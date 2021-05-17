@@ -1,0 +1,50 @@
+Compound;BiGG;ModelSeed;KEGG
+Alanine;ala__L;cpd00035;C00041
+Arginine;arg__L;cpd00051;C00062
+Cysteine;cys__L;cpd00084;C00097
+Glutamic acid;glu__L;cpd00023;C00025
+Glycine;gly;cpd00033;C00037
+Histidine;his__L;cpd00119;C00135
+Leucine;leu__L;cpd00107;C00123
+Lysine;lys__L;cpd00039;C00047
+Ornithine;orn;cpd00064;C00077
+Phenylalanine;phe__L;cpd00066;C00079
+Proline;pro__L;cpd00129;C00148
+Serine;ser__L;cpd00054;C00065
+Threonine;thr__L;cpd00161;C00188
+Tryptophane;trp__L;cpd00065;C00078
+Valine;val__L;cpd00156;C00183
+citric acid;cit;cpd00137;C00158
+Fumaric acid;fum;cpd00106;C00122
+maleic acid;male;cpd00996;C01384
+pyruvic acid;pyr;cpd00020;C00022
+succinic acid;succ;cpd00036;C00042
+glucose;glc__D;cpd00027;C00031
+Urea;urea;cpd00073;C00086
+Sodium;na1;cpd00971;C01330
+Chloride;cl;cpd00099;C00698
+Potassium;k;cpd00205;C00238
+Phosphate;pi;cpd00009;C00009
+Magnesium;mg2;cpd00254;C00305
+Sulphate;so4;cpd00048;C00059
+2,2-Bipyridine;;cpd25442;
+Calcium;ca2;cpd00063;C00076
+ZnCl2;zn2;cpd00034;C00038
+MnCl2;mn2;cpd00030;C00034
+H3BO3;;cpd09225;C12486
+CoCl2;cobalt2;cpd00149;C00175
+CuCl2;cu2;cpd00058;C00070
+NiCl2;ni2;cpd00244;C00291
+MoNa2O4;mobd;cpd11574;C06232
+Cyanocobalamine;adocbl;cpd01826;C02823
+p-Aminobenzoic acid;4abz;cpd00443;C00568
+Biotin;btn;cpd00104;C00120
+Nicotinic acid;nac;cpd00218;C00253
+Ca-D-Pantothenic acid;pnto__R;cpd00644;C00864
+Pyridoxamine-2HCl;pydam;cpd00419;C00534
+Thiamine-dichloride;thm;cpd00305;C00378
+Riboflavin;ribflv;cpd00220;C00255
+Oxygen;o2;cpd00007;C00007
+Fe3+;fe2;cpd10516;C14819
+Water;h2o;cpd00001;C00001
+Co2;co2;cpd00011;C00011
