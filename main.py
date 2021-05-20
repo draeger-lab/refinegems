@@ -6,7 +6,7 @@ import cobra
 __author__ = "Famke Baeuerle"
 
 @click.command()
-@click.option('-i', '--input', default='models/CStr_sbo_kegg_orphan_ncam_cmp.xml', help='Path to GEM to be investigated')
+@click.option('-i', '--input', default='models/e_coli_core.xml', help='Path to GEM to be investigated')
 @click.option('-o', '--output', default=False, help='Determine if output file should be created, default FALSE')
 @click.option('-k', '--keggpathways', default=None, help='new filename/path for model with KEGG pathways')
 @click.option('-m', '--medium', default='media/media_db.csv', help='Simulate growth on medium defined in csv file, default SNM3')
