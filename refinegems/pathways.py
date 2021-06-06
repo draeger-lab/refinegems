@@ -8,7 +8,6 @@ to the respective reaction.
 """
 
 import sys
-import click
 import cobra
 import os
 import memote

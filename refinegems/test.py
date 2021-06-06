@@ -6,7 +6,6 @@ access to its number of reactions, metabolites and genes.
 """
 
 import sys
-import click
 import cobra
 import os
 import memote
