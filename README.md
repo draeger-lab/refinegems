@@ -24,21 +24,5 @@ You should be all set now.
 
 ### Usage
 The script `main.py` can be used directly in the command line. 
-```
-python main.py --help
-```
-will give you access to all possible flags that can be used with the script.
 
-```
-Usage: main.py [OPTIONS]
-
-  main function to run the program
-
-Options:
-  -i, --input TEXT         Path to GEM to be investigated
-  -o, --output TEXT        Determine if output file should be created, default
-                           FALSE
-
-  -k, --keggpathways TEXT  new filename/path for model with KEGG pathways
-  --help                   Show this message and exit.
-```
+The `config.yaml` file contains defaults for all variables that need to be set by the user. The user can change the path to the model, the medium etc.
