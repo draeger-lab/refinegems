@@ -7,7 +7,6 @@ when given to the functions.
 """
 
 import sys
-import click
 import cobra
 import os
 import memote

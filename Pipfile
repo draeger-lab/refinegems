@@ -5,13 +5,13 @@ name = "pypi"
 
 [packages]
 cobra = "*"
-click = "*"
 biopython = "*"
 bioservices = "*"
 memote = "==0.11.1"
 escher = "*"
 pandas = "*"
 numpy = "*"
+pyyaml = "*"
 
 [dev-packages]
 autopep8 = "*"

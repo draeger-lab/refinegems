@@ -6,7 +6,6 @@ or with libSBML (activation of groups).
 """
 
 import sys
-import click
 import cobra
 import os
 import memote

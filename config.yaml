@@ -1,0 +1,5 @@
+input: 'models/CStr_20210518.xml'
+output: False
+keggpathways: null
+medium: 'media/media_db.csv'
+mediumname: 'SNM3'
