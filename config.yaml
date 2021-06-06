@@ -1,5 +1,15 @@
-input: 'models/CStr_20210518.xml'
-output: False
-keggpathways: null
-medium: 'media/media_db.csv'
-mediumname: 'SNM3'
+# Path to GEM to be investigated
+model: 'models/CStr_20210518.xml' 
+
+# new filename/path for model with KEGG pathways, null means KEGG pathways will not be added
+keggpathways: null 
+
+# Path to database which contains metabolites present in different media
+media_db: 'media/media_db.csv' 
+
+# media to simulate growth from, available: SNM, LB, M9
+media: ['SNM3', 'LB', 'M9']
+
+# Determine if output file should be created, default FALSE
+# still needs to be implemented (report with all interesting numbers!)
+# output: False
