@@ -1,133 +1,133 @@
 medium;description;BiGG;name
-LB;Lysogeny broth;adn;Adenosine
-LB;Lysogeny broth;ala__L;L-Alanine
-LB;Lysogeny broth;amp;AMP
-LB;Lysogeny broth;arg__L;L-Arginine
-LB;Lysogeny broth;aso3;Arsenite 
-LB;Lysogeny broth;asp__L;L-Aspartate
-LB;Lysogeny broth;ca2;Ca2+
-LB;Lysogeny broth;cbl1;Vitamin B12
-LB;Lysogeny broth;cd2;Cadmium 
-LB;Lysogeny broth;cl;Cl-
-LB;Lysogeny broth;cmp;CMP
-LB;Lysogeny broth;cobalt2;Co2+
-LB;Lysogeny broth;cro4;Chromate 
-LB;Lysogeny broth;cu2;Cu2+
-LB;Lysogeny broth;cys__L;L-Cysteine
-LB;Lysogeny broth;dad_2;Deoxyadenosine 
-LB;Lysogeny broth;dcyt;Deoxycytidine
-LB;Lysogeny broth;fe2;Fe2+
-LB;Lysogeny broth;fe3;Fe3+
-LB;Lysogeny broth;fol;Folate
-LB;Lysogeny broth;glc__D;D-Glucose
-LB;Lysogeny broth;glu__L;L-Glutamate
-LB;Lysogeny broth;gly;Glycine
-LB;Lysogeny broth;gmp;GMP
-LB;Lysogeny broth;gsn;Guanosine
-LB;Lysogeny broth;h2o;H2O
-LB;Lysogeny broth;h2s;Hydrogen sulfide
-LB;Lysogeny broth;h;H+
-LB;Lysogeny broth;hg2;Hg2+ 
-LB;Lysogeny broth;his__L;L-Histidine
-LB;Lysogeny broth;hxan;Hypoxanthine
-LB;Lysogeny broth;ile__L;L-Isoleucine
-LB;Lysogeny broth;ins;Inosine
-LB;Lysogeny broth;k;K+
-LB;Lysogeny broth;leu__L;L-Leucine
-LB;Lysogeny broth;lipoate;Lipoate
-LB;Lysogeny broth;lys__L;L-Lysine
-LB;Lysogeny broth;met__L;L-Methionine
-LB;Lysogeny broth;mg2;Mg
-LB;Lysogeny broth;mn2;Mn2+
-LB;Lysogeny broth;mobd;Molybdate
-LB;Lysogeny broth;na1;Na+
-LB;Lysogeny broth;nac;Isonicotinic acid
-LB;Lysogeny broth;nh4;Ammonium
-LB;Lysogeny broth;ni2;Ni2+
-LB;Lysogeny broth;o2;O2
-LB;Lysogeny broth;phe__L;L-Phenylalanine
-LB;Lysogeny broth;pheme;Protoheme
-LB;Lysogeny broth;pi;Phosphate
-LB;Lysogeny broth;pnto__R;PAN
-LB;Lysogeny broth;pro__L;L-Proline
-LB;Lysogeny broth;pydx;Pyridoxal
-LB;Lysogeny broth;ribflv;Riboflavin
-LB;Lysogeny broth;ser__L;L-Serine
-LB;Lysogeny broth;so4;Sulfate
-LB;Lysogeny broth;thm;Thiamin
-LB;Lysogeny broth;thr__L;L-Threonine
-LB;Lysogeny broth;thymd;Thymidine
-LB;Lysogeny broth;trp__L;L-Tryptophan
-LB;Lysogeny broth;tyr__L;L-Tyrosine
-LB;Lysogeny broth;ump;UMP
-LB;Lysogeny broth;ura;Uracil
-LB;Lysogeny broth;uri;Uridine
-LB;Lysogeny broth;val__L;L-Valine
-LB;Lysogeny broth;zn2;Zn2+
-LB[-O2];Lysogeny broth (anaerobic);adn;Adenosine
-LB[-O2];Lysogeny broth (anaerobic);ala__L;L-Alanine
-LB[-O2];Lysogeny broth (anaerobic);amp;AMP
-LB[-O2];Lysogeny broth (anaerobic);arg__L;L-Arginine
-LB[-O2];Lysogeny broth (anaerobic);aso3;Arsenite 
-LB[-O2];Lysogeny broth (anaerobic);asp__L;L-Aspartate
-LB[-O2];Lysogeny broth (anaerobic);ca2;Ca2+
-LB[-O2];Lysogeny broth (anaerobic);cbl1;Vitamin B12
-LB[-O2];Lysogeny broth (anaerobic);cd2;Cadmium 
-LB[-O2];Lysogeny broth (anaerobic);cl;Cl-
-LB[-O2];Lysogeny broth (anaerobic);cmp;CMP
-LB[-O2];Lysogeny broth (anaerobic);cobalt2;Co2+
-LB[-O2];Lysogeny broth (anaerobic);cro4;Chromate 
-LB[-O2];Lysogeny broth (anaerobic);cu2;Cu2+
-LB[-O2];Lysogeny broth (anaerobic);cys__L;L-Cysteine
-LB[-O2];Lysogeny broth (anaerobic);dad_2;Deoxyadenosine 
-LB[-O2];Lysogeny broth (anaerobic);dcyt;Deoxycytidine
-LB[-O2];Lysogeny broth (anaerobic);fe2;Fe2+
-LB[-O2];Lysogeny broth (anaerobic);fe3;Fe3+
-LB[-O2];Lysogeny broth (anaerobic);fol;Folate
-LB[-O2];Lysogeny broth (anaerobic);glc__D;D-Glucose
-LB[-O2];Lysogeny broth (anaerobic);glu__L;L-Glutamate
-LB[-O2];Lysogeny broth (anaerobic);gly;Glycine
-LB[-O2];Lysogeny broth (anaerobic);gmp;GMP
-LB[-O2];Lysogeny broth (anaerobic);gsn;Guanosine
-LB[-O2];Lysogeny broth (anaerobic);h2o;H2O
-LB[-O2];Lysogeny broth (anaerobic);h2s;Hydrogen sulfide
-LB[-O2];Lysogeny broth (anaerobic);h;H+
-LB[-O2];Lysogeny broth (anaerobic);hg2;Hg2+ 
-LB[-O2];Lysogeny broth (anaerobic);his__L;L-Histidine
-LB[-O2];Lysogeny broth (anaerobic);hxan;Hypoxanthine
-LB[-O2];Lysogeny broth (anaerobic);ile__L;L-Isoleucine
-LB[-O2];Lysogeny broth (anaerobic);ins;Inosine
-LB[-O2];Lysogeny broth (anaerobic);k;K+
-LB[-O2];Lysogeny broth (anaerobic);leu__L;L-Leucine
-LB[-O2];Lysogeny broth (anaerobic);lipoate;Lipoate
-LB[-O2];Lysogeny broth (anaerobic);lys__L;L-Lysine
-LB[-O2];Lysogeny broth (anaerobic);met__L;L-Methionine
-LB[-O2];Lysogeny broth (anaerobic);mg2;Mg
-LB[-O2];Lysogeny broth (anaerobic);mn2;Mn2+
-LB[-O2];Lysogeny broth (anaerobic);mobd;Molybdate
-LB[-O2];Lysogeny broth (anaerobic);na1;Na+
-LB[-O2];Lysogeny broth (anaerobic);nac;Isonicotinic acid
-LB[-O2];Lysogeny broth (anaerobic);nh4;Ammonium
-LB[-O2];Lysogeny broth (anaerobic);ni2;Ni2+
-LB[-O2];Lysogeny broth (anaerobic);phe__L;L-Phenylalanine
-LB[-O2];Lysogeny broth (anaerobic);pheme;Protoheme
-LB[-O2];Lysogeny broth (anaerobic);pi;Phosphate
-LB[-O2];Lysogeny broth (anaerobic);pnto__R;PAN
-LB[-O2];Lysogeny broth (anaerobic);pro__L;L-Proline
-LB[-O2];Lysogeny broth (anaerobic);pydx;Pyridoxal
-LB[-O2];Lysogeny broth (anaerobic);ribflv;Riboflavin
-LB[-O2];Lysogeny broth (anaerobic);ser__L;L-Serine
-LB[-O2];Lysogeny broth (anaerobic);so4;Sulfate
-LB[-O2];Lysogeny broth (anaerobic);thm;Thiamin
-LB[-O2];Lysogeny broth (anaerobic);thr__L;L-Threonine
-LB[-O2];Lysogeny broth (anaerobic);thymd;Thymidine
-LB[-O2];Lysogeny broth (anaerobic);trp__L;L-Tryptophan
-LB[-O2];Lysogeny broth (anaerobic);tyr__L;L-Tyrosine
-LB[-O2];Lysogeny broth (anaerobic);ump;UMP
-LB[-O2];Lysogeny broth (anaerobic);ura;Uracil
-LB[-O2];Lysogeny broth (anaerobic);uri;Uridine
-LB[-O2];Lysogeny broth (anaerobic);val__L;L-Valine
-LB[-O2];Lysogeny broth (anaerobic);zn2;Zn2+
+LB;Lysogeny broth;adn;Adenosine
+LB;Lysogeny broth;ala__L;L-Alanine
+LB;Lysogeny broth;amp;AMP
+LB;Lysogeny broth;arg__L;L-Arginine
+LB;Lysogeny broth;aso3;Arsenite 
+LB;Lysogeny broth;asp__L;L-Aspartate
+LB;Lysogeny broth;ca2;Ca2+
+LB;Lysogeny broth;cbl1;Vitamin B12
+LB;Lysogeny broth;cd2;Cadmium
+LB;Lysogeny broth;cl;Cl-
+LB;Lysogeny broth;cmp;CMP
+LB;Lysogeny broth;cobalt2;Co2+
+LB;Lysogeny broth;cro4;Chromate 
+LB;Lysogeny broth;cu2;Cu2+
+LB;Lysogeny broth;cys__L;L-Cysteine
+LB;Lysogeny broth;dad_2;Deoxyadenosine 
+LB;Lysogeny broth;dcyt;Deoxycytidine
+LB;Lysogeny broth;fe2;Fe2+
+LB;Lysogeny broth;fe3;Fe3+
+LB;Lysogeny broth;fol;Folate
+LB;Lysogeny broth;glc__D;D-Glucose
+LB;Lysogeny broth;glu__L;L-Glutamate
+LB;Lysogeny broth;gly;Glycine
+LB;Lysogeny broth;gmp;GMP
+LB;Lysogeny broth;gsn;Guanosine
+LB;Lysogeny broth;h2o;H2O
+LB;Lysogeny broth;h2s;Hydrogen sulfide
+LB;Lysogeny broth;h;H+
+LB;Lysogeny broth;hg2;Hg2+ 
+LB;Lysogeny broth;his__L;L-Histidine
+LB;Lysogeny broth;hxan;Hypoxanthine
+LB;Lysogeny broth;ile__L;L-Isoleucine
+LB;Lysogeny broth;ins;Inosine
+LB;Lysogeny broth;k;K+
+LB;Lysogeny broth;leu__L;L-Leucine
+LB;Lysogeny broth;lipoate;Lipoate
+LB;Lysogeny broth;lys__L;L-Lysine
+LB;Lysogeny broth;met__L;L-Methionine
+LB;Lysogeny broth;mg2;Mg
+LB;Lysogeny broth;mn2;Mn2+
+LB;Lysogeny broth;mobd;Molybdate
+LB;Lysogeny broth;na1;Na+
+LB;Lysogeny broth;nac;Isonicotinic acid
+LB;Lysogeny broth;nh4;Ammonium
+LB;Lysogeny broth;ni2;Ni2+
+LB;Lysogeny broth;o2;O2
+LB;Lysogeny broth;phe__L;L-Phenylalanine
+LB;Lysogeny broth;pheme;Protoheme
+LB;Lysogeny broth;pi;Phosphate
+LB;Lysogeny broth;pnto__R;PAN
+LB;Lysogeny broth;pro__L;L-Proline
+LB;Lysogeny broth;pydx;Pyridoxal
+LB;Lysogeny broth;ribflv;Riboflavin
+LB;Lysogeny broth;ser__L;L-Serine
+LB;Lysogeny broth;so4;Sulfate
+LB;Lysogeny broth;thm;Thiamin
+LB;Lysogeny broth;thr__L;L-Threonine
+LB;Lysogeny broth;thymd;Thymidine
+LB;Lysogeny broth;trp__L;L-Tryptophan
+LB;Lysogeny broth;tyr__L;L-Tyrosine
+LB;Lysogeny broth;ump;UMP
+LB;Lysogeny broth;ura;Uracil
+LB;Lysogeny broth;uri;Uridine
+LB;Lysogeny broth;val__L;L-Valine
+LB;Lysogeny broth;zn2;Zn2+
+LB[-O2];Lysogeny broth (anaerobic);adn;Adenosine
+LB[-O2];Lysogeny broth (anaerobic);ala__L;L-Alanine
+LB[-O2];Lysogeny broth (anaerobic);amp;AMP
+LB[-O2];Lysogeny broth (anaerobic);arg__L;L-Arginine
+LB[-O2];Lysogeny broth (anaerobic);aso3;Arsenite 
+LB[-O2];Lysogeny broth (anaerobic);asp__L;L-Aspartate
+LB[-O2];Lysogeny broth (anaerobic);ca2;Ca2+
+LB[-O2];Lysogeny broth (anaerobic);cbl1;Vitamin B12
+LB[-O2];Lysogeny broth (anaerobic);cd2;Cadmium 
+LB[-O2];Lysogeny broth (anaerobic);cl;Cl-
+LB[-O2];Lysogeny broth (anaerobic);cmp;CMP
+LB[-O2];Lysogeny broth (anaerobic);cobalt2;Co2+
+LB[-O2];Lysogeny broth (anaerobic);cro4;Chromate 
+LB[-O2];Lysogeny broth (anaerobic);cu2;Cu2+
+LB[-O2];Lysogeny broth (anaerobic);cys__L;L-Cysteine
+LB[-O2];Lysogeny broth (anaerobic);dad_2;Deoxyadenosine 
+LB[-O2];Lysogeny broth (anaerobic);dcyt;Deoxycytidine
+LB[-O2];Lysogeny broth (anaerobic);fe2;Fe2+
+LB[-O2];Lysogeny broth (anaerobic);fe3;Fe3+
+LB[-O2];Lysogeny broth (anaerobic);fol;Folate
+LB[-O2];Lysogeny broth (anaerobic);glc__D;D-Glucose
+LB[-O2];Lysogeny broth (anaerobic);glu__L;L-Glutamate
+LB[-O2];Lysogeny broth (anaerobic);gly;Glycine
+LB[-O2];Lysogeny broth (anaerobic);gmp;GMP
+LB[-O2];Lysogeny broth (anaerobic);gsn;Guanosine
+LB[-O2];Lysogeny broth (anaerobic);h2o;H2O
+LB[-O2];Lysogeny broth (anaerobic);h2s;Hydrogen sulfide
+LB[-O2];Lysogeny broth (anaerobic);h;H+
+LB[-O2];Lysogeny broth (anaerobic);hg2;Hg2+ 
+LB[-O2];Lysogeny broth (anaerobic);his__L;L-Histidine
+LB[-O2];Lysogeny broth (anaerobic);hxan;Hypoxanthine
+LB[-O2];Lysogeny broth (anaerobic);ile__L;L-Isoleucine
+LB[-O2];Lysogeny broth (anaerobic);ins;Inosine
+LB[-O2];Lysogeny broth (anaerobic);k;K+
+LB[-O2];Lysogeny broth (anaerobic);leu__L;L-Leucine
+LB[-O2];Lysogeny broth (anaerobic);lipoate;Lipoate
+LB[-O2];Lysogeny broth (anaerobic);lys__L;L-Lysine
+LB[-O2];Lysogeny broth (anaerobic);met__L;L-Methionine
+LB[-O2];Lysogeny broth (anaerobic);mg2;Mg
+LB[-O2];Lysogeny broth (anaerobic);mn2;Mn2+
+LB[-O2];Lysogeny broth (anaerobic);mobd;Molybdate
+LB[-O2];Lysogeny broth (anaerobic);na1;Na+
+LB[-O2];Lysogeny broth (anaerobic);nac;Isonicotinic acid
+LB[-O2];Lysogeny broth (anaerobic);nh4;Ammonium
+LB[-O2];Lysogeny broth (anaerobic);ni2;Ni2+
+LB[-O2];Lysogeny broth (anaerobic);phe__L;L-Phenylalanine
+LB[-O2];Lysogeny broth (anaerobic);pheme;Protoheme
+LB[-O2];Lysogeny broth (anaerobic);pi;Phosphate
+LB[-O2];Lysogeny broth (anaerobic);pnto__R;PAN
+LB[-O2];Lysogeny broth (anaerobic);pro__L;L-Proline
+LB[-O2];Lysogeny broth (anaerobic);pydx;Pyridoxal
+LB[-O2];Lysogeny broth (anaerobic);ribflv;Riboflavin
+LB[-O2];Lysogeny broth (anaerobic);ser__L;L-Serine
+LB[-O2];Lysogeny broth (anaerobic);so4;Sulfate
+LB[-O2];Lysogeny broth (anaerobic);thm;Thiamin
+LB[-O2];Lysogeny broth (anaerobic);thr__L;L-Threonine
+LB[-O2];Lysogeny broth (anaerobic);thymd;Thymidine
+LB[-O2];Lysogeny broth (anaerobic);trp__L;L-Tryptophan
+LB[-O2];Lysogeny broth (anaerobic);tyr__L;L-Tyrosine
+LB[-O2];Lysogeny broth (anaerobic);ump;UMP
+LB[-O2];Lysogeny broth (anaerobic);ura;Uracil
+LB[-O2];Lysogeny broth (anaerobic);uri;Uridine
+LB[-O2];Lysogeny broth (anaerobic);val__L;L-Valine
+LB[-O2];Lysogeny broth (anaerobic);zn2;Zn2+
 M9;M9 minimal medium;ca2;Ca2+
 M9;M9 minimal medium;cl;Cl-
 M9;M9 minimal medium;cobalt2;Co2+
@@ -236,25 +236,25 @@ SNM3;Synthetic Nasal Medium Version 3;o2;
 SNM3;Synthetic Nasal Medium Version 3;fe2;
 SNM3;Synthetic Nasal Medium Version 3;h2o;
 SNM3;Synthetic Nasal Medium Version 3;co2;
-SMM;Synthtic Minimal Medium;na1;
-SMM;Synthtic Minimal Medium;cl;
-SMM;Synthtic Minimal Medium;k;
-SMM;Synthtic Minimal Medium;mg2;
-SMM;Synthtic Minimal Medium;so4;
-SMM;Synthtic Minimal Medium;h2o;
-SMM;Synthtic Minimal Medium;nh4;
-SMM;Synthtic Minimal Medium;ca2;
-SMM;Synthtic Minimal Medium;pi;
-SMM;Synthtic Minimal Medium;fe2;
-SMM;Synthtic Minimal Medium;mn2;
-SMM;Synthtic Minimal Medium;glc__D;
-SMM;Synthtic Minimal Medium;arg__L;
-SMM;Synthtic Minimal Medium;cys__L;
-SMM;Synthtic Minimal Medium;pro__L;
-SMM;Synthtic Minimal Medium;nac;
-SMM;Synthtic Minimal Medium;thm;
-SMM;Synthtic Minimal Medium;pnto__R;
-SMM;Synthtic Minimal Medium;h;
+SMM;Synthetic Minimal Medium;na1;
+SMM;Synthetic Minimal Medium;cl;
+SMM;Synthetic Minimal Medium;k;
+SMM;Synthetic Minimal Medium;mg2;
+SMM;Synthetic Minimal Medium;so4;
+SMM;Synthetic Minimal Medium;h2o;
+SMM;Synthetic Minimal Medium;nh4;
+SMM;Synthetic Minimal Medium;ca2;
+SMM;Synthetic Minimal Medium;pi;
+SMM;Synthetic Minimal Medium;fe2;
+SMM;Synthetic Minimal Medium;mn2;
+SMM;Synthetic Minimal Medium;glc__D;
+SMM;Synthetic Minimal Medium;arg__L;
+SMM;Synthetic Minimal Medium;cys__L;
+SMM;Synthetic Minimal Medium;pro__L;
+SMM;Synthetic Minimal Medium;nac;
+SMM;Synthetic Minimal Medium;thm;
+SMM;Synthetic Minimal Medium;pnto__R;
+SMM;Synthetic Minimal Medium;h;
 RPMI;;ca2;
 RPMI;;no3;
 RPMI;;mg2;

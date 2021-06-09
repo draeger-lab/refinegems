@@ -8,7 +8,10 @@ keggpathways: null
 media_db: 'media/media_db.csv' 
 
 # media to simulate growth from, available: SNM, LB, M9
-media: ['SNM3', 'LB', 'M9']
+media: ['SNM3', 'LB', 'M9', 'SMM']
+
+# determine whether the memote score should be calculated
+memote: FALSE
 
 # Determine if output file should be created, default FALSE
 # still needs to be implemented (report with all interesting numbers!)

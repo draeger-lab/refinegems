@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-cobra = "*"
-biopython = "*"
-bioservices = "*"
+cobra = "==0.22.0"
+biopython = "==1.79"
+bioservices = "==1.7.11"
 memote = "==0.11.1"
-escher = "*"
-pandas = "*"
-numpy = "*"
-pyyaml = "*"
+escher = "==1.7.3"
+pandas = "==1.2.4"
+numpy = "==1.20.3"
+pyyaml = "==5.4.1"
 
 [dev-packages]
 autopep8 = "*"

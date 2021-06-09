@@ -2,6 +2,7 @@
 import yaml
 import refinegems as rg
 import cobra
+import pandas as pd
 
 __author__ = "Famke Baeuerle"
 
@@ -27,19 +28,23 @@ def main():
             print('# reactions: ' + str(reac))
             print('# metabolites: ' + str(metab))
             print('# genes: ' + str(genes))
-            #score = rg.run_memote(model_cobra)
-            #print('Memote score: ' + str(score))
+            
+            if (config['memote'] == True):
+                score = rg.run_memote(model_cobra)
+                print('Memote score: ' + str(score))
+                
             if (config['media_db'] != None):
+                df_list = []
                 for medium in config['media']:
-                    essential, missing, growth, dt = rg.growth_simulation(model_cobra, model_libsbml, config['media_db'], medium)
-                    print('---')
-                    print('Growth was tested on ' + medium)
-                    print('The following exchanges are needed for growth and not in the medium:')
-                    print(essential)
-                    print('With them the growth value is ' + str("%.2f" %growth) + ' mmol/gDW·h')
-                    print('The corresponding doubling time is ' + str("%.2f" %dt)+ ' min')
-                    print('The following exchanges are in the medium but not in the model:')
-                    print(missing)
+                    model_cobra = rg.load_model_cobra('models/CStr_20210518.xml')
+                    model_libsbml = rg.load_model_libsbml('models/CStr_20210518.xml')
+                    essential, missing, growth, dt = rg.growth_simulation(model_cobra, model_libsbml, 'media/media_db.csv', medium)
+                    exchanges = [[medium], essential, missing, [growth], [dt]]
+                    df_temp = pd.DataFrame(exchanges, ['name', 'essential', 'missing', 'growth_value [mmol/gDW·h]', 'doubling_time [min]']).T
+                    df_list.append(df_temp)
+                growth_sim = pd.concat(df_list)
+
+                print(growth_sim)
 
 
 if __name__ == "__main__":
