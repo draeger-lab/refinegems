@@ -34,7 +34,7 @@ export PATH={Output from the line above with /bin as line end}:$PATH
 
 The database containing the BiGG ID and EC number mappings
 ```
-sbo\create_dbs.sql
+sbo/create_dbs.sql
 ```
 must be imported to a local PostgreSQL database to a selected user. 
 
