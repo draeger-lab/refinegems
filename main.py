@@ -24,14 +24,9 @@ def main():
         if (model_cobra != None):
             model_libsbml = rg.load_model_libsbml(config['model'])
             name, reac, metab, genes = rg.initial_analysis(model_libsbml)
-            print('Name: ' + name)
-            print('# reactions: ' + str(reac))
-            print('# metabolites: ' + str(metab))
-            print('# genes: ' + str(genes))
             
             if (config['memote'] == True):
                 score = rg.run_memote(model_cobra)
-                print('Memote score: ' + str(score))
                 
             if (config['media_db'] != None):
                 df_list = []
@@ -44,8 +39,38 @@ def main():
                     df_list.append(df_temp)
                 growth_sim = pd.concat(df_list)
 
+            if (config['output'][0] == 'command_line'):
+                print('---')
+                print('Model name: ' + name)
+                print('# reactions: ' + str(reac))
+                print('# metabolites: ' + str(metab))
+                print('# genes: ' + str(genes))
+                if (config['memote'] == True):
+                    print('Memote score: ' + str(score))
                 print(growth_sim)
-
+                
+            if (config['output'][0] != 'command_line'):
+                if (config['output'][1] == 1): # excel file
+                    if (config['memote'] == True):
+                        information = [[name], [reac], [metab], [genes], [score]]
+                        model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score']).T
+                    else:
+                        information = [[name], [reac], [metab], [genes]]
+                        model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes']).T
+                    with pd.ExcelWriter(config['output'][0]) as writer:  
+                        model_params.to_excel(writer, sheet_name='model params', index=False)
+                        growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
+                if (config['output'][1] == 2): # csv file
+                    print('---')
+                    print('Model name: ' + name)
+                    print('# reactions: ' + str(reac))
+                    print('# metabolites: ' + str(metab))
+                    print('# genes: ' + str(genes))
+                    if (config['memote'] == True):
+                        print('Memote score: ' + str(score))
+                    growth_sim.to_csv(config['output'][0], index=False)
+    
+    print("Gem Curation Finished!")
 
 if __name__ == "__main__":
     main()
