@@ -20,6 +20,6 @@ media: ['SNM3', 'LB', 'M9', 'SMM', 'CGXII', 'RPMI']
 memote: FALSE
 
 # Determine if output file should be created, default: [command_line, 0]
-# for output into an excel file indicate the filename in this format: ['path/to/file/name.xlsx', 1]
-# for output of the growth simulation into a csv file: ['path/to/file/name.csv', 2]
+# for output into an excel file indicate the filename in this format: ['filename.xlsx', 1]
+# for output of the growth simulation into a csv file: ['filename.csv', 2]
 output: [command_line, 0]
