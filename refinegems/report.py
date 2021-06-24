@@ -4,6 +4,8 @@
 Initial analysis covers number of reactions, metabolites and genes. 
 This part of the script also adds the memote score to the script 
 when given to the functions.
+
+Obsolete at the moment
 """
 
 import sys

@@ -17,6 +17,13 @@ def main():
     if (config['keggpathways'] != None):
         rg.kegg_pathways(config['model'], config['keggpathways'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['keggpathways'])
+        print(errors)
+        
+    elif (config['sboterms'] != None):
+        model_libsbml = rg.load_model_libsbml(config['model'])
+        rg.sbo_annotation(model_libsbml, config['sboterms'][0], config['sboterms'][1], config['sboterms'][2])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['sboterms'][2])
+        print(errors)
     
     else:
         model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
@@ -30,9 +37,9 @@ def main():
                 
             if (config['media_db'] != None):
                 df_list = []
-                for medium in config['media']:
-                    model_cobra = rg.load_model_cobra('models/CStr_20210518.xml')
-                    model_libsbml = rg.load_model_libsbml('models/CStr_20210518.xml')
+                for medium in config['media']: # ACHTUNG, so funktioniert das natürlich nicht :D
+                    model_cobra = rg.load_model_cobra(config['model'])
+                    model_libsbml = rg.load_model_libsbml(config['model'])
                     essential, missing, growth, dt = rg.growth_simulation(model_cobra, model_libsbml, 'media/media_db.csv', medium)
                     exchanges = [[medium], essential, missing, [growth], [dt]]
                     df_temp = pd.DataFrame(exchanges, ['name', 'essential', 'missing', 'growth_value [mmol/gDW·h]', 'doubling_time [min]']).T

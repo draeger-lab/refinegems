@@ -1,10 +1,14 @@
-# This config file will be read by main.py
-
 # Path to GEM to be investigated
 model: 'models/CStr_20210518.xml' 
 
 # new filename/path for model with KEGG pathways, default: null means KEGG pathways will not be added
 keggpathways: null 
+
+# Requirements: PostgreSQL
+# needs database name and user: [database_user, database_name, 'new_filename.xml']
+sboterms: [postgres, sbo_ann, 'test_sbo.xml']
+
+### The following inputs are only necessary if neither kegg nor sbo is active
 
 # Path to database which contains metabolites present in different media
 media_db: 'media/media_db.csv' 

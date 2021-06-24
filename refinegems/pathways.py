@@ -47,7 +47,7 @@ def write_to_file(model, new_filename):
     """
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
-    print("Written to " + new_filename)
+    print("Model with KEGG pathway groups written to " + new_filename)
 
 def extract_kegg_reactions(model):
     """extract KEGG Ids from reactions
