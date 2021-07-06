@@ -56,22 +56,31 @@ model: 'models/CStr_20210518.xml'
 keggpathways: null 
 
 # Requirements: PostgreSQL
-# needs database name and user: [database_user, database_name, 'new_filename.xml']
-sboterms: null
+sboterms: FALSE
+database_user: postgres
+database_name: sbo_ann
+new_filename: 'cstr_sboann.xml'
 
-### The following inputs are only necessary if neither kegg nor sbo is active
+### The following inputs are only necessary if neither kegg nor sbo is active ###
 
 # Path to database which contains metabolites present in different media
 media_db: 'media/media_db.csv' 
 
-# media to simulate growth from, available: SNM, LB, M9, SMM
-media: ['SNM3', 'LB', 'M9', 'SMM']
+# media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
+media: ['SNM3', 'LB', 'M9', 'SMM', 'CGXII', 'RPMI']
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
 
-# Determine if output file should be created, default: [command_line, 0]
-# for output into an excel file indicate the filename in this format: ['path/to/file/name.xlsx', 1]
-# for output of the growth simulation into a csv file: ['path/to/file/name.csv', 2]
-output: [command_line, 0]
+# Determine if output file should be created, default: cl
+# Filename is set as the models name
+output: cl #xlsx, csv 
+
+### Gene comparison ###
+# set to False if not needed
+genecomp: TRUE
+# the following is only relevant when turned on
+organismid: 'T05059' # C. striatum
+gff_file: 'genecomp/cstr.gff' # C. striatum
+biggreactions: 'genecomp/bigg_models_reactions.txt'
 ```

@@ -5,17 +5,9 @@ These functions enable simple testing of any model using memote and
 access to its number of reactions, metabolites and genes.
 """
 
-import sys
-import cobra
 import os
 import memote
 import json
-from libsbml import *# SBMLReader, GroupsExtension, FbcModelPlugin, CVTerm, writeSBML
-from Bio import SeqIO
-from bioservices import KEGG
-from datetime import datetime
-from bs4 import BeautifulSoup
-
 __author__ = "Famke Baeuerle"
 
 

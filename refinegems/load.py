@@ -5,16 +5,8 @@ Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups).
 """
 
-import sys
 import cobra
-import os
-import memote
-import json
-from libsbml import *# SBMLReader, GroupsExtension, FbcModelPlugin, CVTerm, writeSBML
-from Bio import SeqIO
-from bioservices import KEGG
-from datetime import datetime
-from bs4 import BeautifulSoup
+from libsbml import SBMLReader
 
 __author__ = "Famke Baeuerle"
 

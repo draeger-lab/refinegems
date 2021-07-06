@@ -1,6 +1,7 @@
-import sys
 from libsbml import *
 import psycopg2
+
+__author__ = "Elisabeth Fritze"
 
 def getCompartmentlessSpeciesId(speciesReference):
     speciesId = speciesReference.getSpecies()

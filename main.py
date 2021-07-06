@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from refinegems.genecomp import genecomp
 import yaml
 import refinegems as rg
 import cobra
@@ -19,10 +20,10 @@ def main():
         model, errors = cobra.io.sbml.validate_sbml_model(config['keggpathways'])
         print(errors)
         
-    elif (config['sboterms'] != None):
+    elif (config['sboterms']):
         model_libsbml = rg.load_model_libsbml(config['model'])
-        rg.sbo_annotation(model_libsbml, config['sboterms'][0], config['sboterms'][1], config['sboterms'][2])
-        model, errors = cobra.io.sbml.validate_sbml_model(config['sboterms'][2])
+        rg.sbo_annotation(model_libsbml, config['database_user'], config['database_name'], config['new_filename'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['new_filename'])
         print(errors)
     
     else:
@@ -32,8 +33,11 @@ def main():
             model_libsbml = rg.load_model_libsbml(config['model'])
             name, reac, metab, genes = rg.initial_analysis(model_libsbml)
             
-            if (config['memote'] == True):
+            if (config['memote']):
                 score = rg.run_memote(model_cobra)
+                
+            if (config['genecomp']):
+                genecomp = rg.genecomp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
                 
             if (config['media_db'] != None):
                 df_list = []
@@ -46,7 +50,30 @@ def main():
                     df_list.append(df_temp)
                 growth_sim = pd.concat(df_list)
 
-            if (config['output'][0] == 'command_line'):
+            if (config['output'] == 'cl'):
+                print('---')
+                print('Model name: ' + name)
+                print('# reactions: ' + str(reac))
+                print('# metabolites: ' + str(metab))
+                print('# genes: ' + str(genes))
+                if (config['memote']): print('Memote score: ' + str(score))
+                print(growth_sim)
+                if(config['genecomp']): print(genecomp)
+                
+            if (config['output'] == 'xlsx'): # excel file
+                if (config['memote'] == True):
+                    information = [[name], [reac], [metab], [genes], [score]]
+                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score']).T
+                else:
+                    information = [[name], [reac], [metab], [genes]]
+                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes']).T
+                with pd.ExcelWriter(name + '_refinegems.xlsx') as writer:  
+                    model_params.to_excel(writer, sheet_name='model params', index=False)
+                    growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
+                    if(config['genecomp']):
+                        genecomp.to_excel(writer, sheet_name='gene comparison', index=False)
+            
+            if (config['output'] == 'csv'): # csv file
                 print('---')
                 print('Model name: ' + name)
                 print('# reactions: ' + str(reac))
@@ -54,28 +81,9 @@ def main():
                 print('# genes: ' + str(genes))
                 if (config['memote'] == True):
                     print('Memote score: ' + str(score))
-                print(growth_sim)
-                
-            if (config['output'][0] != 'command_line'):
-                if (config['output'][1] == 1): # excel file
-                    if (config['memote'] == True):
-                        information = [[name], [reac], [metab], [genes], [score]]
-                        model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score']).T
-                    else:
-                        information = [[name], [reac], [metab], [genes]]
-                        model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes']).T
-                    with pd.ExcelWriter(config['output'][0]) as writer:  
-                        model_params.to_excel(writer, sheet_name='model params', index=False)
-                        growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
-                if (config['output'][1] == 2): # csv file
-                    print('---')
-                    print('Model name: ' + name)
-                    print('# reactions: ' + str(reac))
-                    print('# metabolites: ' + str(metab))
-                    print('# genes: ' + str(genes))
-                    if (config['memote'] == True):
-                        print('Memote score: ' + str(score))
-                    growth_sim.to_csv(config['output'][0], index=False)
+                growth_sim.to_csv(name +'_growthsim.csv', index=False)
+                if(config['genecomp']):
+                    genecomp.to_csv(name +'_genecomp.csv', index=False)
     
     print("Gem Curation Finished!")
 

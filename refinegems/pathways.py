@@ -7,13 +7,7 @@ all KEGG pathways for a reaction then as annotations with the biological qualifi
 to the respective reaction.
 """
 
-import sys
-import cobra
-import os
-import memote
-import json
 from libsbml import *# SBMLReader, GroupsExtension, FbcModelPlugin, CVTerm, writeSBML
-from Bio import SeqIO
 from bioservices import KEGG
 from bs4 import BeautifulSoup
 

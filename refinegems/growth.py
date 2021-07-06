@@ -6,10 +6,8 @@ work with any medium as long as its defined in a csv with ; as
 delimiter and BiGG Ids for the compounds.
 """
 
-import cobra
 import pandas as pd
 import numpy as np
-from libsbml import Model
 
 __author__ = "Famke Baeuerle"
 
