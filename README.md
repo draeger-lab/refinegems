@@ -7,6 +7,7 @@ It is recommended to install all required packages in a `pipenv`.
 ```
 pip install pipenv
 ```
+The `pipenv` package can also be installed via Anaconda (recommended if you are a Windows user).
 
 All dependencies can the be installed by running 
 ```
@@ -22,6 +23,8 @@ will initiate a session in the environment.
 
 You should be all set now.
 
+Note: If you use python 3.8 it everything should work, just edit the `Pipfile` entry to `python_version = "3.8"` before running `pipenv install`.
+
 ### Further Dependencies
 
 If you want to use the SBO terms annotation part you will need to install PostgreSQL to your machine.
@@ -32,6 +35,9 @@ locate psql | grep /bin
 export PATH={Output from the line above with /bin as line end}:$PATH
 ```
 
+If you are a Windows user you will want to locate the installation manually. The path should look like somthing like this
+`C:\Program Files\PostgreSQL\13\lib`.
+
 The database containing the BiGG ID and EC number mappings
 ```
 sbo/create_dbs.sql
@@ -41,6 +47,16 @@ must be imported to a local PostgreSQL database to a selected user.
 You can use the following command, run it from this directory:
 ```
 psql -U {your postgres username} -h localhost -d {your database name} < sbo/create_dbs.sql 
+```
+
+If you are a Windows user you will need to use a different command:
+Enter into the psql shell by typing `psql`, then create the database with
+```
+CREATE DATABASE sbo_ann;
+```
+Afterwards load the database with
+```
+psql.exe -U postgres -d sbo_ann -f sbo\create_dbs.sql
 ```
 
 ### Usage

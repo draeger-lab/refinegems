@@ -1,3 +1,5 @@
+# Generally: For windows use \ instead of / for the paths
+
 # Path to GEM to be investigated
 model: 'models/CStr_20210518.xml' 
 
@@ -27,7 +29,7 @@ output: xlsx #cl, xlsx, csv
 
 ### Gene comparison ###
 # set to False if not needed
-genecomp: TRUE
+genecomp: FALSE
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
 gff_file: 'genecomp/cstr.gff' # C. striatum

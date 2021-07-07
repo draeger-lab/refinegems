@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """ Provides functions to compare genes found in KEGG and in the model
 
 Extracts all KEGG ids from the annotations and compares them to a list for you organism from KEGG.

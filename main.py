@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from refinegems.genecomp import genecomp
+
 import yaml
 import refinegems as rg
 import cobra
@@ -32,6 +32,8 @@ def main():
         if (model_cobra != None):
             model_libsbml = rg.load_model_libsbml(config['model'])
             name, reac, metab, genes = rg.initial_analysis(model_libsbml)
+            orphans, deadends, disconnected = rg.get_orphans_deadends_disconnected(model_cobra)
+            mass_unbal, charge_unbal = rg.get_mass_charge_unbalanced(model_cobra)
             
             if (config['memote']):
                 score = rg.run_memote(model_cobra)
@@ -41,7 +43,7 @@ def main():
                 
             if (config['media_db'] != None):
                 df_list = []
-                for medium in config['media']: # ACHTUNG, so funktioniert das natürlich nicht :D
+                for medium in config['media']: # ACHTUNG, so funktioniert das nur wenn das model gleich bleibt.
                     model_cobra = rg.load_model_cobra(config['model'])
                     model_libsbml = rg.load_model_libsbml(config['model'])
                     essential, missing, growth, dt = rg.growth_simulation(model_cobra, model_libsbml, 'media/media_db.csv', medium)
@@ -57,16 +59,21 @@ def main():
                 print('# metabolites: ' + str(metab))
                 print('# genes: ' + str(genes))
                 if (config['memote']): print('Memote score: ' + str(score))
+                print('Orphan metabolites: ' + str(orphans))
+                print('Deadend metabolites: ' + str(deadends))
+                print('Disconnected metabolites: ' + str(disconnected))
+                print('Mass unbalanced reactions: ' + str(mass_unbal))
+                print('Charge unbalanced reactions: ' + str(charge_unbal))
                 print(growth_sim)
                 if(config['genecomp']): print(genecomp)
                 
             if (config['output'] == 'xlsx'): # excel file
                 if (config['memote'] == True):
-                    information = [[name], [reac], [metab], [genes], [score]]
-                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score']).T
+                    information = [[name], [reac], [metab], [genes], [score], orphans, deadends, disconnected, mass_unbal, charge_unbal]
+                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score', 'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
                 else:
-                    information = [[name], [reac], [metab], [genes]]
-                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes']).T
+                    information = [[name], [reac], [metab], [genes], orphans, deadends, disconnected, mass_unbal, charge_unbal]
+                    model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
                 with pd.ExcelWriter(name + '_refinegems.xlsx') as writer:  
                     model_params.to_excel(writer, sheet_name='model params', index=False)
                     growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
@@ -79,8 +86,14 @@ def main():
                 print('# reactions: ' + str(reac))
                 print('# metabolites: ' + str(metab))
                 print('# genes: ' + str(genes))
-                if (config['memote'] == True):
-                    print('Memote score: ' + str(score))
+                if (config['memote'] == True): print('Memote score: ' + str(score))
+                model_info = pd.DataFrame([orphans, deadends, disconnected, mass_unbal, charge_unbal], ['orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
+                #print('Orphan metabolites: ' + str(orphans))
+                #print('Deadend metabolites: ' + str(deadends))
+                #print('Disconnected metabolites: ' + str(disconnected))
+                #print('Mass unbalanced reactions: ' + str(mass_unbal))
+                #print('Charge unbalanced reactions: ' + str(charge_unbal))
+                model_info.to_csv(name + '_modelinfo.csv', index=False)
                 growth_sim.to_csv(name +'_growthsim.csv', index=False)
                 if(config['genecomp']):
                     genecomp.to_csv(name +'_genecomp.csv', index=False)
