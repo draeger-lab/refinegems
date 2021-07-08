@@ -1,7 +1,7 @@
-## gem_curation_template
+# gem_curation_template
 Template repository structure for a genome-scale metabolic model curation project.
 
-### Installation
+## Installation
 
 It is recommended to install all required packages in a `pipenv`. 
 ```
@@ -23,7 +23,7 @@ will initiate a session in the environment.
 
 You should be all set now.
 
-### Further Dependencies
+## Further Dependencies
 
 If you want to use the SBO terms annotation part you will need to install PostgreSQL to your machine.
 
@@ -50,7 +50,7 @@ Afterwards load the database with
 psql.exe -U postgres -d sbo_ann -f sbo\create_dbs.sql
 ```
 
-### Usage
+## Usage
 The script `main.py` can be used directly in the command line. 
 
 The `config.yaml` file contains defaults for all variables that need to be set by the user.
@@ -92,7 +92,7 @@ gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 ```
 
-#### Troubleshooting
+## Troubleshooting
 
 * If you get `ImportError: DLL load failed while importing _sqlite3` when running main.py. Locate the `sqlite3.dll` file on you machine and add it to PATH.
 
