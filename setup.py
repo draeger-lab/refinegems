@@ -1,3 +1,4 @@
+# needed for installation of refinegems
 from setuptools import setup
 
 setup(name='refinegems',

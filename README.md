@@ -23,20 +23,11 @@ will initiate a session in the environment.
 
 You should be all set now.
 
-Note: If you use python 3.8 it everything should work, just edit the `Pipfile` entry to `python_version = "3.8"` before running `pipenv install`.
-
 ### Further Dependencies
 
 If you want to use the SBO terms annotation part you will need to install PostgreSQL to your machine.
 
-Make sure that you will be able to use psql from the command line. A common issue is that its not added to PATH:
-```
-locate psql | grep /bin
-export PATH={Output from the line above with /bin as line end}:$PATH
-```
-
-If you are a Windows user you will want to locate the installation manually. The path should look like somthing like this
-`C:\Program Files\PostgreSQL\13\lib`.
+Make sure that you will be able to use psql from the command line. 
 
 The database containing the BiGG ID and EC number mappings
 ```
@@ -100,3 +91,18 @@ organismid: 'T05059' # C. striatum
 gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 ```
+
+#### Troubleshooting
+
+* If you get `ImportError: DLL load failed while importing _sqlite3` when running main.py. Locate the `sqlite3.dll` file on you machine and add it to PATH.
+
+* If you use python 3.8 it everything should work, just edit the `Pipfile` entry to `python_version = "3.8"` before running `pipenv install`.
+
+* If you can't use `psql`from the command line, a common issue is that its not added to PATH:
+```
+locate psql | grep /bin
+export PATH={Output from the line above with /bin as line end}:$PATH
+```
+
+* If you are a Windows user you will want to locate the installation manually. The path should look like something like this
+`C:\Program Files\PostgreSQL\13\lib`.
