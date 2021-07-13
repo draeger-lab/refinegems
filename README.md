@@ -106,3 +106,5 @@ export PATH={Output from the line above with /bin as line end}:$PATH
 
 * If you are a Windows user you will want to locate the installation manually. The path should look like something like this
 `C:\Program Files\PostgreSQL\13\lib`.
+
+* If you run into `psycopg2.OperationalError: fe_sendauth: no password supplied`: Change `scram-sha256`to `trust` in your file `pg_hba.conf` (located probably in `C:\Program Files\PostgreSQL\13\data`) 

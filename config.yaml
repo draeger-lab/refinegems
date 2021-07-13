@@ -1,7 +1,7 @@
 # Generally: For windows use \ instead of / for the paths
 
 # Path to GEM to be investigated
-model: 'models/CStr_20210518.xml' 
+model: 'models/GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
 # new filename/path for model with KEGG pathways, default: null means KEGG pathways will not be added
 keggpathways: null 
@@ -25,7 +25,7 @@ memote: FALSE
 
 # Determine if output file should be created, default: cl
 # Filename is set as the models name
-output: xlsx #cl, xlsx, csv 
+output: cl #cl, xlsx, csv 
 
 ### Gene comparison ###
 # set to False if not needed
