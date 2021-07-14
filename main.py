@@ -41,6 +41,9 @@ def main():
             if (config['genecomp']):
                 genecomp = rg.genecomp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
                 
+            if(config['modelseed']):
+                charge_mismatch, formula_mismatch = rg.modelseed(config['modelseedpath'], model_cobra)
+                
             if (config['media_db'] != None):
                 df_list = []
                 for medium in config['media']: # ACHTUNG, so funktioniert das nur wenn das model gleich bleibt.
@@ -66,6 +69,9 @@ def main():
                 print('Charge unbalanced reactions: ' + str(charge_unbal))
                 print(growth_sim)
                 if(config['genecomp']): print(genecomp)
+                if(config['modelseed']):
+                    print(charge_mismatch)
+                    print(formula_mismatch)
                 
             if (config['output'] == 'xlsx'): # excel file
                 if (config['memote'] == True):
@@ -79,6 +85,9 @@ def main():
                     growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
                     if(config['genecomp']):
                         genecomp.to_excel(writer, sheet_name='gene comparison', index=False)
+                    if(config['modelseed']):
+                        charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
+                        formula_mismatch.to_excel(writer, sheet_name='formula mismatches', index=False)
             
             if (config['output'] == 'csv'): # csv file
                 print('---')
@@ -97,6 +106,9 @@ def main():
                 growth_sim.to_csv(name +'_growthsim.csv', index=False)
                 if(config['genecomp']):
                     genecomp.to_csv(name +'_genecomp.csv', index=False)
+                if(config['modelseed']):
+                    charge_mismatch.to_csv(name + '_charge_mismatch.csv', index=False)
+                    formula_mismatch.to_csv(name + '_formula_mismatch.csv', index=False)
     
     print("Gem Curation Finished!")
 
