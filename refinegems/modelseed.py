@@ -1,5 +1,4 @@
 import pandas as pd
-import cobra
 import re
 import numpy as np
 
@@ -54,6 +53,48 @@ def get_charge_mismatch(df_comp):
 def get_formula_mismatch(df_comp):
     return df_comp.loc[~df_comp['formula_match']].dropna(subset=['formula_modelseed'])
 
+def get_compared_formulae(formula_mismatch):
+    def formula_comparison(f1, f2):
+        formula_pattern = "[A-Z][a-z]?\d*"
+        atom_pattern = '[A-Z][a-z]?'
+        atom_number_pattern = '\d+'
+        difference = {}
+        f1_dict = {}
+        f2_dict = {}
+        f1 = re.findall(formula_pattern, f1)
+        f2 = re.findall(formula_pattern, f2)
+        for p in f1:
+            key = re.findall(atom_pattern, p)[0]
+            value = re.findall(atom_number_pattern, p)
+            if not value:
+                value = 1
+            else:
+                value = (int)(value[0])
+            f1_dict[key] = value
+        for q in f2:
+            key = re.findall(atom_pattern, q)[0]
+            value = re.findall(atom_number_pattern, q)
+            if not value:
+                value = 1
+            else:
+                value = (int)(value[0])
+            f2_dict[key] = value
+        difference = f1_dict
+        if not f2_dict:
+            return difference
+        else:
+            for q in f2_dict:
+                if q in difference:
+                    difference[q] -= f2_dict[q]
+                else:
+                    difference[q] = -f2_dict[q]
+        for a in list(difference):
+            if difference[a] == 0:
+                difference.pop(a)
+        return difference
+    formula_mismatch['formula_comparison'] = formula_mismatch.apply(lambda row: formula_comparison(row['formula_model'], row['formula_modelseed']), axis=1)
+    return formula_mismatch
+
 def modelseed(path, model):
     ms_comp = get_modelseed_compounds(path)
     model_charges = get_model_charges(model)
@@ -61,4 +102,5 @@ def modelseed(path, model):
     df_comp = compare_model_modelseed(model_charges, modelseed_charges)
     charge_mismatch = get_charge_mismatch(df_comp)
     formula_mismatch = get_formula_mismatch(df_comp)
-    return charge_mismatch, formula_mismatch
+    formula_comp = get_compared_formulae(formula_mismatch)
+    return charge_mismatch, formula_comp
