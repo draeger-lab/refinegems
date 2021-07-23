@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+""" Provides functions to automate the addition of SBO terms to the model
+
+Script written by ELisabeth Fritze in her bachelor thesis.
+"""
+
 from libsbml import *
 import psycopg2
 
