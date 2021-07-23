@@ -36,5 +36,5 @@ gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: TRUE
+modelseed: FALSE
 modelseedpath: 'modelseed/modelseed_compounds.tsv'
