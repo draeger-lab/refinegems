@@ -22,8 +22,8 @@ def main():
         
     elif (config['sboterms']):
         model_libsbml = rg.load_model_libsbml(config['model'])
-        rg.sbo_annotation(model_libsbml, config['database_user'], config['database_name'], config['sbo_name'])
-        model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_name'])
+        rg.sbo_annotation(model_libsbml, config['database_user'], config['database_name'], config['sbo_path'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_path'])
         print(errors)
         
     elif (config['polish_carveme']):

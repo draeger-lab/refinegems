@@ -10,11 +10,11 @@ keggpathways: null
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
-sbo_name: 'cstr_sboann.xml'
+sbo_path: 'models/cstr_ma_sbo.xml'
 
 ### CarveMe polishing ###
 polish_carveme: FALSE
-polish_path: 'models/cstr_ma_polished.xml'
+polish_path: ''models/cstr_ma_pol.xml''
 
 ### The following inputs are only necessary if neither kegg nor sbo nor carvme is active ###
 
