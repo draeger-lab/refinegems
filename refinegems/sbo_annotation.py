@@ -143,8 +143,8 @@ def checkExchange(reac):
 def checkDemand(reac):
     if "_DM_" in reac.getId():
         reac.setSBOTerm('SBO:0000628')
-def checkBiomass(reac):
-    if '_BIOMASS_' in reac.getId():
+def checkBiomass(reac): #memote says growth is biomass
+    if '_BIOMASS_' in reac.getId() or 'Growth' in reac.getId():
         reac.setSBOTerm('SBO:0000629')
 
 def checkPassiveTransport(reac):
