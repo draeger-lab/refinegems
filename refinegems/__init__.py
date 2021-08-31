@@ -5,3 +5,4 @@ from refinegems.growth import growth_simulation
 from refinegems.sbo_annotation import sbo_annotation
 from refinegems.genecomp import genecomp
 from refinegems.modelseed import modelseed
+from refinegems.polish_carveme import polish_carveme

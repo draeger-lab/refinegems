@@ -22,8 +22,14 @@ def main():
         
     elif (config['sboterms']):
         model_libsbml = rg.load_model_libsbml(config['model'])
-        rg.sbo_annotation(model_libsbml, config['database_user'], config['database_name'], config['new_filename'])
-        model, errors = cobra.io.sbml.validate_sbml_model(config['new_filename'])
+        rg.sbo_annotation(model_libsbml, config['database_user'], config['database_name'], config['sbo_name'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_name'])
+        print(errors)
+        
+    elif (config['polish_carveme']):
+        model_libsbml = rg.load_model_libsbml(config['model'])
+        rg.polish_carveme(model_libsbml, config['polish_path'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['polish_path'])
         print(errors)
     
     else:
@@ -109,6 +115,8 @@ def main():
                 if(config['modelseed']):
                     charge_mismatch.to_csv(name + '_charge_mismatch.csv', index=False)
                     formula_mismatch.to_csv(name + '_formula_mismatch.csv', index=False)
+        else:
+            print(errors)
     
     print("Gem Curation Finished!")
 

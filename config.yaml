@@ -10,9 +10,13 @@ keggpathways: null
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
-new_filename: 'cstr_sboann.xml'
+sbo_name: 'cstr_sboann.xml'
 
-### The following inputs are only necessary if neither kegg nor sbo is active ###
+### CarveMe polishing ###
+polish_carveme: FALSE
+polish_path: 'models/cstr_ma_polished.xml'
+
+### The following inputs are only necessary if neither kegg nor sbo nor carvme is active ###
 
 # Path to database which contains metabolites present in different media
 media_db: 'media/media_db.csv' 
@@ -36,5 +40,5 @@ gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: FALSEstr
+modelseed: FALSE
 modelseedpath: 'modelseed/modelseed_compounds.tsv'
