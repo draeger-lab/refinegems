@@ -21,25 +21,24 @@ Other applications of `refinegems` include curation of a given model these inclu
 
 ## Installation
 
-It is recommended to install all required packages in a `pipenv`. 
-```
+`refinegems` is distributed via this github repository, all dependencies are denoted in a [pipenv](https://pipenv.pypa.io/en/latest/). You will need to install `pipenv` first. To install `refinegems` locally complete the following steps:
+
+```bash
+# install pipenv using pip
 pip install pipenv
+
+# clone or pull the latest source code
+git clone https://github.com/draeger-lab/gem_curation_template.git
+cd gem_curation_template
+
+# install all dependencies
+pipenv install
+
+# initiate a session in the virtual environment
+pipenv shell
+
 ```
 The `pipenv` package can also be installed via Anaconda (recommended if you are a Windows user).
-
-All dependencies can the be installed by running 
-```
-pipenv install
-```
-in the local directory of this repository. All packages will be installed to pipenv called something like the repository name.
-
-The command
-```
-pipenv shell
-```
-will initiate a session in the environment.
-
-You should be all set now.
 
 ## Further Dependencies
 
@@ -54,7 +53,7 @@ sbo/create_dbs.sql
 must be imported to a local PostgreSQL database to a selected user. 
 
 You can use the following command, run it from this directory:
-```
+```bash
 psql -U {your postgres username} -h localhost -d {your database name} < sbo/create_dbs.sql 
 ```
 
@@ -69,9 +68,9 @@ psql.exe -U postgres -d sbo_ann -f sbo\create_dbs.sql
 ```
 
 ## Usage
-The script `main.py` can be used directly in the command line. 
+The script `main.py` can be used directly in the command line after entering the virtual environment with `pipenv shell`.
 
-The `config.yaml` file contains defaults for all variables that need to be set by the user.
+The `config.yaml` file contains defaults for all variables that need to be set by the user. 
 
 ```
 # Path to GEM to be investigated
