@@ -7,12 +7,22 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 from libsbml import *
 
 def unset_ann(entity_list):
+    """removes "empty" rdf bags from model
+
+    Args:
+        entity_list (list): libSBML ListOfSpecies or ListOfReactions
+    """
     for entity in entity_list:
         ann = entity.getAnnotationString()
         if '<bqbiol:is xmlns:bqbiol="http://biomodels.net/biology-qualifiers/">' in ann:
             entity.unsetAnnotation()
             
 def add_bigg_metab(entity_list):
+    """adds the BiGG Id of metabolites as URL to the annotation field
+
+    Args:
+        entity_list (list): libSBML ListOfSpecies
+    """
     for entity in entity_list:
         bigg_id = entity.getId()
         bigg_id = bigg_id[2:] 
@@ -25,6 +35,11 @@ def add_bigg_metab(entity_list):
         entity.addCVTerm(cv, False)
             
 def add_bigg_reac(entity_list):
+    """adds the BiGG Id of reactions as URL to the annotation field
+
+    Args:
+        entity_list (list): libSBML ListOfReactions
+    """
     for entity in entity_list:
         bigg_id = entity.getId()
         if bigg_id != 'Growth':
@@ -37,6 +52,12 @@ def add_bigg_reac(entity_list):
         entity.addCVTerm(cv, False)
 
 def cv_notes_metab(species_list):
+    """checks the notes field for information which should be in the annotation field
+       removes entry from notes and adds it as URL to the CVTerms of a metabolite
+
+    Args:
+        species_list (list): libSBML ListOfSpecies
+    """
     metabol_db_dict = {'BIGG': 'bigg.metabolite:', 'BRENDA': 'brenda:', 'CHEBI': 'chebi:','INCHI': 'inchi:', 'KEGG': 'kegg.compound:', 'METACYC': 'metacyc.compound:','MXNREF': 'metanetx.chemical:', 'SEED':'seed.compound:', 'UPA': 'unipathway.compound:', 'HMDB': 'hmdb:', 'REACTOME': 'reactome:'}
     
     def add_cv_term_from_notes_species(entry, db_id, metab):
@@ -75,6 +96,12 @@ def cv_notes_metab(species_list):
                     
                     
 def cv_notes_reac(reaction_list):
+    """checks the notes field for information which should be in the annotation field
+       removes entry from notes and adds it as URL to the CVTerms of a reaction
+
+    Args:
+        reaction_list (list): libSBML ListOfReactions
+    """
     reaction_db_dict = {'BIGG': 'bigg.reaction/', 'BRENDA': 'brenda/', 'KEGG': 'kegg.reaction/', 'METACYC': 'metacyc.reaction/', 'MetaNetX': 'metanetx.reaction/', 'SEED':'seed.reaction/','UPA': 'unipathway.reaction/', 'HMDB': 'hmdb/', 'REACTOME': 'reactome/', 'RHEA': 'rhea/','EC': 'ec-code/'}
     
     def add_cv_term_from_notes_reactions(entry, db_id, reac):
@@ -112,6 +139,13 @@ def cv_notes_reac(reaction_list):
         reaction.setNotes(new_notes)
         
 def polish_entities(entity_list, metabolite):
+    """removes Notes field from entity
+       sets boundary condition and constant if not set for a metabolite
+
+    Args:
+        entity_list (list): libSBML ListOfSpecies or ListOfReactions
+        metabolite (boolean): flag to determine whether entity = metabolite
+    """
     for entity in entity_list:
         entity.unsetNotes()
         if metabolite: # some polishing
@@ -132,6 +166,12 @@ def write_to_file(model, new_filename):
     print("Polished model written to " + new_filename)
             
 def polish_carveme(model, new_filename):
+    """completes all steps to polish a model created with CarveMe
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+        new_filename (Str): filename for modified model
+    """
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     

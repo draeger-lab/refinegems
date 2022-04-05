@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Provides functions for adding charges to metabolites
 
-
+When iterating thorugh all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin('fbc').isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.
 """
 
 import pandas as pd
@@ -59,21 +59,30 @@ def correct_charges_modelseed(model, modelseed_compounds):
     
     return model, mulchar
 
-def write_to_file(model, path_to_new_file):
+def write_to_file(model, new_file_path):
     """Writes modified model to new file
 
     Args:
         model (libsbml-model): model loaded with libsbml
-        path_to_new_file (Str): filepath + name for modified model
+        new_file_path (Str): filepath + name for modified model
     """
     new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, path_to_new_file)
-    print("Polished model written to " + path_to_new_file)
+    writeSBMLToFile(new_document, new_file_path)
+    print("Polished model written to " + new_file_path)
     
-def charges(model, path, modelseed_path):
-    
+def charges(model, new_file_path, modelseed_path):
+    """wrapper function which completes the steps to charge correction 
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+        new_file_path (Str): filepath + name for modified model
+        modelseed_path (str): path to modelseed compound definition
+
+    Returns:
+        dict: BiGG Id and possible charges of metabolites
+    """
     modelseed_compounds = get_modelseed_compounds(modelseed_path)
     model_corr, multiple_charges = correct_charges_modelseed(model, modelseed_compounds)
-    write_to_file(model_corr, path)
+    write_to_file(model_corr, new_file_path)
     
     return multiple_charges
