@@ -77,13 +77,13 @@ Description: >
   This file can be adapted to choose what refinegems should do.
   Note: For windows use \ instead of / for the paths
 
----
+
 General Setting: >
   Path to GEM to be investigated
 
 model: 'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
----
+
 Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
@@ -93,7 +93,8 @@ kegg_path: ''
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
-{database_user: postgres, database_name: sbo_ann}
+database_user: postgres
+database_name: sbo_ann
 sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
@@ -104,7 +105,7 @@ polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where 
 charge_corr: FALSE
 charge_path: '../Nextcloud/master_thesis/models/Cstr_17_char.xml'
 
----
+
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
