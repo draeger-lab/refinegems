@@ -31,6 +31,13 @@ def main():
         rg.polish_carveme(model_libsbml, config['polish_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['polish_path'])
         print(errors)
+        
+    elif (config['charge_corr']):
+        model_libsbml = rg.load_model_libsbml(config['model'])
+        mulchar = rg.charges(model_libsbml, config['charge_path'], config['modelseedpath'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['charge_path'])
+        print(errors)
+        print(mulchar) # hier muss ich noch eine bessere Lösung finden, klappt aber erstmal
     
     else:
         model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])

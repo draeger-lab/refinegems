@@ -6,6 +6,7 @@ import refinegems as rg
 import cobra
 import re
 import numpy as np
+from libsbml import *
 #%%
 
 def return_modelseed_compounds(path):
@@ -64,57 +65,33 @@ df_comp['formula_match'] = df_comp.apply(g, axis=1)
 #df_comp.loc[~df_comp['charge_match']].dropna(subset=['charge_modelseed'])
 df_comp
 
-#%%
+#%% new stuff
 model_libsbml = rg.load_model_libsbml('../Nextcloud/master_thesis/models/Cstr_17_sbo.xml')
 
-#%%
 spe = model_libsbml.getListOfSpecies()
-# %%
 
-# %%
-n = 0
-for i in spe:
-    #print(i.getPlugin('fbc').getCharge())
-    if not i.getPlugin('fbc').isSetCharge():
-        print(i.getName())
-        n += 1
-
-print(n)
-
-# %%
 com = pd.read_csv('modelseed/modelseed_compounds_condensed.csv', sep=',')
 com
-# %%
+
 # get charges for previously uncharged metabolites
-bigg_charge = dict()
+mulchar = dict()
 for i in spe:
-    #print(i.getPlugin('fbc').getCharge())
-    if not i.getPlugin('fbc').isSetCharge():
+    if not i.getPlugin('fbc').isSetCharge(): # we are only interested in metab without charge
         bigg = i.getId()[2:-2]
-        if len(com[com['BiGG'] == bigg]['charge'].array) > 0:
+        if len(com[com['BiGG'] == bigg]['charge'].array) == 1: #eindeutig
             charge = com[com['BiGG'] == bigg]['charge'].array[0]
-            bigg_charge[bigg] = charge
-        
-print(bigg_charge)
-# %%
-
-df = pd.DataFrame.from_dict(bigg_charge, orient='index', columns=['charge']).reset_index().rename(columns={'index': 'BiGG'})
-
-def fuc(x):
-    return 'M_' + x
-
-df['id'] =  df['BiGG'].apply(fuc)
-df
-
-#%%
-# set charges for previously uncharged metabolites
-from libsbml import *
-for i in spe:
-    #print(i.getPlugin('fbc').getCharge())
-    if not i.getPlugin('fbc').isSetCharge():
-        if len(df[df['id'] == i.getId()[:-2]]['charge'].array) > 0:
-            charge = df[df['id'] == i.getId()[:-2]]['charge'].array[0]
             i.getPlugin('fbc').setCharge(int(charge))
+        elif len(com[com['BiGG'] == bigg]['charge'].array) > 1:
+            charges = com[com['BiGG'] == bigg]['charge'].array
+            if all(x==charges[0] for x in charges):
+                charge = charges[0]
+                i.getPlugin('fbc').setCharge(int(charge))
+            else:
+                mulchar[bigg] = charges
 
+print(mulchar)
+            
+
+#%%     
 new_document = model_libsbml.getSBMLDocument()
 writeSBMLToFile(new_document, 'Cstr.xml')

@@ -16,6 +16,10 @@ sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to sa
 polish_carveme: FALSE
 polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where to save polished model
 
+### Charge correction ###
+charge_corr: TRUE
+charge_path: 'Cstr2.xml'
+
 ### The following inputs are only necessary if neither kegg nor sbo nor carvme is active ###
 
 # Path to database which contains metabolites present in different media
@@ -32,13 +36,12 @@ memote: FALSE
 output: xlsx #cl, xlsx, csv 
 
 ### Gene comparison ###
-# set to False if not needed
-genecomp: FALSE
+genecomp: FALSE # set to False if not needed
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
 gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: FALSE
+modelseed: FALSE # set to False if not needed
 modelseedpath: 'modelseed/modelseed_compounds.tsv'
