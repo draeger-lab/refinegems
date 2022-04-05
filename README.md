@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # gem_curation_template
 Template repository structure for a genome-scale metabolic model curation project.
 
