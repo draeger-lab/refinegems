@@ -14,7 +14,7 @@ Currently `refinegems` can be used for the investigation of a GEM, it can comple
 - compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database
 
 Other applications of `refinegems` include curation of a given model these include:
-- correction of a model created with CarveMe v.1.5.1 (for example moving all relevant information from the notes to the annotation field)
+- correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v.1.5.1 (for example moving all relevant information from the notes to the annotation field)
 - addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin)
 - SBO-Term annotation based on a script by Elisabeth Fritze
 
