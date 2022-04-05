@@ -15,9 +15,9 @@ def main():
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
 
-    if (config['keggpathways'] != None):
-        rg.kegg_pathways(config['model'], config['keggpathways'])
-        model, errors = cobra.io.sbml.validate_sbml_model(config['keggpathways'])
+    if (config['keggpathways']):
+        rg.kegg_pathways(config['model'], config['kegg_path'])
+        model, errors = cobra.io.sbml.validate_sbml_model(config['kegg_path'])
         print(errors)
         
     elif (config['sboterms']):

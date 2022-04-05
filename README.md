@@ -72,20 +72,39 @@ The script `main.py` can be used directly in the command line after entering the
 
 The `config.yaml` file contains defaults for all variables that need to be set by the user. 
 
-```
-# Path to GEM to be investigated
-model: 'models/CStr_20210518.xml' 
+```yaml
+Description: > 
+  This file can be adapted to choose what refinegems should do.
+  Note: For windows use \ instead of / for the paths
 
-# new filename/path for model with KEGG pathways, default: null means KEGG pathways will not be added
-keggpathways: null 
+General Setting: >
+  Path to GEM to be investigated
 
-# Requirements: PostgreSQL
+model: 'Cstr.xml' #'../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+
+Settings for scripts that manipulate the model: >
+  They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
+
+### Addition of KEGG Pathways as Groups ###
+keggpathways: FALSE
+kegg_path: ''
+
+### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
-new_filename: 'cstr_sboann.xml'
+sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
-### The following inputs are only necessary if neither kegg nor sbo is active ###
+### CarveMe polishing ###
+polish_carveme: FALSE
+polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where to save polished model
+
+### Charge correction ###
+charge_corr: TRUE
+charge_path: 'Cstr2.xml'
+
+Settings for scripts that investigate the model: >
+  These are only necessary if none of the scripts to manipulate the model are used.
 
 # Path to database which contains metabolites present in different media
 media_db: 'media/media_db.csv' 
@@ -98,15 +117,18 @@ memote: FALSE
 
 # Determine if output file should be created, default: cl
 # Filename is set as the models name
-output: cl #xlsx, csv 
+output: xlsx #cl, xlsx, csv 
 
 ### Gene comparison ###
-# set to False if not needed
-genecomp: TRUE
+genecomp: FALSE # set to False if not needed
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
 gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
+
+### ModelSEED comparison ###
+modelseed: FALSE # set to False if not needed
+modelseedpath: 'modelseed/modelseed_compounds.tsv'
 ```
 
 ## Troubleshooting
@@ -120,7 +142,6 @@ biggreactions: 'genecomp/bigg_models_reactions.txt'
 locate psql | grep /bin
 export PATH={Output from the line above with /bin as line end}:$PATH
 ```
-
 * If you are a Windows user you will want to locate the installation manually. The path should look like something like this
 `C:\Program Files\PostgreSQL\13\lib`.
 

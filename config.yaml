@@ -1,12 +1,20 @@
-# Generally: For windows use \ instead of / for the paths
+Description: > 
+  This file can be adapted to choose what refinegems should do.
+  Note: For windows use \ instead of / for the paths
 
-# Path to GEM to be investigated
+General Setting: >
+  Path to GEM to be investigated
+
 model: 'Cstr.xml' #'../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
-# new filename/path for model with KEGG pathways, default: null means KEGG pathways will not be added
-keggpathways: null 
+Settings for scripts that manipulate the model: >
+  They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
-# Requirements: PostgreSQL
+### Addition of KEGG Pathways as Groups ###
+keggpathways: FALSE
+kegg_path: ''
+
+### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
@@ -20,7 +28,8 @@ polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where 
 charge_corr: TRUE
 charge_path: 'Cstr2.xml'
 
-### The following inputs are only necessary if neither kegg nor sbo nor carvme is active ###
+Settings for scripts that investigate the model: >
+  These are only necessary if none of the scripts to manipulate the model are used.
 
 # Path to database which contains metabolites present in different media
 media_db: 'media/media_db.csv' 
