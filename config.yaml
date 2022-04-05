@@ -1,7 +1,7 @@
 # Generally: For windows use \ instead of / for the paths
 
 # Path to GEM to be investigated
-model: 'models/cstr_ma.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+model: 'Cstr.xml' #'../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
 # new filename/path for model with KEGG pathways, default: null means KEGG pathways will not be added
 keggpathways: null 
@@ -10,11 +10,11 @@ keggpathways: null
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
-sbo_path: 'models/cstr_ma_sbo.xml'
+sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
 polish_carveme: FALSE
-polish_path: ''models/cstr_ma_pol.xml''
+polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where to save polished model
 
 ### The following inputs are only necessary if neither kegg nor sbo nor carvme is active ###
 
