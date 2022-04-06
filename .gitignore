@@ -136,3 +136,4 @@ dmypy.json
 .DS_Store
 Cstr.xml
 dev.py
+*.xlsx

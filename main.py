@@ -28,7 +28,7 @@ def main():
         
     elif (config['polish_carveme']):
         model_libsbml = rg.load_model_libsbml(config['model'])
-        rg.polish_carveme(model_libsbml, config['polish_path'])
+        rg.polish_carveme(model_libsbml, config['polish_path'], config['entrez_email'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['polish_path'])
         print(errors)
         

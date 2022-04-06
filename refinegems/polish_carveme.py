@@ -5,6 +5,8 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 """
 
 from libsbml import *
+from Bio import Entrez, SeqIO
+from tqdm.auto import tqdm
 
 def unset_ann(entity_list):
     """removes "empty" rdf bags from model
@@ -58,7 +60,18 @@ def cv_notes_metab(species_list):
     Args:
         species_list (list): libSBML ListOfSpecies
     """
-    metabol_db_dict = {'BIGG': 'bigg.metabolite:', 'BRENDA': 'brenda:', 'CHEBI': 'chebi:','INCHI': 'inchi:', 'KEGG': 'kegg.compound:', 'METACYC': 'metacyc.compound:','MXNREF': 'metanetx.chemical:', 'SEED':'seed.compound:', 'UPA': 'unipathway.compound:', 'HMDB': 'hmdb:', 'REACTOME': 'reactome:'}
+    metabol_db_dict = {'BIGG': 'bigg.metabolite/', 
+                   'BRENDA': 'brenda/', 
+                   'CHEBI': 'chebi/',
+                   'INCHI': 'inchi/', 
+                   'KEGG': 'kegg.compound/', 
+                   'METACYC': 'metacyc.compound/',
+                   'MXNREF': 'metanetx.chemical/', 
+                   'SEED':'seed.compound/', 
+                   'UPA': 'unipathway.compound/', 
+                   'HMDB': 'hmdb/', 
+                   'REACTOME': 'reactome/',
+                   'BIOCYC': 'biocyc/'}
     
     def add_cv_term_from_notes_species(entry, db_id, metab):
         cv = CVTerm()
@@ -154,6 +167,38 @@ def polish_entities(entity_list, metabolite):
             if not entity.getConstant():
                 entity.setConstant(False)
                 
+def cv_ncbiprotein(gene_list, email):
+    Entrez.email = email
+
+    def add_cv_term_from_id(entry, gene):
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        cv.setBiologicalQualifierType(BQB_IS)
+        cv.addResource('https://identifiers.org/ncbiprotein/'+ entry)
+        gene.addCVTerm(cv)
+    
+    def get_name_locus_tag(ncbi_id):
+        handle = Entrez.efetch(db="protein", id=ncbi_id, rettype="gbwithparts", retmode='text')
+        records = SeqIO.parse(handle, "gb")
+
+        for i,record in enumerate(records):
+            for feature in record.features:
+                if feature.type == "CDS":
+                    return record.description, feature.qualifiers["locus_tag"][0]
+
+    print('Setting CVTerms and removing notes for all genes:')
+    for gene in tqdm(gene_list):
+        id_string = gene.getId().split('_')
+        
+        for entry in id_string:
+            if (entry[:2] == 'QQ'):
+                add_cv_term_from_id(entry, gene)
+                name, locus = get_name_locus_tag(entry)
+                gene.setName(name)
+                gene.setLabel(locus)
+
+        gene.unsetNotes()
+                
 def write_to_file(model, new_filename):
     """Writes modified model to new file
 
@@ -165,7 +210,7 @@ def write_to_file(model, new_filename):
     writeSBMLToFile(new_document, new_filename)
     print("Polished model written to " + new_filename)
             
-def polish_carveme(model, new_filename):
+def polish_carveme(model, new_filename, email):
     """completes all steps to polish a model created with CarveMe
 
     Args:
@@ -174,6 +219,7 @@ def polish_carveme(model, new_filename):
     """
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
     
     unset_ann(metab_list)
     unset_ann(reac_list)
@@ -181,6 +227,7 @@ def polish_carveme(model, new_filename):
     add_bigg_reac(reac_list)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
+    cv_ncbiprotein(gene_list, email)
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
     

@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: 'Cstr.xml' #'../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+model: '../Nextcloud/master_thesis/models/Cstr_16_charges.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
 
 Settings for scripts that manipulate the model: >
@@ -23,12 +23,13 @@ database_name: sbo_ann
 sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
-polish_carveme: FALSE
-polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where to save polished model
+polish_carveme: TRUE
+polish_path: '../Nextcloud/master_thesis/models/Cstr_16_genes.xml' # path where to save polished model
+entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
 ### Charge correction ###
-charge_corr: TRUE
-charge_path: 'Cstr2.xml'
+charge_corr: FALSE
+charge_path: '../Nextcloud/master_thesis/models/Cstr_16_charges.xml'
 
 
 Settings for scripts that investigate the model: >
@@ -55,5 +56,5 @@ gff_file: 'genecomp/cstr.gff' # C. striatum
 biggreactions: 'genecomp/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: FALSE # set to False if not needed
+modelseed: TRUE # set to False if not needed
 modelseedpath: 'modelseed/modelseed_compounds.tsv'
