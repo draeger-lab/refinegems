@@ -191,7 +191,7 @@ def cv_ncbiprotein(gene_list, email):
         id_string = gene.getId().split('_')
         
         for entry in id_string:
-            if (entry[:2] == 'QQ'):
+            if (entry[:1] == 'Q'): #maybe change this to user input
                 add_cv_term_from_id(entry, gene)
                 name, locus = get_name_locus_tag(entry)
                 gene.setName(name)

@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: '../Nextcloud/master_thesis/models/Cstr_16_charges.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+model: '../Nextcloud/master_thesis/models/Cstr_15_charges.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
 
 
 Settings for scripts that manipulate the model: >
@@ -24,7 +24,7 @@ sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to sa
 
 ### CarveMe polishing ###
 polish_carveme: TRUE
-polish_path: '../Nextcloud/master_thesis/models/Cstr_16_genes.xml' # path where to save polished model
+polish_path: '../Nextcloud/master_thesis/models/Cstr_15_genes.xml' # path where to save polished model
 entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
 ### Charge correction ###
