@@ -15,9 +15,10 @@ Currently `refinegems` can be used for the investigation of a GEM, it can comple
 - compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database
 
 Other applications of `refinegems` include curation of a given model these include:
-- correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v.1.5.1 (for example moving all relevant information from the notes to the annotation field)
+- correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v.1.5.1 (for example moving all relevant information from the notes to the annotation field) this includes automated annotation of NCBI genes to the GeneProtein section of the model
 - addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin)
 - SBO-Term annotation based on a script by Elisabeth Fritze
+- *annotation of metabolites based using a table created by the user `data/manual_annotations.xlsx` (coming soon...)*
 
 ## Installation
 
@@ -59,11 +60,11 @@ psql -U {your postgres username} -h localhost -d {your database name} < sbo/crea
 
 If you are a Windows user you will need to use a different command:
 Enter into the psql shell by typing `psql`, then create the database with
-```
+```sql
 CREATE DATABASE sbo_ann;
 ```
 Afterwards load the database with
-```
+```bash
 psql.exe -U postgres -d sbo_ann -f sbo\create_dbs.sql
 ```
 
@@ -81,7 +82,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: 'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+model: 'data/e_coli_core.xml' #'../C_striatum_GEMs/models/Cstr_14.xml'
 
 
 Settings for scripts that manipulate the model: >
@@ -89,7 +90,7 @@ Settings for scripts that manipulate the model: >
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
-kegg_path: ''
+kegg_path: '../Nextcloud/master_thesis/models/Cstr_17_kegg.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
@@ -99,21 +100,22 @@ sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to sa
 
 ### CarveMe polishing ###
 polish_carveme: FALSE
-polish_path: '../Nextcloud/master_thesis/models/Cstr_17_clean.xml' # path where to save polished model
+polish_path: '../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
+entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
 ### Charge correction ###
 charge_corr: FALSE
-charge_path: '../Nextcloud/master_thesis/models/Cstr_17_char.xml'
+charge_path: '../Nextcloud/master_thesis/models/Cstr_16_charges.xml'
 
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Path to database which contains metabolites present in different media
-media_db: 'media/media_db.csv' 
+media_db: 'data/media_db.csv' 
 
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
-media: ['SNM3', 'LB', 'M9', 'SMM', 'CGXII', 'RPMI']
+media: ['SNM3', 'LB', 'M9']
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
@@ -126,13 +128,20 @@ output: xlsx #cl, xlsx, csv
 genecomp: FALSE # set to False if not needed
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
-gff_file: 'genecomp/cstr.gff' # C. striatum
-biggreactions: 'genecomp/bigg_models_reactions.txt'
+gff_file: 'data/cstr.gff' # C. striatum
+biggreactions: 'data/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: FALSE # set to False if not needed
-modelseedpath: 'modelseed/modelseed_compounds.tsv'
+modelseed: TRUE # set to False if not needed
+modelseedpath: 'data/modelseed_compounds.tsv'
 ```
+
+The repository structure has the following intention:
+* `refinegems/` contains all the functions needed in `main.py` 
+* `data/` contains all tables that are used by different parts of the script as well as a toy model `e_coli_core.xml`
+* Instead of using the files given in `data/`, you can use your own files and just change the paths in `config.yaml`. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the `data/` folder and use the same formatting.
+* `sbo/` contains the `sql` files necessary for the SBOAnn script by Elisabeth Fritze
+* `setup.py` and `pyproject.toml` enable creating a PyPi package called `refinegems`
 
 ## Troubleshooting
 
@@ -141,7 +150,7 @@ modelseedpath: 'modelseed/modelseed_compounds.tsv'
 * If you use python 3.8 it everything should work, just edit the `Pipfile` entry to `python_version = "3.8"` before running `pipenv install`.
 
 * If you can't use `psql`from the command line, a common issue is that its not added to PATH:
-```
+```bash
 locate psql | grep /bin
 export PATH={Output from the line above with /bin as line end}:$PATH
 ```

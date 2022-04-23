@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: '../Nextcloud/master_thesis/models/Cstr_15_charges.xml' #GCF_002156805.1_ASM215680v1_protein.xml' #'models/cstr_ma.xml' #'models/CStr_20210518.xml' 
+model: 'data/e_coli_core.xml' #'../C_striatum_GEMs/models/Cstr_14.xml'
 
 
 Settings for scripts that manipulate the model: >
@@ -14,7 +14,7 @@ Settings for scripts that manipulate the model: >
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
-kegg_path: '../Nextcloud/master_thesis/models/Cstr_17_kegg.xml'
+kegg_path: '../Nextcloud/master_thesis/models/Cstr_17_kegg.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
@@ -23,8 +23,8 @@ database_name: sbo_ann
 sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
-polish_carveme: TRUE
-polish_path: '../Nextcloud/master_thesis/models/Cstr_15_genes.xml' # path where to save polished model
+polish_carveme: FALSE
+polish_path: '../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
 entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
 ### Charge correction ###
@@ -36,10 +36,10 @@ Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Path to database which contains metabolites present in different media
-media_db: 'media/media_db.csv' 
+media_db: 'data/media_db.csv' 
 
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
-media: ['SNM3', 'LB', 'M9', 'SMM', 'CGXII', 'RPMI']
+media: ['SNM3', 'LB', 'M9']
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
@@ -52,9 +52,9 @@ output: xlsx #cl, xlsx, csv
 genecomp: FALSE # set to False if not needed
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
-gff_file: 'genecomp/cstr.gff' # C. striatum
-biggreactions: 'genecomp/bigg_models_reactions.txt'
+gff_file: 'data/cstr.gff' # C. striatum
+biggreactions: 'data/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
 modelseed: TRUE # set to False if not needed
-modelseedpath: 'modelseed/modelseed_compounds.tsv'
+modelseedpath: 'data/modelseed_compounds.tsv'
