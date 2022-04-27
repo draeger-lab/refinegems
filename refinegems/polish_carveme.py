@@ -198,6 +198,11 @@ def cv_ncbiprotein(gene_list, email):
                 gene.setLabel(locus)
 
         gene.unsetNotes()
+        
+def set_units(model):
+    for param in model.getListOfParameters():
+        if param.isSetUnits() == False:
+            param.setUnits('mmol_per_gDW_per_hr')
                 
 def write_to_file(model, new_filename):
     """Writes modified model to new file
@@ -221,6 +226,7 @@ def polish_carveme(model, new_filename, email):
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
     
+    set_units(model)
     unset_ann(metab_list)
     unset_ann(reac_list)
     add_bigg_metab(metab_list)
