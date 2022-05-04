@@ -1,9 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-# gem_curation_template
-Template repository structure for a genome-scale metabolic model curation project.
+# refinegems
+`refinegems` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
 
 ## Overview
-`refinegems` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
 
 Currently `refinegems` can be used for the investigation of a GEM, it can complete the following tasks:
 - loading GEMS with `cobrapy` and `libSBML`
