@@ -37,8 +37,60 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </section>
-<section id="refinegems-charges-module">
-<h2>refinegems.charges module<a class="headerlink" href="#refinegems-charges-module" title="Permalink to this headline">¶</a></h2>
+<section id="module-refinegems.charges">
+<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this headline">¶</a></h2>
+<p>Provides functions for adding charges to metabolites</p>
+<p>When iterating thorugh all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.charges">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">charges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelseed_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.charges" title="Permalink to this definition">¶</a></dt>
+<dd><p>wrapper function which completes the steps to charge correction</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_file_path (Str): filepath + name for modified model
+modelseed_path (str): path to modelseed compound definition</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: BiGG Id and possible charges of metabolites</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges_modelseed">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelseed_compounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_modelseed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds charges taken from the ModelSEED database to metabolites which have no defined charge</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+modelseed_compounds (df): containing modelseed data</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (model with added charges, metabolites with multiple charges)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.get_modelseed_compounds">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">get_modelseed_compounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.get_modelseed_compounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>extracts compounds from modelseed which have BiGG Ids</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>path (str): path to modelseed compound definition</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table containing modelseed data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.write_to_file">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.write_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes modified model to new file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_file_path (Str): filepath + name for modified model</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.genecomp">
 <span id="refinegems-genecomp-module"></span><h2>refinegems.genecomp module<a class="headerlink" href="#module-refinegems.genecomp" title="Permalink to this headline">¶</a></h2>
@@ -208,9 +260,9 @@ locus_gpr (df): mapping from locus tags to GPRs</p>
 <p>Tailored to work with the Synthetic Nasal Medium (SNM), should
 work with any medium as long as its defined in a csv with ; as 
 delimiter and BiGG Ids for the compounds.</p>
-<p>Outputs a table where 
-essential = metabolites not present in the medium but necessary for growth
-missing = all exchanges missing in the model but given in medium</p>
+<p>Outputs a table where</p>
+<p>essential = metabolites not present in the medium but necessary for growth</p>
+<p>missing = all exchanges missing in the model but given in medium</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.find_minimum_essential">
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">essential</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.find_minimum_essential" title="Permalink to this definition">¶</a></dt>
@@ -583,8 +635,106 @@ new_filename (Str): filename for modified model</p>
 </dd></dl>
 
 </section>
-<section id="refinegems-polish-carveme-module">
-<h2>refinegems.polish_carveme module<a class="headerlink" href="#refinegems-polish-carveme-module" title="Permalink to this headline">¶</a></h2>
+<section id="module-refinegems.polish_carveme">
+<span id="refinegems-polish-carveme-module"></span><h2>refinegems.polish_carveme module<a class="headerlink" href="#module-refinegems.polish_carveme" title="Permalink to this headline">¶</a></h2>
+<p>Can be used to polish a model created with CarveMe v.1.5.1</p>
+<p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.add_bigg_metab">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">add_bigg_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.add_bigg_metab" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds the BiGG Id of metabolites as URL to the annotation field</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.add_bigg_reac">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">add_bigg_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.add_bigg_reac" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds the BiGG Id of reactions as URL to the annotation field</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfReactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.cv_ncbiprotein">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">cv_ncbiprotein</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gene_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.cv_ncbiprotein" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.cv_notes_metab">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">cv_notes_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.cv_notes_metab" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a metabolite</p>
+</dd>
+<dt>Args:</dt><dd><p>species_list (list): libSBML ListOfSpecies</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.cv_notes_reac">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">cv_notes_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaction_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.cv_notes_reac" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a reaction</p>
+</dd>
+<dt>Args:</dt><dd><p>reaction_list (list): libSBML ListOfReactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.polish_carveme">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">polish_carveme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.polish_carveme" title="Permalink to this definition">¶</a></dt>
+<dd><p>completes all steps to polish a model created with CarveMe</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_filename (Str): filename for modified model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.polish_entities">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">polish_entities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metabolite</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.polish_entities" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>removes Notes field from entity</dt><dd><p>sets boundary condition and constant if not set for a metabolite</p>
+</dd>
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions
+metabolite (boolean): flag to determine whether entity = metabolite</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.set_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">set_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.set_units" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.unset_ann">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">unset_ann</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.unset_ann" title="Permalink to this definition">¶</a></dt>
+<dd><p>removes “empty” rdf bags from model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish_carveme.write_to_file">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.write_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes modified model to new file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_filename (Str): filename for modified model</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.sbo_annotation">
 <span id="refinegems-sbo-annotation-module"></span><h2>refinegems.sbo_annotation module<a class="headerlink" href="#module-refinegems.sbo_annotation" title="Permalink to this headline">¶</a></h2>
@@ -906,8 +1056,8 @@ access to its number of reactions, metabolites and genes.</p>
 </dd></dl>
 
 </section>
-<section id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<section id="module-refinegems">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-refinegems" title="Permalink to this headline">¶</a></h2>
 </section>
 </section>
 
