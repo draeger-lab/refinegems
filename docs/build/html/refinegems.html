@@ -46,8 +46,47 @@
 <section id="refinegems-growth-module">
 <h2>refinegems.growth module<a class="headerlink" href="#refinegems-growth-module" title="Permalink to this headline">¶</a></h2>
 </section>
-<section id="refinegems-load-module">
-<h2>refinegems.load module<a class="headerlink" href="#refinegems-load-module" title="Permalink to this headline">¶</a></h2>
+<section id="module-refinegems.load">
+<span id="refinegems-load-module"></span><h2>refinegems.load module<a class="headerlink" href="#module-refinegems.load" title="Permalink to this headline">¶</a></h2>
+<p>Provides functions to load a modelpath with libSBML and cobrapy</p>
+<p>Depending on the application the model needs to be loaded with cobra (memote)
+or with libSBML (activation of groups).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_document_libsbml">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_document_libsbml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_document_libsbml" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads model document using libsbml</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
+</dd>
+<dt>Returns:</dt><dd><p>libsbml-document: loaded document by libsbml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_model_cobra">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_model_cobra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_model_cobra" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads model using cobrapy</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
+</dd>
+<dt>Returns:</dt><dd><p>cobra-model: loaded model by cobrapy</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_model_libsbml">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_model_libsbml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_model_libsbml" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads model using libsbml</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
+</dd>
+<dt>Returns:</dt><dd><p>libsbml-model: loaded model by libsbml</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="refinegems-modelseed-module">
 <h2>refinegems.modelseed module<a class="headerlink" href="#refinegems-modelseed-module" title="Permalink to this headline">¶</a></h2>
