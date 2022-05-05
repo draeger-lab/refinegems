@@ -62,4 +62,9 @@ autodoc_mock_imports = ["psycopg2",
                         "gffutils",
                         "cplex.exceptions",
                         "cplex",
-                        "cobra"]
+                        "cobra",
+                        "pandas",
+                        "libsbml",
+                        "numpy",
+                        "bioservices",
+                        "bs4"]
