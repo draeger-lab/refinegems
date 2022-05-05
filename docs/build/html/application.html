@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Usage as standalone application &#8212; refinegems 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="usage-as-standalone-application">
+<h1>Usage as standalone application<a class="headerlink" href="#usage-as-standalone-application" title="Permalink to this headline">¶</a></h1>
+<p>The script <code class="docutils literal notranslate"><span class="pre">main.py</span></code> can be used directly in the command line after
+entering the virtual environment with <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">shell</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file contains defaults for all variables that need
+to be set by the user.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Description</span><span class="p">:</span> <span class="p p-Indicator">&gt;</span>
+  <span class="no">This file can be adapted to choose what refinegems should do.</span>
+  <span class="no">Note: For windows use \ instead of / for the paths</span>
+
+
+<span class="nt">General Setting</span><span class="p">:</span> <span class="p p-Indicator">&gt;</span>
+  <span class="no">Path to GEM to be investigated</span>
+
+<span class="nt">model</span><span class="p">:</span> <span class="s">&#39;data/e_coli_core.xml&#39;</span> <span class="c1">#&#39;../C_striatum_GEMs/models/Cstr_14.xml&#39;</span>
+
+
+<span class="nt">Settings for scripts that manipulate the model</span><span class="p">:</span> <span class="p p-Indicator">&gt;</span>
+  <span class="no">They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.</span>
+
+<span class="c1">### Addition of KEGG Pathways as Groups ###</span>
+<span class="nt">keggpathways</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">kegg_path</span><span class="p">:</span> <span class="s">&#39;../Nextcloud/master_thesis/models/Cstr_17_kegg.xml&#39;</span> <span class="c1"># path where to save model with KEGG Groups</span>
+
+<span class="c1">### SBO-Term Annotation (requires PostgreSQL) ###</span>
+<span class="nt">sboterms</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">database_user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">postgres</span>
+<span class="nt">database_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sbo_ann</span>
+<span class="nt">sbo_path</span><span class="p">:</span> <span class="s">&#39;../Nextcloud/master_thesis/models/Cstr_17_sbo.xml&#39;</span> <span class="c1"># path where to save model with sbo terms</span>
+
+<span class="c1">### CarveMe polishing ###</span>
+<span class="nt">polish_carveme</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">polish_path</span><span class="p">:</span> <span class="s">&#39;../Nextcloud/master_thesis/models/Cstr_17_genes.xml&#39;</span> <span class="c1"># path where to save the polished model</span>
+<span class="nt">entrez_email</span><span class="p">:</span> <span class="s">&#39;famke.baeuerle@student.uni-tuebingen.de&#39;</span>
+
+<span class="c1">### Charge correction ###</span>
+<span class="nt">charge_corr</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">charge_path</span><span class="p">:</span> <span class="s">&#39;../Nextcloud/master_thesis/models/Cstr_16_charges.xml&#39;</span>
+
+
+<span class="nt">Settings for scripts that investigate the model</span><span class="p">:</span> <span class="p p-Indicator">&gt;</span>
+  <span class="no">These are only necessary if none of the scripts to manipulate the model are used.</span>
+
+<span class="c1"># Path to database which contains metabolites present in different media</span>
+<span class="nt">media_db</span><span class="p">:</span> <span class="s">&#39;data/media_db.csv&#39;</span>
+
+<span class="c1"># media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI</span>
+<span class="nt">media</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;SNM3&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;LB&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;M9&#39;</span><span class="p p-Indicator">]</span>
+
+<span class="c1"># determine whether the memote score should be calculated, default: FALSE</span>
+<span class="nt">memote</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+
+<span class="c1"># Determine if output file should be created, default: cl</span>
+<span class="c1"># Filename is set as the models name</span>
+<span class="nt">output</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">xlsx</span> <span class="c1">#cl, xlsx, csv</span>
+
+<span class="c1">### Gene comparison ###</span>
+<span class="nt">genecomp</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FALSE</span> <span class="c1"># set to False if not needed</span>
+<span class="c1"># the following is only relevant when turned on</span>
+<span class="nt">organismid</span><span class="p">:</span> <span class="s">&#39;T05059&#39;</span> <span class="c1"># C. striatum</span>
+<span class="nt">gff_file</span><span class="p">:</span> <span class="s">&#39;data/cstr.gff&#39;</span> <span class="c1"># C. striatum</span>
+<span class="nt">biggreactions</span><span class="p">:</span> <span class="s">&#39;data/bigg_models_reactions.txt&#39;</span>
+
+<span class="c1">### ModelSEED comparison ###</span>
+<span class="nt">modelseed</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TRUE</span> <span class="c1"># set to False if not needed</span>
+<span class="nt">modelseedpath</span><span class="p">:</span> <span class="s">&#39;data/modelseed_compounds.tsv&#39;</span>
+</pre></div>
+</div>
+<p>The repository structure has the following intention:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">refinegems/</span></code></p></li>
+</ul>
+<p>contains all the functions needed in <code class="docutils literal notranslate"><span class="pre">main.py</span></code>
+* <code class="docutils literal notranslate"><span class="pre">data/</span></code> contains
+all tables that are used by different parts of the script as well as a
+toy model <code class="docutils literal notranslate"><span class="pre">e_coli_core.xml</span></code>
+* Instead of using the files given in
+<code class="docutils literal notranslate"><span class="pre">data/</span></code>, you can use your own files and just change the paths in
+<code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. Please be aware that some functions rely on input in a
+certain format so make sure to check the files given in the <code class="docutils literal notranslate"><span class="pre">data/</span></code>
+folder and use the same formatting.
+* <code class="docutils literal notranslate"><span class="pre">sbo/</span></code> contains the <code class="docutils literal notranslate"><span class="pre">sql</span></code>
+files necessary for the SBOAnn script by Elisabeth Fritze
+*
+<code class="docutils literal notranslate"><span class="pre">setup.py</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> enable creating a PyPi package
+called <code class="docutils literal notranslate"><span class="pre">refinegems</span></code></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">refinegems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage as standalone application</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Famke Bäuerle.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/application.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
