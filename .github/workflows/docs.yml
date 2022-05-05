@@ -16,11 +16,9 @@ jobs:
        persist-credentials: false
        fetch-depth: 0
       
-    - name: Build docs
-      uses: ammaraskar/sphinx-action@master
+    - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
-        build-command: "sphinx-build -b html . build"
 
     - name: Commit docs
       id: commit
