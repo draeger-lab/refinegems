@@ -67,4 +67,7 @@ autodoc_mock_imports = ["psycopg2",
                         "libsbml",
                         "numpy",
                         "bioservices",
-                        "bs4"]
+                        "bs4",
+                        "memote",
+                        "tqdm",
+                        "psycopg2"]
