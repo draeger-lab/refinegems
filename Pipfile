@@ -8,13 +8,14 @@ cobra = "==0.22.0"
 biopython = "==1.79"
 bioservices = "==1.7.11"
 memote = "==0.11.1"
-escher = "==1.7.3"
 pandas = "==1.2.4"
 numpy = "==1.20.3"
 pyyaml = "==5.4.1"
 psycopg2-binary = "==2.9.1"
 gffutils = "==0.10.1"
 refinegems = {editable = true, path = "."}
+setuptools = "==58.0.0"
+markupsafe = "==2.0.1"
 
 [dev-packages]
 autopep8 = "*"

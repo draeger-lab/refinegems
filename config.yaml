@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: 'data/e_coli_core.xml' #'../C_striatum_GEMs/models/Cstr_14.xml'
+model: '../C_striatum_GEMs/models/Cstr_14.xml' #'data/e_coli_core.xml' 
 
 
 Settings for scripts that manipulate the model: >
