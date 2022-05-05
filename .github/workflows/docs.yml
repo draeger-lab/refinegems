@@ -15,10 +15,18 @@ jobs:
       with:
        persist-credentials: false
        fetch-depth: 0
-      
-    - uses: ammaraskar/sphinx-action@master
+
+    - uses: actions/setup-python@v2
       with:
-        docs-folder: "docs/"
+        python-version: 3.9
+
+    - name: Install dependencies
+      run: pip install sphinx
+
+    - name: Build the site
+      run: |
+        cd docs
+        make html
 
     - name: Commit docs
       id: commit
