@@ -79,7 +79,7 @@ install PostgreSQL to your machine.</p>
 <p>If you are a Windows user you will need to use a different command:
 Enter into the psql shell by typing <code class="docutils literal notranslate"><span class="pre">psql</span></code>, then create the database
 with</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">sbo_ann</span><span class="p">;</span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">sbo_ann</span><span class="p">;</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Afterwards load the database with</p>
@@ -111,6 +111,7 @@ manually. The path should look like something like this
 <code class="docutils literal notranslate"><span class="pre">psycopg2.OperationalError:</span> <span class="pre">fe_sendauth:</span> <span class="pre">no</span> <span class="pre">password</span> <span class="pre">supplied</span></code>:
 Change <code class="docutils literal notranslate"><span class="pre">scram-sha256</span></code>to <code class="docutils literal notranslate"><span class="pre">trust</span></code> in your file <code class="docutils literal notranslate"><span class="pre">pg_hba.conf</span></code>
 (located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
+<li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
 </ul>
 </section>
 </section>
@@ -142,6 +143,7 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems</a></li>
 </ul>
 
 <div class="relations">

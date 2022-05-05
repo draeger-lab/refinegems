@@ -99,5 +99,8 @@ Troubleshooting
    Change ``scram-sha256``\ to ``trust`` in your file ``pg_hba.conf``
    (located probably in ``C:\Program Files\PostgreSQL\13\data``)
 
+- If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
+
 .. |License: MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
+
