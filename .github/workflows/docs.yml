@@ -26,6 +26,7 @@ jobs:
     - name: Build the site
       run: |
         cd docs
+        make clean
         make html
 
     - name: Commit docs
