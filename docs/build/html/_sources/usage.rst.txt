@@ -1,5 +1,5 @@
-Usage
-=====
+Usage as python module
+======================
 
 Note that at this time most of the modules only make sense when you use the respective main functions:
 
@@ -7,6 +7,14 @@ Note that at this time most of the modules only make sense when you use the resp
 .. autofunction:: refinegems.polish_carveme
 .. autofunction:: refinegems.genecomp
 .. autofunction:: refinegems.modelseed
-.. autofunction:: refinegems.pathways
+.. autofunction:: refinegems.kegg_pathways
 .. autofunction:: refinegems.sbo_annotation
-.. autofunction:: refinegems.test
+
+The modules ``load`` and ``test`` provide functions that can be used by themselves.
+
+.. automodule:: refinegems.load
+    :members:
+
+.. automodule:: refinegems.test
+    :members:
+
