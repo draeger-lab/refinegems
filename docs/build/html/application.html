@@ -103,22 +103,12 @@ to be set by the user.</p>
 </div>
 <p>The repository structure has the following intention:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">refinegems/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">refinegems/</span></code> contains all the functions needed in <code class="docutils literal notranslate"><span class="pre">main.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data/</span></code> contains all tables that are used by different parts of the script as well as a toy model <code class="docutils literal notranslate"><span class="pre">e_coli_core.xml</span></code></p></li>
+<li><p>Instead of using the files given in <code class="docutils literal notranslate"><span class="pre">data/</span></code>, you can use your own files and just change the paths in <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the <code class="docutils literal notranslate"><span class="pre">data/</span></code> folder and use the same formatting.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sbo/</span></code> contains the <code class="docutils literal notranslate"><span class="pre">sql</span></code> files necessary for the SBOAnn script by Elisabeth Fritze</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup.py</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> enable creating a PyPi package called <code class="docutils literal notranslate"><span class="pre">refinegems</span></code></p></li>
 </ul>
-<p>contains all the functions needed in <code class="docutils literal notranslate"><span class="pre">main.py</span></code>
-* <code class="docutils literal notranslate"><span class="pre">data/</span></code> contains
-all tables that are used by different parts of the script as well as a
-toy model <code class="docutils literal notranslate"><span class="pre">e_coli_core.xml</span></code>
-* Instead of using the files given in
-<code class="docutils literal notranslate"><span class="pre">data/</span></code>, you can use your own files and just change the paths in
-<code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. Please be aware that some functions rely on input in a
-certain format so make sure to check the files given in the <code class="docutils literal notranslate"><span class="pre">data/</span></code>
-folder and use the same formatting.
-* <code class="docutils literal notranslate"><span class="pre">sbo/</span></code> contains the <code class="docutils literal notranslate"><span class="pre">sql</span></code>
-files necessary for the SBOAnn script by Elisabeth Fritze
-*
-<code class="docutils literal notranslate"><span class="pre">setup.py</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> enable creating a PyPi package
-called <code class="docutils literal notranslate"><span class="pre">refinegems</span></code></p>
 </section>
 
 
