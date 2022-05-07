@@ -72,18 +72,8 @@ to be set by the user.
 
 The repository structure has the following intention: 
 
-* ``refinegems/``
-contains all the functions needed in ``main.py`` 
-* ``data/`` contains
-all tables that are used by different parts of the script as well as a
-toy model ``e_coli_core.xml`` 
-* Instead of using the files given in
-``data/``, you can use your own files and just change the paths in
-``config.yaml``. Please be aware that some functions rely on input in a
-certain format so make sure to check the files given in the ``data/``
-folder and use the same formatting. 
-* ``sbo/`` contains the ``sql``
-files necessary for the SBOAnn script by Elisabeth Fritze 
-*
-``setup.py`` and ``pyproject.toml`` enable creating a PyPi package
-called ``refinegems``
+* ``refinegems/`` contains all the functions needed in ``main.py`` 
+* ``data/`` contains all tables that are used by different parts of the script as well as a toy model ``e_coli_core.xml`` 
+* Instead of using the files given in ``data/``, you can use your own files and just change the paths in ``config.yaml``. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the ``data/`` folder and use the same formatting. 
+* ``sbo/`` contains the ``sql`` files necessary for the SBOAnn script by Elisabeth Fritze 
+* ``setup.py`` and ``pyproject.toml`` enable creating a PyPi package called ``refinegems``
