@@ -3,14 +3,16 @@ Installation
 
 Installation via pip
 --------------------
+To install refinegmes as python package, simply install it via ``pip``:
 
 .. code:: bash
-    pip install refinegems
+
+   pip install refinegems
 
 Installation via github
 -----------------------
 
-``refinegems`` is distributed via this github repository, all
+``refinegems`` is distributed via github repository, all
 dependencies are denoted in a
 `pipenv <https://pipenv.pypa.io/en/latest/>`__. You will need to install
 ``pipenv`` first. To install ``refinegems`` locally complete the
@@ -96,11 +98,9 @@ Troubleshooting
 
 -  If you run into
    ``psycopg2.OperationalError: fe_sendauth: no password supplied``:
-   Change ``scram-sha256``\ to ``trust`` in your file ``pg_hba.conf``
+   Change ``scram-sha256`` to ``trust`` in your file ``pg_hba.conf``
    (located probably in ``C:\Program Files\PostgreSQL\13\data``)
 
 - If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 
-.. |License: MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
 
