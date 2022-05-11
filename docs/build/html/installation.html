@@ -37,10 +37,14 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <section id="installation-via-pip">
 <h2>Installation via pip<a class="headerlink" href="#installation-via-pip" title="Permalink to this headline">¶</a></h2>
+<p>To install refinegmes as python package, simply install it via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install refinegems
+</pre></div>
+</div>
 </section>
 <section id="installation-via-github">
 <h2>Installation via github<a class="headerlink" href="#installation-via-github" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via this github repository, all
+<p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository, all
 dependencies are denoted in a
 <a class="reference external" href="https://pipenv.pypa.io/en/latest/">pipenv</a>. You will need to install
 <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> first. To install <code class="docutils literal notranslate"><span class="pre">refinegems</span></code> locally complete the
@@ -109,7 +113,7 @@ manually. The path should look like something like this
 <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\lib</span></code>.</p></li>
 <li><p>If you run into
 <code class="docutils literal notranslate"><span class="pre">psycopg2.OperationalError:</span> <span class="pre">fe_sendauth:</span> <span class="pre">no</span> <span class="pre">password</span> <span class="pre">supplied</span></code>:
-Change <code class="docutils literal notranslate"><span class="pre">scram-sha256</span></code>to <code class="docutils literal notranslate"><span class="pre">trust</span></code> in your file <code class="docutils literal notranslate"><span class="pre">pg_hba.conf</span></code>
+Change <code class="docutils literal notranslate"><span class="pre">scram-sha256</span></code> to <code class="docutils literal notranslate"><span class="pre">trust</span></code> in your file <code class="docutils literal notranslate"><span class="pre">pg_hba.conf</span></code>
 (located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
 <li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
 </ul>
