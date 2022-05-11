@@ -5,5 +5,6 @@ Here is an overview on all functions. All imports are mocked in ``autodoc_mock_i
 
 .. toctree::
    :maxdepth: 4
+   :show-inheritance:
 
    refinegems
