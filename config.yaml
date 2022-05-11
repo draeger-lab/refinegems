@@ -13,7 +13,7 @@ Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
 ### Addition of KEGG Pathways as Groups ###
-keggpathways: TRUE
+keggpathways: FALSE
 kegg_path: 'data/e_test.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
@@ -23,8 +23,8 @@ database_name: sbo_ann
 sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
-polish_carveme: FALSE
-polish_path: '../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
+polish_carveme: TRUE
+polish_path: 'data/e_test.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
 entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
 ### Charge correction ###

@@ -6,6 +6,7 @@ or with libSBML (activation of groups).
 """
 
 import cobra
+import pandas as pd
 from libsbml import SBMLReader, writeSBMLToFile
 
 __author__ = "Famke Baeuerle"
@@ -92,4 +93,4 @@ def write_to_file(model, new_filename):
     """
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
-    print("Model with KEGG pathway groups written to " + new_filename)
+    print("Modified model written to " + new_filename)

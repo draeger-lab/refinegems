@@ -7,7 +7,7 @@ all KEGG pathways for a reaction then as annotations with the biological qualifi
 to the respective reaction.
 """
 
-from libsbml import *# SBMLReader, GroupsExtension, FbcModelPlugin, CVTerm, writeSBML
+from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
 from bs4 import BeautifulSoup
 from refinegems.load import write_to_file
@@ -58,10 +58,6 @@ def extract_kegg_reactions(model):
                 
         # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
-        # ann_string = reaction.getCVTerm(0)
-        # num_res = ann_string.getNumResources()
-        # #print(ann_string.getResourceURI(0))
-        # kegg_ids = [ann_string.getResourceURI(r)[-6:] for r in range(0,num_res) if 'kegg' in ann_string.getResourceURI(r)]
         if len(kegg_ids) > 0: 
             kegg_reactions[reaction.getId()] = kegg_ids[0]
 
@@ -108,13 +104,7 @@ def add_kegg_pathways(model, kegg_pathways):
         if reaction.getId() in kegg_pathways.keys():
             for path in kegg_pathways[reaction.getId()]:
                 add_cv_term_pathways(path, 'KEGG', reaction)
-                # url = "https://identifiers.org/kegg.pathway:" + path
-                # cv = CVTerm()
-                # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-                # cv.setBiologicalQualifierType(BQB_OCCURS_IN)
-                # cv.addResource(url)
-                # reaction.addCVTerm(cv)
-    
+
     # works but better write this somewhere else?
     return model
 

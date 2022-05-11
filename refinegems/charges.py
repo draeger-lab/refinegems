@@ -9,6 +9,8 @@ from libsbml import *
 from refinegems.load import write_to_file
 import re
 
+__author__ = "Famke Baeuerle"
+
 def get_modelseed_compounds(path):
     """extracts compounds from modelseed which have BiGG Ids
 

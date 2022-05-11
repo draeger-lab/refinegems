@@ -10,16 +10,7 @@ from tqdm.auto import tqdm
 from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, metabol_db_dict, reaction_db_dict
 from refinegems.load import write_to_file
 
-def unset_ann(entity_list):
-    """removes "empty" rdf bags from model
-
-    Args:
-        entity_list (list): libSBML ListOfSpecies or ListOfReactions
-    """
-    for entity in entity_list:
-        ann = entity.getAnnotationString()
-        if '<bqbiol:is xmlns:bqbiol="http://biomodels.net/biology-qualifiers/">' in ann:
-            entity.unsetAnnotation()
+__author__ = "Famke Baeuerle"
             
 def add_bigg_metab(entity_list):
     """adds the BiGG Id of metabolites as URL to the annotation field
@@ -30,15 +21,8 @@ def add_bigg_metab(entity_list):
     for entity in entity_list:
         bigg_id = entity.getId()
         bigg_id = bigg_id[2:] 
-        bigg_id = bigg_id[:-2]
-        
+        bigg_id = bigg_id[:-2]      
         add_cv_term_metabolites(bigg_id, 'BIGG', entity)
-        # url = "https://identifiers.org/bigg.metabolite/" + bigg_id
-        # cv = CVTerm()
-        # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        # cv.setBiologicalQualifierType(BQB_IS)
-        # cv.addResource(url)
-        # entity.addCVTerm(cv, False)
             
 def add_bigg_reac(entity_list):
     """adds the BiGG Id of reactions as URL to the annotation field
@@ -51,13 +35,7 @@ def add_bigg_reac(entity_list):
         if bigg_id != 'Growth':
             bigg_id = bigg_id[2:]
             add_cv_term_reactions(bigg_id, 'BIGG', entity)
-            
-        # url = "https://identifiers.org/bigg.reaction/" + bigg_id
-        # cv = CVTerm()
-        # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        # cv.setBiologicalQualifierType(BQB_IS)
-        # cv.addResource(url)
-        # entity.addCVTerm(cv, False)
+
 
 def cv_notes_metab(species_list):
     """checks the notes field for information which should be in the annotation field
@@ -147,11 +125,22 @@ def polish_entities(entity_list, metabolite):
                 entity.setConstant(False)
                 
 def set_units(model):
+    """Adds units to parameters in model
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+    """
     for param in model.getListOfParameters():
         if param.isSetUnits() == False:
             param.setUnits('mmol_per_gDW_per_hr')
                 
 def cv_ncbiprotein(gene_list, email):
+    """Adds NCBI Id to genes as annotation
+
+    Args:
+        gene_list (list): libSBML ListOfGenes
+        email (string): User Email to access the Entrez database
+    """
     Entrez.email = email
     
     def get_name_locus_tag(ncbi_id):
@@ -188,8 +177,6 @@ def polish_carveme(model, new_filename, email):
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
     
     set_units(model)
-    unset_ann(metab_list)
-    unset_ann(reac_list)
     add_bigg_metab(metab_list)
     add_bigg_reac(reac_list)
     cv_notes_metab(metab_list)
