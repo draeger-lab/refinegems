@@ -63,7 +63,7 @@ def correct_charges_modelseed(model, modelseed_compounds):
     return model, mulchar
 
     
-def charges(model, new_file_path, modelseed_path):
+def correct_charges(model, new_file_path, modelseed_path):
     """wrapper function which completes the steps to charge correction 
 
     Args:

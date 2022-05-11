@@ -8,7 +8,7 @@ from refinegems.sbo_annotation import sbo_annotation
 from refinegems.genecomp import genecomp
 from refinegems.modelseed import modelseed
 from refinegems.polish_carveme import polish_carveme
-from refinegems.charges import charges
-import refinegems.cvterms
+from refinegems.charges import correct_charges
+import refinegems.cvterms 
 
 __author__ = "Famke Baeuerle"
