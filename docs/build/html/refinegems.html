@@ -80,17 +80,6 @@ modelseed_compounds (df): containing modelseed data</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.charges.write_to_file">
-<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.write_to_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes modified model to new file</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_file_path (Str): filepath + name for modified model</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 <section id="module-refinegems.genecomp">
 <span id="refinegems-genecomp-module"></span><h2>refinegems.genecomp module<a class="headerlink" href="#module-refinegems.genecomp" title="Permalink to this headline">¶</a></h2>
@@ -331,31 +320,6 @@ mediumpath (Str): path to csv file with medium</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.growth.load_medium_custom">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">load_medium_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.load_medium_custom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function to read medium csv</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.growth.load_medium_from_db">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">load_medium_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.load_medium_from_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function to read standard media_db.csv</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium database
-mediumname (Str): name of medium to test growth on</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.modify_medium">
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">modify_medium</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing_exchanges</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.modify_medium" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove exchanges from medium that are not in the model</p>
@@ -401,6 +365,31 @@ or with libSBML (activation of groups).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_medium_custom">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_medium_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_medium_custom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read medium csv</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_medium_from_db">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_medium_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_medium_from_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read standard media_db.csv</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium database
+mediumname (Str): name of medium to test growth on</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.load.load_model_cobra">
 <span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_model_cobra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_model_cobra" title="Permalink to this definition">¶</a></dt>
 <dd><p>loads model using cobrapy</p>
@@ -420,6 +409,17 @@ or with libSBML (activation of groups).</p>
 <dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
 </dd>
 <dt>Returns:</dt><dd><p>libsbml-model: loaded model by libsbml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.write_to_file">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.write_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes modified model to new file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_filename (Str): filename for modified model</p>
 </dd>
 </dl>
 </dd></dl>
@@ -623,17 +623,6 @@ new_filename (Str): filename for modified model</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.pathways.write_to_file">
-<span class="sig-prename descclassname"><span class="pre">refinegems.pathways.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.pathways.write_to_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes modified model to new file</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 <section id="module-refinegems.polish_carveme">
 <span id="refinegems-polish-carveme-module"></span><h2>refinegems.polish_carveme module<a class="headerlink" href="#module-refinegems.polish_carveme" title="Permalink to this headline">¶</a></h2>
@@ -662,7 +651,13 @@ new_filename (Str): filename for modified model</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish_carveme.cv_ncbiprotein">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">cv_ncbiprotein</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gene_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.cv_ncbiprotein" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Adds NCBI Id to genes as annotation</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gene_list (list): libSBML ListOfGenes
+email (string): User Email to access the Entrez database</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish_carveme.cv_notes_metab">
@@ -712,25 +707,9 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish_carveme.set_units">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">set_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.set_units" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish_carveme.unset_ann">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">unset_ann</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.unset_ann" title="Permalink to this definition">¶</a></dt>
-<dd><p>removes “empty” rdf bags from model</p>
+<dd><p>Adds units to parameters in model</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish_carveme.write_to_file">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.write_to_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes modified model to new file</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1240,17 +1219,6 @@ new_filename (Str): filename for modified model</p>
 <dd><p>test if reaction traverses more than 1 compartment and set SBO Term</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.sbo_annotation.write_to_file">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sbo_annotation.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sbo_annotation.write_to_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes modified model to new file</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
 </dd>
 </dl>
 </dd></dl>

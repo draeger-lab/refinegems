@@ -120,6 +120,31 @@ or with libSBML (activation of groups).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_medium_custom">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_medium_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_medium_custom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read medium csv</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_medium_from_db">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_medium_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_medium_from_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read standard media_db.csv</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium database
+mediumname (Str): name of medium to test growth on</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.load.load_model_cobra">
 <span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_model_cobra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_model_cobra" title="Permalink to this definition">¶</a></dt>
 <dd><p>loads model using cobrapy</p>
@@ -139,6 +164,17 @@ or with libSBML (activation of groups).</p>
 <dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
 </dd>
 <dt>Returns:</dt><dd><p>libsbml-model: loaded model by libsbml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.write_to_file">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.write_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes modified model to new file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_filename (Str): filename for modified model</p>
 </dd>
 </dl>
 </dd></dl>
