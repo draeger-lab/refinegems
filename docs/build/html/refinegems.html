@@ -42,8 +42,8 @@
 <p>Provides functions for adding charges to metabolites</p>
 <p>When iterating thorugh all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.charges.charges">
-<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">charges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelseed_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.charges" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelseed_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges" title="Permalink to this definition">¶</a></dt>
 <dd><p>wrapper function which completes the steps to charge correction</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml

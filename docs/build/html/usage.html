@@ -37,6 +37,13 @@
 <h1>Usage as python module<a class="headerlink" href="#usage-as-python-module" title="Permalink to this headline">¶</a></h1>
 <p>Note that at this time most of the modules only make sense when you use the respective main functions:</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges">
+<span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">charges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides functions for adding charges to metabolites</p>
+<p>When iterating thorugh all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish_carveme">
 <span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">polish_carveme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme" title="Permalink to this definition">¶</a></dt>
 <dd><p>completes all steps to polish a model created with CarveMe</p>
@@ -246,6 +253,73 @@ access to its number of reactions, metabolites and genes.</p>
 </dd></dl>
 
 </section>
+<section id="cvterms">
+<h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this headline">¶</a></h2>
+<p>provides functions to work with cvterms</p>
+<span class="target" id="module-refinegems.cvterms"></span><p>Helper module to work with annotations (CVTerms)</p>
+<p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_genes">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a gene</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-gene): gene to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_metabolites">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_metabolites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metab</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_metabolites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a metabolite</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-species): metabolite to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_pathways">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_pathways" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a groups pathway</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-group): pathway to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_reactions">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_reactions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a reaction</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+reac (libsbml-reaction): reaction to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.parse_id_from_cv_term">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">parse_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.parse_id_from_cv_term" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract id for a specific database from CVTerm</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
+db_id (string): database of interes</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: ids of entity belonging to db_id</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -272,6 +346,7 @@ access to its number of reactions, metabolites and genes.</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage as python module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#load"><code class="docutils literal notranslate"><span class="pre">load</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#test"><code class="docutils literal notranslate"><span class="pre">test</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cvterms"><code class="docutils literal notranslate"><span class="pre">cvterms</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems</a></li>

@@ -3,7 +3,7 @@ Usage as python module
 
 Note that at this time most of the modules only make sense when you use the respective main functions:
 
-.. autofunction:: refinegems.charge
+.. autofunction:: refinegems.charges
 .. autofunction:: refinegems.polish_carveme
 .. autofunction:: refinegems.genecomp
 .. autofunction:: refinegems.modelseed
@@ -26,3 +26,9 @@ provides a couple of functions to get parameters of your model
 .. automodule:: refinegems.test
     :members:
 
+``cvterms``
+-----------
+provides functions to work with cvterms
+
+.. automodule:: refinegems.cvterms
+    :members:
