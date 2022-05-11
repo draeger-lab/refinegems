@@ -10,6 +10,8 @@ to the respective reaction.
 from libsbml import *# SBMLReader, GroupsExtension, FbcModelPlugin, CVTerm, writeSBML
 from bioservices import KEGG
 from bs4 import BeautifulSoup
+from refinegems.load import write_to_file
+from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term
 
 __author__ = "Famke Baeuerle"
 
@@ -32,17 +34,6 @@ def load_model_enable_groups(modelpath):
     model = read.getModel()
     return model
 
-def write_to_file(model, new_filename):
-    """Writes modified model to new file
-
-    Args:
-        model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
-    """
-    new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, new_filename)
-    print("Model with KEGG pathway groups written to " + new_filename)
-
 def extract_kegg_reactions(model):
     """extract KEGG Ids from reactions
 
@@ -56,6 +47,7 @@ def extract_kegg_reactions(model):
     kegg_reactions = {}
 
     for reaction in list_reac:
+        # kegg id from notes (deprecated)
         notes_string = reaction.getNotesString()
         soup = BeautifulSoup(notes_string, 'lxml')
         entries = soup.find_all('p')
@@ -63,6 +55,15 @@ def extract_kegg_reactions(model):
         for i in range(len(entries)):
             if 'KEGG' in entries[i].text:
                 kegg_reactions[reaction.getId()] = entries[i].text[15:]
+                
+        # kegg id from annotation
+        kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
+        # ann_string = reaction.getCVTerm(0)
+        # num_res = ann_string.getNumResources()
+        # #print(ann_string.getResourceURI(0))
+        # kegg_ids = [ann_string.getResourceURI(r)[-6:] for r in range(0,num_res) if 'kegg' in ann_string.getResourceURI(r)]
+        if len(kegg_ids) > 0: 
+            kegg_reactions[reaction.getId()] = kegg_ids[0]
 
     return kegg_reactions
 
@@ -106,12 +107,13 @@ def add_kegg_pathways(model, kegg_pathways):
     for reaction in list_reac:
         if reaction.getId() in kegg_pathways.keys():
             for path in kegg_pathways[reaction.getId()]:
-                url = "https://identifiers.org/kegg.pathway:" + path
-                cv = CVTerm()
-                cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-                cv.setBiologicalQualifierType(BQB_OCCURS_IN)
-                cv.addResource(url)
-                reaction.addCVTerm(cv)
+                add_cv_term_pathways(path, 'KEGG', reaction)
+                # url = "https://identifiers.org/kegg.pathway:" + path
+                # cv = CVTerm()
+                # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+                # cv.setBiologicalQualifierType(BQB_OCCURS_IN)
+                # cv.addResource(url)
+                # reaction.addCVTerm(cv)
     
     # works but better write this somewhere else?
     return model
@@ -156,6 +158,7 @@ def create_pathway_groups(model, pathway_groups):
         group_list[i].setMetaId("meta_" + keys[i])
         group_list[i].setKind('partonomy')
         group_list[i].setSBOTerm("SBO:0000633") # NAME
+        add_cv_term_pathways(keys[i], 'KEGG', group_list[i])
         for j in range(num_reactions[i]):
             group_list[i].createMember()
     
@@ -184,6 +187,7 @@ def kegg_pathways(modelpath, new_filename):
     reactions = extract_kegg_reactions(model)
     pathways = extract_kegg_pathways(reactions)
     pathway_groups = get_pathway_groups(pathways)
+    print(reactions, pathways, pathway_groups)
 
     model_pathways = add_kegg_pathways(model, pathways)
     model_pathway_groups = create_pathway_groups(model_pathways, pathway_groups)

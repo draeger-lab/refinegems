@@ -6,6 +6,7 @@ When iterating thorugh all metabolites present in a model, you will find several
 
 import pandas as pd
 from libsbml import *
+from refinegems.load import write_to_file
 import re
 
 def get_modelseed_compounds(path):
@@ -59,16 +60,6 @@ def correct_charges_modelseed(model, modelseed_compounds):
     
     return model, mulchar
 
-def write_to_file(model, new_file_path):
-    """Writes modified model to new file
-
-    Args:
-        model (libsbml-model): model loaded with libsbml
-        new_file_path (Str): filepath + name for modified model
-    """
-    new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, new_file_path)
-    print("Polished model written to " + new_file_path)
     
 def charges(model, new_file_path, modelseed_path):
     """wrapper function which completes the steps to charge correction 

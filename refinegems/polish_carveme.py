@@ -7,6 +7,8 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 from libsbml import *
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
+from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, metabol_db_dict, reaction_db_dict
+from refinegems.load import write_to_file
 
 def unset_ann(entity_list):
     """removes "empty" rdf bags from model
@@ -29,12 +31,14 @@ def add_bigg_metab(entity_list):
         bigg_id = entity.getId()
         bigg_id = bigg_id[2:] 
         bigg_id = bigg_id[:-2]
-        url = "https://identifiers.org/bigg.metabolite/" + bigg_id
-        cv = CVTerm()
-        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
-        cv.addResource(url)
-        entity.addCVTerm(cv, False)
+        
+        add_cv_term_metabolites(bigg_id, 'BIGG', entity)
+        # url = "https://identifiers.org/bigg.metabolite/" + bigg_id
+        # cv = CVTerm()
+        # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        # cv.setBiologicalQualifierType(BQB_IS)
+        # cv.addResource(url)
+        # entity.addCVTerm(cv, False)
             
 def add_bigg_reac(entity_list):
     """adds the BiGG Id of reactions as URL to the annotation field
@@ -45,13 +49,15 @@ def add_bigg_reac(entity_list):
     for entity in entity_list:
         bigg_id = entity.getId()
         if bigg_id != 'Growth':
-            bigg_id = bigg_id[2:] 
-        url = "https://identifiers.org/bigg.reaction/" + bigg_id
-        cv = CVTerm()
-        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
-        cv.addResource(url)
-        entity.addCVTerm(cv, False)
+            bigg_id = bigg_id[2:]
+            add_cv_term_reactions(bigg_id, 'BIGG', entity)
+            
+        # url = "https://identifiers.org/bigg.reaction/" + bigg_id
+        # cv = CVTerm()
+        # cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        # cv.setBiologicalQualifierType(BQB_IS)
+        # cv.addResource(url)
+        # entity.addCVTerm(cv, False)
 
 def cv_notes_metab(species_list):
     """checks the notes field for information which should be in the annotation field
@@ -60,25 +66,6 @@ def cv_notes_metab(species_list):
     Args:
         species_list (list): libSBML ListOfSpecies
     """
-    metabol_db_dict = {'BIGG': 'bigg.metabolite/', 
-                   'BRENDA': 'brenda/', 
-                   'CHEBI': 'chebi/',
-                   'INCHI': 'inchi/', 
-                   'KEGG': 'kegg.compound/', 
-                   'METACYC': 'metacyc.compound/',
-                   'MXNREF': 'metanetx.chemical/', 
-                   'SEED':'seed.compound/', 
-                   'UPA': 'unipathway.compound/', 
-                   'HMDB': 'hmdb/', 
-                   'REACTOME': 'reactome/',
-                   'BIOCYC': 'biocyc/'}
-    
-    def add_cv_term_from_notes_species(entry, db_id, metab):
-        cv = CVTerm()
-        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
-        cv.addResource('https://identifiers.org/'+ metabol_db_dict[db_id]+entry)
-        metab.addCVTerm(cv)
 
     for species in species_list:
         notes_list=[]
@@ -93,9 +80,9 @@ def cv_notes_metab(species_list):
                     if (';')  in fill_in and db != 'INCHI':
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_from_notes_species(entry.strip(), db, species)
+                            add_cv_term_metabolites(entry.strip(), db, species)
                     else:
-                        add_cv_term_from_notes_species(fill_in, db, species)
+                        add_cv_term_metabolites(fill_in, db, species)
                         
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -115,14 +102,6 @@ def cv_notes_reac(reaction_list):
     Args:
         reaction_list (list): libSBML ListOfReactions
     """
-    reaction_db_dict = {'BIGG': 'bigg.reaction/', 'BRENDA': 'brenda/', 'KEGG': 'kegg.reaction/', 'METACYC': 'metacyc.reaction/', 'MetaNetX': 'metanetx.reaction/', 'SEED':'seed.reaction/','UPA': 'unipathway.reaction/', 'HMDB': 'hmdb/', 'REACTOME': 'reactome/', 'RHEA': 'rhea/','EC': 'ec-code/'}
-    
-    def add_cv_term_from_notes_reactions(entry, db_id, reac):
-        cv = CVTerm()
-        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
-        cv.addResource('https://identifiers.org/'+ reaction_db_dict[db_id]+entry)
-        reac.addCVTerm(cv)
 
     for reaction in reaction_list:
         notes_list=[]
@@ -138,9 +117,9 @@ def cv_notes_reac(reaction_list):
                     if (';')  in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_from_notes_reactions(entry.strip(), db, reaction)
+                            add_cv_term_reactions(entry.strip(), db, reaction)
                     else:
-                        add_cv_term_from_notes_reactions(fill_in, db, reaction)
+                        add_cv_term_reactions(fill_in, db, reaction)
                         
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -167,15 +146,13 @@ def polish_entities(entity_list, metabolite):
             if not entity.getConstant():
                 entity.setConstant(False)
                 
+def set_units(model):
+    for param in model.getListOfParameters():
+        if param.isSetUnits() == False:
+            param.setUnits('mmol_per_gDW_per_hr')
+                
 def cv_ncbiprotein(gene_list, email):
     Entrez.email = email
-
-    def add_cv_term_from_id(entry, gene):
-        cv = CVTerm()
-        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
-        cv.addResource('https://identifiers.org/ncbiprotein/'+ entry)
-        gene.addCVTerm(cv)
     
     def get_name_locus_tag(ncbi_id):
         handle = Entrez.efetch(db="protein", id=ncbi_id, rettype="gbwithparts", retmode='text')
@@ -192,28 +169,12 @@ def cv_ncbiprotein(gene_list, email):
         
         for entry in id_string:
             if (entry[:1] == 'Q'): #maybe change this to user input
-                add_cv_term_from_id(entry, gene)
+                add_cv_term_genes(entry, 'NCBI', gene)
                 name, locus = get_name_locus_tag(entry)
                 gene.setName(name)
                 gene.setLabel(locus)
 
         gene.unsetNotes()
-        
-def set_units(model):
-    for param in model.getListOfParameters():
-        if param.isSetUnits() == False:
-            param.setUnits('mmol_per_gDW_per_hr')
-                
-def write_to_file(model, new_filename):
-    """Writes modified model to new file
-
-    Args:
-        model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
-    """
-    new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, new_filename)
-    print("Polished model written to " + new_filename)
             
 def polish_carveme(model, new_filename, email):
     """completes all steps to polish a model created with CarveMe

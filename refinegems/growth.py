@@ -14,6 +14,7 @@ missing = all exchanges missing in the model but given in medium
 
 import pandas as pd
 import numpy as np
+from refinegems.load import load_medium_custom, load_medium_from_db
 
 __author__ = "Famke Baeuerle"
 
@@ -33,36 +34,6 @@ def get_default_uptake(model):
             if value < 0:
                 default_uptake.append(index)
     return default_uptake
-
-def load_medium_custom(mediumpath):
-    """Helper function to read medium csv
-
-    Args:
-        mediumpath (Str): path to csv file with medium
-
-    Returns:
-        df: pandas dataframe of csv
-    """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium['BiGG_R']='R_EX_'+ medium['BiGG']+ '_e'
-    medium['BiGG_EX']='EX_'+ medium['BiGG']+ '_e'
-    return medium
-
-def load_medium_from_db(mediumpath, mediumname):
-    """Helper function to read standard media_db.csv
-
-    Args:
-        mediumpath (Str): path to csv file with medium database
-        mediumname (Str): name of medium to test growth on
-
-    Returns:
-        df: pandas dataframe of csv
-    """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium = medium.loc[medium['medium'] == mediumname]
-    medium['BiGG_R']='R_EX_'+ medium['BiGG']+ '_e'
-    medium['BiGG_EX']='EX_'+ medium['BiGG']+ '_e'
-    return medium
     
 def find_missing_exchanges(model, medium):
     """Look for exchange reactions needed by the medium but not in the model

@@ -6,8 +6,9 @@ Script written by Elisabeth Fritze in her bachelor thesis.
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation(model_libsbml, database_user, database_name, new_filename). The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
 
-from libsbml import *
 import psycopg2
+from libsbml import *
+from refinegems.load import write_to_file
 
 __author__ = "Elisabeth Fritze"
 
@@ -606,17 +607,7 @@ def addSBOfromDB(reac, cur):
         return True
     else:
         return False
-    
-def write_to_file(model, new_filename):
-    """Writes modified model to new file
 
-    Args:
-        model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
-    """
-    new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, new_filename)
-    print("Model with SBO Annotations written to " + new_filename)
 
 def sbo_annotation(model_libsbml, database_user, database_name, new_filename):
     """executes all steps to annotate sbo terms to a given model
