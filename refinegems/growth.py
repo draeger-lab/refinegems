@@ -2,10 +2,10 @@
 """ Provides functions to simulate growth on any medium
 
 Tailored to work with the Synthetic Nasal Medium (SNM), should
-work with any medium as long as its defined in a csv with ; as 
+work with any medium as long as its defined in a csv with ; as
 delimiter and BiGG Ids for the compounds.
 
-Outputs a table where 
+Outputs a table where
 
 essential = metabolites not present in the medium but necessary for growth
 
@@ -17,6 +17,7 @@ import numpy as np
 from refinegems.load import load_all_media_from_db
 
 __author__ = "Famke Baeuerle"
+
 
 def get_default_uptake(model):
     """Determines which metabolites are used in the standard medium
@@ -34,7 +35,8 @@ def get_default_uptake(model):
             if value < 0:
                 default_uptake.append(index)
     return default_uptake
-    
+
+
 def get_missing_exchanges(model, medium):
     """Look for exchange reactions needed by the medium but not in the model
 
@@ -48,11 +50,12 @@ def get_missing_exchanges(model, medium):
     medium_list = medium['BiGG_EX'].dropna().tolist()
     missing_exchanges = []
     for exchange in medium_list:
-        try: 
+        try:
             model.reactions.get_by_id(exchange)
         except(KeyError):
             missing_exchanges.append(exchange)
     return missing_exchanges
+
 
 def modify_medium(medium, missing_exchanges):
     """Remove exchanges from medium that are not in the model
@@ -70,6 +73,7 @@ def modify_medium(medium, missing_exchanges):
         medium_dict.pop(exchange)
     return medium_dict
 
+
 def find_missing_essential(model, medium, default_uptake):
     """Report which exchange reactions are needed for growth
         combines default uptake and valid new medium
@@ -82,17 +86,18 @@ def find_missing_essential(model, medium, default_uptake):
     Returns:
         list: all metabolites which lead to zero growth if blocked
     """
-    medium.update({ i : 10.0 for i in default_uptake })
+    medium.update({i: 10.0 for i in default_uptake})
     med = model.medium
     model.medium = medium
     essential = []
     for metab in medium.keys():
         model.reactions.get_by_id(metab).lower_bound = 0
         sol = model.optimize()
-        if sol.objective_value < 1e-9: # and sol.objective_value > -1e-9: # == 0 no negative growth!
+        if sol.objective_value < 1e-9:  # and sol.objective_value > -1e-9: # == 0 no negative growth!
             essential.append(metab)
         model.reactions.get_by_id(metab).lower_bound = -10
     return essential
+
 
 def find_minimum_essential(medium, essential):
     """Report metabolites necessary for growth and not in custom medium
@@ -110,6 +115,7 @@ def find_minimum_essential(medium, essential):
             minimum.append(metab)
     return minimum
 
+
 def simulate_minimum_essential(model, medium, minimum):
     """Simulate growth with custom medium plus necessary uptakes
 
@@ -121,7 +127,7 @@ def simulate_minimum_essential(model, medium, minimum):
     Returns:
         float: growth value
     """
-    medium.update({ i : 10.0 for i in minimum })
+    medium.update({i: 10.0 for i in minimum})
     try:
         if (medium['EX_o2_e'] == 10.0):
             medium['EX_o2_e'] = 20.0
@@ -131,6 +137,7 @@ def simulate_minimum_essential(model, medium, minimum):
     model.medium = medium
     sol = model.optimize()
     return sol.objective_value
+
 
 def get_all_minimum_essential(model, mediumpath):
     """Returns metabolites necessary for growth and not in media
@@ -165,17 +172,24 @@ def get_growth_one_medium(model, medium):
         DataFrame: information on growth behaviour on medium
     """
     default_uptake = get_default_uptake(model)
-    missing_exchanges = get_missing_exchanges(model, medium) #
+    missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
     essential = find_missing_essential(model, medium_dict, default_uptake)
-    minimum = find_minimum_essential(medium, essential) 
-    
+    minimum = find_minimum_essential(medium, essential)
+
     medium_dict = modify_medium(medium, missing_exchanges)
-    growth_value = simulate_minimum_essential(model, medium_dict, minimum) #
-    doubling_time = (np.log(2)/growth_value) * 60
-    exchanges = [[medium['medium'][0]], essential, missing_exchanges, [growth_value], [doubling_time]]
-    df_growth = pd.DataFrame(exchanges, ['medium', 'essential', 'missing', 'growth_value [mmol/gDW·h]', 'doubling_time [min]']).T
+    growth_value = simulate_minimum_essential(model, medium_dict, minimum)
+    doubling_time = (np.log(2) / growth_value) * 60
+    exchanges = [[medium['medium'][0]], essential,
+                 missing_exchanges, [growth_value], [doubling_time]]
+    df_growth = pd.DataFrame(exchanges,
+                             ['medium',
+                              'essential',
+                              'missing',
+                              'growth_value [mmol/gDW·h]',
+                              'doubling_time [min]']).T
     return df_growth
+
 
 def get_growth_selected_media(model, mediumpath, media):
     """Simulates growth on all selected media
@@ -192,5 +206,7 @@ def get_growth_selected_media(model, mediumpath, media):
     selected_media = [x for x in all_media if x['medium'][0] in media]
     growth = pd.DataFrame()
     for medium in selected_media:
-        growth = growth.append(get_growth_one_medium(model, medium), ignore_index = True)
+        growth = growth.append(
+            get_growth_one_medium(model, medium), 
+            ignore_index=True)
     return growth

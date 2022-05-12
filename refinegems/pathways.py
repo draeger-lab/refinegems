@@ -15,6 +15,7 @@ from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term
 
 __author__ = "Famke Baeuerle"
 
+
 def load_model_enable_groups(modelpath):
     """loads model as document using libsbml
         enables groups extension
@@ -26,13 +27,14 @@ def load_model_enable_groups(modelpath):
         libsbml-document: loaded document by libsbml
     """
     reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath) #read from file
+    read = reader.readSBMLFromFile(modelpath)  # read from file
     groupextension = GroupsExtension()
-    groupURI = groupextension.getURI(3,1,1)
-    read.enablePackage(groupURI, "groups", True) #enable groups extension
-    read.setPkgRequired('groups', False) #make groups not required
+    groupURI = groupextension.getURI(3, 1, 1)
+    read.enablePackage(groupURI, "groups", True)  # enable groups extension
+    read.setPkgRequired('groups', False)  # make groups not required
     model = read.getModel()
     return model
+
 
 def extract_kegg_reactions(model):
     """extract KEGG Ids from reactions
@@ -55,13 +57,14 @@ def extract_kegg_reactions(model):
         for i in range(len(entries)):
             if 'KEGG' in entries[i].text:
                 kegg_reactions[reaction.getId()] = entries[i].text[15:]
-                
+
         # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
-        if len(kegg_ids) > 0: 
+        if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
 
     return kegg_reactions
+
 
 def extract_kegg_pathways(kegg_reactions):
     """finds pathway for KEGG reactions
@@ -77,16 +80,17 @@ def extract_kegg_pathways(kegg_reactions):
 
     for reaction in kegg_reactions.keys():
         kegg_reaction = k.get(kegg_reactions[reaction])
-        #print(kegg_reaction)
+        # print(kegg_reaction)
         dbentry = k.parse(kegg_reaction)
         # sometimes parse does not work -> try and except
         try:
             pathways = [x for x in dbentry['PATHWAY']]
-        except:
+        except BaseException:
             pathways = []
         kegg_pathways[reaction] = pathways
 
     return kegg_pathways
+
 
 def add_kegg_pathways(model, kegg_pathways):
     """add KEGG reactions as BQB_OCCURS_IN
@@ -108,6 +112,7 @@ def add_kegg_pathways(model, kegg_pathways):
     # works but better write this somewhere else?
     return model
 
+
 def get_pathway_groups(kegg_pathways):
     """group reaction into pathways
 
@@ -126,6 +131,7 @@ def get_pathway_groups(kegg_pathways):
                 pathway_groups[path].append(reaction)
     return pathway_groups
 
+
 def create_pathway_groups(model, pathway_groups):
     """use group module to add reactions to Kegg pathway
 
@@ -140,18 +146,18 @@ def create_pathway_groups(model, pathway_groups):
     group_list = groups.getListOfGroups()
     keys = list(pathway_groups.keys())
     num_reactions = [len(sub) for sub in list(pathway_groups.values())]
-    
+
     for i in range(len(pathway_groups)):
         group_list.createGroup()
         group_list[i].setName(keys[i])
-        group_list[i].setId(keys[i]) # important for validity (memote/cobra)
+        group_list[i].setId(keys[i])  # important for validity (memote/cobra)
         group_list[i].setMetaId("meta_" + keys[i])
         group_list[i].setKind('partonomy')
-        group_list[i].setSBOTerm("SBO:0000633") # NAME
+        group_list[i].setSBOTerm("SBO:0000633")  # NAME
         add_cv_term_pathways(keys[i], 'KEGG', group_list[i])
         for j in range(num_reactions[i]):
             group_list[i].createMember()
-    
+
     n_groups = groups.getNumGroups()
     group_list = groups.getListOfGroups()
 
@@ -160,10 +166,11 @@ def create_pathway_groups(model, pathway_groups):
         num_members = group_list[i].getNumMembers()
         member_list = group_list[i].getListOfMembers()
         reaction_list = pathway_groups[group]
-        for j in range(0, num_members): 
+        for j in range(0, num_members):
             member_list[j].setIdRef(reaction_list[j])
 
     return model
+
 
 def kegg_pathways(modelpath, new_filename):
     """Executes all steps to add KEGG pathways as groups
@@ -180,6 +187,7 @@ def kegg_pathways(modelpath, new_filename):
     print(reactions, pathways, pathway_groups)
 
     model_pathways = add_kegg_pathways(model, pathways)
-    model_pathway_groups = create_pathway_groups(model_pathways, pathway_groups)
+    model_pathway_groups = create_pathway_groups(
+        model_pathways, pathway_groups)
 
     write_to_file(model_pathway_groups, new_filename)

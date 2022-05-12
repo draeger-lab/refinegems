@@ -11,6 +11,7 @@ import re
 
 __author__ = "Famke Baeuerle"
 
+
 def get_modelseed_compounds(path):
     """extracts compounds from modelseed which have BiGG Ids
 
@@ -32,7 +33,9 @@ def get_modelseed_compounds(path):
 
     com['BiGG'] = com.apply(lambda row: get_bigg_ids(row['aliases']), axis=1)
 
-    return com.loc[:, ['id', 'name', 'formula', 'mass', 'charge', 'BiGG']].dropna(subset=['BiGG'])
+    return com.loc[:, ['id', 'name', 'formula', 'mass',
+                       'charge', 'BiGG']].dropna(subset=['BiGG'])
+
 
 def correct_charges_modelseed(model, modelseed_compounds):
     """Adds charges taken from the ModelSEED database to metabolites which have no defined charge
@@ -47,24 +50,28 @@ def correct_charges_modelseed(model, modelseed_compounds):
     spe = model.getListOfSpecies()
     mulchar = dict()
     for i in spe:
-        if not i.getPlugin('fbc').isSetCharge(): # we are only interested in metab without charge
+        if not i.getPlugin('fbc').isSetCharge(
+        ):  # we are only interested in metab without charge
             bigg = i.getId()[2:-2]
-            if len(modelseed_compounds[modelseed_compounds['BiGG'] == bigg]['charge'].array) == 1: #eindeutig
-                charge = modelseed_compounds[modelseed_compounds['BiGG'] == bigg]['charge'].array[0]
+            if len(modelseed_compounds[modelseed_compounds['BiGG']
+                   == bigg]['charge'].array) == 1:  # eindeutig
+                charge = modelseed_compounds[modelseed_compounds['BiGG']
+                                             == bigg]['charge'].array[0]
                 i.getPlugin('fbc').setCharge(int(charge))
             elif len(modelseed_compounds[modelseed_compounds['BiGG'] == bigg]['charge'].array) > 1:
-                charges = modelseed_compounds[modelseed_compounds['BiGG'] == bigg]['charge'].array
-                if all(x==charges[0] for x in charges):
+                charges = modelseed_compounds[modelseed_compounds['BiGG']
+                                              == bigg]['charge'].array
+                if all(x == charges[0] for x in charges):
                     charge = charges[0]
                     i.getPlugin('fbc').setCharge(int(charge))
                 else:
                     mulchar[bigg] = charges
-    
+
     return model, mulchar
 
-    
+
 def correct_charges(model, new_file_path, modelseed_path):
-    """wrapper function which completes the steps to charge correction 
+    """wrapper function which completes the steps to charge correction
 
     Args:
         model (libsbml-model): model loaded with libsbml
@@ -75,7 +82,8 @@ def correct_charges(model, new_file_path, modelseed_path):
         dict: BiGG Id and possible charges of metabolites
     """
     modelseed_compounds = get_modelseed_compounds(modelseed_path)
-    model_corr, multiple_charges = correct_charges_modelseed(model, modelseed_compounds)
+    model_corr, multiple_charges = correct_charges_modelseed(
+        model, modelseed_compounds)
     write_to_file(model_corr, new_file_path)
-    
+
     return multiple_charges

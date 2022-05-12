@@ -31,7 +31,8 @@ def get_modelseed_compounds(path):
 
     com['BiGG'] = com.apply(lambda row: get_bigg_ids(row['aliases']), axis=1)
 
-    return com.loc[:, ['id', 'name', 'formula', 'mass', 'charge', 'BiGG']].dropna(subset=['BiGG'])
+    return com.loc[:, ['id', 'name', 'formula', 'mass',
+                       'charge', 'BiGG']].dropna(subset=['BiGG'])
 
 
 def get_model_charges(model):
@@ -47,8 +48,14 @@ def get_model_charges(model):
     for metab in model.metabolites:
         charges[metab.id[:-2]] = [metab.charge, metab.formula]
 
-    df_charges = pd.DataFrame.from_dict(charges, orient='index', columns=[
-                                        'charge_model', 'formula_model']).reset_index().rename(columns={'index': 'BiGG'})
+    df_charges = pd.DataFrame.from_dict(
+        charges,
+        orient='index',
+        columns=[
+            'charge_model',
+            'formula_model']).reset_index().rename(
+        columns={
+            'index': 'BiGG'})
 
     return df_charges
 
@@ -85,7 +92,8 @@ def compare_model_modelseed(model_charges, modelseed_charges):
     df_comp = pd.merge(model_charges, modelseed_charges, on='BiGG', how='left')
 
     def f(x):
-        return True if float(x['charge_model']) == x['charge_modelseed'] else False
+        return True if float(
+            x['charge_model']) == x['charge_modelseed'] else False
 
     def g(x):
         return True if x['formula_model'] == x['formula_modelseed'] else False
@@ -105,7 +113,8 @@ def get_charge_mismatch(df_comp):
     Returns:
         df: table containing metabolites with charge mismatch
     """
-    return df_comp.loc[~df_comp['charge_match']].dropna(subset=['charge_modelseed'])
+    return df_comp.loc[~df_comp['charge_match']].dropna(
+        subset=['charge_modelseed'])
 
 
 def get_formula_mismatch(df_comp):
@@ -117,7 +126,8 @@ def get_formula_mismatch(df_comp):
     Returns:
         df: table containing metabolites with formula mismatch
     """
-    return df_comp.loc[~df_comp['formula_match']].dropna(subset=['formula_modelseed'])
+    return df_comp.loc[~df_comp['formula_match']].dropna(
+        subset=['formula_modelseed'])
 
 
 def get_compared_formulae(formula_mismatch):
@@ -131,9 +141,9 @@ def get_compared_formulae(formula_mismatch):
     """
 
     def formula_comparison(f1, f2):
-        formula_pattern = "[A-Z][a-z]?\d*"
+        formula_pattern = "[A-Z][a-z]?\\d*"
         atom_pattern = '[A-Z][a-z]?'
-        atom_number_pattern = '\d+'
+        atom_number_pattern = '\\d+'
         difference = {}
         f1_dict = {}
         f2_dict = {}
@@ -170,7 +180,8 @@ def get_compared_formulae(formula_mismatch):
         return difference
 
     formula_mismatch['formula_comparison'] = formula_mismatch.apply(
-        lambda row: formula_comparison(row['formula_model'], row['formula_modelseed']), axis=1)
+        lambda row: formula_comparison(
+            row['formula_model'], row['formula_modelseed']), axis=1)
 
     return formula_mismatch
 

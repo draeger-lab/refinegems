@@ -11,7 +11,8 @@ from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions, a
 from refinegems.load import write_to_file
 
 __author__ = "Famke Baeuerle"
-            
+
+
 def add_bigg_metab(entity_list):
     """adds the BiGG Id of metabolites as URL to the annotation field
 
@@ -20,10 +21,11 @@ def add_bigg_metab(entity_list):
     """
     for entity in entity_list:
         bigg_id = entity.getId()
-        bigg_id = bigg_id[2:] 
-        bigg_id = bigg_id[:-2]      
+        bigg_id = bigg_id[2:]
+        bigg_id = bigg_id[:-2]
         add_cv_term_metabolites(bigg_id, 'BIGG', entity)
-            
+
+
 def add_bigg_reac(entity_list):
     """adds the BiGG Id of reactions as URL to the annotation field
 
@@ -46,33 +48,33 @@ def cv_notes_metab(species_list):
     """
 
     for species in species_list:
-        notes_list=[]
-        elem_used=[]
+        notes_list = []
+        elem_used = []
         notes_string = species.getNotesString().split('\n')
         for elem in notes_string:
             for db in metabol_db_dict.keys():
-                if '<p>'+db in elem:
+                if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
                     fill_in = elem.strip()[:-4].split(': ')[1]
-                    if (';')  in fill_in and db != 'INCHI':
+                    if (';') in fill_in and db != 'INCHI':
                         entries = fill_in.split(';')
                         for entry in entries:
                             add_cv_term_metabolites(entry.strip(), db, species)
                     else:
                         add_cv_term_metabolites(fill_in, db, species)
-                        
+
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
                 notes_list.append(elem)
-        
-        ####Adding new, shortened notes
-        new_notes = ' '.join([str(elem)+'\n' for elem in notes_list])
+
+        # Adding new, shortened notes
+        new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
         species.unsetNotes()
         species.setNotes(new_notes)
-        #print(species.getNotesString())
-                    
-                    
+        # print(species.getNotesString())
+
+
 def cv_notes_reac(reaction_list):
     """checks the notes field for information which should be in the annotation field
        removes entry from notes and adds it as URL to the CVTerms of a reaction
@@ -82,32 +84,33 @@ def cv_notes_reac(reaction_list):
     """
 
     for reaction in reaction_list:
-        notes_list=[]
-        elem_used=[]
+        notes_list = []
+        elem_used = []
         notes_string = reaction.getNotesString().split('\n')
-        
+
         for elem in notes_string:
             for db in reaction_db_dict.keys():
-                if '<p>'+db in elem:
+                if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
                     fill_in = elem.strip()[:-4].split(': ')[1]
-                    if (';')  in fill_in:
+                    if (';') in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
                             add_cv_term_reactions(entry.strip(), db, reaction)
                     else:
                         add_cv_term_reactions(fill_in, db, reaction)
-                        
+
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
                 notes_list.append(elem)
-        
-        ####Adding new, shortened notes
-        new_notes = ' '.join([str(elem)+'\n' for elem in notes_list])
+
+        # Adding new, shortened notes
+        new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
         reaction.unsetNotes()
         reaction.setNotes(new_notes)
-        
+
+
 def polish_entities(entity_list, metabolite):
     """removes Notes field from entity
        sets boundary condition and constant if not set for a metabolite
@@ -118,12 +121,13 @@ def polish_entities(entity_list, metabolite):
     """
     for entity in entity_list:
         entity.unsetNotes()
-        if metabolite: # some polishing
+        if metabolite:  # some polishing
             if not entity.getBoundaryCondition():
                 entity.setBoundaryCondition(False)
             if not entity.getConstant():
                 entity.setConstant(False)
-                
+
+
 def set_units(model):
     """Adds units to parameters in model
 
@@ -133,7 +137,8 @@ def set_units(model):
     for param in model.getListOfParameters():
         if param.isSetUnits() == False:
             param.setUnits('mmol_per_gDW_per_hr')
-                
+
+
 def cv_ncbiprotein(gene_list, email):
     """Adds NCBI Id to genes as annotation
 
@@ -142,12 +147,16 @@ def cv_ncbiprotein(gene_list, email):
         email (string): User Email to access the Entrez database
     """
     Entrez.email = email
-    
+
     def get_name_locus_tag(ncbi_id):
-        handle = Entrez.efetch(db="protein", id=ncbi_id, rettype="gbwithparts", retmode='text')
+        handle = Entrez.efetch(
+            db="protein",
+            id=ncbi_id,
+            rettype="gbwithparts",
+            retmode='text')
         records = SeqIO.parse(handle, "gb")
 
-        for i,record in enumerate(records):
+        for i, record in enumerate(records):
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
@@ -155,16 +164,17 @@ def cv_ncbiprotein(gene_list, email):
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
         id_string = gene.getId().split('_')
-        
+
         for entry in id_string:
-            if (entry[:1] == 'Q'): #maybe change this to user input
+            if (entry[:1] == 'Q'):  # maybe change this to user input
                 add_cv_term_genes(entry, 'NCBI', gene)
                 name, locus = get_name_locus_tag(entry)
                 gene.setName(name)
                 gene.setLabel(locus)
 
         gene.unsetNotes()
-            
+
+
 def polish_carveme(model, new_filename, email):
     """completes all steps to polish a model created with CarveMe
 
@@ -175,7 +185,7 @@ def polish_carveme(model, new_filename, email):
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-    
+
     set_units(model)
     add_bigg_metab(metab_list)
     add_bigg_reac(reac_list)
@@ -184,5 +194,5 @@ def polish_carveme(model, new_filename, email):
     cv_ncbiprotein(gene_list, email)
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
-    
+
     write_to_file(model, new_filename)

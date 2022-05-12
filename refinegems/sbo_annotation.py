@@ -12,6 +12,7 @@ from refinegems.load import write_to_file
 
 __author__ = "Elisabeth Fritze"
 
+
 def getCompartmentlessSpeciesId(speciesReference):
     """determines wheter a species has compartment by its refernece
 
@@ -27,6 +28,7 @@ def getCompartmentlessSpeciesId(speciesReference):
     wasteStringLen = len(compartment) + 1
     return(speciesId[:-wasteStringLen])
 
+
 def getCompartmentFromSpeciesRef(speciesReference):
     """extracts compartment from a species by its reference
 
@@ -41,9 +43,11 @@ def getCompartmentFromSpeciesRef(speciesReference):
     compartment = species.getCompartment()
     return compartment
 
+
 def returnCompartment(id):
     """helper to split compartment id"""
     return id[-1]
+
 
 def getReactantIds(reac):
     """extracts reactants (metabolites) of reaction
@@ -59,6 +63,7 @@ def getReactantIds(reac):
         list.append(metabolite.getSpecies())
     return list
 
+
 def getCompartmentlessReactantIds(reac):
     """extracts reactants which have no compartment information
 
@@ -72,6 +77,7 @@ def getCompartmentlessReactantIds(reac):
     for metabolite in reac.getListOfReactants():
         list.append(getCompartmentlessSpeciesId(metabolite))
     return list
+
 
 def getProductIds(reac):
     """extracts products (metabolites) of reaction
@@ -87,6 +93,7 @@ def getProductIds(reac):
         list.append(metabolite.getSpecies())
     return list
 
+
 def getCompartmentlessProductIds(reac):
     """extracts products which have no compartment information
 
@@ -100,6 +107,7 @@ def getCompartmentlessProductIds(reac):
     for metabolite in reac.getListOfProducts():
         list.append(getCompartmentlessSpeciesId(metabolite))
     return list
+
 
 def getListOfMetabolites(reac):
     """extracts list of metabolites of the reaction
@@ -117,6 +125,7 @@ def getListOfMetabolites(reac):
         list.append(product)
     return list
 
+
 def getMetaboliteIds(reac):
     """extracts list of metabolite ids of reaction
 
@@ -128,6 +137,7 @@ def getMetaboliteIds(reac):
     """
     return getReactantIds(reac) + getProductIds(reac)
 
+
 def getCompartmentlessMetaboliteIds(reac):
     """extracts metabolites which have no compartment information
 
@@ -137,7 +147,9 @@ def getCompartmentlessMetaboliteIds(reac):
     Returns:
         list: all metabolites which have no compartment
     """
-    return getCompartmentlessReactantIds(reac) + getCompartmentlessProductIds(reac)
+    return getCompartmentlessReactantIds(
+        reac) + getCompartmentlessProductIds(reac)
+
 
 def getReactantCompartmentList(reac):
     """extracts compartments of reactants
@@ -154,6 +166,7 @@ def getReactantCompartmentList(reac):
         compartments.append(compartment)
     return set(compartments)
 
+
 def getProductCompartmentList(reac):
     """extracts compartments of products
 
@@ -168,6 +181,7 @@ def getProductCompartmentList(reac):
         compartment = getCompartmentFromSpeciesRef(metabolite)
         compartments.append(compartment)
     return set(compartments)
+
 
 def getCompartmentList(reac):
     """extracts compartments of metabolites
@@ -184,6 +198,7 @@ def getCompartmentList(reac):
         compartments.append(getCompartmentFromSpeciesRef(metabolite))
     return set(compartments)
 
+
 def getCompartmentDict(reac):
     """sorts metabolites by compartment
 
@@ -195,11 +210,13 @@ def getCompartmentDict(reac):
     """
     compartmentDict = {}
     for compartment in getCompartmentList(reac):
-        compartmentDict[compartment]=[]
+        compartmentDict[compartment] = []
         for metabolite in getListOfMetabolites(reac):
             if '_' + compartment in metabolite.getSpecies():
-                compartmentDict[compartment].append(getCompartmentlessSpeciesId(metabolite))
+                compartmentDict[compartment].append(
+                    getCompartmentlessSpeciesId(metabolite))
     return compartmentDict
+
 
 def moreThanTwoCompartmentTransport(reac):
     """check if reaction traverses more than 2 compartments
@@ -211,6 +228,7 @@ def moreThanTwoCompartmentTransport(reac):
         bool: True if reaction traverses more than 2 compartments
     """
     return len(getCompartmentList(reac)) > 2
+
 
 def isProtonTransport(reac):
     """check if reaction is proton transport
@@ -231,6 +249,7 @@ def isProtonTransport(reac):
             protonTransport = reactant == product == 'M_h'
     return protonTransport
 
+
 def soleProtonTransported(reac):
     """check if reaction is transport powered by one H
 
@@ -245,7 +264,9 @@ def soleProtonTransported(reac):
     for compartment in dict:
         if len(dict[compartment]) == 1:
             soleProton = soleProton or dict[compartment][0] == "M_h"
-    return soleProton and not isProtonTransport(reac) and not moreThanTwoCompartmentTransport(reac)
+    return soleProton and not isProtonTransport(
+        reac) and not moreThanTwoCompartmentTransport(reac)
+
 
 def getECNums(reac):
     """extracts EC-Code from the reaction annotations
@@ -263,6 +284,7 @@ def getECNums(reac):
             ECNums.append(line.split('ec-code/')[1][:-3])
     return ECNums
 
+
 def splitTransportBiochem(reac):
     """test if reaction traverses more than 1 compartment and set SBO Term
 
@@ -274,6 +296,7 @@ def splitTransportBiochem(reac):
     else:
         reac.setSBOTerm('SBO:0000176')
 
+
 def checkSink(reac):
     """tests if reac is sink and sets SBO Term if true
 
@@ -283,6 +306,7 @@ def checkSink(reac):
     if "_SINK_" in reac.getId() or "_SK_" in reac.getId():
         reac.setSBOTerm('SBO:0000632')
 
+
 def checkExchange(reac):
     """tests if reac is exchange and sets SBO Term if true
 
@@ -291,7 +315,8 @@ def checkExchange(reac):
     """
     if "_EX_" in reac.getId():
         reac.setSBOTerm('SBO:0000627')
-        
+
+
 def checkDemand(reac):
     """tests if reac is demand and sets SBO Term if true
 
@@ -300,8 +325,9 @@ def checkDemand(reac):
     """
     if "_DM_" in reac.getId():
         reac.setSBOTerm('SBO:0000628')
-        
-def checkBiomass(reac): #memote says growth is biomass
+
+
+def checkBiomass(reac):  # memote says growth is biomass
     """tests if reac is biomass / growth and sets SBO Term if true
 
     Args:
@@ -309,6 +335,7 @@ def checkBiomass(reac): #memote says growth is biomass
     """
     if '_BIOMASS_' in reac.getId() or 'Growth' in reac.getId():
         reac.setSBOTerm('SBO:0000629')
+
 
 def checkPassiveTransport(reac):
     """tests if reac is passive transport and sets SBO Term if true
@@ -324,6 +351,7 @@ def checkPassiveTransport(reac):
         if returnCompartment(reactant) != returnCompartment(product):
             reac.setSBOTerm('SBO:0000658')
 
+
 def checkActiveTransport(reac):
     """tests if reac is active transport (uses atp/pep) and sets SBO Term if true
 
@@ -338,6 +366,7 @@ def checkActiveTransport(reac):
         if reac.getReversible():
             print("Error, active reaction but reversible " + reac.getId())
 
+
 def checkCoTransport(reac):
     """tests if reac is co-transport and sets SBO Term if true
 
@@ -347,6 +376,7 @@ def checkCoTransport(reac):
     reactants = reac.getListOfReactants()
     if len(reactants) > 1:
         reac.setSBOTerm('SBO:0000654')
+
 
 def splitSymAntiPorter(reac):
     """tests if reac is sym- or antiporter and sets SBO Term if true
@@ -374,6 +404,7 @@ def checkPhosphorylation(reac):
     if ' phosphorylase' in name or 'kinase' in name:
         reac.setSBOTerm('SBO:0000216')
 
+
 def hasReactantPair(reac, met1, met2):
     """checks if a pair of metabolites is present in reaction
        needed for special reactions like redox or deamination
@@ -388,7 +419,9 @@ def hasReactantPair(reac, met1, met2):
     """
     reactants = getCompartmentlessReactantIds(reac)
     products = getCompartmentlessProductIds(reac)
-    return (met1 in reactants and met2 in products) or (met2 in reactants and met1 in products)
+    return (met1 in reactants and met2 in products) or (
+        met2 in reactants and met1 in products)
+
 
 def checkRedox(reac):
     """tests if reac is redox and sets SBO Term if true
@@ -406,6 +439,7 @@ def checkRedox(reac):
     if isRedox:
         reac.setSBOTerm('SBO:0000200')
 
+
 def checkGlycosylation(reac):
     """tests if reac is glycosylation and sets SBO Term if true
 
@@ -413,10 +447,13 @@ def checkGlycosylation(reac):
         reac (libsbml-reaction): libsbml reaction from sbml model
     """
     isGlycosylation = False
-    isGlycosylation = isGlycosylation or hasReactantPair(reac, 'M_ppi', 'M_prpp')
-    isGlycosylation = isGlycosylation or hasReactantPair(reac, 'M_udpglcur', 'M_udp')
+    isGlycosylation = isGlycosylation or hasReactantPair(
+        reac, 'M_ppi', 'M_prpp')
+    isGlycosylation = isGlycosylation or hasReactantPair(
+        reac, 'M_udpglcur', 'M_udp')
     if isGlycosylation:
         reac.setSBOTerm('SBO:0000217')
+
 
 def checkDecarbonylation(reac):
     """tests if reac is decarbonylation and sets SBO Term if true
@@ -428,6 +465,7 @@ def checkDecarbonylation(reac):
         if 'M_co' in getCompartmentlessProductIds(reac):
             reac.setSBOTerm('SBO:0000400')
 
+
 def checkDecarboxylation(reac):
     """tests if reac is decarboxylation and sets SBO Term if true
 
@@ -437,6 +475,7 @@ def checkDecarboxylation(reac):
     if not reac.getReversible():
         if 'M_co2' in getCompartmentlessProductIds(reac):
             reac.setSBOTerm('SBO:0000399')
+
 
 def checkDeamination(reac):
     """_tests if reac is deamination and sets SBO Term if true
@@ -450,6 +489,7 @@ def checkDeamination(reac):
         if waterAdded and nh4Removed:
             reac.setSBOTerm('SBO:0000401')
 
+
 def checkRedoxViaEC(reac):
     """tests if reac is redox by its EC-Code and sets SBO Term if true
 
@@ -459,6 +499,7 @@ def checkRedoxViaEC(reac):
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('1'):
             reac.setSBOTerm('SBO:0000200')
+
 
 def checkAcetylationViaEC(reac):
     """tests if reac is acetylation by its EC-Code and sets SBO Term if true
@@ -470,6 +511,7 @@ def checkAcetylationViaEC(reac):
         if getECNums(reac)[0].startswith('2.3.1'):
             reac.setSBOTerm('SBO:0000215')
 
+
 def checkGlycosylationViaEC(reac):
     """tests if reac is glycosylation by its EC-Code and sets SBO Term if true
 
@@ -479,6 +521,7 @@ def checkGlycosylationViaEC(reac):
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.4'):
             reac.setSBOTerm('SBO:0000217')
+
 
 def checkMethylationViaEC(reac):
     """tests if reac is methylation by its EC-Code and sets SBO Term if true
@@ -490,6 +533,7 @@ def checkMethylationViaEC(reac):
         if getECNums(reac)[0].startswith('2.1.1'):
             reac.setSBOTerm('SBO:0000214')
 
+
 def checkTransaminationViaEC(reac):
     """tests if reac is transamination by its EC-Code and sets SBO Term if true
 
@@ -499,6 +543,7 @@ def checkTransaminationViaEC(reac):
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.6.1'):
             reac.setSBOTerm('SBO:0000403')
+
 
 def checkDeaminationViaEC(reac):
     """tests if reac is deamination by its EC-Code and sets SBO Term if true
@@ -510,6 +555,7 @@ def checkDeaminationViaEC(reac):
         if getECNums(reac)[0].startswith('3.5.4'):
             reac.setSBOTerm('SBO:0000401')
 
+
 def checkDecarboxylationViaEC(reac):
     """tests if reac is decarboxylation by its EC-Code and sets SBO Term if true
 
@@ -519,6 +565,7 @@ def checkDecarboxylationViaEC(reac):
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('4.1.1'):
             reac.setSBOTerm('SBO:0000399')
+
 
 def checkIsomerisationViaEC(reac):
     """tests if reac is isomerisation by its EC-Code and sets SBO Term if true
@@ -530,6 +577,7 @@ def checkIsomerisationViaEC(reac):
         if getECNums(reac)[0].startswith('5'):
             reac.setSBOTerm('SBO:0000377')
 
+
 def checkHydrolysisViaEC(reac):
     """tests if reac is hydrolysis by its EC-Code and sets SBO Term if true
 
@@ -540,13 +588,14 @@ def checkHydrolysisViaEC(reac):
         if getECNums(reac)[0].startswith('3'):
             reac.setSBOTerm('SBO:0000376')
 
+
 def addSBOviaEC(reac, cur):
     """Adds SBO terms based on EC numbers given in the annotations of a reactions
 
     Args:
         reac (libsbml-reaction): libsbml reaction from sbml model
         cur (psycopg2.connect.cursor): used to access the psql database
-    """    
+    """
     if len(getECNums(reac)) == 1:
         ECnum = getECNums(reac)[0]
         splittedEC = ECnum.split(".")
@@ -558,7 +607,7 @@ def addSBOviaEC(reac, cur):
                                      FROM ec_to_sbo t
                                     WHERE t.ecnum = %s""", (ECnum,))
             result4 = cur.fetchone()
-            if result4 != None:
+            if result4 is not None:
                 sbo4 = result4[0]
                 reac.setSBOTerm(sbo4)
             else:
@@ -566,7 +615,7 @@ def addSBOviaEC(reac, cur):
                                           FROM ec_to_sbo t
                                          WHERE t.ecnum = %s""", (ECpos1to3,))
                 result3 = cur.fetchone()
-                if result3 != None:
+                if result3 is not None:
                     sbo3 = result3[0]
                     reac.setSBOTerm(sbo3)
                 else:
@@ -574,7 +623,7 @@ def addSBOviaEC(reac, cur):
                                               FROM ec_to_sbo t
                                              WHERE t.ecnum = %s""", (ECpos1to2,))
                     result2 = cur.fetchone()
-                    if result2 != None:
+                    if result2 is not None:
                         sbo2 = result2[0]
                         reac.setSBOTerm(sbo2)
                     else:
@@ -582,9 +631,10 @@ def addSBOviaEC(reac, cur):
                                                   FROM ec_to_sbo t
                                                  WHERE t.ecnum = %s""", (ECpos1,))
                         result1 = cur.fetchone()
-                        if result1 != None:
+                        if result1 is not None:
                             sbo1 = result1[0]
                             reac.setSBOTerm(sbo1)
+
 
 def addSBOfromDB(reac, cur):
     """Adds SBO term based on bigg id of a reaction
@@ -596,12 +646,12 @@ def addSBOfromDB(reac, cur):
     Returns:
         bool: True if SBO Term was changed
     """
-    reacid = reac.getId()  
+    reacid = reac.getId()
     query = cur.execute("SELECT t.sbo_term \
                        FROM bigg_to_sbo t \
                       WHERE  t.bigg_reactionid = %s", (reacid,))
     result = cur.fetchone()
-    if result != None:
+    if result is not None:
         sbo_term = result[0]
         reac.setSBOTerm(sbo_term)
         return True
@@ -612,7 +662,7 @@ def addSBOfromDB(reac, cur):
 def sbo_annotation(model_libsbml, database_user, database_name, new_filename):
     """executes all steps to annotate sbo terms to a given model
        (former main function of original script by Elisabeth Fritze)
-    
+
     Args:
         model_libsbml (libsbml-model): model loaded with libsbml
         database_user (Str): username for postgresql database
@@ -647,7 +697,7 @@ def sbo_annotation(model_libsbml, database_user, database_name, new_filename):
                 checkDecarboxylation(reaction)
                 checkDeamination(reaction)
                 checkPhosphorylation(reaction)
-    
+
     write_to_file(model_libsbml, new_filename)
     cur.close()
     conn.close()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Provides functions to investigate the model and test with memote
 
-These functions enable simple testing of any model using memote and 
+These functions enable simple testing of any model using memote and
 access to its number of reactions, metabolites and genes.
 """
 
@@ -11,7 +11,7 @@ import json
 import pandas as pd
 from memote.support import consistency
 # needed by memote.support.consitency
-from memote.support import consistency_helpers as con_helpers 
+from memote.support import consistency_helpers as con_helpers
 from refinegems.load import load_model_cobra, load_model_libsbml
 
 __author__ = "Famke Baeuerle"
@@ -37,7 +37,8 @@ def run_memote(model):
         float: memote score of model
     """
     ret, res = memote.suite.api.test_model(model, sbml_version=None, results=True,
-                                            pytest_args=None, exclusive=None, skip=None, experimental=None, solver_timeout=10)
+                                           pytest_args=None, exclusive=None, skip=None, 
+                                           experimental=None, solver_timeout=10)
     snap = memote.suite.api.snapshot_report(res, html=False)
     result = json.loads(snap)
     totalScore = result['score']['total_score']
@@ -72,26 +73,27 @@ def get_orphans_deadends_disconnected(model):
     orphans = consistency.find_orphans(model)
     deadends = consistency.find_deadends(model)
     disconnected = consistency.find_disconnected(model)
-    
+
     orphan_list = []
     if len(orphans) > 0:
         for orphan in orphans:
             orphan_list.append(orphan.id)
-    
+
     deadend_list = []
     if len(deadends) > 0:
         for deadend in deadends:
             deadend_list.append(deadend.id)
-            
+
     disconnected_list = []
     if len(disconnected) > 0:
         for disc in disconnected:
             disconnected_list.append(disc.id)
-    
+
     return orphan_list, deadend_list, disconnected_list
 
+
 def get_mass_charge_unbalanced(model):
-    """creates lists of mass and charge unbalanced reactions, 
+    """creates lists of mass and charge unbalanced reactions,
        without exchange reactions since they are unbalanced per definition
 
     Args:
@@ -100,22 +102,24 @@ def get_mass_charge_unbalanced(model):
     Returns:
         tuple: (list of mass unbalanced, charge unbalanced reactions)
     """
-    
-    mass_unbalanced = consistency.find_mass_unbalanced_reactions(model.reactions)
-    charge_unbalanced = consistency.find_charge_unbalanced_reactions(model.reactions)
-    
+
+    mass_unbalanced = consistency.find_mass_unbalanced_reactions(
+        model.reactions)
+    charge_unbalanced = consistency.find_charge_unbalanced_reactions(
+        model.reactions)
+
     mass_list = []
     if len(mass_unbalanced) > 0:
         for reac in mass_unbalanced:
             if (reac.id[:2] != 'EX'):
                 mass_list.append(reac.id)
-    
+
     charge_list = []
     if len(charge_unbalanced) > 0:
         for reac in charge_unbalanced:
             if (reac.id[:2] != 'EX'):
                 charge_list.append(reac.id)
-                
+
     return mass_list, charge_list
 
 
@@ -124,18 +128,33 @@ def get_model_info(modelpath):
 
     Args:
         modelpath (string): path to model file
-        
+
     Returns:
         DataFrame: overview on model parameters
     """
     model_libsbml = load_model_libsbml(modelpath)
     model_cobra = load_model_cobra(modelpath)
     name, reac, metab, genes = initial_analysis(model_libsbml)
-    orphans, deadends, disconnected = get_orphans_deadends_disconnected(model_cobra)
+    orphans, deadends, disconnected = get_orphans_deadends_disconnected(
+        model_cobra)
     mass_unbal, charge_unbal = get_mass_charge_unbalanced(model_cobra)
-    model_info = pd.DataFrame([name, reac, metab, genes,
-                                orphans, deadends, disconnected, mass_unbal, charge_unbal], 
-                              ['model', '#reactions', '#metabolites', '#genes',
-                                'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
-    
+    model_info = pd.DataFrame([name,
+                               reac,
+                               metab,
+                               genes,
+                               orphans,
+                               deadends,
+                               disconnected,
+                               mass_unbal,
+                               charge_unbal],
+                              ['model',
+                               '#reactions',
+                               '#metabolites',
+                               '#genes',
+                               'orphans',
+                               'deadends',
+                               'disconnected',
+                               'mass unbalanced',
+                               'charge unbalanced']).T
+
     return model_info

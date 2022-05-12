@@ -5,11 +5,13 @@ Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups).
 """
 
-import cobra, os
+import cobra
+import os
 import pandas as pd
 from libsbml import SBMLReader, writeSBMLToFile
 
 __author__ = "Famke Baeuerle"
+
 
 def load_model_cobra(modelpath):
     """loads model using cobrapy
@@ -34,9 +36,10 @@ def load_model_libsbml(modelpath):
         libsbml-model: loaded model by libsbml
     """
     reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath) #read from file
+    read = reader.readSBMLFromFile(modelpath)  # read from file
     mod = read.getModel()
     return mod
+
 
 def load_document_libsbml(modelpath):
     """loads model document using libsbml
@@ -48,7 +51,7 @@ def load_document_libsbml(modelpath):
         libsbml-document: loaded document by libsbml
     """
     reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath) #read from file
+    read = reader.readSBMLFromFile(modelpath)  # read from file
     return read
 
 
@@ -62,8 +65,8 @@ def load_medium_custom(mediumpath):
         df: pandas dataframe of csv
     """
     medium = pd.read_csv(mediumpath, sep=';')
-    medium['BiGG_R']='R_EX_'+ medium['BiGG']+ '_e'
-    medium['BiGG_EX']='EX_'+ medium['BiGG']+ '_e'
+    medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
+    medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
 
 
@@ -79,9 +82,10 @@ def load_medium_from_db(mediumpath, mediumname):
     """
     medium = pd.read_csv(mediumpath, sep=';')
     medium = medium.loc[medium['medium'] == mediumname]
-    medium['BiGG_R']='R_EX_'+ medium['BiGG']+ '_e'
-    medium['BiGG_EX']='EX_'+ medium['BiGG']+ '_e'
+    medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
+    medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
+
 
 def load_all_media_from_db(mediumpath):
     """Helper function to extract media definitions from media_db.csv
@@ -93,8 +97,8 @@ def load_all_media_from_db(mediumpath):
         df: pandas dataframe of csv with metabs added as BiGG_EX exchange reactions
     """
     media = pd.read_csv(mediumpath, sep=';')
-    media['BiGG_R']='R_EX_'+ media['BiGG']+ '_e'
-    media['BiGG_EX']='EX_'+ media['BiGG']+ '_e'
+    media['BiGG_R'] = 'R_EX_' + media['BiGG'] + '_e'
+    media['BiGG_EX'] = 'EX_' + media['BiGG'] + '_e'
 
     media['group'] = media['medium'].ne(media['medium'].shift()).cumsum()
     grouped = media.groupby('group')
@@ -102,6 +106,7 @@ def load_all_media_from_db(mediumpath):
     for name, data in grouped:
         media_dfs.append(data.reset_index(drop=True))
     return media_dfs
+
 
 def write_to_file(model, new_filename):
     """Writes modified model to new file
@@ -113,7 +118,8 @@ def write_to_file(model, new_filename):
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
     print("Modified model written to " + new_filename)
-    
+
+
 def write_report(dataframe, filepath):
     """Writes reports stored in dataframes to xlsx file
 
