@@ -34,9 +34,6 @@
             
   <section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this headline">¶</a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</section>
 <section id="module-refinegems.charges">
 <span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this headline">¶</a></h2>
 <p>Provides functions for adding charges to metabolites</p>
@@ -1350,8 +1347,75 @@ access to its number of reactions, metabolites and genes.</p>
 </dd></dl>
 
 </section>
-<section id="module-refinegems">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-refinegems" title="Permalink to this headline">¶</a></h2>
+<section id="refinegems-cvterms-module">
+<h2>refinegems.cvterms module<a class="headerlink" href="#refinegems-cvterms-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-refinegems.cvterms"></span><p>Helper module to work with annotations (CVTerms)</p>
+<p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_genes">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a gene</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-gene): gene to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_metabolites">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_metabolites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metab</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_metabolites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a metabolite</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-species): metabolite to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_pathways">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_pathways" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a groups pathway</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+metab (libsbml-group): pathway to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_reactions">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_reactions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add CVTerm to a reaction</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+reac (libsbml-reaction): reaction to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.parse_id_from_cv_term">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">parse_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.parse_id_from_cv_term" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract id for a specific database from CVTerm</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
+db_id (string): database of interes</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: ids of entity belonging to db_id</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="refinegems-strains-module">
+<h2>refinegems.strains module<a class="headerlink" href="#refinegems-strains-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-refinegems.strains"></span><p>Implements functions to use refinegems with models of the same bacterium but different strains</p>
 </section>
 </section>
 
