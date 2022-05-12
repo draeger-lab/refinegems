@@ -56,17 +56,9 @@ def main():
                 
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed(config['modelseedpath'], model_cobra)
-                
+            
             if (config['media_db'] != None):
-                df_list = []
-                for medium in config['media']: # ACHTUNG, so funktioniert das nur wenn das model gleich bleibt.
-                    model_cobra = rg.load_model_cobra(config['model'])
-                    model_libsbml = rg.load_model_libsbml(config['model'])
-                    essential, missing, growth, dt = rg.growth_simulation(model_cobra, model_libsbml, config['media_db'], medium)
-                    exchanges = [[medium], essential, missing, [growth], [dt]]
-                    df_temp = pd.DataFrame(exchanges, ['name', 'essential', 'missing', 'growth_value [mmol/gDW·h]', 'doubling_time [min]']).T
-                    df_list.append(df_temp)
-                growth_sim = pd.concat(df_list)
+                growth_sim = rg.get_growth_selected_media(model_cobra, config['media_db'], config['media'])
 
             if (config['output'] == 'cl'):
                 print('---')

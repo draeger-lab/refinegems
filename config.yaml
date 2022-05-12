@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: 'data/e_coli_core.xml'# '../C_striatum_GEMs/models/Cstr_14.xml' # 
+model: 'data/e_coli_core.xml' # '../C_striatum_GEMs/models/Cstr_14.xml' # 
 
 
 Settings for scripts that manipulate the model: >
@@ -23,7 +23,7 @@ database_name: sbo_ann
 sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
-polish_carveme: TRUE
+polish_carveme: FALSE
 polish_path: 'data/e_test.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
 entrez_email: 'famke.baeuerle@student.uni-tuebingen.de'
 
@@ -56,5 +56,5 @@ gff_file: 'data/cstr.gff' # C. striatum
 biggreactions: 'data/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: TRUE # set to False if not needed
+modelseed: FALSE # set to False if not needed
 modelseedpath: 'data/modelseed_compounds.tsv'

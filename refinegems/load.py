@@ -83,6 +83,25 @@ def load_medium_from_db(mediumpath, mediumname):
     medium['BiGG_EX']='EX_'+ medium['BiGG']+ '_e'
     return medium
 
+def load_all_media_from_db(mediumpath):
+    """Helper function to extract media definitions from media_db.csv
+
+    Args:
+        mediumpath (Str): path to csv file with medium database
+
+    Returns:
+        df: pandas dataframe of csv with metabs added as BiGG_EX exchange reactions
+    """
+    media = pd.read_csv(mediumpath, sep=';')
+    media['BiGG_R']='R_EX_'+ media['BiGG']+ '_e'
+    media['BiGG_EX']='EX_'+ media['BiGG']+ '_e'
+
+    media['group'] = media['medium'].ne(media['medium'].shift()).cumsum()
+    grouped = media.groupby('group')
+    media_dfs = []
+    for name, data in grouped:
+        media_dfs.append(data.reset_index(drop=True))
+    return media_dfs
 
 def write_to_file(model, new_filename):
     """Writes modified model to new file

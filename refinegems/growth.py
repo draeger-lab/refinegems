@@ -14,7 +14,7 @@ missing = all exchanges missing in the model but given in medium
 
 import pandas as pd
 import numpy as np
-from refinegems.load import load_medium_custom, load_medium_from_db
+from refinegems.load import load_all_media_from_db
 
 __author__ = "Famke Baeuerle"
 
@@ -35,20 +35,22 @@ def get_default_uptake(model):
                 default_uptake.append(index)
     return default_uptake
     
-def find_missing_exchanges(model, medium):
+def get_missing_exchanges(model, medium):
     """Look for exchange reactions needed by the medium but not in the model
 
     Args:
-        model (libsbml-model): model loaded with libsbml
+        model (cobra-model): model loaded with cobrapy
         medium (df): dataframe of medium csv
 
     Returns:
         list: all exchanges missing in the model but given in medium
     """
-    medium_list = medium['BiGG_R'].dropna().tolist()
+    medium_list = medium['BiGG_EX'].dropna().tolist()
     missing_exchanges = []
     for exchange in medium_list:
-        if model.getReaction(exchange) == None:
+        try: 
+            model.reactions.get_by_id(exchange)
+        except(KeyError):
             missing_exchanges.append(exchange)
     return missing_exchanges
 
@@ -64,7 +66,7 @@ def modify_medium(medium, missing_exchanges):
     """
     medium_dict = dict.fromkeys(medium['BiGG_EX'].dropna().tolist(), 10.0)
     for exchange in missing_exchanges:
-        exchange = exchange[2:]
+        #exchange = exchange[2:]
         medium_dict.pop(exchange)
     return medium_dict
 
@@ -130,25 +132,65 @@ def simulate_minimum_essential(model, medium, minimum):
     sol = model.optimize()
     return sol.objective_value
 
-def growth_simulation(model_cobra, model_libsbml, mediumpath, mediumname):
-    """Executes all steps to determine growth on custom medium
+def get_all_minimum_essential(model, mediumpath):
+    """Returns metabolites necessary for growth and not in media
 
     Args:
-        model_cobra (cobra-model): model loaded with cobrapy
-        model_libsbml (libsbml-model): model loaded with libsbml
-        mediumpath (Str): path to csv file with medium
+        model (cobra-model): model loaded with cobrapy
+        mediumpath (string): path to csv with media definitions
 
     Returns:
-        tuple: (added exchanges, exchanges missing in model, growth value)
+        DataFrame: information on different media which metabs are missing
     """
-    medium = load_medium_from_db(mediumpath, mediumname)
-    default_uptake = get_default_uptake(model_cobra)
-    missing_exchanges = find_missing_exchanges(model_libsbml, medium)
+    media = load_all_media_from_db(mediumpath)
+    default_uptake = get_default_uptake(model)
+    mins = pd.DataFrame()
+    for medium in media:
+        missing_exchanges = get_missing_exchanges(model, medium)
+        medium_dict = modify_medium(medium, missing_exchanges)
+        essential = find_missing_essential(model, medium_dict, default_uptake)
+        minimum = find_minimum_essential(medium, essential)
+        mins[medium['medium'][0]] = pd.Series(minimum)
+    return mins
+
+
+def get_growth_one_medium(model, medium):
+    """Simulates growth on given medium
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+        medium (pandas-DataFrame): table containing metabolites present in the medium
+
+    Returns:
+        DataFrame: information on growth behaviour on medium
+    """
+    default_uptake = get_default_uptake(model)
+    missing_exchanges = get_missing_exchanges(model, medium) #
     medium_dict = modify_medium(medium, missing_exchanges)
-    essential = find_missing_essential(model_cobra, medium_dict, default_uptake)
-    minimum = find_minimum_essential(medium, essential)
-    # reload medium definition to exclude all previous additions
+    essential = find_missing_essential(model, medium_dict, default_uptake)
+    minimum = find_minimum_essential(medium, essential) 
+    
     medium_dict = modify_medium(medium, missing_exchanges)
-    growth_value = simulate_minimum_essential(model_cobra, medium_dict, minimum)
+    growth_value = simulate_minimum_essential(model, medium_dict, minimum) #
     doubling_time = (np.log(2)/growth_value) * 60
-    return minimum, missing_exchanges, growth_value, doubling_time
+    exchanges = [[medium['medium'][0]], essential, missing_exchanges, [growth_value], [doubling_time]]
+    df_growth = pd.DataFrame(exchanges, ['medium', 'essential', 'missing', 'growth_value [mmol/gDW·h]', 'doubling_time [min]']).T
+    return df_growth
+
+def get_growth_selected_media(model, mediumpath, media):
+    """Simulates growth on all selected media
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+        mediumpath (string): path to csv with media definitions
+        media (list): media to simulate on (must be in csv)
+
+    Returns:
+        DataFrame: information on growth behaviour on selected media
+    """
+    all_media = load_all_media_from_db(mediumpath)
+    selected_media = [x for x in all_media if x['medium'][0] in media]
+    growth = pd.DataFrame()
+    for medium in selected_media:
+        growth = growth.append(get_growth_one_medium(model, medium), ignore_index = True)
+    return growth

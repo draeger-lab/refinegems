@@ -8,9 +8,11 @@ access to its number of reactions, metabolites and genes.
 import os
 import memote
 import json
+import pandas as pd
 from memote.support import consistency
 # needed by memote.support.consitency
 from memote.support import consistency_helpers as con_helpers 
+from refinegems.load import load_model_cobra, load_model_libsbml
 
 __author__ = "Famke Baeuerle"
 
@@ -40,7 +42,6 @@ def run_memote(model):
     result = json.loads(snap)
     totalScore = result['score']['total_score']
     return totalScore
-
 
 
 def initial_analysis(model):
@@ -116,3 +117,25 @@ def get_mass_charge_unbalanced(model):
                 charge_list.append(reac.id)
                 
     return mass_list, charge_list
+
+
+def get_model_info(modelpath):
+    """Reports core information of given model
+
+    Args:
+        modelpath (string): path to model file
+        
+    Returns:
+        DataFrame: overview on model parameters
+    """
+    model_libsbml = load_model_libsbml(modelpath)
+    model_cobra = load_model_cobra(modelpath)
+    name, reac, metab, genes = initial_analysis(model_libsbml)
+    orphans, deadends, disconnected = get_orphans_deadends_disconnected(model_cobra)
+    mass_unbal, charge_unbal = get_mass_charge_unbalanced(model_cobra)
+    model_info = pd.DataFrame([name, reac, metab, genes,
+                                orphans, deadends, disconnected, mass_unbal, charge_unbal], 
+                              ['model', '#reactions', '#metabolites', '#genes',
+                                'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
+    
+    return model_info
