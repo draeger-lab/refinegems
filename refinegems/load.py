@@ -5,7 +5,7 @@ Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups).
 """
 
-import cobra
+import cobra, os
 import pandas as pd
 from libsbml import SBMLReader, writeSBMLToFile
 
@@ -108,8 +108,19 @@ def write_to_file(model, new_filename):
 
     Args:
         model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
+        new_filename (Str): filename / path for modified model
     """
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
     print("Modified model written to " + new_filename)
+    
+def write_report(dataframe, filepath):
+    """Writes reports stored in dataframes to xlsx file
+
+    Args:
+        dataframe (pd.DataFrame): table containing output
+        filepath (string): path to file with filename
+    """
+    writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
+    dataframe.to_excel(writer)
+    writer.save()
