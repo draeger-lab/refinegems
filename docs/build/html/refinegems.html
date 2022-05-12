@@ -281,14 +281,14 @@ default_uptake (list): metabolites consumed in standard medium</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.growth.find_missing_exchanges">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_missing_exchanges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.find_missing_exchanges" title="Permalink to this definition">¶</a></dt>
-<dd><p>Look for exchange reactions needed by the medium but not in the model</p>
+<dt class="sig sig-object py" id="refinegems.growth.get_all_minimum_essential">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_all_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_all_minimum_essential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns metabolites necessary for growth and not in media</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-medium (df): dataframe of medium csv</p>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
+mediumpath (string): path to csv with media definitions</p>
 </dd>
-<dt>Returns:</dt><dd><p>list: all exchanges missing in the model but given in medium</p>
+<dt>Returns:</dt><dd><p>DataFrame: information on different media which metabs are missing</p>
 </dd>
 </dl>
 </dd></dl>
@@ -306,15 +306,41 @@ medium (df): dataframe of medium csv</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.growth.growth_simulation">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">growth_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_cobra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_libsbml</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.growth_simulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Executes all steps to determine growth on custom medium</p>
+<dt class="sig sig-object py" id="refinegems.growth.get_growth_one_medium">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_one_medium</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_growth_one_medium" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulates growth on given medium</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model_cobra (cobra-model): model loaded with cobrapy
-model_libsbml (libsbml-model): model loaded with libsbml
-mediumpath (Str): path to csv file with medium</p>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
+medium (pandas-DataFrame): table containing metabolites present in the medium</p>
 </dd>
-<dt>Returns:</dt><dd><p>tuple: (added exchanges, exchanges missing in model, growth value)</p>
+<dt>Returns:</dt><dd><p>DataFrame: information on growth behaviour on medium</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.growth.get_growth_selected_media">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_selected_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_growth_selected_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulates growth on all selected media</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
+mediumpath (string): path to csv with media definitions
+media (list): media to simulate on (must be in csv)</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: information on growth behaviour on selected media</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.growth.get_missing_exchanges">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_missing_exchanges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_missing_exchanges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look for exchange reactions needed by the medium but not in the model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
+medium (df): dataframe of medium csv</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: all exchanges missing in the model but given in medium</p>
 </dd>
 </dl>
 </dd></dl>
@@ -352,6 +378,18 @@ minimum (list): metabolites not present in the medium but necessary for growth</
 <p>Provides functions to load a modelpath with libSBML and cobrapy</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.load_all_media_from_db">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_all_media_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_all_media_from_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to extract media definitions from media_db.csv</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium database</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: pandas dataframe of csv with metabs added as BiGG_EX exchange reactions</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.load.load_document_libsbml">
 <span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_document_libsbml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.load_document_libsbml" title="Permalink to this definition">¶</a></dt>
@@ -414,12 +452,23 @@ mediumname (Str): name of medium to test growth on</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.load.write_report">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">write_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataframe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.write_report" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes reports stored in dataframes to xlsx file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dataframe (pd.DataFrame): table containing output
+filepath (string): path to file with filename</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.load.write_to_file">
 <span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.load.write_to_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes modified model to new file</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
+new_filename (Str): filename / path for modified model</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1238,6 +1287,18 @@ access to its number of reactions, metabolites and genes.</p>
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.test.get_model_info">
+<span class="sig-prename descclassname"><span class="pre">refinegems.test.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.test.get_model_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reports core information of given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
 </dd>
 </dl>
 </dd></dl>
