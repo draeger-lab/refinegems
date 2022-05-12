@@ -105,7 +105,7 @@ def parse_id_from_cv_term(entity, db_id):
     for i in range(0,num_cvs):
         ann_string = entity.getCVTerm(i) 
         num_res = ann_string.getNumResources()
-        ids = [ann_string.getResourceURI(r)[-6:] for r in range(0,num_res) if str(db_id) in ann_string.getResourceURI(r)]
+        ids = [ann_string.getResourceURI(r).split('/')[-1] for r in range(0,num_res) if str(db_id) in ann_string.getResourceURI(r)]
         all_ids.extend(ids)
         
     return all_ids
