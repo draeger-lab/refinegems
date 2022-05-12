@@ -1,9 +1,6 @@
 refinegems package
 ==================
 
-Submodules
-----------
-
 refinegems.charges module
 -------------------------
 
@@ -76,10 +73,18 @@ refinegems.test module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+refinegems.cvterms module
+----------------------
 
-.. automodule:: refinegems
+.. automodule:: refinegems.cvterms
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+refinegems.strains module
+----------------------
+
+.. automodule:: refinegems.strains
    :members:
    :undoc-members:
    :show-inheritance:
