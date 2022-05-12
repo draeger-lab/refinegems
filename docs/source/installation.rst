@@ -25,7 +25,7 @@ following steps:
 
    # clone or pull the latest source code
    git clone https://github.com/draeger-lab/refinegems.git
-   cd gem_curation_template
+   cd refinegems
 
    # install all dependencies
    pipenv install
