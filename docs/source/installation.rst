@@ -24,7 +24,7 @@ following steps:
    pip install pipenv
 
    # clone or pull the latest source code
-   git clone https://github.com/draeger-lab/gem_curation_template.git
+   git clone https://github.com/draeger-lab/refinegems.git
    cd gem_curation_template
 
    # install all dependencies
