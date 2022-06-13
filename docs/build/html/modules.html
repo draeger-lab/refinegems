@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>refinegems package &#8212; refinegems 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -12,6 +12,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,10 +34,10 @@
           <div class="body" role="main">
             
   <section id="refinegems-package">
-<h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this headline">¶</a></h1>
+<h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading">¶</a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
 <section id="module-refinegems.charges">
-<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions for adding charges to metabolites</p>
 <p>When iterating thorugh all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
 <dl class="py function">
@@ -80,10 +81,10 @@ modelseed_compounds (df): containing modelseed data</p>
 
 </section>
 <section id="module-refinegems.genecomp">
-<span id="refinegems-genecomp-module"></span><h2>refinegems.genecomp module<a class="headerlink" href="#module-refinegems.genecomp" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-genecomp-module"></span><h2>refinegems.genecomp module<a class="headerlink" href="#module-refinegems.genecomp" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions to compare genes found in KEGG and in the model</p>
 <p>Extracts all KEGG ids from the annotations and compares them to a list for you organism from KEGG.
-Reactions with KEGG ids not found in the model are expanded to a table containing the KEGG id, 
+Reactions with KEGG ids not found in the model are expanded to a table containing the KEGG id,
 the locus_tag (old format), the EC number, the BiGG id and the Gene Protein Reaction (GPR) rule.
 This section needs a gff file of your organism, the txt file from BiGG containing all reactions
 and the KEGG identifier of your organism.</p>
@@ -242,10 +243,10 @@ locus_gpr (df): mapping from locus tags to GPRs</p>
 
 </section>
 <section id="module-refinegems.growth">
-<span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions to simulate growth on any medium</p>
 <p>Tailored to work with the Synthetic Nasal Medium (SNM), should
-work with any medium as long as its defined in a csv with ; as 
+work with any medium as long as its defined in a csv with ; as
 delimiter and BiGG Ids for the compounds.</p>
 <p>Outputs a table where</p>
 <p>essential = metabolites not present in the medium but necessary for growth</p>
@@ -372,7 +373,7 @@ minimum (list): metabolites not present in the medium but necessary for growth</
 
 </section>
 <section id="module-refinegems.load">
-<span id="refinegems-load-module"></span><h2>refinegems.load module<a class="headerlink" href="#module-refinegems.load" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-load-module"></span><h2>refinegems.load module<a class="headerlink" href="#module-refinegems.load" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions to load a modelpath with libSBML and cobrapy</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups).</p>
@@ -473,7 +474,7 @@ new_filename (Str): filename / path for modified model</p>
 
 </section>
 <section id="module-refinegems.modelseed">
-<span id="refinegems-modelseed-module"></span><h2>refinegems.modelseed module<a class="headerlink" href="#module-refinegems.modelseed" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-modelseed-module"></span><h2>refinegems.modelseed module<a class="headerlink" href="#module-refinegems.modelseed" title="Permalink to this heading">¶</a></h2>
 <p>Reports mismatches in charges and formulae based on ModelSEED</p>
 <p>Extracts modelseed data from a given tsv file, extracts all metabolites
 from a given model. Both lists of metabolites are compared by charge and
@@ -578,7 +579,7 @@ model (cobra-model): model loaded with cobrapy</p>
 
 </section>
 <section id="module-refinegems.pathways">
-<span id="refinegems-pathways-module"></span><h2>refinegems.pathways module<a class="headerlink" href="#module-refinegems.pathways" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-pathways-module"></span><h2>refinegems.pathways module<a class="headerlink" href="#module-refinegems.pathways" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions for adding KEGG reactions as Group Pathways</p>
 <p>If your organism occurs in the KEGG database, extract the KEGG reaction ID from the
 annotations of your reactions and identify, in which KEGG pathways this reaction occurs. Add
@@ -672,7 +673,7 @@ new_filename (Str): filename for modified model</p>
 
 </section>
 <section id="module-refinegems.polish_carveme">
-<span id="refinegems-polish-carveme-module"></span><h2>refinegems.polish_carveme module<a class="headerlink" href="#module-refinegems.polish_carveme" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-polish-carveme-module"></span><h2>refinegems.polish_carveme module<a class="headerlink" href="#module-refinegems.polish_carveme" title="Permalink to this heading">¶</a></h2>
 <p>Can be used to polish a model created with CarveMe v.1.5.1</p>
 <p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
 <dl class="py function">
@@ -763,7 +764,7 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 
 </section>
 <section id="module-refinegems.sbo_annotation">
-<span id="refinegems-sbo-annotation-module"></span><h2>refinegems.sbo_annotation module<a class="headerlink" href="#module-refinegems.sbo_annotation" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-sbo-annotation-module"></span><h2>refinegems.sbo_annotation module<a class="headerlink" href="#module-refinegems.sbo_annotation" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions to automate the addition of SBO terms to the model</p>
 <p>Script written by Elisabeth Fritze in her bachelor thesis.</p>
 <p>It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the “main” function: sbo_annotation(model_libsbml, database_user, database_name, new_filename). The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.</p>
@@ -1272,15 +1273,15 @@ new_filename (Str): filename for modified model</p>
 
 </section>
 <section id="module-refinegems.test">
-<span id="refinegems-test-module"></span><h2>refinegems.test module<a class="headerlink" href="#module-refinegems.test" title="Permalink to this headline">¶</a></h2>
+<span id="refinegems-test-module"></span><h2>refinegems.test module<a class="headerlink" href="#module-refinegems.test" title="Permalink to this heading">¶</a></h2>
 <p>Provides functions to investigate the model and test with memote</p>
-<p>These functions enable simple testing of any model using memote and 
+<p>These functions enable simple testing of any model using memote and
 access to its number of reactions, metabolites and genes.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.test.get_mass_charge_unbalanced">
 <span class="sig-prename descclassname"><span class="pre">refinegems.test.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.test.get_mass_charge_unbalanced" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
-<dt>creates lists of mass and charge unbalanced reactions, </dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
 </dd>
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
@@ -1349,7 +1350,7 @@ access to its number of reactions, metabolites and genes.</p>
 
 </section>
 <section id="refinegems-cvterms-module">
-<h2>refinegems.cvterms module<a class="headerlink" href="#refinegems-cvterms-module" title="Permalink to this headline">¶</a></h2>
+<h2>refinegems.cvterms module<a class="headerlink" href="#refinegems-cvterms-module" title="Permalink to this heading">¶</a></h2>
 <span class="target" id="module-refinegems.cvterms"></span><p>Helper module to work with annotations (CVTerms)</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
 <dl class="py function">
@@ -1415,7 +1416,7 @@ db_id (string): database of interes</p>
 
 </section>
 <section id="refinegems-strains-module">
-<h2>refinegems.strains module<a class="headerlink" href="#refinegems-strains-module" title="Permalink to this headline">¶</a></h2>
+<h2>refinegems.strains module<a class="headerlink" href="#refinegems-strains-module" title="Permalink to this heading">¶</a></h2>
 <span class="target" id="module-refinegems.strains"></span><p>Implements functions to use refinegems with models of the same bacterium but different strains</p>
 </section>
 </section>
@@ -1475,7 +1476,7 @@ db_id (string): database of interes</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -1492,7 +1493,7 @@ db_id (string): database of interes</p>
       &copy;2022, Famke Bäuerle.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

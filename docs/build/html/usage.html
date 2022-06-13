@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Usage as python module &#8212; refinegems 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -12,6 +12,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,7 +35,7 @@
           <div class="body" role="main">
             
   <section id="usage-as-python-module">
-<h1>Usage as python module<a class="headerlink" href="#usage-as-python-module" title="Permalink to this headline">¶</a></h1>
+<h1>Usage as python module<a class="headerlink" href="#usage-as-python-module" title="Permalink to this heading">¶</a></h1>
 <p>Note that at this time most of the modules only make sense when you use the respective main functions:</p>
 <dl class="py function">
 <dt class="sig sig-object py">
@@ -116,7 +117,7 @@ new_filename (Str): filename for modified model</p>
 
 <p>The modules <code class="docutils literal notranslate"><span class="pre">load</span></code> and <code class="docutils literal notranslate"><span class="pre">test</span></code> provide functions that can be used by themselves.</p>
 <section id="load">
-<h2><code class="docutils literal notranslate"><span class="pre">load</span></code><a class="headerlink" href="#load" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">load</span></code><a class="headerlink" href="#load" title="Permalink to this heading">¶</a></h2>
 <p>provides a couple of helper functions to avoid remembering how cobra and libsbml actually load</p>
 <p>Provides functions to load a modelpath with libSBML and cobrapy</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
@@ -218,16 +219,16 @@ new_filename (Str): filename / path for modified model</p>
 
 </section>
 <section id="test">
-<h2><code class="docutils literal notranslate"><span class="pre">test</span></code><a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">test</span></code><a class="headerlink" href="#test" title="Permalink to this heading">¶</a></h2>
 <p>provides a couple of functions to get parameters of your model</p>
 <p>Provides functions to investigate the model and test with memote</p>
-<p>These functions enable simple testing of any model using memote and 
+<p>These functions enable simple testing of any model using memote and
 access to its number of reactions, metabolites and genes.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.test.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
 <dd><dl class="simple">
-<dt>creates lists of mass and charge unbalanced reactions, </dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
 </dd>
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
@@ -296,7 +297,7 @@ access to its number of reactions, metabolites and genes.</p>
 
 </section>
 <section id="cvterms">
-<h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this heading">¶</a></h2>
 <p>provides functions to work with cvterms</p>
 <p>Helper module to work with annotations (CVTerms)</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
@@ -412,7 +413,7 @@ db_id (string): database of interes</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -429,7 +430,7 @@ db_id (string): database of interes</p>
       &copy;2022, Famke Bäuerle.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
