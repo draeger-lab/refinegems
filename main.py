@@ -59,6 +59,11 @@ def main():
             
             if (config['media_db'] != None):
                 growth_sim = rg.get_growth_selected_media(model_cobra, config['media_db'], config['media'])
+                
+            if (config['multiple']):
+                growth_all = rg.simulate_all(config['multiple_paths'], config['media_db'], config['media'])
+                with pd.ExcelWriter('simulate_all.xlsx') as writer:  
+                    growth_all.to_excel(writer, index=False)
 
             if (config['output'] == 'cl'):
                 print('---')

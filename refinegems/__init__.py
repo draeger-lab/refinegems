@@ -10,6 +10,7 @@ from refinegems.modelseed import modelseed
 from refinegems.polish_carveme import polish_carveme
 from refinegems.cvterms import parse_id_from_cv_term
 from refinegems.charges import correct_charges
+from refinegems.comparison import simulate_all
 
 
 __author__ = "Famke Baeuerle"

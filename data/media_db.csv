@@ -322,3 +322,16 @@ CGXII;;mg2;Mg
 CGXII;;mops;MOPS
 CGXII;;o2;O2
 CGXII;;glc__D;D-Glucose
+CasA;Casamino Acids;lys__L;Lysine
+CasA;;his__L;Histidine
+CasA;;arg__L;Arginine
+CasA;;asp__L;Aspartic acid
+CasA;;thr__L;Threonine
+CasA;;glu__L;Glutamic acid
+CasA;;gly;Glycine
+CasA;;val__L;Valine
+CasA;;met__L;Methionine
+CasA;;ile__L;Isoleucine
+CasA;;leu__L;Leucine
+CasA;;tyr__L;Tyrosine
+CasA;;phe__L;Phenylalanine

@@ -180,13 +180,13 @@ def get_growth_one_medium(model, medium):
     medium_dict = modify_medium(medium, missing_exchanges)
     growth_value = simulate_minimum_essential(model, medium_dict, minimum)
     doubling_time = (np.log(2) / growth_value) * 60
-    exchanges = [[medium['medium'][0]], essential,
+    exchanges = [[medium['medium'][0]], minimum,
                  missing_exchanges, [growth_value], [doubling_time]]
     df_growth = pd.DataFrame(exchanges,
                              ['medium',
                               'essential',
                               'missing',
-                              'growth_value [mmol/gDW·h]',
+                              'growth_value',
                               'doubling_time [min]']).T
     return df_growth
 

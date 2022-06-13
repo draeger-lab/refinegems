@@ -48,7 +48,7 @@ The database containing the BiGG ID and EC number mappings
 
 ::
 
-   sbo/create_dbs.sql
+   data/sbo/create_dbs.sql
 
 must be imported to a local PostgreSQL database to a selected user.
 
@@ -56,7 +56,7 @@ You can use the following command, run it from this directory:
 
 .. code:: bash
 
-   psql -U {your postgres username} -h localhost -d {your database name} < sbo/create_dbs.sql 
+   psql -U {your postgres username} -h localhost -d {your database name} < data/sbo/create_dbs.sql 
 
 If you are a Windows user you will need to use a different command:
 Enter into the psql shell by typing ``psql``, then create the database
@@ -70,7 +70,7 @@ Afterwards load the database with
 
 .. code:: bash
 
-   psql.exe -U postgres -d sbo_ann -f sbo\create_dbs.sql
+   psql.exe -U postgres -d sbo_ann -f data\\sbo\\create_dbs.sql
 
 
 Troubleshooting
