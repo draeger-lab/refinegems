@@ -3,3 +3,6 @@
 """
 
 __author__ = "Famke Baeuerle"
+
+from refinegems.genecomp import get_model_genes
+

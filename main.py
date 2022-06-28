@@ -47,6 +47,7 @@ def main():
             name, reac, metab, genes = rg.initial_analysis(model_libsbml)
             orphans, deadends, disconnected = rg.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.get_mass_charge_unbalanced(model_cobra)
+            egc = rg.get_egc(model_cobra)
             
             if (config['memote']):
                 score = rg.run_memote(model_cobra)
@@ -78,6 +79,7 @@ def main():
                 print('Mass unbalanced reactions: ' + str(mass_unbal))
                 print('Charge unbalanced reactions: ' + str(charge_unbal))
                 print(growth_sim)
+                print(egc)
                 if(config['genecomp']): print(genecomp)
                 if(config['modelseed']):
                     print(charge_mismatch)
@@ -93,6 +95,7 @@ def main():
                 with pd.ExcelWriter(name + '_refinegems.xlsx') as writer:  
                     model_params.to_excel(writer, sheet_name='model params', index=False)
                     growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
+                    egc.to_excel(writer, sheet_name='EGC test', index=False)
                     if(config['genecomp']):
                         genecomp.to_excel(writer, sheet_name='gene comparison', index=False)
                     if(config['modelseed']):
@@ -107,13 +110,9 @@ def main():
                 print('# genes: ' + str(genes))
                 if (config['memote'] == True): print('Memote score: ' + str(score))
                 model_info = pd.DataFrame([orphans, deadends, disconnected, mass_unbal, charge_unbal], ['orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
-                #print('Orphan metabolites: ' + str(orphans))
-                #print('Deadend metabolites: ' + str(deadends))
-                #print('Disconnected metabolites: ' + str(disconnected))
-                #print('Mass unbalanced reactions: ' + str(mass_unbal))
-                #print('Charge unbalanced reactions: ' + str(charge_unbal))
                 model_info.to_csv(name + '_modelinfo.csv', index=False)
                 growth_sim.to_csv(name +'_growthsim.csv', index=False)
+                egc.to_csv(name + '_egc.csv', index=False)
                 if(config['genecomp']):
                     genecomp.to_csv(name +'_genecomp.csv', index=False)
                 if(config['modelseed']):

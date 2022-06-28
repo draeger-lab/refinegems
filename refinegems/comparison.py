@@ -4,9 +4,11 @@
 Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.
 """
 
+__author__ = "Famke Baeuerle"
 import pandas as pd
 from refinegems.load import load_model_cobra, load_all_media_from_db
 from refinegems.growth import get_growth_one_medium
+from refinegems.test import get_egc # implement here for multiple models
 
 def simulate_all(model_list, mediumpath, media):
     growth = pd.DataFrame()

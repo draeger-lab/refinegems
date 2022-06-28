@@ -9,6 +9,8 @@ import os
 import memote
 import json
 import pandas as pd
+import numpy as np
+from cobra import Reaction
 from memote.support import consistency
 # needed by memote.support.consitency
 from memote.support import consistency_helpers as con_helpers
@@ -158,3 +160,67 @@ def get_model_info(modelpath):
                                'charge unbalanced']).T
 
     return model_info
+
+def parse_reaction(eq, model): # from alina
+    eq = eq.split(' ')
+    eq_matrix={}
+    are_products = False
+    coeff = 1
+    for i,part in enumerate(eq):
+        if part == '-->':
+            are_products = True
+            continue          
+        if part == '+':
+            continue
+        if part == '2':
+            coeff = 2
+            continue
+        if are_products:
+            eq_matrix[model.metabolites.get_by_id(part)] = 1*coeff
+            coeff = 1
+        else:
+            eq_matrix[model.metabolites.get_by_id(part)] = -1*coeff
+            coeff = 1
+    return eq_matrix
+
+def get_egc(model):
+    dissipation_rxns = pd.read_csv("../data/energy_dissipation_rxns.csv")
+    with model: 
+    # add dissipation reactions
+        for i, row in dissipation_rxns.iterrows():
+            met_atp = parse_reaction(row['equation'], model)
+            rxn = Reaction(row['type'])
+            rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
+            rxn.add_metabolites(met_atp)
+            model.add_reaction(rxn)
+            
+        for rxn in model.reactions:
+            if 'EX_' in rxn.id:
+                rxn.upper_bound = 0.0
+                rxn.lower_bound = 0.0
+                #print('Set exchange rxn to 0', rxn.name)
+            # set reversible reactions fluxes to [-1,1]    
+            elif rxn.reversibility: 
+                rxn.upper_bound = 1.0
+                rxn.lower_bound = -1.0
+                #print('Reversible rxn', rxn.name)
+            # irreversible reactions have fluxes [0.1]    
+            else:
+                rxn.upper_bound = 1.0
+                rxn.lower_bound = 0.0
+                #print('Irreversible rxn', rxn.name)
+                
+        df_fluxes = pd.DataFrame()
+        objval = dict()
+        # optimize by choosing one of dissipation reactions as an objective
+        for i, row in dissipation_rxns.iterrows():
+            model.objective = row['type']
+            #print('Set objective to', row['type'], ':', model.optimize().objective_value)
+            objval[row['type']] = model.optimize().objective_value
+            if model.optimize().objective_value > 0.0:
+                df = pd.DataFrame.from_dict([model.optimize().fluxes]).T.replace(0, np.nan).dropna(axis=0).rename({'fluxes':row['type']}, axis=1)
+                df_fluxes = pd.concat([df_fluxes, df], axis=1)
+            else:
+                df_fluxes[row['type']] = np.nan
+        df_fluxes = pd.concat([df_fluxes,pd.DataFrame.from_dict([objval])])
+    return df_fluxes.T.reset_index().rename({'index':'BOF', 0:'objective value'}, axis=1).fillna('')
