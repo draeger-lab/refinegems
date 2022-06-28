@@ -103,7 +103,7 @@ def parse_id_from_cv_term(entity, db_id):
 
     Args:
         entity (libsbml Object): Species, Reaction, Gene
-        db_id (string): database of interes
+        db_id (string): database of interest
 
     Returns:
         list: ids of entity belonging to db_id

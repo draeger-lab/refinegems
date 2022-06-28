@@ -9,7 +9,7 @@ to the respective reaction.
 
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 from refinegems.load import write_to_file
 from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term
 
@@ -50,13 +50,13 @@ def extract_kegg_reactions(model):
 
     for reaction in list_reac:
         # kegg id from notes (deprecated)
-        notes_string = reaction.getNotesString()
-        soup = BeautifulSoup(notes_string, 'lxml')
-        entries = soup.find_all('p')
+        #notes_string = reaction.getNotesString()
+        #soup = BeautifulSoup(notes_string, 'lxml')
+        #entries = soup.find_all('p')
 
-        for i in range(len(entries)):
-            if 'KEGG' in entries[i].text:
-                kegg_reactions[reaction.getId()] = entries[i].text[15:]
+        #for i in range(len(entries)):
+        #    if 'KEGG' in entries[i].text:
+        #        kegg_reactions[reaction.getId()] = entries[i].text[15:]
 
         # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')

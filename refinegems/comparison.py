@@ -33,4 +33,5 @@ def simulate_all(model_list, mediumpath, media):
             growth = growth.append(
                 growth_one, 
                 ignore_index=True)
+    #print(growth.to_latex(index = False))
     return growth
