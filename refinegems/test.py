@@ -184,15 +184,18 @@ def parse_reaction(eq, model): # from alina
     return eq_matrix
 
 def get_egc(model):
-    dissipation_rxns = pd.read_csv("../data/energy_dissipation_rxns.csv")
+    dissipation_rxns = pd.read_csv("data/energy_dissipation_rxns.csv")
     with model: 
     # add dissipation reactions
         for i, row in dissipation_rxns.iterrows():
-            met_atp = parse_reaction(row['equation'], model)
-            rxn = Reaction(row['type'])
-            rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
-            rxn.add_metabolites(met_atp)
-            model.add_reaction(rxn)
+            try:
+                met_atp = parse_reaction(row['equation'], model)
+                rxn = Reaction(row['type'])
+                rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
+                rxn.add_metabolites(met_atp)
+                model.add_reaction(rxn)
+            except(KeyError):
+                dissipation_rxns.drop(dissipation_rxns[dissipation_rxns['type'] == row['type']].index, inplace=True)
             
         for rxn in model.reactions:
             if 'EX_' in rxn.id:
