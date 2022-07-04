@@ -4,6 +4,7 @@ import yaml
 import refinegems as rg
 import cobra
 import pandas as pd
+from datetime import date
 
 __author__ = "Famke Baeuerle"
 
@@ -11,6 +12,7 @@ def main():
     """main function to run the program"""
     print("Report main properties of a GEM")
     print("Author:", __author__)
+    today = date.today().strftime("%Y%m%d")
     
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
@@ -63,7 +65,7 @@ def main():
                 
             if (config['multiple']):
                 growth_all = rg.simulate_all(config['multiple_paths'], config['media_db'], config['media'])
-                with pd.ExcelWriter('simulate_all.xlsx') as writer:  
+                with pd.ExcelWriter('simulate_all_' + str(today) +'.xlsx') as writer:  
                     growth_all.to_excel(writer, index=False)
 
             if (config['output'] == 'cl'):
@@ -92,7 +94,7 @@ def main():
                 else:
                     information = [[name], [reac], [metab], [genes], orphans, deadends, disconnected, mass_unbal, charge_unbal]
                     model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
-                with pd.ExcelWriter(name + '_refinegems.xlsx') as writer:  
+                with pd.ExcelWriter(name + '_' + str(today) + '.xlsx') as writer:  
                     model_params.to_excel(writer, sheet_name='model params', index=False)
                     growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
                     egc.to_excel(writer, sheet_name='EGC test', index=False)
