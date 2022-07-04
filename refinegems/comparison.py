@@ -6,6 +6,7 @@ Can mainly be used to compare growth behaviour of multiple models. All other sta
 
 __author__ = "Famke Baeuerle"
 import pandas as pd
+from tqdm import tqdm
 from refinegems.load import load_model_cobra, load_all_media_from_db
 from refinegems.growth import get_growth_one_medium
 from refinegems.test import get_egc # implement here for multiple models
@@ -14,7 +15,7 @@ def simulate_all(model_list, mediumpath, media):
     growth = pd.DataFrame()
     all_media = load_all_media_from_db(mediumpath)
     selected_media = [x for x in all_media if x['medium'][0] in media]
-    for medium in selected_media:
+    for medium in tqdm(selected_media):
         for model_path in model_list:
             model = load_model_cobra(model_path)
             essentials_given = False
