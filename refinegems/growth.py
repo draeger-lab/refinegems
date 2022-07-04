@@ -37,6 +37,23 @@ def get_default_uptake(model):
     return default_uptake
 
 
+def get_default_secretion(model):
+    """Checks fluxes after fba, if positive the metabolite is produced
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+        list: BiGG Ids of produced metabolites
+    """
+    fluxes = model.optimize().fluxes
+    default_secretion = []
+    for index, value in fluxes.items():
+        if value > 0:
+            default_secretion.append(index)
+    return default_secretion
+
+
 def get_missing_exchanges(model, medium):
     """Look for exchange reactions needed by the medium but not in the model
 
@@ -210,3 +227,35 @@ def get_growth_selected_media(model, mediumpath, media):
             get_growth_one_medium(model, medium), 
             ignore_index=True)
     return growth
+
+
+def get_essential_reactions(model):
+    """Knocks out each reaction, if no growth is detected the reaction is seen as essential
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+        list: BiGG Ids of essential reactions
+    """
+    ess = []
+    for reaction in model.reactions:
+        with model as model:
+            reaction.knock_out()
+            model.optimize()
+            if model.objective.value <= 11:
+                print('%s blocked (bounds: %s), new growth rate %f $' %
+                    (reaction.id, str(reaction.bounds), model.objective.value))
+                ess.append(reaction.id)
+                
+    #### other implementation via bounds ###
+    # medium = model.medium
+    # ess = []
+    # for content in medium.keys():
+    #     model.reactions.get_by_id(content).lower_bound = 0.0
+    #     solution = model.optimize().objective_value
+    #     if solution < 1e-9:
+    #         ess.append(content)
+    #     model.reactions.get_by_id(content).lower_bound = -10.0
+
+    return ess
