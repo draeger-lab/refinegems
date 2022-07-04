@@ -13,8 +13,8 @@ Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
 ### Addition of KEGG Pathways as Groups ###
-keggpathways: FALSE
-kegg_path: 'data/e_test.xml' # path where to save model with KEGG Groups
+keggpathways: TRUE
+kegg_path: '../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE

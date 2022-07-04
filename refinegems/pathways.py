@@ -7,6 +7,7 @@ all KEGG pathways for a reaction then as annotations with the biological qualifi
 to the respective reaction.
 """
 
+from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
 #from bs4 import BeautifulSoup
@@ -67,7 +68,8 @@ def extract_kegg_reactions(model):
 
 
 def extract_kegg_pathways(kegg_reactions):
-    """finds pathway for KEGG reactions
+    """finds pathway for reactions in model with KEGG Ids
+        accesses KEGG API, uses tqdm to report progres to user
 
     Args:
         kegg_reactions (dict): reaction Id as key and Kegg Id as value
@@ -78,7 +80,7 @@ def extract_kegg_pathways(kegg_reactions):
     k = KEGG()
     kegg_pathways = {}
 
-    for reaction in kegg_reactions.keys():
+    for reaction in tqdm(kegg_reactions.keys()):
         kegg_reaction = k.get(kegg_reactions[reaction])
         # print(kegg_reaction)
         dbentry = k.parse(kegg_reaction)
