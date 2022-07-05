@@ -44,7 +44,7 @@ def extract_kegg_reactions(model):
         model (libsbml-model): model loaded with libsbml
 
     Returns:
-        dict: reaction Id as key and Kegg Id as value
+        (dict, list): reaction Id as key and Kegg Id as value, Ids of reactions without KEGG annotation
     """
     list_reac = model.getListOfReactions()
     kegg_reactions = {}
@@ -61,10 +61,13 @@ def extract_kegg_reactions(model):
 
         # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
+        non_kegg_reac = []
         if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
+        else:
+            non_kegg_reac.append(reaction.getId())
 
-    return kegg_reactions
+    return kegg_reactions, non_kegg_reac
 
 
 def extract_kegg_pathways(kegg_reactions):
@@ -80,6 +83,7 @@ def extract_kegg_pathways(kegg_reactions):
     k = KEGG()
     kegg_pathways = {}
 
+    print('Extracting pathway Id for each reaction:')
     for reaction in tqdm(kegg_reactions.keys()):
         kegg_reaction = k.get(kegg_reactions[reaction])
         # print(kegg_reaction)
@@ -144,27 +148,41 @@ def create_pathway_groups(model, pathway_groups):
     Returns:
         libsbml-model: modified model with groups for pathways
     """
+    k = KEGG()
     groups = model.getPlugin('groups')
     group_list = groups.getListOfGroups()
     keys = list(pathway_groups.keys())
     num_reactions = [len(sub) for sub in list(pathway_groups.values())]
 
-    for i in range(len(pathway_groups)):
-        group_list.createGroup()
-        group_list[i].setName(keys[i])
-        group_list[i].setId(keys[i])  # important for validity (memote/cobra)
-        group_list[i].setMetaId("meta_" + keys[i])
-        group_list[i].setKind('partonomy')
-        group_list[i].setSBOTerm("SBO:0000633")  # NAME
-        add_cv_term_pathways(keys[i], 'KEGG', group_list[i])
-        for j in range(num_reactions[i]):
-            group_list[i].createMember()
+    print('Adding pathways as groups to the model:')
+    for i in tqdm(range(len(pathway_groups))):
+        kegg_pathway = k.get(keys[i])
+        dbentry = k.parse(kegg_pathway)
+        if groups.getGroup(keys[i]) is not None:
+            group = groups.getGroup(keys[i])
+            group.setName(dbentry['NAME'][0])
+            group.setMetaId("meta_" + keys[i])
+            group.setKind('partonomy')
+            group.setSBOTerm("SBO:0000633")  # NAME
+            add_cv_term_pathways(keys[i], 'KEGG', group)
+            while (group.getNumMembers() < num_reactions[i]): # this means I'll overwrite previous members -> is that desired???
+                group.createMember()
+        else:
+            group_list.createGroup()
+            group_list[i].setName(dbentry['NAME'][0])
+            group_list[i].setId(keys[i])  # important for validity (memote/cobra)
+            group_list[i].setMetaId("meta_" + keys[i])
+            group_list[i].setKind('partonomy')
+            group_list[i].setSBOTerm("SBO:0000633")  # NAME
+            add_cv_term_pathways(keys[i], 'KEGG', group_list[i])
+            for j in range(num_reactions[i]):
+                group_list[i].createMember()
 
     n_groups = groups.getNumGroups()
     group_list = groups.getListOfGroups()
 
     for i in range(n_groups):
-        group = group_list[i].getName()
+        group = group_list[i].getId()
         num_members = group_list[i].getNumMembers()
         member_list = group_list[i].getListOfMembers()
         reaction_list = pathway_groups[group]
@@ -180,16 +198,21 @@ def kegg_pathways(modelpath, new_filename):
     Args:
         modelpath (Str): Path to GEM
         new_filename (Str): filename for modified model
+        
+    Returns:
+        list: Ids of reactions without KEGG annotation
     """
     model = load_model_enable_groups(modelpath)
 
-    reactions = extract_kegg_reactions(model)
+    reactions, non_kegg_reactions = extract_kegg_reactions(model)
     pathways = extract_kegg_pathways(reactions)
     pathway_groups = get_pathway_groups(pathways)
-    print(reactions, pathways, pathway_groups)
+    #print(reactions, pathways, pathway_groups)
 
     model_pathways = add_kegg_pathways(model, pathways)
     model_pathway_groups = create_pathway_groups(
         model_pathways, pathway_groups)
 
     write_to_file(model_pathway_groups, new_filename)
+    
+    return non_kegg_reactions

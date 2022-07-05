@@ -89,7 +89,7 @@ def add_cv_term_pathways(entry, db_id, entity):
     Args:
         entry (string): id to add as annotation
         db_id (string): database to which entry belongs
-        metab (libsbml-group): pathway to add CVTerm to
+        entity (libsbml-group): pathway to add CVTerm to
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
