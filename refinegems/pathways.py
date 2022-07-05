@@ -48,7 +48,8 @@ def extract_kegg_reactions(model):
     """
     list_reac = model.getListOfReactions()
     kegg_reactions = {}
-
+    non_kegg_reac = []
+    
     for reaction in list_reac:
         # kegg id from notes (deprecated)
         #notes_string = reaction.getNotesString()
@@ -61,7 +62,6 @@ def extract_kegg_reactions(model):
 
         # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
-        non_kegg_reac = []
         if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
         else:
