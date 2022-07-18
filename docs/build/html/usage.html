@@ -98,6 +98,8 @@ model (cobra-model): model loaded with cobrapy</p>
 <dt>Args:</dt><dd><p>modelpath (Str): Path to GEM
 new_filename (Str): filename for modified model</p>
 </dd>
+<dt>Returns:</dt><dd><p>list: Ids of reactions without KEGG annotation</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -142,6 +144,32 @@ or with libSBML (activation of groups).</p>
 <dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
 </dd>
 <dt>Returns:</dt><dd><p>libsbml-document: loaded document by libsbml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_manual_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tablepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data/manual_curation.xlsx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'metab'</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>loads metabolite sheet from manual curation table</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>tablepath (str): Path to manual curation table. Defaults to ‘data/manual_curation.xlsx’.
+sheet_name (str): Sheet name for metabolite annotations. Defaults to ‘metab’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table as pandas df</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.load.</span></span><span class="sig-name descname"><span class="pre">load_manual_gapfill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tablepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data/manual_curation.xlsx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gapfill'</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>loads gapfill sheet from manual curation table</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>tablepath (str): Path to manual curation table. Defaults to ‘data/manual_curation.xlsx’.
+sheet_name (str): Sheet name for reaction gapfilling. Defaults to ‘gapfill’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table as pandas df</p>
 </dd>
 </dl>
 </dd></dl>
@@ -308,7 +336,7 @@ access to its number of reactions, metabolites and genes.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>entry (string): id to add as annotation
 db_id (string): database to which entry belongs
-metab (libsbml-gene): gene to add CVTerm to</p>
+gene (libsbml-gene): gene to add CVTerm to</p>
 </dd>
 </dl>
 </dd></dl>
@@ -332,7 +360,7 @@ metab (libsbml-species): metabolite to add CVTerm to</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>entry (string): id to add as annotation
 db_id (string): database to which entry belongs
-metab (libsbml-group): pathway to add CVTerm to</p>
+entity (libsbml-group): pathway to add CVTerm to</p>
 </dd>
 </dl>
 </dd></dl>
@@ -355,7 +383,7 @@ reac (libsbml-reaction): reaction to add CVTerm to</p>
 <dd><p>extract id for a specific database from CVTerm</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
-db_id (string): database of interes</p>
+db_id (string): database of interest</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: ids of entity belonging to db_id</p>
 </dd>
@@ -430,7 +458,7 @@ db_id (string): database of interes</p>
       &copy;2022, Famke Bäuerle.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

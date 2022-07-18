@@ -48,6 +48,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -62,13 +63,15 @@
 </li>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_metabolites">add_cv_term_metabolites() (in module refinegems.cvterms)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_pathways">add_cv_term_pathways() (in module refinegems.cvterms)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_reactions">add_cv_term_reactions() (in module refinegems.cvterms)</a>
 </li>
       <li><a href="modules.html#refinegems.pathways.add_kegg_pathways">add_kegg_pathways() (in module refinegems.pathways)</a>
+</li>
+      <li><a href="modules.html#refinegems.curate.add_reactions_from_table">add_reactions_from_table() (in module refinegems.curate)</a>
 </li>
       <li><a href="modules.html#refinegems.sbo_annotation.addSBOfromDB">addSBOfromDB() (in module refinegems.sbo_annotation)</a>
 </li>
@@ -110,10 +113,10 @@
 </li>
       <li><a href="modules.html#refinegems.sbo_annotation.checkIsomerisationViaEC">checkIsomerisationViaEC() (in module refinegems.sbo_annotation)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.sbo_annotation.checkMethylationViaEC">checkMethylationViaEC() (in module refinegems.sbo_annotation)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.sbo_annotation.checkPassiveTransport">checkPassiveTransport() (in module refinegems.sbo_annotation)</a>
 </li>
       <li><a href="modules.html#refinegems.sbo_annotation.checkPhosphorylation">checkPhosphorylation() (in module refinegems.sbo_annotation)</a>
@@ -136,7 +139,11 @@
 </li>
       <li><a href="modules.html#refinegems.charges.correct_charges_modelseed">correct_charges_modelseed() (in module refinegems.charges)</a>
 </li>
+      <li><a href="modules.html#refinegems.curate.create_gpr">create_gpr() (in module refinegems.curate)</a>
+</li>
       <li><a href="modules.html#refinegems.pathways.create_pathway_groups">create_pathway_groups() (in module refinegems.pathways)</a>
+</li>
+      <li><a href="modules.html#refinegems.curate.create_reaction">create_reaction() (in module refinegems.curate)</a>
 </li>
       <li><a href="modules.html#refinegems.polish_carveme.cv_ncbiprotein">cv_ncbiprotein() (in module refinegems.polish_carveme)</a>
 </li>
@@ -184,7 +191,13 @@
 </li>
       <li><a href="modules.html#refinegems.modelseed.get_compared_formulae">get_compared_formulae() (in module refinegems.modelseed)</a>
 </li>
+      <li><a href="modules.html#refinegems.growth.get_default_secretion">get_default_secretion() (in module refinegems.growth)</a>
+</li>
       <li><a href="modules.html#refinegems.growth.get_default_uptake">get_default_uptake() (in module refinegems.growth)</a>
+</li>
+      <li><a href="modules.html#refinegems.test.get_egc">get_egc() (in module refinegems.test)</a>
+</li>
+      <li><a href="modules.html#refinegems.growth.get_essential_reactions">get_essential_reactions() (in module refinegems.growth)</a>
 </li>
       <li><a href="modules.html#refinegems.modelseed.get_formula_mismatch">get_formula_mismatch() (in module refinegems.modelseed)</a>
 </li>
@@ -212,10 +225,10 @@
 </li>
       <li><a href="modules.html#refinegems.genecomp.get_model_genes">get_model_genes() (in module refinegems.genecomp)</a>
 </li>
-      <li><a href="modules.html#refinegems.test.get_model_info">get_model_info() (in module refinegems.test)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.test.get_model_info">get_model_info() (in module refinegems.test)</a>
+</li>
       <li><a href="modules.html#refinegems.genecomp.get_model_reactions">get_model_reactions() (in module refinegems.genecomp)</a>
 </li>
       <li><a href="modules.html#refinegems.modelseed.get_modelseed_charges">get_modelseed_charges() (in module refinegems.modelseed)</a>
@@ -226,6 +239,8 @@
         <li><a href="modules.html#refinegems.modelseed.get_modelseed_compounds">(in module refinegems.modelseed)</a>
 </li>
       </ul></li>
+      <li><a href="modules.html#refinegems.curate.get_name_from_locus">get_name_from_locus() (in module refinegems.curate)</a>
+</li>
       <li><a href="modules.html#refinegems.test.get_orphans_deadends_disconnected">get_orphans_deadends_disconnected() (in module refinegems.test)</a>
 </li>
       <li><a href="modules.html#refinegems.pathways.get_pathway_groups">get_pathway_groups() (in module refinegems.pathways)</a>
@@ -296,10 +311,14 @@
 </li>
       <li><a href="modules.html#refinegems.load.load_document_libsbml">load_document_libsbml() (in module refinegems.load)</a>
 </li>
-      <li><a href="modules.html#refinegems.load.load_medium_custom">load_medium_custom() (in module refinegems.load)</a>
+      <li><a href="modules.html#refinegems.load.load_manual_annotations">load_manual_annotations() (in module refinegems.load)</a>
+</li>
+      <li><a href="modules.html#refinegems.load.load_manual_gapfill">load_manual_gapfill() (in module refinegems.load)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.load.load_medium_custom">load_medium_custom() (in module refinegems.load)</a>
+</li>
       <li><a href="modules.html#refinegems.load.load_medium_from_db">load_medium_from_db() (in module refinegems.load)</a>
 </li>
       <li><a href="modules.html#refinegems.load.load_model_cobra">load_model_cobra() (in module refinegems.load)</a>
@@ -323,6 +342,10 @@
 
       <ul>
         <li><a href="modules.html#module-refinegems.charges">refinegems.charges</a>
+</li>
+        <li><a href="modules.html#module-refinegems.comparison">refinegems.comparison</a>
+</li>
+        <li><a href="modules.html#module-refinegems.curate">refinegems.curate</a>
 </li>
         <li><a href="modules.html#module-refinegems.cvterms">refinegems.cvterms</a>
 </li>
@@ -357,6 +380,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.cvterms.parse_id_from_cv_term">parse_id_from_cv_term() (in module refinegems.cvterms)</a>
 </li>
+      <li><a href="modules.html#refinegems.test.parse_reaction">parse_reaction() (in module refinegems.test)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.polish_carveme.polish_carveme">polish_carveme() (in module refinegems.polish_carveme)</a>
@@ -374,6 +399,20 @@
 
       <ul>
         <li><a href="modules.html#module-refinegems.charges">module</a>
+</li>
+      </ul></li>
+      <li>
+    refinegems.comparison
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.comparison">module</a>
+</li>
+      </ul></li>
+      <li>
+    refinegems.curate
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.curate">module</a>
 </li>
       </ul></li>
       <li>
@@ -404,6 +443,8 @@
         <li><a href="modules.html#module-refinegems.load">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     refinegems.modelseed
 
@@ -411,8 +452,6 @@
         <li><a href="modules.html#module-refinegems.modelseed">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     refinegems.pathways
 
@@ -464,15 +503,25 @@
 </li>
       <li><a href="modules.html#refinegems.polish_carveme.set_units">set_units() (in module refinegems.polish_carveme)</a>
 </li>
-      <li><a href="modules.html#refinegems.growth.simulate_minimum_essential">simulate_minimum_essential() (in module refinegems.growth)</a>
+      <li><a href="modules.html#refinegems.comparison.simulate_all">simulate_all() (in module refinegems.comparison)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.growth.simulate_minimum_essential">simulate_minimum_essential() (in module refinegems.growth)</a>
+</li>
       <li><a href="modules.html#refinegems.sbo_annotation.soleProtonTransported">soleProtonTransported() (in module refinegems.sbo_annotation)</a>
 </li>
       <li><a href="modules.html#refinegems.sbo_annotation.splitSymAntiPorter">splitSymAntiPorter() (in module refinegems.sbo_annotation)</a>
 </li>
       <li><a href="modules.html#refinegems.sbo_annotation.splitTransportBiochem">splitTransportBiochem() (in module refinegems.sbo_annotation)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.curate.update_annotations_from_table">update_annotations_from_table() (in module refinegems.curate)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -548,7 +597,7 @@
       &copy;2022, Famke Bäuerle.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

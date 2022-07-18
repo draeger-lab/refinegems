@@ -11,6 +11,30 @@ refinegems.charges module
    :undoc-members:
    :show-inheritance:
 
+refinegems.comparison module
+----------------------
+
+.. automodule:: refinegems.comparison
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+refinegems.curate module
+----------------------
+
+.. automodule:: refinegems.curate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+refinegems.cvterms module
+----------------------
+
+.. automodule:: refinegems.cvterms
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 refinegems.genecomp module
 --------------------------
 
@@ -67,26 +91,18 @@ refinegems.sbo\_annotation module
    :undoc-members:
    :show-inheritance:
 
-refinegems.test module
-----------------------
-
-.. automodule:: refinegems.test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refinegems.cvterms module
-----------------------
-
-.. automodule:: refinegems.cvterms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 refinegems.strains module
 ----------------------
 
 .. automodule:: refinegems.strains
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+refinegems.test module
+----------------------
+
+.. automodule:: refinegems.test
    :members:
    :undoc-members:
    :show-inheritance:
