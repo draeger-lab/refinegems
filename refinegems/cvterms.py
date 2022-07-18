@@ -22,7 +22,7 @@ reaction_db_dict = {'BIGG': 'bigg.reaction/',
                     'BRENDA': 'brenda/',
                     'KEGG': 'kegg.reaction/',
                     'METACYC': 'metacyc.reaction/',
-                    'MetaNetX': 'metanetx.reaction/',
+                    'MXNREF': 'metanetx.reaction/',
                     'SEED': 'seed.reaction/',
                     'UPA': 'unipathway.reaction/',
                     'HMDB': 'hmdb/',
@@ -74,7 +74,7 @@ def add_cv_term_genes(entry, db_id, gene):
     Args:
         entry (string): id to add as annotation
         db_id (string): database to which entry belongs
-        metab (libsbml-gene): gene to add CVTerm to
+        gene (libsbml-gene): gene to add CVTerm to
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
