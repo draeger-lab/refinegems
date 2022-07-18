@@ -29,7 +29,7 @@ def get_name_from_locus(locus):
     for i, record in enumerate(records):
         return record.description
 
-def create_reaction(model, reaction_id, name, reactants, products, fluxes, sbo):
+def create_reaction(model, reaction_id, name, reactants, products, fluxes, reversible, fast, sbo):
     """creates new reaction in the given model
 
     Args:
@@ -39,6 +39,8 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, sbo):
         reactants (dict): metabolites as keys and their stoichiometry as values
         products (dict): metabolites as keys and their stoichiometry as values
         fluxes (dict): lower_bound and upper_bound as keys
+        reversible (bool): true/false for the reaction
+        fast (bool): true/false for the reaction
         sbo (string): SBO term of the reaction
 
     Returns:
@@ -49,6 +51,8 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, sbo):
     reaction.setName(name)
     reaction.setMetaId('meta_R_' + reaction_id)
     reaction.setSBOTerm(sbo)
+    reaction.setFast(fast)
+    reaction.setReversible(reversible)
     for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
         reaction.addReactant(model.getSpecies('M_' + metab), stoich)
     for metab, stoich in products.items(): #reactants as dict with metab:stoich
@@ -93,18 +97,20 @@ def add_reactions_from_table(model, table, email):
     """
     for reaction_info in tqdm(table.groupby('BIGG')):
         reac_id = reaction_info[0]
-        if not model.getReaction(str(reac_id)):
+        if model.getReaction(str(reac_id)) is None:
             reactants = dict(table.loc[table['BIGG'] == reac_id, ['educts', 'stoich_e']].dropna().values)
             products = dict(table.loc[table['BIGG'] == reac_id, ['products', 'stoich_p']].dropna().values)
             fluxes = table.loc[table['BIGG'] == reac_id, ['lower_bound', 'upper_bound']].dropna().to_dict('records')[0]
             name = table.loc[table['BIGG'] == reac_id, ['name']].dropna().to_dict('records')[0]['name']
+            reversible = table.loc[table['BIGG'] == reac_id, ['reversible']].dropna().to_dict('records')[0]['reversible']
+            fast = table.loc[table['BIGG'] == reac_id, ['fast']].dropna().to_dict('records')[0]['fast']
             try:
                 sbo = table.loc[table['BIGG'] == reac_id, ['sbo']].dropna().to_dict('records')[0]['sbo']
             except (IndexError):
                 print('SBO Term for ' + str(reac_id) + ' will be set to standard "SBO:0000167" (biochemical or transport reaction)')
                 sbo = "SBO:0000167"
-            reaction, model = create_reaction(model, reac_id, name, reactants, products, fluxes, sbo)
-            for (columnName, columnData) in table.loc[table['BIGG'] == reac_id].drop(['educts', 'stoich_e','products', 'stoich_p','lower_bound', 'upper_bound', 'name'], axis=1).fillna(0).iteritems():
+            reaction, model = create_reaction(model, reac_id, name, reactants, products, fluxes, reversible, fast, sbo)
+            for (columnName, columnData) in table.loc[table['BIGG'] == reac_id].drop(['educts', 'stoich_e','products', 'stoich_p','lower_bound', 'upper_bound', 'name', 'reversible', 'fast'], axis=1).fillna(0).iteritems():
                 for entry in columnData.values:
                     if not entry == 0:
                         if columnName == 'locus':
@@ -127,6 +133,8 @@ def update_annotations_from_table(model, table):
     Returns:
         model: modified model with new annotations
     """
+    table = table.drop(['Name', 'FORMULA', 'Notiz'], axis=1).fillna(0)
+    table['PUBCHEM'] = table['PUBCHEM'].astype(int)
     for metab_info in tqdm(table.groupby('BIGG')):
         met = metab_info[0]
         for comp in ['_c', '_e', '_p']:
@@ -137,7 +145,6 @@ def update_annotations_from_table(model, table):
                     for entry in columnData.values:
                         if not entry == 0:
                             add_cv_term_metabolites(str(entry), str(columnName), metab)
-                print(metab.getAnnotationString())
             except (AttributeError):
                 print(met + comp + ' not in model')
     return model

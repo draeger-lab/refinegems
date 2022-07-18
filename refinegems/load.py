@@ -119,10 +119,6 @@ def load_manual_annotations(tablepath='data/manual_curation.xlsx', sheet_name='m
         df: table as pandas df
     """
     man_ann = pd.read_excel(tablepath, sheet_name)
-    try:
-        man_ann['PUBCHEM'] = man_ann['PUBCHEM'].astype(int)
-    except:
-        pass
     return man_ann
 
 

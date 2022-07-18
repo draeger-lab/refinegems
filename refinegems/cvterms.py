@@ -16,7 +16,8 @@ metabol_db_dict = {'BIGG': 'bigg.metabolite/',
                    'UPA': 'unipathway.compound/',
                    'HMDB': 'hmdb/',
                    'REACTOME': 'reactome/',
-                   'BIOCYC': 'biocyc/'}
+                   'BIOCYC': 'biocyc/',
+                   'PUBCHEM': 'pubchem.compound/'}
 
 reaction_db_dict = {'BIGG': 'bigg.reaction/',
                     'BRENDA': 'brenda/',
