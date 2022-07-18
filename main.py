@@ -41,9 +41,25 @@ def main():
         model, errors = cobra.io.sbml.validate_sbml_model(config['charge_path'])
         print(errors)
         print(mulchar) # hier muss ich noch eine bessere Lösung finden, klappt aber erstmal
+        
+    elif(config['man_cur']):
+        model_libsbml = rg.load_model_libsbml(config['model'])
+        if config['man_cur_type'] == 'gapfill':
+            gapfill = rg.load_manual_gapfill(config['man_cur_table'])
+            model = rg.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
+            rg.write_to_file(model, config['man_cur_path'])
+            model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
+            print(errors)
+        elif config['man_cur_type'] == 'metabs':
+            man_ann = rg.load_manual_annotations(config['man_cur_table'])
+            model = rg.update_annotations_from_table(model_libsbml, man_ann)
+            rg.write_to_file(model, config['man_cur_path'])
+            model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
+            print(errors)
     
     else:
         model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
+        print(errors)
 
         if (model_cobra != None):
             model_libsbml = rg.load_model_libsbml(config['model'])

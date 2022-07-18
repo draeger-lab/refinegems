@@ -1,6 +1,6 @@
 # declares public API for this module
 # loads functions from subscripts which are needed in main.py
-from refinegems.load import load_model_libsbml, load_model_cobra
+from refinegems.load import load_model_libsbml, load_model_cobra, load_manual_gapfill, load_manual_annotations, write_to_file
 from refinegems.test import run_memote, initial_analysis, get_orphans_deadends_disconnected, get_mass_charge_unbalanced, get_egc
 from refinegems.pathways import kegg_pathways
 from refinegems.growth import get_all_minimum_essential, get_growth_selected_media
@@ -11,6 +11,7 @@ from refinegems.polish_carveme import polish_carveme
 from refinegems.cvterms import parse_id_from_cv_term
 from refinegems.charges import correct_charges
 from refinegems.comparison import simulate_all
+from refinegems.curate import add_reactions_from_table, update_annotations_from_table
 
 
 __author__ = "Famke Baeuerle"

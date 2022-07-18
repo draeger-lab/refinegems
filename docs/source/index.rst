@@ -21,7 +21,7 @@ Other applications of ``refinegems`` include curation of a given model these inc
 * correction of a model created with `CarveMe <https://github.com/cdanielmachado/carveme>`__ v.1.5.1 (for example moving all relevant information from the notes to the annotation field) this includes automated annotation of NCBI genes to the GeneProtein section of the model
 * addition of `KEGG <https://www.genome.jp/kegg/kegg1.html>`__ Pathways as Groups (using the `libSBML <https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html>`__ Groups Plugin)
 * SBO-Term annotation based on a script by Elisabeth Fritze
-* *annotation of metabolites based using a table created by the user ``data/manual_annotations.xlsx`` (coming soon…)*
+* updating the annotation of metabolites and extending the model with reactions (for the purpose of gapfilling) based on a table filled by the user ``data/manual_annotations.xlsx``, note that this only works when the structure of the given table is used
 
 
 .. toctree::
