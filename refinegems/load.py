@@ -108,6 +108,38 @@ def load_all_media_from_db(mediumpath):
     return media_dfs
 
 
+def load_manual_annotations(tablepath='data/manual_curation.xlsx', sheet_name='metab'):
+    """loads metabolite sheet from manual curation table
+
+    Args:
+        tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        sheet_name (str): Sheet name for metabolite annotations. Defaults to 'metab'.
+
+    Returns:
+        df: table as pandas df
+    """
+    man_ann = pd.read_excel(tablepath, sheet_name)
+    try:
+        man_ann['PUBCHEM'] = man_ann['PUBCHEM'].astype(int)
+    except:
+        pass
+    return man_ann
+
+
+def load_manual_gapfill(tablepath='data/manual_curation.xlsx' , sheet_name='gapfill'):
+    """loads gapfill sheet from manual curation table
+
+    Args:
+        tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
+
+    Returns:
+        df: table as pandas df
+    """
+    man_gapf = pd.read_excel(tablepath, sheet_name)
+    return man_gapf
+
+
 def write_to_file(model, new_filename):
     """Writes modified model to new file
 
