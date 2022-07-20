@@ -53,6 +53,7 @@ def main():
         elif config['man_cur_type'] == 'metabs':
             man_ann = rg.load_manual_annotations(config['man_cur_table'])
             model = rg.update_annotations_from_table(model_libsbml, man_ann)
+            model = rg.update_annotations_from_others(model)
             rg.write_to_file(model, config['man_cur_path'])
             model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
             print(errors)

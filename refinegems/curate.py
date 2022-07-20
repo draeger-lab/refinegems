@@ -5,7 +5,7 @@ While working on GEMs the user might come across ill-annotated or missing metabo
 """
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
-from refinegems.cvterms import add_cv_term_reactions, add_cv_term_genes, add_cv_term_metabolites
+from refinegems.cvterms import add_cv_term_reactions, add_cv_term_genes, add_cv_term_metabolites, metabol_db_dict, parse_id_from_cv_term
 
 __author__ = "Famke Baeuerle"
 
@@ -140,7 +140,9 @@ def update_annotations_from_table(model, table):
         for comp in ['_c', '_e', '_p']:
             try:
                 metab = model.getSpecies('M_' + met + comp)
-                metab.unsetAnnotation()
+                #metab.unsetAnnotation()
+                if not metab.isSetMetaId():
+                    metab.setMetaId('meta_' + metab.getId())
                 for (columnName, columnData) in table.loc[table['BIGG'] == met].iteritems():
                     for entry in columnData.values:
                         if not entry == 0:
@@ -148,3 +150,26 @@ def update_annotations_from_table(model, table):
             except (AttributeError):
                 print(met + comp + ' not in model')
     return model
+
+def update_annotations_from_others(model):
+    """Synchronizes metabolite annotations for core, periplasm and extracelullar
+
+    Args:
+        model (libsbml-model): model loaded with libSBML
+
+    Returns:
+        model: modified with synchronized annotations
+    """
+    for metab in model.getListOfSpecies():
+        base = metab.getId()[:-2]
+        for comp in ['_c', '_e', '_p']:
+            other_metab = model.getSpecies(base + comp)
+            if other_metab is not None:
+                if not other_metab.isSetMetaId():
+                    other_metab.setMetaId('meta_' + other_metab.getId())
+                for db_id, code in metabol_db_dict.items():
+                    id = parse_id_from_cv_term(metab, code)
+                    for entry in id:
+                        if entry is not None:
+                            add_cv_term_metabolites(entry, db_id, other_metab)    
+    return model               
