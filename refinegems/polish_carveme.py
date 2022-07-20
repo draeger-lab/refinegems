@@ -157,20 +157,31 @@ def cv_ncbiprotein(gene_list, email):
         records = SeqIO.parse(handle, "gb")
 
         for i, record in enumerate(records):
-            for feature in record.features:
-                if feature.type == "CDS":
-                    return record.description, feature.qualifiers["locus_tag"][0]
+            if (ncbi_id[0] == 'W'):
+                return record.description, ncbi_id
+            else:
+                for feature in record.features:
+                    if feature.type == "CDS":
+                        return record.description, feature.qualifiers["locus_tag"][0]
 
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
-        id_string = gene.getId().split('_')
-
-        for entry in id_string:
-            if (entry[:1] == 'Q'):  # maybe change this to user input
-                add_cv_term_genes(entry, 'NCBI', gene)
-                name, locus = get_name_locus_tag(entry)
-                gene.setName(name)
-                gene.setLabel(locus)
+        
+        if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
+            entry = gene.getId()[2:-2]
+            add_cv_term_genes(entry, 'NCBI', gene)
+            name, locus = get_name_locus_tag(entry)
+            gene.setName(name)
+            gene.setLabel(locus)
+        
+        else:
+            id_string = gene.getId().split('_')
+            for entry in id_string:
+                if (entry[:1] == 'Q'):  # maybe change this to user input
+                    add_cv_term_genes(entry, 'NCBI', gene)
+                    name, locus = get_name_locus_tag(entry)
+                    gene.setName(name)
+                    gene.setLabel(locus)
 
         gene.unsetNotes()
 
