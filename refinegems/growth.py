@@ -15,6 +15,7 @@ missing = all exchanges missing in the model but given in medium
 import pandas as pd
 import numpy as np
 from refinegems.load import load_all_media_from_db
+from cobra.medium import minimal_medium
 
 __author__ = "Famke Baeuerle"
 
@@ -28,13 +29,27 @@ def get_default_uptake(model):
     Returns:
         list: metabolites consumed in standard medium
     """
-    fluxes = model.optimize().fluxes
-    default_uptake = []
-    for index, value in fluxes.items():
-        if "EX" in index:
-            if value < 0:
-                default_uptake.append(index)
+    with model:
+        sol = model.optimize()
+        fluxes = sol.fluxes
+        default_uptake = []
+        for index, value in fluxes.items():
+            if "EX" in index:
+                if value < 0:
+                    default_uptake.append(index)
     return default_uptake
+
+
+def get_minimum_default(model):
+    with model:
+        #new_medium = {i: 10.0 for i in default_uptake}
+        #model.medium = new_medium
+        minimal = minimal_medium(model)
+        uptake = []
+        for index, value in minimal.items():
+            if value < 0:
+                uptake.append(index)
+    return list(minimal.index)
 
 
 def get_default_secretion(model):
@@ -46,11 +61,12 @@ def get_default_secretion(model):
     Returns:
         list: BiGG Ids of produced metabolites
     """
-    fluxes = model.optimize().fluxes
-    default_secretion = []
-    for index, value in fluxes.items():
-        if value > 0:
-            default_secretion.append(index)
+    with model:
+        fluxes = model.optimize().fluxes
+        default_secretion = []
+        for index, value in fluxes.items():
+            if value > 0:
+                default_secretion.append(index)
     return default_secretion
 
 
@@ -82,11 +98,11 @@ def modify_medium(medium, missing_exchanges):
         missing_exchanges (list): exchanges not in the model
 
     Returns:
-        dict: medium that can be used with the model
+        dict: growth medium that can be used with the model
     """
+    # needed or else KeyError later
     medium_dict = dict.fromkeys(medium['BiGG_EX'].dropna().tolist(), 10.0)
     for exchange in missing_exchanges:
-        #exchange = exchange[2:]
         medium_dict.pop(exchange)
     return medium_dict
 
@@ -97,22 +113,24 @@ def find_missing_essential(model, medium, default_uptake):
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        medium (dict): medium with exchanges that are present in the model
+        medium (dict): custom medium with exchanges that are present in the model
         default_uptake (list): metabolites consumed in standard medium
 
     Returns:
         list: all metabolites which lead to zero growth if blocked
     """
-    medium.update({i: 10.0 for i in default_uptake})
-    med = model.medium
-    model.medium = medium
-    essential = []
-    for metab in medium.keys():
-        model.reactions.get_by_id(metab).lower_bound = 0
-        sol = model.optimize()
-        if sol.objective_value < 1e-9:  # and sol.objective_value > -1e-9: # == 0 no negative growth!
-            essential.append(metab)
-        model.reactions.get_by_id(metab).lower_bound = -10
+    with model:
+        default_medium = {i: 10.0 for i in default_uptake}
+        new_medium = {**medium, **default_medium}
+        model.medium = new_medium
+        essential = []
+        for metab in new_medium.keys():
+            with model:
+                model.reactions.get_by_id(metab).lower_bound = 0
+                sol = model.optimize()
+                if sol.objective_value < 1e-5:  # and sol.objective_value > -1e-9: # == 0 no negative growth!
+                    essential.append(metab)
+                model.reactions.get_by_id(metab).lower_bound = -10
     return essential
 
 
@@ -121,7 +139,7 @@ def find_minimum_essential(medium, essential):
 
     Args:
         medium (df): dataframe of medium csv
-        essential (list): metabolites which lead to zero growth if blocked
+        essential (list): echanges of metabolites which lead to zero growth if blocked
 
     Returns:
         list: metabolites not present in the medium but necessary for growth
@@ -133,26 +151,28 @@ def find_minimum_essential(medium, essential):
     return minimum
 
 
-def simulate_minimum_essential(model, medium, minimum):
+def simulate_minimum_essential(model, growth_medium, minimum):
     """Simulate growth with custom medium plus necessary uptakes
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        medium (dict): medium with exchanges present in the model
-        minimum (list): metabolites not present in the medium but necessary for growth
+        growth_medium (dict): growth medium with exchanges present in the model
+        minimum (list): exchanges of metabolites not present in the medium but necessary for growth
 
     Returns:
         float: growth value
     """
-    medium.update({i: 10.0 for i in minimum})
-    try:
-        if (medium['EX_o2_e'] == 10.0):
-            medium['EX_o2_e'] = 20.0
-    except KeyError:
-        pass
-    med = model.medium
-    model.medium = medium
-    sol = model.optimize()
+    with model:
+        min_medium = {i: 10.0 for i in minimum}
+        new_medium = {**growth_medium, **min_medium}
+        try:
+            if (new_medium['EX_o2_e'] == 10.0):
+                new_medium['EX_o2_e'] = 20.0
+        except KeyError:
+            print('No Oxygen Exchange Reaction')
+            pass
+        model.medium = new_medium
+        sol = model.optimize()
     return sol.objective_value
 
 
@@ -189,9 +209,10 @@ def get_growth_one_medium(model, medium):
         DataFrame: information on growth behaviour on medium
     """
     default_uptake = get_default_uptake(model)
+    minimal_medium = get_minimum_default(model) # use this instead of default_uptake
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
-    essential = find_missing_essential(model, medium_dict, default_uptake)
+    essential = find_missing_essential(model, medium_dict, minimal_medium)#default_uptake)
     minimum = find_minimum_essential(medium, essential)
 
     medium_dict = modify_medium(medium, missing_exchanges)
