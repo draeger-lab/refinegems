@@ -20,6 +20,8 @@ def add_bigg_metab(entity_list):
         entity_list (list): libSBML ListOfSpecies
     """
     for entity in entity_list:
+        if not entity.isSetMetaId():
+            entity.setMetaId('meta_' + entity.getId())
         bigg_id = entity.getId()
         bigg_id = bigg_id[2:]
         bigg_id = bigg_id[:-2]
@@ -33,6 +35,8 @@ def add_bigg_reac(entity_list):
         entity_list (list): libSBML ListOfReactions
     """
     for entity in entity_list:
+        if not entity.isSetMetaId():
+            entity.setMetaId('meta_' + entity.getId())
         bigg_id = entity.getId()
         if bigg_id != 'Growth':
             bigg_id = bigg_id[2:]
@@ -48,6 +52,8 @@ def cv_notes_metab(species_list):
     """
 
     for species in species_list:
+        if not species.isSetMetaId():
+            species.setMetaId('meta_' + species.getId())
         notes_list = []
         elem_used = []
         notes_string = species.getNotesString().split('\n')
@@ -72,7 +78,7 @@ def cv_notes_metab(species_list):
         new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
         species.unsetNotes()
         species.setNotes(new_notes)
-        # print(species.getNotesString())
+        #print(species.getAnnotationString())
 
 
 def cv_notes_reac(reaction_list):
@@ -84,6 +90,8 @@ def cv_notes_reac(reaction_list):
     """
 
     for reaction in reaction_list:
+        if not reaction.isSetMetaId():
+            reaction.setMetaId('meta_' + reaction.getId())
         notes_list = []
         elem_used = []
         notes_string = reaction.getNotesString().split('\n')
@@ -112,15 +120,13 @@ def cv_notes_reac(reaction_list):
 
 
 def polish_entities(entity_list, metabolite):
-    """removes Notes field from entity
-       sets boundary condition and constant if not set for a metabolite
+    """sets boundary condition and constant if not set for a metabolite
 
     Args:
         entity_list (list): libSBML ListOfSpecies or ListOfReactions
         metabolite (boolean): flag to determine whether entity = metabolite
     """
     for entity in entity_list:
-        entity.unsetNotes()
         if metabolite:  # some polishing
             if not entity.getBoundaryCondition():
                 entity.setBoundaryCondition(False)
@@ -134,7 +140,7 @@ def set_units(model):
     Args:
         model (libsbml-model): model loaded with libsbml
     """
-    for param in model.getListOfParameters():
+    for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
         if param.isSetUnits() == False:
             param.setUnits('mmol_per_gDW_per_hr')
 
@@ -166,6 +172,8 @@ def cv_ncbiprotein(gene_list, email):
 
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
+        if not gene.isSetMetaId():
+            gene.setMetaId('meta_' + gene.getId())
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()[2:-2]
