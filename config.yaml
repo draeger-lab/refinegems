@@ -6,7 +6,7 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model:  '../C_striatum_GEMs/models/Cstr_14.xml' # 'data/e_coli_core.xml' #
+model: '../Nextcloud/Pneumococcus/pneumococcus_grampos_fbc_polished.xml' # 'data/e_coli_core.xml' #
 entrez_email: 'famke.baeuerle@student.uni-tuebingen.de' # necessary to access NCBI API
 
 
@@ -15,27 +15,27 @@ Settings for scripts that manipulate the model: >
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
-kegg_path: '../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
+kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' #'../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation (requires PostgreSQL) ###
 sboterms: FALSE
 database_user: postgres
 database_name: sbo_ann
-sbo_path: '../Nextcloud/master_thesis/models/Cstr_17_sbo.xml' # path where to save model with sbo terms
+sbo_path: '../Nextcloud/Pneumococcus/pneumococcus_grampos_fbc_sbo.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
 polish_carveme: FALSE
-polish_path: 'data/e_test.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
+polish_path: '../Nextcloud/Pneumococcus/pneumococcus_grampos_fbc_polished.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
 
 ### Charge correction ###
 charge_corr: FALSE
-charge_path: '../Nextcloud/master_thesis/models/Cstr_16_charges.xml'
+charge_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml'
 
 ### Manual Curation ###
-man_cur: TRUE
+man_cur: FALSE
 man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
-man_cur_table: 'data/manual_curation.xlsx'
-man_cur_path: '../C_striatum_GEMs/models/Cstr_14_mancur.xml' # path where to save modified model
+man_cur_table: '../C_striatum_GEMs/data/manual_curation.xlsx'
+man_cur_path: '../C_striatum_GEMs/models/Cstr_17.xml' # path where to save modified model
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
@@ -48,7 +48,7 @@ multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/mo
 media_db: 'data/media_db.csv' 
 
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
-media: ['SNM3', 'LB', 'M9', 'RPMI']
+media: ['SNM3', 'LB', 'M9', 'RPMI', 'CGXII']
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
@@ -56,15 +56,16 @@ memote: FALSE
 # Determine if output file should be created, default: cl
 # Filename is set as the models name
 output: xlsx #cl, xlsx, csv 
+out_path: '../C_striatum_GEMs/analysis/'
 
 # these work only with single models
 ### Gene comparison ###
-genecomp: FALSE # set to False if not needed
+genecomp: FALSE # set to False if not needed, only works when gprs are annotated with kegg
 # the following is only relevant when turned on
 organismid: 'T05059' # C. striatum
 gff_file: 'data/cstr.gff' # C. striatum
 biggreactions: 'data/bigg_models_reactions.txt'
 
 ### ModelSEED comparison ###
-modelseed: FALSE # set to False if not needed
+modelseed: TRUE # set to False if not needed
 modelseedpath: 'data/modelseed_compounds.tsv'
