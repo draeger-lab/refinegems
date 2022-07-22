@@ -125,7 +125,7 @@ email (string): User Email to access the NCBI Entrez database</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.curate.create_reaction">
-<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">create_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reaction_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reactants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">products</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sbo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.create_reaction" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">create_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reaction_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reactants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">products</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reversible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sbo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.create_reaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>creates new reaction in the given model</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML
@@ -134,6 +134,8 @@ name (string): human readable name of the reaction
 reactants (dict): metabolites as keys and their stoichiometry as values
 products (dict): metabolites as keys and their stoichiometry as values
 fluxes (dict): lower_bound and upper_bound as keys
+reversible (bool): true/false for the reaction
+fast (bool): true/false for the reaction
 sbo (string): SBO term of the reaction</p>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (reaction, modified model)</p>
@@ -149,6 +151,18 @@ sbo (string): SBO term of the reaction</p>
 <dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
 </dd>
 <dt>Returns:</dt><dd><p>str: protein name / description</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.curate.update_annotations_from_others">
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">update_annotations_from_others</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.update_annotations_from_others" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronizes metabolite annotations for core, periplasm and extracelullar</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>model: modified with synchronized annotations</p>
 </dd>
 </dl>
 </dd></dl>
@@ -411,7 +425,7 @@ delimiter and BiGG Ids for the compounds.</p>
 <dd><p>Report metabolites necessary for growth and not in custom medium</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>medium (df): dataframe of medium csv
-essential (list): metabolites which lead to zero growth if blocked</p>
+essential (list): echanges of metabolites which lead to zero growth if blocked</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: metabolites not present in the medium but necessary for growth</p>
 </dd>
@@ -425,7 +439,7 @@ essential (list): metabolites which lead to zero growth if blocked</p>
 <dt>Report which exchange reactions are needed for growth</dt><dd><p>combines default uptake and valid new medium</p>
 </dd>
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-medium (dict): medium with exchanges that are present in the model
+medium (dict): custom medium with exchanges that are present in the model
 default_uptake (list): metabolites consumed in standard medium</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: all metabolites which lead to zero growth if blocked</p>
@@ -510,6 +524,11 @@ media (list): media to simulate on (must be in csv)</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.growth.get_minimum_default">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_minimum_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_minimum_default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.get_missing_exchanges">
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_missing_exchanges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_missing_exchanges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Look for exchange reactions needed by the medium but not in the model</p>
@@ -530,19 +549,19 @@ medium (df): dataframe of medium csv</p>
 <dt>Args:</dt><dd><p>medium (df): dataframe of medium csv
 missing_exchanges (list): exchanges not in the model</p>
 </dd>
-<dt>Returns:</dt><dd><p>dict: medium that can be used with the model</p>
+<dt>Returns:</dt><dd><p>dict: growth medium that can be used with the model</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.simulate_minimum_essential">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">simulate_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.simulate_minimum_essential" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">simulate_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">growth_medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.simulate_minimum_essential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate growth with custom medium plus necessary uptakes</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-medium (dict): medium with exchanges present in the model
-minimum (list): metabolites not present in the medium but necessary for growth</p>
+growth_medium (dict): growth medium with exchanges present in the model
+minimum (list): exchanges of metabolites not present in the medium but necessary for growth</p>
 </dd>
 <dt>Returns:</dt><dd><p>float: growth value</p>
 </dd>
@@ -950,9 +969,8 @@ new_filename (Str): filename for modified model</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish_carveme.polish_entities">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish_carveme.</span></span><span class="sig-name descname"><span class="pre">polish_entities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metabolite</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish_carveme.polish_entities" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>removes Notes field from entity</dt><dd><p>sets boundary condition and constant if not set for a metabolite</p>
-</dd>
+<dd><p>sets boundary condition and constant if not set for a metabolite</p>
+<dl class="simple">
 <dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions
 metabolite (boolean): flag to determine whether entity = metabolite</p>
 </dd>
@@ -1491,7 +1509,14 @@ access to its number of reactions, metabolites and genes.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.test.get_egc">
 <span class="sig-prename descclassname"><span class="pre">refinegems.test.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.test.get_egc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.test.get_mass_charge_unbalanced">
@@ -1502,6 +1527,19 @@ access to its number of reactions, metabolites and genes.</p>
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.test.get_metabs_with_one_cvterm">
+<span class="sig-prename descclassname"><span class="pre">refinegems.test.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.test.get_metabs_with_one_cvterm" title="Permalink to this definition">¶</a></dt>
+<dd><p>reports metabolites which have only one annotation, 
+can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
 </dd>
 </dl>
 </dd></dl>
