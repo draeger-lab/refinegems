@@ -184,6 +184,14 @@ def parse_reaction(eq, model): # from alina
     return eq_matrix
 
 def get_egc(model):
+    """Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+        df: table with possible EGCs
+    """
     dissipation_rxns = pd.read_csv("data/energy_dissipation_rxns.csv")
     with model: 
     # add dissipation reactions
@@ -227,3 +235,24 @@ def get_egc(model):
                 df_fluxes[row['type']] = np.nan
         df_fluxes = pd.concat([df_fluxes,pd.DataFrame.from_dict([objval])])
     return df_fluxes.T.reset_index().rename({'index':'BOF', 0:'objective value'}, axis=1).fillna('')
+
+def get_metabs_with_one_cvterm(model):
+    """reports metabolites which have only one annotation, 
+    can be used as basis for further annotation research
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+
+    Returns:
+        list: metabolite Ids
+    """
+    spe = model.getListOfSpecies()
+
+    only_one = [] #safe metab with only BiGG annotation
+    for sb in spe:
+        if sb.isSetId():
+            pid = sb.getId()
+            if sb.getCVTerm(0).getNumResources() == 1:
+                only_one.append(pid)
+                
+    return only_one
