@@ -3,7 +3,7 @@
 
 Script written by Elisabeth Fritze in her bachelor thesis.
 
-It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation(model_libsbml, database_user, database_name, new_filename). The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
+It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
 
 import psycopg2
@@ -657,17 +657,19 @@ def addSBOfromDB(reac, cur):
         return True
     else:
         return False
+    
 
-
-def sbo_annotation(model_libsbml, database_user, database_name, new_filename):
-    """executes all steps to annotate sbo terms to a given model
+def sbo_annotation(model_libsbml, database_user, database_name):
+    """executes all steps to annotate SBO terms to a given model
        (former main function of original script by Elisabeth Fritze)
 
     Args:
         model_libsbml (libsbml-model): model loaded with libsbml
         database_user (Str): username for postgresql database
         database_name (Str): name of database in which create_dbs.sql was imported
-        new_filename (Str): filename for modified model
+
+    Returns:
+        libsbml-model: modified model with SBO terms
     """
     conn = psycopg2.connect(dbname=database_name, user=database_user)
     cur = conn.cursor()
@@ -697,7 +699,20 @@ def sbo_annotation(model_libsbml, database_user, database_name, new_filename):
                 checkDecarboxylation(reaction)
                 checkDeamination(reaction)
                 checkPhosphorylation(reaction)
-
-    write_to_file(model_libsbml, new_filename)
+    
     cur.close()
     conn.close()
+    return model_libsbml
+    
+
+def sbo_annotation_write(model_libsbml, database_user, database_name, new_filename):
+    """wrapper around sbo_annotation to include writing to a file
+
+    Args:
+        model_libsbml (libsbml-model): model loaded with libsbml
+        database_user (Str): username for postgresql database
+        database_name (Str): name of database in which create_dbs.sql was imported
+        new_filename (Str): filename for modified model
+    """
+    new_model = sbo_annotation(model_libsbml, database_user, database_name)
+    write_to_file(new_model, new_filename)

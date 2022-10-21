@@ -3,7 +3,6 @@
 from refinegems.load import load_model_libsbml, load_model_cobra, load_manual_gapfill, load_manual_annotations, write_to_file
 from refinegems.pathways import kegg_pathways
 from refinegems.growth import get_all_minimum_essential, get_growth_selected_media
-from refinegems.sbo_annotation import sbo_annotation
 from refinegems.genecomp import genecomp
 from refinegems.modelseed import modelseed
 from refinegems.polish_carveme import polish_carveme
