@@ -1,5 +1,6 @@
 # declares public API for this module
 # loads functions from subscripts which are needed in main.py
+from refinegems.load import load_model_libsbml, load_model_cobra, load_manual_gapfill, load_manual_annotations, write_to_file
 from refinegems.pathways import kegg_pathways
 from refinegems.growth import get_all_minimum_essential, get_growth_selected_media
 from refinegems.genecomp import genecomp
