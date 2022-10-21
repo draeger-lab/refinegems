@@ -46,14 +46,14 @@ def main():
         model_libsbml = rg.load.load_model_libsbml(config['model'])
         if config['man_cur_type'] == 'gapfill':
             gapfill = rg.load.load_manual_gapfill(config['man_cur_table'])
-            model = rg.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
+            model = rg.curate.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
             rg.load.write_to_file(model, config['man_cur_path'])
             model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
             print(errors)
         elif config['man_cur_type'] == 'metabs':
             man_ann = rg.load.load_manual_annotations(config['man_cur_table'])
-            model = rg.update_annotations_from_table(model_libsbml, man_ann)
-            model = rg.update_annotations_from_others(model)
+            model = rg.curate.update_annotations_from_table(model_libsbml, man_ann)
+            model = rg.curate.update_annotations_from_others(model)
             rg.load.write_to_file(model, config['man_cur_path'])
             model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
             print(errors)
