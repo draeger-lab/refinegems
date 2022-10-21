@@ -70,7 +70,7 @@ def get_orphans_deadends_disconnected(model):
         model (cobra-model): model loaded with cobrapy
 
     Returns:
-        tuple: (list of BiGG ids of orphans, deadends, disconnected metabolites)
+        tuple: (list of orphans, deadends, disconnected metabolites)
     """
     orphans = consistency.find_orphans(model)
     deadends = consistency.find_deadends(model)
@@ -162,6 +162,15 @@ def get_model_info(modelpath):
     return model_info
 
 def parse_reaction(eq, model): # from alina
+    """Parses a reaction equation string to dictionary
+
+    Args:
+        eq (string): Equation of a reaction
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+       dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)
+    """
     eq = eq.split(' ')
     eq_matrix={}
     are_products = False

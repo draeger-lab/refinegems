@@ -64,13 +64,13 @@ def main():
 
         if (model_cobra != None):
             model_libsbml = rg.load_model_libsbml(config['model'])
-            name, reac, metab, genes = rg.initial_analysis(model_libsbml)
-            orphans, deadends, disconnected = rg.get_orphans_deadends_disconnected(model_cobra)
-            mass_unbal, charge_unbal = rg.get_mass_charge_unbalanced(model_cobra)
-            egc = rg.get_egc(model_cobra)
+            name, reac, metab, genes = rg.investigate.initial_analysis(model_libsbml)
+            orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
+            mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
+            egc = rg.investigate.get_egc(model_cobra)
             
             if (config['memote']):
-                score = rg.run_memote(model_cobra)
+                score = rg.investigate.run_memote(model_cobra)
                 
             if (config['genecomp']):
                 genecomp = rg.genecomp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
