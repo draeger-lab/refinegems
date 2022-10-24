@@ -25,6 +25,8 @@ def add_bigg_metab(entity_list):
         bigg_id = entity.getId()
         bigg_id = bigg_id[2:]
         bigg_id = bigg_id[:-2]
+        if entity.getNumCVTerms() == 0:
+            entity.unsetAnnotation()
         add_cv_term_metabolites(bigg_id, 'BIGG', entity)
 
 
@@ -40,6 +42,8 @@ def add_bigg_reac(entity_list):
         bigg_id = entity.getId()
         if bigg_id != 'Growth':
             bigg_id = bigg_id[2:]
+            if entity.getNumCVTerms() == 0:
+                entity.unsetAnnotation()
             add_cv_term_reactions(bigg_id, 'BIGG', entity)
 
 
