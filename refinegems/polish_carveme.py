@@ -137,9 +137,41 @@ def polish_entities(entity_list, metabolite):
             if not entity.getConstant():
                 entity.setConstant(False)
 
+def add_fba_unit(model):
+    """adds mmol per gDW per h to the list of unit definitions (needed for FBA)
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+    """
+    mole = Unit(3,1)
+    mole.setKind(UNIT_KIND_MOLE)
+    mole.setExponent(1)
+    mole.setScale(-3)
+    mole.setMultiplier(1)
+
+    gram = Unit(3,1)
+    gram.setKind(UNIT_KIND_GRAM)
+    gram.setExponent(-1)
+    gram.setScale(0)
+    gram.setMultiplier(1)
+
+    second = Unit(3,1)
+    second.setKind(UNIT_KIND_SECOND)
+    second.setExponent(-1)
+    second.setScale(0)
+    second.setMultiplier(3600)
+
+    mmgdwh = UnitDefinition(3,1)
+    mmgdwh.setId("mmol_per_gDW_per_hr")
+
+    mmgdwh.addUnit(mole)
+    mmgdwh.addUnit(gram)
+    mmgdwh.addUnit(second)
+
+    model.getListOfUnitDefinitions().append(mmgdwh)
 
 def set_units(model):
-    """Adds units to parameters in model
+    """Sets units of parameters in model
 
     Args:
         model (libsbml-model): model loaded with libsbml
@@ -209,6 +241,7 @@ def polish_carveme(model, new_filename, email):
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
 
+    add_fba_unit(model)
     set_units(model)
     add_bigg_metab(metab_list)
     add_bigg_reac(reac_list)
