@@ -25,7 +25,7 @@ def main():
         
     elif (config['sboterms']):
         model_libsbml = rg.load.load_model_libsbml(config['model'])
-        rg.sbo_annotation_write(model_libsbml, config['sbo_path'])
+        rg.sboann.sbo_annotation_write(model_libsbml, config['sbo_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_path'])
         print(errors)
         

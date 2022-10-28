@@ -6,28 +6,28 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: '../Shaemolyticus/models/Shaem_model.xml' # 'data/e_coli_core.xml' #
-entrez_email: 'gwendolyn-olivia.gusak@student.uni-tuebingen.de' # necessary to access NCBI API
+model: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # 'data/e_coli_core.xml' #
+entrez_email: 'famke.baeuerle@student.uni-tuebingen.de' # necessary to access NCBI API
 
 
 Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
 ### Addition of KEGG Pathways as Groups ###
-keggpathways: FALSE # Done! <3
-kegg_path:  '../Shaemolyticus/models/Shaem_model.xml' #'../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
+keggpathways: FALSE
+kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' #'../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation ###
 sboterms: TRUE
-sbo_path: '../Shaemolyticus/models/Shaem_model_sboann.xml' # path where to save model with sbo terms
+sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
-polish_carveme: FALSE # Done! <3
-polish_path: '../Shaemolyticus/models/Shaem_model.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
+polish_carveme: FALSE
+polish_path: '../Nextcloud/Pneumococcus/pneumococcus_grampos_fbc_polished.xml' #'../Nextcloud/master_thesis/models/Cstr_17_genes.xml' # path where to save the polished model
 
 ### Charge correction ###
-charge_corr: FALSE # Done! <3
-charge_path: '../Shaemolyticus/models/Shaem_model.xml'
+charge_corr: FALSE
+charge_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml'
 
 ### Manual Curation ###
 man_cur: FALSE
@@ -39,7 +39,7 @@ Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Settings if you want to compare multiple models
-multiple: FALSE
+multiple: TRUE
 multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/models/Cstr_15.xml', '../C_striatum_GEMs/models/Cstr_16.xml', '../C_striatum_GEMs/models/Cstr_17.xml'] #, '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
 
 # Path to database which contains metabolites present in different media
@@ -53,8 +53,8 @@ memote: FALSE
 
 # Determine if output file should be created, default: cl
 # Filename is set as the models name
-output: cl #cl, xlsx, csv 
-out_path: '../Shaemolyticus/analysis/'
+output: xlsx #cl, xlsx, csv 
+out_path: '../C_striatum_GEMs/analysis/'
 
 # these work only with single models
 ### Gene comparison ###

@@ -13,13 +13,18 @@ from libsbml import *
 from refinegems.load import write_to_file
 
 __author__ = "Elisabeth Fritze"
+__author__ = "Gwendolyn O. Gusak"
 
 
 def is_valid_database(open_cur) -> bool:
    """
    Verifies if database has 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-   @param open_cur: sqlite3.connect.cursor() object of a database
-   @return: True if all conditions (2 tables with names 'bigg_to_sbo' & 'ec_to_sbo') for database correct
+   
+   Args:
+        open_cur: sqlite3.connect.cursor() object of a database
+ 
+   Returns:
+        Boolean: True if all conditions (2 tables with names 'bigg_to_sbo' & 'ec_to_sbo') for database correct
    """
 
    # Fetches the table names as string tuples from the connected database
@@ -34,7 +39,9 @@ def initialise_SBO_database():
    Initialises the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
    if file './data/sbo/sbo_database.db' is an incorrect database,
    otherwise correct database already exists
-   @return: sqlite3.connect() & sqlite3.connect.cursor() objects for SBO database
+   
+   Returns:
+        sqlite3.connect() & sqlite3.connect.cursor() objects for SBO database
    """
 
    # Initialise empty connection
