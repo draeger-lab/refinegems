@@ -1,6 +1,5 @@
 # declares public API for this module
 # loads functions from subscripts which are needed in main.py
-from refinegems.pathways import kegg_pathways
 from refinegems.growth import get_all_minimum_essential, get_growth_selected_media
 from refinegems.genecomp import genecomp
 from refinegems.modelseed import modelseed
@@ -9,6 +8,7 @@ from refinegems.cvterms import parse_id_from_cv_term
 from refinegems.comparison import simulate_all
 import refinegems.sboann
 import refinegems.charges
+import refinegems.pathways
 
 
 __author__ = "Famke Baeuerle"

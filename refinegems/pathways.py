@@ -10,7 +10,6 @@ to the respective reaction.
 from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
-#from bs4 import BeautifulSoup
 from refinegems.load import write_to_file
 from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term
 
@@ -51,16 +50,6 @@ def extract_kegg_reactions(model):
     non_kegg_reac = []
     
     for reaction in list_reac:
-        # kegg id from notes (deprecated)
-        #notes_string = reaction.getNotesString()
-        #soup = BeautifulSoup(notes_string, 'lxml')
-        #entries = soup.find_all('p')
-
-        #for i in range(len(entries)):
-        #    if 'KEGG' in entries[i].text:
-        #        kegg_reactions[reaction.getId()] = entries[i].text[15:]
-
-        # kegg id from annotation
         kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
         if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
@@ -86,7 +75,6 @@ def extract_kegg_pathways(kegg_reactions):
     print('Extracting pathway Id for each reaction:')
     for reaction in tqdm(kegg_reactions.keys()):
         kegg_reaction = k.get(kegg_reactions[reaction])
-        # print(kegg_reaction)
         dbentry = k.parse(kegg_reaction)
         # sometimes parse does not work -> try and except
         try:
@@ -115,7 +103,6 @@ def add_kegg_pathways(model, kegg_pathways):
             for path in kegg_pathways[reaction.getId()]:
                 add_cv_term_pathways(path, 'KEGG', reaction)
 
-    # works but better write this somewhere else?
     return model
 
 
@@ -165,7 +152,7 @@ def create_pathway_groups(model, pathway_groups):
             group.setKind('partonomy')
             group.setSBOTerm("SBO:0000633")  # NAME
             add_cv_term_pathways(keys[i], 'KEGG', group)
-            while (group.getNumMembers() < num_reactions[i]): # this means I'll overwrite previous members -> is that desired???
+            while (group.getNumMembers() < num_reactions[i]): 
                 group.createMember()
         else:
             group_list.createGroup()
@@ -207,7 +194,6 @@ def kegg_pathways(modelpath, new_filename):
     reactions, non_kegg_reactions = extract_kegg_reactions(model)
     pathways = extract_kegg_pathways(reactions)
     pathway_groups = get_pathway_groups(pathways)
-    #print(reactions, pathways, pathway_groups)
 
     model_pathways = add_kegg_pathways(model, pathways)
     model_pathway_groups = create_pathway_groups(

@@ -18,7 +18,7 @@ def main():
         config = yaml.safe_load(f)
 
     if (config['keggpathways']):
-        non_kegg = rg.kegg_pathways(config['model'], config['kegg_path'])
+        non_kegg = rg.pathways.kegg_pathways(config['model'], config['kegg_path'])
         print('The following reactions have no KEGG annotation and were not added to any pathway-group: ' + str(non_kegg))
         model, errors = cobra.io.sbml.validate_sbml_model(config['kegg_path'])
         print(errors)
