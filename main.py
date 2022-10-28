@@ -37,10 +37,9 @@ def main():
         
     elif (config['charge_corr']):
         model_libsbml = rg.load.load_model_libsbml(config['model'])
-        mulchar = rg.correct_charges(model_libsbml, config['charge_path'], config['modelseedpath'])
+        rg.charges.correct_charges_modelseed(model_libsbml, config['charge_path'], config['modelseedpath'], config['charge_report_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['charge_path'])
         print(errors)
-        print(mulchar) # hier muss ich noch eine bessere Lösung finden, klappt aber erstmal
         
     elif(config['man_cur']):
         model_libsbml = rg.load.load_model_libsbml(config['model'])
