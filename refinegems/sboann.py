@@ -2,15 +2,68 @@
 """Provides functions to automate the addition of SBO terms to the model
 
 Script written by Elisabeth Fritze in her bachelor thesis.
+Modified by Gwendolyn O. Gusak during her master thesis.
 
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
 
-import psycopg2
+import sqlite3
+from sqlite3 import Error
 from libsbml import *
 from refinegems.load import write_to_file
 
 __author__ = "Elisabeth Fritze"
+__author__ = "Gwendolyn O. Gusak"
+
+
+def is_valid_database(open_cur) -> bool:
+   """
+   Verifies if database has 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
+   
+   Args:
+        open_cur: sqlite3.connect.cursor() object of a database
+ 
+   Returns:
+        Boolean: True if all conditions (2 tables with names 'bigg_to_sbo' & 'ec_to_sbo') for database correct
+   """
+
+   # Fetches the table names as string tuples from the connected database
+   open_cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+   tables = [string[0] for string in open_cur.fetchall()]
+
+   return 'bigg_to_sbo' in tables and 'ec_to_sbo' in tables and len(tables) == 2
+
+
+def initialise_SBO_database():
+   """
+   Initialises the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
+   if file './data/sbo/sbo_database.db' is an incorrect database,
+   otherwise correct database already exists
+   
+   Returns:
+        sqlite3.connect() & sqlite3.connect.cursor() objects for SBO database
+   """
+
+   # Initialise empty connection
+   con = None
+
+   # Try to open connection & get cursor
+   try:
+      con = sqlite3.connect('./data/sbo/sbo_database.db')
+      cursor = con.cursor()
+
+      # If connected to database incorrect -> initialise correct one from file './data/sbo/sbo_database.sql'
+      if is_valid_database(cursor):
+         with open('./data/sbo/sbo_database.sql') as schema:
+            cursor.executescript(schema.read())
+   except Error as e:
+      print(e)
+   finally:
+      if con:
+         return con, cursor
+
+if __name__ == '__main__':
+   initialise_SBO_database()
 
 
 def getCompartmentlessSpeciesId(speciesReference):
@@ -594,7 +647,7 @@ def addSBOviaEC(reac, cur):
 
     Args:
         reac (libsbml-reaction): libsbml reaction from sbml model
-        cur (psycopg2.connect.cursor): used to access the psql database
+        cur (sqlite3.connect.cursor): used to access the sqlite3 database
     """
     if len(getECNums(reac)) == 1:
         ECnum = getECNums(reac)[0]
@@ -603,33 +656,33 @@ def addSBOviaEC(reac, cur):
             ECpos1 = splittedEC[0]
             ECpos1to2 = ECpos1 + "." + splittedEC[1]
             ECpos1to3 = ECpos1to2 + "." + splittedEC[2]
-            query4 = cur.execute("""SELECT t.sbo_term
-                                     FROM ec_to_sbo t
-                                    WHERE t.ecnum = %s""", (ECnum,))
+            query4 = cur.execute("""SELECT sbo_term
+                                     FROM ec_to_sbo 
+                                    WHERE ecnum = ?""", [ECnum])
             result4 = cur.fetchone()
             if result4 is not None:
                 sbo4 = result4[0]
                 reac.setSBOTerm(sbo4)
             else:
-                query3 = cur.execute("""SELECT t.sbo_term
-                                          FROM ec_to_sbo t
-                                         WHERE t.ecnum = %s""", (ECpos1to3,))
+                query3 = cur.execute("""SELECT sbo_term
+                                        FROM ec_to_sbo 
+                                        WHERE ecnum = ?""", [ECpos1to3])
                 result3 = cur.fetchone()
                 if result3 is not None:
                     sbo3 = result3[0]
                     reac.setSBOTerm(sbo3)
                 else:
-                    query2 = cur.execute("""SELECT t.sbo_term
-                                              FROM ec_to_sbo t
-                                             WHERE t.ecnum = %s""", (ECpos1to2,))
+                    query2 = cur.execute("""SELECT sbo_term
+                                            FROM ec_to_sbo t
+                                            WHERE ecnum = ?""", [ECpos1to2])
                     result2 = cur.fetchone()
                     if result2 is not None:
                         sbo2 = result2[0]
                         reac.setSBOTerm(sbo2)
                     else:
-                        query1 = cur.execute("""SELECT t.sbo_term
-                                                  FROM ec_to_sbo t
-                                                 WHERE t.ecnum = %s""", (ECpos1,))
+                        query1 = cur.execute("""SELECT sbo_term
+                                                FROM ec_to_sbo
+                                                WHERE ecnum = ?""", [ECpos1])
                         result1 = cur.fetchone()
                         if result1 is not None:
                             sbo1 = result1[0]
@@ -641,15 +694,15 @@ def addSBOfromDB(reac, cur):
 
     Args:
         reac (libsbml-reaction): libsbml reaction from sbml model
-        cur (psycopg2.connect.cursor): used to access the psql database
+        cur (sqlite3.connect.cursor): used to access the sqlite3 database
 
     Returns:
         bool: True if SBO Term was changed
     """
     reacid = reac.getId()
-    query = cur.execute("SELECT t.sbo_term \
-                       FROM bigg_to_sbo t \
-                      WHERE  t.bigg_reactionid = %s", (reacid,))
+    query = cur.execute("""SELECT sbo_term 
+                           FROM bigg_to_sbo 
+                           WHERE bigg_reactionid = ?""", [reacid])
     result = cur.fetchone()
     if result is not None:
         sbo_term = result[0]
@@ -659,24 +712,20 @@ def addSBOfromDB(reac, cur):
         return False
     
 
-def sbo_annotation(model_libsbml, database_user, database_name):
+def sbo_annotation(model_libsbml):
     """executes all steps to annotate SBO terms to a given model
        (former main function of original script by Elisabeth Fritze)
 
     Args:
         model_libsbml (libsbml-model): model loaded with libsbml
-        database_user (Str): username for postgresql database
-        database_name (Str): name of database in which create_dbs.sql was imported
-
+      
     Returns:
         libsbml-model: modified model with SBO terms
     """
-    conn = psycopg2.connect(dbname=database_name, user=database_user)
-    cur = conn.cursor()
+    open_con, open_cur = initialise_SBO_database()
 
-    conn.autocommit = True
     for reaction in model_libsbml.reactions:
-        if not addSBOfromDB(reaction, cur):
+        if not addSBOfromDB(reaction, open_cur):
             reaction.unsetSBOTerm()
             splitTransportBiochem(reaction)
             checkBiomass(reaction)
@@ -691,7 +740,7 @@ def sbo_annotation(model_libsbml, database_user, database_name):
                     if reaction.getSBOTermID() == 'SBO:0000654':
                         splitSymAntiPorter(reaction)
             if reaction.getSBOTermID() == 'SBO:0000176':
-                addSBOviaEC(reaction, cur)
+                addSBOviaEC(reaction, open_cur)
             if reaction.getSBOTermID() == 'SBO:0000176':
                 checkRedox(reaction)
                 checkGlycosylation(reaction)
@@ -700,19 +749,17 @@ def sbo_annotation(model_libsbml, database_user, database_name):
                 checkDeamination(reaction)
                 checkPhosphorylation(reaction)
     
-    cur.close()
-    conn.close()
+    open_cur.close()
+    open_con.close()
     return model_libsbml
     
 
-def sbo_annotation_write(model_libsbml, database_user, database_name, new_filename):
+def sbo_annotation_write(model_libsbml, new_filename):
     """wrapper around sbo_annotation to include writing to a file
 
     Args:
         model_libsbml (libsbml-model): model loaded with libsbml
-        database_user (Str): username for postgresql database
-        database_name (Str): name of database in which create_dbs.sql was imported
         new_filename (Str): filename for modified model
     """
-    new_model = sbo_annotation(model_libsbml, database_user, database_name)
+    new_model = sbo_annotation(model_libsbml)
     write_to_file(new_model, new_filename)

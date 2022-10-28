@@ -17,11 +17,9 @@ Settings for scripts that manipulate the model: >
 keggpathways: FALSE
 kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' #'../C_striatum_GEMs/models/Cstr_14_pathways.xml' # path where to save model with KEGG Groups
 
-### SBO-Term Annotation (requires PostgreSQL) ###
-sboterms: FALSE
-database_user: postgres
-database_name: sbo_ann
-sbo_path: '../Nextcloud/Pneumococcus/pneumococcus_grampos_fbc_sbo.xml' # path where to save model with sbo terms
+### SBO-Term Annotation ###
+sboterms: TRUE
+sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with sbo terms
 
 ### CarveMe polishing ###
 polish_carveme: FALSE
