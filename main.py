@@ -72,7 +72,7 @@ def main():
                 score = rg.investigate.run_memote(model_cobra)
                 
             if (config['genecomp']):
-                genecomp = rg.genecomp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
+                genecomp = rg.genecomp.kegg_gene_comp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
                 
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed(config['modelseedpath'], model_cobra)
