@@ -9,34 +9,10 @@ It is possible to use the correct_charges_from_db function with other databases.
 import pandas as pd
 from libsbml import *
 from refinegems.load import write_to_file
+from refinegems.modelseed import get_modelseed_compounds
 import re
 
 __author__ = "Famke Baeuerle"
-
-
-def get_modelseed_compounds(path):
-    """extracts compounds from modelseed which have BiGG Ids
-
-    Args:
-        path (str): path to modelseed compound definition
-
-    Returns:
-        df: table containing modelseed data
-    """
-    com = pd.read_csv(path, sep='\t')
-
-    def get_bigg_ids(aliases):
-        try:
-            aliases_list = aliases.split('|')
-            bigg = [x[6:] for x in aliases_list if re.search('BiGG: .*', x)]
-            return bigg[0]
-        except (IndexError, AttributeError):
-            return None
-
-    com['BiGG'] = com.apply(lambda row: get_bigg_ids(row['aliases']), axis=1)
-
-    return com.loc[:, ['id', 'name', 'formula', 'mass',
-                       'charge', 'BiGG']].dropna(subset=['BiGG'])
 
 
 def correct_charges_from_db(model, compounds):

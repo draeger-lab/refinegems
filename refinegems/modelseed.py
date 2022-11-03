@@ -9,6 +9,8 @@ import pandas as pd
 import re
 import numpy as np
 
+__author__ = "Famke Baeuerle"
+
 
 def get_modelseed_compounds(path):
     """extracts compounds from modelseed which have BiGG Ids
