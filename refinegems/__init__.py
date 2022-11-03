@@ -9,6 +9,7 @@ from refinegems.comparison import simulate_all
 import refinegems.sboann
 import refinegems.charges
 import refinegems.pathways
+import refinegems.curate
 
 
 __author__ = "Famke Baeuerle"
