@@ -230,7 +230,7 @@ def cv_ncbiprotein(gene_list, email):
         gene.unsetNotes()
 
 
-def polish_carveme(model, new_filename, email):
+def polish_carveme_bigg(model, new_filename, email):
     """completes all steps to polish a model created with CarveMe
 
     Args:
@@ -245,6 +245,29 @@ def polish_carveme(model, new_filename, email):
     set_units(model)
     add_bigg_metab(metab_list)
     add_bigg_reac(reac_list)
+    cv_notes_metab(metab_list)
+    cv_notes_reac(reac_list)
+    cv_ncbiprotein(gene_list, email)
+    polish_entities(metab_list, metabolite=True)
+    polish_entities(reac_list, metabolite=False)
+
+    write_to_file(model, new_filename)
+
+
+def polish_not_bigg(model, new_filename, email):
+    """completes steps to polish a model, it will add units and cv-terms
+    
+
+    Args:
+        model (libsbml-model): model loaded with libsbml
+        new_filename (Str): filename for modified model
+    """
+    metab_list = model.getListOfSpecies()
+    reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+
+    add_fba_unit(model)
+    set_units(model)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
     cv_ncbiprotein(gene_list, email)
