@@ -4,6 +4,7 @@
 The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.
 """
 
+import re
 from libsbml import *
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
@@ -66,7 +67,7 @@ def cv_notes_metab(species_list):
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
-                    fill_in = elem.strip()[:-4].split(': ')[1]
+                    fill_in = re.split(':\s*', elem.strip()[:-4])[1]
                     if (';') in fill_in and db != 'INCHI':
                         entries = fill_in.split(';')
                         for entry in entries:
@@ -105,7 +106,7 @@ def cv_notes_reac(reaction_list):
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
-                    fill_in = elem.strip()[:-4].split(': ')[1]
+                    fill_in = re.split(':\s*', elem.strip()[:-4])[1]
                     if (';') in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
