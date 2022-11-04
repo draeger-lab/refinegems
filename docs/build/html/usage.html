@@ -40,6 +40,21 @@
 <p>Note that at this time most of the modules only make sense when you use the respective main functions:</p>
 <dl class="py function">
 <dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">charges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Provides functions for adding charges to metabolites</p>
+<p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
+<p>It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a ‘BiGG’ and a ‘charge’ column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Can be used to polish a model created with CarveMe v.1.5.1</p>
+<p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">genecomp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Provides functions to compare genes found in KEGG and in the model</p>
 <p>Extracts all KEGG ids from the annotations and compares them to a list for you organism from KEGG.
@@ -59,7 +74,16 @@ from a given model. Both lists of metabolites are compared by charge and
 formula.</p>
 </dd></dl>
 
-<p>The modules <code class="docutils literal notranslate"><span class="pre">load</span></code> and <code class="docutils literal notranslate"><span class="pre">test</span></code> provide functions that can be used by themselves.</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.</span></span><span class="sig-name descname"><span class="pre">sboann</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Provides functions to automate the addition of SBO terms to the model</p>
+<p>Script written by Elisabeth Fritze in her bachelor thesis.
+Modified by Gwendolyn O. Gusak during her master thesis.</p>
+<p>It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the “main” function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.</p>
+</dd></dl>
+
+<p>The modules <code class="docutils literal notranslate"><span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">cvterms</span></code> and <code class="docutils literal notranslate"><span class="pre">investigate</span></code> provide functions that can be used by themselves.</p>
 <section id="load">
 <h2><code class="docutils literal notranslate"><span class="pre">load</span></code><a class="headerlink" href="#load" title="Permalink to this heading">¶</a></h2>
 <p>provides a couple of helper functions to avoid remembering how cobra and libsbml actually load</p>
@@ -188,9 +212,121 @@ new_filename (Str): filename / path for modified model</p>
 </dd></dl>
 
 </section>
-<section id="test">
-<h2><code class="docutils literal notranslate"><span class="pre">test</span></code><a class="headerlink" href="#test" title="Permalink to this heading">¶</a></h2>
+<section id="investigate">
+<h2><code class="docutils literal notranslate"><span class="pre">investigate</span></code><a class="headerlink" href="#investigate" title="Permalink to this heading">¶</a></h2>
 <p>provides a couple of functions to get parameters of your model</p>
+<p>Provides functions to investigate the model and test with memote</p>
+<p>These functions enable simple testing of any model using memote and
+access to its number of reactions, metabolites and genes.</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><dl class="simple">
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+</dd>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>reports metabolites which have only one annotation, 
+can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Reports core information of given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>extracts most important numbers of GEM</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Parses a reaction equation string to dictionary</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
+model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>runs memote to obtain total score</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: memote score of model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelfile</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>run memote on linux machine</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelfile (cobra-model): model loaded with cobrapy</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="cvterms">
 <h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this heading">¶</a></h2>
@@ -284,7 +420,7 @@ db_id (string): database of interest</p>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage as python module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#load"><code class="docutils literal notranslate"><span class="pre">load</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#test"><code class="docutils literal notranslate"><span class="pre">test</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#investigate"><code class="docutils literal notranslate"><span class="pre">investigate</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cvterms"><code class="docutils literal notranslate"><span class="pre">cvterms</span></code></a></li>
 </ul>
 </li>
