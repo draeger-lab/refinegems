@@ -188,7 +188,7 @@ def get_compared_formulae(formula_mismatch):
     return formula_mismatch
 
 
-def modelseed(path, model):
+def compare_to_modelseed(path, model):
     """Executes all steps to compare model metabolites to modelseed metabolites
 
     Args:

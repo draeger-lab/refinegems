@@ -75,7 +75,7 @@ def main():
                 genecomp = rg.genecomp.kegg_gene_comp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
                 
             if(config['modelseed']):
-                charge_mismatch, formula_mismatch = rg.modelseed(config['modelseedpath'], model_cobra)
+                charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(config['modelseedpath'], model_cobra)
             
             if (config['media_db'] != None):
                 growth_sim = rg.get_growth_selected_media(model_cobra, config['media_db'], config['media'])
