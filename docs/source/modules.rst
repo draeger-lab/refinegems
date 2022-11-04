@@ -51,6 +51,14 @@ refinegems.growth module
    :undoc-members:
    :show-inheritance:
 
+refinegems.investigate module
+----------------------
+
+.. automodule:: refinegems.investigate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 refinegems.load module
 ----------------------
 
@@ -75,34 +83,18 @@ refinegems.pathways module
    :undoc-members:
    :show-inheritance:
 
-refinegems.polish\_carveme module
+refinegems.polish module
 ---------------------------------
 
-.. automodule:: refinegems.polish_carveme
+.. automodule:: refinegems.polish
    :members:
    :undoc-members:
    :show-inheritance:
 
-refinegems.sbo\_annotation module
+refinegems.sboann module
 ---------------------------------
 
-.. automodule:: refinegems.sbo_annotation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refinegems.strains module
-----------------------
-
-.. automodule:: refinegems.strains
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refinegems.test module
-----------------------
-
-.. automodule:: refinegems.test
+.. automodule:: refinegems.sboann
    :members:
    :undoc-members:
    :show-inheritance:
