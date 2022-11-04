@@ -326,7 +326,7 @@ def compare_bigg_model(locus_ec_kegg_bigg_gpr, model_reactions):
     return reactions_missing_in_model_non_dup
 
 
-def genecomp(model, organismid, biggreactions, gff_file):
+def kegg_gene_comp(model, organismid, biggreactions, gff_file):
     """Exectues all steps to compare genes of the model to KEGG genes
 
     Args:

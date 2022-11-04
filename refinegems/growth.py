@@ -40,10 +40,16 @@ def get_default_uptake(model):
     return default_uptake
 
 
-def get_minimum_default(model):
+def get_minimal_uptake(model):
+    """Determines which metabolites are used in a minimal medium
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+        list: metabolites consumed in minimal medium
+    """
     with model:
-        #new_medium = {i: 10.0 for i in default_uptake}
-        #model.medium = new_medium
         minimal = minimal_medium(model)
         uptake = []
         for index, value in minimal.items():
@@ -198,8 +204,8 @@ def get_all_minimum_essential(model, mediumpath):
     return mins
 
 
-def get_growth_one_medium(model, medium):
-    """Simulates growth on given medium
+def growth_one_medium_from_default(model, medium):
+    """Simulates growth on given medium, adding missing metabolites from the default uptake
 
     Args:
         model (cobra-model): model loaded with cobrapy
@@ -209,10 +215,9 @@ def get_growth_one_medium(model, medium):
         DataFrame: information on growth behaviour on medium
     """
     default_uptake = get_default_uptake(model)
-    minimal_medium = get_minimum_default(model) # use this instead of default_uptake
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
-    essential = find_missing_essential(model, medium_dict, minimal_medium)#default_uptake)
+    essential = find_missing_essential(model, medium_dict, default_uptake)
     minimum = find_minimum_essential(medium, essential)
 
     medium_dict = modify_medium(medium, missing_exchanges)
@@ -223,19 +228,50 @@ def get_growth_one_medium(model, medium):
     df_growth = pd.DataFrame(exchanges,
                              ['medium',
                               'essential',
-                              'missing',
+                              'missing exchanges',
                               'growth_value',
                               'doubling_time [min]']).T
     return df_growth
 
 
-def get_growth_selected_media(model, mediumpath, media):
+def growth_one_medium_from_minimal(model, medium):
+    """Simulates growth on given medium, adding missing metabolites from a minimal uptake
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+        medium (pandas-DataFrame): table containing metabolites present in the medium
+
+    Returns:
+        DataFrame: information on growth behaviour on medium
+    """
+    minimal_uptake = get_minimal_uptake(model) # use this instead of default_uptake
+    missing_exchanges = get_missing_exchanges(model, medium)
+    medium_dict = modify_medium(medium, missing_exchanges)
+    essential = find_missing_essential(model, medium_dict, minimal_uptake)
+    minimum = find_minimum_essential(medium, essential)
+
+    medium_dict = modify_medium(medium, missing_exchanges)
+    growth_value = simulate_minimum_essential(model, medium_dict, minimum)
+    doubling_time = (np.log(2) / growth_value) * 60
+    exchanges = [[medium['medium'][0]], minimum,
+                 missing_exchanges, [growth_value], [doubling_time]]
+    df_growth = pd.DataFrame(exchanges,
+                             ['medium',
+                              'essential',
+                              'missing exchanges',
+                              'growth_value',
+                              'doubling_time [min]']).T
+    return df_growth
+
+
+def get_growth_selected_media(model, mediumpath, media, basis):
     """Simulates growth on all selected media
 
     Args:
         model (cobra-model): model loaded with cobrapy
         mediumpath (string): path to csv with media definitions
         media (list): media to simulate on (must be in csv)
+        basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
 
     Returns:
         DataFrame: information on growth behaviour on selected media
@@ -244,9 +280,11 @@ def get_growth_selected_media(model, mediumpath, media):
     selected_media = [x for x in all_media if x['medium'][0] in media]
     growth = pd.DataFrame()
     for medium in selected_media:
-        growth = growth.append(
-            get_growth_one_medium(model, medium), 
-            ignore_index=True)
+        if (basis=='default_uptake'):
+            growth_one = growth_one_medium_from_default(model, medium)
+        elif (basis == 'minimal_uptake'):
+            growth_one = growth_one_medium_from_minimal(model, medium)
+        growth = growth.append(growth_one, ignore_index=True)
     return growth
 
 
@@ -268,15 +306,26 @@ def get_essential_reactions(model):
                 print('%s blocked (bounds: %s), new growth rate %f $' %
                     (reaction.id, str(reaction.bounds), model.objective.value))
                 ess.append(reaction.id)
-                
-    #### other implementation via bounds ###
-    # medium = model.medium
-    # ess = []
-    # for content in medium.keys():
-    #     model.reactions.get_by_id(content).lower_bound = 0.0
-    #     solution = model.optimize().objective_value
-    #     if solution < 1e-9:
-    #         ess.append(content)
-    #     model.reactions.get_by_id(content).lower_bound = -10.0
 
+    return ess
+
+def get_essential_reactions_via_bounds(model):
+    """Knocks out reactions by setting their bounds to 0, if no growth is detected the reaction is seen as essential
+
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+
+    Returns:
+        list: BiGG Ids of essential reactions
+    """
+    medium = model.medium
+    ess = []
+    for content in medium.keys():
+        model.reactions.get_by_id(content).lower_bound = 0.0
+        solution = model.optimize().objective_value
+        if solution < 1e-9:
+            ess.append(content)
+        model.reactions.get_by_id(content).lower_bound = -10.0
+        
     return ess
