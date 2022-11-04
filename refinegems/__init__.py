@@ -1,6 +1,6 @@
 # declares public API for this module
 # loads functions from subscripts which are needed in main.py
-from refinegems.growth import get_all_minimum_essential, get_growth_selected_media
+import refinegems.growth
 import refinegems.modelseed
 import refinegems.sboann
 import refinegems.charges

@@ -26,7 +26,7 @@ polish_carveme: FALSE
 polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
 
 ### Charge correction ###
-charge_corr: TRUE
+charge_corr: FALSE
 charge_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml'
 charge_report_path: '../C_striatum_GEMs/analysis/Cstr_KC-Na-01_multiple_charges.csv'
 
@@ -39,8 +39,14 @@ man_cur_path: '../C_striatum_GEMs/models/Cstr_17.xml' # path where to save modif
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
+# Set the out path for the csv created by multiple and a possible xlsx for model investigation
+out_path: '../C_striatum_GEMs/analysis/'
+
+# Set the basis medium to simulate growth from
+growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
+
 # Settings if you want to compare multiple models
-multiple: TRUE
+multiple: FALSE
 multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/models/Cstr_15.xml', '../C_striatum_GEMs/models/Cstr_16.xml', '../C_striatum_GEMs/models/Cstr_17.xml'] #, '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
 
 # Path to database which contains metabolites present in different media
@@ -52,10 +58,9 @@ media: ['SNM3', 'RPMI', 'CGXlab'] #'LB', 'M9', 'RPMI', 'CGXII', 'CasA'
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
 
-# Determine if output file should be created, default: cl
+# Determine if output file for single model should be created, default: cl
 # Filename is set as the models name
 output: xlsx #cl, xlsx, csv 
-out_path: '../C_striatum_GEMs/analysis/'
 
 # these work only with single models
 ### Gene comparison ###
