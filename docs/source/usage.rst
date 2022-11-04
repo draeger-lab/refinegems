@@ -3,9 +3,9 @@ Usage as python module
 
 Note that at this time most of the modules only make sense when you use the respective main functions:
 
-.. autofunction:: refinegems.correct_charges
+.. autofunction:: refinegems.charges
     :noindex:
-.. autofunction:: refinegems.polish_carveme
+.. autofunction:: refinegems.polish
     :noindex:
 .. autofunction:: refinegems.genecomp
     :noindex:
@@ -13,10 +13,10 @@ Note that at this time most of the modules only make sense when you use the resp
     :noindex:
 .. autofunction:: refinegems.kegg_pathways
     :noindex:
-.. autofunction:: refinegems.sbo_annotation
+.. autofunction:: refinegems.sboann
     :noindex:
 
-The modules ``load`` and ``test`` provide functions that can be used by themselves.
+The modules ``load``, ``cvterms`` and ``investigate`` provide functions that can be used by themselves.
 
 ``load`` 
 --------
@@ -26,11 +26,11 @@ provides a couple of helper functions to avoid remembering how cobra and libsbml
     :members:
     :noindex:
 
-``test``
+``investigate``
 --------
 provides a couple of functions to get parameters of your model
 
-.. automodule:: refinegems.test
+.. automodule:: refinegems.investigate
     :members:
     :noindex:
 
