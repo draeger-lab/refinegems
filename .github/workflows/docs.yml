@@ -20,11 +20,14 @@ jobs:
       with:
         python-version: 3.9
 
+    - name: Install pandoc
+      run: |
+        sudo apt-get install -y --no-install-recommends pandoc
+
     - name: Install dependencies
       run: |
         pip install sphinx
         pip install nbsphinx
-        pip install pandoc
 
     - name: Build the site
       run: |
