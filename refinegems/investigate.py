@@ -18,6 +18,24 @@ from refinegems.load import load_model_cobra, load_model_libsbml
 
 __author__ = "Famke Baeuerle"
 
+DISSIPATION_RXNS = {
+    'ATP':'atp_c + h2o_c --> adp_c + h_c + pi_c',
+    'CTP':'ctp_c + h2o_c --> cdp_c + h_c + pi_c',
+    'GTP':'gtp_c + h2o_c --> gdp_c + h_c + pi_c',
+    'UTP':'utp_c + h2o_c --> udp_c + h_c + pi_c',
+    'ITP':'itp_c + h2o_c --> idp_c + h_c + pi_c',
+    'NADH':'nadh_c --> h_c + nad_c',
+    'NADPH':'nadph_c --> h_c + nadp_c',
+    'FADH2':'fadh2_c --> 2 h_c + fad_c',
+    'FMNH2':'fmnh2_c --> 2 h_c + fmn_c',
+    'Q8H2':'q8h2_c --> 2 h_c + q8_c',
+    'MQL8':'mql8_c --> 2 h_c + mqn8_c',
+    'DMMQL8':'2dmmql8_c --> 2 h_c + 2dmmq8_c',
+    'ACCOA':'h2o_c + accoa_c --> h_c + ac_c + coa_c',
+    'GLU':'glu__L_c + h2o_c --> akg_c + nh4_c + 2 h_c',
+    'PROTON':'h_p --> h_c'
+    }
+
 
 def run_memote_sys(modelfile):
     """run memote on linux machine
@@ -201,7 +219,8 @@ def get_egc(model):
     Returns:
         df: table with possible EGCs
     """
-    dissipation_rxns = pd.read_csv("data/energy_dissipation_rxns.csv")
+    dissipation_rxns = pd.DataFrame(DISSIPATION_RXNS.items(), columns=['type','equation'])
+    
     with model: 
     # add dissipation reactions
         for i, row in dissipation_rxns.iterrows():
@@ -216,18 +235,18 @@ def get_egc(model):
             
         for rxn in model.reactions:
             if 'EX_' in rxn.id:
-                rxn.upper_bound = 0.0
                 rxn.lower_bound = 0.0
+                rxn.upper_bound = 0.0
                 #print('Set exchange rxn to 0', rxn.name)
             # set reversible reactions fluxes to [-1,1]    
             elif rxn.reversibility: 
-                rxn.upper_bound = 1.0
                 rxn.lower_bound = -1.0
+                rxn.upper_bound = 1.0
                 #print('Reversible rxn', rxn.name)
             # irreversible reactions have fluxes [0.1]    
             else:
-                rxn.upper_bound = 1.0
                 rxn.lower_bound = 0.0
+                rxn.upper_bound = 1.0
                 #print('Irreversible rxn', rxn.name)
                 
         df_fluxes = pd.DataFrame()
