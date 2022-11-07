@@ -72,4 +72,5 @@ autodoc_mock_imports = ["psycopg2",
                         "memote",
                         "tqdm",
                         "psycopg2",
-                        "Bio"]
+                        "Bio",
+                        "pandoc"]
