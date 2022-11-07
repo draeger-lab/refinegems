@@ -12,9 +12,45 @@ To install refinegmes as python package, simply install it via ``pip``:
 Installation via github
 -----------------------
 
-``refinegems`` is distributed via github repository, all
-dependencies are denoted in a
-`pipenv <https://pipenv.pypa.io/en/latest/>`__. You will need to install
+``refinegems`` is distributed via github repository.
+
+The package and all its dependencies can be installed within virtual environments.
+
+**Condaenv**
+
+Setup a conda virtual environment and use its pip to install refineGEMs into that environment:
+
+.. code:: bash
+
+   # clone or pull the latest source code
+   git clone https://github.com/draeger-lab/refinegems.git
+   cd refinegems
+
+   conda create -n <EnvName> python=3.9
+
+   conda activate <EnvName>
+
+   # check that pip comes from <EnvName>
+   which pip
+
+   pip install .
+
+This will install all packags denoted in `setup.py`. 
+
+If `which pip` does not show pip in the conda environment you can also create a local environment for which you can control the path and use its pip:
+
+.. code:: bash
+
+   conda create --prefix ./<EnvName>
+
+   conda activate <path to EnvName>
+
+   <EnvName>/bin/pip install .
+
+**Pipenv**
+
+You can use
+`pipenv <https://pipenv.pypa.io/en/latest/>`__ to keep all dependencies together. You will need to install
 ``pipenv`` first. To install ``refinegems`` locally complete the
 following steps:
 
@@ -27,7 +63,7 @@ following steps:
    git clone https://github.com/draeger-lab/refinegems.git
    cd refinegems
 
-   # install all dependencies
+   # install all dependencies from Pipfile
    pipenv install
 
    # initiate a session in the virtual environment
@@ -36,8 +72,8 @@ following steps:
 The ``pipenv`` package can also be installed via Anaconda (recommended
 if you are a Windows user).
 
-Further Dependencies
---------------------
+Further Dependencies (obsolete)
+-------------------------------
 
 If you want to use the SBO terms annotation part you will need to
 install PostgreSQL to your machine.
