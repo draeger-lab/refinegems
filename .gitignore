@@ -138,3 +138,6 @@ Cstr.xml
 dev.py
 fda**.xlsx
 simulate_all**.xlsx
+
+# conda stuff
+.rg/
