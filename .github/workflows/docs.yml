@@ -5,7 +5,7 @@ on:
   push:
     paths:
     - '**.rst'
-    - 'docs/*''
+    - 'docs/*'
 
 jobs:
   run:
