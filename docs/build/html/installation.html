@@ -46,9 +46,36 @@
 </section>
 <section id="installation-via-github">
 <h2>Installation via github<a class="headerlink" href="#installation-via-github" title="Permalink to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository, all
-dependencies are denoted in a
-<a class="reference external" href="https://pipenv.pypa.io/en/latest/">pipenv</a>. You will need to install
+<p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository.</p>
+<p>The package and all its dependencies can be installed within virtual environments.</p>
+<p><strong>Condaenv</strong></p>
+<p>Setup a conda virtual environment and use its pip to install refineGEMs into that environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># clone or pull the latest source code</span>
+git clone https://github.com/draeger-lab/refinegems.git
+<span class="nb">cd</span> refinegems
+
+conda create -n &lt;EnvName&gt; <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
+
+conda activate &lt;EnvName&gt;
+
+<span class="c1"># check that pip comes from &lt;EnvName&gt;</span>
+which pip
+
+pip install .
+</pre></div>
+</div>
+<p>This will install all packags denoted in <cite>setup.py</cite>.</p>
+<p>If <cite>which pip</cite> does not show pip in the conda environment you can also create a local environment for which you can control the path and use its pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --prefix ./&lt;EnvName&gt;
+
+conda activate &lt;path to EnvName&gt;
+
+&lt;EnvName&gt;/bin/pip install .
+</pre></div>
+</div>
+<p><strong>Pipenv</strong></p>
+<p>You can use
+<a class="reference external" href="https://pipenv.pypa.io/en/latest/">pipenv</a> to keep all dependencies together. You will need to install
 <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> first. To install <code class="docutils literal notranslate"><span class="pre">refinegems</span></code> locally complete the
 following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># install pipenv using pip</span>
@@ -58,7 +85,7 @@ pip install pipenv
 git clone https://github.com/draeger-lab/refinegems.git
 <span class="nb">cd</span> refinegems
 
-<span class="c1"># install all dependencies</span>
+<span class="c1"># install all dependencies from Pipfile</span>
 pipenv install
 
 <span class="c1"># initiate a session in the virtual environment</span>
@@ -68,8 +95,8 @@ pipenv shell
 <p>The <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> package can also be installed via Anaconda (recommended
 if you are a Windows user).</p>
 </section>
-<section id="further-dependencies">
-<h2>Further Dependencies<a class="headerlink" href="#further-dependencies" title="Permalink to this heading">¶</a></h2>
+<section id="further-dependencies-obsolete">
+<h2>Further Dependencies (obsolete)<a class="headerlink" href="#further-dependencies-obsolete" title="Permalink to this heading">¶</a></h2>
 <p>If you want to use the SBO terms annotation part you will need to
 install PostgreSQL to your machine.</p>
 <p>Make sure that you will be able to use psql from the command line.</p>
@@ -144,7 +171,7 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation-via-pip">Installation via pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-via-github">Installation via github</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#further-dependencies">Further Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-dependencies-obsolete">Further Dependencies (obsolete)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
