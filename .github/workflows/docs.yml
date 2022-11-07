@@ -21,7 +21,9 @@ jobs:
         python-version: 3.9
 
     - name: Install dependencies
-      run: pip install sphinx
+      run: |
+        pip install sphinx
+        pip install nbsphinx
 
     - name: Build the site
       run: |

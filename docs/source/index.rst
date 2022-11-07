@@ -1,6 +1,6 @@
 Welcome to refinegems!
 ======================================
-``refinegems`` is a python package inteded
+``refinegems`` is a python package intended
 to help with the curation of genome-scale metabolic models (GEMS).
 
 Overview
