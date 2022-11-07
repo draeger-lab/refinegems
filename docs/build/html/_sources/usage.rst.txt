@@ -1,6 +1,7 @@
 Usage as python module
 ======================
 
+See :doc:`examples <examples>` to learn how to use refineGEMs.
 Note that at this time most of the modules only make sense when you use the respective main functions:
 
 .. autofunction:: refinegems.charges
