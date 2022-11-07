@@ -29,6 +29,7 @@ jobs:
       run: |
         pip install sphinx
         pip install nbsphinx
+        pip install sphinx_rtd_theme
 
     - name: Build the site
       run: |
