@@ -24,6 +24,7 @@ jobs:
       run: |
         pip install sphinx
         pip install nbsphinx
+        pip install pandoc
 
     - name: Build the site
       run: |
