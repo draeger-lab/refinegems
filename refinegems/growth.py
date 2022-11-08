@@ -244,7 +244,8 @@ def growth_one_medium_from_minimal(model, medium):
     Returns:
         DataFrame: information on growth behaviour on medium
     """
-    minimal_uptake = get_minimal_uptake(model) # use this instead of default_uptake
+    minimal_uptake = get_minimal_uptake(
+        model)  # use this instead of default_uptake
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
     essential = find_missing_essential(model, medium_dict, minimal_uptake)
@@ -280,7 +281,7 @@ def get_growth_selected_media(model, mediumpath, media, basis):
     selected_media = [x for x in all_media if x['medium'][0] in media]
     growth = pd.DataFrame()
     for medium in selected_media:
-        if (basis=='default_uptake'):
+        if (basis == 'default_uptake'):
             growth_one = growth_one_medium_from_default(model, medium)
         elif (basis == 'minimal_uptake'):
             growth_one = growth_one_medium_from_minimal(model, medium)
@@ -304,10 +305,11 @@ def get_essential_reactions(model):
             model.optimize()
             if model.objective.value <= 11:
                 print('%s blocked (bounds: %s), new growth rate %f $' %
-                    (reaction.id, str(reaction.bounds), model.objective.value))
+                      (reaction.id, str(reaction.bounds), model.objective.value))
                 ess.append(reaction.id)
 
     return ess
+
 
 def get_essential_reactions_via_bounds(model):
     """Knocks out reactions by setting their bounds to 0, if no growth is detected the reaction is seen as essential
@@ -327,5 +329,39 @@ def get_essential_reactions_via_bounds(model):
         if solution < 1e-9:
             ess.append(content)
         model.reactions.get_by_id(content).lower_bound = -10.0
-        
+
     return ess
+
+
+def find_additives(model, base_medium):
+    """Iterates through all exchanges to find metabolites that lead to a higher growth rate compared to the growth rate yielded on the base_medium
+
+    Args:
+        model (cobra-model): model loaded with cobrapy
+        base_medium (dict): exchanges as keys and their flux bound as value (f.ex {'EX_glc__D_e' : 10.0})
+
+    Returns:
+        DataFrame: exchanges sorted from highest to lowest growth rate improvement
+    """
+    with model:
+        medium = model.medium
+        model.medium = base_medium
+        sol = model.optimize()
+    base_growth = sol.objective_value
+    print(base_growth)
+
+    enhancement = {}
+    for ex in list(model.exchanges):
+        with model:
+            medium = model.medium
+            base_medium[ex.id] = 10.0
+            model.medium = base_medium
+            sol = model.optimize()
+            if sol.objective_value > base_growth:
+                enhancement[ex.id] = sol.objective_value - base_growth
+            base_medium.pop(ex.id)
+
+    adds = pd.DataFrame(enhancement.items(), columns=[
+                        'exchange', 'diff']).sort_values(by=['diff'], ascending=False)
+
+    return adds
