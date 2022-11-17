@@ -53,7 +53,7 @@ def initialise_SBO_database():
       cursor = con.cursor()
 
       # If connected to database incorrect -> initialise correct one from file './data/sbo/sbo_database.sql'
-      if is_valid_database(cursor):
+      if not is_valid_database(cursor):
          with open('./data/sbo/sbo_database.sql') as schema:
             cursor.executescript(schema.read())
    except Error as e:
@@ -61,9 +61,6 @@ def initialise_SBO_database():
    finally:
       if con:
          return con, cursor
-
-if __name__ == '__main__':
-   initialise_SBO_database()
 
 
 def getCompartmentlessSpeciesId(speciesReference):
