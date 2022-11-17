@@ -7,6 +7,7 @@ Modified by Gwendolyn O. Gusak during her master thesis.
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
 
+import re
 import sqlite3
 from sqlite3 import Error
 from libsbml import *
@@ -383,7 +384,9 @@ def checkBiomass(reac):  # memote says growth is biomass
     Args:
         reac (libsbml-reaction): libsbml reaction from sbml model
     """
-    if '_BIOMASS_' in reac.getId() or 'Growth' in reac.getId():
+    # Use regex to generalise check for growth/biomass reaction
+    regex = 'growth|_*biomass\d*_*'
+    if re.match(regex, reac.getId(), re.IGNORECASE):
         reac.setSBOTerm('SBO:0000629')
 
 
