@@ -3,47 +3,73 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
-from libsbml import CVTerm, BIOLOGICAL_QUALIFIER, BQB_IS
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, CVTerm, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, Unit
 
-metabol_db_dict = {'BIGG': 'bigg.metabolite/',
-                   'BRENDA': 'brenda/',
-                   'CHEBI': 'chebi/',
-                   'INCHI': 'inchi/',
-                   'KEGG': 'kegg.compound/',
-                   #'KEGG Compound': 'kegg.compound/',
-                   'METACYC': 'metacyc.compound/',
-                   'MXNREF': 'metanetx.chemical/',
-                   'MetaNetX': 'metanetx.chemical/',
-                   'SEED': 'seed.compound/',
-                   #'UPA': 'unipathway.compound/', #closed due to financial issues
-                   #'UniPathway Compound': 'unipathway.compound/',
-                   'HMDB': 'hmdb/',
-                   'Human Metabolome Database': 'hmdb/',
-                   'REACTOME': 'reactome/',
-                   'Reactome': 'reactome/',
-                   'BIOCYC': 'biocyc/',
-                   'BioCyc': 'biocyc/',
-                   'PUBCHEM': 'pubchem.compound/',}
+metabol_db_dict = {
+                   'BIGG': 'bigg.metabolite:',
+                   'BIOCYC': 'metacyc.compound:',
+                   'BioCyc': 'metacyc.compound:',
+                   'BRENDA': 'brenda:',
+                   'CHEBI': 'CHEBI:',
+                   'ChEBI': 'CHEBI:',
+                   'HMDB': 'hmdb:HMDB',
+                   'Human Metabolome Database': 'hmdb:HMDB',
+                   'INCHI': 'inchi:',
+                   'InChI': 'inchi:',
+                   'KEGG': 'kegg.compound:',
+                   #'KEGG Compound': 'kegg.compound:',
+                   'METACYC': 'metacyc.compound:',
+                   'MXNREF': 'metanetx.chemical:',
+                   'MetaNetX': 'metanetx.chemical:',
+                   'PUBCHEM': 'pubchem.compound:',
+                   'REACTOME': 'reactome:',
+                   'Reactome': 'reactome:',
+                   'SEED': 'seed.compound:',
+                   #'UPA': 'unipathway.compound:', #closed due to financial issues
+                   #'UniPathway Compound': 'unipathway.compound:'
+                   'VMH': 'vmhmetabolite:'
+                  }
 
-reaction_db_dict = {'BIGG': 'bigg.reaction/',
-                    'BRENDA': 'brenda/',
-                    'KEGG': 'kegg.reaction/',
-                    'METACYC': 'metacyc.reaction/',
-                    'BioCyc': 'biocyc/',
-                    'MXNREF': 'metanetx.reaction/',
-                    'MetaNetX': 'metanetx.reaction/',
-                    'SEED': 'seed.reaction/',
-                    #'UPA': 'unipathway.reaction/',
-                    #'UniPathway Reaction': 'unipathway.reaction/',
-                    'HMDB': 'hmdb/',
-                    'REACTOME': 'reactome/',
-                    'Reactome': 'reactome/',
-                    'RHEA': 'rhea/',
-                    'EC': 'ec-code/'}
+reaction_db_dict = {
+                    'BIGG': 'bigg.reaction:',
+                    'BioCyc': 'metacyc.reaction:',
+                    'BRENDA': 'brenda:',
+                    'EC': 'ec-code:',
+                    'HMDB': 'hmdb:HMDB',
+                    'KEGG': 'kegg.reaction:',
+                    'METACYC': 'metacyc.reaction:',
+                    'MXNREF': 'metanetx.reaction:',
+                    'MetaNetX': 'metanetx.reaction:',
+                    'REACTOME': 'reactome:',
+                    'Reactome': 'reactome:',
+                    'RHEA': 'rhea:',
+                    'SEED': 'seed.reaction:',
+                    #'UPA': 'unipathway.reaction:',
+                    #'UniPathway Reaction': 'unipathway.reaction:'
+                    'VMH': 'vmhreaction:'
+                   }
 
-gene_db_dict = {'NCBI': 'ncbiprotein/'}
+gene_db_dict = {'NCBI': 'ncbiprotein:'}
 
-pathway_db_dict = {'KEGG': 'kegg.pathway/'}
+pathway_db_dict = {'KEGG': 'kegg.pathway:'}
+
+
+def add_cv_term_units(unit_id: str, unit: Unit, idf: bool=False):
+    '''Adds CVTerm to a unit
+
+       Params:
+         unit_id (string):    ID to add as URI to annotation
+         unit (libSBML Unit): Unit to add CVTerm to
+         idf (boolean):       Set to True if URI has to have model qualifier isDerivedFrom
+    '''
+    cv = CVTerm()
+    cv.setQualifierType(MODEL_QUALIFIER)
+    if idf:
+       cv.setModelQualifierType(BQM_IS_DERIVED_FROM)
+    else:
+       cv.setModelQualifierType(BQM_IS)
+    cv.addResource(f'https://identifiers.org/UO:{unit_id}')
+    unit.addCVTerm(cv)
 
 
 def add_cv_term_metabolites(entry, db_id, metab):
