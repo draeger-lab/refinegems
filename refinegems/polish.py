@@ -275,7 +275,7 @@ def create_fba_units(model: Model) -> list[UnitDefinition]:
       units=[mole, gram, second]
    )
    
-   return [hour, femto_litre, mmgdw, mmgdwh]
+   return [mmgdwh, mmgdw, hour, femto_litre]
 
 
 def get_missing_fba_units(model: Model, list_of_fba_units: list[UnitDefinition]) -> list[UnitDefinition]:
@@ -339,10 +339,11 @@ def get_missing_fba_units(model: Model, list_of_fba_units: list[UnitDefinition])
 
 def add_fba_units(model: Model):
     """adds 
+         - mmol per gDW per h
+         - mmol per gDW 
          - hour (h)
          - femto litre (fL)
-         - mmol per gDW
-         - mmol per gDW per h 
+ 
        to the list of unit definitions (needed for FBA)
 
     Args:
@@ -406,6 +407,10 @@ def add_compartment_structure_specs(model: Model):
          
       if not compartment.isSetSpatialDimensions():
          compartment.setSpatialDimensions(3)
+         
+      if not compartment.isSetUnits():
+         if any((unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
+              compartment.setUnits(unit_id.group(0))
          
          
 def set_initial_amount(model: Model):
