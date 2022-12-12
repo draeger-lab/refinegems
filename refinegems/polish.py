@@ -419,9 +419,40 @@ def set_initial_amount(model: Model):
       
       if not (species.isSetInitialAmount() or species.isSetInitialConcentration()):
          species.setInitialAmount(float('NaN'))
+         
+
+def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
+   
+   keyword_list = ['protein', 'locus_tag']
+   tmp_dict = dict()
+   id2locus_names = dict()
+   
+   with open(filepath, 'r') as handle:
+      
+      for record in SeqIO.parse(handle, 'fasta'):
+         header = record.description
+         identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0]
+         descriptors = re.findall('\[+(.*?)\]',header)
+         
+         descriptors.insert(0, identifier)
+         
+         if re.fullmatch('^\d+$', descriptors[0]):
+            
+            tmp_dict['protein_id'] = identifier
+            
+            for entry in descriptors:
+            
+               entry = entry.split('=')
+               
+               if entry[0] in keyword_list:
+                  tmp_dict[entry[0]] = entry[1]
+            
+            id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
+            
+   return id2locus_names
 
 
-def cv_ncbiprotein(gene_list, email):
+def cv_ncbiprotein(gene_list, email, protein_fasta: str):
     """Adds NCBI Id to genes as annotation
 
     Args:
@@ -445,6 +476,9 @@ def cv_ncbiprotein(gene_list, email):
                 for feature in record.features:
                     if feature.type == "CDS":
                         return record.description, feature.qualifiers["locus_tag"][0]
+                     
+    if (protein_fasta is not None) or protein_fasta.strip() != '':
+       id2locus_name = parse_fasta_headers(protein_fasta)
 
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
@@ -458,24 +492,35 @@ def cv_ncbiprotein(gene_list, email):
             gene.setName(name)
             gene.setLabel(locus)
         
-        else:
-            id_string = gene.getId().split('_')
-            for entry in id_string:
-                if (entry[:1] == 'Q'):  # maybe change this to user input
-                    add_cv_term_genes(entry, 'NCBI', gene)
-                    name, locus = get_name_locus_tag(entry)
-                    gene.setName(name)
-                    gene.setLabel(locus)
-
+        elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+            id_string = gene.getId().split('prot_')[1].split('_')[0]
+            
+            # If identifier only contains numbers 
+            # -> Get the corresponding data from the CarveMe input file
+            if re.fullmatch('^\d+$', id_string, re.IGNORECASE):
+                  name, locus = id2locus_name[id_string]
+            
+            # If identifier matches ncbiprotein ID pattern
+            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', id_string, re.IGNORECASE):
+               add_cv_term_genes(id_string, 'NCBI', gene)
+               name, locus = get_name_locus_tag(id_string)
+                  
+            gene.setName(name)
+            gene.setLabel(locus)
+            
         gene.unsetNotes()
+ 
         
-def polish(model, new_filename, email, id_db):
+def polish(model, new_filename, email, id_db: str, protein_fasta: str):
     """completes all steps to polish a model
          (Tested for models having either BiGG or VMH identifiers.)
 
     Args:
-        model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
+        model (libsbml-model):   model loaded with libsbml
+        new_filename (Str):      filename for modified model
+        email (str):             E-mail for Entrez
+        id_db (str):             Main database identifiers in model come from
+        protein_fasta (str):     File used as input for CarveMe
     """
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
@@ -490,7 +535,7 @@ def polish(model, new_filename, email, id_db):
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email)
+    cv_ncbiprotein(gene_list, email, protein_fasta)
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
 
