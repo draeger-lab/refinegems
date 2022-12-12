@@ -26,6 +26,7 @@ polish: FALSE
 id_db: 'BIGG' # Required! 
 # Possible identifiers, currently: BiGG & VMH
 # For other IDs the `polish` function in `polish.py` might need adjustment
+protein_fasta: '' # Path to used CarveMe input file, if exists
 polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
 
 ### Charge correction ###
