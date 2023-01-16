@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
 from refinegems.load import write_to_file
-from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term
+from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"
 
@@ -101,7 +101,7 @@ def add_kegg_pathways(model, kegg_pathways):
     for reaction in list_reac:
         if reaction.getId() in kegg_pathways.keys():
             for path in kegg_pathways[reaction.getId()]:
-                add_cv_term_pathways(path, 'KEGG', reaction)
+                add_cv_term_pathways_to_entity(path, 'KEGG', reaction)
 
     return model
 
@@ -145,36 +145,29 @@ def create_pathway_groups(model, pathway_groups):
     for i in tqdm(range(len(pathway_groups))):
         kegg_pathway = k.get(keys[i])
         dbentry = k.parse(kegg_pathway)
-        if groups.getGroup(keys[i]) is not None:
-            group = groups.getGroup(keys[i])
+        if groups.getGroup('G_' + keys[i]) is not None:
+            group = groups.getGroup('G_' + keys[i])
             group.setName(dbentry['NAME'][0])
-            group.setMetaId("meta_" + keys[i])
+            group.setMetaId("meta_" + 'G_' + keys[i])
             group.setKind('partonomy')
             group.setSBOTerm("SBO:0000633")  # NAME
             add_cv_term_pathways(keys[i], 'KEGG', group)
-            while (group.getNumMembers() < num_reactions[i]): 
-                group.createMember()
+            for reac in pathway_groups[keys[i]]:
+                if group.getMemberByIdRef(reac) is None:
+                    member = group.createMember()
+                    member.setIdRef(reac)
         else:
-            group_list.createGroup()
-            group_list[i].setName(dbentry['NAME'][0])
-            group_list[i].setId(keys[i])  # important for validity (memote/cobra)
-            group_list[i].setMetaId("meta_" + keys[i])
-            group_list[i].setKind('partonomy')
-            group_list[i].setSBOTerm("SBO:0000633")  # NAME
-            add_cv_term_pathways(keys[i], 'KEGG', group_list[i])
-            for j in range(num_reactions[i]):
-                group_list[i].createMember()
-
-    n_groups = groups.getNumGroups()
-    group_list = groups.getListOfGroups()
-
-    for i in range(n_groups):
-        group = group_list[i].getId()
-        num_members = group_list[i].getNumMembers()
-        member_list = group_list[i].getListOfMembers()
-        reaction_list = pathway_groups[group]
-        for j in range(0, num_members):
-            member_list[j].setIdRef(reaction_list[j])
+            group = group_list.createGroup() 
+            group.setName(dbentry['NAME'][0])
+            group.setId('G_' + keys[i])  # important for validity (memote/cobra)
+            group.setMetaId("meta_" + 'G_' + keys[i])
+            group.setKind('partonomy')
+            group.setSBOTerm("SBO:0000633")  # NAME
+            add_cv_term_pathways(keys[i], 'KEGG', group)
+            for reac in pathway_groups[keys[i]]:
+                if group.getMemberByIdRef(reac) is None:
+                    member = group.createMember()
+                    member.setIdRef(reac)
 
     return model
 

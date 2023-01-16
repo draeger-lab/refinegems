@@ -3,7 +3,7 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
-from libsbml import CVTerm, BIOLOGICAL_QUALIFIER, BQB_IS
+from libsbml import CVTerm, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN
 
 metabol_db_dict = {'BIGG': 'bigg.metabolite/',
                    'BRENDA': 'brenda/',
@@ -105,6 +105,21 @@ def add_cv_term_pathways(entry, db_id, entity):
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
     cv.setBiologicalQualifierType(BQB_IS)
+    cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
+    entity.addCVTerm(cv)
+    
+
+def add_cv_term_pathways_to_entity(entry, db_id, entity):
+    """Add CVTerm to a entity as OCCURS IN pathway
+
+    Args:
+        entry (string): id to add as annotation
+        db_id (string): database to which entry belongs
+        entity (libsbml-group): entity to add CVTerm to
+    """
+    cv = CVTerm()
+    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+    cv.setBiologicalQualifierType(BQB_OCCURS_IN)
     cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
     entity.addCVTerm(cv)
 
