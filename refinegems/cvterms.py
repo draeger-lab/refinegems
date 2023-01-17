@@ -3,7 +3,7 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, CVTerm, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, Unit
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, CVTerm, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, Unit
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
@@ -54,21 +54,22 @@ gene_db_dict = {'NCBI': 'ncbiprotein:'}
 pathway_db_dict = {'KEGG': 'kegg.pathway:'}
 
 
-def add_cv_term_units(unit_id: str, unit: Unit, idf: bool=False):
+def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
     '''Adds CVTerm to a unit
 
        Params:
          unit_id (string):    ID to add as URI to annotation
          unit (libSBML Unit): Unit to add CVTerm to
-         idf (boolean):       Set to True if URI has to have model qualifier isDerivedFrom
+         relation (str):      Provides model qualifier to be added
     '''
     cv = CVTerm()
     cv.setQualifierType(MODEL_QUALIFIER)
-    if idf:
-       cv.setModelQualifierType(BQM_IS_DERIVED_FROM)
+    cv.setModelQualifierType(relation)
+    
+    if relation == BQM_IS_DESCRIBED_BY:
+      cv.addResource(f'https://identifiers.org/{unit_id}')
     else:
-       cv.setModelQualifierType(BQM_IS)
-    cv.addResource(f'https://identifiers.org/UO:{unit_id}')
+      cv.addResource(f'https://identifiers.org/UO:{unit_id}')
     unit.addCVTerm(cv)
 
 
