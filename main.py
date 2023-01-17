@@ -29,9 +29,9 @@ def main():
         model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_path'])
         print(errors)
         
-    elif (config['polish_carveme']):
+    elif (config['polish']):
         model_libsbml = rg.load.load_model_libsbml(config['model'])
-        rg.polish.polish_carveme_bigg(model_libsbml, config['polish_path'], config['entrez_email'])
+        rg.polish.polish(model_libsbml, config['polish_path'], config['entrez_email'], config['id_db'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['polish_path'])
         print(errors)
         

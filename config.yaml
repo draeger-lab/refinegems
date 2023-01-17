@@ -21,8 +21,11 @@ kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save m
 sboterms: FALSE
 sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with sbo terms
 
-### CarveMe polishing ###
-polish_carveme: FALSE
+### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
+polish: FALSE
+id_db: 'BIGG' # Required! 
+# Possible identifiers, currently: BiGG & VMH
+# For other IDs the `polish` function in `polish.py` might need adjustment
 polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
 
 ### Charge correction ###
