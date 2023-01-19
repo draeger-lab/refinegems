@@ -139,6 +139,21 @@ def add_cv_term_pathways(entry, db_id, entity):
     cv.setBiologicalQualifierType(BQB_IS)
     cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
     entity.addCVTerm(cv)
+    
+
+def add_cv_term_pathways_to_entity(entry, db_id, entity):
+    """Add CVTerm to a entity as OCCURS IN pathway
+
+    Args:
+        entry (string): id to add as annotation
+        db_id (string): database to which entry belongs
+        entity (libsbml-group): entity to add CVTerm to
+    """
+    cv = CVTerm()
+    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+    cv.setBiologicalQualifierType(BQB_OCCURS_IN)
+    cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
+    entity.addCVTerm(cv)
 
 
 def parse_id_from_cv_term(entity, db_id):
@@ -158,6 +173,7 @@ def parse_id_from_cv_term(entity, db_id):
         num_res = ann_string.getNumResources()
         ids = [ann_string.getResourceURI(r).split(
             '/')[-1] for r in range(0, num_res) if str(db_id) in ann_string.getResourceURI(r)]
+        ids = [id_string.split(':')[-1] for id_string in ids if ':' in id_string]
         all_ids.extend(ids)
 
     return all_ids

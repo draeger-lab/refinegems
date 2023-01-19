@@ -177,212 +177,197 @@ def polish_entities(entity_list, metabolite):
  
                 
 def create_unit(model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int, s: int, uri_is: str='', uri_idf: str='') -> Unit:
-   '''Creates unit for SBML model according to parameters
+    """Creates unit for SBML model according to arguments
 
-      Params:
-         model_specs (tuple):    Level & Version of SBML model
-         meta_id (str):          Meta ID for unit (Neccessary for URI)
-         kind (str):             Unit kind constant (see libSBML for available constants)
-         e (int):                Exponent of unit
-         m (int):                Multiplier of unit
-         s (int):                Scale of unit 
-         uri_is (str):           URI supporting the specified unit
-         uri_idf (str):          URI supporting the derived from unit
+    Args:
+        model_specs (tuple):    Level & Version of SBML model
+        meta_id (str):          Meta ID for unit (Neccessary for URI)
+        kind (str):             Unit kind constant (see libSBML for available constants)
+        e (int):                Exponent of unit
+        m (int):                Multiplier of unit
+        s (int):                Scale of unit 
+        uri_is (str):           URI supporting the specified unit
+        uri_idf (str):          URI supporting the derived from unit
       
-      Return:
-         libSBML unit object
-   '''
-   unit = Unit(*model_specs)
-   unit.setKind(kind)
-   unit.setMetaId(f'meta_{meta_id}_{unit.getKind()}')
-   unit.setExponent(e)
-   unit.setMultiplier(m)
-   unit.setScale(s)
-   if uri_is:
-      add_cv_term_units(uri_is, unit, BQM_IS)
-   if uri_idf:
-      add_cv_term_units(uri_idf, unit, BQM_IS_DERIVED_FROM)
-   return unit
+    Return:
+        libSBML unit object
+    """
+    unit = Unit(*model_specs)
+    unit.setKind(kind)
+    unit.setMetaId(f'meta_{meta_id}_{unit.getKind()}')
+    unit.setExponent(e)
+    unit.setMultiplier(m)
+    unit.setScale(s)
+    if uri_is:
+        add_cv_term_units(uri_is, unit, BQM_IS)
+    if uri_idf:
+        add_cv_term_units(uri_idf, unit, BQM_IS_DERIVED_FROM)
+    return unit
 
 
 def create_unit_definition(model_specs: tuple[int], identifier: str, name: str, 
                            units: list[Unit]) -> UnitDefinition:
-   '''Creates unit definition for SBML model according to parameters
+    """Creates unit definition for SBML model according to arguments
    
-      Params:
-         model_specs (tuple): Level & Version of SBML model
-         identifier (str):    Identifier for the defined unit
-         name (str):          Full name of the defined unit
-         units (list):        All units the defined unit consists of
+    Args:
+        model_specs (tuple): Level & Version of SBML model
+        identifier (str):    Identifier for the defined unit
+        name (str):          Full name of the defined unit
+        units (list):        All units the defined unit consists of
          
-      Return:
-         libSBML unit definition object
-   '''
-   unit_definition = UnitDefinition(*model_specs)
-   unit_definition.setId(identifier)
-   unit_definition.setMetaId(f'meta_{identifier}')
-   unit_definition.setName(name)
+    Return:
+        libSBML unit definition object
+    """
+    unit_definition = UnitDefinition(*model_specs)
+    unit_definition.setId(identifier)
+    unit_definition.setMetaId(f'meta_{identifier}')
+    unit_definition.setName(name)
       
-   # Iterate over all units provided for the unit definition & add the units
-   for unit in units:
-      unit_definition.addUnit(unit)
+    # Iterate over all units provided for the unit definition & add the units
+    for unit in units:
+        unit_definition.addUnit(unit)
    
-   return unit_definition
+    return unit_definition
 
 
 def create_fba_units(model: Model) -> list[UnitDefinition]:
-   '''Creates all fba units required for a constraint-based model
+    """Creates all fba units required for a constraint-based model
    
-      Params:
-         model (Model): SBML model loaded with libSBML
+    Args:
+        model (Model): SBML model loaded with libSBML
          
-      Return:
-         list of libSBML UnitDefinitions
-   '''
-   # Get model level & version for unit & unit definition
-   model_specs = model.getLevel(), model.getVersion()
+    Return:
+        list of libSBML UnitDefinitions
+    """
+    # Get model level & version for unit & unit definition
+    model_specs = model.getLevel(), model.getVersion()
     
-   # Create required units
-   litre = create_unit(model_specs, 'litre', UNIT_KIND_LITRE, e=1, m=1, s=-3, uri_is='0000104', uri_idf='0000099')
-   mole = create_unit(model_specs, 'mole_0', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
-   gram = create_unit(model_specs, 'per_gram_0', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
-   second = create_unit(model_specs, 'second_0', UNIT_KIND_SECOND, e=1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
+    # Create required units
+    litre = create_unit(model_specs, 'litre', UNIT_KIND_LITRE, e=1, m=1, s=-3, uri_is='0000104', uri_idf='0000099')
+    mole = create_unit(model_specs, 'mole_0', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
+    gram = create_unit(model_specs, 'per_gram_0', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
+    second = create_unit(model_specs, 'second_0', UNIT_KIND_SECOND, e=1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
     
-   # Create unit definitions for hour & femto litre
-   hour = create_unit_definition(
-      model_specs, identifier='h', name='Hour', 
-      units=[second]
-   )
-   femto_litre = create_unit_definition(
-      model_specs, identifier='fL', name='Femto litres', 
-      units=[litre]
-   )
+    # Create unit definitions for hour & femto litre
+    hour = create_unit_definition(
+        model_specs, identifier='h', name='Hour', 
+        units=[second]
+    )
+    femto_litre = create_unit_definition(
+        model_specs, identifier='fL', name='Femto litres', 
+        units=[litre]
+    )
     
-   # Create unit definitions for millimoles per gram dry weight (mmgdw) & mmgdw per hour
-   mmgdw = create_unit_definition(
-      model_specs, identifier='mmol_per_gDW', name='Millimoles per gram (dry weight)',
-      units=[mole, gram]
-   )
+    # Create unit definitions for millimoles per gram dry weight (mmgdw) & mmgdw per hour
+    mmgdw = create_unit_definition(
+        model_specs, identifier='mmol_per_gDW', name='Millimoles per gram (dry weight)',
+        units=[mole, gram]
+    )
    
-   # Create new units mole & gram to get new meta IDs 
-   mole = create_unit(model_specs, 'mole_1', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
-   gram = create_unit(model_specs, 'per_gram_1', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
-   # Create new unit second to fit to per hour & get new meta ID
-   second = create_unit(model_specs, 'second_1', UNIT_KIND_SECOND, e=-1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
+    # Create new units mole & gram to get new meta IDs 
+    mole = create_unit(model_specs, 'mole_1', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
+    gram = create_unit(model_specs, 'per_gram_1', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
+    # Create new unit second to fit to per hour & get new meta ID
+    second = create_unit(model_specs, 'second_1', UNIT_KIND_SECOND, e=-1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
    
-   mmgdwh = create_unit_definition(
-      model_specs, identifier='mmol_per_gDW_per_h', name='Millimoles per gram (dry weight) per hour',
-      units=[mole, gram, second]
-   )
-   add_cv_term_units('pubmed:7986045', mmgdwh, BQM_IS_DESCRIBED_BY)
+    mmgdwh = create_unit_definition(
+        model_specs, identifier='mmol_per_gDW_per_h', name='Millimoles per gram (dry weight) per hour',
+        units=[mole, gram, second]
+    )
+    add_cv_term_units('pubmed:7986045', mmgdwh, BQM_IS_DESCRIBED_BY)
    
-   return [mmgdwh, mmgdw, hour, femto_litre]
-
-
-def get_missing_fba_units(model: Model, list_of_fba_units: list[UnitDefinition]) -> list[UnitDefinition]:
-   '''Retrieves a list of the missing units in a model 
-
-      Params:
-         model (Model): SBML model loaded with libSBML
-         list_of_fba_units (list):  list of libSBML UnitDefinitions
+    return [mmgdwh, mmgdw, hour, femto_litre]
+            
          
-      Return:
-         list of libSBML UnitDefinition    
-   '''
-   polished_mmgdwh = False
-   model_specs = model.getLevel(), model.getVersion()
-   id_mapper = {'h': 'hr?', 'fL': 'fL', 'mmol_per_gDW': 'mmol_per_gDW', 'mmol_per_gDW_per_h': 'mmol_per_gDW_per_hr?'}
-   new_list = []
+def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
+    """Prints a list of libSBML UnitDefinitions as XMLNodes
+   
+    Args:
+        contained_unit_defs (list): List of libSBML UnitDefinition objects
+    """
+    for unit_def in contained_unit_defs:
+        print(unit_def.toXMLNode())
+
+
+def print_remaining_UnitDefinitions(model: Model, list_of_fba_units: list[UnitDefinition]):
+    """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
+
+    Args:
+        model (Model): SBML model loaded with libSBML
+        list_of_fba_units (list):  List of libSBML UnitDefinitions  
+    """
        
-   # Get all units already present in the model
-   contained_unit_defs = [unit.getId() for unit in model.getListOfUnitDefinitions()]
+    # Get all units already present in the model
+    contained_unit_defs = [unit for unit in model.getListOfUnitDefinitions()]
          
-   # Check if contained unit fits to one of the created fba units
-   for unit_def in list_of_fba_units:
-      
-      is_matched = False
-      
-      for contained_unit_def in contained_unit_defs:
+    # Check if contained unit fits to one of the created fba units
+    for unit_def in list_of_fba_units:
+        for contained_unit_def in contained_unit_defs:
          
-         # Remove units added by ModelPolisher & Replace with the ones from the list
-         if 'substance' == contained_unit_def:
-            contained_unit_defs.remove(contained_unit_def)
-            model.removeUnitDefinition(contained_unit_def)
-         
-         if 'time' == contained_unit_def:
-            contained_unit_defs.remove(contained_unit_def)
-            model.removeUnitDefinition(contained_unit_def)
-            
-         if re.fullmatch('mmol_per_gDW_per_hr?', contained_unit_def, re.IGNORECASE) and not polished_mmgdwh:
-            polished_mmgdwh = True
-            mmgdwh = model.getUnitDefinition(contained_unit_def)
-            
-            if not mmgdwh.isSetMetaId():
-               mmgdwh.setMetaId(f'meta_{mmgdwh.getId()}')
-            
-            if not mmgdwh.isSetName():
-               mmgdwh.setName('Millimoles per gram (dry weight) per hour')
-            
-            # Adjust unit list
-            mmgdwh.getListOfUnits().clear()
-            mmgdwh.addUnit(create_unit(model_specs, 'mole_1', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013'))
-            mmgdwh.addUnit(create_unit(model_specs, 'per_gram_1', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021'))
-            mmgdwh.addUnit(create_unit(model_specs, 'second_1', UNIT_KIND_SECOND, e=-1, m=3600, s=0, uri_is='0000032', uri_idf='0000010'))
+            current_id = contained_unit_def.getId()
                
-         if re.fullmatch(id_mapper.get(unit_def.getId()), contained_unit_def, re.IGNORECASE):
-            is_matched = True       
-            
-      if not is_matched and (unit_def not in new_list):
-         new_list.append(unit_def)
-               
-   return new_list
+            if UnitDefinition.areIdentical(unit_def, contained_unit_def):
+                contained_unit_defs.remove(contained_unit_def)
+                model.removeUnitDefinition(current_id)
+   
+    # Only print list if it contains UnitDefinitions         
+    if contained_unit_defs:
+        print('''
+        The following UnitDefinition objects were removed. 
+        The reasoning is that
+        \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
+        \t(b) the UnitDefinitions defined within this program are handled as ground truth.
+        Thus, the following UnitDefinitions are not seen as relevant for the model.
+        ''')
+        print_UnitDefinitions(contained_unit_defs)
 
 
 def add_fba_units(model: Model):
-    """adds 
-         - mmol per gDW per h
-         - mmol per gDW 
-         - hour (h)
-         - femto litre (fL)
+    """Adds:
+            - mmol per gDW per h
+            - mmol per gDW 
+            - hour (h)
+            - femto litre (fL)
  
-       to the list of unit definitions (needed for FBA)
+        to the list of unit definitions (needed for FBA)
 
     Args:
         model (libsbml-model): model loaded with libsbml
     """
     list_of_fba_units = create_fba_units(model)
     
-    # If list of unit definitions is not empty, only add missing units
+    # If list of unit definitions is not empty, replace all units identical to list_of_fba_units
+    # & Print the remaining unit definitions
     if model.getListOfUnitDefinitions():
-       list_of_fba_units = get_missing_fba_units(model, list_of_fba_units)
+        print_remaining_UnitDefinitions(model, list_of_fba_units)
     
     for unit_def in list_of_fba_units:
-         model.getListOfUnitDefinitions().append(unit_def)
+        model.getListOfUnitDefinitions().append(unit_def)
           
 
 def set_default_units(model: Model):
-   '''Sets default units of model
+    """ Sets default units of model
 
-      Params:
-         model (Model): SBML model loaded with libSBML
-   '''
-   for unit in model.getListOfUnitDefinitions():
+    Args:
+        model (Model): SBML model loaded with libSBML
+    """ 
+    for unit in model.getListOfUnitDefinitions():
       
-      unit_id = unit.getId()
+        unit_id = unit.getId()
       
-      if re.fullmatch('mmol_per_gDW', unit_id, re.IGNORECASE):
+        if re.fullmatch('mmol_per_gDW', unit_id, re.IGNORECASE):
          
-         if not (model.isSetExtentUnits() and model.getExtentUnits() == unit_id):
-            model.setExtentUnits(unit_id)
+            if not (model.isSetExtentUnits() and model.getExtentUnits() == unit_id):
+                model.setExtentUnits(unit_id)
             
-         if not (model.isSetSubstanceUnits() and model.getSubstanceUnits() == unit_id):
-            model.setSubstanceUnits(unit_id)
+            if not (model.isSetSubstanceUnits() and model.getSubstanceUnits() == unit_id):
+                model.setSubstanceUnits(unit_id)
          
-      if not (model.isSetTimeUnits() and model.getTimeUnits() == unit_id) and re.fullmatch('hr?', unit_id, re.IGNORECASE):
-         model.setTimeUnits(unit_id)
+        if not (model.isSetTimeUnits() and model.getTimeUnits() == unit_id) and re.fullmatch('hr?', unit_id, re.IGNORECASE):
+            model.setTimeUnits(unit_id)
          
-      if not (model.isSetVolumeUnits() and model.getVolumeUnits() == unit_id) and re.fullmatch('fL', unit_id, re.IGNORECASE):
-         model.setVolumeUnits(unit_id)
+        if not (model.isSetVolumeUnits() and model.getVolumeUnits() == unit_id) and re.fullmatch('fL', unit_id, re.IGNORECASE):
+            model.setVolumeUnits(unit_id)
 
 
 def set_units(model):
@@ -392,31 +377,38 @@ def set_units(model):
         model (libsbml-model): model loaded with libsbml
     """
     for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
-        if param.isSetUnits() == False:
-           if any((unit_id := re.fullmatch('mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
-              param.setUnits(unit_id.group(0))
+        if any((unit_id := re.fullmatch('mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
+            if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
+                param.setUnits(unit_id.group(0))
             
             
 def add_compartment_structure_specs(model: Model):
-   ''' Adds the required specifications for the compartment structure
-       if not set (size & spatial dimension)
-   '''
-   for compartment in model.getListOfCompartments():
+    """ Adds the required specifications for the compartment structure
+        if not set (size & spatial dimension)
+        
+    Args:
+        model (Model): Model loaded with libSBML
+    """ 
+    for compartment in model.getListOfCompartments():
       
-      if not compartment.isSetSize():
-         compartment.setSize(float('NaN'))
+        if not compartment.isSetSize():
+            compartment.setSize(float('NaN'))
          
-      if not compartment.isSetSpatialDimensions():
-         compartment.setSpatialDimensions(3)
+        if not compartment.isSetSpatialDimensions():
+            compartment.setSpatialDimensions(3)
          
-      if not compartment.isSetUnits():
-         if any((unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
-              compartment.setUnits(unit_id.group(0))
+        if any((unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
+            if not (compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)):
+                compartment.setUnits(unit_id.group(0))
          
          
 def set_initial_amount(model: Model):
-   
-   for species in model.getListOfSpecies():
+    """Sets initial amount to all metabolites if not already set or if initial concentration is not set
+    
+    Args:
+        model (Model): Model loaded with libSBML
+    """
+    for species in model.getListOfSpecies():
       
       if not (species.isSetInitialAmount() or species.isSetInitialConcentration()):
          species.setInitialAmount(float('NaN'))
