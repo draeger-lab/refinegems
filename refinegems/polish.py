@@ -12,7 +12,7 @@ from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_c
 from refinegems.load import write_to_file
 
 __author__ = "Famke Baeuerle"
-__author__ = 'Gwendolyn O. Gusak'
+__author__ = "Gwendolyn O. Gusak"
         
         
 def add_metab(entity_list, id_db: str):
@@ -199,9 +199,9 @@ def create_unit(model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int
    unit.setMultiplier(m)
    unit.setScale(s)
    if uri_is:
-      add_cv_term_units(uri_is, unit)
+      add_cv_term_units(uri_is, unit, BQM_IS)
    if uri_idf:
-      add_cv_term_units(uri_idf, unit, True)
+      add_cv_term_units(uri_idf, unit, BQM_IS_DERIVED_FROM)
    return unit
 
 
@@ -274,6 +274,7 @@ def create_fba_units(model: Model) -> list[UnitDefinition]:
       model_specs, identifier='mmol_per_gDW_per_h', name='Millimoles per gram (dry weight) per hour',
       units=[mole, gram, second]
    )
+   add_cv_term_units('pubmed:7986045', mmgdwh, BQM_IS_DESCRIBED_BY)
    
    return [mmgdwh, mmgdw, hour, femto_litre]
 
@@ -435,29 +436,33 @@ def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
          descriptors = re.findall('\[+(.*?)\]',header)
          
          descriptors.insert(0, identifier)
-         
-         if re.fullmatch('^\d+$', descriptors[0]):
             
-            tmp_dict['protein_id'] = identifier
+         tmp_dict['protein_id'] = identifier
             
-            for entry in descriptors:
+         for entry in descriptors:
             
-               entry = entry.split('=')
+            entry = entry.split('=')
                
-               if entry[0] in keyword_list:
+            if entry[0] in keyword_list:
+               if entry[0] == 'protein_id':
+                  tmp_dict[entry[0]] = entry[1].split('.')[0]
+               else:
                   tmp_dict[entry[0]] = entry[1]
             
-            id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
+         id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
             
    return id2locus_names
 
 
-def cv_ncbiprotein(gene_list, email, protein_fasta: str):
+def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
     Args:
         gene_list (list): libSBML ListOfGenes
         email (string): User Email to access the Entrez database
+        protein_fasta (string): The CarveMe protein.fasta input file
+        lab_strain (bool): Needs to be set to True if strain was self-annotated
+                           and/or the locus tags in the CarveMe input file should be kept
     """
     Entrez.email = email
 
@@ -493,17 +498,33 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str):
             gene.setLabel(locus)
         
         elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
-            id_string = gene.getId().split('prot_')[1].split('_')[0]
+            id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein.fasta files have the identifier after 'prot_'
+            
+            ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
+            
+            if (len(id_string) > 2):  # Identifier contains '_'
+               # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
+               # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
+               if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
+                  ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
+               
+            # If identifier matches RefSeq ID pattern   
+            if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
+               add_cv_term_genes(ncbi_id, 'REFSEQ', gene)
+               name, locus = get_name_locus_tag(ncbi_id)
             
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
-            if re.fullmatch('^\d+$', id_string, re.IGNORECASE):
-                  name, locus = id2locus_name[id_string]
+            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE) and id2locus_name:
+                  name, locus = id2locus_name[ncbi_id]
             
             # If identifier matches ncbiprotein ID pattern
-            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', id_string, re.IGNORECASE):
-               add_cv_term_genes(id_string, 'NCBI', gene)
-               name, locus = get_name_locus_tag(id_string)
+            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
+               add_cv_term_genes(ncbi_id, 'NCBI', gene)
+               name, locus = get_name_locus_tag(ncbi_id)
+               
+            if lab_strain and id2locus_name:
+               locus = id2locus_name[ncbi_id][1]
                   
             gene.setName(name)
             gene.setLabel(locus)
@@ -511,7 +532,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str):
         gene.unsetNotes()
  
         
-def polish(model, new_filename, email, id_db: str, protein_fasta: str):
+def polish(model, new_filename, email, id_db: str, protein_fasta: str, lab_strain: bool):
     """completes all steps to polish a model
          (Tested for models having either BiGG or VMH identifiers.)
 
@@ -535,7 +556,7 @@ def polish(model, new_filename, email, id_db: str, protein_fasta: str):
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, protein_fasta)
+    cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
 
