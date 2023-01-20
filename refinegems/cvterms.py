@@ -49,7 +49,12 @@ reaction_db_dict = {
                     'VMH': 'vmhreaction:'
                    }
 
-gene_db_dict = {'NCBI': 'ncbiprotein:'}
+gene_db_dict = {
+                'KEGG': 'kegg.gene:',
+                'NCBI': 'ncbiprotein:',
+                'REFSEQ': 'refseq:',
+                'UNIPROT': 'uniprot:'
+               }
 
 pathway_db_dict = {'KEGG': 'kegg.pathway:'}
 

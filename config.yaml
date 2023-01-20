@@ -24,8 +24,11 @@ sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save mod
 ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
 polish: FALSE
 id_db: 'BIGG' # Required! 
+lab_strain: False # Needs to be specified if the locus tag from the provided protein_fasta file 
+                  # should be used as label in the model
 # Possible identifiers, currently: BiGG & VMH
 # For other IDs the `polish` function in `polish.py` might need adjustment
+protein_fasta: '' # Path to used CarveMe input file, if exists
 polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
 
 ### Charge correction ###
