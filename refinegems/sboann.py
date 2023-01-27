@@ -3,6 +3,7 @@
 
 Script written by Elisabeth Fritze in her bachelor thesis.
 Modified by Gwendolyn O. Gusak during her master thesis.
+Commented by Famke Bäuerle and extended by Nantia Leonidou.
 
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
@@ -710,7 +711,98 @@ def addSBOfromDB(reac, cur):
         return True
     else:
         return False
-    
+
+### functions below from Nantia, not yet linked in main ###
+
+def addSBOforMetabolites(model):
+    # add metabolites SBO
+    for met in model.species:
+        met_id = met.getId()
+        model.getSpecies(met_id).setSBOTerm("SBO:0000247")
+
+
+def addSBOforGenes(model):
+    # add genes SBO
+    model_fbc = model.getPlugin("fbc")
+    # if model has genes
+    if model_fbc is not None:
+        for gene in model_fbc.getListOfGeneProducts():
+            gene.setSBOTerm("SBO:0000243")
+
+
+def addSBOforModel(doc):
+    doc.setSBOTerm("SBO:0000624")
+
+
+def addSBOforGroups(model):
+    mplugin = model.getPlugin("groups")
+    # if groups are in model defined
+    if mplugin is not None:
+        for grp in mplugin.getListOfGroups():
+            grp.setSBOTerm("SBO:0000633")
+
+
+def addSBOforParameters(model):
+    for param in model.getListOfParameters():
+        # reaction bounds
+        if 'R_' in param.getId():
+            param.setSBOTerm("SBO:0000625")
+        # default set bounds
+        else:
+            param.setSBOTerm("SBO:0000626")
+
+
+def addSBOforCompartments(model):
+    for cmp in model.getListOfCompartments():
+        cmp.setSBOTerm("SBO:0000290")   
+
+        
+def handleMultipleECs(react, ECNums):
+    # if no EC number annotated in model
+    if len(ECNums) == 0:
+        react.setSBOTerm('SBO:0000176')
+
+    else:
+        # store first digits of all annotated EC numbers
+        lst = []
+        for ec in ECNums:
+            lst.append(ec.split(".")[0])
+
+        # if ec numbers are from different enzyme classes, based on first digit
+        # no ambiguous classification possible
+        if len(set(lst)) > 1:
+            react.setSBOTerm("SBO:0000176")  # metabolic rxn
+
+        # if ec numbers are from the same enzyme classes,
+        # assign parent SBO term based on first digit in EC number
+        else:
+
+            # Oxidoreductases
+            if "1" in set(lst):
+                react.setSBOTerm("SBO:0000200")
+            # Transferase
+            elif "2" in set(lst):
+                react.setSBOTerm("SBO:0000402")
+            # Hydrolases
+            elif "3" in set(lst):
+                react.setSBOTerm("SBO:0000376")
+            # Lyases
+            elif "4" in set(lst):
+                react.setSBOTerm("SBO:0000211")
+            # Isomerases
+            elif "5" in set(lst):
+                react.setSBOTerm("SBO:0000377")
+            # Ligases, proper SBO is missing from graph --> use one for modification of covalent bonds
+            elif "6" in set(lst):
+                react.setSBOTerm("SBO:0000182")
+            # Translocases
+            elif "7" in set(lst):
+                react.setSBOTerm("SBO:0000185")
+            # Metabolic reactions
+            else:
+                react.setSBOTerm("SBO:0000176")
+
+### end functions from Nantia ###
 
 def sbo_annotation(model_libsbml):
     """executes all steps to annotate SBO terms to a given model
@@ -732,14 +824,14 @@ def sbo_annotation(model_libsbml):
             checkSink(reaction)
             checkExchange(reaction)
             checkDemand(reaction)
-            if reaction.getSBOTermID() == 'SBO:0000655':
+            if reaction.getSBOTermID() == 'SBO:0000655': #transporter
                 checkPassiveTransport(reaction)
                 checkActiveTransport(reaction)
                 if reaction.getSBOTermID() != 'SBO:0000657':
                     checkCoTransport(reaction)
                     if reaction.getSBOTermID() == 'SBO:0000654':
                         splitSymAntiPorter(reaction)
-            if reaction.getSBOTermID() == 'SBO:0000176':
+            if reaction.getSBOTermID() == 'SBO:0000176': #metabolic reaction
                 addSBOviaEC(reaction, open_cur)
             if reaction.getSBOTermID() == 'SBO:0000176':
                 checkRedox(reaction)
