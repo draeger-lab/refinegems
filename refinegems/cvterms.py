@@ -3,7 +3,7 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, CVTerm, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, Unit
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, CVTerm, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
@@ -111,7 +111,7 @@ def add_cv_term_reactions(entry, db_id, reac):
     reac.addCVTerm(cv)
 
 
-def add_cv_term_genes(entry, db_id, gene):
+def add_cv_term_genes(entry, db_id, gene, lab_strain: bool=False):
     """Add CVTerm to a gene
 
     Args:
@@ -121,7 +121,10 @@ def add_cv_term_genes(entry, db_id, gene):
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_IS)
+    if lab_strain:
+        cv.setBiologicalQualifierType(BQB_IS_HOMOLOG_TO)
+    else:
+        cv.setBiologicalQualifierType(BQB_IS)
     cv.addResource('https://identifiers.org/' + gene_db_dict[db_id] + entry)
     gene.addCVTerm(cv)
 
