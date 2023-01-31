@@ -424,7 +424,7 @@ def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
       
       for record in SeqIO.parse(handle, 'fasta'):
          header = record.description
-         identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0]
+         identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
          descriptors = re.findall('\[+(.*?)\]',header)
          
          descriptors.insert(0, identifier)
@@ -433,7 +433,7 @@ def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
             
          for entry in descriptors:
             
-            entry = entry.split('=')
+            entry = entry.strip().split('=')
                
             if entry[0] in keyword_list:
                if entry[0] == 'protein_id':
@@ -473,9 +473,12 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                 for feature in record.features:
                     if feature.type == "CDS":
                         return record.description, feature.qualifiers["locus_tag"][0]
-                     
-    if (protein_fasta is not None) or protein_fasta.strip() != '':
+                    
+    id2locus_name = {}  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
+    if (protein_fasta is not None) and protein_fasta.strip() != '':  # NCBI Protein headers contain information on locus tag and protein name
        id2locus_name = parse_fasta_headers(protein_fasta)
+       
+    genes_missing_annotation = []
 
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
@@ -484,13 +487,13 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()[2:-2]
-            add_cv_term_genes(entry, 'NCBI', gene)
+            add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = get_name_locus_tag(entry)
             gene.setName(name)
             gene.setLabel(locus)
         
         elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
-            id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein.fasta files have the identifier after 'prot_'
+            id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
             
             ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
             
@@ -502,26 +505,33 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                
             # If identifier matches RefSeq ID pattern   
             if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
-               add_cv_term_genes(ncbi_id, 'REFSEQ', gene)
+               add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                name, locus = get_name_locus_tag(ncbi_id)
             
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
-            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE) and id2locus_name:
-                  name, locus = id2locus_name[ncbi_id]
+            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
+                if id2locus_name:
+                    name, locus = id2locus_name[ncbi_id]
+                else: 
+                    genes_missing_annotation.append(ncbi_id)
             
             # If identifier matches ncbiprotein ID pattern
             elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
-               add_cv_term_genes(ncbi_id, 'NCBI', gene)
+               add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                name, locus = get_name_locus_tag(ncbi_id)
-               
+            
+            # For lab strains use the locus tag from the annotation file   
             if lab_strain and id2locus_name:
-               locus = id2locus_name[ncbi_id][1]
-                  
-            gene.setName(name)
-            gene.setLabel(locus)
+                locus = id2locus_name[ncbi_id][1]
+            
+            if ncbi_id not in genes_missing_annotation:      
+                gene.setName(name)
+                gene.setLabel(locus)
             
         gene.unsetNotes()
+    if genes_missing_annotation:    
+        print(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
  
         
 def polish(model, new_filename, email, id_db: str, protein_fasta: str, lab_strain: bool):
@@ -535,6 +545,17 @@ def polish(model, new_filename, email, id_db: str, protein_fasta: str, lab_strai
         id_db (str):             Main database identifiers in model come from
         protein_fasta (str):     File used as input for CarveMe
     """
+    if lab_strain and not protein_fasta:
+        print('''
+            Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
+            Otherwise, polish will not change anything for the GeneProducts.
+            The header lines should look similar to the following line:
+            >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+            It would also be a valid input if the header lines looked similar to the following line:
+            >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
+            ''')
+        return
+    
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
