@@ -46,15 +46,8 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">refinegems package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.charges">refinegems.charges module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_from_db"><code class="docutils literal notranslate"><span class="pre">correct_charges_from_db()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_modelseed"><code class="docutils literal notranslate"><span class="pre">correct_charges_modelseed()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-comparison-module">refinegems.comparison module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.simulate_all"><code class="docutils literal notranslate"><span class="pre">simulate_all()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#refinegems-charges-module">refinegems.charges module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#refinegems-comparison-module">refinegems.comparison module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#refinegems-curate-module">refinegems.curate module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.add_reactions_from_table"><code class="docutils literal notranslate"><span class="pre">add_reactions_from_table()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.create_gpr"><code class="docutils literal notranslate"><span class="pre">create_gpr()</span></code></a></li>
@@ -68,26 +61,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_genes"><code class="docutils literal notranslate"><span class="pre">add_cv_term_genes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_metabolites"><code class="docutils literal notranslate"><span class="pre">add_cv_term_metabolites()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_pathways"><code class="docutils literal notranslate"><span class="pre">add_cv_term_pathways()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_pathways_to_entity"><code class="docutils literal notranslate"><span class="pre">add_cv_term_pathways_to_entity()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_reactions"><code class="docutils literal notranslate"><span class="pre">add_cv_term_reactions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_units"><code class="docutils literal notranslate"><span class="pre">add_cv_term_units()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.parse_id_from_cv_term"><code class="docutils literal notranslate"><span class="pre">parse_id_from_cv_term()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.genecomp">refinegems.genecomp module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.compare_bigg_model"><code class="docutils literal notranslate"><span class="pre">compare_bigg_model()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.compare_kegg_model"><code class="docutils literal notranslate"><span class="pre">compare_kegg_model()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_bigg_kegg"><code class="docutils literal notranslate"><span class="pre">get_bigg_kegg()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_kegg_genes"><code class="docutils literal notranslate"><span class="pre">get_kegg_genes()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_locus_ec"><code class="docutils literal notranslate"><span class="pre">get_locus_ec()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_locus_ec_kegg"><code class="docutils literal notranslate"><span class="pre">get_locus_ec_kegg()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_locus_ec_kegg_bigg"><code class="docutils literal notranslate"><span class="pre">get_locus_ec_kegg_bigg()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_locus_ec_kegg_bigg_gpr"><code class="docutils literal notranslate"><span class="pre">get_locus_ec_kegg_bigg_gpr()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_locus_gpr"><code class="docutils literal notranslate"><span class="pre">get_locus_gpr()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_model_genes"><code class="docutils literal notranslate"><span class="pre">get_model_genes()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.get_model_reactions"><code class="docutils literal notranslate"><span class="pre">get_model_reactions()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.genecomp.kegg_gene_comp"><code class="docutils literal notranslate"><span class="pre">kegg_gene_comp()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#refinegems-genecomp-module">refinegems.genecomp module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.growth">refinegems.growth module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_additives"><code class="docutils literal notranslate"><span class="pre">find_additives()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_minimum_essential"><code class="docutils literal notranslate"><span class="pre">find_minimum_essential()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_missing_essential"><code class="docutils literal notranslate"><span class="pre">find_missing_essential()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_all_minimum_essential"><code class="docutils literal notranslate"><span class="pre">get_all_minimum_essential()</span></code></a></li>
@@ -104,18 +86,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.simulate_minimum_essential"><code class="docutils literal notranslate"><span class="pre">simulate_minimum_essential()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-investigate-module">refinegems.investigate module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_egc"><code class="docutils literal notranslate"><span class="pre">get_egc()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_mass_charge_unbalanced"><code class="docutils literal notranslate"><span class="pre">get_mass_charge_unbalanced()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_metabs_with_one_cvterm"><code class="docutils literal notranslate"><span class="pre">get_metabs_with_one_cvterm()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_model_info"><code class="docutils literal notranslate"><span class="pre">get_model_info()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_orphans_deadends_disconnected"><code class="docutils literal notranslate"><span class="pre">get_orphans_deadends_disconnected()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.initial_analysis"><code class="docutils literal notranslate"><span class="pre">initial_analysis()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.parse_reaction"><code class="docutils literal notranslate"><span class="pre">parse_reaction()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote"><code class="docutils literal notranslate"><span class="pre">run_memote()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote_sys"><code class="docutils literal notranslate"><span class="pre">run_memote_sys()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#refinegems-investigate-module">refinegems.investigate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.load">refinegems.load module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.load.load_all_media_from_db"><code class="docutils literal notranslate"><span class="pre">load_all_media_from_db()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.load.load_document_libsbml"><code class="docutils literal notranslate"><span class="pre">load_document_libsbml()</span></code></a></li>
@@ -150,19 +121,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.load_model_enable_groups"><code class="docutils literal notranslate"><span class="pre">load_model_enable_groups()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.polish">refinegems.polish module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_bigg_metab"><code class="docutils literal notranslate"><span class="pre">add_bigg_metab()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_bigg_reac"><code class="docutils literal notranslate"><span class="pre">add_bigg_reac()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_fba_unit"><code class="docutils literal notranslate"><span class="pre">add_fba_unit()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_ncbiprotein"><code class="docutils literal notranslate"><span class="pre">cv_ncbiprotein()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_metab"><code class="docutils literal notranslate"><span class="pre">cv_notes_metab()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_reac"><code class="docutils literal notranslate"><span class="pre">cv_notes_reac()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_carveme_bigg"><code class="docutils literal notranslate"><span class="pre">polish_carveme_bigg()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_entities"><code class="docutils literal notranslate"><span class="pre">polish_entities()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_not_bigg"><code class="docutils literal notranslate"><span class="pre">polish_not_bigg()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_units"><code class="docutils literal notranslate"><span class="pre">set_units()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#refinegems-polish-module">refinegems.polish module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.sboann">refinegems.sboann module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOfromDB"><code class="docutils literal notranslate"><span class="pre">addSBOfromDB()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOviaEC"><code class="docutils literal notranslate"><span class="pre">addSBOviaEC()</span></code></a></li>
@@ -270,58 +229,11 @@
 <section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading"></a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
-<section id="module-refinegems.charges">
-<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading"></a></h2>
-<p>Provides functions for adding charges to metabolites</p>
-<p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
-<p>It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a ‘BiGG’ and a ‘charge’ column.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.charges.correct_charges_from_db">
-<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_from_db" title="Permalink to this definition"></a></dt>
-<dd><p>Adds charges taken from given database to metabolites which have no defined charge</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-compounds (df): containing database data with ‘BiGG’ (BiGG-Ids) and ‘charge’ (float or int) as columns</p>
-</dd>
-<dt>Returns:</dt><dd><p>tuple: (model with added charges, metabolites with multiple charges as pd df)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.charges.correct_charges_modelseed">
-<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelseed_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_report_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_modelseed" title="Permalink to this definition"></a></dt>
-<dd><p>wrapper function which completes the steps to charge correction</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_file_path (Str): filepath + name for modified model
-modelseed_path (str): path to modelseed compound definition</p>
-</dd>
-<dt>Returns:</dt><dd><p>dict: BiGG Id and possible charges of metabolites</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="refinegems-charges-module">
+<h2>refinegems.charges module<a class="headerlink" href="#refinegems-charges-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="refinegems-comparison-module">
 <h2>refinegems.comparison module<a class="headerlink" href="#refinegems-comparison-module" title="Permalink to this heading"></a></h2>
-<span class="target" id="module-refinegems.comparison"></span><p>Provides functions to compare multiple models</p>
-<p>Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.comparison.simulate_all">
-<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">simulate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.simulate_all" title="Permalink to this definition"></a></dt>
-<dd><p>does a run of growth simulation for multiple models on different media</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model_list (list): paths to the models of interest (xml files)
-mediumpath (string): path to csv containing medium definitions
-media (list): media of interest (f.ex. LB, M9, …)
-basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing the results of the growth simulation</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 <section id="refinegems-curate-module">
 <h2>refinegems.curate module<a class="headerlink" href="#refinegems-curate-module" title="Permalink to this heading"></a></h2>
@@ -456,6 +368,18 @@ entity (libsbml-group): pathway to add CVTerm to</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_pathways_to_entity">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways_to_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_pathways_to_entity" title="Permalink to this definition"></a></dt>
+<dd><p>Add CVTerm to a entity as OCCURS IN pathway</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entry (string): id to add as annotation
+db_id (string): database to which entry belongs
+entity (libsbml-group): entity to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_reactions">
 <span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_reactions" title="Permalink to this definition"></a></dt>
 <dd><p>Add CVTerm to a reaction</p>
@@ -463,6 +387,18 @@ entity (libsbml-group): pathway to add CVTerm to</p>
 <dt>Args:</dt><dd><p>entry (string): id to add as annotation
 db_id (string): database to which entry belongs
 reac (libsbml-reaction): reaction to add CVTerm to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.add_cv_term_units" title="Permalink to this definition"></a></dt>
+<dd><p>Adds CVTerm to a unit</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>unit_id (string):    ID to add as URI to annotation
+unit (libSBML Unit): Unit to add CVTerm to
+relation (str):      Provides model qualifier to be added</p>
 </dd>
 </dl>
 </dd></dl>
@@ -481,167 +417,8 @@ db_id (string): database of interest</p>
 </dd></dl>
 
 </section>
-<section id="module-refinegems.genecomp">
-<span id="refinegems-genecomp-module"></span><h2>refinegems.genecomp module<a class="headerlink" href="#module-refinegems.genecomp" title="Permalink to this heading"></a></h2>
-<p>Provides functions to compare genes found in KEGG and in the model</p>
-<p>Extracts all KEGG ids from the annotations and compares them to a list for you organism from KEGG.
-Reactions with KEGG ids not found in the model are expanded to a table containing the KEGG id,
-the locus_tag (old format), the EC number, the BiGG id and the Gene Protein Reaction (GPR) rule.
-This section needs a gff file of your organism, the txt file from BiGG containing all reactions
-and the KEGG identifier of your organism.</p>
-<p>Due to the KEGG REST API this is relatively slow (model of size 1500 reactions - 20 min).</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.compare_bigg_model">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">compare_bigg_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_ec_kegg_bigg_gpr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_reactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.compare_bigg_model" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Compares reactions by genes extracted via KEGG to reactions in the model</dt><dd><p>Needed to back check previous comparisons.</p>
-</dd>
-<dt>Args:</dt><dd><p>locus_ec_kegg_bigg_gpr (df): locus tag, EC number, KEGG Id, BiGG Id and GPR
-model_reactions (df): BiGG Ids of reactions in the model</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing reactions present in KEGG but not in the model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.compare_kegg_model">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">compare_kegg_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_genes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kegg_genes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.compare_kegg_model" title="Permalink to this definition"></a></dt>
-<dd><p>Extracts list of genes present in KEGG but not in the model</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model_genes (df): all genes in the model
-kegg_genes (df): all genes denoted in KEGG for the organism</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of all genes present in KEGG but not in the model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_bigg_kegg">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_bigg_kegg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">biggreactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_bigg_kegg" title="Permalink to this definition"></a></dt>
-<dd><p>Uses list of BiGG reactions to get a mapping from BiGG to KEGG Id</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>biggreactions (Str): path to file containing BiGG database</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing BiGG Ids with corresponding KEGG Ids</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_kegg_genes">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_kegg_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">organismid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_kegg_genes" title="Permalink to this definition"></a></dt>
-<dd><p>Extracts list of genes from KEGG given an organism</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>organismid (Str): KEGG Id of organism which the model is based on</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of all genes denoted in KEGG for the organism</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_locus_ec">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_locus_ec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">genes_kegg_notmodel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_locus_ec" title="Permalink to this definition"></a></dt>
-<dd><p>Creates columns with EC numbers for the locus tags of the genes</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>genes_kegg_notmodel (df): genes present in KEGG but not in the model</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of genes with locus tag and EC number</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_locus_ec_kegg">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_locus_ec_kegg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_ec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_locus_ec_kegg" title="Permalink to this definition"></a></dt>
-<dd><p>Searches for KEGG reactions based on EC numbers</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>locus_ec (df): genes with locus tag and EC number</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of genes with locus tag, EC number and KEGG Id</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_locus_ec_kegg_bigg">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_locus_ec_kegg_bigg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_ec_kegg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bigg_kegg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_locus_ec_kegg_bigg" title="Permalink to this definition"></a></dt>
-<dd><p>Merges table with genes from model with BiGG / KEGG mapping to add BiGG Ids</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>locus_ec_kegg (df): genes with locus tag, EC number and KEGG Id
-bigg_kegg (df): BiGG Ids with corresponding KEGG Ids</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of genes with locus tag, EC number, KEGG Id and BiGG Id</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_locus_ec_kegg_bigg_gpr">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_locus_ec_kegg_bigg_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus_ec_kegg_bigg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locus_gpr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_locus_ec_kegg_bigg_gpr" title="Permalink to this definition"></a></dt>
-<dd><p>Merges table with genes from model if locus tag / GPR mapping to add GPRs</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>locus_ec_kegg_bigg (df): genes with locus tag, EC number, KEGG Id and BiGG Id
-locus_gpr (df): mapping from locus tags to GPRs</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table of genes with locus tag, EC number, KEGG Id, BiGG Id and GPR</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_locus_gpr">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_locus_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_locus_gpr" title="Permalink to this definition"></a></dt>
-<dd><p>Searches gff file of organism for gene protein reactions based on locus tags</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>gff_file (Str): path to gff file of organism of interest</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing mapping from locus tag to GPR</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_model_genes">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_model_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_model_genes" title="Permalink to this definition"></a></dt>
-<dd><p>Extracts genes from given model</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (model-libsbml): model loaded with libsbml</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table with all genes in the model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.get_model_reactions">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">get_model_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.get_model_reactions" title="Permalink to this definition"></a></dt>
-<dd><p>Extracts table of reactions with BiGG Ids from model</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table with BiGG Ids of reactions in the model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.genecomp.kegg_gene_comp">
-<span class="sig-prename descclassname"><span class="pre">refinegems.genecomp.</span></span><span class="sig-name descname"><span class="pre">kegg_gene_comp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organismid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">biggreactions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.genecomp.kegg_gene_comp" title="Permalink to this definition"></a></dt>
-<dd><p>Exectues all steps to compare genes of the model to KEGG genes</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-organismid (Str): KEGG Id of organism which the model is based on
-biggreactions (Str): path to file containing BiGG database
-gff_file (Str): path to gff file of organism of interest</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing missing reactions with locus tag, EC number, KEGG Id, BiGG Id and GPR</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="refinegems-genecomp-module">
+<h2>refinegems.genecomp module<a class="headerlink" href="#refinegems-genecomp-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="module-refinegems.growth">
 <span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this heading"></a></h2>
@@ -652,6 +429,19 @@ delimiter and BiGG Ids for the compounds.</p>
 <p>Outputs a table where</p>
 <p>essential = metabolites not present in the medium but necessary for growth</p>
 <p>missing = all exchanges missing in the model but given in medium</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.growth.find_additives">
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_additives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_medium</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.find_additives" title="Permalink to this definition"></a></dt>
+<dd><p>Iterates through all exchanges to find metabolites that lead to a higher growth rate compared to the growth rate yielded on the base_medium</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
+base_medium (dict): exchanges as keys and their flux bound as value (f.ex {‘EX_glc__D_e’ : 10.0})</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: exchanges sorted from highest to lowest growth rate improvement</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.find_minimum_essential">
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">essential</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.find_minimum_essential" title="Permalink to this definition"></a></dt>
@@ -837,118 +627,6 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 </section>
 <section id="refinegems-investigate-module">
 <h2>refinegems.investigate module<a class="headerlink" href="#refinegems-investigate-module" title="Permalink to this heading"></a></h2>
-<span class="target" id="module-refinegems.investigate"></span><p>Provides functions to investigate the model and test with memote</p>
-<p>These functions enable simple testing of any model using memote and
-access to its number of reactions, metabolites and genes.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.get_egc">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_egc" title="Permalink to this definition"></a></dt>
-<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.get_mass_charge_unbalanced">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_mass_charge_unbalanced" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
-</dd>
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
-</dd>
-<dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.get_metabs_with_one_cvterm">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_metabs_with_one_cvterm" title="Permalink to this definition"></a></dt>
-<dd><p>reports metabolites which have only one annotation, 
-can be used as basis for further annotation research</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
-</dd>
-<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.get_model_info">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_model_info" title="Permalink to this definition"></a></dt>
-<dd><p>Reports core information of given model</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
-</dd>
-<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.get_orphans_deadends_disconnected">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_orphans_deadends_disconnected" title="Permalink to this definition"></a></dt>
-<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
-</dd>
-<dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.initial_analysis">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.initial_analysis" title="Permalink to this definition"></a></dt>
-<dd><p>extracts most important numbers of GEM</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
-</dd>
-<dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.parse_reaction">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.parse_reaction" title="Permalink to this definition"></a></dt>
-<dd><p>Parses a reaction equation string to dictionary</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
-model (cobra-model): model loaded with cobrapy</p>
-</dd>
-<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.run_memote">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.run_memote" title="Permalink to this definition"></a></dt>
-<dd><p>runs memote to obtain total score</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
-</dd>
-<dt>Returns:</dt><dd><p>float: memote score of model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.investigate.run_memote_sys">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.run_memote_sys" title="Permalink to this definition"></a></dt>
-<dd><p>run memote on linux machine</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>modelfile (cobra-model): model loaded with cobrapy</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 <section id="module-refinegems.load">
 <span id="refinegems-load-module"></span><h2>refinegems.load module<a class="headerlink" href="#module-refinegems.load" title="Permalink to this heading"></a></h2>
@@ -1279,116 +957,8 @@ new_filename (Str): filename for modified model</p>
 </dd></dl>
 
 </section>
-<section id="module-refinegems.polish">
-<span id="refinegems-polish-module"></span><h2>refinegems.polish module<a class="headerlink" href="#module-refinegems.polish" title="Permalink to this heading"></a></h2>
-<p>Can be used to polish a model created with CarveMe v.1.5.1</p>
-<p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.add_bigg_metab">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_bigg_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_bigg_metab" title="Permalink to this definition"></a></dt>
-<dd><p>adds the BiGG Id of metabolites as URL to the annotation field</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.add_bigg_reac">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_bigg_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_bigg_reac" title="Permalink to this definition"></a></dt>
-<dd><p>adds the BiGG Id of reactions as URL to the annotation field</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfReactions</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.add_fba_unit">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_fba_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_fba_unit" title="Permalink to this definition"></a></dt>
-<dd><p>adds mmol per gDW per h to the list of unit definitions (needed for FBA)</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.cv_ncbiprotein">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_ncbiprotein</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gene_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_ncbiprotein" title="Permalink to this definition"></a></dt>
-<dd><p>Adds NCBI Id to genes as annotation</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>gene_list (list): libSBML ListOfGenes
-email (string): User Email to access the Entrez database</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.cv_notes_metab">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_notes_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_notes_metab" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a metabolite</p>
-</dd>
-<dt>Args:</dt><dd><p>species_list (list): libSBML ListOfSpecies</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.cv_notes_reac">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_notes_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaction_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_notes_reac" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a reaction</p>
-</dd>
-<dt>Args:</dt><dd><p>reaction_list (list): libSBML ListOfReactions</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.polish_carveme_bigg">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish_carveme_bigg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish_carveme_bigg" title="Permalink to this definition"></a></dt>
-<dd><p>completes all steps to polish a model created with CarveMe</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.polish_entities">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish_entities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metabolite</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish_entities" title="Permalink to this definition"></a></dt>
-<dd><p>sets boundary condition and constant if not set for a metabolite</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions
-metabolite (boolean): flag to determine whether entity = metabolite</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.polish_not_bigg">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish_not_bigg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish_not_bigg" title="Permalink to this definition"></a></dt>
-<dd><p>completes steps to polish a model, it will add units and cv-terms</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
-new_filename (Str): filename for modified model</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.set_units">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">set_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.set_units" title="Permalink to this definition"></a></dt>
-<dd><p>Sets units of parameters in model</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="refinegems-polish-module">
+<h2>refinegems.polish module<a class="headerlink" href="#refinegems-polish-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="module-refinegems.sboann">
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
