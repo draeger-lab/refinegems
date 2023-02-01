@@ -8,7 +8,7 @@ Growth simulation
 
 Growth rates and thus doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.
 
-.. image:: ../files/growth_algorithm.png
+.. image:: images/growth_algorithm.png
   :width: 400
   :alt: Pseudocode representation of the algorithm implemented for growth simulation.
 

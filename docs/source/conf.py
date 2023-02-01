@@ -59,6 +59,9 @@ html_theme = 'sphinx_rtd_theme' #'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Explicitly assign the master document
+master_doc = 'index'
+
 # -- Autodoc -----------------------------------------------------------------
 
 # we need those to display the code comments otherwise the functions cannot be imported
