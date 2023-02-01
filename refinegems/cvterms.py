@@ -50,7 +50,7 @@ reaction_db_dict = {
                    }
 
 gene_db_dict = {
-                'KEGG': 'kegg.gene:',
+                'KEGG': 'kegg.genes:',
                 'NCBI': 'ncbiprotein:',
                 'REFSEQ': 'refseq:',
                 'UNIPROT': 'uniprot:'
