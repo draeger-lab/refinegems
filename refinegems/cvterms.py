@@ -61,13 +61,6 @@ pathway_db_dict = {'KEGG': 'kegg.pathway:'}
 MIRIAM = 'https://identifiers.org/'
 OLD_MIRIAM = 'http://identifiers.org/'
 
-db2prefix = {
-            'envipath': 'envipath:',
-            'swisslipid': 'SLM:',
-            'metanetxM': 'metanetx.chemical:',
-            'metanetxR': 'metanetx.reaction:'
-            }
-
 
 def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
     '''Adds CVTerm to a unit
