@@ -8,12 +8,20 @@ import re
 from libsbml import *
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
-from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, metabol_db_dict, reaction_db_dict
-from refinegems.load import write_to_file
+from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, db2prefix, MIRIAM, OLD_MIRIAM
+from refinegems.load import write_to_file, validate_libsbml_model
+
+import argparse
+import yaml
+import pandas as pd
+from refinegems import load
+import os.path
+import cobra
+from sortedcontainers import SortedDict, SortedSet
 
 __author__ = "Famke Baeuerle"
 __author__ = "Gwendolyn O. Gusak"
-        
+    
         
 def add_metab(entity_list, id_db: str):
     """adds the ID of metabolites as URI to the annotation field
@@ -532,9 +540,336 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         gene.unsetNotes()
     if genes_missing_annotation:    
         print(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
- 
+
+
+def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
+    ''' Gets a list of CURIEs
+        & maps the database prefixes to their respective identifier sets
         
-def polish(model, new_filename, email, id_db: str, protein_fasta: str, lab_strain: bool):
+        Params:
+            - curie_list (list[str]): List containing CURIEs
+            
+        Returns:
+            -> Dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
+    '''
+    curie_dict = SortedDict()
+    
+    for curie in curie_list:
+        
+        # Extracts the prefix & identifier part
+        if MIRIAM in curie:
+            extracted_curie = curie.split(MIRIAM)[1]
+        else:
+            extracted_curie = curie.split(OLD_MIRIAM)[1]
+        
+        # Get CURIEs irrespective of pattern
+        if '/' in extracted_curie:
+            extracted_curie = extracted_curie.split('/')
+            
+            # Check for certain special cases
+            if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
+                prefix = extracted_curie[0].lower()
+                identifier = '/'.join(extracted_curie[1:len(extracted_curie)])
+            elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
+                prefix = 'ec-code'
+                identifier = extracted_curie[1]
+            elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
+                prefix = 'biocyc'
+                identifier = extracted_curie[1].replace('META:', '')
+                
+                if not curie_dict or (prefix not in curie_dict):
+                    curie_dict[prefix] = SortedSet()
+                    curie_dict[prefix].add(identifier)
+                
+                if re.search('^rxn-|-rxn$', identifier, re.IGNORECASE):
+                    prefix = 'metacyc.reaction'
+                else:
+                    prefix = 'metacyc.compound'
+                
+            elif re.fullmatch('^chebi$', extracted_curie[0], re.IGNORECASE):
+                new_curie = extracted_curie[1].split(':')
+                
+                prefix = new_curie[0].upper()
+                identifier = new_curie[1]
+                
+            else:
+                if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
+                    prefix = 'ec-code'
+                else:
+                    prefix = extracted_curie[0]
+                
+                identifier = extracted_curie[1]
+                
+        elif ':' in extracted_curie:
+            extracted_curie = extracted_curie.split(':')
+            
+            if re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
+                prefix = 'biocyc'
+                identifier = extracted_curie[-1]
+                
+                if not curie_dict or (prefix not in curie_dict):
+                    curie_dict[prefix] = SortedSet()
+                    curie_dict[prefix].add(identifier)
+                
+                if re.search('^rxn-|-rxn$', identifier, re.IGNORECASE):
+                    prefix = 'metacyc.reaction'
+                else:
+                    prefix = 'metacyc.compound'
+                
+            else:
+                if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
+                    prefix = 'ec-code'
+                else:
+                    prefix = extracted_curie[0]
+
+                if re.fullmatch('^kegg.genes$', extracted_curie[0], re.IGNORECASE):
+                    identifier = ':'.join(extracted_curie[1:len(extracted_curie)])
+                else:
+                    identifier = extracted_curie[1]
+    
+        # Use prefix as key & the corresponding set of identifiers as values   
+        if not curie_dict or (prefix not in curie_dict):
+            curie_dict[prefix] = SortedSet()
+
+        curie_dict[prefix].add(identifier)
+            
+    return curie_dict
+
+
+def add_new_curie_set(entity: SBase, qt, b_m_qt, prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool):
+    ''' Add a complete CURIE set to the provided CVTerm
+        
+        Params:
+            - entity (SBase):                              A libSBML SBase object like model, GeneProduct, etc.
+            - qt:                                          A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+            - b_m_qt:                                      A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+            - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets 
+            - new_pattern (bool):                          True if new pattern is wanted, otherwise False
+    '''
+    if new_pattern:
+        SEPARATOR = ':'
+    else:
+        SEPARATOR = '/'
+                
+    new_cvterm = generate_cvterm(qt, b_m_qt)
+    
+    for prefix in prefix2id:
+        current_prefix = prefix   
+        
+        for identifier in prefix2id.get(prefix):
+            separator = SEPARATOR
+
+            if re.search('o$', prefix, re.IGNORECASE):  # Ontologies seem only to work with new pattern!
+                separator = ':'
+            
+            elif re.fullmatch('^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
+                prefix = f'chebi/{current_prefix}'
+                separator = ':'
+                
+            elif re.fullmatch('^biocyc$', prefix, re.IGNORECASE):  # Get identifier for biocyc
+                prefix = f'biocyc{SEPARATOR}META'
+                separator = ':'
+
+            
+            curie = MIRIAM + prefix + separator + identifier
+            new_cvterm.addResource(curie)
+            
+    entity.addCVTerm(new_cvterm)
+
+
+def improve_curie_per_entity(entity: SBase, new_pattern: bool):
+    ''' Helper function: Removes duplicates & changes pattern according to new_pattern
+
+        Params:
+            - entity (SBase):      A libSBML SBase object, either a model or an entity
+            - new_pattern (bool):  True if new pattern is wanted, otherwise False
+    '''
+    not_miriam_compliant = []
+    pattern = f'{MIRIAM}|{OLD_MIRIAM}'
+    cvterms = entity.getCVTerms()
+    
+    for cvterm in cvterms:
+        tmp_list = []
+        
+        # Retrieve QualifierType & Biological/ModelQualifierType before resource is removed!
+        current_qt = cvterm.getQualifierType()
+                
+        if current_qt == BIOLOGICAL_QUALIFIER:
+            current_b_m_qt = cvterm.getBiologicalQualifierType()
+        elif current_qt == MODEL_QUALIFIER:
+            current_b_m_qt = cvterm.getModelQualifierType()
+            
+        current_curies = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
+    
+        for cc in current_curies:
+            if re.match(pattern, cc, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                tmp_list.append(cc)
+                cvterm.removeResource(cc)
+            else:
+                not_miriam_compliant.append(cc)
+            
+        prefix2id = get_set_of_curies(tmp_list)
+        add_new_curie_set(entity, current_qt, current_b_m_qt, prefix2id, new_pattern)
+    
+    if not_miriam_compliant:
+        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+
+
+def improve_curies(entities: SBase, new_pattern: bool):
+    ''' Removes duplicates & changes pattern according to new_pattern
+    
+        Params:
+            - entity (SBase):      A libSBML SBase object, either a model or an entity
+            - new_pattern (bool):  True if new pattern is wanted, otherwise False
+    '''
+    if type(entities) == Model:  # Model needs to be handled like entity!
+        improve_curie_per_entity(entities, new_pattern)
+    
+    else: 
+        for entity in tqdm(entities):
+            improve_curie_per_entity(entity, new_pattern)
+            
+            if type(entity) == UnitDefinition:
+                for unit in entity.getListOfUnits():  # Unit needs to be handled within ListOfUnitDefinition
+                    improve_curie_per_entity(unit, new_pattern)
+
+
+def polish_annotations(model: Model, new_pattern: bool):
+    ''' Polishes all annotations in a model such that no duplicates are present 
+        & the same pattern is used for all CURIEs
+        
+        Params:
+            - model (libsbml-model):   model loaded with libsbml
+            - new_pattern (bool):  True if new pattern is wanted, otherwise False  
+    '''
+    listOf_dict = {
+        'model': model,
+        'compartment': model.getListOfCompartments(),
+        'metabolite': model.getListOfSpecies(),
+        'parameter': model.getListOfParameters(),
+        'reaction': model.getListOfReactions(),
+        'unit definition': model.getListOfUnitDefinitions(),
+        }
+
+    if model.isPackageEnabled('fbc'):
+        listOf_dict['gene product'] = model.getPlugin('fbc').getListOfGeneProducts()
+    
+    if model.isPackageEnabled('groups'):
+        listOf_dict['group'] = model.getPlugin('groups').getListOfGroups()
+
+    # Adjust annotations in model
+    for listOf in listOf_dict:
+        print(f'Polish {listOf} annotations...')
+        improve_curies(listOf_dict[listOf], new_pattern)
+    
+    return model
+
+def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
+    ''' Add a complete CURIE set to the provided CVTerm
+        
+        Params:
+            - entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.
+            - qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+            - b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+            - curie_set (SortedSet[str]):   SortedSet containing CURIEs
+    '''        
+    new_cvterm = generate_cvterm(qt, b_m_qt)
+        
+    for curie in curie_set:
+        new_cvterm.addResource(curie)
+            
+    entity.addCVTerm(new_cvterm)
+
+
+def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_prefix: str):
+    """_summary_
+
+    Args:
+        entity (SBase): _description_
+        new_qt (_type_): _description_
+        new_b_m_qt (_type_): _description_
+        specific_db_prefix (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    not_miriam_compliant = []
+    pattern = f'{MIRIAM}|{OLD_MIRIAM}'
+    cvterms = entity.getCVTerms()
+
+    for i in range(len(cvterms)):
+        tmp_set = SortedSet()
+        cvterm = cvterms.get(i)
+            
+        current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
+    
+        for cc in current_curies:
+                
+            current_curie = None
+                
+            if (specific_db_prefix != None) and (specific_db_prefix != ''):
+                if specific_db_prefix in cc:
+                    current_curie = cc
+            else:
+                current_curie = cc
+                
+            if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                tmp_set.add(current_curie)
+                cvterm.removeResource(current_curie)
+            else:
+                not_miriam_compliant.append(current_curie)
+        
+        add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
+        cvterms.remove(i)
+                
+    if not_miriam_compliant:
+        return not_miriam_compliant
+
+
+def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specific_db_prefix: str):
+    """ entity_types = 'model|compartment|metabolite|parameter|reaction|unit definition|unit|gene product|group'
+
+    Args:
+        model (libsbml-model):   model loaded with libsbml
+        entity_type (str): _description_
+        new_qt (_type_): _description_
+        new_b_m_qt (_type_): _description_
+        specific_db_prefix (str): _description_
+    """
+    not_miriam_compliant = []
+    listOf_dict = {
+        'model': model,
+        'compartment': model.getListOfCompartments(),
+        'metabolite': model.getListOfSpecies(),
+        'parameter': model.getListOfParameters(),
+        'reaction': model.getListOfReactions(),
+        'unit definition': model.getListOfUnitDefinitions(),
+        }
+    
+    if model.isPackageEnabled('fbc'):
+        listOf_dict['gene product'] = model.getPlugin('fbc').getListOfGeneProducts()
+    
+    if model.isPackageEnabled('groups'):
+        listOf_dict['group'] = model.getPlugin('groups').getListOfGroups()
+        
+    if entity_type == 'model':  # Model needs to be handled like entity!
+        not_miriam_compliant = change_qualifier_per_entity(listOf_dict.get('model'), new_qt, new_b_m_qt, specific_db_prefix)
+        
+    elif entity_type == 'unit':
+        for unit in listOf_dict.get('unit definition'):  # Unit needs to be handled within ListOfUnitDefinition
+            not_miriam_compliant = change_qualifier_per_entity(unit, new_qt, new_b_m_qt, specific_db_prefix)
+        
+    else: 
+        for entity in tqdm(listOf_dict.get(entity_type)):
+            not_miriam_compliant = change_qualifier_per_entity(entity, new_qt, new_b_m_qt, specific_db_prefix)
+                
+    if not_miriam_compliant:         
+        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+    
+    return model
+
+
+def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fasta: str, lab_strain: bool):
     """completes all steps to polish a model
          (Tested for models having either BiGG or VMH identifiers.)
 
@@ -574,3 +909,9 @@ def polish(model, new_filename, email, id_db: str, protein_fasta: str, lab_strai
     polish_entities(reac_list, metabolite=False)
 
     write_to_file(model, new_filename)
+
+    # print('Remove duplicates & transform all CURIEs to same pattern:')
+    # polish_annotations(model, options['refined_model'], options['new_pattern'])
+    # print('Changing qualifiers for provided list:')
+    # change_qualifiers(model, options['refined_model'], options['entity_type'], options['new_qualifier'][0], options['new_qualifier'][1], options['specific_db_prefix'])
+      

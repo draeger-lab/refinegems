@@ -8,7 +8,7 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 import cobra
 import os
 import pandas as pd
-from libsbml import SBMLReader, writeSBMLToFile
+from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator
 
 __author__ = "Famke Baeuerle"
 
@@ -158,3 +158,15 @@ def write_report(dataframe, filepath):
     writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
     dataframe.to_excel(writer)
     writer.save()
+
+
+def validate_libsbml_model(model: Model):
+   ''' Debug method: Validates a libSBML model with the libSBML validator
+   
+       Params:
+          - model (Model): A libSBML Model
+   '''
+   validator = SBMLValidator()
+   doc = model.getSBMLDocument()
+   
+   return validator.validate(doc)
