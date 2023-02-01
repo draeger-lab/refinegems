@@ -32,6 +32,7 @@ Other applications of ``refinegems`` include curation of a given model these inc
    application
    examples
    usage
+   explanation
    modules
 
 * :ref:`genindex`
