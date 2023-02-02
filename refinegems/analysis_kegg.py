@@ -15,30 +15,9 @@ from bioservices.kegg import KEGG
 import io
 import re
 import gffutils
+from refinegems.gapfill import get_model_genes, compare_gene_lists
 
-__author__ = "Famke Baeuerle"
-
-
-def get_model_genes(model):
-    """Extracts genes from given model
-
-    Args:
-        model (model-libsbml): model loaded with libsbml
-
-    Returns:
-        df: table with all genes in the model
-    """
-    genes_in_model = []
-    for gene in model.getPlugin(0).getListOfGeneProducts():
-        cv_terms = gene.getCVTerms()
-        if cv_terms:
-            for cv_term in cv_terms:
-                for idx in range(cv_term.getNumResources()):
-                    uri = cv_term.getResourceURI(idx)
-                    if 'kegg.genes' in uri:
-                        genes_in_model.append(uri.split('kegg.genes:')[1])
-
-    return pd.DataFrame(genes_in_model)
+__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 
 def get_kegg_genes(organismid):
@@ -54,22 +33,6 @@ def get_kegg_genes(organismid):
     gene_list = k.list(organismid)
 
     return pd.read_table(io.StringIO(gene_list), header=None)
-
-
-def compare_kegg_model(model_genes, kegg_genes):
-    """Extracts list of genes present in KEGG but not in the model
-
-    Args:
-        model_genes (df): all genes in the model
-        kegg_genes (df): all genes denoted in KEGG for the organism
-
-    Returns:
-        df: table of all genes present in KEGG but not in the model
-    """
-    ke = kegg_genes.set_index(0)
-    mo = model_genes.set_index(0)
-    genes_in_kegg_not_in_model = ke[~ke.index.isin(mo.index)]
-    return genes_in_kegg_not_in_model.reset_index().iloc[:, 0]
 
 
 def get_locus_ec(genes_kegg_notmodel):
@@ -339,11 +302,11 @@ def kegg_gene_comp(model, organismid, biggreactions, gff_file):
     Returns:
         df: table containing missing reactions with locus tag, EC number, KEGG Id, BiGG Id and GPR
     """
-    model_genes = get_model_genes(model)
+    model_genes = get_model_genes(model, True)
     model_reactions = get_model_reactions(model)
     kegg_genes = get_kegg_genes(organismid)
     bigg_kegg = get_bigg_kegg(biggreactions)
-    genes_kegg_notmodel = compare_kegg_model(model_genes, kegg_genes)
+    genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes, True)
     locus_gpr = get_locus_gpr(gff_file)
     locus_ec = get_locus_ec(genes_kegg_notmodel)
     locus_ec_kegg = get_locus_ec_kegg(locus_ec)
