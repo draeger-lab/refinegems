@@ -35,7 +35,8 @@ def get_model_genes(model):
             for cv_term in cv_terms:
                 for idx in range(cv_term.getNumResources()):
                     uri = cv_term.getResourceURI(idx)
-                    genes_in_model.append(uri[-16:])
+                    if 'kegg.genes' in uri:
+                        genes_in_model.append(uri.split('kegg.genes:')[1])
 
     return pd.DataFrame(genes_in_model)
 
