@@ -6,7 +6,7 @@ import cobra
 import pandas as pd
 from datetime import date
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 def main():
     """main function to run the program"""
@@ -79,8 +79,8 @@ def main():
             if (config['memote']):
                 score = rg.investigate.run_memote(model_cobra)
                 
-            if (config['genecomp']):
-                genecomp = rg.genecomp.kegg_gene_comp(model_libsbml, config['organismid'], config['biggreactions'], config['gff_file'])
+            if (config['gapfill_analysis']):
+                gapfill_analysis = rg.gapfill.gapfill_analysis(model_libsbml, config['gapfill_analysis_params'])
                 
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(config['modelseedpath'], model_cobra)
@@ -102,7 +102,24 @@ def main():
                 print('Charge unbalanced reactions: ' + str(charge_unbal))
                 print(growth_sim)
                 print(egc)
-                if(config['genecomp']): print(genecomp)
+                if(config['gapfill_analysis']): 
+                    if type(gapfill_analysis) == tuple:
+                        print('BioCyc - Statistics on missing entities:')
+                        print(gapfill_analysis[0])
+                        print('BioCyc - Missing genes for reactions table:')
+                        print(gapfill_analysis[1])
+                        print('BioCyc - Missing metabolites with BiGG ID table:')
+                        print(gapfill_analysis[2])
+                        print('BioCyc - Missing metabolites without BiGG ID table:')
+                        print(gapfill_analysis[3])
+                        print('BioCyc - Missing reactions with BiGG ID table:')
+                        print(gapfill_analysis[4])
+                        if len(gapfill_analysis) == 6:
+                            print('KEGG - Missing reactions with BiGG ID table:')
+                            print(gapfill_analysis[6])
+                    else:
+                        print('KEGG - Gap fill analysis')
+                        print(gapfill_analysis)
                 if(config['modelseed']):
                     print(charge_mismatch)
                     print(formula_mismatch)
@@ -118,11 +135,20 @@ def main():
                     model_params.to_excel(writer, sheet_name='model params', index=False)
                     growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
                     egc.to_excel(writer, sheet_name='EGC test', index=False)
-                    if(config['genecomp']):
-                        genecomp.to_excel(writer, sheet_name='gene comparison', index=False)
+                    if(config['gapfill_analysis']) and type(gapfill_analysis) != tuple:
+                        gapfill_analysis.to_excel(writer, sheet_name='KEGG gap fill analysis', index=False)
                     if(config['modelseed']):
                         charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
                         formula_mismatch.to_excel(writer, sheet_name='formula mismatches', index=False)
+                if(config['gapfill_analysis']) and type(gapfill_analysis) == tuple: 
+                    with pd.ExcelWriter(config['out_path'] + name + '_gapfill_analysis2_' + str(today) + '.xlsx') as writer:
+                        gapfill_analysis[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
+                        gapfill_analysis[1].to_excel(writer, sheet_name='genes', index=False)
+                        gapfill_analysis[2].to_excel(writer, sheet_name='metabolites', index=False)
+                        gapfill_analysis[3].to_excel(writer, sheet_name='metabolites without BiGG IDs', index=False)
+                        gapfill_analysis[4].to_excel(writer, sheet_name='reactions', index=False)
+                        if len(gapfill_analysis) == 6:
+                            gapfill_analysis[5].to_excel(writer, sheet_name='KEGG reactions', index=False)
             
             if (config['output'] == 'csv'): # csv file
                 print('---')
@@ -135,8 +161,17 @@ def main():
                 model_info.to_csv(name + '_modelinfo.csv', index=False)
                 growth_sim.to_csv(name +'_growthsim.csv', index=False)
                 egc.to_csv(name + '_egc.csv', index=False)
-                if(config['genecomp']):
-                    genecomp.to_csv(name +'_genecomp.csv', index=False)
+                if(config['gapfill_analysis']):
+                    if type(gapfill_analysis) == tuple:
+                        gapfill_analysis[0].to_csv(name +'_BioCyc_analysis_statistics.csv', index=False)
+                        gapfill_analysis[1].to_csv(name +'_BioCyc_analysis_genes.csv', index=False)
+                        gapfill_analysis[2].to_csv(name +'_BioCyc_analysis_metabolites.csv', index=False)
+                        gapfill_analysis[3].to_csv(name +'_BioCyc_analysis_metabolites_wo_BiGG.csv', index=False)
+                        gapfill_analysis[4].to_csv(name +'_BioCyc_analysis_reactions.csv', index=False) 
+                        if len(gapfill_analysis) == 6:
+                            gapfill_analysis[5].to_csv(name +'_KEGG_gapfill_analysis.csv', index=False) 
+                    else:
+                        gapfill.to_csv(name +'_KEGG_gapfill_analysis.csv', index=False)
                 if(config['modelseed']):
                     charge_mismatch.to_csv(name + '_charge_mismatch.csv', index=False)
                     formula_mismatch.to_csv(name + '_formula_mismatch.csv', index=False)
