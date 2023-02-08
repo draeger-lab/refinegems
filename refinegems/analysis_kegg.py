@@ -14,10 +14,11 @@ import pandas as pd
 from bioservices.kegg import KEGG
 import io
 import re
-import gffutils
-from refinegems.gapfill import get_model_genes, compare_gene_lists
+from refinegems.parse import get_locus_gpr
+from refinegems.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
+from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle"
 
 
 def get_kegg_genes(organismid):
@@ -127,83 +128,6 @@ def get_locus_ec_kegg(locus_ec):
     return locus_ec_kegg
 
 
-def get_bigg_kegg(biggreactions):
-    """Uses list of BiGG reactions to get a mapping from BiGG to KEGG Id
-
-    Args:
-        biggreactions (Str): path to file containing BiGG database
-
-    Returns:
-        df: table containing BiGG Ids with corresponding KEGG Ids
-    """
-    # make the download of biggreactions possible to maintain database
-    all_reac_bigg = pd.read_csv(
-        biggreactions,
-        sep='\t').drop(
-        'model_list',
-        axis=1).dropna()
-
-    def find_kegg(database_links):
-        m = re.search(
-            'KEGG Reaction: http://identifiers.org/kegg.reaction/(.*?); ',
-            database_links)
-        if m:
-            return m.group(0)
-        else:
-            return None
-
-    def slice_kegg(kegg):
-        return kegg[52:-2]
-
-    all_reac_bigg['KEGG_link'] = all_reac_bigg.apply(
-        lambda row: find_kegg(row['database_links']), axis=1)
-    all_reac_bigg['KEGG'] = all_reac_bigg.dropna().apply(
-        lambda row: slice_kegg(row['KEGG_link']), axis=1)
-    all_reac_bigg = all_reac_bigg.dropna().drop('KEGG_link', axis=1)
-
-    return all_reac_bigg[['bigg_id', 'KEGG']]
-
-
-def get_locus_gpr(gff_file):
-    """Searches gff file of organism for gene protein reactions based on locus tags
-
-    Args:
-        gff_file (Str): path to gff file of organism of interest
-
-    Returns:
-        df: table containing mapping from locus tag to GPR
-    """
-    db = gffutils.create_db(
-        gff_file,
-        ':memory:',
-        merge_strategy='create_unique')
-    mapping_cds = {}
-    for feature in db.all_features():
-        attr = dict(feature.attributes)
-        try:
-            if str(attr['gbkey'][0]) == 'CDS':
-                mapping_cds[attr['Name'][0]] = attr['Parent'][0]
-        except BaseException:
-            pass
-    mapping_df = pd.DataFrame.from_dict(
-        mapping_cds,
-        columns=['Parent'],
-        orient='index').reset_index().rename(
-        columns={
-            'index': 'GPR'})
-
-    def extract_locus(feature):
-        try:
-            return db[feature].attributes['old_locus_tag'][0]
-        except BaseException:
-            pass
-        return None
-
-    mapping_df['locus_tag'] = mapping_df.apply(
-        lambda row: extract_locus(row['Parent']), axis=1)
-    return mapping_df.drop('Parent', axis=1)
-
-
 def get_locus_ec_kegg_bigg(locus_ec_kegg, bigg_kegg):
     """Merges table with genes from model with BiGG / KEGG mapping to add BiGG Ids
 
@@ -238,58 +162,6 @@ def get_locus_ec_kegg_bigg_gpr(locus_ec_kegg_bigg, locus_gpr):
     return locus_ec_kegg_bigg.merge(locus_gpr, how='left', on='locus_tag')
 
 
-def get_model_reactions(model):
-    """Extracts table of reactions with BiGG Ids from model
-
-    Args:
-        model (libsbml-model): model loaded with libsbml
-
-    Returns:
-        df: table with BiGG Ids of reactions in the model
-    """
-    reac_list = model.getListOfReactions()
-
-    list_of_reac = []
-    for reac in reac_list:
-        list_of_reac.append(reac.id[2:])
-
-    reac_list_df = pd.Series(list_of_reac)
-    reac_list_df = pd.DataFrame(reac_list_df, columns=['bigg_id'])
-
-    return reac_list_df
-
-
-def compare_bigg_model(locus_ec_kegg_bigg_gpr, model_reactions):
-    """Compares reactions by genes extracted via KEGG to reactions in the model
-        Needed to back check previous comparisons.
-
-    Args:
-        locus_ec_kegg_bigg_gpr (df): locus tag, EC number, KEGG Id, BiGG Id and GPR
-        model_reactions (df): BiGG Ids of reactions in the model
-
-    Returns:
-        df: table containing reactions present in KEGG but not in the model
-    """
-    mapp = locus_ec_kegg_bigg_gpr.set_index('bigg_id')
-    reacs = model_reactions.set_index('bigg_id')
-
-    reactions_missing_in_model = mapp[~mapp.index.isin(
-        reacs.index)].reset_index()
-
-    ambig_kegg = locus_ec_kegg_bigg_gpr.loc[locus_ec_kegg_bigg_gpr.duplicated(
-        subset=['KEGG'], keep=False)]
-    ambig_kegg = ambig_kegg.set_index('KEGG').drop(
-        ['locus_tag', 'EC'], axis=1).sort_index()
-
-    ambig = ambig_kegg.set_index('bigg_id')
-    miss = reactions_missing_in_model.set_index('bigg_id')
-
-    reactions_missing_in_model_non_dup = miss[~miss.index.isin(
-        ambig.index)].reset_index()
-
-    return reactions_missing_in_model_non_dup
-
-
 def kegg_gene_comp(model, organismid, biggreactions, gff_file):
     """Exectues all steps to compare genes of the model to KEGG genes
 
@@ -303,10 +175,10 @@ def kegg_gene_comp(model, organismid, biggreactions, gff_file):
         df: table containing missing reactions with locus tag, EC number, KEGG Id, BiGG Id and GPR
     """
     model_genes = get_model_genes(model, True)
-    model_reactions = get_model_reactions(model)
+    model_reactions = get_model_reacs_or_metabs(model)
     kegg_genes = get_kegg_genes(organismid)
-    bigg_kegg = get_bigg_kegg(biggreactions)
-    genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes, True)
+    bigg_kegg = get_bigg2other_db(biggreactions, 'KEGG')
+    genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes)
     locus_gpr = get_locus_gpr(gff_file)
     locus_ec = get_locus_ec(genes_kegg_notmodel)
     locus_ec_kegg = get_locus_ec_kegg(locus_ec)
