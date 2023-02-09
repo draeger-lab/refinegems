@@ -845,17 +845,18 @@ def change_all_qualifiers(model: Model):
         model: Model with all qualifiers updated to be MIRIAM compliant
     """
     
-    model = change_qualifiers(model, 'model', MODEL_QUALIFIER, BQM_IS)
+    entity_list_mod = ['model',
+                    'unit definition',
+                    'unit']
+    for entity in entity_list_mod:
+        model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
     
     entity_list = ['compartment',
                    'metabolite',
                    'parameter',
                    'reaction',
-                   'unit definition',
-                   'unit',
                    'gene product',
                    'group']
-    
     for entity in entity_list:
         model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
         
