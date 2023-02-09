@@ -98,23 +98,26 @@ def create_gpr(model, locus_tag, email):
     return gpr, model
 
 
-def create_gp(model: Model, locus_tag: str, model_id: str) -> tuple[GeneProduct, Model]:
+def create_gp(model: Model, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, Model]:
     """creates GeneProduct in the given model
 
     Args:
         model (libsbml-model): model loaded with libSBML
-        locus_tag (string): genome-specific locus tag used as label in the model
-        protein_id (str): NCBI Protein/RefSeq ID
         model_id (str): ID identical to ID that CarveMe adds from the NCBI FASTA input file
+        name (str): Name of the GeneProduct
+        locus_tag (str): genome-specific locus tag used as label in the model
+        protein_id (str): NCBI Protein/RefSeq ID
 
     Returns:
         tuple: (gpr, modified model)
     """
     gp = model.getPlugin(0).createGeneProduct()
     gp.setId(model_id)
-    gp.setMetaId(f'meta_{model_id}')
+    gp.setName(name)
     gp.setLabel(locus_tag)
     gp.setSBOTerm('SBO:0000243')
+    gp.setMetaId(f'meta_{model_id}')
+    add_cv_term_genes(protein_id, 'NCBI', gp)
     return gp, model
 
 
