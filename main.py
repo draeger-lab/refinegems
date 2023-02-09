@@ -141,7 +141,7 @@ def main():
                         charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
                         formula_mismatch.to_excel(writer, sheet_name='formula mismatches', index=False)
                 if(config['gapfill_analysis']) and type(gapfill_analysis) == tuple: 
-                    with pd.ExcelWriter(config['out_path'] + name + '_gapfill_analysis2_' + str(today) + '.xlsx') as writer:
+                    with pd.ExcelWriter(config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx') as writer:
                         gapfill_analysis[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
                         gapfill_analysis[1].to_excel(writer, sheet_name='genes', index=False)
                         gapfill_analysis[2].to_excel(writer, sheet_name='metabolites', index=False)
