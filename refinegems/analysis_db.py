@@ -51,30 +51,24 @@ def get_bigg2other_db(bigg_db: str, other_db: Literal['KEGG', 'BioCyc'], metabol
         axis=1).dropna()
 
     def find_other_db(database_links: str):
-        m = re.search(
+        m = re.findall(
             db_search_regex,
             database_links)
         if m:
-            return m.group(0)
+            return m
         else:
             return None
-
-    def get_other_db_id(other_db_id: str):
-        other_db_id = other_db_id.split('/')[-1] if other_db == 'KEGG' else other_db_id.split('/')[-1].split(':')[-1]
-        return other_db_id.split(';')[0]
     
     def get_compartment_from_id(bigg_id: str):
         compartment = bigg_id[-1]
-        return compartment if compartment in ['c', 'e', 'p'] else 'C'
+        return compartment if compartment in ['c', 'e', 'p'] else 'c'
 
-    bigg_db_df['db_link'] = bigg_db_df.apply(
+    bigg_db_df[other_db] = bigg_db_df.apply(
         lambda row: find_other_db(row['database_links']), axis=1)
-    bigg_db_df[other_db] = bigg_db_df.dropna().apply(
-        lambda row: get_other_db_id(row['db_link']), axis=1)
     if metabolites:
         bigg_db_df['compartment'] = bigg_db_df.apply(
             lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
-    bigg_db_df = bigg_db_df.dropna().drop('db_link', axis=1)
+    bigg_db_df = bigg_db_df.explode(other_db, ignore_index=True)
 
     return bigg_db_df[['bigg_id', 'name', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', 'name', other_db]]
  
@@ -129,11 +123,11 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
                 reactants[compound_dict.get('bigg_id')] = abs(compound_dict.get('stoichiometry'))
             elif compound_dict.get('stoichiometry') > 0:
                 products[compound_dict.get('bigg_id')] = abs(compound_dict.get('stoichiometry'))
-        
-        return [reactants, products]
                 
-    missing_reacs['bigg_reactants'], missing_reacs['bigg_products'] = missing_reacs.apply(
-        lambda row: get_reactants_and_products_dicts(str(row['bigg_id'])), axis=1, result_type='expand')
-            
-        
+        return str({'reactants': reactants, 'products': products})
+                
+    missing_reacs['bigg_reaction']= missing_reacs.apply(
+        lambda row: get_reactants_and_products_dicts(str(row['bigg_id'])), axis=1)  #, missing_reacs['bigg_products'], result_type='expand'
+      
+    return missing_reacs  
  
