@@ -598,7 +598,7 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
     return curie_dict
 
 
-def add_new_curie_set(entity: SBase, qt, b_m_qt, prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool):
+def generate_new_curie_set(entity: SBase, qt, b_m_qt, prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool):
     ''' Add a complete CURIE set to the provided CVTerm
         
         Params:
@@ -671,7 +671,7 @@ def improve_curie_per_entity(entity: SBase, new_pattern: bool):
                 not_miriam_compliant.append(cc)
             
         prefix2id = get_set_of_curies(tmp_list)
-        add_new_curie_set(entity, current_qt, current_b_m_qt, prefix2id, new_pattern)
+        generate_new_curie_set(entity, current_qt, current_b_m_qt, prefix2id, new_pattern)
     
     if not_miriam_compliant:
         print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
