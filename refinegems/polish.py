@@ -12,8 +12,7 @@ from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
 from refinegems.load import write_to_file, parse_fasta_headers
 
-__author__ = "Famke Baeuerle"
-__author__ = "Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle, Gwendolyn O. Gusak"
     
         
 def add_metab(entity_list: list[Species], id_db: str):
