@@ -889,22 +889,29 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
 
+    ### unit definition ###
     add_fba_units(model)
     set_default_units(model)
     set_units(model)
     add_compartment_structure_specs(model)
     set_initial_amount(model)
+    
+    ## improve metabolite, reaction and gene annotations ###
     add_metab(metab_list, id_db)
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
     cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    
+    ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
     
+    ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
     polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model)
 
+    ### write model ###
     write_to_file(model, new_filename)
