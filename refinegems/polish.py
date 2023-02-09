@@ -70,7 +70,8 @@ def add_reac(entity_list: list[Reaction], id_db: str):
         
         # Get ID and remove 'R_'
         current_id = entity.getId()
-        current_id = current_id[2:]
+        if current_id[:2] == 'R_':
+            current_id = current_id[2:]
         
         # Readjusted to fit to the metaid pattern from the metabolites      
         if not entity.isSetMetaId():
@@ -798,6 +799,9 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
         - new_qt (Qualifier): A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
         - new_b_m_qt (QualifierType): A libSBML biological or model qualifier type like BQB_IS|BQM_IS
         - specific_db_prefix (str): Has to be set if only for a specific database the qualifier type should be changed. Can be 'kegg.genes', 'biocyc', etc.
+    
+    Returns:
+        model: Model with changed qualifier for given entity type
     """
     not_miriam_compliant = []
     listOf_dict = {
@@ -829,6 +833,33 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
     if not_miriam_compliant:         
         print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
     
+    return model
+
+
+def change_all_qualifiers(model: Model):
+    """Wrapper function to change qualifiers of all entities at once
+
+    Params:
+        - model (Model): Model loaded with libsbml
+
+    Returns:
+        model: Model with all qualifiers updated to be MIRIAM compliant
+    """
+    
+    model = change_qualifiers(model, 'model', MODEL_QUALIFIER, BQM_IS)
+    
+    entity_list = ['compartment',
+                   'metabolite',
+                   'parameter',
+                   'reaction',
+                   'unit definition',
+                   'unit',
+                   'gene product',
+                   'group']
+    
+    for entity in entity_list:
+        model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
+        
     return model
 
 
@@ -870,11 +901,10 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
+    
+    print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
+    polish_annotations(model, True)
+    print('Changing all qualifiers to be MIRIAM compliant:')
+    change_all_qualifiers(model)
 
     write_to_file(model, new_filename)
-
-    # print('Remove duplicates & transform all CURIEs to same pattern:')
-    # polish_annotations(model, options['refined_model'], options['new_pattern'])
-    # print('Changing qualifiers for provided list:')
-    # change_qualifiers(model, options['refined_model'], options['entity_type'], options['new_qualifier'][0], options['new_qualifier'][1], options['specific_db_prefix'])
-      
