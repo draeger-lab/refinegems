@@ -195,7 +195,6 @@ def get_missing_reactions(
    
    # Get all metabolites for the missing reactions
    metabs_from_reaction = extract_metabolites_from_reactions(missing_reactions)
-   
    return metabs_from_reaction, missing_reactions  
 
 
@@ -286,7 +285,6 @@ def get_missing_metabolites(
    
    # Get amount of missing metabolites that are not in the model
    statistics_df.loc['Metabolite', 'Can be added'] = len(missing_metabolites['BioCyc'].unique().tolist())
-   
    return missing_metabolites, missing_metabs_wo_BiGG
 
 
@@ -327,34 +325,44 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
    metab_bigg_url = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
    
    # Finds the charges through the ChEBI/BiGG API, defaults to: 0
-   def find_charge(chebi_id: str, bigg_id: str) -> int:
-      if chebi_id != 'nan':
+   def find_charge(row: pd.Series) -> int:
+      chebi_id, bigg_id = str(row.get('ChEBI')), str(row.get('bigg_id'))
+      charge = None
+      if chebi_id != 'nan':  # Get charge from ChEBI (Returns always a charge)
          chebi_entity = libchebipy.ChebiEntity('CHEBI:' + chebi_id)
          return chebi_entity.get_charge()
-      elif bigg_id != 'nan':
-         return requests.get(metab_bigg_url + bigg_id[:-2]).json()['charges'][0]  # Take first charge
-      else:
-         return 0  
+      elif bigg_id != 'nan':  # Get charge from BiGG if no ChEBI ID available
+         try:
+            charge = requests.get(metab_bigg_url + bigg_id[:-2]).json()['charges'][0]  # Take first charge
+         except ValueError:
+            pass   
+         # If no charge was found, charge=0
+         return charge if charge else 0
    
    # Finds the chemical formula through the ChEBI/BiGG API, defaults to: 'No formula'
-   def find_formula(chebi_id: str, bigg_id: str, chem_form: str) -> str:
+   def find_formula(row: pd.Series) -> str:
+      chebi_id, bigg_id, chem_form = str(row.get('ChEBI')), str(row.get('bigg_id')), str(row.get('Chemical Formula'))
       chem_formula = None
       if chebi_id != 'nan': # Get formula from ChEBI
          chebi_entity = libchebipy.ChebiEntity('CHEBI:' + chebi_id)
          chem_formula = chebi_entity.get_formula()
-      elif bigg_id != 'nan': # Get formula from BiGG if no CHEBI ID available
-         chem_formula = requests.get(metab_bigg_url + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
-      if not chem_formula: # Retrieved formula is empty/None
-         # Get formula already existing in dataframe or set to 'No formula'
-         chem_formula = chem_form if chem_form != 'nan' else 'No formula'
+      if not chem_formula:  # If no formula was found with ChEBI/No ChEBI ID available
+         if bigg_id != 'nan': # Get formula from BiGG
+            try:
+               chem_formula = requests.get(metab_bigg_url + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
+            except ValueError:
+               pass
+         if not chem_formula: # If no formula was found with BiGG ID
+            # Get formula already existing in dataframe or set to 'No formula'
+            chem_formula = chem_form if chem_form != 'nan' else 'No formula'
       return chem_formula
    
-   missing_metabs['charge'] = missing_metabs.apply(
-        lambda row: find_charge(str(row['ChEBI']), str(row['bigg_id'])), axis=1)
-   missing_metabs['New Chemical Formula'] = missing_metabs.apply(
-        lambda row: find_formula(str(row['ChEBI']), str(row['bigg_id']), str(row['Chemical Formula'])), axis=1)
+   missing_metabs['charge'] = missing_metabs.apply(find_charge, axis=1)  #str(row['ChEBI']), str(row['bigg_id'])
+   missing_metabs['New Chemical Formula'] = missing_metabs.apply(find_formula, axis=1)
    missing_metabs['Chemical Formula'] = missing_metabs['New Chemical Formula']
    missing_metabs.drop('New Chemical Formula', axis=1, inplace=True)
+   
+   return missing_metabs
 
 
 def biocyc_gene_comp(
@@ -383,10 +391,15 @@ def biocyc_gene_comp(
    # Extract missing metabolites that belong to the missing reactions
    missing_metabolites_df, missing_metabs_wo_BiGG_df = get_missing_metabolites(model_libsbml, bigg_dbs[1], metabs_from_reacs, biocyc_file_paths[2])
    missing_metabolites_df = add_charges_chemical_formulae_to_metabs(missing_metabolites_df)
-   missing_metabs_wo_BiGG_df = add_charges_chemical_formulae_to_metabs(missing_metabs_wo_BiGG_df)
+   # If metabolites should be added due to reactions but no BiGG ID was found
+   if len(missing_metabs_wo_BiGG_df.index) > 0:
+      missing_metabs_wo_BiGG_df = add_charges_chemical_formulae_to_metabs(missing_metabs_wo_BiGG_df)
    
    # Extract missing genes that belong to the missing reactions
    missing_genes_df = get_missing_genes(missing_reactions_df, biocyc_file_paths[3])
+   
+   # Remove index from statistics_df
+   statistics_df.reset_index(inplace=True)
    
    return (statistics_df, missing_genes_df, missing_metabolites_df, missing_metabs_wo_BiGG_df, missing_reactions_df)
    
