@@ -14,7 +14,8 @@ from refinegems.load import write_to_file, parse_fasta_headers
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Gusak"
     
-        
+ 
+#----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
 def add_metab(entity_list: list[Species], id_db: str):
     """adds the ID of metabolites as URI to the annotation field
        For a VMH model, additionally, the corresponding BiGG IDs are added! 
@@ -54,7 +55,7 @@ def add_metab(entity_list: list[Species], id_db: str):
             # Add BiGG ID to annotation, additionally
             add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
             
-            
+           
 def add_reac(entity_list: list[Reaction], id_db: str):
     """adds the ID of reactions as URI to the annotation field
             (Currently, only BiGG & VMH IDs supported!)
@@ -86,6 +87,7 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             add_cv_term_reactions(current_id, id_db, entity)
 
 
+#----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
 def cv_notes_metab(species_list: list[Species]):
     """checks the notes field for information which should be in the annotation field
        removes entry from notes and adds it as URL to the CVTerms of a metabolite
@@ -162,6 +164,7 @@ def cv_notes_reac(reaction_list: list[Reaction]):
         reaction.setNotes(new_notes)
 
 
+#--------------- Function to set boundary condition & constant for metabolites & reactions ----------------------------# 
 def polish_entities(entity_list: list, metabolite: bool):
     """sets boundary condition and constant if not set for a metabolite
 
@@ -177,7 +180,10 @@ def polish_entities(entity_list: list, metabolite: bool):
                 entity.setConstant(False) 
 
 
-def create_unit(model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int, s: int, uri_is: str='', uri_idf: str='') -> Unit:
+#------------------------------------ Functions to create units & UnitDefinitions -------------------------------------# 
+def create_unit(
+    model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int, s: int, uri_is: str='', uri_idf: str=''
+    ) -> Unit:
     """Creates unit for SBML model according to arguments
 
     Args:
@@ -230,7 +236,7 @@ def create_unit_definition(model_specs: tuple[int], identifier: str, name: str,
    
     return unit_definition
 
-
+#----------------------------------- Function to create FBA unit & UnitDefinitions ------------------------------------#
 def create_fba_units(model: Model) -> list[UnitDefinition]:
     """Creates all fba units required for a constraint-based model
    
@@ -280,6 +286,7 @@ def create_fba_units(model: Model) -> list[UnitDefinition]:
     return [mmgdwh, mmgdw, hour, femto_litre]
 
 
+#--------------------------- Functions to print UnitDefinitions with the respective units -----------------------------#
 def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
     """Prints a list of libSBML UnitDefinitions as XMLNodes
    
@@ -323,6 +330,7 @@ def print_remaining_UnitDefinitions(model: Model, list_of_fba_units: list[UnitDe
         print_UnitDefinitions(contained_unit_defs)
 
 
+#-------------------------------------- Function to add units & UnitDefinitions ---------------------------------------#
 def add_fba_units(model: Model):
     """Adds:
             - mmol per gDW per h
@@ -371,6 +379,7 @@ def set_default_units(model: Model):
             model.setVolumeUnits(unit_id)
 
 
+#--------------------------------------- Function to set units fro parameters -----------------------------------------#
 def set_units(model: Model):
     """Sets units of parameters in model
 
@@ -378,11 +387,15 @@ def set_units(model: Model):
         - model (Model): Model loaded with libSBML
     """
     for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
-        if any((unit_id := re.fullmatch('mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
+        if any(
+            (unit_id := re.fullmatch('mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) 
+            for unit in model.getListOfUnitDefinitions()
+            ):
             if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
                 param.setUnits(unit_id.group(0))
             
-            
+
+#-------------------------- Functions to add default settings for compartments & metabolites --------------------------#            
 def add_compartment_structure_specs(model: Model):
     """ Adds the required specifications for the compartment structure
         if not set (size & spatial dimension)
@@ -398,7 +411,9 @@ def add_compartment_structure_specs(model: Model):
         if not compartment.isSetSpatialDimensions():
             compartment.setSpatialDimensions(3)
          
-        if any((unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()):
+        if any(
+            (unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()
+            ):
             if not (compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)):
                 compartment.setUnits(unit_id.group(0))
          
@@ -415,7 +430,7 @@ def set_initial_amount(model: Model):
          species.setInitialAmount(float('NaN'))
          
 
-
+#--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
 def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
@@ -504,6 +519,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         print(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
 
 
+#----------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
 def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
     ''' Gets a list of CURIEs
         & maps the database prefixes to their respective identifier sets
@@ -571,7 +587,7 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
                 
                 if not curie_dict or (prefix not in curie_dict):
                     curie_dict[prefix] = SortedSet()
-                    curie_dict[prefix].add(identifier)
+                curie_dict[prefix].add(identifier)
                 
                 if re.search('^rxn-|-rxn$', identifier, re.IGNORECASE):
                     prefix = 'metacyc.reaction'
@@ -598,22 +614,22 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
     return curie_dict
 
 
-def generate_new_curie_set(entity: SBase, qt, b_m_qt, prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool):
-    ''' Add a complete CURIE set to the provided CVTerm
+def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
+    ''' Generate a set of complete CURIEs from the provided prefix to identifier mapping
         
         Params:
-            - entity (SBase):                              A libSBML SBase object like model, GeneProduct, etc.
-            - qt:                                          A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
-            - b_m_qt:                                      A libSBML biological or model qualifier type like BQB_IS|BQM_IS
             - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets 
             - new_pattern (bool):                          True if new pattern is wanted, otherwise False
+            
+        Returns:
+            A sorted set containing complete CURIEs
     '''
+    curie_set = SortedSet()
+    
     if new_pattern:
         SEPARATOR = ':'
     else:
         SEPARATOR = '/'
-                
-    new_cvterm = generate_cvterm(qt, b_m_qt)
     
     for prefix in prefix2id:
         current_prefix = prefix   
@@ -634,7 +650,24 @@ def generate_new_curie_set(entity: SBase, qt, b_m_qt, prefix2id: SortedDict[str:
 
             
             curie = MIRIAM + prefix + separator + identifier
-            new_cvterm.addResource(curie)
+            curie_set.add(curie)
+            
+    return curie_set
+
+
+def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
+    ''' Add a complete CURIE set to the provided CVTerm
+        
+        Params:
+            - entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.
+            - qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+            - b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+            - curie_set (SortedSet[str]):   SortedSet containing CURIEs
+    '''        
+    new_cvterm = generate_cvterm(qt, b_m_qt)
+        
+    for curie in curie_set:
+        new_cvterm.addResource(curie)
             
     entity.addCVTerm(new_cvterm)
 
@@ -671,7 +704,8 @@ def improve_curie_per_entity(entity: SBase, new_pattern: bool):
                 not_miriam_compliant.append(cc)
             
         prefix2id = get_set_of_curies(tmp_list)
-        generate_new_curie_set(entity, current_qt, current_b_m_qt, prefix2id, new_pattern)
+        curie_set = generate_new_curie_set(prefix2id, new_pattern)
+        add_curie_set(entity, current_qt, current_b_m_qt, curie_set)
     
     if not_miriam_compliant:
         print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
@@ -725,23 +759,6 @@ def polish_annotations(model: Model, new_pattern: bool):
         improve_curies(listOf_dict[listOf], new_pattern)
     
     return model
-
-
-def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
-    ''' Add a complete CURIE set to the provided CVTerm
-        
-        Params:
-            - entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.
-            - qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
-            - b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS
-            - curie_set (SortedSet[str]):   SortedSet containing CURIEs
-    '''        
-    new_cvterm = generate_cvterm(qt, b_m_qt)
-        
-    for curie in curie_set:
-        new_cvterm.addResource(curie)
-            
-    entity.addCVTerm(new_cvterm)
 
 
 def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_prefix: str=None) -> list:
@@ -863,6 +880,7 @@ def change_all_qualifiers(model: Model):
     return model
 
 
+#--------------------------------------------------- Main function ----------------------------------------------------#
 def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fasta: str, lab_strain: bool):
     """completes all steps to polish a model
         (Tested for models having either BiGG or VMH identifiers.)
