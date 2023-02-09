@@ -23,8 +23,9 @@ def parse_fasta_headers(filepath: str) -> pd.DataFrame:
     tmp_dict = dict()
     locus2ids = {
         'locus_tag': [],
-        'Protein_id': [],
-        'Model_id': []
+        'protein_id': [],
+        'model_id': [],
+        'name': []
     }
    
     with open(filepath, 'r') as handle:
@@ -49,8 +50,9 @@ def parse_fasta_headers(filepath: str) -> pd.DataFrame:
                         tmp_dict[entry[0]] = entry[1]
                     
             locus2ids.get('locus_tag').append(tmp_dict.get('locus_tag'))
-            locus2ids.get('Protein_id').append(tmp_dict.get('protein_id'))
-            locus2ids.get('Model_id').append(model_id)
+            locus2ids.get('protein_id').append(tmp_dict.get('protein_id'))
+            locus2ids.get('name').append(tmp_dict.get('protein'))
+            locus2ids.get('model_id').append(model_id)
             
     return pd.DataFrame(locus2ids)
  
