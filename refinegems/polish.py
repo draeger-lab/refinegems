@@ -780,27 +780,33 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     for i in range(len(cvterms)):
         tmp_set = SortedSet()
         cvterm = cvterms.get(i)
-            
-        current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
-    
-        for cc in current_curies:
-                
-            current_curie = None
-                
-            if (specific_db_prefix != None) and (specific_db_prefix != ''):
-                if specific_db_prefix in cc:
-                    current_curie = cc
-            else:
-                current_curie = cc
-                
-            if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                tmp_set.add(current_curie)
-                cvterm.removeResource(current_curie)
-            else:
-                not_miriam_compliant.append(current_curie)
         
-        add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
-        cvterms.remove(i)
+        # include check for reaction and unit definition
+        if entity == 'reaction' or entity == 'unit definition':
+            if cvterm.getBiologicalQualifierType() == BQB_OCCURS_IN or cvterm.getBiologicalQualifierType() == BQB_IS_DESCRIBED_BY:
+                continue # go to next CVTerm
+        
+        else:    
+            current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
+        
+            for cc in current_curies:
+                    
+                current_curie = None
+                    
+                if (specific_db_prefix != None) and (specific_db_prefix != ''):
+                    if specific_db_prefix in cc:
+                        current_curie = cc
+                else:
+                    current_curie = cc
+                    
+                if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                    tmp_set.add(current_curie)
+                    cvterm.removeResource(current_curie)
+                else:
+                    not_miriam_compliant.append(current_curie)
+            
+            add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
+            cvterms.remove(i)
                 
     if not_miriam_compliant:
         return not_miriam_compliant
@@ -852,11 +858,12 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
     return model
 
 
-def change_all_qualifiers(model: Model):
+def change_all_qualifiers(model: Model, lab_strain: bool):
     """Wrapper function to change qualifiers of all entities at once
 
     Params:
         - model (Model): Model loaded with libsbml
+        - lab_strain (bool): True if the strain was sequenced in a local lab
 
     Returns:
         model: Model with all qualifiers updated to be MIRIAM compliant
@@ -875,6 +882,8 @@ def change_all_qualifiers(model: Model):
                    'gene product',
                    'group']
     for entity in entity_list:
+        if lab_strain and entity == 'gene product':
+            model = change_qualifiers(model, 'gene product', BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO)
         model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
         
     return model
@@ -891,6 +900,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
         - email (str): E-mail for Entrez
         - id_db (str): Main database identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
+        - lab_strain (bool): True if the strain was sequenced in a local lab
     """
     if lab_strain and not protein_fasta:
         print('''
@@ -929,7 +939,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
     polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
-    change_all_qualifiers(model)
+    change_all_qualifiers(model, lab_strain)
 
     ### write model ###
     write_to_file(model, new_filename)
