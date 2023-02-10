@@ -915,7 +915,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
         - lab_strain (bool): True if the strain was sequenced in a local lab
     """
     colorama_init(autoreset=True)
-    """
+    
     if lab_strain and not protein_fasta:
         print(Fore.LIGHTRED_EX + '''
               Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
@@ -926,12 +926,11 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
               >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
               ''')
         return
-    """
     
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-    '''
+
     ### unit definition ###
     add_fba_units(model)
     set_default_units(model)
@@ -949,7 +948,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
-    '''
+
     
     ### MIRIAM compliance of CVTerms ###
     #print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
