@@ -782,26 +782,33 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
         tmp_set = SortedSet()
         #cvterm = cvterms.get(i)
         
-        current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
-    
-        for cc in current_curies:
-                
-            current_curie = None
-                
-            if (specific_db_prefix != None) and (specific_db_prefix != ''):
-                if specific_db_prefix in cc:
-                    current_curie = cc
-            else:
-                current_curie = cc
-                
-            if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                tmp_set.add(current_curie)
-                cvterm.removeResource(current_curie)
-            else:
-                not_miriam_compliant.append(current_curie)
+        # include check for reaction and unit definition
+        # if entity == Reaction or entity == UnitDefinition:
+        # print(cvterm.getBiologicalQualifierType())
+        if cvterm.getBiologicalQualifierType() == 9 or cvterm.getBiologicalQualifierType() == 6:
+            print('CVTerm for ' + str(entity) + ' is left as ' + str(cvterm.getBiologicalQualifierType()))
         
-        add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
-        #cvterms.remove(i)
+        else:
+            current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
+        
+            for cc in current_curies:
+                    
+                current_curie = None
+                    
+                if (specific_db_prefix != None) and (specific_db_prefix != ''):
+                    if specific_db_prefix in cc:
+                        current_curie = cc
+                else:
+                    current_curie = cc
+                    
+                if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                    tmp_set.add(current_curie)
+                    cvterm.removeResource(current_curie)
+                else:
+                    not_miriam_compliant.append(current_curie)
+            
+            add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
+            #cvterms.remove(i)
                 
     if not_miriam_compliant:
         return not_miriam_compliant
@@ -868,6 +875,7 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
                     'unit definition',
                     'unit']
     for entity in entity_list_mod:
+        print(entity)
         model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
     
     entity_list = ['compartment',
@@ -877,6 +885,7 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
                    'gene product',
                    'group']
     for entity in entity_list:
+        print(entity)
         if lab_strain and entity == 'gene product':
             model = change_qualifiers(model, 'gene product', BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO)
         model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
@@ -924,7 +933,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    #cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
     
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
