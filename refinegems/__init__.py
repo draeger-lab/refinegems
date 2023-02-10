@@ -7,8 +7,13 @@ import refinegems.charges
 import refinegems.pathways
 import refinegems.curate
 import refinegems.polish
+import refinegems.parse
 import refinegems.cvterms
-import refinegems.genecomp
+import refinegems.analysis_db
+import refinegems.analysis_biocyc
+import refinegems.analysis_kegg
+import refinegems.entities
+import refinegems.gapfill
 import refinegems.comparison
 import refinegems.investigate
 import refinegems.load

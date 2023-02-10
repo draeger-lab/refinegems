@@ -124,6 +124,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#refinegems-polish-module">refinegems.polish module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.sboann">refinegems.sboann module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforCompartments"><code class="docutils literal notranslate"><span class="pre">addSBOforCompartments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforGenes"><code class="docutils literal notranslate"><span class="pre">addSBOforGenes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforGroups"><code class="docutils literal notranslate"><span class="pre">addSBOforGroups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforMetabolites"><code class="docutils literal notranslate"><span class="pre">addSBOforMetabolites()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforModel"><code class="docutils literal notranslate"><span class="pre">addSBOforModel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforParameters"><code class="docutils literal notranslate"><span class="pre">addSBOforParameters()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOfromDB"><code class="docutils literal notranslate"><span class="pre">addSBOfromDB()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOviaEC"><code class="docutils literal notranslate"><span class="pre">addSBOviaEC()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkAcetylationViaEC"><code class="docutils literal notranslate"><span class="pre">checkAcetylationViaEC()</span></code></a></li>
@@ -162,6 +168,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getProductIds"><code class="docutils literal notranslate"><span class="pre">getProductIds()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantCompartmentList"><code class="docutils literal notranslate"><span class="pre">getReactantCompartmentList()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantIds"><code class="docutils literal notranslate"><span class="pre">getReactantIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.handleMultipleECs"><code class="docutils literal notranslate"><span class="pre">handleMultipleECs()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.hasReactantPair"><code class="docutils literal notranslate"><span class="pre">hasReactantPair()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.initialise_SBO_database"><code class="docutils literal notranslate"><span class="pre">initialise_SBO_database()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.isProtonTransport"><code class="docutils literal notranslate"><span class="pre">isProtonTransport()</span></code></a></li>
@@ -965,8 +972,39 @@ new_filename (Str): filename for modified model</p>
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
 <p>Provides functions to automate the addition of SBO terms to the model</p>
 <p>Script written by Elisabeth Fritze in her bachelor thesis.
-Modified by Gwendolyn O. Gusak during her master thesis.</p>
+Modified by Gwendolyn O. Gusak during her master thesis.
+Commented by Famke Bäuerle and extended by Nantia Leonidou.</p>
 <p>It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the “main” function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforCompartments">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforCompartments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforCompartments" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforGenes">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforGenes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforGenes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforGroups">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforGroups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforGroups" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforMetabolites">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforMetabolites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforMetabolites" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforModel">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforModel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.addSBOforParameters">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforParameters" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.addSBOfromDB">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOfromDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOfromDB" title="Permalink to this definition"></a></dt>
@@ -1378,6 +1416,11 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.sboann.handleMultipleECs">
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">handleMultipleECs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">react</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ECNums</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.handleMultipleECs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.hasReactantPair">
