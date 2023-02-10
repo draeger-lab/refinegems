@@ -712,7 +712,7 @@ def addSBOfromDB(reac, cur):
     else:
         return False
 
-### functions below from Nantia, not yet linked in main ###
+### functions below from Nantia ###
 
 def addSBOforMetabolites(model):
     # add metabolites SBO
@@ -730,8 +730,8 @@ def addSBOforGenes(model):
             gene.setSBOTerm("SBO:0000243")
 
 
-def addSBOforModel(doc):
-    doc.setSBOTerm("SBO:0000624")
+def addSBOforModel(model):
+    model.setSBOTerm("SBO:0000624")
 
 
 def addSBOforGroups(model):
@@ -755,52 +755,6 @@ def addSBOforParameters(model):
 def addSBOforCompartments(model):
     for cmp in model.getListOfCompartments():
         cmp.setSBOTerm("SBO:0000290")   
-
-        
-def handleMultipleECs(react, ECNums):
-    # if no EC number annotated in model
-    if len(ECNums) == 0:
-        react.setSBOTerm('SBO:0000176')
-
-    else:
-        # store first digits of all annotated EC numbers
-        lst = []
-        for ec in ECNums:
-            lst.append(ec.split(".")[0])
-
-        # if ec numbers are from different enzyme classes, based on first digit
-        # no ambiguous classification possible
-        if len(set(lst)) > 1:
-            react.setSBOTerm("SBO:0000176")  # metabolic rxn
-
-        # if ec numbers are from the same enzyme classes,
-        # assign parent SBO term based on first digit in EC number
-        else:
-
-            # Oxidoreductases
-            if "1" in set(lst):
-                react.setSBOTerm("SBO:0000200")
-            # Transferase
-            elif "2" in set(lst):
-                react.setSBOTerm("SBO:0000402")
-            # Hydrolases
-            elif "3" in set(lst):
-                react.setSBOTerm("SBO:0000376")
-            # Lyases
-            elif "4" in set(lst):
-                react.setSBOTerm("SBO:0000211")
-            # Isomerases
-            elif "5" in set(lst):
-                react.setSBOTerm("SBO:0000377")
-            # Ligases, proper SBO is missing from graph --> use one for modification of covalent bonds
-            elif "6" in set(lst):
-                react.setSBOTerm("SBO:0000182")
-            # Translocases
-            elif "7" in set(lst):
-                react.setSBOTerm("SBO:0000185")
-            # Metabolic reactions
-            else:
-                react.setSBOTerm("SBO:0000176")
 
 ### end functions from Nantia ###
 
@@ -840,6 +794,14 @@ def sbo_annotation(model_libsbml):
                 checkDecarboxylation(reaction)
                 checkDeamination(reaction)
                 checkPhosphorylation(reaction)
+    
+    ### functions from Nantia ###            
+    # addSBOforMetabolites(model_libsbml)
+    # addSBOforGenes(model_libsbml)
+    # addSBOforModel(model_libsbml)
+    # addSBOforGroups(model_libsbml)
+    # addSBOforParameters(model_libsbml)
+    # addSBOforCompartments(model_libsbml)
     
     open_cur.close()
     open_con.close()
