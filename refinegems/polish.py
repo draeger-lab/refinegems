@@ -11,6 +11,8 @@ from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
 from refinegems.load import write_to_file, parse_fasta_headers
+from colorama import init as colorama_init
+from colorama import Fore, Style
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Gusak"
     
@@ -785,8 +787,13 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
         # include check for reaction and unit definition
         # if entity == Reaction or entity == UnitDefinition:
         # print(cvterm.getBiologicalQualifierType())
-        if cvterm.getBiologicalQualifierType() == 9 or cvterm.getBiologicalQualifierType() == 6:
-            print('CVTerm for ' + str(entity) + ' is left as ' + str(cvterm.getBiologicalQualifierType()))
+        if cvterm.getBiologicalQualifierType() == 9:  # 9 = BQB_OCCURS_IN (Reaction), Check for reactions with occursIn
+            print(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' +
+                  f' is left as {Fore.LIGHTYELLOW_EX}{BiolQualifierType_toString(cvterm.getBiologicalQualifierType())}{Style.RESET_ALL}')
+        
+        elif cvterm.getModelQualifierType() == 1:  # 1 = BQM_IS_DESCRIBED_BY (UnitDefinition), Check for UnitDefinitions with isDescribedBy
+            print(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' + 
+                  f' is left as {Fore.LIGHTYELLOW_EX}{ModelQualifierType_toString(cvterm.getModelQualifierType())}{Style.RESET_ALL}')
         
         else:
             current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
@@ -888,7 +895,8 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
         print(entity)
         if lab_strain and entity == 'gene product':
             model = change_qualifiers(model, 'gene product', BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO)
-        model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
+        else:
+            model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
         
     return model
 
@@ -906,21 +914,24 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
     """
+    colorama_init(autoreset=True)
+    """
     if lab_strain and not protein_fasta:
-        print('''
-            Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
-            Otherwise, polish will not change anything for the GeneProducts.
-            The header lines should look similar to the following line:
-            >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-            It would also be a valid input if the header lines looked similar to the following line:
-            >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
-            ''')
+        print(Fore.LIGHTRED_EX + '''
+              Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
+              Otherwise, polish will not change anything for the GeneProducts.
+              The header lines should look similar to the following line:
+              >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+              It would also be a valid input if the header lines looked similar to the following line:
+              >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
+              ''')
         return
+    """
     
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-
+    '''
     ### unit definition ###
     add_fba_units(model)
     set_default_units(model)
@@ -938,10 +949,11 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
+    '''
     
     ### MIRIAM compliance of CVTerms ###
-    print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    polish_annotations(model, True)
+    #print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
+    #polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
 
