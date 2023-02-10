@@ -1,18 +1,65 @@
 #!/usr/bin/env python
-""" Provides functions to compare multiple models
+""" Provides functions to compare and visualize multiple models
 
 Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.
 """
 
 import pandas as pd
+import matplotlib.pyplot as plt
+from cobra import Model
 from tqdm import tqdm
-from refinegems.load import load_model_cobra, load_all_media_from_db
+from venn import venn
+from refinegems.load import load_multiple_models, load_all_media_from_db
 from refinegems.growth import growth_one_medium_from_default, growth_one_medium_from_minimal
+from refinegems.investigate import initial_analysis
 
 __author__ = "Famke Baeuerle"
 
+sbo_mapping={'658': 'passive transport', 
+            '176': 'biochemical reaction', 
+            '167': 'biochemical or transport reaction',
+            '402': 'transfer of a chemical group', 
+            '659': 'symporter-mediated transport', 
+            '200': 'redox reaction', 
+            '233': 'hydroxylation',
+            '399': 'decarboxylation', 
+            '178': 'cleavage', 
+            '403': 'transamination', 
+            '215': 'acetylation', 
+            '377': 'isomerisation', 
+            '657': 'active transport', 
+            '216': 'phosphorylation', 
+            '401': 'deamination', 
+            '376': 'hydrolysis', 
+            '217': 'glycosylation', 
+            '660': 'antiporter-mediated transport', 
+            '654': 'co-transport reaction', 
+            '214': 'methylation', 
+            '655': 'transport reaction', 
+            '627': 'exchange reaction', 
+            '632': 'sink reaction', 
+            '629': 'biomass production',
+            '630': 'ATP maintenance'}
 
-def simulate_all(model_list, mediumpath, media, basis):
+def create_venn(model_list: list[str], entity: str, perc: bool=False) -> plt.figure: 
+    all_models = load_multiple_models(model_list, package='cobra')
+    intersec = {}
+    for model in all_models:
+        reas = []
+        if entity == 'metabolite':
+            for rea in model.metabolites:
+                reas.append(rea.id)
+        if entity == 'reaction':
+            for rea in model.reactions:
+                reas.append(rea.id)
+        intersec[model.id] = set(reas)
+    if perc:
+        fig = venn(intersec, fmt="{percentage:.0f}%")
+    else:
+        fig = venn(intersec)
+    return fig
+
+def simulate_all(model_list: list[str], mediumpath: str, media: list[str], basis: str) -> pd.DataFrame:
     """does a run of growth simulation for multiple models on different media
 
     Args:
@@ -26,10 +73,10 @@ def simulate_all(model_list, mediumpath, media, basis):
     """
     growth = pd.DataFrame()
     all_media = load_all_media_from_db(mediumpath)
+    all_models = load_multiple_models(model_list, package='cobra')
     selected_media = [x for x in all_media if x['medium'][0] in media]
     for medium in tqdm(selected_media):
-        for model_path in model_list:
-            model = load_model_cobra(model_path)
+        for model in all_models:
             essentials_given = False
             if (basis=='default_uptake'):
                 growth_one = growth_one_medium_from_default(model, medium).drop('missing exchanges', axis=1)
@@ -53,3 +100,4 @@ def simulate_all(model_list, mediumpath, media, basis):
                 ignore_index=True)
 
     return growth
+

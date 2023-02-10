@@ -8,7 +8,7 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 import cobra
 import os
 import pandas as pd
-from libsbml import SBMLReader, writeSBMLToFile
+from libsbml import SBMLReader, writeSBMLToFile, Model
 
 __author__ = "Famke Baeuerle"
 
@@ -39,6 +39,15 @@ def load_model_libsbml(modelpath):
     read = reader.readSBMLFromFile(modelpath)  # read from file
     mod = read.getModel()
     return mod
+
+def load_multiple_models(models: list[str], package: str) -> list:
+    loaded_models = []
+    for modelpath in models:
+        if package == 'cobra':
+            loaded_models.append(load_model_cobra(modelpath))
+        elif package == 'libsbml':
+            loaded_models.append(load_model_libsbml(modelpath))
+    return loaded_models
 
 
 def load_document_libsbml(modelpath):
