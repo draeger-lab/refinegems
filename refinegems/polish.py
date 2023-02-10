@@ -777,36 +777,31 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     pattern = f'{MIRIAM}|{OLD_MIRIAM}'
     cvterms = entity.getCVTerms()
 
-    for i in range(len(cvterms)):
+    #for i in range(len(cvterms)):
+    for cvterm in cvterms:
         tmp_set = SortedSet()
-        cvterm = cvterms.get(i)
+        #cvterm = cvterms.get(i)
         
-        # include check for reaction and unit definition
-        if entity == 'reaction' or entity == 'unit definition':
-            if cvterm.getBiologicalQualifierType() == BQB_OCCURS_IN or cvterm.getBiologicalQualifierType() == BQB_IS_DESCRIBED_BY:
-                continue # go to next CVTerm
-        
-        else:    
-            current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
-        
-            for cc in current_curies:
-                    
-                current_curie = None
-                    
-                if (specific_db_prefix != None) and (specific_db_prefix != ''):
-                    if specific_db_prefix in cc:
-                        current_curie = cc
-                else:
+        current_curies = [cvterm.getResourceURI(j) for j in range(cvterm.getNumResources())]
+    
+        for cc in current_curies:
+                
+            current_curie = None
+                
+            if (specific_db_prefix != None) and (specific_db_prefix != ''):
+                if specific_db_prefix in cc:
                     current_curie = cc
-                    
-                if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                    tmp_set.add(current_curie)
-                    cvterm.removeResource(current_curie)
-                else:
-                    not_miriam_compliant.append(current_curie)
-            
-            add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
-            cvterms.remove(i)
+            else:
+                current_curie = cc
+                
+            if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                tmp_set.add(current_curie)
+                cvterm.removeResource(current_curie)
+            else:
+                not_miriam_compliant.append(current_curie)
+        
+        add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
+        #cvterms.remove(i)
                 
     if not_miriam_compliant:
         return not_miriam_compliant
@@ -929,7 +924,7 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    #cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
     
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
