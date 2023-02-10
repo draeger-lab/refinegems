@@ -16,6 +16,7 @@ metabol_db_dict = {
                    'Human Metabolome Database': 'hmdb:HMDB',
                    'INCHI': 'inchi:',
                    'InChI': 'inchi:',
+                   'InChI-Key': 'inchikey:',
                    'KEGG': 'kegg.compound:',
                    #'KEGG Compound': 'kegg.compound:',
                    'METACYC': 'metacyc.compound:',

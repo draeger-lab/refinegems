@@ -69,12 +69,28 @@ memote: FALSE
 output: xlsx #cl, xlsx, csv 
 
 # these work only with single models
-### Gene comparison ###
-genecomp: FALSE # set to False if not needed, only works when gprs are annotated with kegg
-# the following is only relevant when turned on
-organismid: 'T05059' # C. striatum
-gff_file: 'data/cstr.gff' # C. striatum
-biggreactions: 'data/bigg_models_reactions.txt'
+### Gapfill ###
+# All parameters are required for all db_to_compare choices except:
+# - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
+# - and biocyc_tables which is not required for 'KEGG'
+gapfill_analysis: TRUE
+gapfill_analysis_params:
+  db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
+  organismid: 'T05059'  # Needs to be specified for KEGG
+  bigg_dbs:
+    - 'data/bigg_models_reactions.txt'  # Path to BiGG reactions database
+    - 'data/bigg_models_metabolites.txt'  # Path to BiGG metabolites database
+  gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
+  biocyc_files: 
+    - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
+    - 'Path1'  # Path to TXT file containing a SmartTable with all reaction relevant information (*)
+    - 'Path2'  # Path to TXT file containing a SmartTable with all metabolite relevant information (+)
+    - 'Path3'  # Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)
+# (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence
+# (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
+# (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
+# For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
+# complete tables for reactions can be used with the same columns.
 
 ### ModelSEED comparison ###
 modelseed: FALSE # set to False if not needed
