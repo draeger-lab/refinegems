@@ -7,17 +7,19 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 
 import cobra
 import os
+import re
 import pandas as pd
-from libsbml import SBMLReader, writeSBMLToFile, Model
+from Bio import Entrez, SeqIO
+from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
 
 __author__ = "Famke Baeuerle"
 
 
-def load_model_cobra(modelpath):
+def load_model_cobra(modelpath: str) -> cobra.Model:
     """loads model using cobrapy
 
     Args:
-        modelpath (Str): Path to GEM
+        modelpath (str): Path to GEM
 
     Returns:
         cobra-model: loaded model by cobrapy
@@ -26,11 +28,11 @@ def load_model_cobra(modelpath):
     return mod
 
 
-def load_model_libsbml(modelpath):
+def load_model_libsbml(modelpath: str) -> Model:
     """loads model using libsbml
 
     Args:
-        modelpath (Str): Path to GEM
+        modelpath (str): Path to GEM
 
     Returns:
         libsbml-model: loaded model by libsbml
@@ -50,11 +52,11 @@ def load_multiple_models(models: list[str], package: str) -> list:
     return loaded_models
 
 
-def load_document_libsbml(modelpath):
+def load_document_libsbml(modelpath: str) -> SBMLDocument:
     """loads model document using libsbml
 
     Args:
-        modelpath (Str): Path to GEM
+        modelpath (str): Path to GEM
 
     Returns:
         libsbml-document: loaded document by libsbml
@@ -64,7 +66,7 @@ def load_document_libsbml(modelpath):
     return read
 
 
-def load_medium_custom(mediumpath):
+def load_medium_custom(mediumpath: str) -> pd.DataFrame:
     """Helper function to read medium csv
 
     Args:
@@ -79,7 +81,7 @@ def load_medium_custom(mediumpath):
     return medium
 
 
-def load_medium_from_db(mediumpath, mediumname):
+def load_medium_from_db(mediumpath: str, mediumname: str) -> pd.DataFrame:
     """Helper function to read standard media_db.csv
 
     Args:
@@ -96,7 +98,7 @@ def load_medium_from_db(mediumpath, mediumname):
     return medium
 
 
-def load_all_media_from_db(mediumpath):
+def load_all_media_from_db(mediumpath: str) -> pd.DataFrame: 
     """Helper function to extract media definitions from media_db.csv
 
     Args:
@@ -117,7 +119,7 @@ def load_all_media_from_db(mediumpath):
     return media_dfs
 
 
-def load_manual_annotations(tablepath='data/manual_curation.xlsx', sheet_name='metab'):
+def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_name: str='metab') -> pd.DataFrame:
     """loads metabolite sheet from manual curation table
 
     Args:
@@ -131,7 +133,7 @@ def load_manual_annotations(tablepath='data/manual_curation.xlsx', sheet_name='m
     return man_ann
 
 
-def load_manual_gapfill(tablepath='data/manual_curation.xlsx' , sheet_name='gapfill'):
+def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
     """loads gapfill sheet from manual curation table
 
     Args:
@@ -145,7 +147,7 @@ def load_manual_gapfill(tablepath='data/manual_curation.xlsx' , sheet_name='gapf
     return man_gapf
 
 
-def write_to_file(model, new_filename):
+def write_to_file(model: Model, new_filename: str):
     """Writes modified model to new file
 
     Args:
@@ -157,13 +159,65 @@ def write_to_file(model, new_filename):
     print("Modified model written to " + new_filename)
 
 
-def write_report(dataframe, filepath):
+def write_report(dataframe: pd.DataFrame, filepath: str):
     """Writes reports stored in dataframes to xlsx file
 
     Args:
         dataframe (pd.DataFrame): table containing output
-        filepath (string): path to file with filename
+        filepath (str): path to file with filename
     """
     writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
     dataframe.to_excel(writer)
     writer.save()
+
+
+def validate_libsbml_model(model: Model):
+    ''' Debug method: Validates a libSBML model with the libSBML validator
+    
+        Params:
+            - model (Model): A libSBML Model
+    '''
+    validator = SBMLValidator()
+    doc = model.getSBMLDocument()
+    
+    return validator.validate(doc)
+
+
+def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
+    """Parses a .fasta file to reveal the protein IDs
+       NCBI Protein headers contain information on locus tag and protein name
+    
+    Params:
+        - filepath (str): path to .fasta file
+
+    Returns:
+        dict: mapping from protein ids to (protein name, locus tag)
+    """
+    keyword_list = ['protein', 'locus_tag']
+    tmp_dict = dict()
+    id2locus_names = dict()
+    
+    with open(filepath, 'r') as handle:
+        
+        for record in SeqIO.parse(handle, 'fasta'):
+            header = record.description
+            identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
+            descriptors = re.findall('\[+(.*?)\]',header)
+            
+            descriptors.insert(0, identifier)
+                
+            tmp_dict['protein_id'] = identifier
+                
+            for entry in descriptors:
+                
+                entry = entry.strip().split('=')
+                
+                if entry[0] in keyword_list:
+                    if entry[0] == 'protein_id':
+                        tmp_dict[entry[0]] = entry[1].split('.')[0]
+                    else:
+                        tmp_dict[entry[0]] = entry[1]
+                
+            id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
+                
+    return id2locus_names
