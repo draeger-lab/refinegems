@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from cobra import Model
 from tqdm import tqdm
 from venn import venn
-from refinegems.load import load_multiple_models, load_all_media_from_db
+from refinegems.io import load_multiple_models, load_all_media_from_db
 from refinegems.growth import growth_one_medium_from_default, growth_one_medium_from_minimal
 from refinegems.investigate import initial_analysis
 

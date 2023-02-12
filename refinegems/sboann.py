@@ -12,7 +12,7 @@ import re
 import sqlite3
 from sqlite3 import Error
 from libsbml import *
-from refinegems.load import write_to_file
+from refinegems.io import write_to_file
 
 __author__ = "Elisabeth Fritze"
 __author__ = "Gwendolyn O. Gusak"

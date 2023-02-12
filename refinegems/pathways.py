@@ -10,7 +10,7 @@ to the respective reaction.
 from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
-from refinegems.load import write_to_file
+from refinegems.io import write_to_file
 from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"

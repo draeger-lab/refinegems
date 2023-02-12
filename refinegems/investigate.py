@@ -14,7 +14,7 @@ from cobra import Reaction
 from memote.support import consistency
 # needed by memote.support.consitency
 from memote.support import consistency_helpers as con_helpers
-from refinegems.load import load_model_cobra, load_model_libsbml
+from refinegems.io import load_model_cobra, load_model_libsbml
 
 __author__ = "Famke Baeuerle"
 
