@@ -59,10 +59,10 @@ refinegems.investigate module
    :undoc-members:
    :show-inheritance:
 
-refinegems.load module
+refinegems.io module
 ----------------------
 
-.. automodule:: refinegems.load
+.. automodule:: refinegems.io
    :members:
    :undoc-members:
    :show-inheritance:
