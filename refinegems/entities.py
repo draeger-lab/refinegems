@@ -4,7 +4,7 @@ from Bio import Entrez
 from libsbml import *
 from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from refinegems.sboann import *
-from refinegems.parse import get_name_from_locus
+from refinegems.io import get_name_from_locus
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 

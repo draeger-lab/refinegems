@@ -14,7 +14,7 @@ import pandas as pd
 from bioservices.kegg import KEGG
 import io
 import re
-from refinegems.parse import get_locus_gpr
+from refinegems.io import get_locus_gpr
 from refinegems.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model
 
