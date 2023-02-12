@@ -882,7 +882,7 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
                     'unit definition',
                     'unit']
     for entity in entity_list_mod:
-        print(entity)
+        print(f'Change {str(entity)} qualifiers...')
         model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
     
     entity_list = ['compartment',
@@ -892,7 +892,7 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
                    'gene product',
                    'group']
     for entity in entity_list:
-        print(entity)
+        print(f'Change {str(entity)} qualifiers...')
         if lab_strain and entity == 'gene product':
             model = change_qualifiers(model, 'gene product', BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO)
         else:
@@ -951,8 +951,8 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
 
     
     ### MIRIAM compliance of CVTerms ###
-    #print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    #polish_annotations(model, True)
+    print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
+    polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
 
