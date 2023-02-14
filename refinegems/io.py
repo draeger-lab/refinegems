@@ -271,7 +271,7 @@ def search_ncbi_for_gpr(locus):
 
 
 def parse_gff_for_gp_info(gff_file):
-    """Searches gff file of organism for gene protein reactions based on locus tags
+    """Parses gff file of organism to find gene protein reactions based on locus tags
 
     Args:
         gff_file (Str): path to gff file of organism of interest
@@ -308,4 +308,3 @@ def parse_gff_for_gp_info(gff_file):
     mapping_df['locus_tag'] = mapping_df.apply(
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
- 
