@@ -60,7 +60,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_reactions"><code class="docutils literal notranslate"><span class="pre">add_cv_term_reactions()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_units"><code class="docutils literal notranslate"><span class="pre">add_cv_term_units()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.generate_cvterm"><code class="docutils literal notranslate"><span class="pre">generate_cvterm()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.parse_id_from_cv_term"><code class="docutils literal notranslate"><span class="pre">parse_id_from_cv_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.get_id_from_cv_term"><code class="docutils literal notranslate"><span class="pre">get_id_from_cv_term()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.print_cvterm"><code class="docutils literal notranslate"><span class="pre">print_cvterm()</span></code></a></li>
 </ul>
 </li>
@@ -85,8 +85,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#refinegems-investigate-module">refinegems.investigate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.io">refinegems.io module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.get_locus_gpr"><code class="docutils literal notranslate"><span class="pre">get_locus_gpr()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.get_name_from_locus"><code class="docutils literal notranslate"><span class="pre">get_name_from_locus()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_all_media_from_db"><code class="docutils literal notranslate"><span class="pre">load_all_media_from_db()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_document_libsbml"><code class="docutils literal notranslate"><span class="pre">load_document_libsbml()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_manual_annotations"><code class="docutils literal notranslate"><span class="pre">load_manual_annotations()</span></code></a></li>
@@ -97,7 +95,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_model_libsbml"><code class="docutils literal notranslate"><span class="pre">load_model_libsbml()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_multiple_models"><code class="docutils literal notranslate"><span class="pre">load_multiple_models()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_fasta_headers"><code class="docutils literal notranslate"><span class="pre">parse_fasta_headers()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_fasta_headers_to_dict"><code class="docutils literal notranslate"><span class="pre">parse_fasta_headers_to_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_gff_for_gp_info"><code class="docutils literal notranslate"><span class="pre">parse_gff_for_gp_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.search_ncbi_for_gpr"><code class="docutils literal notranslate"><span class="pre">search_ncbi_for_gpr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.validate_libsbml_model"><code class="docutils literal notranslate"><span class="pre">validate_libsbml_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_report"><code class="docutils literal notranslate"><span class="pre">write_report()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
@@ -340,8 +339,8 @@ biological or model qualifier types</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.cvterms.parse_id_from_cv_term">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">parse_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.parse_id_from_cv_term" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="refinegems.cvterms.get_id_from_cv_term">
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">get_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.cvterms.get_id_from_cv_term" title="Permalink to this definition"></a></dt>
 <dd><p>extract id for a specific database from CVTerm</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
@@ -584,30 +583,6 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 <p>Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups). The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.io.get_locus_gpr">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">get_locus_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.get_locus_gpr" title="Permalink to this definition"></a></dt>
-<dd><p>Searches gff file of organism for gene protein reactions based on locus tags</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>gff_file (Str): path to gff file of organism of interest</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing mapping from locus tag to GPR</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.io.get_name_from_locus">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">get_name_from_locus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.get_name_from_locus" title="Permalink to this definition"></a></dt>
-<dd><p>fetches protein name from NCBI</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
-</dd>
-<dt>Returns:</dt><dd><p>str: protein name / description</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.io.load_all_media_from_db">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_all_media_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.load_all_media_from_db" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to extract media definitions from media_db.csv</p>
@@ -713,7 +688,7 @@ mediumname (Str): name of medium to test growth on</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.io.parse_fasta_headers">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.parse_fasta_headers" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_for_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.parse_fasta_headers" title="Permalink to this definition"></a></dt>
 <dd><p>Parses FASTA file headers to obtain:
 - the protein_id
 - and the model_id (like it is obtained from CarveMe)
@@ -727,16 +702,25 @@ corresponding to the locus_tag</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.io.parse_fasta_headers_to_dict">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">tuple[str,</span> <span class="pre">str],</span> <span class="pre">None)]</span></span></span><a class="headerlink" href="#refinegems.io.parse_fasta_headers_to_dict" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Parses a .fasta file to reveal the protein IDs</dt><dd><p>NCBI Protein headers contain information on locus tag and protein name</p>
+<dt class="sig sig-object py" id="refinegems.io.parse_gff_for_gp_info">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_gff_for_gp_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.parse_gff_for_gp_info" title="Permalink to this definition"></a></dt>
+<dd><p>Parses gff file of organism to find gene protein reactions based on locus tags</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gff_file (Str): path to gff file of organism of interest</p>
 </dd>
-<dt>Params:</dt><dd><ul class="simple">
-<li><p>filepath (str): path to .fasta file</p></li>
-</ul>
+<dt>Returns:</dt><dd><p>df: table containing mapping from locus tag to GPR</p>
 </dd>
-<dt>Returns:</dt><dd><p>dict: mapping from protein ids to (protein name, locus tag)</p>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.io.search_ncbi_for_gpr">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">search_ncbi_for_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.search_ncbi_for_gpr" title="Permalink to this definition"></a></dt>
+<dd><p>fetches protein name from NCBI</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: protein name / description</p>
 </dd>
 </dl>
 </dd></dl>

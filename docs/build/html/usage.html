@@ -118,30 +118,6 @@ Note that at this time most of the modules only make sense when you use the resp
 or with libSBML (activation of groups). The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">get_locus_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Searches gff file of organism for gene protein reactions based on locus tags</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>gff_file (Str): path to gff file of organism of interest</p>
-</dd>
-<dt>Returns:</dt><dd><p>df: table containing mapping from locus tag to GPR</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">get_name_from_locus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>fetches protein name from NCBI</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
-</dd>
-<dt>Returns:</dt><dd><p>str: protein name / description</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_all_media_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
 <dd><p>Helper function to extract media definitions from media_db.csv</p>
 <dl class="simple">
@@ -241,7 +217,7 @@ mediumname (Str): name of medium to test growth on</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_for_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
 <dd><p>Parses FASTA file headers to obtain:
 - the protein_id
 - and the model_id (like it is obtained from CarveMe)
@@ -256,15 +232,24 @@ corresponding to the locus_tag</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">tuple[str,</span> <span class="pre">str],</span> <span class="pre">None)]</span></span></span></dt>
-<dd><dl class="simple">
-<dt>Parses a .fasta file to reveal the protein IDs</dt><dd><p>NCBI Protein headers contain information on locus tag and protein name</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_gff_for_gp_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gff_file</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Parses gff file of organism to find gene protein reactions based on locus tags</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gff_file (Str): path to gff file of organism of interest</p>
 </dd>
-<dt>Params:</dt><dd><ul class="simple">
-<li><p>filepath (str): path to .fasta file</p></li>
-</ul>
+<dt>Returns:</dt><dd><p>df: table containing mapping from locus tag to GPR</p>
 </dd>
-<dt>Returns:</dt><dd><p>dict: mapping from protein ids to (protein name, locus tag)</p>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">search_ncbi_for_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>fetches protein name from NCBI</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: protein name / description</p>
 </dd>
 </dl>
 </dd></dl>
@@ -403,7 +388,7 @@ biological or model qualifier types</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">parse_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">get_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>extract id for a specific database from CVTerm</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
