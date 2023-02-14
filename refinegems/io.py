@@ -241,10 +241,9 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
                 locus2ids.get('model_id').append(model_id)
             
     return pd.DataFrame(locus2ids)
- 
 
-# Function originally from analysis_kegg
-def get_name_from_locus(locus):
+
+def search_ncbi_for_gpr(locus):
     """fetches protein name from NCBI
 
     Args:
@@ -261,10 +260,16 @@ def get_name_from_locus(locus):
     records = SeqIO.parse(handle, "gb")
 
     for i, record in enumerate(records):
-        return record.description
- 
+        if (locus[0] == 'W'):
+            return record.description, locus
+        else:
+            for feature in record.features:
+                if feature.type == "CDS":
+                    return record.description, feature.qualifiers["locus_tag"][0]
+                else:
+                    return record.description, None
 
-# Function originally from analysis_kegg
+
 def parse_gff_for_gp_info(gff_file):
     """Searches gff file of organism for gene protein reactions based on locus tags
 
