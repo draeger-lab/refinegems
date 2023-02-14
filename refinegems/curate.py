@@ -4,7 +4,7 @@
 While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.
 """
 from tqdm.auto import tqdm
-from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, parse_id_from_cv_term
+from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
 from refinegems.entities import create_gpr, create_reaction
 
 __author__ = "Famke Baeuerle"
@@ -95,7 +95,7 @@ def update_annotations_from_others(model):
                 if not other_metab.isSetMetaId():
                     other_metab.setMetaId('meta_' + other_metab.getId())
                 for db_id, code in metabol_db_dict.items():
-                    id = parse_id_from_cv_term(metab, code)
+                    id = get_id_from_cv_term(metab, code)
                     for entry in id:
                         if entry is not None:
                             add_cv_term_metabolites(entry, db_id, other_metab)    

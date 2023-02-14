@@ -17,13 +17,13 @@ Note that at this time most of the modules only make sense when you use the resp
 .. autofunction:: refinegems.sboann
     :noindex:
 
-The modules ``load``, ``cvterms`` and ``investigate`` provide functions that can be used by themselves.
+The modules ``io``, ``cvterms`` and ``investigate`` provide functions that can be used by themselves.
 
-``load`` 
+``io`` 
 --------
-provides a couple of helper functions to avoid remembering how cobra and libsbml actually load
+provides a couple of helper functions to load models, databases and parse gfffiles
 
-.. automodule:: refinegems.load
+.. automodule:: refinegems.io
     :members:
     :noindex:
 

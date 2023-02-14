@@ -8,11 +8,12 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 import cobra
 import os
 import re
+import gffutils
 import pandas as pd
 from Bio import Entrez, SeqIO
 from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 
 def load_model_cobra(modelpath: str) -> cobra.Model:
@@ -41,6 +42,15 @@ def load_model_libsbml(modelpath: str) -> Model:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     mod = read.getModel()
     return mod
+
+def load_multiple_models(models: list[str], package: str) -> list:
+    loaded_models = []
+    for modelpath in models:
+        if package == 'cobra':
+            loaded_models.append(load_model_cobra(modelpath))
+        elif package == 'libsbml':
+            loaded_models.append(load_model_libsbml(modelpath))
+    return loaded_models
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
@@ -174,41 +184,127 @@ def validate_libsbml_model(model: Model):
     return validator.validate(doc)
 
 
-def parse_fasta_headers(filepath: str) -> dict[str: tuple[str, str]]:
-    """Parses a .fasta file to reveal the protein IDs
-       NCBI Protein headers contain information on locus tag and protein name
-    
-    Params:
-        - filepath (str): path to .fasta file
-
-    Returns:
-        dict: mapping from protein ids to (protein name, locus tag)
+def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
+    """Parses FASTA file headers to obtain:
+        - the protein_id
+        - and the model_id (like it is obtained from CarveMe)
+        corresponding to the locus_tag
+        
+        Args:
+            filepath (str): Path to FASTA file
+            
+        Returns:
+            a pandas dataframe containing the columns locus_tag, Protein_id & Model_id
     """
     keyword_list = ['protein', 'locus_tag']
     tmp_dict = dict()
-    id2locus_names = dict()
-    
+    if id_for_model:
+        locus2ids = {
+            'locus_tag': [],
+            'protein_id': [],
+            'model_id': [],
+            'name': []
+        }
+    else:
+        locus2ids = {
+            'locus_tag': [],
+            'protein_id': [],
+            'name': []
+        }
+   
     with open(filepath, 'r') as handle:
-        
         for record in SeqIO.parse(handle, 'fasta'):
             header = record.description
-            identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
-            descriptors = re.findall('\[+(.*?)\]',header)
+            protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0]
+            descriptors = re.findall('\[+(.*?)\]', header)
+            if id_for_model:
+                model_id = re.sub("\||\.", "_", record.id)
+                model_id = f'G_{model_id}'
+         
+            descriptors.insert(0, protein_id)
             
-            descriptors.insert(0, identifier)
-                
-            tmp_dict['protein_id'] = identifier
-                
+            tmp_dict['protein_id'] = protein_id
+            
             for entry in descriptors:
-                
-                entry = entry.strip().split('=')
-                
+                entry = entry.split('=')
+               
                 if entry[0] in keyword_list:
                     if entry[0] == 'protein_id':
                         tmp_dict[entry[0]] = entry[1].split('.')[0]
                     else:
                         tmp_dict[entry[0]] = entry[1]
-                
-            id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
-                
-    return id2locus_names
+                    
+            locus2ids.get('locus_tag').append(tmp_dict.get('locus_tag'))
+            locus2ids.get('protein_id').append(tmp_dict.get('protein_id'))
+            locus2ids.get('name').append(tmp_dict.get('protein'))
+            if id_for_model:
+                locus2ids.get('model_id').append(model_id)
+            
+    return pd.DataFrame(locus2ids)
+
+
+def search_ncbi_for_gpr(locus):
+    """fetches protein name from NCBI
+
+    Args:
+        locus (string): NCBI compatible locus_tag
+
+    Returns:
+        str: protein name / description
+    """
+    handle = Entrez.efetch(
+        db="protein",
+        id=locus,
+        rettype="gbwithparts",
+        retmode='text')
+    records = SeqIO.parse(handle, "gb")
+
+    for i, record in enumerate(records):
+        if (locus[0] == 'W'):
+            return record.description, locus
+        else:
+            for feature in record.features:
+                if feature.type == "CDS":
+                    return record.description, feature.qualifiers["locus_tag"][0]
+                else:
+                    return record.description, None
+
+
+def parse_gff_for_gp_info(gff_file):
+    """Parses gff file of organism to find gene protein reactions based on locus tags
+
+    Args:
+        gff_file (Str): path to gff file of organism of interest
+
+    Returns:
+        df: table containing mapping from locus tag to GPR
+    """
+    db = gffutils.create_db(
+        gff_file,
+        ':memory:',
+        merge_strategy='create_unique')
+    mapping_cds = {}
+    for feature in db.all_features():
+        attr = dict(feature.attributes)
+        try:
+            if str(attr['gbkey'][0]) == 'CDS':
+                mapping_cds[attr['Name'][0]] = attr['Parent'][0]
+        except BaseException:
+            pass
+    mapping_df = pd.DataFrame.from_dict(
+        mapping_cds,
+        columns=['Parent'],
+        orient='index').reset_index().rename(
+        columns={
+            'index': 'GPR'})
+
+    def extract_locus(feature):
+        try:
+            return db[feature].attributes['old_locus_tag'][0]
+        except BaseException:
+            pass
+        return None
+
+    mapping_df['locus_tag'] = mapping_df.apply(
+        lambda row: extract_locus(row['Parent']), axis=1)
+    return mapping_df.drop('Parent', axis=1)

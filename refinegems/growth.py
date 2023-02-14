@@ -14,7 +14,7 @@ missing = all exchanges missing in the model but given in medium
 
 import pandas as pd
 import numpy as np
-from refinegems.load import load_all_media_from_db
+from refinegems.io import load_all_media_from_db
 from cobra.medium import minimal_medium
 
 __author__ = "Famke Baeuerle"

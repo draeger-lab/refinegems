@@ -8,7 +8,7 @@ It is possible to use the correct_charges_from_db function with other databases.
 
 import pandas as pd
 from libsbml import *
-from refinegems.load import write_to_file
+from refinegems.io import write_to_file
 from refinegems.modelseed import get_modelseed_compounds
 import re
 

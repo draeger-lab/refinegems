@@ -10,7 +10,7 @@ from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.load import write_to_file, parse_fasta_headers
+from refinegems.io import write_to_file, parse_fasta_headers, search_ncbi_for_gpr
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -444,26 +444,11 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                            and/or the locus tags in the CarveMe input file should be kept
     """
     Entrez.email = email
-
-    def get_name_locus_tag(ncbi_id):
-        handle = Entrez.efetch(
-            db="protein",
-            id=ncbi_id,
-            rettype="gbwithparts",
-            retmode='text')
-        records = SeqIO.parse(handle, "gb")
-
-        for i, record in enumerate(records):
-            if (ncbi_id[0] == 'W'):
-                return record.description, ncbi_id
-            else:
-                for feature in record.features:
-                    if feature.type == "CDS":
-                        return record.description, feature.qualifiers["locus_tag"][0]
                     
     id2locus_name = {}  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
     if (protein_fasta is not None) and protein_fasta.strip() != '': 
        id2locus_name = parse_fasta_headers(protein_fasta)
+       id2locus_name.set_index('protein_id')
        
     genes_missing_annotation = []
 
@@ -475,7 +460,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()[2:-2]
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
-            name, locus = get_name_locus_tag(entry)
+            name, locus = search_ncbi_for_gpr(entry)
             gene.setName(name)
             gene.setLabel(locus)
         
@@ -493,7 +478,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             # If identifier matches RefSeq ID pattern   
             if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
                add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
-               name, locus = get_name_locus_tag(ncbi_id)
+               name, locus = search_ncbi_for_gpr(ncbi_id)
             
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
@@ -506,7 +491,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             # If identifier matches ncbiprotein ID pattern
             elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
                add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
-               name, locus = get_name_locus_tag(ncbi_id)
+               name, locus = search_ncbi_for_gpr(ncbi_id)
             
             # For lab strains use the locus tag from the annotation file   
             if lab_strain and id2locus_name:

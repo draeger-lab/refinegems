@@ -24,36 +24,36 @@ def main():
         print(errors)
         
     elif (config['sboterms']):
-        model_libsbml = rg.load.load_model_libsbml(config['model'])
+        model_libsbml = rg.io.load_model_libsbml(config['model'])
         rg.sboann.sbo_annotation_write(model_libsbml, config['sbo_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['sbo_path'])
         print(errors)
         
     elif (config['polish']):
-        model_libsbml = rg.load.load_model_libsbml(config['model'])
+        model_libsbml = rg.io.load_model_libsbml(config['model'])
         rg.polish.polish(model_libsbml, config['polish_path'], config['entrez_email'], config['id_db'], config['protein_fasta'], config['lab_strain'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['polish_path'])
         print(errors)
         
     elif (config['charge_corr']):
-        model_libsbml = rg.load.load_model_libsbml(config['model'])
+        model_libsbml = rg.io.load_model_libsbml(config['model'])
         rg.charges.correct_charges_modelseed(model_libsbml, config['charge_path'], config['modelseedpath'], config['charge_report_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['charge_path'])
         print(errors)
         
     elif(config['man_cur']):
-        model_libsbml = rg.load.load_model_libsbml(config['model'])
+        model_libsbml = rg.io.load_model_libsbml(config['model'])
         if config['man_cur_type'] == 'gapfill':
-            gapfill = rg.load.load_manual_gapfill(config['man_cur_table'])
+            gapfill = rg.io.load_manual_gapfill(config['man_cur_table'])
             model = rg.curate.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
-            rg.load.write_to_file(model, config['man_cur_path'])
+            rg.io.write_to_file(model, config['man_cur_path'])
             model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
             print(errors)
         elif config['man_cur_type'] == 'metabs':
-            man_ann = rg.load.load_manual_annotations(config['man_cur_table'])
+            man_ann = rg.io.load_manual_annotations(config['man_cur_table'])
             model = rg.curate.update_annotations_from_table(model_libsbml, man_ann)
             model = rg.curate.update_annotations_from_others(model)
-            rg.load.write_to_file(model, config['man_cur_path'])
+            rg.io.write_to_file(model, config['man_cur_path'])
             model, errors = cobra.io.sbml.validate_sbml_model(config['man_cur_path'])
             print(errors)
     
@@ -70,7 +70,7 @@ def main():
             print('Either no or no valid model given, please enter a valid path in the model field in the config file.')
 
         if (model_cobra != None):
-            model_libsbml = rg.load.load_model_libsbml(config['model'])
+            model_libsbml = rg.io.load_model_libsbml(config['model'])
             name, reac, metab, genes = rg.investigate.initial_analysis(model_libsbml)
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
