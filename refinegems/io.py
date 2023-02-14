@@ -184,46 +184,7 @@ def validate_libsbml_model(model: Model):
     return validator.validate(doc)
 
 
-def parse_fasta_headers_to_dict(filepath: str) -> dict[str: tuple[str, str]]:
-    """Parses a .fasta file to reveal the protein IDs
-       NCBI Protein headers contain information on locus tag and protein name
-    
-    Params:
-        - filepath (str): path to .fasta file
-
-    Returns:
-        dict: mapping from protein ids to (protein name, locus tag)
-    """
-    keyword_list = ['protein', 'locus_tag']
-    tmp_dict = dict()
-    id2locus_names = dict()
-    
-    with open(filepath, 'r') as handle:
-        
-        for record in SeqIO.parse(handle, 'fasta'):
-            header = record.description
-            identifier = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
-            descriptors = re.findall('\[+(.*?)\]',header)
-            
-            descriptors.insert(0, identifier)
-                
-            tmp_dict['protein_id'] = identifier
-                
-            for entry in descriptors:
-                
-                entry = entry.strip().split('=')
-                
-                if entry[0] in keyword_list:
-                    if entry[0] == 'protein_id':
-                        tmp_dict[entry[0]] = entry[1].split('.')[0]
-                    else:
-                        tmp_dict[entry[0]] = entry[1]
-                
-            id2locus_names[tmp_dict.get('protein_id')] = (tmp_dict.get('protein'), tmp_dict.get('locus_tag'))
-                
-    return id2locus_names
-
-def parse_fasta_headers(filepath: str) -> pd.DataFrame:
+def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
     """Parses FASTA file headers to obtain:
         - the protein_id
         - and the model_id (like it is obtained from CarveMe)
@@ -237,20 +198,28 @@ def parse_fasta_headers(filepath: str) -> pd.DataFrame:
     """
     keyword_list = ['protein', 'locus_tag']
     tmp_dict = dict()
-    locus2ids = {
-        'locus_tag': [],
-        'protein_id': [],
-        'model_id': [],
-        'name': []
-    }
+    if id_for_model:
+        locus2ids = {
+            'locus_tag': [],
+            'protein_id': [],
+            'model_id': [],
+            'name': []
+        }
+    else:
+        locus2ids = {
+            'locus_tag': [],
+            'protein_id': [],
+            'name': []
+        }
    
     with open(filepath, 'r') as handle:
         for record in SeqIO.parse(handle, 'fasta'):
             header = record.description
             protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0]
             descriptors = re.findall('\[+(.*?)\]', header)
-            model_id = re.sub("\||\.", "_", record.id)
-            model_id = f'G_{model_id}'
+            if id_for_model:
+                model_id = re.sub("\||\.", "_", record.id)
+                model_id = f'G_{model_id}'
          
             descriptors.insert(0, protein_id)
             
@@ -268,7 +237,8 @@ def parse_fasta_headers(filepath: str) -> pd.DataFrame:
             locus2ids.get('locus_tag').append(tmp_dict.get('locus_tag'))
             locus2ids.get('protein_id').append(tmp_dict.get('protein_id'))
             locus2ids.get('name').append(tmp_dict.get('protein'))
-            locus2ids.get('model_id').append(model_id)
+            if id_for_model:
+                locus2ids.get('model_id').append(model_id)
             
     return pd.DataFrame(locus2ids)
  
@@ -295,7 +265,7 @@ def get_name_from_locus(locus):
  
 
 # Function originally from analysis_kegg
-def get_locus_gpr(gff_file):
+def parse_gff_for_gp_info(gff_file):
     """Searches gff file of organism for gene protein reactions based on locus tags
 
     Args:

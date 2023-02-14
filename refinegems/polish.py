@@ -10,7 +10,7 @@ from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import write_to_file, parse_fasta_headers_to_dict
+from refinegems.io import write_to_file, parse_fasta_headers
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -463,7 +463,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                     
     id2locus_name = {}  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
     if (protein_fasta is not None) and protein_fasta.strip() != '': 
-       id2locus_name = parse_fasta_headers_to_dict(protein_fasta)
+       id2locus_name = parse_fasta_headers(protein_fasta)
+       id2locus_name.set_index('protein_id')
        
     genes_missing_annotation = []
 

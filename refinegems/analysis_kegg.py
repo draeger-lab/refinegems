@@ -14,7 +14,7 @@ import pandas as pd
 from bioservices.kegg import KEGG
 import io
 import re
-from refinegems.io import get_locus_gpr
+from refinegems.io import parse_gff_for_gp_info
 from refinegems.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model
 
@@ -179,7 +179,7 @@ def kegg_gene_comp(model, organismid, biggreactions, gff_file):
     kegg_genes = get_kegg_genes(organismid)
     bigg_kegg = get_bigg2other_db(biggreactions, 'KEGG')
     genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes)
-    locus_gpr = get_locus_gpr(gff_file)
+    locus_gpr = parse_gff_for_gp_info(gff_file)
     locus_ec = get_locus_ec(genes_kegg_notmodel)
     locus_ec_kegg = get_locus_ec_kegg(locus_ec)
     locus_ec_kegg_bigg = get_locus_ec_kegg_bigg(locus_ec_kegg, bigg_kegg)

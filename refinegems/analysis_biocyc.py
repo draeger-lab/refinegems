@@ -304,7 +304,7 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> pd.DataFra
    locus_tags_df = pd.DataFrame(pd.Series(locus_tags), columns=['locus_tag'])
    
    # Get protein and GeneProduct ID for the model from FASTA file
-   ids_df = parse_fasta_headers(fasta)
+   ids_df = parse_fasta_headers(fasta, id_for_model=True)
    
    # Get the complete dataframe with the protein & model id
    missing_genes = locus_tags_df.merge(ids_df, on='locus_tag')
