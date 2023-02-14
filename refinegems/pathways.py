@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
 from refinegems.io import write_to_file
-from refinegems.cvterms import add_cv_term_pathways, parse_id_from_cv_term, add_cv_term_pathways_to_entity
+from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"
 
@@ -50,7 +50,7 @@ def extract_kegg_reactions(model):
     non_kegg_reac = []
     
     for reaction in list_reac:
-        kegg_ids = parse_id_from_cv_term(reaction, 'kegg')
+        kegg_ids = get_id_from_cv_term(reaction, 'kegg')
         if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
         else:

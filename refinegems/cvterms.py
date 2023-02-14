@@ -163,7 +163,7 @@ def add_cv_term_pathways_to_entity(entry, db_id, entity):
     entity.addCVTerm(cv)
 
 
-def parse_id_from_cv_term(entity, db_id):
+def get_id_from_cv_term(entity, db_id):
     """extract id for a specific database from CVTerm
 
     Args:
