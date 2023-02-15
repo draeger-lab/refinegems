@@ -1,7 +1,7 @@
 BEGIN;
 
-DROP TABLE IF EXISTS BiGG_to_SBO;
-DROP TABLE IF EXISTS EC_to_SBO;
+DROP TABLE IF EXISTS bigg_to_sbo;
+DROP TABLE IF EXISTS ec_to_sbo;
 
 --
 -- Name: bigg_to_sbo; Type: TABLE; Schema: public; Owner: -
