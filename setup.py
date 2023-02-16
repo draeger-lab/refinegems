@@ -20,6 +20,7 @@ setup(name='refineGEMs',
             "markupsafe==2.0.1", 
             "depinfo==1.7.0",
             "sortedcontainers==2.4.0",
-            "libchebipy==1.0.10"
+            "libchebipy==1.0.10",
+            "venn==0.1.3"
             ],
       zip_safe=False)
