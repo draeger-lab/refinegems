@@ -266,8 +266,6 @@ def search_ncbi_for_gpr(locus):
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
-                else:
-                    return record.description, None
 
 
 def parse_gff_for_gp_info(gff_file):
