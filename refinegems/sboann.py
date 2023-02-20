@@ -10,59 +10,11 @@ It is splitted into a lot of small functions which are all annotated, however wh
 
 import re
 import sqlite3
-from sqlite3 import Error
 from libsbml import *
+from refinegems.databases import PATH_TO_DB
 from refinegems.io import write_to_file
 
-__author__ = "Elisabeth Fritze"
-__author__ = "Gwendolyn O. Gusak"
-
-
-def is_valid_database(open_cur) -> bool:
-   """
-   Verifies if database has 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-   
-   Args:
-        open_cur: sqlite3.connect.cursor() object of a database
- 
-   Returns:
-        Boolean: True if all conditions (2 tables with names 'bigg_to_sbo' & 'ec_to_sbo') for database correct
-   """
-
-   # Fetches the table names as string tuples from the connected database
-   open_cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
-   tables = [string[0] for string in open_cur.fetchall()]
-
-   return 'bigg_to_sbo' in tables and 'ec_to_sbo' in tables and len(tables) == 2
-
-
-def initialise_SBO_database():
-   """
-   Initialises the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
-   if file './data/sbo/sbo_database.db' is an incorrect database,
-   otherwise correct database already exists
-   
-   Returns:
-        sqlite3.connect() & sqlite3.connect.cursor() objects for SBO database
-   """
-
-   # Initialise empty connection
-   con = None
-
-   # Try to open connection & get cursor
-   try:
-      con = sqlite3.connect('./data/sbo/sbo_database.db')
-      cursor = con.cursor()
-
-      # If connected to database incorrect -> initialise correct one from file './data/sbo/sbo_database.sql'
-      if not is_valid_database(cursor):
-         with open('./data/sbo/sbo_database.sql') as schema:
-            cursor.executescript(schema.read())
-   except Error as e:
-      print(e)
-   finally:
-      if con:
-         return con, cursor
+__author__ = "Elisabeth Fritze, Gwendolyn O. Gusak & Nantia Leonidou"
 
 
 def getCompartmentlessSpeciesId(speciesReference):
@@ -768,7 +720,8 @@ def sbo_annotation(model_libsbml):
     Returns:
         libsbml-model: modified model with SBO terms
     """
-    open_con, open_cur = initialise_SBO_database()
+    open_con = sqlite3.connect(PATH_TO_DB)
+    open_cur = open_con.cursor()
 
     for reaction in model_libsbml.reactions:
         if not addSBOfromDB(reaction, open_cur):

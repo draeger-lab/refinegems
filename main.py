@@ -14,6 +14,8 @@ def main():
     print("Author:", __author__)
     today = date.today().strftime("%Y%m%d")
     
+    rg.databases.initialise_database()
+    
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
 
