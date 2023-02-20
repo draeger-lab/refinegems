@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from libsbml import *
-import refinegems.analysis_db as rga
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
-import refinegems.entities as rge
+from pandas import DataFrame
+from typing import Union
 from colorama import init as colorama_init
 from colorama import Fore
 
@@ -22,12 +22,29 @@ def gff_gene_comp():
     pass
 
 
-def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]):
-    """ Main function to gapfill a model with comparison to KEGG/BioCyc/(Genbank) GFF file
+def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
+    """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
+        to KEGG/BioCyc/(Genbank) GFF file
    
         Args:
             model_libsbml (Model): model loaded with libSBML
             gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
+            
+        Returns:
+            Case 'KEGG' - A data frame containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
+            Case 'BioCyc' - Five data frames:
+                (1): Gap fill statistics with the columns 
+                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+                (2): Genes with the columns 'locus_tag' 'protein_id' 'model_id' 'name'
+                (3): Metabolites with the columns 
+                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'
+                (4): Metabolites without BiGG ID with the columns 
+                    'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')
+                (5): Reactions with the columns 
+                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
+                    'bigg_reaction'
+            Case 'KEGG+BioCyc': Same output as cases 'KEGG' & 'BioCyc' 
+                -> Data frame reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
     db_to_compare = gapfill_params['db_to_compare']
@@ -44,7 +61,6 @@ def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]):
         if gapfill_params['organismid']:
             missing_kegg = rga_kegg.kegg_gene_comp(model_libsbml, 
                                                    gapfill_params['organismid'], 
-                                                   gapfill_params['bigg_dbs'][0], 
                                                    gapfill_params['gff_file']
                                                    )
             return missing_kegg
@@ -54,14 +70,12 @@ def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]):
         
     elif db_to_compare == 'BioCyc':
         missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
-                                                     gapfill_params['biocyc_files'],
-                                                     gapfill_params['bigg_dbs']
+                                                     gapfill_params['biocyc_files']
                                                      )
         return missing_biocyc
         
     elif db_to_compare == 'GFF':
         gff_genes = gff_gene_comp(model_libsbml, 
-                                  gapfill_params['bigg_dbs'], 
                                   gapfill_params['gff_file']
                                   )
         return gff_genes
@@ -69,14 +83,40 @@ def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]):
     elif db_to_compare == 'KEGG+BioCyc':
         missing_kegg_reacs = rga_kegg.kegg_gene_comp(model_libsbml, 
                                                gapfill_params['organismid'], 
-                                               gapfill_params['bigg_dbs'][0], 
                                                gapfill_params['gff_file']
                                                )
         missing_kegg_reacs.drop(['name', 'locus_tag', 'EC'], axis=1, inplace=True)
         missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
-                                                     gapfill_params['biocyc_files'],
-                                                     gapfill_params['bigg_dbs']
+                                                     gapfill_params['biocyc_files']
                                                      )
         stats, missing_biocyc_genes, missing_biocyc_metabs, missing_metabs_wo_BiGG_df, missing_biocyc_reacs = missing_biocyc
         missing_combined_reacs = missing_biocyc_reacs.merge(missing_kegg_reacs, how='left', on='bigg_id')
         return (stats, missing_biocyc_genes, missing_biocyc_metabs, missing_metabs_wo_BiGG_df, missing_combined_reacs, missing_kegg_reacs)
+    
+    
+def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tuple]):
+    """Main function to fill gaps in a model from a table
+   
+        Args:
+            model_libsbml (Model): model loaded with libSBML
+            gapfill_analysis_result (str | tuple): Path to Excel file from gapfill_analysis | Tuple of pandas data 
+                frames obtained from gapfill_analysis
+    """
+    pass
+
+
+def gapfill(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
+    """Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
+        KEGG/BioCyc/(Genbank) GFF file
+   
+        Args:
+            model_libsbml (Model): model loaded with libSBML
+            gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
+            
+        Return:
+            Result from gapfill_analysis()
+    """
+    gapfill_analysis_result = gapfill_analysis(model_libsbml, gapfill_params)
+    gapfill_model(model_libsbml, gapfill_analysis_result)
+    
+    return gapfill_analysis_result
