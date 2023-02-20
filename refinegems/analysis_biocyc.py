@@ -139,7 +139,7 @@ def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame):
 
 
 def get_missing_reactions(
-   model_libsbml: Model, bigg_db: str, genes2reaction: pd.DataFrame, inpath: str
+   model_libsbml: Model, genes2reaction: pd.DataFrame, inpath: str
    ) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Subsets the BioCyc table with the following columns: 
    'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
@@ -148,7 +148,6 @@ def get_missing_reactions(
 
       Params:
          - model_libsbml (Model):         Model read in with libSBML
-         - bigg_db (str):                 Path to TXT file containing all reactions from the BiGG database
          - genes2reaction (pd.DataFrame): A pandas dataframe containing only 'Accession-2' & 'Reactions' for the 
                                           missing genes
          - inpath (str):                  Path to file from BioCyc containing the following columns:
@@ -178,7 +177,7 @@ def get_missing_reactions(
    statistics_df.loc['Reaction', 'Total'] = len(missing_reactions['Reaction'].unique().tolist())
    
    # Get BiGG BioCyc
-   bigg2biocyc_reacs = get_bigg2other_db(bigg_db, 'BioCyc')
+   bigg2biocyc_reacs = get_bigg2other_db('BioCyc')
    
    # Subset missing_reactions with BiGG BioCyc
    missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
@@ -238,15 +237,14 @@ def get_missing_metabolites_wo_BiGG(
    
 
 def get_missing_metabolites(
-   model_libsbml: Model, bigg_db: str, metabs_from_reacs: pd.DataFrame, inpath: str
+   model_libsbml: Model, metabs_from_reacs: pd.DataFrame, inpath: str
    ) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Subsets the BioCyc table with the following columns: 'Compound' 'Chemical Formula' 'InChI-Key' 'ChEBI'
       to obtain the missing metabolites with all the corresponding data
       & Adds the according BiGG Compound identifiers
       
       Params:
-         - model_libsml (Model):             Model read in with libSBML
-         - bigg_db (str):                    Path to TXT file containing all metabolites from the BiGG database 
+         - model_libsml (Model):             Model read in with libSBML 
          - metabs_from_reacs (pd.DataFrame): A pandas dataframe containing only the metabolites corresponding to the 
                                              missing reactions
          - inpath (str):                     Path to file from BioCyc containing the following columns:
@@ -269,7 +267,7 @@ def get_missing_metabolites(
    statistics_df.loc['Metabolite', 'Total'] = len(missing_metabolites['BioCyc'].unique().tolist())
    
    # Get BiGG BioCyc
-   bigg2biocyc_metabs = get_bigg2other_db(bigg_db, 'BioCyc', True)
+   bigg2biocyc_metabs = get_bigg2other_db('BioCyc', True)
    
    # Subset missing_metabolites with BiGG BioCyc -> To get only metabolites with BiGG IDs
    missing_metabolites = bigg2biocyc_metabs.merge(missing_metabolites, on='BioCyc')
@@ -317,7 +315,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
    """Adds charges & chemical formulae from CHEBI to the provided dataframe
 
       Params:
-         - missing_metabolites (DataFrame): A pandas dataframe containing metabolites & the respective CHEBI IDs
+         - missing_metabs (DataFrame): A pandas dataframe containing metabolites & the respective CHEBI IDs
          
       Returns:
          -> The input pandas dataframe extended with the charges & chemical formulas obtained from CHEBI
@@ -357,23 +355,59 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
             chem_formula = chem_form if chem_form != 'nan' else 'No formula'
       return chem_formula
    
-   missing_metabs['charge'] = missing_metabs.apply(find_charge, axis=1)  #str(row['ChEBI']), str(row['bigg_id'])
+   missing_metabs['charge'] = missing_metabs.apply(find_charge, axis=1)
    missing_metabs['New Chemical Formula'] = missing_metabs.apply(find_formula, axis=1)
    missing_metabs['Chemical Formula'] = missing_metabs['New Chemical Formula']
    missing_metabs.drop('New Chemical Formula', axis=1, inplace=True)
    
    return missing_metabs
 
+# Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
+def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
+   """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'
+   
+      Params:
+         - missing_reacs (DataFrame): A pandas dataframe containing reactions & the respective Reaction-Directions
+         
+      Returns:
+         -> The input pandas dataframe extended with the fluxes lower & upper bounds obtained from 
+            the Reaction-Directions
+   """
+    
+   def get_fluxes(row: pd.Series) -> dict[str: str]:
+      direction = row['Reaction-Direction']
+      fluxes = {}
+      
+      if type(direction) == float:
+         # Use default bounds as described in readthedocs from COBRApy
+         fluxes['lower_bound'] = 'cobra_0_bound'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      elif 'RIGHT-TO-LEFT' in direction:
+         fluxes['lower_bound'] = 'cobra_default_lb'
+         fluxes['upper_bound'] = 'cobra_0_bound'
+      elif 'LEFT-TO-RIGHT' in direction:
+         fluxes['lower_bound'] = 'cobra_0_bound'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      elif 'REVERSIBLE' in direction:
+         fluxes['lower_bound'] = 'cobra_default_lb'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      
+      return str(fluxes)
+   
+   missing_reacs['fluxes'] = missing_reacs.apply(get_fluxes, axis=1)
+   missing_reacs.drop('Reaction-Direction', axis=1, inplace=True)
+   
+   return missing_reacs
+
 
 def biocyc_gene_comp(
-   model_libsbml: Model, biocyc_file_paths: list[str], bigg_dbs: list[str]
+   model_libsbml: Model, biocyc_file_paths: list[str]
    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
    """Main function to retrieve the dataframes for missing genes, metabolites and reactions from BioCyc
    
       Params:
          - model_libsbml (Model):      libSBML Model object
          - biocyc_file_paths (list):   A list of the files required for the BioCyc analysis
-         - bigg_dbs (list):            A list of TXT files where the BiGG metabolites & reactions are stored
          
       Returns: 
          -> Five dataframes (1) - (5):
@@ -385,11 +419,12 @@ def biocyc_gene_comp(
    """
    # Extract missing reactions from all missing genes
    genes2reactions = get_missing_genes2reactions(model_libsbml, biocyc_file_paths[0])
-   metabs_from_reacs, missing_reactions_df = get_missing_reactions(model_libsbml, bigg_dbs[0], genes2reactions, biocyc_file_paths[1])
+   metabs_from_reacs, missing_reactions_df = get_missing_reactions(model_libsbml, genes2reactions, biocyc_file_paths[1])
    missing_reactions_df = add_stoichiometric_values_to_reacs(missing_reactions_df)
+   missing_reactions_df = replace_reaction_direction_with_fluxes(missing_reactions_df)
    
    # Extract missing metabolites that belong to the missing reactions
-   missing_metabolites_df, missing_metabs_wo_BiGG_df = get_missing_metabolites(model_libsbml, bigg_dbs[1], metabs_from_reacs, biocyc_file_paths[2])
+   missing_metabolites_df, missing_metabs_wo_BiGG_df = get_missing_metabolites(model_libsbml, metabs_from_reacs, biocyc_file_paths[2])
    missing_metabolites_df = add_charges_chemical_formulae_to_metabs(missing_metabolites_df)
    # If metabolites should be added due to reactions but no BiGG ID was found
    if len(missing_metabs_wo_BiGG_df.index) > 0:
