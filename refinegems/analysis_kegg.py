@@ -162,13 +162,12 @@ def get_locus_ec_kegg_bigg_gpr(locus_ec_kegg_bigg, locus_gpr):
     return locus_ec_kegg_bigg.merge(locus_gpr, how='left', on='locus_tag')
 
 
-def kegg_gene_comp(model, organismid, biggreactions, gff_file):
+def kegg_gene_comp(model, organismid, gff_file):
     """Exectues all steps to compare genes of the model to KEGG genes
 
     Args:
         model (libsbml-model): model loaded with libsbml
         organismid (Str): KEGG Id of organism which the model is based on
-        biggreactions (Str): path to file containing BiGG database
         gff_file (Str): path to gff file of organism of interest
 
     Returns:
@@ -177,7 +176,7 @@ def kegg_gene_comp(model, organismid, biggreactions, gff_file):
     model_genes = get_model_genes(model, True)
     model_reactions = get_model_reacs_or_metabs(model)
     kegg_genes = get_kegg_genes(organismid)
-    bigg_kegg = get_bigg2other_db(biggreactions, 'KEGG')
+    bigg_kegg = get_bigg2other_db('KEGG')
     genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes)
     locus_gpr = parse_gff_for_gp_info(gff_file)
     locus_ec = get_locus_ec(genes_kegg_notmodel)
