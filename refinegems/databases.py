@@ -11,7 +11,7 @@ from os import path
 __author__ = 'Gwendolyn O. Gusak'
 
 
-PATH_TO_DB_DATA = path.join(path.abspath(path.dirname(path.dirname(__file__))), 'data/databases')
+PATH_TO_DB_DATA = path.join(path.abspath(path.dirname(path.dirname(__file__))), 'data/database')
 PATH_TO_DB = path.join(PATH_TO_DB_DATA, 'data.db')
 VERSION_FILE = path.join(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
@@ -74,7 +74,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """Creates the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
-      & the media database with 2 tables ('media', 'media_compositions') from file './data/databases/sbo_media_db.sql'
+      & the media database with 2 tables ('media', 'media_compositions') from file './data/database/sbo_media_db.sql'
 
       Args:
          db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
@@ -143,6 +143,7 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    Args:
        db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
+   print('Adding the ModelSEED compounds table...')
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
    modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t')
