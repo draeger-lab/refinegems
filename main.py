@@ -81,8 +81,12 @@ def main():
             if (config['memote']):
                 score = rg.investigate.run_memote(model_cobra)
                 
-            if (config['gapfill_analysis']):
+            if (config['gapfill_analysis'] and config['gapfill_model']):
+                gapfill_analysis = rg.gapfill.gapfill(model_libsbml, config['gapfill_analysis_params'])    
+            elif (config['gapfill_analysis']):
                 gapfill_analysis = rg.gapfill.gapfill_analysis(model_libsbml, config['gapfill_analysis_params'])
+            elif (config['gapfill_model']):
+                rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_file'])
                 
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(config['modelseedpath'], model_cobra)
@@ -104,7 +108,7 @@ def main():
                 print('Charge unbalanced reactions: ' + str(charge_unbal))
                 print(growth_sim)
                 print(egc)
-                if(config['gapfill_analysis']): 
+                if(config['gapfill_analysis']) or (config['gapfill_analysis'] and config['gapfill_model']): 
                     if type(gapfill_analysis) == tuple:
                         print('BioCyc - Statistics on missing entities:')
                         print(gapfill_analysis[0])
@@ -142,15 +146,16 @@ def main():
                     if(config['modelseed']):
                         charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
                         formula_mismatch.to_excel(writer, sheet_name='formula mismatches', index=False)
-                if(config['gapfill_analysis']) and type(gapfill_analysis) == tuple: 
-                    with pd.ExcelWriter(config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx') as writer:
-                        gapfill_analysis[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
-                        gapfill_analysis[1].to_excel(writer, sheet_name='genes', index=False)
-                        gapfill_analysis[2].to_excel(writer, sheet_name='metabolites', index=False)
-                        gapfill_analysis[3].to_excel(writer, sheet_name='metabolites without BiGG IDs', index=False)
-                        gapfill_analysis[4].to_excel(writer, sheet_name='reactions', index=False)
-                        if len(gapfill_analysis) == 6:
-                            gapfill_analysis[5].to_excel(writer, sheet_name='KEGG reactions', index=False)
+                if(config['gapfill_analysis']) or (config['gapfill_analysis'] and config['gapfill_model']): 
+                    if type(gapfill_analysis) == tuple:
+                        with pd.ExcelWriter(config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx') as writer:
+                            gapfill_analysis[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
+                            gapfill_analysis[1].to_excel(writer, sheet_name='genes', index=False)
+                            gapfill_analysis[2].to_excel(writer, sheet_name='metabolites', index=False)
+                            gapfill_analysis[3].to_excel(writer, sheet_name='metabolites without BiGG IDs', index=False)
+                            gapfill_analysis[4].to_excel(writer, sheet_name='reactions', index=False)
+                            if len(gapfill_analysis) == 6:
+                                gapfill_analysis[5].to_excel(writer, sheet_name='KEGG reactions', index=False)
             
             if (config['output'] == 'csv'): # csv file
                 print('---')
@@ -163,7 +168,7 @@ def main():
                 model_info.to_csv(name + '_modelinfo.csv', index=False)
                 growth_sim.to_csv(name +'_growthsim.csv', index=False)
                 egc.to_csv(name + '_egc.csv', index=False)
-                if(config['gapfill_analysis']):
+                if(config['gapfill_analysis']) or (config['gapfill_analysis'] and config['gapfill_model']):
                     if type(gapfill_analysis) == tuple:
                         gapfill_analysis[0].to_csv(name +'_BioCyc_analysis_statistics.csv', index=False)
                         gapfill_analysis[1].to_csv(name +'_BioCyc_analysis_genes.csv', index=False)

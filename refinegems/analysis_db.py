@@ -2,8 +2,8 @@
 import re
 import requests
 import pandas as pd
+from refinegems.io import load_a_table_from_database
 from libsbml import *
-from bioservices.kegg import KEGG
 from typing import Literal
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
@@ -26,34 +26,27 @@ def get_search_regex(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool) -> 
             return 'KEGG Compound: http://identifiers.org/kegg.compound/(.*?);'
         else:
             return 'KEGG Reaction: http://identifiers.org/kegg.reaction/(.*?);'
-    
+
  
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_bigg2other_db(bigg_db: str, other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=False) -> pd.DataFrame:
+def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=False) -> pd.DataFrame:
     """Uses list of BiGG reactions/metabolites to get a mapping from BiGG to KEGG/BioCyc Id
 
     Args:
-        bigg_db (Str): path to file containing BiGG database
-                       (Either: bigg_models_metabolites.txt (metabolites=True) 
-                        Or: bigg_models_reactions.txt (metabolites=False))
         other_db (Literal): Set to 'KEGG'/'BioCyc' to map KEGG/BioCyc IDs to BiGG IDs
         metabolites (bool): set to True to map other_db IDs to BiGG IDs for metabolites
 
     Returns:
         df: table containing BiGG Ids with corresponding KEGG/BioCyc Ids
     """
+    db_table_name = 'bigg_metabolites' if metabolites else 'bigg_reactions'
+    bigg_db_df = load_a_table_from_database(db_table_name)
     db_search_regex = get_search_regex(other_db, metabolites)
-    # make the download of biggreactions/biggmetabolites possible to maintain database
-    bigg_db_df = pd.read_csv(
-        bigg_db,
-        sep='\t').drop(
-        'model_list',
-        axis=1).dropna()
-
+    
     def find_other_db(database_links: str):
         m = re.findall(
             db_search_regex,
-            database_links)
+            str(database_links))
         if m:
             return m
         else:
@@ -73,7 +66,7 @@ def get_bigg2other_db(bigg_db: str, other_db: Literal['KEGG', 'BioCyc'], metabol
     return bigg_db_df[['bigg_id', 'name', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', 'name', other_db]]
  
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame):
+def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame) -> pd.DataFrame:
     """Compares missing entities obtained through genes extracted via KEGG/BioCyc to entities in the model
         Needed to back check previous comparisons.
 
@@ -84,32 +77,42 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame):
     Returns:
         df: table containing entities present in KEGG/BioCyc but not in the model
     """
-    db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
-    
     mapp = complete_df.set_index('bigg_id')
     entities = model_entities.set_index('bigg_id')
 
     entities_missing_in_model = mapp[~mapp.index.isin(
         entities.index)].reset_index()
 
-    ambig_db_id = complete_df.loc[complete_df.duplicated(
-        subset=[db], keep='first')]
-    if 'EC' in ambig_db_id.columns:
-        ambig_db_id = ambig_db_id.set_index(db).drop(
-            ['locus_tag', 'EC'], axis=1).sort_index()
-    else:
-        ambig_db_id.set_index(db).sort_index(inplace=True)
+    return entities_missing_in_model
 
-    ambig = ambig_db_id.set_index('bigg_id')
-    miss = entities_missing_in_model.set_index('bigg_id')
 
-    entities_missing_in_model_non_dup = miss[~miss.index.isin(
-        ambig.index)].reset_index()
-
-    return entities_missing_in_model_non_dup
+def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
+    """
+        complete_df (DataFrame): A pandas dataframe containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
+        compartments (list): A list of BiGG compartment identifiers for which reaction IDs should be kept
+    """
+    db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
+    complete_df.drop_duplicates(subset=['bigg_id', db], inplace=True, ignore_index=True)  # Remove ID duplicates
+    complete_df = complete_df[['bigg_id', db]]  # Remove all unnecessary columns
+    
+    # (1) re.findall() to find all occurrencs of a BiGG reaction ID in data frame
+    # (2) Use list of all BiGG IDs obtained with re.findall() to get 'metabolites'
+    # (3) Check if all metabolites are contained in correct compartments
+    # (4) Assemble new data frame with 'bigg_id' 'BioCyc' and 'compartment' if overall compartment is available
+    
+    return pd.DataFrame()
 
 
 def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFrame:
+    """Adds for each reaction a dictionary containing the reactants & products as dictionaries with the BiGG Metabolite 
+        ID as key & the respective absolute stoichiometric value as value
+        
+        Args:
+            missing_reacs (df): A dataframe containing missing reactions (Only requires a column containing BiGG IDs)
+            
+        Returns:
+            df: A table where for each BiGG reaction ID a dictionary containing reactants & products exists 
+    """
     
     def get_reactants_and_products_dicts(reaction_id: str) -> list[dict]:
         reactants = {}
@@ -129,5 +132,5 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
     missing_reacs['bigg_reaction']= missing_reacs.apply(
         lambda row: get_reactants_and_products_dicts(str(row['bigg_id'])), axis=1)  #, missing_reacs['bigg_products'], result_type='expand'
       
-    return missing_reacs  
+    return missing_reacs
  

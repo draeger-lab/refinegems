@@ -77,9 +77,6 @@ gapfill_analysis: TRUE
 gapfill_analysis_params:
   db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
   organismid: 'T05059'  # Needs to be specified for KEGG
-  bigg_dbs:
-    - 'data/bigg_models_reactions.txt'  # Path to BiGG reactions database
-    - 'data/bigg_models_metabolites.txt'  # Path to BiGG metabolites database
   gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
   biocyc_files: 
     - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)

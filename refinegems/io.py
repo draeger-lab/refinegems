@@ -9,8 +9,10 @@ import cobra
 import os
 import re
 import gffutils
+import sqlalchemy
 import pandas as pd
 from Bio import Entrez, SeqIO
+from refinegems.databases import PATH_TO_DB
 from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
@@ -42,6 +44,7 @@ def load_model_libsbml(modelpath: str) -> Model:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     mod = read.getModel()
     return mod
+
 
 def load_multiple_models(models: list[str], package: str) -> list:
     loaded_models = []
@@ -132,6 +135,25 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     """
     man_ann = pd.read_excel(tablepath, sheet_name)
     return man_ann
+
+
+def load_a_table_from_database(table_name: str) -> pd.DataFrame:
+    """Loads the table for which the name is provided from the refineGEMs database ('data/database/data.db')
+
+    Args:
+        table_name (str): Name of a table contained in the database 'data.db'
+
+    Returns:
+        pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
+    """
+    sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
+    engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
+    open_con = engine.connect()
+    
+    db_table = pd.read_sql_table(table_name, open_con)
+    
+    open_con.close()
+    return db_table
 
 
 def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
