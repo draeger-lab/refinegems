@@ -137,11 +137,12 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     return man_ann
 
 
-def load_a_table_from_database(table_name: str) -> pd.DataFrame:
-    """Loads the table for which the name is provided from the refineGEMs database ('data/database/data.db')
+def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
+    """Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
+        true from the refineGEMs database ('data/database/data.db')
 
     Args:
-        table_name (str): Name of a table contained in the database 'data.db'
+        table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
 
     Returns:
         pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
@@ -150,7 +151,7 @@ def load_a_table_from_database(table_name: str) -> pd.DataFrame:
     engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
     open_con = engine.connect()
     
-    db_table = pd.read_sql_table(table_name, open_con)
+    db_table = pd.read_sql(table_name_or_query, open_con)
     
     open_con.close()
     return db_table
