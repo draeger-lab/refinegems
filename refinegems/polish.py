@@ -10,7 +10,7 @@ from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import write_to_file, parse_fasta_headers, search_ncbi_for_gpr
+from refinegems.io import write_to_file, search_ncbi_for_gpr, parse_fasta_headers
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -445,11 +445,11 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
     """
     Entrez.email = email
                     
-    id2locus_name = {}  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
+    id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
     if (protein_fasta is not None) and protein_fasta.strip() != '': 
        id2locus_name = parse_fasta_headers(protein_fasta)
        id2locus_name.set_index('protein_id')
-       
+    
     genes_missing_annotation = []
 
     print('Setting CVTerms and removing notes for all genes:')
@@ -468,7 +468,6 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
             
             ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
-            
             if (len(id_string) > 2):  # Identifier contains '_'
                # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
                # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
@@ -483,8 +482,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
             elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
-                if id2locus_name:
-                    name, locus = id2locus_name[ncbi_id]
+                if id2locus_name is not None:
+                    name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
                 else: 
                     genes_missing_annotation.append(ncbi_id)
             
@@ -494,8 +493,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                name, locus = search_ncbi_for_gpr(ncbi_id)
             
             # For lab strains use the locus tag from the annotation file   
-            if lab_strain and id2locus_name:
-                locus = id2locus_name[ncbi_id][1]
+            if lab_strain and id2locus_name is not None:
+                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
             
             if ncbi_id not in genes_missing_annotation:      
                 gene.setName(name)

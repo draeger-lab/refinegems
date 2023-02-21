@@ -215,7 +215,7 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     with open(filepath, 'r') as handle:
         for record in SeqIO.parse(handle, 'fasta'):
             header = record.description
-            protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0]
+            protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
             descriptors = re.findall('\[+(.*?)\]', header)
             if id_for_model:
                 model_id = re.sub("\||\.", "_", record.id)
@@ -223,10 +223,10 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
          
             descriptors.insert(0, protein_id)
             
-            tmp_dict['protein_id'] = protein_id
+            tmp_dict['protein_id'] = str(protein_id)
             
             for entry in descriptors:
-                entry = entry.split('=')
+                entry = entry.strip().split('=')
                
                 if entry[0] in keyword_list:
                     if entry[0] == 'protein_id':
