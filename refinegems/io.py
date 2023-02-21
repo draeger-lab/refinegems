@@ -85,18 +85,18 @@ def load_medium_custom(mediumpath: str) -> pd.DataFrame:
     return medium
 
 
-def load_medium_from_db(mediumpath: str, mediumname: str) -> pd.DataFrame:
-    """Helper function to read standard media_db.csv
+def load_medium_from_db(mediumname: str) -> pd.DataFrame:
+    """Wrapper function to extract subtable for the requested medium from the database 'data.db'
 
     Args:
-        mediumpath (Str): path to csv file with medium database
         mediumname (Str): name of medium to test growth on
 
     Returns:
-        df: pandas dataframe of csv
+        df: pandas dataframe containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium = medium.loc[medium['medium'] == mediumname]
+    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'" 
+    medium = load_a_table_from_database(medium_query)
+    medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
     medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
     medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
