@@ -39,7 +39,7 @@ def main():
         
     elif (config['charge_corr']):
         model_libsbml = rg.io.load_model_libsbml(config['model'])
-        rg.charges.correct_charges_modelseed(model_libsbml, config['charge_path'], config['modelseedpath'], config['charge_report_path'])
+        rg.charges.correct_charges_modelseed(model_libsbml, config['charge_path'], config['charge_report_path'])
         model, errors = cobra.io.sbml.validate_sbml_model(config['charge_path'])
         print(errors)
         
@@ -61,7 +61,7 @@ def main():
     
     else:
         if (config['multiple']):
-            growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media_db'], config['media'], config['growth_basis'])
+            growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media'], config['growth_basis'])
             growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
         
         try:    
@@ -89,10 +89,10 @@ def main():
                 rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_file'])
                 
             if(config['modelseed']):
-                charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(config['modelseedpath'], model_cobra)
+                charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)
             
-            if (config['media_db'] != None):
-                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media_db'], config['media'], config['growth_basis'])
+            if (config['media'] != None):
+                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media'], config['growth_basis'])
 
             if (config['output'] == 'cl'):
                 print('---')

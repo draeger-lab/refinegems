@@ -14,7 +14,7 @@ missing = all exchanges missing in the model but given in medium
 
 import pandas as pd
 import numpy as np
-from refinegems.io import load_all_media_from_db
+from refinegems.io import load_medium_from_db
 from cobra.medium import minimal_medium
 
 __author__ = "Famke Baeuerle"
@@ -81,7 +81,7 @@ def get_missing_exchanges(model, medium):
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        medium (df): dataframe of medium csv
+        medium (df): dataframe of medium
 
     Returns:
         list: all exchanges missing in the model but given in medium
@@ -100,7 +100,7 @@ def modify_medium(medium, missing_exchanges):
     """Remove exchanges from medium that are not in the model
 
     Args:
-        medium (df): dataframe of medium csv
+        medium (df): dataframe of medium
         missing_exchanges (list): exchanges not in the model
 
     Returns:
@@ -144,7 +144,7 @@ def find_minimum_essential(medium, essential):
     """Report metabolites necessary for growth and not in custom medium
 
     Args:
-        medium (df): dataframe of medium csv
+        medium (df): dataframe of medium
         essential (list): echanges of metabolites which lead to zero growth if blocked
 
     Returns:
@@ -182,24 +182,25 @@ def simulate_minimum_essential(model, growth_medium, minimum):
     return sol.objective_value
 
 
-def get_all_minimum_essential(model, mediumpath):
+def get_all_minimum_essential(model, media: list[str]):
     """Returns metabolites necessary for growth and not in media
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        mediumpath (string): path to csv with media definitions
+        media (list): a list containing the names of all media for which the growth essential metabolites not 
+                        contained in the media should be returned
 
     Returns:
         DataFrame: information on different media which metabs are missing
     """
-    media = load_all_media_from_db(mediumpath)
     default_uptake = get_default_uptake(model)
     mins = pd.DataFrame()
     for medium in media:
-        missing_exchanges = get_missing_exchanges(model, medium)
-        medium_dict = modify_medium(medium, missing_exchanges)
+        medium_df = load_medium_from_db(medium)
+        missing_exchanges = get_missing_exchanges(model, medium_df)
+        medium_dict = modify_medium(medium_df, missing_exchanges)
         essential = find_missing_essential(model, medium_dict, default_uptake)
-        minimum = find_minimum_essential(medium, essential)
+        minimum = find_minimum_essential(medium_df, essential)
         mins[medium['medium'][0]] = pd.Series(minimum)
     return mins
 
@@ -265,26 +266,24 @@ def growth_one_medium_from_minimal(model, medium):
     return df_growth
 
 
-def get_growth_selected_media(model, mediumpath, media, basis):
+def get_growth_selected_media(model, media, basis):
     """Simulates growth on all selected media
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        mediumpath (string): path to csv with media definitions
         media (list): media to simulate on (must be in csv)
         basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
 
     Returns:
         DataFrame: information on growth behaviour on selected media
     """
-    all_media = load_all_media_from_db(mediumpath)
-    selected_media = [x for x in all_media if x['medium'][0] in media]
     growth = pd.DataFrame()
-    for medium in selected_media:
+    for medium in media:
+        medium_df = load_medium_from_db(medium)
         if (basis == 'default_uptake'):
-            growth_one = growth_one_medium_from_default(model, medium)
+            growth_one = growth_one_medium_from_default(model, medium_df)
         elif (basis == 'minimal_uptake'):
-            growth_one = growth_one_medium_from_minimal(model, medium)
+            growth_one = growth_one_medium_from_minimal(model, medium_df)
         growth = growth.append(growth_one, ignore_index=True)
     return growth
 
