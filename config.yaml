@@ -88,7 +88,7 @@ gapfill_analysis_params:
 # (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
 # For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
 # complete tables for reactions can be used with the same columns.
+gapfill_model: FALSE
 
 ### ModelSEED comparison ###
-modelseed: FALSE # set to False if not needed
-modelseedpath: 'data/modelseed_compounds.tsv'
+modelseed: TRUE # set to False if not needed
