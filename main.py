@@ -61,7 +61,7 @@ def main():
     
     else:
         if (config['multiple']):
-            growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media_db'], config['media'], config['growth_basis'])
+            growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media'], config['growth_basis'])
             growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
         
         try:    
@@ -91,8 +91,8 @@ def main():
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)
             
-            if (config['media_db'] != None):
-                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media_db'], config['media'], config['growth_basis'])
+            if (config['media'] != None):
+                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media'], config['growth_basis'])
 
             if (config['output'] == 'cl'):
                 print('---')
