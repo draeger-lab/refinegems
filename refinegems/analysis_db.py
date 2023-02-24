@@ -171,7 +171,9 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     
     # Get only rows with BioCyc/KEGG entries
     db_table_name = 'bigg_metabolites' if metabolites else 'bigg_reactions'
-    bigg_db_query = f"SELECT *, INSTR(database_links, '{other_db}:') o_db FROM {db_table_name} WHERE o_db > 0"
+    reaction_or_compound = 'Compound' if metabolites else 'Reaction'
+    other_db_query = other_db if other_db == 'BioCyc' else ' '.join([other_db, reaction_or_compound])
+    bigg_db_query = f"SELECT *, INSTR(database_links, '{other_db_query}:') o_db FROM {db_table_name} WHERE o_db > 0"
     bigg_db_df = load_a_table_from_database(bigg_db_query)
     
     db_search_regex = get_search_regex(other_db, metabolites)
@@ -188,7 +190,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     def get_compartment_from_id(bigg_id: str):
         compartment = bigg_id[-1]
         return compartment if compartment in compartments else np.nan  # To filter the incorrect compartments out
-
+    
     bigg_db_df[other_db] = bigg_db_df.apply(
         lambda row: find_other_db(row['database_links']), axis=1)
     bigg_db_df = bigg_db_df.explode(other_db, ignore_index=True)
