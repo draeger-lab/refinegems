@@ -190,7 +190,7 @@ def get_missing_reactions(
    missing_reactions = compare_bigg_model(missing_reactions, model_reacs)
    
    # Get amount of missing reactions that are not in the model
-   statistics_df.loc['Reaction', 'Can be added'] = len(missing_reactions['BioCyc'].unique().tolist())
+   statistics_df.loc['Reaction', 'Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
    
    # Get all metabolites for the missing reactions
    metabs_from_reaction = extract_metabolites_from_reactions(missing_reactions)
@@ -282,7 +282,7 @@ def get_missing_metabolites(
    missing_metabolites = compare_bigg_model(missing_metabolites, model_metabs)
    
    # Get amount of missing metabolites that are not in the model
-   statistics_df.loc['Metabolite', 'Can be added'] = len(missing_metabolites['BioCyc'].unique().tolist())
+   statistics_df.loc['Metabolite', 'Can be added'] = len(missing_metabolites['bigg_id'].unique().tolist())
    return missing_metabolites, missing_metabs_wo_BiGG
 
 
