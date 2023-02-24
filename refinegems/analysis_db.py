@@ -197,7 +197,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
             lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
         bigg_db_df.dropna(subset=['compartment'], inplace=True)  # Drop all BiGG metabolite IDs which have no valid compartment
     else:
-        bigg_db_df = pd.read_csv('./complete_df.tsv', sep='\t')  #keep_only_reactions_in_certain_compartments(bigg_db_df, compartments)
+        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df, compartments)
         
     bigg_df = bigg_db_df[['bigg_id', 'name', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', 'name', other_db, 'compartment', 'id_group']]
 
