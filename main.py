@@ -83,12 +83,18 @@ def main():
                 
             if (config['gapfill_analysis'] and config['gapfill_model']):
                 filename = config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx'
-                gapfill_analysis = rg.gapfill.gapfill(model_libsbml, config['gapfill_analysis_params'], filename)    
+                gapfill_analysis, model = rg.gapfill.gapfill(model_libsbml, config['gapfill_analysis_params'], filename) 
+                rg.io.write_to_file(model, config['gapfill_model_out'])
+                model, errors = cobra.io.sbml.validate_sbml_model(config['gapfill_model_out'])
+                print(errors)   
             elif (config['gapfill_analysis']):
                 filename = config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx'
                 gapfill_analysis = rg.gapfill.gapfill_analysis(model_libsbml, config['gapfill_analysis_params'], filename)
             elif (config['gapfill_model']):
-                rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_file'])
+                rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_in'])
+                rg.io.write_to_file(model, config['gapfill_model_out'])
+                model, errors = cobra.io.sbml.validate_sbml_model(config['gapfill_model_out'])
+                print(errors)   
                 
             if(config['modelseed']):
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)
