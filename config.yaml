@@ -23,7 +23,7 @@ sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save mod
 
 ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
 polish: FALSE
-id_db: 'BIGG' # Required! 
+id_db: 'BIGG' # Required!
 # Possible identifiers, currently: BiGG & VMH
 # For other IDs the `polish` function in `polish.py` might need adjustment
 lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
@@ -86,6 +86,10 @@ gapfill_analysis_params:
 # For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
 # complete tables for reactions can be used with the same columns.
 gapfill_model: FALSE
+gapfill_model_file: 'Path to Excel file with which gaps in model should be filled'
+# Either obtained by running gapfill_analysis/Created by hand with the same structure as the result file from gapfill_analysis
+# Example Excel file to fill in by hand: data/modelName_gapfill_analysis_date_example.xlsx
+gapfill_model_out: 'Path to gap filled model'
 
 ### ModelSEED comparison ###
 modelseed: FALSE # set to False if not needed
