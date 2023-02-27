@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -10,11 +11,10 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -106,42 +106,42 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="installation">
+<section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
-<div class="section" id="installation-via-pip">
+<section id="installation-via-pip">
 <h2>Installation via pip<a class="headerlink" href="#installation-via-pip" title="Permalink to this heading"></a></h2>
 <p>To install refinegmes as python package, simply install it via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install refinegems
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>refinegems
 </pre></div>
 </div>
-</div>
-<div class="section" id="installation-via-github">
+</section>
+<section id="installation-via-github">
 <h2>Installation via github<a class="headerlink" href="#installation-via-github" title="Permalink to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository.</p>
 <p>The package and all its dependencies can be installed within virtual environments.</p>
 <p><strong>Condaenv</strong></p>
 <p>Setup a conda virtual environment and use its pip to install refineGEMs into that environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># clone or pull the latest source code</span>
-git clone https://github.com/draeger-lab/refinegems.git
-<span class="nb">cd</span> refinegems
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/draeger-lab/refinegems.git
+<span class="nb">cd</span><span class="w"> </span>refinegems
 
-conda create -n &lt;EnvName&gt; <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;EnvName&gt;<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
 
-conda activate &lt;EnvName&gt;
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;EnvName&gt;
 
 <span class="c1"># check that pip comes from &lt;EnvName&gt;</span>
-which pip
+which<span class="w"> </span>pip
 
-pip install .
+pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 <p>This will install all packags denoted in <cite>setup.py</cite>.</p>
 <p>If <cite>which pip</cite> does not show pip in the conda environment you can also create a local environment for which you can control the path and use its pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --prefix ./&lt;EnvName&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--prefix<span class="w"> </span>./&lt;EnvName&gt;
 
-conda activate &lt;path to EnvName&gt;
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;path<span class="w"> </span>to<span class="w"> </span>EnvName&gt;
 
-&lt;EnvName&gt;/bin/pip install .
+&lt;EnvName&gt;/bin/pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 <p><strong>Pipenv</strong></p>
@@ -150,23 +150,23 @@ conda activate &lt;path to EnvName&gt;
 <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> first. To install <code class="docutils literal notranslate"><span class="pre">refinegems</span></code> locally complete the
 following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># install pipenv using pip</span>
-pip install pipenv
+pip<span class="w"> </span>install<span class="w"> </span>pipenv
 
 <span class="c1"># clone or pull the latest source code</span>
-git clone https://github.com/draeger-lab/refinegems.git
-<span class="nb">cd</span> refinegems
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/draeger-lab/refinegems.git
+<span class="nb">cd</span><span class="w"> </span>refinegems
 
 <span class="c1"># install all dependencies from Pipfile</span>
-pipenv install
+pipenv<span class="w"> </span>install
 
 <span class="c1"># initiate a session in the virtual environment</span>
-pipenv shell
+pipenv<span class="w"> </span>shell
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> package can also be installed via Anaconda (recommended
 if you are a Windows user).</p>
-</div>
-<div class="section" id="further-dependencies-obsolete">
+</section>
+<section id="further-dependencies-obsolete">
 <h2>Further Dependencies (obsolete)<a class="headerlink" href="#further-dependencies-obsolete" title="Permalink to this heading"></a></h2>
 <p>If you want to use the SBO terms annotation part you will need to
 install PostgreSQL to your machine.</p>
@@ -177,21 +177,21 @@ install PostgreSQL to your machine.</p>
 </div>
 <p>must be imported to a local PostgreSQL database to a selected user.</p>
 <p>You can use the following command, run it from this directory:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql -U <span class="o">{</span>your postgres username<span class="o">}</span> -h localhost -d <span class="o">{</span>your database name<span class="o">}</span> &lt; data/sbo/create_dbs.sql
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql<span class="w"> </span>-U<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>postgres<span class="w"> </span>username<span class="o">}</span><span class="w"> </span>-h<span class="w"> </span>localhost<span class="w"> </span>-d<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>database<span class="w"> </span>name<span class="o">}</span><span class="w"> </span>&lt;<span class="w"> </span>data/sbo/create_dbs.sql
 </pre></div>
 </div>
 <p>If you are a Windows user you will need to use a different command:
 Enter into the psql shell by typing <code class="docutils literal notranslate"><span class="pre">psql</span></code>, then create the database
 with</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">sbo_ann</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">sbo_ann</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>Afterwards load the database with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql.exe -U postgres -d sbo_ann -f data<span class="se">\\</span>sbo<span class="se">\\</span>create_dbs.sql
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql.exe<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>sbo_ann<span class="w"> </span>-f<span class="w"> </span>data<span class="se">\\</span>sbo<span class="se">\\</span>create_dbs.sql
 </pre></div>
 </div>
-</div>
-<div class="section" id="troubleshooting">
+</section>
+<section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p>If you get <code class="docutils literal notranslate"><span class="pre">ImportError:</span> <span class="pre">DLL</span> <span class="pre">load</span> <span class="pre">failed</span> <span class="pre">while</span> <span class="pre">importing</span> <span class="pre">_sqlite3</span></code>
@@ -203,8 +203,8 @@ and add it to PATH.</p></li>
 <li><p>If you can’t use <code class="docutils literal notranslate"><span class="pre">psql</span></code>from the command line, a common issue is
 that its not added to PATH:</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>locate psql <span class="p">|</span> grep /bin
-<span class="nb">export</span> <span class="nv">PATH</span><span class="o">={</span>Output from the line above with /bin as line end<span class="o">}</span>:<span class="nv">$PATH</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>locate<span class="w"> </span>psql<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>/bin
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">={</span>Output<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>line<span class="w"> </span>above<span class="w"> </span>with<span class="w"> </span>/bin<span class="w"> </span>as<span class="w"> </span>line<span class="w"> </span>end<span class="o">}</span>:<span class="nv">$PATH</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -217,8 +217,8 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
 (located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
 <li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
