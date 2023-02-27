@@ -8,7 +8,7 @@ Note that at this time most of the modules only make sense when you use the resp
     :noindex:
 .. autofunction:: refinegems.polish
     :noindex:
-.. autofunction:: refinegems.genecomp
+.. autofunction:: refinegems.gapfill
     :noindex:
 .. autofunction:: refinegems.modelseed
     :noindex:
@@ -20,7 +20,7 @@ Note that at this time most of the modules only make sense when you use the resp
 The modules ``io``, ``cvterms`` and ``investigate`` provide functions that can be used by themselves.
 
 ``io`` 
---------
+------
 provides a couple of helper functions to load models, databases and parse gfffiles
 
 .. automodule:: refinegems.io
@@ -28,7 +28,7 @@ provides a couple of helper functions to load models, databases and parse gfffil
     :noindex:
 
 ``investigate``
---------
+---------------
 provides a couple of functions to get parameters of your model
 
 .. automodule:: refinegems.investigate

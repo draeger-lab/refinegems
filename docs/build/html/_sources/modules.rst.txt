@@ -12,7 +12,7 @@ refinegems.charges module
    :show-inheritance:
 
 refinegems.comparison module
-----------------------
+----------------------------
 
 .. automodule:: refinegems.comparison
    :members:
@@ -20,7 +20,7 @@ refinegems.comparison module
    :show-inheritance:
 
 refinegems.curate module
-----------------------
+------------------------
 
 .. automodule:: refinegems.curate
    :members:
@@ -28,17 +28,17 @@ refinegems.curate module
    :show-inheritance:
 
 refinegems.cvterms module
-----------------------
+-------------------------
 
 .. automodule:: refinegems.cvterms
    :members:
    :undoc-members:
    :show-inheritance:
 
-refinegems.genecomp module
---------------------------
+refinegems.gapfill module
+-------------------------
 
-.. automodule:: refinegems.genecomp
+.. automodule:: refinegems.gapfill
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,7 +52,7 @@ refinegems.growth module
    :show-inheritance:
 
 refinegems.investigate module
-----------------------
+-----------------------------
 
 .. automodule:: refinegems.investigate
    :members:
@@ -60,7 +60,7 @@ refinegems.investigate module
    :show-inheritance:
 
 refinegems.io module
-----------------------
+--------------------
 
 .. automodule:: refinegems.io
    :members:
@@ -84,7 +84,7 @@ refinegems.pathways module
    :show-inheritance:
 
 refinegems.polish module
----------------------------------
+------------------------
 
 .. automodule:: refinegems.polish
    :members:
@@ -92,7 +92,7 @@ refinegems.polish module
    :show-inheritance:
 
 refinegems.sboann module
----------------------------------
+------------------------
 
 .. automodule:: refinegems.sboann
    :members:

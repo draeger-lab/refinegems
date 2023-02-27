@@ -10,10 +10,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
@@ -89,6 +90,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
@@ -96,6 +98,10 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.add_compartment_structure_specs">add_compartment_structure_specs() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.add_curie_set">add_curie_set() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_genes">add_cv_term_genes() (in module refinegems.cvterms)</a>
 </li>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_metabolites">add_cv_term_metabolites() (in module refinegems.cvterms)</a>
@@ -108,10 +114,18 @@
 </li>
       <li><a href="modules.html#refinegems.cvterms.add_cv_term_units">add_cv_term_units() (in module refinegems.cvterms)</a>
 </li>
+      <li><a href="modules.html#refinegems.polish.add_fba_units">add_fba_units() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.pathways.add_kegg_pathways">add_kegg_pathways() (in module refinegems.pathways)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.add_metab">add_metab() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.add_reac">add_reac() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.curate.add_reactions_from_table">add_reactions_from_table() (in module refinegems.curate)</a>
+</li>
       <li><a href="modules.html#refinegems.sboann.addSBOforCompartments">addSBOforCompartments() (in module refinegems.sboann)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.addSBOforGenes">addSBOforGenes() (in module refinegems.sboann)</a>
@@ -134,6 +148,12 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.change_all_qualifiers">change_all_qualifiers() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.change_qualifier_per_entity">change_qualifier_per_entity() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.change_qualifiers">change_qualifiers() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.sboann.checkAcetylationViaEC">checkAcetylationViaEC() (in module refinegems.sboann)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.checkActiveTransport">checkActiveTransport() (in module refinegems.sboann)</a>
@@ -158,12 +178,12 @@
 </li>
       <li><a href="modules.html#refinegems.sboann.checkGlycosylation">checkGlycosylation() (in module refinegems.sboann)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.sboann.checkGlycosylationViaEC">checkGlycosylationViaEC() (in module refinegems.sboann)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.checkHydrolysisViaEC">checkHydrolysisViaEC() (in module refinegems.sboann)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.sboann.checkIsomerisationViaEC">checkIsomerisationViaEC() (in module refinegems.sboann)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.checkMethylationViaEC">checkMethylationViaEC() (in module refinegems.sboann)</a>
@@ -184,7 +204,19 @@
 </li>
       <li><a href="modules.html#refinegems.modelseed.compare_to_modelseed">compare_to_modelseed() (in module refinegems.modelseed)</a>
 </li>
+      <li><a href="modules.html#refinegems.polish.create_fba_units">create_fba_units() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.pathways.create_pathway_groups">create_pathway_groups() (in module refinegems.pathways)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.create_unit">create_unit() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.create_unit_definition">create_unit_definition() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.cv_ncbiprotein">cv_ncbiprotein() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.cv_notes_metab">cv_notes_metab() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.cv_notes_reac">cv_notes_reac() (in module refinegems.polish)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -218,7 +250,15 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.gapfill.gapfill">gapfill() (in module refinegems.gapfill)</a>
+</li>
+      <li><a href="modules.html#refinegems.gapfill.gapfill_analysis">gapfill_analysis() (in module refinegems.gapfill)</a>
+</li>
+      <li><a href="modules.html#refinegems.gapfill.gapfill_model">gapfill_model() (in module refinegems.gapfill)</a>
+</li>
       <li><a href="modules.html#refinegems.cvterms.generate_cvterm">generate_cvterm() (in module refinegems.cvterms)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.generate_new_curie_set">generate_new_curie_set() (in module refinegems.polish)</a>
 </li>
       <li><a href="modules.html#refinegems.growth.get_all_minimum_essential">get_all_minimum_essential() (in module refinegems.growth)</a>
 </li>
@@ -248,11 +288,13 @@
 </li>
       <li><a href="modules.html#refinegems.modelseed.get_modelseed_charges">get_modelseed_charges() (in module refinegems.modelseed)</a>
 </li>
-      <li><a href="modules.html#refinegems.modelseed.get_modelseed_compounds">get_modelseed_compounds() (in module refinegems.modelseed)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.modelseed.get_modelseed_compounds">get_modelseed_compounds() (in module refinegems.modelseed)</a>
+</li>
       <li><a href="modules.html#refinegems.pathways.get_pathway_groups">get_pathway_groups() (in module refinegems.pathways)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.get_set_of_curies">get_set_of_curies() (in module refinegems.polish)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.getCompartmentDict">getCompartmentDict() (in module refinegems.sboann)</a>
 </li>
@@ -300,6 +342,12 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.improve_curie_per_entity">improve_curie_per_entity() (in module refinegems.polish)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.improve_curies">improve_curies() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.sboann.isProtonTransport">isProtonTransport() (in module refinegems.sboann)</a>
 </li>
   </ul></td>
@@ -352,7 +400,11 @@
     module
 
       <ul>
+        <li><a href="modules.html#module-refinegems.curate">refinegems.curate</a>
+</li>
         <li><a href="modules.html#module-refinegems.cvterms">refinegems.cvterms</a>
+</li>
+        <li><a href="modules.html#module-refinegems.gapfill">refinegems.gapfill</a>
 </li>
         <li><a href="modules.html#module-refinegems.growth">refinegems.growth</a>
 </li>
@@ -361,6 +413,8 @@
         <li><a href="modules.html#module-refinegems.modelseed">refinegems.modelseed</a>
 </li>
         <li><a href="modules.html#module-refinegems.pathways">refinegems.pathways</a>
+</li>
+        <li><a href="modules.html#module-refinegems.polish">refinegems.polish</a>
 </li>
         <li><a href="modules.html#module-refinegems.sboann">refinegems.sboann</a>
 </li>
@@ -377,11 +431,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.io.parse_fasta_headers">parse_fasta_headers() (in module refinegems.io)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.io.parse_gff_for_gp_info">parse_gff_for_gp_info() (in module refinegems.io)</a>
 </li>
+      <li><a href="modules.html#refinegems.polish.polish">polish() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.polish_annotations">polish_annotations() (in module refinegems.polish)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.polish_entities">polish_entities() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.cvterms.print_cvterm">print_cvterm() (in module refinegems.cvterms)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.print_remaining_UnitDefinitions">print_remaining_UnitDefinitions() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.print_UnitDefinitions">print_UnitDefinitions() (in module refinegems.polish)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -390,10 +454,24 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    refinegems.curate
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.curate">module</a>
+</li>
+      </ul></li>
+      <li>
     refinegems.cvterms
 
       <ul>
         <li><a href="modules.html#module-refinegems.cvterms">module</a>
+</li>
+      </ul></li>
+      <li>
+    refinegems.gapfill
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.gapfill">module</a>
 </li>
       </ul></li>
       <li>
@@ -427,6 +505,13 @@
 </li>
       </ul></li>
       <li>
+    refinegems.polish
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.polish">module</a>
+</li>
+      </ul></li>
+      <li>
     refinegems.sboann
 
       <ul>
@@ -447,8 +532,14 @@
 </li>
       <li><a href="modules.html#refinegems.io.search_ncbi_for_gpr">search_ncbi_for_gpr() (in module refinegems.io)</a>
 </li>
+      <li><a href="modules.html#refinegems.polish.set_default_units">set_default_units() (in module refinegems.polish)</a>
+</li>
+      <li><a href="modules.html#refinegems.polish.set_initial_amount">set_initial_amount() (in module refinegems.polish)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.polish.set_units">set_units() (in module refinegems.polish)</a>
+</li>
       <li><a href="modules.html#refinegems.growth.simulate_minimum_essential">simulate_minimum_essential() (in module refinegems.growth)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.soleProtonTransported">soleProtonTransported() (in module refinegems.sboann)</a>
@@ -456,6 +547,18 @@
       <li><a href="modules.html#refinegems.sboann.splitSymAntiPorter">splitSymAntiPorter() (in module refinegems.sboann)</a>
 </li>
       <li><a href="modules.html#refinegems.sboann.splitTransportBiochem">splitTransportBiochem() (in module refinegems.sboann)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.curate.update_annotations_from_others">update_annotations_from_others() (in module refinegems.curate)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.curate.update_annotations_from_table">update_annotations_from_table() (in module refinegems.curate)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ideas behind some implementations &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +10,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -104,26 +104,20 @@
     text-align: unset;
 }
 </style>
-<section id="ideas-behind-some-implementations">
+<div class="section" id="ideas-behind-some-implementations">
 <h1>Ideas behind some implementations<a class="headerlink" href="#ideas-behind-some-implementations" title="Permalink to this heading"></a></h1>
 <p>Below you will find some arguing behind the implementation choices we made.</p>
-<section id="gap-filling">
+<div class="section" id="gap-filling">
 <h2>Gap filling<a class="headerlink" href="#gap-filling" title="Permalink to this heading"></a></h2>
-<p>The <cite>gapfill</cite> module can be used either with KEGG were you only need the KEGG organism ID or with BioCyc. For the gap filling using BioCyc you will need to create an  <cite>account &lt;https://biocyc.org/&gt;</cite>. Then you will search for the strain of your organism. Then you click on Tools and select Special Smart Tables. There you can download the tables “all genes of &lt;organism&gt;” and “all reactions of &lt;organism&gt;”. Remove all columns except Gene Name and then choose a transform (reactions of gene), then add property (Accession-2) and after that delete the Gene Name files. The choose Accession-2, and use the filter function to delete all empty rows. The Export to Spreadsheet File then choose frame ids (for gene table).</p>
-<p>For reaction: ‘Reaction’ (present) ‘Reactants of reaction’ (transform) ‘Products of reaction’ (transform) ‘EC-Number’ (present) ‘Reaction-Direction’ (property) ‘Spontaneous?’ (property)</p>
-<p>For metabolite: Use MetaCyc database -&gt; all compounds
-‘Compound’ (present) ‘Object ID’ (property) ‘Chemical Formula’ (property) ‘InChI-Key’ (property) ‘ChEBI’ (property - database links - ChEBI)
-Export with common names</p>
-<p>Running times: Around 2h for KEGG
-Around 45 mins for BioCyc</p>
-</section>
-<section id="growth-simulation">
+<p>The <cite>gapfill</cite> module was created to enable an automatic way of filling gaps in a model via genes.</p>
+</div>
+<div class="section" id="growth-simulation">
 <h2>Growth simulation<a class="headerlink" href="#growth-simulation" title="Permalink to this heading"></a></h2>
 <p>Growth rates and thus doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.</p>
 <a class="reference internal image-reference" href="_images/growth_algorithm.png"><img alt="Pseudocode representation of the algorithm implemented for growth simulation." src="_images/growth_algorithm.png" style="width: 400px;" /></a>
 <p>There is a flag called basis which can be set to either default_uptake or minimal_uptake. You can decide from which uptake you want to fill your medium of interest when looking for missing metabolites. Either the default_uptake which is the uptake that the model has when no specific medium is set or the minimal_uptake which is the uptake resulting from cobrapys minimal_medium optimization.</p>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
