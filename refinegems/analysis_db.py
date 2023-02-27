@@ -17,6 +17,8 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y')
 ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm')
+BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
+BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
 
 
 def get_search_regex(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool) -> str:
@@ -98,11 +100,10 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
     """
     tqdm.pandas()
     db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
-    complete_df = complete_df[['bigg_id', 'name', db]]  # Remove all unnecessary columns
+    complete_df = complete_df[['bigg_id', db]]  # Remove all unnecessary columns
     
     # (1) Find all occurrencs of a BiGG reaction ID in bigg_reactions table in database
-    def get_all_similar_bigg_ids(row: pd.Series) -> list[str]:
-        bigg_id_in = str(row['bigg_id'])
+    def get_all_similar_bigg_ids(bigg_id_in: str) -> list[str]:
         
         if '_' in bigg_id_in: bigg_id = re.split('_([a-zA-Z]|[0-9])$', bigg_id_in)[0]
         elif bigg_id_in.endswith(ALL_BIGG_COMPARTMENTS_ONE_LETTER): bigg_id = bigg_id_in[:-1]
@@ -118,15 +119,13 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
     # (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
     @sleep_and_retry
     @limits(calls=10, period=1)
-    def get_reaction_compartment(row: pd.Series) -> str:
-        bigg_id = str(row['bigg_id'])
+    def get_reaction_compartment(bigg_id: str) -> str:
         
-        reac_bigg_url = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
-        metabs_from_reac = requests.get(reac_bigg_url + bigg_id, allow_redirects=False).json()['metabolites']
+        metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
                 
         comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
-        contained_in_compartments = [True for comp in comps if comp in compartments]  # Get True for correct compartment        
-        if not any(contained_in_compartments):  # At least one compartment not correct
+        contained_in_compartments = [(comp in compartments) for comp in comps]  # Get True for correct compartment        
+        if not all(contained_in_compartments):  # At least one compartment not correct
             return np.nan
         else:  # All compartments correct
             if len(set(comps)) == 1:  # Set of found compartments of reaction = 1: Reaction happens in one compartment
@@ -137,7 +136,8 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
     # Connect to database & get similar IDs (1)
     print('Getting all similar IDs...')
     con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
-    complete_df.loc[:,'bigg_id_list'] = complete_df.progress_apply(get_all_similar_bigg_ids, axis=1)
+    complete_df.loc[:,'bigg_id_list'] = complete_df.loc[:, 'bigg_id'].progress_map(get_all_similar_bigg_ids)
+    #complete_df.progress_apply(get_all_similar_bigg_ids, axis=1)
     con.close()  # Close connection to database
     
     # Adjust table to contain one BiGG ID per row from bigg_id_list (1)
@@ -148,7 +148,8 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
     
     # (2) Get all compartments for each reaction from BiGG database API
     print(f'Getting all IDs with correct compartment {compartments}...')
-    complete_df.loc[:, 'compartment'] = complete_df.progress_apply(get_reaction_compartment, axis=1)  # (2)
+    complete_df.loc[:, 'compartment'] = complete_df.loc[:, 'bigg_id'].progress_map(get_reaction_compartment)
+    #complete_df.progress_apply(get_reaction_compartment, axis=1)  # (2)
     
     # (3) Remove reactions with compartment = NaN
     complete_df.dropna(subset=['compartment'], inplace=True)
@@ -201,19 +202,20 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     else:
         bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df, compartments)
         
-    bigg_df = bigg_db_df[['bigg_id', 'name', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', 'name', other_db, 'compartment', 'id_group']]
+    bigg_df = bigg_db_df[['bigg_id', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
 
     return bigg_df
  
  
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame) -> pd.DataFrame:
+def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, metabolites: bool=False) -> pd.DataFrame:
     """Compares missing entities obtained through genes extracted via KEGG/BioCyc to entities in the model
         Needed to back check previous comparisons.
 
     Args:
         complete_df (df): pandas dataframe that contains BioCyc Id, BiGG Id & more
         model_entities (df): BiGG Ids of entities in the model 
+        metabolites (bool): True if names of metabolites should be added, otherwise false
 
     Returns:
         df: table containing entities present in KEGG/BioCyc but not in the model
@@ -238,6 +240,15 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame) 
         entities_missing_in_model.drop(labels='id_group', axis=1, inplace=True)
         
     entities_missing_in_model.drop_duplicates(subset=['bigg_id', db], inplace=True, ignore_index=True)  # Remove ID duplicates
+    
+    # Add name column to dataframe
+    def get_name_from_bigg(bigg_id: str):
+        bigg_url = BIGG_METABOLITES_URL if metabolites else BIGG_REACTIONS_URL
+        name_from_bigg = requests.get(bigg_url + bigg_id).json()['name']
+        return name_from_bigg
+    
+    entities_missing_in_model['name'] = entities_missing_in_model['bigg_id'].map(get_name_from_bigg)
+    
     return entities_missing_in_model
 
 
@@ -256,8 +267,7 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
         reactants = {}
         products = {}
         
-        reac_bigg_url = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
-        metabs_from_reac = requests.get(reac_bigg_url + reaction_id).json()['metabolites']
+        metabs_from_reac = requests.get(BIGG_REACTIONS_URL + reaction_id).json()['metabolites']
 
         for compound_dict in metabs_from_reac:
             if compound_dict.get('stoichiometry') < 0:

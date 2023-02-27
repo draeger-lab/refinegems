@@ -3,28 +3,28 @@
 
 Extracts all BioCyc IDs from the annotations and compares them to a list for your organism from BioCyc.
 Reactions with BioCyc IDs not found in the model are expanded to a table containing the BioCyc ID,
-the locus tag, the protein ID from NCBI, the EC number, the BiGG ID and the KEGG ID.
-This section needs the Genbank GFF file of your organism, the TXT file from BiGG containing all reactions as well as 
-the TXT file from BiGG containing all metabolites and three TXT files from BioCyc. These three TXT files can be 
-obtained through creating SmartTables in BioCyc and exporting these as Spreadsheets with the parameter FrameID.
-SmartTable one should contain 'Accession-2' and 'Reactions of gene', SmartTable two should contain 'Reaction', 
-'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?' while SmartTable 
-three should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
+the locus tag, the protein ID from NCBI, the EC number, the BiGG ID and the KEGG ID. This section needs 
+three TXT files from BioCyc as well as the protein FASTA file from the Genbank entry of the organism. 
 
-Due to the KEGG REST API this is relatively slow (model of size 1500 reactions - 20 min).
+These three TXT files can be obtained through creating SmartTables in BioCyc and exporting these as 
+Spreadsheets with the parameter FrameID. 
+SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
+SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
+SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
 """
 # Get all  possible genes by filtering .gff according to 'bio_type=protein_coding' & 'product=hypothetical protein'
 # Compare the list of genes with the ones already in the model & add all missing genes
 # Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
 # -> Create dataframes mapping locus tag to old ID, locus tag to new ID & merge 
 # -> Specify user input locus_tag start from NCBI PGAP
+from libsbml import Model
 from libsbml import *
 import numpy as np
 import pandas as pd
 import libchebipy
 import requests
 from refinegems.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
-from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs
+from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
 from refinegems.io import parse_fasta_headers
 
 __author__ = "Gwendolyn O. Gusak"
@@ -279,14 +279,14 @@ def get_missing_metabolites(
    statistics_df.loc['Metabolite', 'Have BiGG ID'] = len(missing_metabolites['BioCyc'].unique().tolist())
    
    # Subset missing_metabolites with model_metabs
-   missing_metabolites = compare_bigg_model(missing_metabolites, model_metabs)
+   missing_metabolites = compare_bigg_model(missing_metabolites, model_metabs, True)
    
    # Get amount of missing metabolites that are not in the model
    statistics_df.loc['Metabolite', 'Can be added'] = len(missing_metabolites['bigg_id'].unique().tolist())
    return missing_metabolites, missing_metabs_wo_BiGG
 
 
-def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> pd.DataFrame:
+def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Retrieves all missing genes that belong to the obtained missing reactions
    
       Params: 
@@ -294,8 +294,10 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> pd.DataFra
          - fasta (str):                   Path to a FASTA file where the headers contain the information protein_id and locus_tag
          
       Returns:
-         -> A pandas dataframe with the columns locus_tag, Protein_id & Model_id 
-         (The model_id is similar to how CarveMe generates the GeneProduct ID.)
+         -> Two dataframes:
+            (1): A pandas dataframe with the columns locus_tag, Protein_id & Model_id 
+                  (The model_id is similar to how CarveMe generates the GeneProduct ID.)
+            (2): The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
    """
    # Get locus tags from the missing reactions
    locus_tags = list(set([lt for row in missing_reactions['locus_tag'] for lt in row]))
@@ -308,7 +310,15 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> pd.DataFra
    missing_genes = locus_tags_df.merge(ids_df, on='locus_tag')
    statistics_df.loc['Protein', 'Can be added'] = len(missing_genes['locus_tag'].unique().tolist())
    
-   return missing_genes
+   # Replace the locus tags in the reaction dataframe with the gene model ID
+   def transform_lt_into_gp_model_id(locus_tag_list: list[str]) -> list[str]:
+      return [missing_genes[lt, 'model_id'] for lt in locus_tag_list]
+   
+   missing_genes.set_index('locus_tag', inplace=True)
+   missing_reactions['gene_product'] = missing_reactions['locus_tag'].map(transform_lt_into_gp_model_id)
+   missing_genes.reset_index(inplace=True)
+   
+   return missing_genes, missing_reactions
 
 
 def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.DataFrame:
@@ -320,7 +330,6 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
       Returns:
          -> The input pandas dataframe extended with the charges & chemical formulas obtained from CHEBI
    """
-   metab_bigg_url = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
    
    # Finds the charges through the ChEBI/BiGG API, defaults to: 0
    def find_charge(row: pd.Series) -> int:
@@ -331,7 +340,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
          return chebi_entity.get_charge()
       elif bigg_id != 'nan':  # Get charge from BiGG if no ChEBI ID available
          try:
-            charge = requests.get(metab_bigg_url + bigg_id[:-2]).json()['charges'][0]  # Take first charge
+            charge = requests.get(BIGG_METABOLITES_URL + bigg_id[:-2]).json()['charges'][0]  # Take first charge
          except ValueError:
             pass   
          # If no charge was found, charge=0
@@ -347,7 +356,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
       if not chem_formula:  # If no formula was found with ChEBI/No ChEBI ID available
          if bigg_id != 'nan': # Get formula from BiGG
             try:
-               chem_formula = requests.get(metab_bigg_url + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
+               chem_formula = requests.get(BIGG_METABOLITES_URL + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
             except ValueError:
                pass
          if not chem_formula: # If no formula was found with BiGG ID
@@ -431,7 +440,7 @@ def biocyc_gene_comp(
       missing_metabs_wo_BiGG_df = add_charges_chemical_formulae_to_metabs(missing_metabs_wo_BiGG_df)
    
    # Extract missing genes that belong to the missing reactions
-   missing_genes_df = get_missing_genes(missing_reactions_df, biocyc_file_paths[3])
+   missing_genes_df, missing_reactions_df = get_missing_genes(missing_reactions_df, biocyc_file_paths[3])
    
    # Remove index from statistics_df
    statistics_df.reset_index(inplace=True)
