@@ -72,8 +72,15 @@ def main():
         if (config['multiple']):
             growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media'], config['growth_basis'])
             growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
+            # visualizations
             sbo_fig_all = rg.comparison.get_sbo_plot_multiple(config['multiple_paths']).get_figure()
+            venn_reac = rg.comparison.create_venn(config['multiple_paths'], 'reaction', True).get_figure()
+            venn_metab = rg.comparison.create_venn(config['multiple_paths'], 'reaction', True).get_figure()
+            # saving them
             sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
+            venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
+            venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
+            
         
         try:    
             model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])

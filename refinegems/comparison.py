@@ -6,8 +6,6 @@ Can mainly be used to compare growth behaviour of multiple models. All other sta
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from cobra import Model as cobmod
-from libsbml import Model as libmod
 from tqdm import tqdm
 from venn import venn
 from refinegems.io import load_multiple_models, load_medium_from_db, search_sbo_label
