@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import re
 import pandas as pd
 from Bio import Entrez
+from libsbml import Model, GeneProduct, Species, Reaction
 from libsbml import *
 from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
-from refinegems.sboann import *
 from refinegems.io import search_ncbi_for_gpr
+from typing import Union
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
@@ -53,7 +55,7 @@ def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg:
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_model_reacs_or_metabs(model_libsbml: Model, metabolites: bool=False):
+def get_model_reacs_or_metabs(model_libsbml: Model, metabolites: bool=False) -> pd.DataFrame:
     """Extracts table of reactions/metabolites with BiGG Ids from model
 
     Args:
@@ -75,7 +77,7 @@ def get_model_reacs_or_metabs(model_libsbml: Model, metabolites: bool=False):
     return reac_or_metab_list_df
 
 
-def create_gpr(model, locus_tag, email):
+def create_gpr_from_locus_tag(model, locus_tag, email):
     """creates GeneProduct in the given model
 
     Args:
@@ -111,17 +113,23 @@ def create_gp(model: Model, model_id: str, name: str, locus_tag: str, protein_id
     Returns:
         tuple: (gpr, modified model)
     """
+    id_db = None
     gp = model.getPlugin(0).createGeneProduct()
     gp.setId(model_id)
     gp.setName(name)
     gp.setLabel(locus_tag)
     gp.setSBOTerm('SBO:0000243')
     gp.setMetaId(f'meta_{model_id}')
-    add_cv_term_genes(protein_id, 'NCBI', gp)
+    if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
+        id_db = 'NCBI'
+    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'RefSeq'
+    if id_db: add_cv_term_genes(protein_id, id_db, gp)
     return gp, model
 
 
-def create_species(model: Model, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str):
+def create_species(
+    model: Model, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
+                   ) -> tuple[Species, Model]:
     """creates Species/Metabolite in the given model
 
     Args:
@@ -160,7 +168,11 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
     return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
 
 
-def create_reaction(model, reaction_id, name, reactants, products, fluxes, reversible, fast, compartment=None, sbo=None):
+def create_reaction(
+    model: Model, reaction_id: str, name:str, reactants: dict[str: int], products: dict[str: int], 
+    fluxes: dict[str: str], reversible: bool=None, fast: bool=None, compartment: str=None, sbo: str=None, 
+    genes: Union[str, list[str]]=None
+    ) -> tuple[Reaction, Model]:
     """creates new reaction in the given model
 
     Args:
@@ -174,6 +186,7 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, rever
         fast (bool): true/false for the reaction
         compartment (str): BiGG compartment ID of the reaction (if available)
         sbo (string): SBO term of the reaction
+        genes (str|list): List of genes belonging to reaction
 
     Returns:
         tuple: (reaction, modified model)
@@ -189,6 +202,12 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, rever
     if compartment: reaction.setCompartment(compartment)  # Set compartment for reaction if available
     reversible = reversible if reversible else get_reversible(fluxes)
     reaction.setReversible(reversible)
+    if gene:
+        if gene == 'G_spontaneous':
+            reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(gene)
+        else:
+            for gene in genes:  # Set GeneProductReferences if availables
+                reaction.getPlugin(0).createGeneProductAssociation().createAnd().createGeneProductRef().setGeneProduct(gene)
     for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
         reaction.addReactant(model.getSpecies('M_' + metab), stoich)
     for metab, stoich in products.items(): #reactants as dict with metab:stoich
