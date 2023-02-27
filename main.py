@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import yaml
+import os
 import refinegems as rg
 import cobra
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
@@ -18,6 +20,13 @@ def main():
     
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
+    
+    # check if the output directory is already present, if not create it
+    dir = os.path.join(config['out_path'] + 'visualization/')
+    if not os.path.isdir(config['out_path']):
+        os.makedirs(config['out_path'])
+    if not os.path.isdir(dir): 
+        os.makedirs(dir)
 
     if (config['keggpathways']):
         non_kegg = rg.pathways.kegg_pathways(config['model'], config['kegg_path'])
@@ -63,6 +72,8 @@ def main():
         if (config['multiple']):
             growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media'], config['growth_basis'])
             growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
+            sbo_fig_all = rg.comparison.get_sbo_plot_multiple(config['multiple_paths']).get_figure()
+            sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
         
         try:    
             model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
@@ -77,6 +88,10 @@ def main():
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
             egc = rg.investigate.get_egc(model_cobra)
+            sbo_fig = rg.investigate.get_sbo_plot_single(model_libsbml).get_figure()
+            
+            # saving the created visualizations
+            sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             
             if (config['memote']):
                 score = rg.investigate.run_memote(model_cobra)

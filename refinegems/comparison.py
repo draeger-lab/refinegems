@@ -6,40 +6,38 @@ Can mainly be used to compare growth behaviour of multiple models. All other sta
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from cobra import Model
+from cobra import Model as cobmod
+from libsbml import Model as libmod
 from tqdm import tqdm
 from venn import venn
-from refinegems.io import load_multiple_models, load_all_media_from_db
+from refinegems.io import load_multiple_models, load_medium_from_db, search_sbo_label
 from refinegems.growth import growth_one_medium_from_default, growth_one_medium_from_minimal
-from refinegems.investigate import initial_analysis
+from refinegems.investigate import initial_analysis, get_reactions_per_sbo
 
 __author__ = "Famke Baeuerle"
 
-sbo_mapping={'658': 'passive transport', 
-            '176': 'biochemical reaction', 
-            '167': 'biochemical or transport reaction',
-            '402': 'transfer of a chemical group', 
-            '659': 'symporter-mediated transport', 
-            '200': 'redox reaction', 
-            '233': 'hydroxylation',
-            '399': 'decarboxylation', 
-            '178': 'cleavage', 
-            '403': 'transamination', 
-            '215': 'acetylation', 
-            '377': 'isomerisation', 
-            '657': 'active transport', 
-            '216': 'phosphorylation', 
-            '401': 'deamination', 
-            '376': 'hydrolysis', 
-            '217': 'glycosylation', 
-            '660': 'antiporter-mediated transport', 
-            '654': 'co-transport reaction', 
-            '214': 'methylation', 
-            '655': 'transport reaction', 
-            '627': 'exchange reaction', 
-            '632': 'sink reaction', 
-            '629': 'biomass production',
-            '630': 'ATP maintenance'}
+def get_sbo_mapping_multiple(models):
+    mappings = {}
+    for model in models:
+        mappings[model.id] = get_reactions_per_sbo(model)
+    df = pd.DataFrame.from_dict(mappings)
+    df = df.reset_index().rename({'index': 'SBO-Term'}, axis=1)
+    df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
+    return df
+
+def get_sbo_plot_multiple(model_list: list[str], rename=None):
+    models = load_multiple_models(model_list, package='libsbml')
+    map = get_sbo_mapping_multiple(models)
+    id_list = [mod.id for mod in models]
+    map = map[(map[id_list]>3).all(axis=1)]
+    map = map.drop('SBO-Term', axis=1).sort_values(id_list[0]).set_index('SBO-Name')
+    if rename is not None:
+        map = map.rename(rename, axis=1)
+    fig = map.plot.barh(stacked=True, width=.8, figsize=(8,10))
+    fig.set_ylabel('')
+    fig.set_xlabel('number of reactions', fontsize=16)
+    fig.legend(loc='lower right')
+    return fig
 
 def create_venn(model_list: list[str], entity: str, perc: bool=False) -> plt.figure: 
     all_models = load_multiple_models(model_list, package='cobra')
@@ -59,7 +57,7 @@ def create_venn(model_list: list[str], entity: str, perc: bool=False) -> plt.fig
         fig = venn(intersec)
     return fig
 
-def simulate_all(model_list: list[str], mediumpath: str, media: list[str], basis: str) -> pd.DataFrame:
+def simulate_all(model_list: list[str], media: list[str], basis: str) -> pd.DataFrame:
     """does a run of growth simulation for multiple models on different media
 
     Args:
@@ -72,10 +70,9 @@ def simulate_all(model_list: list[str], mediumpath: str, media: list[str], basis
         df: table containing the results of the growth simulation
     """
     growth = pd.DataFrame()
-    all_media = load_all_media_from_db(mediumpath)
     all_models = load_multiple_models(model_list, package='cobra')
-    selected_media = [x for x in all_media if x['medium'][0] in media]
-    for medium in tqdm(selected_media):
+    for medium_id in tqdm(media):
+        medium = load_medium_from_db(medium_id)
         for model in all_models:
             essentials_given = False
             if (basis=='default_uptake'):

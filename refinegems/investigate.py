@@ -14,7 +14,7 @@ from cobra import Reaction
 from memote.support import consistency
 # needed by memote.support.consitency
 from memote.support import consistency_helpers as con_helpers
-from refinegems.io import load_model_cobra, load_model_libsbml
+from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
 
 __author__ = "Famke Baeuerle"
 
@@ -284,3 +284,23 @@ def get_metabs_with_one_cvterm(model):
                 only_one.append(pid)
                 
     return only_one
+
+def get_reactions_per_sbo(model):
+    sbos_dict = {}
+    for react in model.getListOfReactions():
+        sbo = react.getSBOTerm()
+        if sbo in sbos_dict.keys():
+            sbos_dict[sbo] += 1
+        else: 
+            sbos_dict[sbo] = 1
+    return sbos_dict
+
+def get_sbo_plot_single(model):
+    df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
+    df = df[df[model.id]>3]
+    df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
+    fig = df.drop('SBO-Term', axis=1).sort_values(model.id).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
+    fig.set_ylabel('')
+    fig.set_xlabel('number of reactions', fontsize=16)
+    fig.legend(loc='lower right')
+    return fig

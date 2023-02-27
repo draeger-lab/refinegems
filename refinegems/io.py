@@ -11,6 +11,7 @@ import re
 import gffutils
 import sqlalchemy
 import pandas as pd
+from ols_client import EBIClient
 from Bio import Entrez, SeqIO
 from refinegems.databases import PATH_TO_DB
 from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
@@ -329,3 +330,9 @@ def parse_gff_for_gp_info(gff_file):
     mapping_df['locus_tag'] = mapping_df.apply(
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
+
+def search_sbo_label(sbo_number: str):
+    sbo_number = str(sbo_number)
+    client = EBIClient()
+    sbo = client.get_term('sbo', 'http://biomodels.net/SBO/SBO_0000' + sbo_number)
+    return sbo['_embedded']['terms'][0]['label']
