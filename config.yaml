@@ -55,9 +55,6 @@ growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 multiple: FALSE
 multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/models/Cstr_15.xml', '../C_striatum_GEMs/models/Cstr_16.xml', '../C_striatum_GEMs/models/Cstr_17.xml'] #, '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
 
-# Path to database which contains metabolites present in different media
-media_db: 'data/media_db.csv' 
-
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
 media: ['SNM3', 'RPMI', 'CGXlab'] #'LB', 'M9', 'RPMI', 'CGXII', 'CasA'
 
@@ -73,13 +70,10 @@ output: xlsx #cl, xlsx, csv
 # All parameters are required for all db_to_compare choices except:
 # - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
 # - and biocyc_tables which is not required for 'KEGG'
-gapfill_analysis: TRUE
+gapfill_analysis: FALSE
 gapfill_analysis_params:
   db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
   organismid: 'T05059'  # Needs to be specified for KEGG
-  bigg_dbs:
-    - 'data/bigg_models_reactions.txt'  # Path to BiGG reactions database
-    - 'data/bigg_models_metabolites.txt'  # Path to BiGG metabolites database
   gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
   biocyc_files: 
     - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
@@ -91,7 +85,7 @@ gapfill_analysis_params:
 # (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
 # For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
 # complete tables for reactions can be used with the same columns.
+gapfill_model: FALSE
 
 ### ModelSEED comparison ###
 modelseed: FALSE # set to False if not needed
-modelseedpath: 'data/modelseed_compounds.tsv'

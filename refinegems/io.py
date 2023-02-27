@@ -9,8 +9,10 @@ import cobra
 import os
 import re
 import gffutils
+import sqlalchemy
 import pandas as pd
 from Bio import Entrez, SeqIO
+from refinegems.databases import PATH_TO_DB
 from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
@@ -42,6 +44,7 @@ def load_model_libsbml(modelpath: str) -> Model:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     mod = read.getModel()
     return mod
+
 
 def load_multiple_models(models: list[str], package: str) -> list:
     loaded_models = []
@@ -82,18 +85,18 @@ def load_medium_custom(mediumpath: str) -> pd.DataFrame:
     return medium
 
 
-def load_medium_from_db(mediumpath: str, mediumname: str) -> pd.DataFrame:
-    """Helper function to read standard media_db.csv
+def load_medium_from_db(mediumname: str) -> pd.DataFrame:
+    """Wrapper function to extract subtable for the requested medium from the database 'data.db'
 
     Args:
-        mediumpath (Str): path to csv file with medium database
         mediumname (Str): name of medium to test growth on
 
     Returns:
-        df: pandas dataframe of csv
+        df: pandas dataframe containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium = medium.loc[medium['medium'] == mediumname]
+    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'" 
+    medium = load_a_table_from_database(medium_query)
+    medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
     medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
     medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
@@ -132,6 +135,26 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     """
     man_ann = pd.read_excel(tablepath, sheet_name)
     return man_ann
+
+
+def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
+    """Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
+        true from the refineGEMs database ('data/database/data.db')
+
+    Args:
+        table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
+
+    Returns:
+        pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
+    """
+    sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
+    engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
+    open_con = engine.connect()
+    
+    db_table = pd.read_sql(table_name_or_query, open_con)
+    
+    open_con.close()
+    return db_table
 
 
 def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
@@ -215,7 +238,7 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     with open(filepath, 'r') as handle:
         for record in SeqIO.parse(handle, 'fasta'):
             header = record.description
-            protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0]
+            protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
             descriptors = re.findall('\[+(.*?)\]', header)
             if id_for_model:
                 model_id = re.sub("\||\.", "_", record.id)
@@ -223,10 +246,10 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
          
             descriptors.insert(0, protein_id)
             
-            tmp_dict['protein_id'] = protein_id
+            tmp_dict['protein_id'] = str(protein_id)
             
             for entry in descriptors:
-                entry = entry.split('=')
+                entry = entry.strip().split('=')
                
                 if entry[0] in keyword_list:
                     if entry[0] == 'protein_id':
@@ -266,8 +289,6 @@ def search_ncbi_for_gpr(locus):
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
-                else:
-                    return record.description, None
 
 
 def parse_gff_for_gp_info(gff_file):

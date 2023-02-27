@@ -8,20 +8,19 @@ formula.
 import pandas as pd
 import re
 import numpy as np
+from refinegems.io import load_a_table_from_database
 
 __author__ = "Famke Baeuerle"
 
 
-def get_modelseed_compounds(path):
+def get_modelseed_compounds():
     """extracts compounds from modelseed which have BiGG Ids
-
-    Args:
-        path (str): path to modelseed compound definition
 
     Returns:
         df: table containing modelseed data
     """
-    com = pd.read_csv(path, sep='\t')
+    # Get only rows where BiGG is contained
+    com = load_a_table_from_database("SELECT *, INSTR(aliases, 'BiGG:') bigg FROM modelseed_compounds WHERE bigg > 0")
 
     def get_bigg_ids(aliases):
         try:
@@ -33,8 +32,7 @@ def get_modelseed_compounds(path):
 
     com['BiGG'] = com.apply(lambda row: get_bigg_ids(row['aliases']), axis=1)
 
-    return com.loc[:, ['id', 'name', 'formula', 'mass',
-                       'charge', 'BiGG']].dropna(subset=['BiGG'])
+    return com.loc[:, ['id', 'name', 'formula', 'mass', 'charge', 'BiGG']]
 
 
 def get_model_charges(model):
@@ -188,17 +186,16 @@ def get_compared_formulae(formula_mismatch):
     return formula_mismatch
 
 
-def compare_to_modelseed(path, model):
+def compare_to_modelseed(model):
     """Executes all steps to compare model metabolites to modelseed metabolites
 
     Args:
-        path (str): path to modelseed compound definition
         model (cobra-model): model loaded with cobrapy
 
     Returns:
         tuple: (table with charge mismatches, formula mismatches)
     """
-    ms_comp = get_modelseed_compounds(path)
+    ms_comp = get_modelseed_compounds()
     model_charges = get_model_charges(model)
     modelseed_charges = get_modelseed_charges(ms_comp)
     df_comp = compare_model_modelseed(model_charges, modelseed_charges)

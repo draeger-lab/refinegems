@@ -150,17 +150,17 @@ def create_species(model: Model, metabolite_id: str, name: str, compartment_id: 
     return metabolite, model
 
 
-def get_fluxes() -> dict[str: int]:
-    # return dict of fluxes
-    fluxes = {}
-    return fluxes
+def get_reversible(fluxes: dict[str: str]) -> bool:
+    """Infer if reaction is reversible from flux bounds
+    
+        Args:
+            fluxes (dict): A dictionary containing the keys 'lower_bound' & 'upper_bound' 
+                            with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+    """
+    return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
 
 
-def get_reversible():
-    pass
-
-
-def create_reaction(model, reaction_id, name, reactants, products, fluxes, reversible, fast, sbo=None):
+def create_reaction(model, reaction_id, name, reactants, products, fluxes, reversible, fast, compartment=None, sbo=None):
     """creates new reaction in the given model
 
     Args:
@@ -172,6 +172,7 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, rever
         fluxes (dict): lower_bound and upper_bound as keys
         reversible (bool): true/false for the reaction
         fast (bool): true/false for the reaction
+        compartment (str): BiGG compartment ID of the reaction (if available)
         sbo (string): SBO term of the reaction
 
     Returns:
@@ -185,13 +186,13 @@ def create_reaction(model, reaction_id, name, reactants, products, fluxes, rever
     reaction.setSBOTerm(sbo)
     fast = fast if fast else False
     reaction.setFast(fast)
-    reversible = reversible if reversible else get_reversible()
+    if compartment: reaction.setCompartment(compartment)  # Set compartment for reaction if available
+    reversible = reversible if reversible else get_reversible(fluxes)
     reaction.setReversible(reversible)
     for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
         reaction.addReactant(model.getSpecies('M_' + metab), stoich)
     for metab, stoich in products.items(): #reactants as dict with metab:stoich
         reaction.addProduct(model.getSpecies('M_' + metab), stoich)
-    fluxes = fluxes if fluxes else get_fluxes()
     reaction.getPlugin(0).setLowerFluxBound(fluxes['lower_bound'])
     reaction.getPlugin(0).setUpperFluxBound(fluxes['upper_bound'])
     add_cv_term_reactions(reaction_id, 'BIGG', reaction)

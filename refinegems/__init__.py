@@ -1,5 +1,6 @@
 # declares public API for this module
 # loads functions from subscripts which are needed in main.py
+import refinegems.databases
 import refinegems.growth
 import refinegems.modelseed
 import refinegems.sboann
