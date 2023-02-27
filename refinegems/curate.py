@@ -5,7 +5,7 @@ While working on GEMs the user might come across ill-annotated or missing metabo
 """
 from tqdm.auto import tqdm
 from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
-from refinegems.entities import create_gpr, create_reaction
+from refinegems.entities import create_gpr_from_locus_tag, create_reaction
 
 __author__ = "Famke Baeuerle"
     
@@ -43,7 +43,7 @@ def add_reactions_from_table(model, table, email):
                         if columnName == 'locus':
                             reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(str(entry))
                             if model.getPlugin(0).getGeneProductByLabel(str(entry)) is None:
-                                gpr, model = create_gpr(model, str(entry), email)
+                                gpr, model = create_gpr_from_locus_tag(model, str(entry), email)
                         else:
                             add_cv_term_reactions(str(entry), str(columnName), reaction)
     return model
