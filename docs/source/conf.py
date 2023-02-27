@@ -79,4 +79,7 @@ autodoc_mock_imports = ["psycopg2",
                         "tqdm",
                         "psycopg2",
                         "Bio",
+                        "sqlalchemy",
+                        "ratelimit",
+                        "libchebipy"
                         ]
