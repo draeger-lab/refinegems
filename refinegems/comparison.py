@@ -95,6 +95,42 @@ def create_heatmap(growth: pd.DataFrame):
         )
     return fig
 
+def create_binary_heatmap(growth: pd.DataFrame):
+    def get_native_growth(row):
+        if row == True:
+            return 1
+        else:
+            return 0
+    growth['native_growth'] = growth['complete'].apply(get_native_growth)
+    growth = growth[['medium', 'model', 'native_growth']]
+    growth=growth.set_index(['medium', 'model']).sort_index().T.stack()
+    growth.columns.name=None
+    growth.index.names = (None,None)
+    growth.index.name=None
+    growth.index = growth.index.get_level_values(1)
+    fig, ax = plt.subplots(figsize=(10,8))
+    sns.heatmap(growth.T, 
+                annot_kws={"fontsize":15},
+                cmap='RdYlBu', 
+                linewidth=.5, 
+                ax=ax,
+                cbar=False,
+                )
+    plt.xticks(rotation=0)
+    plt.yticks(rotation=0)
+    plt.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        )
+    plt.tick_params(
+        axis='y',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        left=False,
+        )
+    return fig
+
 def simulate_all(model_list: list[str], media: list[str], basis: str) -> pd.DataFrame:
     """does a run of growth simulation for multiple models on different media
 
