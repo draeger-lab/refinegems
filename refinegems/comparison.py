@@ -6,6 +6,8 @@ Can mainly be used to compare growth behaviour of multiple models. All other sta
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 from tqdm import tqdm
 from venn import venn
 from refinegems.io import load_multiple_models, load_medium_from_db, search_sbo_label
@@ -37,7 +39,7 @@ def get_sbo_plot_multiple(model_list: list[str], rename=None):
     fig.legend(loc='lower right')
     return fig
 
-def create_venn(model_list: list[str], entity: str, perc: bool=False) -> plt.figure: 
+def create_venn(model_list: list[str], entity: str, perc: bool=False): 
     all_models = load_multiple_models(model_list, package='cobra')
     intersec = {}
     for model in all_models:
@@ -53,6 +55,44 @@ def create_venn(model_list: list[str], entity: str, perc: bool=False) -> plt.fig
         fig = venn(intersec, fmt="{percentage:.0f}%")
     else:
         fig = venn(intersec)
+    return fig
+
+def create_heatmap(growth: pd.DataFrame):
+    growth=growth.set_index(['medium', 'model']).sort_index().T.stack()
+    growth.columns.name=None
+    growth.index.names = (None,None)
+    growth.index.name=None
+    growth.index = growth.index.get_level_values(1)
+    growth[growth > 500] = np.nan
+    growth[growth < 0] = np.nan
+    growth.replace([np.inf, -np.inf], np.nan, inplace=True)
+    vmin=growth.min().min() - 5
+    vmax=growth.max().max() + 5
+    fig, ax = plt.subplots(figsize=(10,8))
+    sns.heatmap(growth.T, 
+                annot=True, 
+                annot_kws={"fontsize":15},
+                vmin=vmin, 
+                vmax=vmax,
+                #cmap='crest', 
+                linewidth=.5, 
+                cbar_kws = {'orientation':'horizontal', 'label':'doubling time [min]'},
+                ax=ax,
+                fmt='.0f'
+                )
+    plt.xticks(rotation=0)
+    plt.yticks(rotation=0)
+    plt.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        )
+    plt.tick_params(
+        axis='y',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        left=False,
+        )
     return fig
 
 def simulate_all(model_list: list[str], media: list[str], basis: str) -> pd.DataFrame:

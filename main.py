@@ -75,12 +75,13 @@ def main():
             # visualizations
             sbo_fig_all = rg.comparison.get_sbo_plot_multiple(config['multiple_paths']).get_figure()
             venn_reac = rg.comparison.create_venn(config['multiple_paths'], 'reaction', True).get_figure()
-            venn_metab = rg.comparison.create_venn(config['multiple_paths'], 'reaction', True).get_figure()
+            venn_metab = rg.comparison.create_venn(config['multiple_paths'], 'metabolite', True).get_figure()
+            heatmap = rg.comparison.create_heatmap(growth_all[['model', 'medium', 'doubling_time [min]']])
             # saving them
             sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
             venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
-            
+            heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_dt_additives_' + str(today) + '.png')
         
         try:    
             model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
