@@ -331,7 +331,15 @@ def parse_gff_for_gp_info(gff_file):
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
 
-def search_sbo_label(sbo_number: str):
+def search_sbo_label(sbo_number: str) -> str:
+    """looks up the SBO label corresponding to a given SBO Term number
+
+    Args:
+        sbo_number (str): Last three digits of SBO-Term as str
+
+    Returns:
+        str: denoted label for given SBO Term
+    """
     sbo_number = str(sbo_number)
     client = EBIClient()
     sbo = client.get_term('sbo', 'http://biomodels.net/SBO/SBO_0000' + sbo_number)

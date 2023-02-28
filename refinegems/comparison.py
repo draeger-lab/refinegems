@@ -10,13 +10,46 @@ import seaborn as sns
 import numpy as np
 from tqdm import tqdm
 from venn import venn
-from refinegems.io import load_multiple_models, load_medium_from_db, search_sbo_label
+from libsbml import Model as libModel
+from cobra import Model as cobraModel
+from refinegems.io import load_medium_from_db, search_sbo_label
 from refinegems.growth import growth_one_medium_from_default, growth_one_medium_from_minimal
 from refinegems.investigate import initial_analysis, get_reactions_per_sbo
 
 __author__ = "Famke Baeuerle"
 
-def get_sbo_mapping_multiple(models):
+def plot_initial_analysis(models: list[libModel]):
+    """Creates bar plot of number of entities per Model
+
+    Args:
+        models (list[libModel]): Models loaded with libSBML
+
+    Returns:
+        plot: pandas plot object
+    """
+    numbers = pd.DataFrame([initial_analysis(model) for model in models], columns=['model', 'metabolites', 'reactions', 'genes'])
+    ax = numbers.set_index('model').plot.bar(y=['metabolites', 'reactions', 'genes'], figsize=(8, 5), cmap='Paired', rot=0)
+    # commented is possibility to integrate memote scores
+    #numbers.set_index('model').plot(y='Memote score', ax=ax, use_index=False, linestyle=':', secondary_y='Memote score', color='k', marker='D', legend=True)
+    #ax.right_ax.set_ylabel('Memote score [%]')
+    #ax.right_ax.legend(loc='upper right', bbox_to_anchor=[0.98, 0.9])
+    #ax.right_ax.set_ylim([75, 95])
+    ax.legend(title=False, loc='upper left', ncol=3, frameon=False)
+    ylim = numbers.drop('model', axis=1).max().max() + 200
+    ax.set_ylim([0,ylim])
+    ax.set_xlabel('')
+    ax.tick_params(axis='x',which='both', bottom=False,top=False)
+    return ax
+
+def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
+    """Determines number of reactions per SBO Term and adss label of SBO Terms
+
+    Args:
+        models (list[libModel]): Models loaded with libSBML
+
+    Returns:
+        pd.DataFrame: SBO Terms, no of reactions per model and SBO Label
+    """
     mappings = {}
     for model in models:
         mappings[model.id] = get_reactions_per_sbo(model)
@@ -25,8 +58,16 @@ def get_sbo_mapping_multiple(models):
     df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
     return df
 
-def get_sbo_plot_multiple(model_list: list[str], rename=None):
-    models = load_multiple_models(model_list, package='libsbml')
+def plot_rea_sbo_multiple(models: list[libModel], rename=None):
+    """Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models
+
+    Args:
+        models (list[libModel]): Models loaded with libSBML
+        rename (dict, optional): Rename model ids to custom names. Defaults to None.
+
+    Returns:
+        plot: pandas plot object
+    """
     map = get_sbo_mapping_multiple(models)
     id_list = [mod.id for mod in models]
     map = map[(map[id_list]>3).all(axis=1)]
@@ -39,10 +80,19 @@ def get_sbo_plot_multiple(model_list: list[str], rename=None):
     fig.legend(loc='lower right')
     return fig
 
-def create_venn(model_list: list[str], entity: str, perc: bool=False): 
-    all_models = load_multiple_models(model_list, package='cobra')
+def plot_venn(models: list[cobraModel], entity: str, perc: bool=False):
+    """Creates venn diagram to show the overlap of model entities
+
+    Args:
+        models (list[cobraModel]): Models loaded with cobrapy
+        entity (str): Compare on metabolite|reaction
+        perc (bool, optional): True if percentages should be used. Defaults to False.
+
+    Returns:
+        plot: venn diagram
+    """
     intersec = {}
-    for model in all_models:
+    for model in models:
         reas = []
         if entity == 'metabolite':
             for rea in model.metabolites:
@@ -57,7 +107,15 @@ def create_venn(model_list: list[str], entity: str, perc: bool=False):
         fig = venn(intersec)
     return fig
 
-def create_heatmap(growth: pd.DataFrame):
+def plot_heatmap_dt(growth: pd.DataFrame):
+    """Creates heatmap of simulated doubling times with additives
+    
+    Args:
+        growth (pd.DataFrame): Containing growth data from simulate_all
+        
+    Returns:
+        plot: sns heatmap plot
+    """
     growth=growth.set_index(['medium', 'model']).sort_index().T.stack()
     growth.columns.name=None
     growth.index.names = (None,None)
@@ -95,7 +153,15 @@ def create_heatmap(growth: pd.DataFrame):
         )
     return fig
 
-def create_binary_heatmap(growth: pd.DataFrame):
+def plot_heatmap_binary(growth: pd.DataFrame):
+    """Creates a plot were if growth without additives is possible is marked blue otherwise red
+
+    Args:
+        growth (pd.DataFrame): Containing growth data from simulate_all
+        
+    Returns:
+        plot: sns heatmap plot
+    """
     def get_native_growth(row):
         if row == True:
             return 1
@@ -131,23 +197,22 @@ def create_binary_heatmap(growth: pd.DataFrame):
         )
     return fig
 
-def simulate_all(model_list: list[str], media: list[str], basis: str) -> pd.DataFrame:
-    """does a run of growth simulation for multiple models on different media
+def simulate_all(models: list[cobraModel], media: list[str], basis: str) -> pd.DataFrame:
+    """Does a run of growth simulation for multiple models on different media
 
     Args:
-        model_list (list): paths to the models of interest (xml files)
-        mediumpath (string): path to csv containing medium definitions
-        media (list): media of interest (f.ex. LB, M9, ...)
-        basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
+        models (list[cobraModel]): Models loaded with cobrapy
+        mediumpath (string): Path to csv containing medium definitions
+        media (list): Media of interest (f.ex. LB, M9, ...)
+        basis (string): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
 
     Returns:
-        df: table containing the results of the growth simulation
+        pd.DataFrame: table containing the results of the growth simulation
     """
     growth = pd.DataFrame()
-    all_models = load_multiple_models(model_list, package='cobra')
     for medium_id in tqdm(media):
         medium = load_medium_from_db(medium_id)
-        for model in all_models:
+        for model in models:
             essentials_given = False
             if (basis=='default_uptake'):
                 growth_one = growth_one_medium_from_default(model, medium).drop('missing exchanges', axis=1)

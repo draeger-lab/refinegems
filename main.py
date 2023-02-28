@@ -70,19 +70,26 @@ def main():
     
     else:
         if (config['multiple']):
-            growth_all = rg.comparison.simulate_all(config['multiple_paths'], config['media'], config['growth_basis'])
+            models_cobra = rg.io.load_multiple_models(config['multiple_paths'], 'cobra')
+            growth_all = rg.comparison.simulate_all(models_cobra, config['media'], config['growth_basis'])
             growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
             # visualizations
-            sbo_fig_all = rg.comparison.get_sbo_plot_multiple(config['multiple_paths']).get_figure()
-            venn_reac = rg.comparison.create_venn(config['multiple_paths'], 'reaction', True).get_figure()
-            venn_metab = rg.comparison.create_venn(config['multiple_paths'], 'metabolite', True).get_figure()
-            heatmap = rg.comparison.create_heatmap(growth_all[['model', 'medium', 'doubling_time [min]']])
-            # saving them
-            sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
-            venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
-            venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
-            heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_dt_additives_' + str(today) + '.png')
-        
+            if (config['visualize']):
+                models_libsbml = rg.io.load_multiple_models(config['multiple_paths'], 'libsbml')
+                ini_plot = rg.comparison.plot_initial_analysis(models_libsbml).get_figure()
+                sbo_fig_all = rg.comparison.plot_rea_sbo_multiple(models_libsbml).get_figure()
+                venn_reac = rg.comparison.plot_venn(models_cobra, 'reaction', True).get_figure()
+                venn_metab = rg.comparison.plot_venn(models_cobra, 'metabolite', True).get_figure()
+                heatmap = rg.comparison.plot_heatmap_dt(growth_all[['model', 'medium', 'doubling_time [min]']])
+                binary_heatmap = rg.comparison.plot_heatmap_binary(growth_all)
+                # saving them
+                sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
+                venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
+                venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
+                heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_dt_additives_' + str(today) + '.png')
+                binary_heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_native_' + str(today) + '.png', bbox_inches='tight')
+                ini_plot.savefig(config['out_path'] + 'visualization/' + 'model_status_' + str(today) + '.png', bbox_inches='tight')
+                                                    
         try:    
             model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
             print(errors)
@@ -96,7 +103,7 @@ def main():
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
             egc = rg.investigate.get_egc(model_cobra)
-            sbo_fig = rg.investigate.get_sbo_plot_single(model_libsbml).get_figure()
+            sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
             
             # saving the created visualizations
             sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
