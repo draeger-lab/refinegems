@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Usage as python module &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -31,8 +33,9 @@
 
           
           
-          <a href="index.html" class="icon icon-home">
-            refinegems
+          <a href="index.html">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,6 +48,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage as python module</a><ul>
@@ -105,12 +109,12 @@
     text-align: unset;
 }
 </style>
-<section id="usage-as-python-module">
+<div class="section" id="usage-as-python-module">
 <h1>Usage as python module<a class="headerlink" href="#usage-as-python-module" title="Permalink to this heading"></a></h1>
 <p>See <a class="reference internal" href="examples.html"><span class="doc">examples</span></a> to learn how to use refineGEMs.
 Note that at this time most of the modules only make sense when you use the respective main functions:</p>
 <p>The modules <code class="docutils literal notranslate"><span class="pre">io</span></code>, <code class="docutils literal notranslate"><span class="pre">cvterms</span></code> and <code class="docutils literal notranslate"><span class="pre">investigate</span></code> provide functions that can be used by themselves.</p>
-<section id="io">
+<div class="section" id="io">
 <h2><code class="docutils literal notranslate"><span class="pre">io</span></code><a class="headerlink" href="#io" title="Permalink to this heading"></a></h2>
 <p>provides a couple of helper functions to load models, databases and parse gfffiles</p>
 <p>Provides functions to load and write models, media definitions and the manual annotation table</p>
@@ -268,6 +272,18 @@ corresponding to the locus_tag</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">search_sbo_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sbo_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span></dt>
+<dd><p>looks up the SBO label corresponding to a given SBO Term number</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>sbo_number (str): Last three digits of SBO-Term as str</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: denoted label for given SBO Term</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">validate_libsbml_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Debug method: Validates a libSBML model with the libSBML validator</p>
 <dl class="simple">
@@ -300,12 +316,12 @@ new_filename (Str): filename / path for modified model</p>
 </dl>
 </dd></dl>
 
-</section>
-<section id="investigate">
+</div>
+<div class="section" id="investigate">
 <h2><code class="docutils literal notranslate"><span class="pre">investigate</span></code><a class="headerlink" href="#investigate" title="Permalink to this heading"></a></h2>
 <p>provides a couple of functions to get parameters of your model</p>
-</section>
-<section id="cvterms">
+</div>
+<div class="section" id="cvterms">
 <h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this heading"></a></h2>
 <p>provides functions to work with cvterms</p>
 <p>Helper module to work with annotations (CVTerms)</p>
@@ -425,8 +441,8 @@ along with the provided qualifier &amp; biological/model qualifier types</p>
 </dl>
 </dd></dl>
 
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

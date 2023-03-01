@@ -12,7 +12,7 @@ Note that at this time most of the modules only make sense when you use the resp
     :noindex:
 .. autofunction:: refinegems.modelseed
     :noindex:
-.. autofunction:: refinegems.kegg_pathways
+.. autofunction:: refinegems.pathways
     :noindex:
 .. autofunction:: refinegems.sboann
     :noindex:

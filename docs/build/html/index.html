@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to refinegems! &mdash; refinegems 1.0 documentation</title>
+  <title>Welcome to refineGEMs! &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -30,8 +32,9 @@
 
           
           
-          <a href="#" class="icon icon-home">
-            refinegems
+          <a href="#">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -44,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
@@ -65,7 +69,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Welcome to refinegems!</li>
+      <li class="breadcrumb-item active">Welcome to refineGEMs!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -99,13 +103,13 @@
     text-align: unset;
 }
 </style>
-<section id="welcome-to-refinegems">
-<h1>Welcome to refinegems!<a class="headerlink" href="#welcome-to-refinegems" title="Permalink to this heading"></a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is a python package intended
+<div class="section" id="welcome-to-refinegems">
+<h1>Welcome to refineGEMs!<a class="headerlink" href="#welcome-to-refinegems" title="Permalink to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">refineGEMs</span></code> is a python package intended
 to help with the curation of genome-scale metabolic models (GEMS).</p>
-<section id="overview">
+<div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
-<p>Currently <code class="docutils literal notranslate"><span class="pre">refinegems</span></code> can be used for the investigation of a GEM, it can complete the following tasks:</p>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">refineGEMs</span></code> can be used for the investigation of a GEM, it can complete the following tasks:</p>
 <ul class="simple">
 <li><p>loading GEMS with <code class="docutils literal notranslate"><span class="pre">cobrapy</span></code> and <code class="docutils literal notranslate"><span class="pre">libSBML</span></code></p></li>
 <li><p>report number of metabolites, reactions and genes</p></li>
@@ -132,6 +136,10 @@ to help with the curation of genome-scale metabolic models (GEMS).</p>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="development.html#development-installation">Development installation</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#You-can-load-models">You can load models</a></li>
@@ -153,13 +161,13 @@ to help with the curation of genome-scale metabolic models (GEMS).</p>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#refinegems-comparison-module">refinegems.comparison module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.curate">refinegems.curate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.cvterms">refinegems.cvterms module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#refinegems-gapfill-module">refinegems.gapfill module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.gapfill">refinegems.gapfill module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.growth">refinegems.growth module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#refinegems-investigate-module">refinegems.investigate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.io">refinegems.io module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.modelseed">refinegems.modelseed module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.pathways">refinegems.pathways module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#refinegems-polish-module">refinegems.polish module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.polish">refinegems.polish module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#module-refinegems.sboann">refinegems.sboann module</a></li>
 </ul>
 </li>
@@ -169,8 +177,8 @@ to help with the curation of genome-scale metabolic models (GEMS).</p>
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

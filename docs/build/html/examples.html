@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Examples on how to use refinegems &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -33,8 +35,9 @@
 
           
           
-          <a href="index.html" class="icon icon-home">
-            refinegems
+          <a href="index.html">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -47,6 +50,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Examples on how to use refinegems</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#You-can-load-models">You can load models</a></li>
@@ -360,24 +364,24 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<section id="Examples-on-how-to-use-refinegems">
+<div class="section" id="Examples-on-how-to-use-refinegems">
 <h1>Examples on how to use refinegems<a class="headerlink" href="#Examples-on-how-to-use-refinegems" title="Permalink to this heading"></a></h1>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># imports
-import refinegems as rg
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># imports</span>
+<span class="kn">import</span> <span class="nn">refinegems</span> <span class="k">as</span> <span class="nn">rg</span>
 </pre></div>
 </div>
 </div>
-<section id="You-can-load-models">
+<div class="section" id="You-can-load-models">
 <h2>You can load models<a class="headerlink" href="#You-can-load-models" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>model = rg.ioload_model_cobra(&#39;../../data/e_coli_core.xml&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">rg</span><span class="o">.</span><span class="n">ioload_model_cobra</span><span class="p">(</span><span class="s1">&#39;../../data/e_coli_core.xml&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -385,7 +389,7 @@ import refinegems as rg
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rg.investigate.get_egc(model)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rg</span><span class="o">.</span><span class="n">investigate</span><span class="o">.</span><span class="n">get_egc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -459,8 +463,8 @@ import refinegems as rg
 </pre></div>
 </div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

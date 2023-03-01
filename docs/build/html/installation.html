@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Usage as standalone application" href="application.html" />
-    <link rel="prev" title="Welcome to refinegems!" href="index.html" /> 
+    <link rel="next" title="Development" href="development.html" />
+    <link rel="prev" title="Welcome to refineGEMs!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -31,8 +33,9 @@
 
           
           
-          <a href="index.html" class="icon icon-home">
-            refinegems
+          <a href="index.html">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -51,6 +54,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
@@ -106,20 +110,33 @@
     text-align: unset;
 }
 </style>
-<section id="installation">
+<div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
-<section id="installation-via-pip">
+<div class="section" id="installation-via-pip">
 <h2>Installation via pip<a class="headerlink" href="#installation-via-pip" title="Permalink to this heading"></a></h2>
 <p>To install refinegmes as python package, simply install it via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>refinegems
 </pre></div>
 </div>
-</section>
-<section id="installation-via-github">
+</div>
+<div class="section" id="installation-via-github">
 <h2>Installation via github<a class="headerlink" href="#installation-via-github" title="Permalink to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository.</p>
 <p>The package and all its dependencies can be installed within virtual environments.</p>
 <p><strong>Condaenv</strong></p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<div class="line-block">
+<div class="line">Installing refineGEMs in a conda environment on a  MacOS can cause the following issue:</div>
+<div class="line">-&gt; After a restart of the device the whole conda set-up may have the wrong python version.</div>
+<div class="line">If that is the case:</div>
+</div>
+<ol class="arabic simple">
+<li><p>Deactivate all environments including the base environment</p></li>
+<li><p>Activate base</p></li>
+<li><p>Activate the refineGEMs environment</p></li>
+</ol>
+</div>
 <p>Setup a conda virtual environment and use its pip to install refineGEMs into that environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># clone or pull the latest source code</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/draeger-lab/refinegems.git
@@ -165,8 +182,8 @@ pipenv<span class="w"> </span>shell
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> package can also be installed via Anaconda (recommended
 if you are a Windows user).</p>
-</section>
-<section id="further-dependencies-obsolete">
+</div>
+<div class="section" id="further-dependencies-obsolete">
 <h2>Further Dependencies (obsolete)<a class="headerlink" href="#further-dependencies-obsolete" title="Permalink to this heading"></a></h2>
 <p>If you want to use the SBO terms annotation part you will need to
 install PostgreSQL to your machine.</p>
@@ -190,8 +207,8 @@ with</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql.exe<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>sbo_ann<span class="w"> </span>-f<span class="w"> </span>data<span class="se">\\</span>sbo<span class="se">\\</span>create_dbs.sql
 </pre></div>
 </div>
-</section>
-<section id="troubleshooting">
+</div>
+<div class="section" id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p>If you get <code class="docutils literal notranslate"><span class="pre">ImportError:</span> <span class="pre">DLL</span> <span class="pre">load</span> <span class="pre">failed</span> <span class="pre">while</span> <span class="pre">importing</span> <span class="pre">_sqlite3</span></code>
@@ -217,15 +234,15 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
 (located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
 <li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
 </ul>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to refinegems!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="application.html" class="btn btn-neutral float-right" title="Usage as standalone application" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to refineGEMs!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="development.html" class="btn btn-neutral float-right" title="Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
