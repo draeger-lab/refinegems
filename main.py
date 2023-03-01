@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import yaml
 import os
 import click
 import cobra
