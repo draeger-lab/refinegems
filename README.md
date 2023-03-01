@@ -1,12 +1,15 @@
 [![Update Docs](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml/badge.svg)](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-# refinegems
-`refinegems` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
 
-To access the updated documentation please enter `<path to refinegems>/refinegems/docs/build/html/index.html` into your favourite browser. As soon as the repository is made public this will be moved to a standalone website.
+<img src="https://github.com/draeger-lab/refinegems/blob/dev/refineGEMs_logo.png" height="200"/><br>
+
+# refineGEMs
+`refineGEMs` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
+
+To access the updated documentation please enter `<path to refineGEMs>/refinegems/docs/build/html/index.html` into your favourite browser. As soon as the repository is made public this will be moved to a standalone website.
 
 ## Overview
 
-Currently `refinegems` can be used for the investigation of a GEM, it can complete the following tasks:
+Currently `refineGEMs` can be used for the investigation of a GEM, it can complete the following tasks:
 - loading GEMS with `cobrapy` and `libSBML`
 - report number of metabolites, reactions and genes
 - report orphaned, deadends and disconnected metabolites
@@ -15,7 +18,7 @@ Currently `refinegems` can be used for the investigation of a GEM, it can comple
 - compare the genes present in the model to the genes found in the [KEGG](https://www.genome.jp/kegg/kegg1.html) Database (Note: this requires a gff file of your organism and the KEGG identifier of your organism)
 - compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database
 
-Other applications of `refinegems` include curation of a given model these include:
+Other applications of `refineGEMs` include curation of a given model these include:
 - correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v.1.5.1 (for example moving all relevant information from the notes to the annotation field) this includes automated annotation of NCBI genes to the GeneProtein section of the model
 - addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin)
 - SBO-Term annotation based on a script by Elisabeth Fritze
@@ -23,7 +26,7 @@ Other applications of `refinegems` include curation of a given model these inclu
 
 ## Installation
 
-`refinegems` is distributed via this github repository, all dependencies are denoted in a [pipenv](https://pipenv.pypa.io/en/latest/). You will need to install `pipenv` first. To install `refinegems` locally complete the following steps:
+`refineGEMs` is distributed via this github repository, all dependencies are denoted in a [pipenv](https://pipenv.pypa.io/en/latest/). You will need to install `pipenv` first. To install `refineGEMs` locally complete the following steps:
 
 ```bash
 # install pipenv using pip
@@ -76,7 +79,7 @@ The `config.yaml` file contains defaults for all variables that need to be set b
 
 ```yaml
 Description: > 
-  This file can be adapted to choose what refinegems should do.
+  This file can be adapted to choose what refineGEMs should do.
   Note: For windows use \ instead of / for the paths
 
 
@@ -142,7 +145,7 @@ The repository structure has the following intention:
 * `data/` contains all tables that are used by different parts of the script as well as a toy model `e_coli_core.xml`
 * Instead of using the files given in `data/`, you can use your own files and just change the paths in `config.yaml`. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the `data/` folder and use the same formatting.
 * `sbo/` contains the `sql` files necessary for the SBOAnn script by Elisabeth Fritze
-* `setup.py` and `pyproject.toml` enable creating a PyPi package called `refinegems`
+* `setup.py` and `pyproject.toml` enable creating a PyPi package called `refineGEMs`
 
 ## Troubleshooting
 
