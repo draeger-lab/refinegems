@@ -53,10 +53,11 @@ growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 
 # Settings if you want to compare multiple models
 multiple: FALSE
-multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/models/Cstr_15.xml', '../C_striatum_GEMs/models/Cstr_16.xml', '../C_striatum_GEMs/models/Cstr_17.xml'] #, '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
+visualize: TRUE
+multiple_paths: ['../C_striatum_GEMs/models/Cstr_TS.xml', '../C_striatum_GEMs/models/Cstr_1197.xml', '../C_striatum_GEMs/models/Cstr_1115.xml', '../C_striatum_GEMs/models/Cstr_1116.xml', '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
 
-# media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
-media: ['SNM3', 'RPMI', 'CGXlab'] #'LB', 'M9', 'RPMI', 'CGXII', 'CasA'
+# media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI, no duplicates allowed
+media: ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA']
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE

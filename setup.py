@@ -23,5 +23,10 @@ setup(name='refineGEMs',
             "libchebipy==1.0.10",
             "ratelimit==2.2.1",
             "sqlalchemy==1.4.43"
+            "venn==0.1.3",
+            "ols-client==0.1.3",
+            "seaborn==0.12.2"
             ],
       zip_safe=False)
+
+# pip install ipywidgets
