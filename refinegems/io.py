@@ -17,6 +17,7 @@ from ols_client import EBIClient
 from Bio import Entrez, SeqIO
 from refinegems.databases import PATH_TO_DB
 from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
+from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
@@ -493,6 +494,8 @@ def save_user_input(configpath):
             user_input['sboterms'] = False
             user_input['charge_corr'] = False
             user_input['man_cur'] = False
+            
+        today = date.today().strftime("%Y%m%d")
         
         print('This is your input:')
         print(user_input)
@@ -501,5 +504,5 @@ def save_user_input(configpath):
             os.makedirs(user_input['out_path'])
         with open(user_input['out_path'] + 'user_input.yaml', 'w') as f:
             yaml.dump(user_input, f)
-        print('Your input was saved as yaml to '+ user_input['out_path'] + 'user_input.yaml')
+        print('Your input was saved as yaml to '+ user_input['out_path'] + 'user_input' + str(today) + '.yaml')
         return user_input
