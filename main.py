@@ -2,28 +2,36 @@
 
 import yaml
 import os
-import refinegems as rg
+import click
 import cobra
+import refinegems as rg
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
-def main():
+@click.command()
+@click.option('-c', '--configpath', type=click.Path(exists=True), required=True, prompt='Enter path to config file:',
+              help='Path to file containing configurations to run refineGEMs. An example file can be found in config.yaml.')
+
+def main(configpath=None):
     """main function to run the program"""
-    print("Report main properties of a GEM")
+    print("RefineGEMs provides functions to curate and investigate genome-scale metabolic models!")
     print("Author:", __author__)
     today = date.today().strftime("%Y%m%d")
     
-    rg.databases.initialise_database()
+    click.echo('Config file loaded from ' + click.format_filename(configpath))
     
-    with open('config.yaml') as f:
+    rg.databases.initialise_database()
+
+    with open(configpath) as f:
         config = yaml.safe_load(f)
     
     # check if the output directory is already present, if not create it
     dir = os.path.join(config['out_path'] + 'visualization/')
     if not os.path.isdir(config['out_path']):
+        print('Given out_path is not yet a directory, creating ' + config['out_path'])
         os.makedirs(config['out_path'])
     if not os.path.isdir(dir): 
         os.makedirs(dir)
