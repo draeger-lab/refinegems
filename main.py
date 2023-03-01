@@ -12,8 +12,8 @@ from datetime import date
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 @click.command()
-@click.option('-c', '--configpath', required=True, prompt='Enter path to config file or "no" if you want to create one',
-              help='Path to file containing configurations to run refineGEMs. An example file can be found in config.yaml.')
+@click.option('-c', '--configpath', required=True, prompt='Enter path to config file or press Enter if you want to create one.',
+              help='Path to file containing configurations to run refineGEMs. An example file can be found in config.yaml.', default='ENTER')
 
 def main(configpath=None):
     """main function to run the program"""
@@ -22,13 +22,8 @@ def main(configpath=None):
     today = date.today().strftime("%Y%m%d")
     
    # click.echo('Config file loaded from ' + click.format_filename(configpath))
-    
-    rg.databases.initialise_database()
-
-    # with open(configpath) as f:
-    #     config = yaml.safe_load(f)
-    # print(config)
     config = rg.io.save_user_input(configpath)
+    rg.databases.initialise_database()
     
     # check if the output directory is already present, if not create it
     dir = os.path.join(config['out_path'] + 'visualization/')
