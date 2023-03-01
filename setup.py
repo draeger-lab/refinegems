@@ -23,7 +23,9 @@ setup(name='refineGEMs',
             "libchebipy==1.0.10",
             "venn==0.1.3",
             "ols-client==0.1.3",
-            "seaborn==0.12.2"
+            "seaborn==0.12.2",
+            "sqlalchemy==1.4.43",
+            "click==8.1.3"
             ],
       zip_safe=False)
 
