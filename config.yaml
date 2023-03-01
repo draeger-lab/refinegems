@@ -6,8 +6,8 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # 'data/e_coli_core.xml' #
-entrez_email: 'famke.baeuerle@student.uni-tuebingen.de' # necessary to access NCBI API
+model: 'data/e_coli_core.xml' #
+entrez_email: '' # necessary to access NCBI API
 
 
 Settings for scripts that manipulate the model: >
@@ -15,11 +15,11 @@ Settings for scripts that manipulate the model: >
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
-kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with KEGG Groups
+kegg_path:  '' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation ###
 sboterms: FALSE
-sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with sbo terms
+sbo_path: '' # path where to save model with sbo terms
 
 ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
 polish: FALSE
@@ -29,24 +29,24 @@ id_db: 'BIGG' # Required!
 lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
                   # & to set the locus_tag to the ones obtained by the annotation
 protein_fasta: '' # Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True
-polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
+polish_path: '' # path where to save the polished model
 
 ### Charge correction ###
 charge_corr: FALSE
-charge_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml'
-charge_report_path: '../C_striatum_GEMs/analysis/Cstr_KC-Na-01_multiple_charges.csv'
+charge_path: ''
+charge_report_path: ''
 
 ### Manual Curation ###
 man_cur: FALSE
 man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
-man_cur_table: '../C_striatum_GEMs/data/manual_curation.xlsx'
-man_cur_path: '../C_striatum_GEMs/models/Cstr_17.xml' # path where to save modified model
+man_cur_table: 'data/manual_curation.xlsx'
+man_cur_path: '' # path where to save modified model
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Set the out path for the csv created by multiple and a possible xlsx for model investigation
-out_path: '../C_striatum_GEMs/analysis/'
+out_path: ''
 
 # Set the basis medium to simulate growth from
 growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
@@ -54,7 +54,7 @@ growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 # Settings if you want to compare multiple models
 multiple: FALSE
 visualize: TRUE
-multiple_paths: ['../C_striatum_GEMs/models/Cstr_TS.xml', '../C_striatum_GEMs/models/Cstr_1197.xml', '../C_striatum_GEMs/models/Cstr_1115.xml', '../C_striatum_GEMs/models/Cstr_1116.xml', '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
+multiple_paths: ['data/e_coli_core.xml', '', '']
 
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI, no duplicates allowed
 media: ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA']
@@ -74,8 +74,8 @@ output: xlsx #cl, xlsx, csv
 gapfill_analysis: FALSE
 gapfill_analysis_params:
   db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
-  organismid: 'T05059'  # Needs to be specified for KEGG
-  gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
+  organismid: ''  # Needs to be specified for KEGG
+  gff_file: ''  # Path to RefSeq GFF file 
   biocyc_files: 
     - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
     - 'Path1'  # Path to TXT file containing a SmartTable with all reaction relevant information (*)
