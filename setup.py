@@ -21,6 +21,10 @@ setup(name='refineGEMs',
             "depinfo==1.7.0",
             "sortedcontainers==2.4.0",
             "libchebipy==1.0.10",
-            "venn==0.1.3"
+            "venn==0.1.3",
+            "ols-client==0.1.3",
+            "seaborn==0.12.2"
             ],
       zip_safe=False)
+
+# pip install ipywidgets
