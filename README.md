@@ -1,8 +1,6 @@
 [![Update Docs](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml/badge.svg)](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-<img src="https://github.com/draeger-lab/refinegems/blob/dev/refineGEMs_logo.png" height="200"/><br>
-
-# refineGEMs
+# <img src="https://github.com/draeger-lab/refinegems/blob/dev/refineGEMs_logo.png" height="100"/> refineGEMs
 `refineGEMs` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
 
 To access the updated documentation please enter `<path to refineGEMs>/refinegems/docs/build/html/index.html` into your favourite browser. As soon as the repository is made public this will be moved to a standalone website.
