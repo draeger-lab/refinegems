@@ -350,6 +350,15 @@ def search_sbo_label(sbo_number: str) -> str:
 
 
 def save_user_input(configpath):
+    """This aims to collect user input from the command line to create a config file, 
+    will also save the user input to a config if no config was given
+
+    Args:
+        configpath (str): path to config file if present
+        
+    Returns:
+        dict: either loaded config file or created from user input
+    """
     if os.path.isfile(configpath):
         with open(configpath) as f:
             config = yaml.safe_load(f)
