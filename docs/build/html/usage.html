@@ -388,6 +388,142 @@ new_filename (Str): filename / path for modified model</p>
 <section id="investigate">
 <h2><code class="docutils literal notranslate"><span class="pre">investigate</span></code><a class="headerlink" href="#investigate" title="Permalink to this heading"></a></h2>
 <p>provides a couple of functions to get parameters of your model</p>
+<p>Provides functions to investigate the model and test with memote</p>
+<p>These functions enable simple testing of any model using memote and
+access to its number of reactions, metabolites and genes.</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
+<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><dl class="simple">
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+</dd>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span></dt>
+<dd><p>reports metabolites which have only one annotation, 
+can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Reports core information of given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_reactions_per_sbo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span></dt>
+<dd><p>Counts number of reactions of all SBO Terms present</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: SBO Term as keys and number of reactions as values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>extracts most important numbers of GEM</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span></dt>
+<dd><p>Parses a reaction equation string to dictionary</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
+model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Plots reactions per SBO Term in horizontal bar chart</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span></dt>
+<dd><p>runs memote to obtain total score</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: memote score of model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>run memote on linux machine</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="cvterms">
 <h2><code class="docutils literal notranslate"><span class="pre">cvterms</span></code><a class="headerlink" href="#cvterms" title="Permalink to this heading"></a></h2>

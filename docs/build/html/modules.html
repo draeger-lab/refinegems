@@ -52,8 +52,21 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">refinegems package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-charges-module">refinegems.charges module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-comparison-module">refinegems.comparison module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.charges">refinegems.charges module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_from_db"><code class="docutils literal notranslate"><span class="pre">correct_charges_from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_modelseed"><code class="docutils literal notranslate"><span class="pre">correct_charges_modelseed()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.comparison">refinegems.comparison module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.get_sbo_mapping_multiple"><code class="docutils literal notranslate"><span class="pre">get_sbo_mapping_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_binary"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_binary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_dt"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_dt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_initial_analysis"><code class="docutils literal notranslate"><span class="pre">plot_initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_rea_sbo_multiple"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_venn"><code class="docutils literal notranslate"><span class="pre">plot_venn()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.simulate_all"><code class="docutils literal notranslate"><span class="pre">simulate_all()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.curate">refinegems.curate module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.add_reactions_from_table"><code class="docutils literal notranslate"><span class="pre">add_reactions_from_table()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.update_annotations_from_others"><code class="docutils literal notranslate"><span class="pre">update_annotations_from_others()</span></code></a></li>
@@ -90,7 +103,20 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.simulate_minimum_essential"><code class="docutils literal notranslate"><span class="pre">simulate_minimum_essential()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-investigate-module">refinegems.investigate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.investigate">refinegems.investigate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_egc"><code class="docutils literal notranslate"><span class="pre">get_egc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_mass_charge_unbalanced"><code class="docutils literal notranslate"><span class="pre">get_mass_charge_unbalanced()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_metabs_with_one_cvterm"><code class="docutils literal notranslate"><span class="pre">get_metabs_with_one_cvterm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_model_info"><code class="docutils literal notranslate"><span class="pre">get_model_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_orphans_deadends_disconnected"><code class="docutils literal notranslate"><span class="pre">get_orphans_deadends_disconnected()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_reactions_per_sbo"><code class="docutils literal notranslate"><span class="pre">get_reactions_per_sbo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.initial_analysis"><code class="docutils literal notranslate"><span class="pre">initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.parse_reaction"><code class="docutils literal notranslate"><span class="pre">parse_reaction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.plot_rea_sbo_single"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_single()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote"><code class="docutils literal notranslate"><span class="pre">run_memote()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote_sys"><code class="docutils literal notranslate"><span class="pre">run_memote_sys()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.io">refinegems.io module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_a_table_from_database"><code class="docutils literal notranslate"><span class="pre">load_a_table_from_database()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_all_media_from_db"><code class="docutils literal notranslate"><span class="pre">load_all_media_from_db()</span></code></a></li>
@@ -273,11 +299,132 @@
 <section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading"></a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
-<section id="refinegems-charges-module">
-<h2>refinegems.charges module<a class="headerlink" href="#refinegems-charges-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.charges">
+<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading"></a></h2>
+<p>Provides functions for adding charges to metabolites</p>
+<p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
+<p>It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a ‘BiGG’ and a ‘charge’ column.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges_from_db">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_from_db" title="Permalink to this definition"></a></dt>
+<dd><p>Adds charges taken from given database to metabolites which have no defined charge</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+compounds (df): containing database data with ‘BiGG’ (BiGG-Ids) and ‘charge’ (float or int) as columns</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (model with added charges, metabolites with multiple charges as pd df)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges_modelseed">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_report_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_modelseed" title="Permalink to this definition"></a></dt>
+<dd><p>wrapper function which completes the steps to charge correction</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_file_path (Str): filepath + name for modified model</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: BiGG Id and possible charges of metabolites</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="refinegems-comparison-module">
-<h2>refinegems.comparison module<a class="headerlink" href="#refinegems-comparison-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.comparison">
+<span id="refinegems-comparison-module"></span><h2>refinegems.comparison module<a class="headerlink" href="#module-refinegems.comparison" title="Permalink to this heading"></a></h2>
+<p>Provides functions to compare and visualize multiple models</p>
+<p>Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.get_sbo_mapping_multiple">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">get_sbo_mapping_multiple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.get_sbo_mapping_multiple" title="Permalink to this definition"></a></dt>
+<dd><p>Determines number of reactions per SBO Term and adss label of SBO Terms</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: SBO Terms, no of reactions per model and SBO Label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_binary">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_binary" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a plot were if growth without additives is possible is marked blue otherwise red</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>growth (pd.DataFrame): Containing growth data from simulate_all</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: sns heatmap plot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_dt">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_dt" title="Permalink to this definition"></a></dt>
+<dd><p>Creates heatmap of simulated doubling times with additives</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>growth (pd.DataFrame): Containing growth data from simulate_all</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: sns heatmap plot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_initial_analysis">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_initial_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Creates bar plot of number of entities per Model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_rea_sbo_multiple">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_multiple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_rea_sbo_multiple" title="Permalink to this definition"></a></dt>
+<dd><p>Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML
+rename (dict, optional): Rename model ids to custom names. Defaults to None.</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_venn">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_venn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_venn" title="Permalink to this definition"></a></dt>
+<dd><p>Creates venn diagram to show the overlap of model entities</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[cobraModel]): Models loaded with cobrapy
+entity (str): Compare on metabolite|reaction
+perc (bool, optional): True if percentages should be used. Defaults to False.</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: venn diagram</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.simulate_all">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">simulate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.simulate_all" title="Permalink to this definition"></a></dt>
+<dd><p>Does a run of growth simulation for multiple models on different media</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[cobraModel]): Models loaded with cobrapy
+mediumpath (string): Path to csv containing medium definitions
+media (list): Media of interest (f.ex. LB, M9, …)
+basis (string): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: table containing the results of the growth simulation</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.curate">
 <span id="refinegems-curate-module"></span><h2>refinegems.curate module<a class="headerlink" href="#module-refinegems.curate" title="Permalink to this heading"></a></h2>
@@ -649,8 +796,144 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 </dd></dl>
 
 </section>
-<section id="refinegems-investigate-module">
-<h2>refinegems.investigate module<a class="headerlink" href="#refinegems-investigate-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.investigate">
+<span id="refinegems-investigate-module"></span><h2>refinegems.investigate module<a class="headerlink" href="#module-refinegems.investigate" title="Permalink to this heading"></a></h2>
+<p>Provides functions to investigate the model and test with memote</p>
+<p>These functions enable simple testing of any model using memote and
+access to its number of reactions, metabolites and genes.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_egc">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.investigate.get_egc" title="Permalink to this definition"></a></dt>
+<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_mass_charge_unbalanced">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_mass_charge_unbalanced" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+</dd>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_metabs_with_one_cvterm">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.investigate.get_metabs_with_one_cvterm" title="Permalink to this definition"></a></dt>
+<dd><p>reports metabolites which have only one annotation, 
+can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_model_info">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_model_info" title="Permalink to this definition"></a></dt>
+<dd><p>Reports core information of given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_orphans_deadends_disconnected">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_orphans_deadends_disconnected" title="Permalink to this definition"></a></dt>
+<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_reactions_per_sbo">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_reactions_per_sbo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#refinegems.investigate.get_reactions_per_sbo" title="Permalink to this definition"></a></dt>
+<dd><p>Counts number of reactions of all SBO Terms present</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: SBO Term as keys and number of reactions as values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.initial_analysis">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.initial_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>extracts most important numbers of GEM</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.parse_reaction">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#refinegems.investigate.parse_reaction" title="Permalink to this definition"></a></dt>
+<dd><p>Parses a reaction equation string to dictionary</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
+model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.plot_rea_sbo_single">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.plot_rea_sbo_single" title="Permalink to this definition"></a></dt>
+<dd><p>Plots reactions per SBO Term in horizontal bar chart</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.run_memote">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#refinegems.investigate.run_memote" title="Permalink to this definition"></a></dt>
+<dd><p>runs memote to obtain total score</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: memote score of model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.run_memote_sys">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.run_memote_sys" title="Permalink to this definition"></a></dt>
+<dd><p>run memote on linux machine</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.io">
 <span id="refinegems-io-module"></span><h2>refinegems.io module<a class="headerlink" href="#module-refinegems.io" title="Permalink to this heading"></a></h2>
