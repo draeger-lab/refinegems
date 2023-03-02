@@ -30,6 +30,7 @@ jobs:
         pip install sphinx
         pip install nbsphinx
         pip install sphinx_rtd_theme
+        pip install ipython
 
     - name: Build the site
       run: |
