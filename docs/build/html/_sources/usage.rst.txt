@@ -6,8 +6,6 @@ Note that at this time most of the modules only make sense when you use the resp
 
 .. autofunction:: refinegems.polish.polish
     :noindex:
-.. autofunction:: refinegems.gapfill.gapfill
-    :noindex:
 .. autofunction:: refinegems.modelseed.compare_to_modelseed
     :noindex:
 .. autofunction:: refinegems.pathways.kegg_pathways

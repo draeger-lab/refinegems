@@ -35,14 +35,6 @@ refinegems.cvterms module
    :undoc-members:
    :show-inheritance:
 
-refinegems.gapfill module
--------------------------
-
-.. automodule:: refinegems.gapfill
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 refinegems.growth module
 ------------------------
 
