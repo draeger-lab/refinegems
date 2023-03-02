@@ -114,6 +114,24 @@
 Note that at this time most of the modules only make sense when you use the respective main functions:</p>
 <dl class="py function">
 <dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span></dt>
+<dd><dl class="simple">
+<dt>completes all steps to polish a model</dt><dd><p>(Tested for models having either BiGG or VMH identifiers.)</p>
+</dd>
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): model loaded with libsbml</p></li>
+<li><p>new_filename (Str): filename for modified model</p></li>
+<li><p>email (str): E-mail for Entrez</p></li>
+<li><p>id_db (str): Main database identifiers in model come from</p></li>
+<li><p>protein_fasta (str): File used as input for CarveMe</p></li>
+<li><p>lab_strain (bool): True if the strain was sequenced in a local lab</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">compare_to_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Executes all steps to compare model metabolites to modelseed metabolites</p>
 <dl class="simple">
