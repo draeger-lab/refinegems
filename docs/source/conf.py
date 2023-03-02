@@ -97,5 +97,6 @@ autodoc_mock_imports = ["psycopg2",
                         "charges",
                         "click",
                         "yaml",
-                        "sortedcontainers"
+                        "sortedcontainers",
+                        "colorama"
                         ]
