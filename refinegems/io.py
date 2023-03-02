@@ -511,7 +511,7 @@ def save_user_input(configpath):
         if not os.path.isdir(user_input['out_path']):
             print('Given out_path is not yet a directory, creating ' + user_input['out_path'])
             os.makedirs(user_input['out_path'])
-        with open(user_input['out_path'] + 'user_input.yaml', 'w') as f:
+        with open(user_input['out_path'] + 'user_input_' + str(today) + '.yaml', 'w') as f:
             yaml.dump(user_input, f)
-        print('Your input was saved as yaml to '+ user_input['out_path'] + 'user_input' + str(today) + '.yaml')
+        print('Your input was saved as yaml to '+ user_input['out_path'] + 'user_input_' + str(today) + '.yaml')
         return user_input
