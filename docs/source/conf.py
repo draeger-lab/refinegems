@@ -94,5 +94,6 @@ autodoc_mock_imports = ["psycopg2",
                         "ratelimit",
                         "libchebipy",
                         "ols_client",
-                        "charges"
+                        "charges",
+                        "click"
                         ]
