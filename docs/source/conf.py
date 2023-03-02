@@ -100,5 +100,6 @@ autodoc_mock_imports = ["psycopg2",
                         "sortedcontainers",
                         "colorama",
                         "matplotlib",
-                        "seaborn"
+                        "seaborn",
+                        "venn"
                         ]
