@@ -243,11 +243,14 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     
     # Add name column to dataframe
     def get_name_from_bigg(bigg_id: str):
-        bigg_url = BIGG_METABOLITES_URL if metabolites else BIGG_REACTIONS_URL
-        name_from_bigg = requests.get(bigg_url + bigg_id).json()['name']
+        bigg_db = 'bigg_metabolites' if metabolites else 'bigg_reactions'
+        query = f"SELECT name FROM {bigg_db} WHERE bigg_id=\'{bigg_id}\'"
+        name_from_bigg = con.execute(query).fetchone()[0]
         return name_from_bigg
     
+    con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
     entities_missing_in_model['name'] = entities_missing_in_model['bigg_id'].map(get_name_from_bigg)
+    con.close()
     
     return entities_missing_in_model
 

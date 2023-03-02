@@ -113,7 +113,9 @@ def main():
                 
             if (config['gapfill_analysis'] and config['gapfill_model']):
                 filename = config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx'
-                gapfill_analysis, model = rg.gapfill.gapfill(model_libsbml, config['gapfill_analysis_params'], filename) 
+                gapfill_complete = rg.gapfill.gapfill(model_libsbml, config['gapfill_analysis_params'], filename) 
+                gapfill_analysis = gapfill_complete[:-1]
+                model = gapfill_complete[-1]
                 rg.io.write_to_file(model, config['gapfill_model_out'])
                 model, errors = cobra.io.sbml.validate_sbml_model(config['gapfill_model_out'])
                 print(errors)   
@@ -121,7 +123,7 @@ def main():
                 filename = config['out_path'] + name + '_gapfill_analysis_' + str(today) + '.xlsx'
                 gapfill_analysis = rg.gapfill.gapfill_analysis(model_libsbml, config['gapfill_analysis_params'], filename)
             elif (config['gapfill_model']):
-                rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_in'])
+                model = rg.gapfill.gapfill_model(model_libsbml, config['gapfill_model_in'])
                 rg.io.write_to_file(model, config['gapfill_model_out'])
                 model, errors = cobra.io.sbml.validate_sbml_model(config['gapfill_model_out'])
                 print(errors)   
@@ -151,11 +153,11 @@ def main():
                         print('BioCyc - Statistics on missing entities:')
                         print(gapfill_analysis[0])
                         if len(gapfill_analysis) == 6:
-                            print(f'Complete Excel table is in file: {config["out_path"] + name + "_gapfill_analysis_" + str(today) + ".xlsx"}')
+                            print(f'Complete Excel table is in file: {config["out_path"]}{name}_gapfill_analysis_{str(today)}.xlsx')
                         else:
-                            print(f'Complete Excel table is in file: {config["out_path"] + name + "_gapfill_analysis_" + str(today) + ".xlsx"}')
+                            print(f'Complete Excel table is in file: {config["out_path"]}{name}_gapfill_analysis_{str(today)}.xlsx')
                     else:
-                        print(f'Complete Excel table is in file: {config["out_path"] + name + "_gapfill_analysis_" + str(today) + ".xlsx"}')
+                        print(f'Complete Excel table is in file: {config["out_path"]}{name}_gapfill_analysis_{str(today)}.xlsx')
                 if(config['modelseed']):
                     print(charge_mismatch)
                     print(formula_mismatch)

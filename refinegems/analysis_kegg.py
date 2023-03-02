@@ -114,7 +114,7 @@ def get_locus_ec_kegg(locus_ec):
         lambda row: get_kegg_reaction(
             row['EC']), axis=1)
     locus_ec = locus_ec.dropna()
-    locus_ec['KEGG_Ids2'] = locus_ec.apply(
+    locus_ec.loc[:, 'KEGG_Ids2'] = locus_ec.apply(
         lambda row: drop_nonreac(
             row['KEGG_Ids']), axis=1)
     locus_ec = locus_ec.dropna()
