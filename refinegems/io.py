@@ -422,7 +422,7 @@ def save_user_input(configpath):
         user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
         user_input['output'] = 'xlsx'
         
-        gapfill_analysis = click.confirm('Do you want run the gapfill analysis?') 
+        gapfill_analysis = click.confirm('Do you want to run the gapfill analysis?') 
         user_input['gapfill_analysis'] = gapfill_analysis
         if gapfill_analysis:
             gapfill_params = {}
@@ -460,11 +460,11 @@ def save_user_input(configpath):
             if polish:
                 entrez_email = click.prompt('Email to access NCBI Entrez')
                 user_input['entrez_email'] = entrez_email
-                id_db = click.prompt('What databse is your model based on? BIGG|VMH')
+                id_db = click.prompt('What database is your model based on? BIGG|VMH')
                 user_input['id_db'] = id_db
-                lab_strain = click.confirm('Is your model based on local sequencing in your laboratory?')
+                lab_strain = click.confirm('Does your modeled organism have NO database entry?')
                 user_input['lab_strain'] = lab_strain
-                protein_fasta = click.prompt('If possible, proide the path to your Protein FASTA fiel used for CarveMe')
+                protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
                 user_input['protein_fasta'] = protein_fasta
                 polish_path = click.prompt('Enter the modified file name')
                 user_input['polish_path'] = polish_path
