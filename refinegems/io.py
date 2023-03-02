@@ -462,8 +462,8 @@ def save_user_input(configpath):
                 user_input['entrez_email'] = entrez_email
                 id_db = click.prompt('What database is your model based on? BIGG|VMH')
                 user_input['id_db'] = id_db
-                lab_strain = click.confirm('Does your modeled organism have NO database entry?')
-                user_input['lab_strain'] = lab_strain
+                not_lab_strain = click.confirm('Does your modeled organism have a database entry?')
+                user_input['lab_strain'] = not not_lab_strain
                 protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
                 user_input['protein_fasta'] = protein_fasta
                 polish_path = click.prompt('Enter the modified file name')
