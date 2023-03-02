@@ -66,27 +66,5 @@ memote: FALSE
 # Filename is set as the models name
 output: xlsx #cl, xlsx, csv 
 
-# these work only with single models
-### Gapfill ###
-# All parameters are required for all db_to_compare choices except:
-# - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
-# - and biocyc_tables which is not required for 'KEGG'
-gapfill_analysis: FALSE
-gapfill_analysis_params:
-  db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
-  organismid: ''  # Needs to be specified for KEGG
-  gff_file: ''  # Path to RefSeq GFF file 
-  biocyc_files: 
-    - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
-    - 'Path1'  # Path to TXT file containing a SmartTable with all reaction relevant information (*)
-    - 'Path2'  # Path to TXT file containing a SmartTable with all metabolite relevant information (+)
-    - 'Path3'  # Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)
-# (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence
-# (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
-# (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
-# For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
-# complete tables for reactions can be used with the same columns.
-gapfill_model: FALSE
-
 ### ModelSEED comparison ###
 modelseed: FALSE # set to False if not needed

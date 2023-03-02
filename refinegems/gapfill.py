@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from libsbml import *
+from libsbml import Model
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
 from pandas import DataFrame
@@ -25,7 +25,7 @@ def gff_gene_comp():
 def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
     """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
         to KEGG/BioCyc/(Genbank) GFF file
-   
+
         Args:
             model_libsbml (Model): model loaded with libSBML
             gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
@@ -96,7 +96,7 @@ def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]) -> Un
     
 def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tuple]):
     """Main function to fill gaps in a model from a table
-   
+
         Args:
             model_libsbml (Model): model loaded with libSBML
             gapfill_analysis_result (str | tuple): Path to Excel file from gapfill_analysis | Tuple of pandas data 
@@ -108,7 +108,7 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
 def gapfill(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
     """Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
         KEGG/BioCyc/(Genbank) GFF file
-   
+
         Args:
             model_libsbml (Model): model loaded with libSBML
             gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings

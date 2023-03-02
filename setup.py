@@ -28,5 +28,3 @@ setup(name='refineGEMs',
             "click==8.1.3"
             ],
       zip_safe=False)
-
-# pip install ipywidgets

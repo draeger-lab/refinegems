@@ -18,7 +18,7 @@ Due to the KEGG REST API this is relatively slow (model of size 1500 reactions -
 # Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
 # -> Create dataframes mapping locus tag to old ID, locus tag to new ID & merge 
 # -> Specify user input locus_tag start from NCBI PGAP
-from libsbml import *
+from libsbml import Model
 import numpy as np
 import pandas as pd
 import libchebipy

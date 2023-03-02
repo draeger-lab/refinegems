@@ -187,8 +187,7 @@ def get_all_minimum_essential(model, media: list[str]):
 
     Args:
         model (cobra-model): model loaded with cobrapy
-        media (list): a list containing the names of all media for which the growth essential metabolites not 
-                        contained in the media should be returned
+        media (list): a list containing the names of all media for which the growth essential metabolites not contained in the media should be returned
 
     Returns:
         DataFrame: information on different media which metabs are missing

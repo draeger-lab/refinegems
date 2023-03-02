@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import pandas as pd
 from Bio import Entrez
-from libsbml import *
+from libsbml import Model, GeneProduct
 from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from refinegems.sboann import *
 from refinegems.io import search_ncbi_for_gpr
