@@ -8,6 +8,7 @@ General Setting: >
 
 model: 'data/e_coli_core.xml' #
 entrez_email: '' # necessary to access NCBI API
+visualize: TRUE
 
 
 Settings for scripts that manipulate the model: >
@@ -53,7 +54,6 @@ growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 
 # Settings if you want to compare multiple models
 multiple: FALSE
-visualize: TRUE
 multiple_paths: ['data/e_coli_core.xml', '', '']
 
 # media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI, no duplicates allowed

@@ -381,6 +381,8 @@ def save_user_input(configpath):
             user_input['out_path'] = click.prompt('Enter you desired output path')
         else:
             user_input['out_path'] = '../rg_out/'
+        
+        user_input['visualize'] = click.confirm('Do you want to generate visualizations of your model(s)?')
             
         growth_basis = click.prompt('Enter the base uptakes for growth simulation (d for default_uptake, m for minimal_uptake)')
         if growth_basis == 'd':
@@ -391,7 +393,6 @@ def save_user_input(configpath):
         multiple = click.confirm('Do you want to simulate and compare multiple models?')
         user_input['multiple'] = multiple
         if multiple:
-            user_input['visualize'] = True
             list_of_models = []
             while True:
                 file_path = click.prompt('Enter file path to model (or "stop" to stop)')

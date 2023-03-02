@@ -107,10 +107,11 @@ def main(configpath=None):
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
             egc = rg.investigate.get_egc(model_cobra)
-            sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
-            
-            # saving the created visualizations
-            sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
+            if (config['visualize']):
+                sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
+                
+                # saving the created visualizations
+                sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             
             if (config['memote']):
                 score = rg.investigate.run_memote(model_cobra)
