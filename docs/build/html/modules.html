@@ -7,6 +7,7 @@
   <title>refinegems package &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -30,8 +31,9 @@
 
           
           
-          <a href="index.html" class="icon icon-home">
-            refinegems
+          <a href="index.html">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -44,15 +46,34 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">refinegems package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-charges-module">refinegems.charges module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-comparison-module">refinegems.comparison module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-curate-module">refinegems.curate module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-cvterms-module">refinegems.cvterms module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.charges">refinegems.charges module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_from_db"><code class="docutils literal notranslate"><span class="pre">correct_charges_from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_modelseed"><code class="docutils literal notranslate"><span class="pre">correct_charges_modelseed()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.comparison">refinegems.comparison module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.get_sbo_mapping_multiple"><code class="docutils literal notranslate"><span class="pre">get_sbo_mapping_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_binary"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_binary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_dt"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_dt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_initial_analysis"><code class="docutils literal notranslate"><span class="pre">plot_initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_rea_sbo_multiple"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_venn"><code class="docutils literal notranslate"><span class="pre">plot_venn()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.simulate_all"><code class="docutils literal notranslate"><span class="pre">simulate_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.curate">refinegems.curate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.add_reactions_from_table"><code class="docutils literal notranslate"><span class="pre">add_reactions_from_table()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.update_annotations_from_others"><code class="docutils literal notranslate"><span class="pre">update_annotations_from_others()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.update_annotations_from_table"><code class="docutils literal notranslate"><span class="pre">update_annotations_from_table()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.cvterms">refinegems.cvterms module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_genes"><code class="docutils literal notranslate"><span class="pre">add_cv_term_genes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_metabolites"><code class="docutils literal notranslate"><span class="pre">add_cv_term_metabolites()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_pathways"><code class="docutils literal notranslate"><span class="pre">add_cv_term_pathways()</span></code></a></li>
@@ -64,7 +85,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.print_cvterm"><code class="docutils literal notranslate"><span class="pre">print_cvterm()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-genecomp-module">refinegems.genecomp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.gapfill">refinegems.gapfill module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.gapfill"><code class="docutils literal notranslate"><span class="pre">gapfill()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.gapfill_analysis"><code class="docutils literal notranslate"><span class="pre">gapfill_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.gapfill_model"><code class="docutils literal notranslate"><span class="pre">gapfill_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.get_genes_from_gff"><code class="docutils literal notranslate"><span class="pre">get_genes_from_gff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.get_related_metabs_reactions_blast"><code class="docutils literal notranslate"><span class="pre">get_related_metabs_reactions_blast()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.gapfill.gff_gene_comp"><code class="docutils literal notranslate"><span class="pre">gff_gene_comp()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.growth">refinegems.growth module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_additives"><code class="docutils literal notranslate"><span class="pre">find_additives()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_minimum_essential"><code class="docutils literal notranslate"><span class="pre">find_minimum_essential()</span></code></a></li>
@@ -83,8 +112,22 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.simulate_minimum_essential"><code class="docutils literal notranslate"><span class="pre">simulate_minimum_essential()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-investigate-module">refinegems.investigate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.investigate">refinegems.investigate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_egc"><code class="docutils literal notranslate"><span class="pre">get_egc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_mass_charge_unbalanced"><code class="docutils literal notranslate"><span class="pre">get_mass_charge_unbalanced()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_metabs_with_one_cvterm"><code class="docutils literal notranslate"><span class="pre">get_metabs_with_one_cvterm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_model_info"><code class="docutils literal notranslate"><span class="pre">get_model_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_orphans_deadends_disconnected"><code class="docutils literal notranslate"><span class="pre">get_orphans_deadends_disconnected()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_reactions_per_sbo"><code class="docutils literal notranslate"><span class="pre">get_reactions_per_sbo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.initial_analysis"><code class="docutils literal notranslate"><span class="pre">initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.parse_reaction"><code class="docutils literal notranslate"><span class="pre">parse_reaction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.plot_rea_sbo_single"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_single()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote"><code class="docutils literal notranslate"><span class="pre">run_memote()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote_sys"><code class="docutils literal notranslate"><span class="pre">run_memote_sys()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.io">refinegems.io module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_a_table_from_database"><code class="docutils literal notranslate"><span class="pre">load_a_table_from_database()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_all_media_from_db"><code class="docutils literal notranslate"><span class="pre">load_all_media_from_db()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_document_libsbml"><code class="docutils literal notranslate"><span class="pre">load_document_libsbml()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_manual_annotations"><code class="docutils literal notranslate"><span class="pre">load_manual_annotations()</span></code></a></li>
@@ -96,7 +139,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_multiple_models"><code class="docutils literal notranslate"><span class="pre">load_multiple_models()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_fasta_headers"><code class="docutils literal notranslate"><span class="pre">parse_fasta_headers()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_gff_for_gp_info"><code class="docutils literal notranslate"><span class="pre">parse_gff_for_gp_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.save_user_input"><code class="docutils literal notranslate"><span class="pre">save_user_input()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.search_ncbi_for_gpr"><code class="docutils literal notranslate"><span class="pre">search_ncbi_for_gpr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.search_sbo_label"><code class="docutils literal notranslate"><span class="pre">search_sbo_label()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.validate_libsbml_model"><code class="docutils literal notranslate"><span class="pre">validate_libsbml_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_report"><code class="docutils literal notranslate"><span class="pre">write_report()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
@@ -123,7 +168,35 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.load_model_enable_groups"><code class="docutils literal notranslate"><span class="pre">load_model_enable_groups()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#refinegems-polish-module">refinegems.polish module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.polish">refinegems.polish module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_compartment_structure_specs"><code class="docutils literal notranslate"><span class="pre">add_compartment_structure_specs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_curie_set"><code class="docutils literal notranslate"><span class="pre">add_curie_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_fba_units"><code class="docutils literal notranslate"><span class="pre">add_fba_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_metab"><code class="docutils literal notranslate"><span class="pre">add_metab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_reac"><code class="docutils literal notranslate"><span class="pre">add_reac()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_all_qualifiers"><code class="docutils literal notranslate"><span class="pre">change_all_qualifiers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_qualifier_per_entity"><code class="docutils literal notranslate"><span class="pre">change_qualifier_per_entity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_qualifiers"><code class="docutils literal notranslate"><span class="pre">change_qualifiers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_fba_units"><code class="docutils literal notranslate"><span class="pre">create_fba_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_unit"><code class="docutils literal notranslate"><span class="pre">create_unit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_unit_definition"><code class="docutils literal notranslate"><span class="pre">create_unit_definition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_ncbiprotein"><code class="docutils literal notranslate"><span class="pre">cv_ncbiprotein()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_metab"><code class="docutils literal notranslate"><span class="pre">cv_notes_metab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_reac"><code class="docutils literal notranslate"><span class="pre">cv_notes_reac()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.generate_new_curie_set"><code class="docutils literal notranslate"><span class="pre">generate_new_curie_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.get_set_of_curies"><code class="docutils literal notranslate"><span class="pre">get_set_of_curies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.improve_curie_per_entity"><code class="docutils literal notranslate"><span class="pre">improve_curie_per_entity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.improve_curies"><code class="docutils literal notranslate"><span class="pre">improve_curies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish"><code class="docutils literal notranslate"><span class="pre">polish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_annotations"><code class="docutils literal notranslate"><span class="pre">polish_annotations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_entities"><code class="docutils literal notranslate"><span class="pre">polish_entities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.print_UnitDefinitions"><code class="docutils literal notranslate"><span class="pre">print_UnitDefinitions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.print_remaining_UnitDefinitions"><code class="docutils literal notranslate"><span class="pre">print_remaining_UnitDefinitions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_default_units"><code class="docutils literal notranslate"><span class="pre">set_default_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_initial_amount"><code class="docutils literal notranslate"><span class="pre">set_initial_amount()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_units"><code class="docutils literal notranslate"><span class="pre">set_units()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.sboann">refinegems.sboann module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforCompartments"><code class="docutils literal notranslate"><span class="pre">addSBOforCompartments()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforGenes"><code class="docutils literal notranslate"><span class="pre">addSBOforGenes()</span></code></a></li>
@@ -170,9 +243,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantCompartmentList"><code class="docutils literal notranslate"><span class="pre">getReactantCompartmentList()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantIds"><code class="docutils literal notranslate"><span class="pre">getReactantIds()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.hasReactantPair"><code class="docutils literal notranslate"><span class="pre">hasReactantPair()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.initialise_SBO_database"><code class="docutils literal notranslate"><span class="pre">initialise_SBO_database()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.isProtonTransport"><code class="docutils literal notranslate"><span class="pre">isProtonTransport()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.is_valid_database"><code class="docutils literal notranslate"><span class="pre">is_valid_database()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.moreThanTwoCompartmentTransport"><code class="docutils literal notranslate"><span class="pre">moreThanTwoCompartmentTransport()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.returnCompartment"><code class="docutils literal notranslate"><span class="pre">returnCompartment()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.sbo_annotation"><code class="docutils literal notranslate"><span class="pre">sbo_annotation()</span></code></a></li>
@@ -237,18 +308,182 @@
 <section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading"></a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
-<section id="refinegems-charges-module">
-<h2>refinegems.charges module<a class="headerlink" href="#refinegems-charges-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.charges">
+<span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading"></a></h2>
+<p>Provides functions for adding charges to metabolites</p>
+<p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
+<p>It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a ‘BiGG’ and a ‘charge’ column.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges_from_db">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_from_db" title="Permalink to this definition"></a></dt>
+<dd><p>Adds charges taken from given database to metabolites which have no defined charge</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+compounds (df): containing database data with ‘BiGG’ (BiGG-Ids) and ‘charge’ (float or int) as columns</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (model with added charges, metabolites with multiple charges as pd df)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.charges.correct_charges_modelseed">
+<span class="sig-prename descclassname"><span class="pre">refinegems.charges.</span></span><span class="sig-name descname"><span class="pre">correct_charges_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_report_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.charges.correct_charges_modelseed" title="Permalink to this definition"></a></dt>
+<dd><p>wrapper function which completes the steps to charge correction</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml
+new_file_path (Str): filepath + name for modified model</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: BiGG Id and possible charges of metabolites</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="refinegems-comparison-module">
-<h2>refinegems.comparison module<a class="headerlink" href="#refinegems-comparison-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.comparison">
+<span id="refinegems-comparison-module"></span><h2>refinegems.comparison module<a class="headerlink" href="#module-refinegems.comparison" title="Permalink to this heading"></a></h2>
+<p>Provides functions to compare and visualize multiple models</p>
+<p>Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.get_sbo_mapping_multiple">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">get_sbo_mapping_multiple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.get_sbo_mapping_multiple" title="Permalink to this definition"></a></dt>
+<dd><p>Determines number of reactions per SBO Term and adss label of SBO Terms</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: SBO Terms, no of reactions per model and SBO Label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_binary">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_binary" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a plot were if growth without additives is possible is marked blue otherwise red</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>growth (pd.DataFrame): Containing growth data from simulate_all</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: sns heatmap plot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_dt">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_dt" title="Permalink to this definition"></a></dt>
+<dd><p>Creates heatmap of simulated doubling times with additives</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>growth (pd.DataFrame): Containing growth data from simulate_all</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: sns heatmap plot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_initial_analysis">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_initial_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Creates bar plot of number of entities per Model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_rea_sbo_multiple">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_multiple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_rea_sbo_multiple" title="Permalink to this definition"></a></dt>
+<dd><p>Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[libModel]): Models loaded with libSBML
+rename (dict, optional): Rename model ids to custom names. Defaults to None.</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.plot_venn">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_venn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_venn" title="Permalink to this definition"></a></dt>
+<dd><p>Creates venn diagram to show the overlap of model entities</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[cobraModel]): Models loaded with cobrapy
+entity (str): Compare on metabolite|reaction
+perc (bool, optional): True if percentages should be used. Defaults to False.</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: venn diagram</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.comparison.simulate_all">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">simulate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.simulate_all" title="Permalink to this definition"></a></dt>
+<dd><p>Does a run of growth simulation for multiple models on different media</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>models (list[cobraModel]): Models loaded with cobrapy
+mediumpath (string): Path to csv containing medium definitions
+media (list): Media of interest (f.ex. LB, M9, …)
+basis (string): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: table containing the results of the growth simulation</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="refinegems-curate-module">
-<h2>refinegems.curate module<a class="headerlink" href="#refinegems-curate-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.curate">
+<span id="refinegems-curate-module"></span><h2>refinegems.curate module<a class="headerlink" href="#module-refinegems.curate" title="Permalink to this heading"></a></h2>
+<p>Functions to enable annotation of entities using a manual curated table</p>
+<p>While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.curate.add_reactions_from_table">
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">add_reactions_from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.add_reactions_from_table" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>adds all reactions with their info given in the table to the given model</dt><dd><p>(wrapper function to use with table given in the data folder)</p>
+</dd>
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML
+table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet gapfill
+email (string): User Email to access the NCBI Entrez database</p>
+</dd>
+<dt>Returns:</dt><dd><p>model: modified model with new reactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.curate.update_annotations_from_others">
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">update_annotations_from_others</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.update_annotations_from_others" title="Permalink to this definition"></a></dt>
+<dd><p>Synchronizes metabolite annotations for core, periplasm and extracelullar</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML</p>
+</dd>
+<dt>Returns:</dt><dd><p>model: modified with synchronized annotations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.curate.update_annotations_from_table">
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">update_annotations_from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.curate.update_annotations_from_table" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>updates annotation of metabolites given in the table</dt><dd><p>(wrapper function to use with table given in the data folder)</p>
+</dd>
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML
+table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet metabs</p>
+</dd>
+<dt>Returns:</dt><dd><p>model: modified model with new annotations</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="refinegems-cvterms-module">
-<h2>refinegems.cvterms module<a class="headerlink" href="#refinegems-cvterms-module" title="Permalink to this heading"></a></h2>
-<span class="target" id="module-refinegems.cvterms"></span><p>Helper module to work with annotations (CVTerms)</p>
+<section id="module-refinegems.cvterms">
+<span id="refinegems-cvterms-module"></span><h2>refinegems.cvterms module<a class="headerlink" href="#module-refinegems.cvterms" title="Permalink to this heading"></a></h2>
+<p>Helper module to work with annotations (CVTerms)</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.cvterms.add_cv_term_genes">
@@ -366,8 +601,88 @@ along with the provided qualifier &amp; biological/model qualifier types</p>
 </dd></dl>
 
 </section>
-<section id="refinegems-genecomp-module">
-<h2>refinegems.genecomp module<a class="headerlink" href="#refinegems-genecomp-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.gapfill">
+<span id="refinegems-gapfill-module"></span><h2>refinegems.gapfill module<a class="headerlink" href="#module-refinegems.gapfill" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.gapfill">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gapfill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model_libsbml:</span> <span class="pre">libsbml.Model,</span> <span class="pre">gapfill_params:</span> <span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">None)]</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></span><a class="headerlink" href="#refinegems.gapfill.gapfill" title="Permalink to this definition"></a></dt>
+<dd><p>Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
+KEGG/BioCyc/(Genbank) GFF file</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_libsbml (Model): model loaded with libSBML
+gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings</p>
+</dd>
+<dt>Return:</dt><dd><p>Result from gapfill_analysis()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.gapfill_analysis">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gapfill_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model_libsbml:</span> <span class="pre">libsbml.Model,</span> <span class="pre">gapfill_params:</span> <span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">None)]</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></span><a class="headerlink" href="#refinegems.gapfill.gapfill_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
+to KEGG/BioCyc/(Genbank) GFF file</p>
+<dl>
+<dt>Args:</dt><dd><p>model_libsbml (Model): model loaded with libSBML
+gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings</p>
+</dd>
+<dt>Returns:</dt><dd><p>Case ‘KEGG’ - A data frame containing the columns ‘bigg_id’ ‘locus_tag’ ‘EC’ ‘KEGG’ ‘name’ ‘GPR’
+Case ‘BioCyc’ - Five data frames:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>(1): Gap fill statistics with the columns </dt><dd><p>‘Missing entity’ ‘Total’ ‘Have BiGG ID’ ‘Can be added’ ‘Notes’</p>
+</dd>
+</dl>
+<p>(2): Genes with the columns ‘locus_tag’ ‘protein_id’ ‘model_id’ ‘name’
+(3): Metabolites with the columns</p>
+<blockquote>
+<div><p>‘bigg_id’ ‘name’ ‘BioCyc’ ‘compartment’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ ‘charge’</p>
+</div></blockquote>
+<dl class="simple">
+<dt>(4): Metabolites without BiGG ID with the columns </dt><dd><p>‘BioCyc’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ (‘charge’)</p>
+</dd>
+<dt>(5): Reactions with the columns </dt><dd><p>‘bigg_id’ ‘name’ ‘BioCyc’ ‘locus_tag’ ‘Reactants’ ‘Products’ ‘EC’ ‘Fluxes’ ‘Spontaneous?’ 
+‘bigg_reaction’</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Case ‘KEGG+BioCyc’: Same output as cases ‘KEGG’ &amp; ‘BioCyc’ </dt><dd><p>-&gt; Data frame reactions contains additionally column ‘KEGG’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.gapfill_model">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gapfill_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_libsbml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gapfill_analysis_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.gapfill.gapfill_model" title="Permalink to this definition"></a></dt>
+<dd><p>Main function to fill gaps in a model from a table</p>
+<dl>
+<dt>Args:</dt><dd><p>model_libsbml (Model): model loaded with libSBML
+gapfill_analysis_result (str | tuple): Path to Excel file from gapfill_analysis | Tuple of pandas data</p>
+<blockquote>
+<div><p>frames obtained from gapfill_analysis</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.get_genes_from_gff">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">get_genes_from_gff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.gapfill.get_genes_from_gff" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.get_related_metabs_reactions_blast">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">get_related_metabs_reactions_blast</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.gapfill.get_related_metabs_reactions_blast" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.gapfill.gff_gene_comp">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gff_gene_comp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.gapfill.gff_gene_comp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 </section>
 <section id="module-refinegems.growth">
 <span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this heading"></a></h2>
@@ -396,7 +711,7 @@ base_medium (dict): exchanges as keys and their flux bound as value (f.ex {‘EX
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">essential</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.find_minimum_essential" title="Permalink to this definition"></a></dt>
 <dd><p>Report metabolites necessary for growth and not in custom medium</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>medium (df): dataframe of medium csv
+<dt>Args:</dt><dd><p>medium (df): dataframe of medium
 essential (list): echanges of metabolites which lead to zero growth if blocked</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: metabolites not present in the medium but necessary for growth</p>
@@ -421,11 +736,11 @@ default_uptake (list): metabolites consumed in standard medium</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.get_all_minimum_essential">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_all_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_all_minimum_essential" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_all_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_all_minimum_essential" title="Permalink to this definition"></a></dt>
 <dd><p>Returns metabolites necessary for growth and not in media</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-mediumpath (string): path to csv with media definitions</p>
+media (list): a list containing the names of all media for which the growth essential metabolites not contained in the media should be returned</p>
 </dd>
 <dt>Returns:</dt><dd><p>DataFrame: information on different media which metabs are missing</p>
 </dd>
@@ -482,11 +797,10 @@ mediumpath (string): path to csv with media definitions</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.get_growth_selected_media">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_selected_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_growth_selected_media" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_selected_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_growth_selected_media" title="Permalink to this definition"></a></dt>
 <dd><p>Simulates growth on all selected media</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-mediumpath (string): path to csv with media definitions
 media (list): media to simulate on (must be in csv)
 basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p>
 </dd>
@@ -513,7 +827,7 @@ basis (string): either default_uptake (adding metabs from default) or minimal_up
 <dd><p>Look for exchange reactions needed by the medium but not in the model</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-medium (df): dataframe of medium csv</p>
+medium (df): dataframe of medium</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: all exchanges missing in the model but given in medium</p>
 </dd>
@@ -551,7 +865,7 @@ medium (pandas-DataFrame): table containing metabolites present in the medium</p
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">modify_medium</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">medium</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing_exchanges</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.modify_medium" title="Permalink to this definition"></a></dt>
 <dd><p>Remove exchanges from medium that are not in the model</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>medium (df): dataframe of medium csv
+<dt>Args:</dt><dd><p>medium (df): dataframe of medium
 missing_exchanges (list): exchanges not in the model</p>
 </dd>
 <dt>Returns:</dt><dd><p>dict: growth medium that can be used with the model</p>
@@ -574,14 +888,163 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 </dd></dl>
 
 </section>
-<section id="refinegems-investigate-module">
-<h2>refinegems.investigate module<a class="headerlink" href="#refinegems-investigate-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.investigate">
+<span id="refinegems-investigate-module"></span><h2>refinegems.investigate module<a class="headerlink" href="#module-refinegems.investigate" title="Permalink to this heading"></a></h2>
+<p>Provides functions to investigate the model and test with memote</p>
+<p>These functions enable simple testing of any model using memote and
+access to its number of reactions, metabolites and genes.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_egc">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.investigate.get_egc" title="Permalink to this definition"></a></dt>
+<dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_mass_charge_unbalanced">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_mass_charge_unbalanced" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
+</dd>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_metabs_with_one_cvterm">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.investigate.get_metabs_with_one_cvterm" title="Permalink to this definition"></a></dt>
+<dd><p>reports metabolites which have only one annotation, 
+can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_model_info">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_model_info" title="Permalink to this definition"></a></dt>
+<dd><p>Reports core information of given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_orphans_deadends_disconnected">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.get_orphans_deadends_disconnected" title="Permalink to this definition"></a></dt>
+<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.get_reactions_per_sbo">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_reactions_per_sbo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#refinegems.investigate.get_reactions_per_sbo" title="Permalink to this definition"></a></dt>
+<dd><p>Counts number of reactions of all SBO Terms present</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: SBO Term as keys and number of reactions as values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.initial_analysis">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.initial_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>extracts most important numbers of GEM</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.parse_reaction">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#refinegems.investigate.parse_reaction" title="Permalink to this definition"></a></dt>
+<dd><p>Parses a reaction equation string to dictionary</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
+model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.plot_rea_sbo_single">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.plot_rea_sbo_single" title="Permalink to this definition"></a></dt>
+<dd><p>Plots reactions per SBO Term in horizontal bar chart</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+</dd>
+<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.run_memote">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#refinegems.investigate.run_memote" title="Permalink to this definition"></a></dt>
+<dd><p>runs memote to obtain total score</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: memote score of model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.investigate.run_memote_sys">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.investigate.run_memote_sys" title="Permalink to this definition"></a></dt>
+<dd><p>run memote on linux machine</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.io">
 <span id="refinegems-io-module"></span><h2>refinegems.io module<a class="headerlink" href="#module-refinegems.io" title="Permalink to this heading"></a></h2>
 <p>Provides functions to load and write models, media definitions and the manual annotation table</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
 or with libSBML (activation of groups). The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.io.load_a_table_from_database">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_a_table_from_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name_or_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.load_a_table_from_database" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Loads the table for which the name is provided or a table containing all rows for which the query evaluates to </dt><dd><p>true from the refineGEMs database (‘data/database/data.db’)</p>
+</dd>
+<dt>Args:</dt><dd><p>table_name_or_query (str): Name of a table contained in the database ‘data.db’/ a SQL query</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Containing the table for which the name was provided from the database ‘data.db’</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.io.load_all_media_from_db">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_all_media_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.load_all_media_from_db" title="Permalink to this definition"></a></dt>
@@ -646,13 +1109,12 @@ sheet_name (str): Sheet name for reaction gapfilling. Defaults to ‘gapfill’.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.io.load_medium_from_db">
-<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_medium_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mediumname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.load_medium_from_db" title="Permalink to this definition"></a></dt>
-<dd><p>Helper function to read standard media_db.csv</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_medium_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mediumname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.io.load_medium_from_db" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper function to extract subtable for the requested medium from the database ‘data.db’</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>mediumpath (Str): path to csv file with medium database
-mediumname (Str): name of medium to test growth on</p>
+<dt>Args:</dt><dd><p>mediumname (Str): name of medium to test growth on</p>
 </dd>
-<dt>Returns:</dt><dd><p>df: pandas dataframe of csv</p>
+<dt>Returns:</dt><dd><p>df: pandas dataframe containing composition for one medium with metabs added as BiGG_EX exchange reactions</p>
 </dd>
 </dl>
 </dd></dl>
@@ -714,6 +1176,19 @@ corresponding to the locus_tag</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="refinegems.io.save_user_input">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">save_user_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.save_user_input" title="Permalink to this definition"></a></dt>
+<dd><p>This aims to collect user input from the command line to create a config file, 
+will also save the user input to a config if no config was given</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>configpath (str): path to config file if present</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: either loaded config file or created from user input</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.io.search_ncbi_for_gpr">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">search_ncbi_for_gpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.io.search_ncbi_for_gpr" title="Permalink to this definition"></a></dt>
 <dd><p>fetches protein name from NCBI</p>
@@ -721,6 +1196,18 @@ corresponding to the locus_tag</p>
 <dt>Args:</dt><dd><p>locus (string): NCBI compatible locus_tag</p>
 </dd>
 <dt>Returns:</dt><dd><p>str: protein name / description</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.io.search_sbo_label">
+<span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">search_sbo_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sbo_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#refinegems.io.search_sbo_label" title="Permalink to this definition"></a></dt>
+<dd><p>looks up the SBO label corresponding to a given SBO Term number</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>sbo_number (str): Last three digits of SBO-Term as str</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: denoted label for given SBO Term</p>
 </dd>
 </dl>
 </dd></dl>
@@ -781,11 +1268,10 @@ modelseed_charges (df): charges and formulae of modelseed metabolites</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.modelseed.compare_to_modelseed">
-<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">compare_to_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.modelseed.compare_to_modelseed" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">compare_to_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.modelseed.compare_to_modelseed" title="Permalink to this definition"></a></dt>
 <dd><p>Executes all steps to compare model metabolites to modelseed metabolites</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>path (str): path to modelseed compound definition
-model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (table with charge mismatches, formula mismatches)</p>
 </dd>
@@ -854,11 +1340,9 @@ model (cobra-model): model loaded with cobrapy</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.modelseed.get_modelseed_compounds">
-<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">get_modelseed_compounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.modelseed.get_modelseed_compounds" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">get_modelseed_compounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.modelseed.get_modelseed_compounds" title="Permalink to this definition"></a></dt>
 <dd><p>extracts compounds from modelseed which have BiGG Ids</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>path (str): path to modelseed compound definition</p>
-</dd>
 <dt>Returns:</dt><dd><p>df: table containing modelseed data</p>
 </dd>
 </dl>
@@ -962,8 +1446,383 @@ new_filename (Str): filename for modified model</p>
 </dd></dl>
 
 </section>
-<section id="refinegems-polish-module">
-<h2>refinegems.polish module<a class="headerlink" href="#refinegems-polish-module" title="Permalink to this heading"></a></h2>
+<section id="module-refinegems.polish">
+<span id="refinegems-polish-module"></span><h2>refinegems.polish module<a class="headerlink" href="#module-refinegems.polish" title="Permalink to this heading"></a></h2>
+<p>Can be used to polish a model (created with CarveMe v.1.5.1)</p>
+<p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.add_compartment_structure_specs">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_compartment_structure_specs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_compartment_structure_specs" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Adds the required specifications for the compartment structure</dt><dd><p>if not set (size &amp; spatial dimension)</p>
+</dd>
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.add_curie_set">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_curie_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curie_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SortedSet</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_curie_set" title="Permalink to this definition"></a></dt>
+<dd><p>Add a complete CURIE set to the provided CVTerm</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.</p></li>
+<li><p>qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER</p></li>
+<li><p>b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS</p></li>
+<li><p>curie_set (SortedSet[str]):   SortedSet containing CURIEs</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.add_fba_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_fba_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_fba_units" title="Permalink to this definition"></a></dt>
+<dd><dl>
+<dt>Adds:</dt><dd><blockquote>
+<div><ul class="simple">
+<li><p>mmol per gDW per h</p></li>
+<li><p>mmol per gDW</p></li>
+<li><p>hour (h)</p></li>
+<li><p>femto litre (fL)</p></li>
+</ul>
+</div></blockquote>
+<p>to the list of unit definitions (needed for FBA)</p>
+</dd>
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.add_metab">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Species</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_metab" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>adds the ID of metabolites as URI to the annotation field</dt><dd><dl class="simple">
+<dt>For a VMH model, additionally, the corresponding BiGG IDs are added! </dt><dd><p>(Currently, only BiGG &amp; VMH IDs supported!)</p>
+</dd>
+</dl>
+</dd>
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.add_reac">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">add_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Reaction</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.add_reac" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>adds the ID of reactions as URI to the annotation field</dt><dd><p>(Currently, only BiGG &amp; VMH IDs supported!)</p>
+</dd>
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfReactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.change_all_qualifiers">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_all_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_all_qualifiers" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper function to change qualifiers of all entities at once</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libsbml</p></li>
+<li><p>lab_strain (bool): True if the strain was sequenced in a local lab</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>model: Model with all qualifiers updated to be MIRIAM compliant</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.change_qualifier_per_entity">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifier_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.polish.change_qualifier_per_entity" title="Permalink to this definition"></a></dt>
+<dd><p>Updates Qualifiers to be MIRIAM compliant for an entity</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>entity (SBase): A libSBML SBase object like model, GeneProduct, etc.</p></li>
+<li><p>new_qt (Qualifier): A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER</p></li>
+<li><p>new_b_m_qt (QualifierType): A libSBML biological or model qualifier type like BQB_IS|BQM_IS</p></li>
+<li><p>specific_db_prefix (str): Has to be set if only for a specific database the qualifier type should be changed. Can be ‘kegg.genes’, ‘biocyc’, etc.</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>list: CURIEs that are not MIRIAM compliant</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.change_qualifiers">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_qualifiers" title="Permalink to this definition"></a></dt>
+<dd><p>Updates Qualifiers to be MIRIAM compliant for an entity type of a given model</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (libsbml-model):   model loaded with libsbml</p></li>
+<li><p>entity_type (str): model|compartment|metabolite|parameter|reaction|unit definition|unit|gene product|group</p></li>
+<li><p>new_qt (Qualifier): A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER</p></li>
+<li><p>new_b_m_qt (QualifierType): A libSBML biological or model qualifier type like BQB_IS|BQM_IS</p></li>
+<li><p>specific_db_prefix (str): Has to be set if only for a specific database the qualifier type should be changed. Can be ‘kegg.genes’, ‘biocyc’, etc.</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>model: Model with changed qualifier for given entity type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.create_fba_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">create_fba_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.UnitDefinition</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#refinegems.polish.create_fba_units" title="Permalink to this definition"></a></dt>
+<dd><p>Creates all fba units required for a constraint-based model</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+<dt>Return:</dt><dd><p>list of libSBML UnitDefinitions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.create_unit">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">create_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_specs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uri_is</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uri_idf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.Unit</span></span></span><a class="headerlink" href="#refinegems.polish.create_unit" title="Permalink to this definition"></a></dt>
+<dd><p>Creates unit for SBML model according to arguments</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_specs (tuple):    Level &amp; Version of SBML model
+meta_id (str):          Meta ID for unit (Neccessary for URI)
+kind (str):             Unit kind constant (see libSBML for available constants)
+e (int):                Exponent of unit
+m (int):                Multiplier of unit
+s (int):                Scale of unit 
+uri_is (str):           URI supporting the specified unit
+uri_idf (str):          URI supporting the derived from unit</p>
+</dd>
+<dt>Return:</dt><dd><p>libSBML unit object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.create_unit_definition">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">create_unit_definition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_specs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identifier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Unit</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.UnitDefinition</span></span></span><a class="headerlink" href="#refinegems.polish.create_unit_definition" title="Permalink to this definition"></a></dt>
+<dd><p>Creates unit definition for SBML model according to arguments</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_specs (tuple): Level &amp; Version of SBML model
+identifier (str):    Identifier for the defined unit
+name (str):          Full name of the defined unit
+units (list):        All units the defined unit consists of</p>
+</dd>
+<dt>Return:</dt><dd><p>libSBML unit definition object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.cv_ncbiprotein">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_ncbiprotein</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gene_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_ncbiprotein" title="Permalink to this definition"></a></dt>
+<dd><p>Adds NCBI Id to genes as annotation</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>gene_list (list): libSBML ListOfGenes</p></li>
+<li><p>email (str): User Email to access the Entrez database</p></li>
+<li><p>protein_fasta (str): The path to the CarveMe protein.fasta input file</p></li>
+<li><dl class="simple">
+<dt>lab_strain (bool): Needs to be set to True if strain was self-annotated</dt><dd><p>and/or the locus tags in the CarveMe input file should be kept</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.cv_notes_metab">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_notes_metab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Species</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_notes_metab" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a metabolite</p>
+</dd>
+<dt>Args:</dt><dd><p>species_list (list): libSBML ListOfSpecies</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.cv_notes_reac">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_notes_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaction_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Reaction</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_notes_reac" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>checks the notes field for information which should be in the annotation field</dt><dd><p>removes entry from notes and adds it as URL to the CVTerms of a reaction</p>
+</dd>
+<dt>Args:</dt><dd><p>reaction_list (list): libSBML ListOfReactions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.generate_new_curie_set">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">generate_new_curie_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">prefix2id:</span> <span class="pre">~sortedcontainers.sorteddict.SortedDict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">sortedcontainers.sortedset.SortedSet[str],</span> <span class="pre">None)],</span> <span class="pre">new_pattern:</span> <span class="pre">bool</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SortedSet</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#refinegems.polish.generate_new_curie_set" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a set of complete CURIEs from the provided prefix to identifier mapping</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets</p></li>
+<li><p>new_pattern (bool):                          True if new pattern is wanted, otherwise False</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>A sorted set containing complete CURIEs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.get_set_of_curies">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">get_set_of_curies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curie_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SortedSet[str],</span> <span class="pre">None)]</span></span></span><a class="headerlink" href="#refinegems.polish.get_set_of_curies" title="Permalink to this definition"></a></dt>
+<dd><p>Gets a list of CURIEs
+&amp; maps the database prefixes to their respective identifier sets</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>curie_list (list[str]): List containing CURIEs</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>Dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.improve_curie_per_entity">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">improve_curie_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.improve_curie_per_entity" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function: Removes duplicates &amp; changes pattern according to new_pattern</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>entity (SBase):      A libSBML SBase object, either a model or an entity</p></li>
+<li><p>new_pattern (bool):  True if new pattern is wanted, otherwise False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.improve_curies">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">improve_curies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.improve_curies" title="Permalink to this definition"></a></dt>
+<dd><p>Removes duplicates &amp; changes pattern according to new_pattern</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>entity (SBase):      A libSBML SBase object, either a model or an entity</p></li>
+<li><p>new_pattern (bool):  True if new pattern is wanted, otherwise False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.polish">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>completes all steps to polish a model</dt><dd><p>(Tested for models having either BiGG or VMH identifiers.)</p>
+</dd>
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): model loaded with libsbml</p></li>
+<li><p>new_filename (Str): filename for modified model</p></li>
+<li><p>email (str): E-mail for Entrez</p></li>
+<li><p>id_db (str): Main database identifiers in model come from</p></li>
+<li><p>protein_fasta (str): File used as input for CarveMe</p></li>
+<li><p>lab_strain (bool): True if the strain was sequenced in a local lab</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.polish_annotations">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish_annotations" title="Permalink to this definition"></a></dt>
+<dd><p>Polishes all annotations in a model such that no duplicates are present 
+&amp; the same pattern is used for all CURIEs</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model):        Model loaded with libsbml</p></li>
+<li><p>new_pattern (bool):   True if new pattern is wanted, otherwise False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.polish_entities">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish_entities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metabolite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish_entities" title="Permalink to this definition"></a></dt>
+<dd><p>sets boundary condition and constant if not set for a metabolite</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entity_list (list): libSBML ListOfSpecies or ListOfReactions
+metabolite (boolean): flag to determine whether entity = metabolite</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.print_UnitDefinitions">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">print_UnitDefinitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contained_unit_defs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.UnitDefinition</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.print_UnitDefinitions" title="Permalink to this definition"></a></dt>
+<dd><p>Prints a list of libSBML UnitDefinitions as XMLNodes</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>contained_unit_defs (list): List of libSBML UnitDefinition objects</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.print_remaining_UnitDefinitions">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">print_remaining_UnitDefinitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_fba_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.UnitDefinition</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.print_remaining_UnitDefinitions" title="Permalink to this definition"></a></dt>
+<dd><p>Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+<li><p>list_of_fba_units (list):  List of libSBML UnitDefinitions</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.set_default_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">set_default_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.set_default_units" title="Permalink to this definition"></a></dt>
+<dd><p>Sets default units of model</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.set_initial_amount">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">set_initial_amount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.set_initial_amount" title="Permalink to this definition"></a></dt>
+<dd><p>Sets initial amount to all metabolites if not already set or if initial concentration is not set</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refinegems.polish.set_units">
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">set_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.set_units" title="Permalink to this definition"></a></dt>
+<dd><p>Sets units of parameters in model</p>
+<dl class="simple">
+<dt>Params:</dt><dd><ul class="simple">
+<li><p>model (Model): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-refinegems.sboann">
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
@@ -1430,18 +2289,6 @@ met2 (libsbml-metabolite): metabolite 2 of metabolite pair</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.sboann.initialise_SBO_database">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">initialise_SBO_database</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.initialise_SBO_database" title="Permalink to this definition"></a></dt>
-<dd><p>Initialises the SBO annotation database with 2 tables (‘bigg_to_sbo’ &amp; ‘ec_to_sbo’)
-if file ‘./data/sbo/sbo_database.db’ is an incorrect database,
-otherwise correct database already exists</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>sqlite3.connect() &amp; sqlite3.connect.cursor() objects for SBO database</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.isProtonTransport">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">isProtonTransport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.isProtonTransport" title="Permalink to this definition"></a></dt>
 <dd><p>check if reaction is proton transport</p>
@@ -1449,18 +2296,6 @@ otherwise correct database already exists</p>
 <dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
 </dd>
 <dt>Returns:</dt><dd><p>bool: True if reaction is proton transport</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="refinegems.sboann.is_valid_database">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">is_valid_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">open_cur</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#refinegems.sboann.is_valid_database" title="Permalink to this definition"></a></dt>
-<dd><p>Verifies if database has 2 tables with names ‘bigg_to_sbo’ &amp; ‘ec_to_sbo’</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>open_cur: sqlite3.connect.cursor() object of a database</p>
-</dd>
-<dt>Returns:</dt><dd><p>Boolean: True if all conditions (2 tables with names ‘bigg_to_sbo’ &amp; ‘ec_to_sbo’) for database correct</p>
 </dd>
 </dl>
 </dd></dl>
