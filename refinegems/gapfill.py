@@ -103,9 +103,9 @@ def gff_gene_comp():
 '''
 
 
-def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:
+def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
-        to KEGG/BioCyc/(Genbank) GFF file
+        to KEGG/BioCyc/both
    
         Args:
             model_libsbml (Model): model loaded with libSBML
