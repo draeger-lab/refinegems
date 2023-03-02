@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import yaml
 import os
 import click
 import cobra
@@ -12,8 +11,8 @@ from datetime import date
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 @click.command()
-@click.option('-c', '--configpath', type=click.Path(exists=True), required=True, prompt='Enter path to config file:',
-              help='Path to file containing configurations to run refineGEMs. An example file can be found in config.yaml.')
+@click.option('-c', '--configpath', required=True, prompt='Enter path to config file or press Enter if you want to create one.',
+              help='Path to file containing configurations to run refineGEMs. An example file can be found in config.yaml.', default='ENTER')
 
 def main(configpath=None):
     """main function to run the program"""
@@ -21,12 +20,9 @@ def main(configpath=None):
     print("Author:", __author__)
     today = date.today().strftime("%Y%m%d")
     
-    click.echo('Config file loaded from ' + click.format_filename(configpath))
-    
+   # click.echo('Config file loaded from ' + click.format_filename(configpath))
+    config = rg.io.save_user_input(configpath)
     rg.databases.initialise_database()
-
-    with open(configpath) as f:
-        config = yaml.safe_load(f)
     
     # check if the output directory is already present, if not create it
     dir = os.path.join(config['out_path'] + 'visualization/')
@@ -111,10 +107,11 @@ def main(configpath=None):
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
             egc = rg.investigate.get_egc(model_cobra)
-            sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
-            
-            # saving the created visualizations
-            sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
+            if (config['visualize']):
+                sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
+                
+                # saving the created visualizations
+                sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             
             if (config['memote']):
                 score = rg.investigate.run_memote(model_cobra)
