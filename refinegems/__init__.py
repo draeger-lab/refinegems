@@ -17,5 +17,6 @@ import refinegems.gapfill
 import refinegems.comparison
 import refinegems.investigate
 import refinegems.io
+import refinegems.logging
 
 __author__ = "Famke Baeuerle"
