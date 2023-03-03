@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development &mdash; refinegems 1.0 documentation</title>
+  <title>Pipeline: From genome sequence to draft model &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Usage as standalone application" href="application.html" />
-    <link rel="prev" title="Installation" href="installation.html" /> 
+    <link rel="next" title="refinegems package" href="modules.html" />
+    <link rel="prev" title="Ideas behind some implementations" href="explanation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,15 +48,12 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#development-installation">Development installation</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems package</a></li>
 </ul>
 
@@ -74,9 +71,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Development</li>
+      <li class="breadcrumb-item active">Pipeline: From genome sequence to draft model</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/development.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/pipeline.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -108,38 +105,16 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="development">
-<h1>Development<a class="headerlink" href="#development" title="Permalink to this heading"></a></h1>
-<div class="section" id="development-installation">
-<h2>Development installation<a class="headerlink" href="#development-installation" title="Permalink to this heading"></a></h2>
-<div class="admonition attention">
-<p class="admonition-title">Attention</p>
-<p>The following packages need to be installed to be able to add content to the refineGEMs documentation.</p>
-<ul class="simple">
-<li><p><cite>sphinx</cite></p></li>
-<li><p><cite>nbsphinx</cite></p></li>
-<li><p><cite>sphinx_rtd_theme</cite></p></li>
-<li><p><cite>pandoc</cite></p></li>
-<li><p><cite>ipython</cite></p></li>
-</ul>
-</div>
-<p>You can install the packages via pip to your local environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>nbsphinx<span class="w"> </span>sphinx_rtd_theme<span class="w"> </span>pandoc<span class="w"> </span>ipython
-</pre></div>
-</div>
-<p>If you run into an error with jinja2, just switch to version 3.0.3:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">jinja2</span><span class="o">==</span><span class="m">3</span>.0.3
-</pre></div>
-</div>
-</div>
-</div>
+<div class="section" id="pipeline-from-genome-sequence-to-draft-model">
+<h1>Pipeline: From genome sequence to draft model<a class="headerlink" href="#pipeline-from-genome-sequence-to-draft-model" title="Permalink to this heading"></a></h1>
+<img alt="Workflow from genome sequence to a draft model" src="_images/genome2draft.svg" /></div>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="application.html" class="btn btn-neutral float-right" title="Usage as standalone application" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="explanation.html" class="btn btn-neutral float-left" title="Ideas behind some implementations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="refinegems package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
