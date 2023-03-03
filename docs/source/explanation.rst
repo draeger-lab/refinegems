@@ -3,11 +3,6 @@ Ideas behind some implementations
 
 Below you will find some arguing behind the implementation choices we made.
 
-Gap filling
------------
-
-The `gapfill` module was created to enable an automatic way of filling gaps in a model via genes.
-
 Growth simulation
 -----------------
 

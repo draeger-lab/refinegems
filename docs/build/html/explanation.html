@@ -52,7 +52,6 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Ideas behind some implementations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#gap-filling">Gap filling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#growth-simulation">Growth simulation</a></li>
 </ul>
 </li>
@@ -110,10 +109,6 @@
 <div class="section" id="ideas-behind-some-implementations">
 <h1>Ideas behind some implementations<a class="headerlink" href="#ideas-behind-some-implementations" title="Permalink to this heading"></a></h1>
 <p>Below you will find some arguing behind the implementation choices we made.</p>
-<div class="section" id="gap-filling">
-<h2>Gap filling<a class="headerlink" href="#gap-filling" title="Permalink to this heading"></a></h2>
-<p>The <cite>gapfill</cite> module was created to enable an automatic way of filling gaps in a model via genes.</p>
-</div>
 <div class="section" id="growth-simulation">
 <h2>Growth simulation<a class="headerlink" href="#growth-simulation" title="Permalink to this heading"></a></h2>
 <p>Growth rates and thus doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.</p>
