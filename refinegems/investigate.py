@@ -11,10 +11,12 @@ import json
 import pandas as pd
 import numpy as np
 from cobra import Reaction
+from libsbml import Model as libModel
+from cobra import Model as cobraModel
 from memote.support import consistency
 # needed by memote.support.consitency
 from memote.support import consistency_helpers as con_helpers
-from refinegems.load import load_model_cobra, load_model_libsbml
+from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
 
 __author__ = "Famke Baeuerle"
 
@@ -37,17 +39,17 @@ DISSIPATION_RXNS = {
     }
 
 
-def run_memote_sys(modelfile):
+def run_memote_sys(model: cobraModel):
     """run memote on linux machine
 
     Args:
-        modelfile (cobra-model): model loaded with cobrapy
+        model (cobra-model): model loaded with cobrapy
     """
-    cmd = 'memote report snapshot ' + str(modelfile)
+    cmd = 'memote report snapshot ' + str(model)
     os.system(cmd)
 
 
-def run_memote(model):
+def run_memote(model: cobraModel) -> float:
     """runs memote to obtain total score
 
     Args:
@@ -65,7 +67,7 @@ def run_memote(model):
     return totalScore
 
 
-def initial_analysis(model):
+def initial_analysis(model: libModel):
     """extracts most important numbers of GEM
 
     Args:
@@ -81,7 +83,7 @@ def initial_analysis(model):
     return name, reactions, metabolites, genes
 
 
-def get_orphans_deadends_disconnected(model):
+def get_orphans_deadends_disconnected(model: cobraModel):
     """Uses memote functions to extract orphans, deadends and disconnected metabolites
 
     Args:
@@ -112,7 +114,7 @@ def get_orphans_deadends_disconnected(model):
     return orphan_list, deadend_list, disconnected_list
 
 
-def get_mass_charge_unbalanced(model):
+def get_mass_charge_unbalanced(model: cobraModel):
     """creates lists of mass and charge unbalanced reactions,
        without exchange reactions since they are unbalanced per definition
 
@@ -143,7 +145,7 @@ def get_mass_charge_unbalanced(model):
     return mass_list, charge_list
 
 
-def get_model_info(modelpath):
+def get_model_info(modelpath: str):
     """Reports core information of given model
 
     Args:
@@ -179,7 +181,7 @@ def get_model_info(modelpath):
 
     return model_info
 
-def parse_reaction(eq, model): # from alina
+def parse_reaction(eq: str, model: cobraModel) -> dict: # from alina
     """Parses a reaction equation string to dictionary
 
     Args:
@@ -210,7 +212,7 @@ def parse_reaction(eq, model): # from alina
             coeff = 1
     return eq_matrix
 
-def get_egc(model):
+def get_egc(model: cobraModel) -> pd.DataFrame:
     """Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)
 
     Args:
@@ -264,7 +266,7 @@ def get_egc(model):
         df_fluxes = pd.concat([df_fluxes,pd.DataFrame.from_dict([objval])])
     return df_fluxes.T.reset_index().rename({'index':'BOF', 0:'objective value'}, axis=1).fillna('')
 
-def get_metabs_with_one_cvterm(model):
+def get_metabs_with_one_cvterm(model: libModel) -> list:
     """reports metabolites which have only one annotation, 
     can be used as basis for further annotation research
 
@@ -284,3 +286,39 @@ def get_metabs_with_one_cvterm(model):
                 only_one.append(pid)
                 
     return only_one
+
+def get_reactions_per_sbo(model: libModel) -> dict:
+    """Counts number of reactions of all SBO Terms present
+
+    Args:
+        model (libModel): model loaded with libsbml
+
+    Returns:
+        dict: SBO Term as keys and number of reactions as values
+    """
+    sbos_dict = {}
+    for react in model.getListOfReactions():
+        sbo = react.getSBOTerm()
+        if sbo in sbos_dict.keys():
+            sbos_dict[sbo] += 1
+        else: 
+            sbos_dict[sbo] = 1
+    return sbos_dict
+
+def plot_rea_sbo_single(model: libModel):
+    """Plots reactions per SBO Term in horizontal bar chart
+
+    Args:
+        model (libModel): model loaded with libsbml
+
+    Returns:
+        plot: pandas plot object
+    """
+    df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
+    df = df[df[model.id]>3]
+    df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
+    fig = df.drop('SBO-Term', axis=1).sort_values(model.id).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
+    fig.set_ylabel('')
+    fig.set_xlabel('number of reactions', fontsize=16)
+    fig.legend(loc='lower right')
+    return fig

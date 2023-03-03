@@ -3,7 +3,7 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, CVTerm, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, Unit
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
@@ -16,6 +16,7 @@ metabol_db_dict = {
                    'Human Metabolome Database': 'hmdb:HMDB',
                    'INCHI': 'inchi:',
                    'InChI': 'inchi:',
+                   'InChI-Key': 'inchikey:',
                    'KEGG': 'kegg.compound:',
                    #'KEGG Compound': 'kegg.compound:',
                    'METACYC': 'metacyc.compound:',
@@ -57,6 +58,9 @@ gene_db_dict = {
                }
 
 pathway_db_dict = {'KEGG': 'kegg.pathway:'}
+
+MIRIAM = 'https://identifiers.org/'
+OLD_MIRIAM = 'http://identifiers.org/'
 
 
 def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
@@ -111,7 +115,7 @@ def add_cv_term_reactions(entry, db_id, reac):
     reac.addCVTerm(cv)
 
 
-def add_cv_term_genes(entry, db_id, gene):
+def add_cv_term_genes(entry, db_id, gene, lab_strain: bool=False):
     """Add CVTerm to a gene
 
     Args:
@@ -121,7 +125,10 @@ def add_cv_term_genes(entry, db_id, gene):
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_IS)
+    if lab_strain:
+        cv.setBiologicalQualifierType(BQB_IS_HOMOLOG_TO)
+    else:
+        cv.setBiologicalQualifierType(BQB_IS)
     cv.addResource('https://identifiers.org/' + gene_db_dict[db_id] + entry)
     gene.addCVTerm(cv)
 
@@ -156,7 +163,7 @@ def add_cv_term_pathways_to_entity(entry, db_id, entity):
     entity.addCVTerm(cv)
 
 
-def parse_id_from_cv_term(entity, db_id):
+def get_id_from_cv_term(entity, db_id):
     """extract id for a specific database from CVTerm
 
     Args:
@@ -177,3 +184,56 @@ def parse_id_from_cv_term(entity, db_id):
         all_ids.extend(ids)
 
     return all_ids
+
+
+def generate_cvterm(qt, b_m_qt) -> CVTerm:
+    ''' Generates a CVTerm with the provided qualifier &
+        biological or model qualifier types
+        
+        Params:
+            - qt: libSBML qualifier type
+            - b_m_qt: libSBML biological or model qualifier
+        
+        Returns:
+            -> A libSBML CVTerm with the provided qualifier & biological or model qualifier types 
+    '''
+    cvterm = CVTerm()
+    cvterm.setQualifierType(qt)
+    
+    if qt == BIOLOGICAL_QUALIFIER:
+        cvterm.setBiologicalQualifierType(b_m_qt)
+    else:
+        cvterm.setModelQualifierType(b_m_qt)
+    
+    return cvterm 
+
+
+def print_cvterm(cvterm: CVTerm):
+    ''' Debug function: 
+        Prints the URIs contained in the provided CVTerm 
+        along with the provided qualifier & biological/model qualifier types
+        
+        Params:
+            - cvterm (CVTerm): A libSBML CVTerm
+    '''
+    if cvterm == None:
+        print('CVTerm currently empty!')
+    else:
+        current_b_m_qt = 0
+    
+        current_qt = cvterm.getQualifierType()
+                
+        if current_qt == BIOLOGICAL_QUALIFIER:
+            current_b_m_qt = cvterm.getBiologicalQualifierType()
+        elif current_qt == MODEL_QUALIFIER:
+            current_b_m_qt = cvterm.getModelQualifierType()
+        
+        if cvterm.getNumResources() == 0:
+            print('No URIs present.')
+        else:
+            print(f'Current CVTerm contains:  {cvterm.getResourceURI(0)}')
+    
+            for i in range(1, cvterm.getNumResources()):
+                print(f'                          {cvterm.getResourceURI(i)}')
+                
+        print(f'Current CVTerm has QualifierType {current_qt} and Biological/ModelQualifierType {current_b_m_qt}.')

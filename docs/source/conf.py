@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'nbsphinx',
     'sphinx_rtd_theme',
+    'IPython.sphinxext.ipython_console_highlighting'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,6 +60,16 @@ html_theme = 'sphinx_rtd_theme' #'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Change colours in theme for navigation
+html_css_files = ['custom_theme.css']
+
+# Adds logo to documentation page
+html_logo = 'images/refineGEMs_logo.png'
+html_theme_options = {
+    'logo_only': True,
+    'display_version': False
+}
+
 # Explicitly assign the master document
 master_doc = 'index'
 
@@ -79,4 +90,16 @@ autodoc_mock_imports = ["psycopg2",
                         "tqdm",
                         "psycopg2",
                         "Bio",
+                        "sqlalchemy",
+                        "ratelimit",
+                        "libchebipy",
+                        "ols_client",
+                        "charges",
+                        "click",
+                        "yaml",
+                        "sortedcontainers",
+                        "colorama",
+                        "matplotlib",
+                        "seaborn",
+                        "venn"
                         ]

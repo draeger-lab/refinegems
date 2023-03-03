@@ -3,85 +3,12 @@
 
 While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.
 """
-from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
-from refinegems.cvterms import add_cv_term_reactions, add_cv_term_genes, add_cv_term_metabolites, metabol_db_dict, parse_id_from_cv_term
+from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
+from refinegems.entities import create_gpr, create_reaction
 
 __author__ = "Famke Baeuerle"
-
-
-def get_name_from_locus(locus):
-    """fetches protein name from NCBI
-
-    Args:
-        locus (string): NCBI compatible locus_tag
-
-    Returns:
-        str: protein name / description
-    """
-    handle = Entrez.efetch(
-        db="protein",
-        id=locus,
-        rettype="gbwithparts",
-        retmode='text')
-    records = SeqIO.parse(handle, "gb")
-
-    for i, record in enumerate(records):
-        return record.description
-
-def create_reaction(model, reaction_id, name, reactants, products, fluxes, reversible, fast, sbo):
-    """creates new reaction in the given model
-
-    Args:
-        model (libsbml-model): model loaded with libSBML
-        reaction_id (str): BiGG id of the reaction to create
-        name (string): human readable name of the reaction
-        reactants (dict): metabolites as keys and their stoichiometry as values
-        products (dict): metabolites as keys and their stoichiometry as values
-        fluxes (dict): lower_bound and upper_bound as keys
-        reversible (bool): true/false for the reaction
-        fast (bool): true/false for the reaction
-        sbo (string): SBO term of the reaction
-
-    Returns:
-        tuple: (reaction, modified model)
-    """
-    reaction = model.createReaction()
-    reaction.setId('R_' + reaction_id)
-    reaction.setName(name)
-    reaction.setMetaId('meta_R_' + reaction_id)
-    reaction.setSBOTerm(sbo)
-    reaction.setFast(fast)
-    reaction.setReversible(reversible)
-    for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
-        reaction.addReactant(model.getSpecies('M_' + metab), stoich)
-    for metab, stoich in products.items(): #reactants as dict with metab:stoich
-        reaction.addProduct(model.getSpecies('M_' + metab), stoich)
-    reaction.getPlugin(0).setLowerFluxBound(fluxes['lower_bound'])
-    reaction.getPlugin(0).setUpperFluxBound(fluxes['upper_bound'])
-    return reaction, model
     
-def create_gpr(model, locus_tag, email):
-    """creates GeneProduct in the given model
-
-    Args:
-        model (libsbml-model): model loaded with libSBML
-        locus_tag (string): NCBI compatible locus_tag
-        email (string): User Email to access the NCBI Entrez database
-
-    Returns:
-        tuple: (gpr, modified model)
-    """
-    Entrez.email = email
-    gpr = model.getPlugin(0).createGeneProduct()
-    name = get_name_from_locus(locus_tag)
-    gpr.setName(name)
-    gpr.setId(locus_tag)
-    gpr.setMetaId('meta_' + locus_tag)
-    gpr.setLabel(locus_tag)
-    gpr.setSBOTerm("SBO:0000243")
-    add_cv_term_genes(locus_tag, 'NCBI', gpr)
-    return gpr, model
             
 def add_reactions_from_table(model, table, email):
     """adds all reactions with their info given in the table to the given model
@@ -168,7 +95,7 @@ def update_annotations_from_others(model):
                 if not other_metab.isSetMetaId():
                     other_metab.setMetaId('meta_' + other_metab.getId())
                 for db_id, code in metabol_db_dict.items():
-                    id = parse_id_from_cv_term(metab, code)
+                    id = get_id_from_cv_term(metab, code)
                     for entry in id:
                         if entry is not None:
                             add_cv_term_metabolites(entry, db_id, other_metab)    

@@ -1,12 +1,12 @@
-Welcome to refinegems!
+Welcome to refineGEMs!
 ======================================
-``refinegems`` is a python package intended
+``refineGEMs`` is a python package intended
 to help with the curation of genome-scale metabolic models (GEMS).
 
 Overview
 --------
 
-Currently ``refinegems`` can be used for the investigation of a GEM, it can complete the following tasks:
+Currently ``refineGEMs`` can be used for the investigation of a GEM, it can complete the following tasks:
 
 * loading GEMS with ``cobrapy`` and ``libSBML``
 * report number of metabolites, reactions and genes
@@ -29,6 +29,7 @@ Other applications of ``refinegems`` include curation of a given model these inc
    :caption: Contents:
 
    installation
+   development
    application
    examples
    usage

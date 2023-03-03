@@ -8,9 +8,8 @@ It is possible to use the correct_charges_from_db function with other databases.
 
 import pandas as pd
 from libsbml import *
-from refinegems.load import write_to_file
+from refinegems.io import write_to_file
 from refinegems.modelseed import get_modelseed_compounds
-import re
 
 __author__ = "Famke Baeuerle"
 
@@ -48,18 +47,17 @@ def correct_charges_from_db(model, compounds):
     return model, mulchar
 
 
-def correct_charges_modelseed(model, new_file_path, modelseed_path, charge_report_path):
+def correct_charges_modelseed(model, new_file_path, charge_report_path):
     """wrapper function which completes the steps to charge correction
 
     Args:
         model (libsbml-model): model loaded with libsbml
         new_file_path (Str): filepath + name for modified model
-        modelseed_path (str): path to modelseed compound definition
 
     Returns:
         dict: BiGG Id and possible charges of metabolites
     """
-    modelseed_compounds = get_modelseed_compounds(modelseed_path)
+    modelseed_compounds = get_modelseed_compounds()
     model_corr, multiple_charges = correct_charges_from_db(
         model, modelseed_compounds)
     write_to_file(model_corr, new_file_path)

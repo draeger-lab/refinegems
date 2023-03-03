@@ -3,65 +3,18 @@
 
 Script written by Elisabeth Fritze in her bachelor thesis.
 Modified by Gwendolyn O. Gusak during her master thesis.
+Commented by Famke Bäuerle and extended by Nantia Leonidou.
 
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
 """
 
 import re
 import sqlite3
-from sqlite3 import Error
 from libsbml import *
-from refinegems.load import write_to_file
+from refinegems.databases import PATH_TO_DB
+from refinegems.io import write_to_file
 
-__author__ = "Elisabeth Fritze"
-__author__ = "Gwendolyn O. Gusak"
-
-
-def is_valid_database(open_cur) -> bool:
-   """
-   Verifies if database has 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-   
-   Args:
-        open_cur: sqlite3.connect.cursor() object of a database
- 
-   Returns:
-        Boolean: True if all conditions (2 tables with names 'bigg_to_sbo' & 'ec_to_sbo') for database correct
-   """
-
-   # Fetches the table names as string tuples from the connected database
-   open_cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
-   tables = [string[0] for string in open_cur.fetchall()]
-
-   return 'bigg_to_sbo' in tables and 'ec_to_sbo' in tables and len(tables) == 2
-
-
-def initialise_SBO_database():
-   """
-   Initialises the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
-   if file './data/sbo/sbo_database.db' is an incorrect database,
-   otherwise correct database already exists
-   
-   Returns:
-        sqlite3.connect() & sqlite3.connect.cursor() objects for SBO database
-   """
-
-   # Initialise empty connection
-   con = None
-
-   # Try to open connection & get cursor
-   try:
-      con = sqlite3.connect('./data/sbo/sbo_database.db')
-      cursor = con.cursor()
-
-      # If connected to database incorrect -> initialise correct one from file './data/sbo/sbo_database.sql'
-      if not is_valid_database(cursor):
-         with open('./data/sbo/sbo_database.sql') as schema:
-            cursor.executescript(schema.read())
-   except Error as e:
-      print(e)
-   finally:
-      if con:
-         return con, cursor
+__author__ = "Elisabeth Fritze, Gwendolyn O. Gusak & Nantia Leonidou"
 
 
 def getCompartmentlessSpeciesId(speciesReference):
@@ -710,7 +663,52 @@ def addSBOfromDB(reac, cur):
         return True
     else:
         return False
-    
+
+### functions below from Nantia ###
+
+def addSBOforMetabolites(model):
+    # add metabolites SBO
+    for met in model.species:
+        met_id = met.getId()
+        model.getSpecies(met_id).setSBOTerm("SBO:0000247")
+
+
+def addSBOforGenes(model):
+    # add genes SBO
+    model_fbc = model.getPlugin("fbc")
+    # if model has genes
+    if model_fbc is not None:
+        for gene in model_fbc.getListOfGeneProducts():
+            gene.setSBOTerm("SBO:0000243")
+
+
+def addSBOforModel(model):
+    model.setSBOTerm("SBO:0000624")
+
+
+def addSBOforGroups(model):
+    mplugin = model.getPlugin("groups")
+    # if groups are in model defined
+    if mplugin is not None:
+        for grp in mplugin.getListOfGroups():
+            grp.setSBOTerm("SBO:0000633")
+
+
+def addSBOforParameters(model):
+    for param in model.getListOfParameters():
+        # reaction bounds
+        if 'R_' in param.getId():
+            param.setSBOTerm("SBO:0000625")
+        # default set bounds
+        else:
+            param.setSBOTerm("SBO:0000626")
+
+
+def addSBOforCompartments(model):
+    for cmp in model.getListOfCompartments():
+        cmp.setSBOTerm("SBO:0000290")   
+
+### end functions from Nantia ###
 
 def sbo_annotation(model_libsbml):
     """executes all steps to annotate SBO terms to a given model
@@ -722,7 +720,8 @@ def sbo_annotation(model_libsbml):
     Returns:
         libsbml-model: modified model with SBO terms
     """
-    open_con, open_cur = initialise_SBO_database()
+    open_con = sqlite3.connect(PATH_TO_DB)
+    open_cur = open_con.cursor()
 
     for reaction in model_libsbml.reactions:
         if not addSBOfromDB(reaction, open_cur):
@@ -732,14 +731,14 @@ def sbo_annotation(model_libsbml):
             checkSink(reaction)
             checkExchange(reaction)
             checkDemand(reaction)
-            if reaction.getSBOTermID() == 'SBO:0000655':
+            if reaction.getSBOTermID() == 'SBO:0000655': #transporter
                 checkPassiveTransport(reaction)
                 checkActiveTransport(reaction)
                 if reaction.getSBOTermID() != 'SBO:0000657':
                     checkCoTransport(reaction)
                     if reaction.getSBOTermID() == 'SBO:0000654':
                         splitSymAntiPorter(reaction)
-            if reaction.getSBOTermID() == 'SBO:0000176':
+            if reaction.getSBOTermID() == 'SBO:0000176': #metabolic reaction
                 addSBOviaEC(reaction, open_cur)
             if reaction.getSBOTermID() == 'SBO:0000176':
                 checkRedox(reaction)
@@ -748,6 +747,14 @@ def sbo_annotation(model_libsbml):
                 checkDecarboxylation(reaction)
                 checkDeamination(reaction)
                 checkPhosphorylation(reaction)
+    
+    ### functions from Nantia ###            
+    # addSBOforMetabolites(model_libsbml)
+    # addSBOforGenes(model_libsbml)
+    # addSBOforModel(model_libsbml)
+    # addSBOforGroups(model_libsbml)
+    # addSBOforParameters(model_libsbml)
+    # addSBOforCompartments(model_libsbml)
     
     open_cur.close()
     open_con.close()

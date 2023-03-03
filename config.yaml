@@ -6,60 +6,36 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # 'data/e_coli_core.xml' #
-entrez_email: 'famke.baeuerle@student.uni-tuebingen.de' # necessary to access NCBI API
-
-
-Settings for scripts that manipulate the model: >
-  They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
-
-### Addition of KEGG Pathways as Groups ###
-keggpathways: FALSE
-kegg_path:  '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with KEGG Groups
-
-### SBO-Term Annotation ###
-sboterms: FALSE
-sbo_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save model with sbo terms
-
-### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
-polish: FALSE
-id_db: 'BIGG' # Required! 
-lab_strain: False # Needs to be specified if the locus tag from the provided protein_fasta file 
-                  # should be used as label in the model
-# Possible identifiers, currently: BiGG & VMH
-# For other IDs the `polish` function in `polish.py` might need adjustment
-protein_fasta: '' # Path to used CarveMe input file, if exists
-polish_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml' # path where to save the polished model
-
-### Charge correction ###
-charge_corr: FALSE
-charge_path: '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml'
-charge_report_path: '../C_striatum_GEMs/analysis/Cstr_KC-Na-01_multiple_charges.csv'
-
-### Manual Curation ###
-man_cur: FALSE
-man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
-man_cur_table: '../C_striatum_GEMs/data/manual_curation.xlsx'
-man_cur_path: '../C_striatum_GEMs/models/Cstr_17.xml' # path where to save modified model
+model: 'data/e_coli_core.xml' 
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
+# Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
+visualize: TRUE
+
 # Set the out path for the csv created by multiple and a possible xlsx for model investigation
-out_path: '../C_striatum_GEMs/analysis/'
+out_path: ''
 
 # Set the basis medium to simulate growth from
 growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 
 # Settings if you want to compare multiple models
 multiple: FALSE
-multiple_paths: ['../C_striatum_GEMs/models/Cstr_14.xml', '../C_striatum_GEMs/models/Cstr_15.xml', '../C_striatum_GEMs/models/Cstr_16.xml', '../C_striatum_GEMs/models/Cstr_17.xml'] #, '../C_striatum_GEMs/models/Cstr_KC-Na-01.xml']
+multiple_paths: # enter as many paths as you need below
+  - 'data/e_coli_core.xml'
+  - ''
+  - ''
 
-# Path to database which contains metabolites present in different media
-media_db: 'data/media_db.csv' 
-
-# media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI
-media: ['SNM3', 'RPMI', 'CGXlab'] #'LB', 'M9', 'RPMI', 'CGXII', 'CasA'
+# media to simulate growth from, just comment the media you do not want with a #
+media: 
+  - 'SNM3'
+  - 'RPMI'
+  - 'CGXlab'
+  - 'LB'
+  - 'M9'
+  - 'CGXII'
+  - 'CasA'
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
@@ -68,14 +44,40 @@ memote: FALSE
 # Filename is set as the models name
 output: xlsx #cl, xlsx, csv 
 
-# these work only with single models
-### Gene comparison ###
-genecomp: FALSE # set to False if not needed, only works when gprs are annotated with kegg
-# the following is only relevant when turned on
-organismid: 'T05059' # C. striatum
-gff_file: 'data/cstr.gff' # C. striatum
-biggreactions: 'data/bigg_models_reactions.txt'
-
-### ModelSEED comparison ###
+# compare metabolites to the ModelSEED database
 modelseed: FALSE # set to False if not needed
-modelseedpath: 'data/modelseed_compounds.tsv'
+
+
+Settings for scripts that manipulate the model: >
+  They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
+
+entrez_email: '' # necessary to access NCBI API
+
+### Addition of KEGG Pathways as Groups ###
+keggpathways: FALSE
+kegg_path:  '' # path where to save model with KEGG Groups
+
+### SBO-Term Annotation ###
+sboterms: FALSE
+sbo_path: '' # path where to save model with sbo terms
+
+### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
+polish: FALSE
+id_db: 'BIGG' # Required! 
+# Possible identifiers, currently: BiGG & VMH
+# For other IDs the `polish` function in `polish.py` might need adjustment
+lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
+                  # & to set the locus_tag to the ones obtained by the annotation
+protein_fasta: '' # Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True
+polish_path: '' # path where to save the polished model
+
+### Charge correction ###
+charge_corr: FALSE
+charge_path: ''
+charge_report_path: ''
+
+### Manual Curation ###
+man_cur: FALSE
+man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
+man_cur_table: 'data/manual_curation.xlsx'
+man_cur_path: '' # path where to save modified model

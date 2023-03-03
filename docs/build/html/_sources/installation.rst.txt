@@ -18,6 +18,15 @@ The package and all its dependencies can be installed within virtual environment
 
 **Condaenv**
 
+.. hint::
+   | Installing refineGEMs in a conda environment on a  MacOS can cause the following issue:
+   | -> After a restart of the device the whole conda set-up may have the wrong python version. 
+   | If that is the case: 
+
+   1. Deactivate all environments including the base environment
+   2. Activate base
+   3. Activate the refineGEMs environment
+
 Setup a conda virtual environment and use its pip to install refineGEMs into that environment:
 
 .. code:: bash
