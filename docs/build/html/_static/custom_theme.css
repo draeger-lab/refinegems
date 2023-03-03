@@ -13,7 +13,7 @@ a.reference.external:visited {
 }
 a.reference.internal:visited {
     color: #343131
-    }
+}
 .sig.sig-object.py {
     color: #a11e3b !important;
     background: #f8e3e9 !important;
@@ -30,7 +30,15 @@ a.reference.internal:visited {
     color: #343131;
 }
 .wy-menu-vertical li.current > a, .wy-menu-vertical li.on a {
+    color: #a11e3b !important;
     background: #f8e3e9 !important;
+}
+.wy-menu-vertical li.current > a button.toctree-expand, .wy-menu-vertical li.on a button.toctree-expand{
+    color: #a11e3b !important;
+}
+.wy-menu-vertical li.toctree-l1.current > a {
+    border-bottom: 1px solid #a11e3b !important;
+    border-top: 1px solid #a11e3b !important;
 }
 .wy-menu-vertical li ul {
     color: #343131 !important;
@@ -38,6 +46,17 @@ a.reference.internal:visited {
 }
 .wy-menu-vertical a {
     color: #343131 !important;
+}
+.wy-menu-vertical a:hover {
+    background: #ac3751 !important;
+    color: #000000 !important;
+}
+.wy-menu-vertical a:hover button.toctree-expand {
+    background: #ac3751 !important;
+    color: #000000 !important;
+}
+.wy-menu-vertical li.current > a:hover button.toctree-expand, .wy-menu-vertical li.on a:hover button.toctree-expand {
+    background: #f8e3e9!important;
 }
 .icon.icon-home {
     color: #a11e3b !important;
