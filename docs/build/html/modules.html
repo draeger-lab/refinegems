@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>refinegems package &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,11 +12,10 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -52,17 +52,198 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">refinegems package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.charges">refinegems.charges module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.comparison">refinegems.comparison module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.curate">refinegems.curate module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.cvterms">refinegems.cvterms module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.growth">refinegems.growth module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.investigate">refinegems.investigate module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.io">refinegems.io module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.modelseed">refinegems.modelseed module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.pathways">refinegems.pathways module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.polish">refinegems.polish module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.sboann">refinegems.sboann module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.charges">refinegems.charges module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_from_db"><code class="docutils literal notranslate"><span class="pre">correct_charges_from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.charges.correct_charges_modelseed"><code class="docutils literal notranslate"><span class="pre">correct_charges_modelseed()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.comparison">refinegems.comparison module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.get_sbo_mapping_multiple"><code class="docutils literal notranslate"><span class="pre">get_sbo_mapping_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_binary"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_binary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_dt"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_dt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_initial_analysis"><code class="docutils literal notranslate"><span class="pre">plot_initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_rea_sbo_multiple"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_multiple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_venn"><code class="docutils literal notranslate"><span class="pre">plot_venn()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.simulate_all"><code class="docutils literal notranslate"><span class="pre">simulate_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.curate">refinegems.curate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.add_reactions_from_table"><code class="docutils literal notranslate"><span class="pre">add_reactions_from_table()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.update_annotations_from_others"><code class="docutils literal notranslate"><span class="pre">update_annotations_from_others()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.curate.update_annotations_from_table"><code class="docutils literal notranslate"><span class="pre">update_annotations_from_table()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.cvterms">refinegems.cvterms module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_genes"><code class="docutils literal notranslate"><span class="pre">add_cv_term_genes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_metabolites"><code class="docutils literal notranslate"><span class="pre">add_cv_term_metabolites()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_pathways"><code class="docutils literal notranslate"><span class="pre">add_cv_term_pathways()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_pathways_to_entity"><code class="docutils literal notranslate"><span class="pre">add_cv_term_pathways_to_entity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_reactions"><code class="docutils literal notranslate"><span class="pre">add_cv_term_reactions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.add_cv_term_units"><code class="docutils literal notranslate"><span class="pre">add_cv_term_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.generate_cvterm"><code class="docutils literal notranslate"><span class="pre">generate_cvterm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.get_id_from_cv_term"><code class="docutils literal notranslate"><span class="pre">get_id_from_cv_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.cvterms.print_cvterm"><code class="docutils literal notranslate"><span class="pre">print_cvterm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.growth">refinegems.growth module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_additives"><code class="docutils literal notranslate"><span class="pre">find_additives()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_minimum_essential"><code class="docutils literal notranslate"><span class="pre">find_minimum_essential()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.find_missing_essential"><code class="docutils literal notranslate"><span class="pre">find_missing_essential()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_all_minimum_essential"><code class="docutils literal notranslate"><span class="pre">get_all_minimum_essential()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_default_secretion"><code class="docutils literal notranslate"><span class="pre">get_default_secretion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_default_uptake"><code class="docutils literal notranslate"><span class="pre">get_default_uptake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_essential_reactions"><code class="docutils literal notranslate"><span class="pre">get_essential_reactions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_essential_reactions_via_bounds"><code class="docutils literal notranslate"><span class="pre">get_essential_reactions_via_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_growth_selected_media"><code class="docutils literal notranslate"><span class="pre">get_growth_selected_media()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_minimal_uptake"><code class="docutils literal notranslate"><span class="pre">get_minimal_uptake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.get_missing_exchanges"><code class="docutils literal notranslate"><span class="pre">get_missing_exchanges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.growth_one_medium_from_default"><code class="docutils literal notranslate"><span class="pre">growth_one_medium_from_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.growth_one_medium_from_minimal"><code class="docutils literal notranslate"><span class="pre">growth_one_medium_from_minimal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.modify_medium"><code class="docutils literal notranslate"><span class="pre">modify_medium()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.growth.simulate_minimum_essential"><code class="docutils literal notranslate"><span class="pre">simulate_minimum_essential()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.investigate">refinegems.investigate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_egc"><code class="docutils literal notranslate"><span class="pre">get_egc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_mass_charge_unbalanced"><code class="docutils literal notranslate"><span class="pre">get_mass_charge_unbalanced()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_metabs_with_one_cvterm"><code class="docutils literal notranslate"><span class="pre">get_metabs_with_one_cvterm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_model_info"><code class="docutils literal notranslate"><span class="pre">get_model_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_orphans_deadends_disconnected"><code class="docutils literal notranslate"><span class="pre">get_orphans_deadends_disconnected()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.get_reactions_per_sbo"><code class="docutils literal notranslate"><span class="pre">get_reactions_per_sbo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.initial_analysis"><code class="docutils literal notranslate"><span class="pre">initial_analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.parse_reaction"><code class="docutils literal notranslate"><span class="pre">parse_reaction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.plot_rea_sbo_single"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_single()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote"><code class="docutils literal notranslate"><span class="pre">run_memote()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.investigate.run_memote_sys"><code class="docutils literal notranslate"><span class="pre">run_memote_sys()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.io">refinegems.io module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_a_table_from_database"><code class="docutils literal notranslate"><span class="pre">load_a_table_from_database()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_all_media_from_db"><code class="docutils literal notranslate"><span class="pre">load_all_media_from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_document_libsbml"><code class="docutils literal notranslate"><span class="pre">load_document_libsbml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_manual_annotations"><code class="docutils literal notranslate"><span class="pre">load_manual_annotations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_manual_gapfill"><code class="docutils literal notranslate"><span class="pre">load_manual_gapfill()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_medium_custom"><code class="docutils literal notranslate"><span class="pre">load_medium_custom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_medium_from_db"><code class="docutils literal notranslate"><span class="pre">load_medium_from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_model_cobra"><code class="docutils literal notranslate"><span class="pre">load_model_cobra()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_model_libsbml"><code class="docutils literal notranslate"><span class="pre">load_model_libsbml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.load_multiple_models"><code class="docutils literal notranslate"><span class="pre">load_multiple_models()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_fasta_headers"><code class="docutils literal notranslate"><span class="pre">parse_fasta_headers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.parse_gff_for_gp_info"><code class="docutils literal notranslate"><span class="pre">parse_gff_for_gp_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.save_user_input"><code class="docutils literal notranslate"><span class="pre">save_user_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.search_ncbi_for_gpr"><code class="docutils literal notranslate"><span class="pre">search_ncbi_for_gpr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.search_sbo_label"><code class="docutils literal notranslate"><span class="pre">search_sbo_label()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.validate_libsbml_model"><code class="docutils literal notranslate"><span class="pre">validate_libsbml_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_report"><code class="docutils literal notranslate"><span class="pre">write_report()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.io.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.modelseed">refinegems.modelseed module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.compare_model_modelseed"><code class="docutils literal notranslate"><span class="pre">compare_model_modelseed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.compare_to_modelseed"><code class="docutils literal notranslate"><span class="pre">compare_to_modelseed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_charge_mismatch"><code class="docutils literal notranslate"><span class="pre">get_charge_mismatch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_compared_formulae"><code class="docutils literal notranslate"><span class="pre">get_compared_formulae()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_formula_mismatch"><code class="docutils literal notranslate"><span class="pre">get_formula_mismatch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_model_charges"><code class="docutils literal notranslate"><span class="pre">get_model_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_modelseed_charges"><code class="docutils literal notranslate"><span class="pre">get_modelseed_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.modelseed.get_modelseed_compounds"><code class="docutils literal notranslate"><span class="pre">get_modelseed_compounds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.pathways">refinegems.pathways module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.add_kegg_pathways"><code class="docutils literal notranslate"><span class="pre">add_kegg_pathways()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.create_pathway_groups"><code class="docutils literal notranslate"><span class="pre">create_pathway_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.extract_kegg_pathways"><code class="docutils literal notranslate"><span class="pre">extract_kegg_pathways()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.extract_kegg_reactions"><code class="docutils literal notranslate"><span class="pre">extract_kegg_reactions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.get_pathway_groups"><code class="docutils literal notranslate"><span class="pre">get_pathway_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.kegg_pathways"><code class="docutils literal notranslate"><span class="pre">kegg_pathways()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.pathways.load_model_enable_groups"><code class="docutils literal notranslate"><span class="pre">load_model_enable_groups()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.polish">refinegems.polish module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_compartment_structure_specs"><code class="docutils literal notranslate"><span class="pre">add_compartment_structure_specs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_curie_set"><code class="docutils literal notranslate"><span class="pre">add_curie_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_fba_units"><code class="docutils literal notranslate"><span class="pre">add_fba_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_metab"><code class="docutils literal notranslate"><span class="pre">add_metab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.add_reac"><code class="docutils literal notranslate"><span class="pre">add_reac()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_all_qualifiers"><code class="docutils literal notranslate"><span class="pre">change_all_qualifiers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_qualifier_per_entity"><code class="docutils literal notranslate"><span class="pre">change_qualifier_per_entity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.change_qualifiers"><code class="docutils literal notranslate"><span class="pre">change_qualifiers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_fba_units"><code class="docutils literal notranslate"><span class="pre">create_fba_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_unit"><code class="docutils literal notranslate"><span class="pre">create_unit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.create_unit_definition"><code class="docutils literal notranslate"><span class="pre">create_unit_definition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_ncbiprotein"><code class="docutils literal notranslate"><span class="pre">cv_ncbiprotein()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_metab"><code class="docutils literal notranslate"><span class="pre">cv_notes_metab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.cv_notes_reac"><code class="docutils literal notranslate"><span class="pre">cv_notes_reac()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.generate_new_curie_set"><code class="docutils literal notranslate"><span class="pre">generate_new_curie_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.get_set_of_curies"><code class="docutils literal notranslate"><span class="pre">get_set_of_curies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.improve_curie_per_entity"><code class="docutils literal notranslate"><span class="pre">improve_curie_per_entity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.improve_curies"><code class="docutils literal notranslate"><span class="pre">improve_curies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish"><code class="docutils literal notranslate"><span class="pre">polish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_annotations"><code class="docutils literal notranslate"><span class="pre">polish_annotations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.polish_entities"><code class="docutils literal notranslate"><span class="pre">polish_entities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.print_UnitDefinitions"><code class="docutils literal notranslate"><span class="pre">print_UnitDefinitions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.print_remaining_UnitDefinitions"><code class="docutils literal notranslate"><span class="pre">print_remaining_UnitDefinitions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_default_units"><code class="docutils literal notranslate"><span class="pre">set_default_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_initial_amount"><code class="docutils literal notranslate"><span class="pre">set_initial_amount()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.polish.set_units"><code class="docutils literal notranslate"><span class="pre">set_units()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-refinegems.sboann">refinegems.sboann module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforCompartments"><code class="docutils literal notranslate"><span class="pre">addSBOforCompartments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforGenes"><code class="docutils literal notranslate"><span class="pre">addSBOforGenes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforGroups"><code class="docutils literal notranslate"><span class="pre">addSBOforGroups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforMetabolites"><code class="docutils literal notranslate"><span class="pre">addSBOforMetabolites()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforModel"><code class="docutils literal notranslate"><span class="pre">addSBOforModel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOforParameters"><code class="docutils literal notranslate"><span class="pre">addSBOforParameters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOfromDB"><code class="docutils literal notranslate"><span class="pre">addSBOfromDB()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.addSBOviaEC"><code class="docutils literal notranslate"><span class="pre">addSBOviaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkAcetylationViaEC"><code class="docutils literal notranslate"><span class="pre">checkAcetylationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkActiveTransport"><code class="docutils literal notranslate"><span class="pre">checkActiveTransport()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkBiomass"><code class="docutils literal notranslate"><span class="pre">checkBiomass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkCoTransport"><code class="docutils literal notranslate"><span class="pre">checkCoTransport()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDeamination"><code class="docutils literal notranslate"><span class="pre">checkDeamination()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDeaminationViaEC"><code class="docutils literal notranslate"><span class="pre">checkDeaminationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDecarbonylation"><code class="docutils literal notranslate"><span class="pre">checkDecarbonylation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDecarboxylation"><code class="docutils literal notranslate"><span class="pre">checkDecarboxylation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDecarboxylationViaEC"><code class="docutils literal notranslate"><span class="pre">checkDecarboxylationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkDemand"><code class="docutils literal notranslate"><span class="pre">checkDemand()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkExchange"><code class="docutils literal notranslate"><span class="pre">checkExchange()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkGlycosylation"><code class="docutils literal notranslate"><span class="pre">checkGlycosylation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkGlycosylationViaEC"><code class="docutils literal notranslate"><span class="pre">checkGlycosylationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkHydrolysisViaEC"><code class="docutils literal notranslate"><span class="pre">checkHydrolysisViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkIsomerisationViaEC"><code class="docutils literal notranslate"><span class="pre">checkIsomerisationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkMethylationViaEC"><code class="docutils literal notranslate"><span class="pre">checkMethylationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkPassiveTransport"><code class="docutils literal notranslate"><span class="pre">checkPassiveTransport()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkPhosphorylation"><code class="docutils literal notranslate"><span class="pre">checkPhosphorylation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkRedox"><code class="docutils literal notranslate"><span class="pre">checkRedox()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkRedoxViaEC"><code class="docutils literal notranslate"><span class="pre">checkRedoxViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkSink"><code class="docutils literal notranslate"><span class="pre">checkSink()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.checkTransaminationViaEC"><code class="docutils literal notranslate"><span class="pre">checkTransaminationViaEC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentDict"><code class="docutils literal notranslate"><span class="pre">getCompartmentDict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentFromSpeciesRef"><code class="docutils literal notranslate"><span class="pre">getCompartmentFromSpeciesRef()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentList"><code class="docutils literal notranslate"><span class="pre">getCompartmentList()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentlessMetaboliteIds"><code class="docutils literal notranslate"><span class="pre">getCompartmentlessMetaboliteIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentlessProductIds"><code class="docutils literal notranslate"><span class="pre">getCompartmentlessProductIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentlessReactantIds"><code class="docutils literal notranslate"><span class="pre">getCompartmentlessReactantIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getCompartmentlessSpeciesId"><code class="docutils literal notranslate"><span class="pre">getCompartmentlessSpeciesId()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getECNums"><code class="docutils literal notranslate"><span class="pre">getECNums()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getListOfMetabolites"><code class="docutils literal notranslate"><span class="pre">getListOfMetabolites()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getMetaboliteIds"><code class="docutils literal notranslate"><span class="pre">getMetaboliteIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getProductCompartmentList"><code class="docutils literal notranslate"><span class="pre">getProductCompartmentList()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getProductIds"><code class="docutils literal notranslate"><span class="pre">getProductIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantCompartmentList"><code class="docutils literal notranslate"><span class="pre">getReactantCompartmentList()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.getReactantIds"><code class="docutils literal notranslate"><span class="pre">getReactantIds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.hasReactantPair"><code class="docutils literal notranslate"><span class="pre">hasReactantPair()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.isProtonTransport"><code class="docutils literal notranslate"><span class="pre">isProtonTransport()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.moreThanTwoCompartmentTransport"><code class="docutils literal notranslate"><span class="pre">moreThanTwoCompartmentTransport()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.returnCompartment"><code class="docutils literal notranslate"><span class="pre">returnCompartment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.sbo_annotation"><code class="docutils literal notranslate"><span class="pre">sbo_annotation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.sbo_annotation_write"><code class="docutils literal notranslate"><span class="pre">sbo_annotation_write()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.soleProtonTransported"><code class="docutils literal notranslate"><span class="pre">soleProtonTransported()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.splitSymAntiPorter"><code class="docutils literal notranslate"><span class="pre">splitSymAntiPorter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.sboann.splitTransportBiochem"><code class="docutils literal notranslate"><span class="pre">splitTransportBiochem()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -115,10 +296,10 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="refinegems-package">
+<section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading"></a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
-<div class="section" id="module-refinegems.charges">
+<section id="module-refinegems.charges">
 <span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading"></a></h2>
 <p>Provides functions for adding charges to metabolites</p>
 <p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
@@ -149,8 +330,8 @@ new_file_path (Str): filepath + name for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.comparison">
+</section>
+<section id="module-refinegems.comparison">
 <span id="refinegems-comparison-module"></span><h2>refinegems.comparison module<a class="headerlink" href="#module-refinegems.comparison" title="Permalink to this heading"></a></h2>
 <p>Provides functions to compare and visualize multiple models</p>
 <p>Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.</p>
@@ -244,8 +425,8 @@ basis (string): Either default_uptake (adding metabs from default) or minimal_up
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.curate">
+</section>
+<section id="module-refinegems.curate">
 <span id="refinegems-curate-module"></span><h2>refinegems.curate module<a class="headerlink" href="#module-refinegems.curate" title="Permalink to this heading"></a></h2>
 <p>Functions to enable annotation of entities using a manual curated table</p>
 <p>While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.</p>
@@ -290,8 +471,8 @@ table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet metabs</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.cvterms">
+</section>
+<section id="module-refinegems.cvterms">
 <span id="refinegems-cvterms-module"></span><h2>refinegems.cvterms module<a class="headerlink" href="#module-refinegems.cvterms" title="Permalink to this heading"></a></h2>
 <p>Helper module to work with annotations (CVTerms)</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
@@ -410,8 +591,8 @@ along with the provided qualifier &amp; biological/model qualifier types</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.growth">
+</section>
+<section id="module-refinegems.growth">
 <span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this heading"></a></h2>
 <p>Provides functions to simulate growth on any medium</p>
 <p>Tailored to work with the Synthetic Nasal Medium (SNM), should
@@ -614,8 +795,8 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.investigate">
+</section>
+<section id="module-refinegems.investigate">
 <span id="refinegems-investigate-module"></span><h2>refinegems.investigate module<a class="headerlink" href="#module-refinegems.investigate" title="Permalink to this heading"></a></h2>
 <p>Provides functions to investigate the model and test with memote</p>
 <p>These functions enable simple testing of any model using memote and
@@ -753,8 +934,8 @@ model (cobra-model): model loaded with cobrapy</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.io">
+</section>
+<section id="module-refinegems.io">
 <span id="refinegems-io-module"></span><h2>refinegems.io module<a class="headerlink" href="#module-refinegems.io" title="Permalink to this heading"></a></h2>
 <p>Provides functions to load and write models, media definitions and the manual annotation table</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
@@ -973,8 +1154,8 @@ new_filename (Str): filename / path for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.modelseed">
+</section>
+<section id="module-refinegems.modelseed">
 <span id="refinegems-modelseed-module"></span><h2>refinegems.modelseed module<a class="headerlink" href="#module-refinegems.modelseed" title="Permalink to this heading"></a></h2>
 <p>Reports mismatches in charges and formulae based on ModelSEED</p>
 <p>Extracts modelseed data from a given tsv file, extracts all metabolites
@@ -1075,8 +1256,8 @@ modelseed_charges (df): charges and formulae of modelseed metabolites</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.pathways">
+</section>
+<section id="module-refinegems.pathways">
 <span id="refinegems-pathways-module"></span><h2>refinegems.pathways module<a class="headerlink" href="#module-refinegems.pathways" title="Permalink to this heading"></a></h2>
 <p>Provides functions for adding KEGG reactions as Group Pathways</p>
 <p>If your organism occurs in the KEGG database, extract the KEGG reaction ID from the
@@ -1172,8 +1353,8 @@ new_filename (Str): filename for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.polish">
+</section>
+<section id="module-refinegems.polish">
 <span id="refinegems-polish-module"></span><h2>refinegems.polish module<a class="headerlink" href="#module-refinegems.polish" title="Permalink to this heading"></a></h2>
 <p>Can be used to polish a model (created with CarveMe v.1.5.1)</p>
 <p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
@@ -1268,7 +1449,7 @@ new_filename (Str): filename for modified model</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish.change_qualifier_per_entity">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifier_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.polish.change_qualifier_per_entity" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifier_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.polish.change_qualifier_per_entity" title="Permalink to this definition"></a></dt>
 <dd><p>Updates Qualifiers to be MIRIAM compliant for an entity</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
@@ -1285,7 +1466,7 @@ new_filename (Str): filename for modified model</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish.change_qualifiers">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_qualifiers" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_qualifiers" title="Permalink to this definition"></a></dt>
 <dd><p>Updates Qualifiers to be MIRIAM compliant for an entity type of a given model</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
@@ -1550,8 +1731,8 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.sboann">
+</section>
+<section id="module-refinegems.sboann">
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
 <p>Provides functions to automate the addition of SBO terms to the model</p>
 <p>Script written by Elisabeth Fritze in her bachelor thesis.
@@ -2101,8 +2282,8 @@ new_filename (Str): filename for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
