@@ -7,15 +7,14 @@ General Setting: >
   Path to GEM to be investigated
 
 model: 'data/e_coli_core.xml' 
+# Set the out path for all analysis files
+out_path: ''
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
 visualize: TRUE
-
-# Set the out path for the csv created by multiple and a possible xlsx for model investigation
-out_path: ''
 
 # Set the basis medium to simulate growth from
 growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
@@ -39,10 +38,6 @@ media:
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
-
-# Determine if output file for single model should be created, default: cl
-# Filename is set as the models name
-output: xlsx #cl, xlsx, csv 
 
 # compare metabolites to the ModelSEED database
 modelseed: FALSE # set to False if not needed
