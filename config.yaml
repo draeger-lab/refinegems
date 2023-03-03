@@ -6,13 +6,52 @@ Description: >
 General Setting: >
   Path to GEM to be investigated
 
-model: 'data/e_coli_core.xml' #
-entrez_email: '' # necessary to access NCBI API
+model: 'data/e_coli_core.xml' 
+
+Settings for scripts that investigate the model: >
+  These are only necessary if none of the scripts to manipulate the model are used.
+
+# Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
 visualize: TRUE
+
+# Set the out path for the csv created by multiple and a possible xlsx for model investigation
+out_path: ''
+
+# Set the basis medium to simulate growth from
+growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
+
+# Settings if you want to compare multiple models
+multiple: FALSE
+multiple_paths: # enter as many paths as you need below
+  - 'data/e_coli_core.xml'
+  - ''
+  - ''
+
+# media to simulate growth from, just comment the media you do not want with a #
+media: 
+  - 'SNM3'
+  - 'RPMI'
+  - 'CGXlab'
+  - 'LB'
+  - 'M9'
+  - 'CGXII'
+  - 'CasA'
+
+# determine whether the memote score should be calculated, default: FALSE
+memote: FALSE
+
+# Determine if output file for single model should be created, default: cl
+# Filename is set as the models name
+output: xlsx #cl, xlsx, csv 
+
+# compare metabolites to the ModelSEED database
+modelseed: FALSE # set to False if not needed
 
 
 Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
+
+entrez_email: '' # necessary to access NCBI API
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
@@ -42,29 +81,3 @@ man_cur: FALSE
 man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
 man_cur_table: 'data/manual_curation.xlsx'
 man_cur_path: '' # path where to save modified model
-
-Settings for scripts that investigate the model: >
-  These are only necessary if none of the scripts to manipulate the model are used.
-
-# Set the out path for the csv created by multiple and a possible xlsx for model investigation
-out_path: ''
-
-# Set the basis medium to simulate growth from
-growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
-
-# Settings if you want to compare multiple models
-multiple: FALSE
-multiple_paths: ['data/e_coli_core.xml', '', '']
-
-# media to simulate growth from, available: SNM, LB, M9, SMM, CGXII, RPMI, no duplicates allowed
-media: ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA']
-
-# determine whether the memote score should be calculated, default: FALSE
-memote: FALSE
-
-# Determine if output file for single model should be created, default: cl
-# Filename is set as the models name
-output: xlsx #cl, xlsx, csv 
-
-### ModelSEED comparison ###
-modelseed: FALSE # set to False if not needed
