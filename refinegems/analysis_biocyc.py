@@ -320,6 +320,7 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.D
    missing_genes.set_index('locus_tag', inplace=True)
    missing_reactions['gene_product'] = missing_reactions['locus_tag'].map(transform_lt_into_gp_model_id)
    missing_genes.reset_index(inplace=True)
+   missing_reactions.drop('locus_tag', axis=1, inplace=True)
    
    return missing_genes, missing_reactions
 

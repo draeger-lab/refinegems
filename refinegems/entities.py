@@ -121,8 +121,8 @@ def create_gp(model: Model, model_id: str, name: str, locus_tag: str, protein_id
     gp.setSBOTerm('SBO:0000243')
     gp.setMetaId(f'meta_{model_id}')
     if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
-        id_db = 'NCBI'
-    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'RefSeq'
+        id_db = 'REFSEQ'
+    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
     if id_db: add_cv_term_genes(protein_id, id_db, gp)
     return gp, model
 
@@ -154,7 +154,7 @@ def create_species(
     metabolite.setCompartment(compartment_id)
     metabolite.getPlugin(0).setCharge(charge)
     metabolite.getPlugin(0).setChemicalFormula(chem_formula)
-    add_cv_term_metabolites(metabolite_id, 'BIGG', metabolite)
+    add_cv_term_metabolites(metabolite_id[:-2], 'BIGG', metabolite)
     return metabolite, model
 
 
@@ -202,12 +202,16 @@ def create_reaction(
     if compartment: reaction.setCompartment(compartment)  # Set compartment for reaction if available
     reversible = reversible if reversible else get_reversible(fluxes)
     reaction.setReversible(reversible)
-    if gene:
-        if gene == 'G_spontaneous':
-            reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(gene)
-        else:
-            for gene in genes:  # Set GeneProductReferences if availables
-                reaction.getPlugin(0).createGeneProductAssociation().createAnd().createGeneProductRef().setGeneProduct(gene)
+    if genes:
+            if genes == 'G_spontaneous':
+                reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(gene)
+            elif len(genes) == 1:
+                reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(genes[0])
+            else:
+                gp_ass_and = reaction.getPlugin(0).createGeneProductAssociation().createAnd()
+                for gene in genes:
+                    # Set GeneProductReferences if available
+                    gp_ass_and.createGeneProductRef().setGeneProduct(gene)
     for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
         reaction.addReactant(model.getSpecies('M_' + metab), stoich)
     for metab, stoich in products.items(): #reactants as dict with metab:stoich

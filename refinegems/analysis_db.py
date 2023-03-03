@@ -228,18 +228,25 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     entities_missing_in_model = mapp[~mapp.index.isin(
         entities.index)].reset_index()
     
+    db_ids = entities_missing_in_model.groupby('bigg_id')[db].agg(set)  # Get a set of all BioCyc/KEGG IDs belonging to one BiGG ID
+    
+    # Add set of BioCyc IDs belonging to one BiGG ID to the dataframe
+    entities_missing_in_model.set_index('bigg_id', inplace=True)
+    entities_missing_in_model.loc[:, db] = db_ids
+    entities_missing_in_model.reset_index(inplace=True)
+    
     if 'id_group' in entities_missing_in_model.columns:  # Remove reaction ID duplicates but keep all realted BiGG & BioCyc IDs in a list
-        aliases = entities_missing_in_model.groupby(['compartment', 'id_group'])['bigg_id'].agg(tuple)  # Get a list of the 'duplicated' BiGG reaction IDs -> aliases
-        db_ids = entities_missing_in_model.groupby(['compartment', 'id_group'])[db].agg(tuple)  # Get a list of all BioCyc/KEGG IDs belonging to one BiGG reaction ID
-        entities_missing_in_model.drop_duplicates(['compartment', 'id_group'], inplace=True)  # Drop duplicates where compartments & id_group same
-        # Add lists to the dataframe
+        aliases = entities_missing_in_model.groupby(['compartment', 'id_group'])['bigg_id'].agg(set)  # Get a set of the 'duplicated' BiGG reaction IDs -> aliases
+        entities_missing_in_model.drop_duplicates(['compartment', 'id_group'], inplace=True, ignore_index=True)  # Drop duplicates where compartments & id_group same
+        
+        # Add set of BiGG ID aliases to the dataframe
         entities_missing_in_model.set_index(['compartment', 'id_group'], inplace=True)
         entities_missing_in_model.loc[:, 'bigg_aliases'] = aliases
-        entities_missing_in_model.loc[:, db] = db_ids
         entities_missing_in_model.reset_index(inplace=True)
-        entities_missing_in_model.drop(labels='id_group', axis=1, inplace=True)
         
-    entities_missing_in_model.drop_duplicates(subset=['bigg_id', db], inplace=True, ignore_index=True)  # Remove ID duplicates
+        entities_missing_in_model.drop(labels='id_group', axis=1, inplace=True)  # id_group is not longer necessary
+        
+    entities_missing_in_model.drop_duplicates(subset='bigg_id', inplace=True, ignore_index=True)  # Remove BiGG ID duplicates
     
     # Add name column to dataframe
     def get_name_from_bigg(bigg_id: str):
@@ -273,10 +280,15 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
         metabs_from_reac = requests.get(BIGG_REACTIONS_URL + reaction_id).json()['metabolites']
 
         for compound_dict in metabs_from_reac:
+            complete_bigg_id = None
+            if compound_dict.get('compartment_bigg_id'):
+                complete_bigg_id = f"{compound_dict.get('bigg_id')}_{compound_dict.get('compartment_bigg_id')}"
+            else:
+                complete_bigg_id = compound_dict.get('bigg_id')
             if compound_dict.get('stoichiometry') < 0:
-                reactants[compound_dict.get('bigg_id')] = abs(compound_dict.get('stoichiometry'))
+                reactants[complete_bigg_id] = abs(compound_dict.get('stoichiometry'))
             elif compound_dict.get('stoichiometry') > 0:
-                products[compound_dict.get('bigg_id')] = abs(compound_dict.get('stoichiometry'))
+                products[complete_bigg_id] = abs(compound_dict.get('stoichiometry'))
                 
         return str({'reactants': reactants, 'products': products})
                 

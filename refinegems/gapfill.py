@@ -76,6 +76,7 @@
         'KEGG+BioCyc': ~ 3 - 4h
         
 """
+import ast
 from libsbml import Model
 from libsbml import *
 import refinegems.analysis_kegg as rga_kegg
@@ -230,54 +231,63 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
         missing_reacs_df = gp_analysis_res.get('reactions')
     
     # (1) Add all missing genes needed for the missing reactions
-    for _, row in missing_genes_df:
+    for _, row in missing_genes_df.iterrows():
         gp, model = create_gp(model_libsbml, row['model_id'], row['name'], row['locus_tag'], row['protein_id'])
     
     # (2) Add all missing metabolites needed for the missing reactions
-    for _, row in missing_metabs_df:
+    for _, row in missing_metabs_df.iterrows():
         sp, model = create_species(model_libsbml, row['bigg_id'], row['name'], row['compartment'], row['charge'], row['Chemical Formula'])
-        if 'BioCyc' in missing_metabs_df:
-            if row['BioCyc']:
-                add_cv_term_metabolites(row['BioCyc'], 'BioCyc', sp)
-                add_cv_term_metabolites(row['BioCyc'], 'METACYC', sp)
+        if 'BioCyc' in missing_metabs_df.columns:
+            biocyc_row = ast.literal_eval(row['BioCyc'])
+            if biocyc_row:
+                for biocyc_id in biocyc_row:
+                    add_cv_term_metabolites(biocyc_id, 'BioCyc', sp)
+                    add_cv_term_metabolites(biocyc_id, 'METACYC', sp)
                 
-        if 'InChI-Key' in missing_metabs_df:
+        if 'InChI-Key' in missing_metabs_df.columns:
             if row['InChI-Key']:
-                add_cv_term_metabolites(row['InChI-Key'], 'InChI-Key', sp)
+                add_cv_term_metabolites(str(row['InChI-Key']), 'InChI-Key', sp)
                 
-        if 'ChEBI' in missing_metabs_df:
+        if 'ChEBI' in missing_metabs_df.columns:
             if row['ChEBI']:
-                add_cv_term_metabolites(row['ChEBI'], 'ChEBI', sp)
+                add_cv_term_metabolites(str(row['ChEBI']), 'ChEBI', sp)
     
     # (3) Add all missing reactions
-    for _, row in missing_reacs_df:
-        reactants = row['bigg_reaction'].get('reactants')
-        products = row['bigg_reaction'].get('products')
-        genes = row['gene_product'] if row['Spontaneous?'] != 'T' else 'G_spontaneous'
+    for _, row in missing_reacs_df.iterrows():
+        reaction_dict = ast.literal_eval(row['bigg_reaction'])
+        reactants = reaction_dict.get('reactants')
+        products = reaction_dict.get('products')
+        genes = ast.literal_eval(str(row['gene_product'])) if row['Spontaneous?'] != 'T' else 'G_spontaneous'
+        compartment = row['compartment']
+        compartment = compartment if compartment != 'exchange' else None
         reac, model = create_reaction(
             model=model_libsbml, reaction_id=row['bigg_id'], name=row['name'], reactants=reactants, 
-            products=products, fluxes=row['fluxes'], compartment_id=row['compartment'], genes=genes
+            products=products, fluxes=ast.literal_eval(row['fluxes']), compartment=compartment, genes=genes
             )
-        if 'bigg_aliases' in missing_reacs_df:
-            if row['bigg_aliases']:
-                for bigg_id in row['bigg_aliases']:
+        if 'bigg_aliases' in missing_reacs_df.columns:
+            bigg_aliases_row = ast.literal_eval(str(row['bigg_aliases']))
+            if bigg_aliases_row:
+                for bigg_id in bigg_aliases_row:
                     if bigg_id != sp.getId():
                         add_cv_term_reactions(bigg_id, 'BIGG', sp)
         
-        if 'KEGG' in missing_reacs_df:
-            if row['KEGG']:
-                for kegg_id in row['KEGG']:
+        if 'KEGG' in missing_reacs_df.columns:
+            kegg_row = ast.literal_eval(str(row['KEGG']).replace('nan', 'None'))
+            if kegg_row:
+                for kegg_id in kegg_row:
                     add_cv_term_reactions(kegg_id, 'KEGG', reac)
                 
-        if 'BioCyc' in missing_reacs_df:
-            if row['BioCyc']:
-                for biocyc_id in row['BioCyc']:
+        if 'BioCyc' in missing_reacs_df.columns:
+            biocyc_row = ast.literal_eval(row['BioCyc'])
+            if biocyc_row:
+                for biocyc_id in biocyc_row:
                     add_cv_term_reactions(biocyc_id, 'BioCyc', reac)
                     add_cv_term_reactions(biocyc_id, 'METACYC', reac)
                     
-        if 'EC' in missing_reacs_df:
-            if row['EC']:
-                for ec_num in row['EC']:
+        if 'EC' in missing_reacs_df.columns:
+            ec_row = ast.literal_eval(row['EC'])
+            if ec_row:
+                for ec_num in ec_row:
                     add_cv_term_reactions(ec_num, 'EC', reac)
                          
     return model
