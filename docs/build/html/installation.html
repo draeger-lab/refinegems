@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +12,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -111,16 +110,16 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="installation">
+<section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
-<div class="section" id="installation-via-pip">
+<section id="installation-via-pip">
 <h2>Installation via pip<a class="headerlink" href="#installation-via-pip" title="Permalink to this heading"></a></h2>
 <p>To install refinegmes as python package, simply install it via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>refinegems
 </pre></div>
 </div>
-</div>
-<div class="section" id="installation-via-github">
+</section>
+<section id="installation-via-github">
 <h2>Installation via github<a class="headerlink" href="#installation-via-github" title="Permalink to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">refinegems</span></code> is distributed via github repository.</p>
 <p>The package and all its dependencies can be installed within virtual environments.</p>
@@ -183,8 +182,8 @@ pipenv<span class="w"> </span>shell
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> package can also be installed via Anaconda (recommended
 if you are a Windows user).</p>
-</div>
-<div class="section" id="further-dependencies-obsolete">
+</section>
+<section id="further-dependencies-obsolete">
 <h2>Further Dependencies (obsolete)<a class="headerlink" href="#further-dependencies-obsolete" title="Permalink to this heading"></a></h2>
 <p>If you want to use the SBO terms annotation part you will need to
 install PostgreSQL to your machine.</p>
@@ -208,8 +207,8 @@ with</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql.exe<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>sbo_ann<span class="w"> </span>-f<span class="w"> </span>data<span class="se">\\</span>sbo<span class="se">\\</span>create_dbs.sql
 </pre></div>
 </div>
-</div>
-<div class="section" id="troubleshooting">
+</section>
+<section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p>If you get <code class="docutils literal notranslate"><span class="pre">ImportError:</span> <span class="pre">DLL</span> <span class="pre">load</span> <span class="pre">failed</span> <span class="pre">while</span> <span class="pre">importing</span> <span class="pre">_sqlite3</span></code>
@@ -235,8 +234,8 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
 (located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
 <li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

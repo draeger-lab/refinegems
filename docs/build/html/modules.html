@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>refinegems package &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +12,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -298,10 +297,10 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="refinegems-package">
+<section id="refinegems-package">
 <h1>refinegems package<a class="headerlink" href="#refinegems-package" title="Permalink to this heading"></a></h1>
 <p>Here is an overview on all functions. All imports are mocked in <code class="docutils literal notranslate"><span class="pre">autodoc_mock_imports</span></code> in the <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file to enable automatic building.</p>
-<div class="section" id="module-refinegems.charges">
+<section id="module-refinegems.charges">
 <span id="refinegems-charges-module"></span><h2>refinegems.charges module<a class="headerlink" href="#module-refinegems.charges" title="Permalink to this heading"></a></h2>
 <p>Provides functions for adding charges to metabolites</p>
 <p>When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin(‘fbc’).isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.</p>
@@ -332,8 +331,8 @@ new_file_path (Str): filepath + name for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.comparison">
+</section>
+<section id="module-refinegems.comparison">
 <span id="refinegems-comparison-module"></span><h2>refinegems.comparison module<a class="headerlink" href="#module-refinegems.comparison" title="Permalink to this heading"></a></h2>
 <p>Provides functions to compare and visualize multiple models</p>
 <p>Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.</p>
@@ -427,8 +426,8 @@ basis (string): Either default_uptake (adding metabs from default) or minimal_up
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.curate">
+</section>
+<section id="module-refinegems.curate">
 <span id="refinegems-curate-module"></span><h2>refinegems.curate module<a class="headerlink" href="#module-refinegems.curate" title="Permalink to this heading"></a></h2>
 <p>Functions to enable annotation of entities using a manual curated table</p>
 <p>While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.</p>
@@ -473,8 +472,8 @@ table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet metabs</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.cvterms">
+</section>
+<section id="module-refinegems.cvterms">
 <span id="refinegems-cvterms-module"></span><h2>refinegems.cvterms module<a class="headerlink" href="#module-refinegems.cvterms" title="Permalink to this heading"></a></h2>
 <p>Helper module to work with annotations (CVTerms)</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
@@ -593,8 +592,8 @@ along with the provided qualifier &amp; biological/model qualifier types</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.growth">
+</section>
+<section id="module-refinegems.growth">
 <span id="refinegems-growth-module"></span><h2>refinegems.growth module<a class="headerlink" href="#module-refinegems.growth" title="Permalink to this heading"></a></h2>
 <p>Provides functions to simulate growth on any medium</p>
 <p>Tailored to work with the Synthetic Nasal Medium (SNM), should
@@ -797,8 +796,8 @@ minimum (list): exchanges of metabolites not present in the medium but necessary
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.investigate">
+</section>
+<section id="module-refinegems.investigate">
 <span id="refinegems-investigate-module"></span><h2>refinegems.investigate module<a class="headerlink" href="#module-refinegems.investigate" title="Permalink to this heading"></a></h2>
 <p>Provides functions to investigate the model and test with memote</p>
 <p>These functions enable simple testing of any model using memote and
@@ -936,8 +935,8 @@ model (cobra-model): model loaded with cobrapy</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.io">
+</section>
+<section id="module-refinegems.io">
 <span id="refinegems-io-module"></span><h2>refinegems.io module<a class="headerlink" href="#module-refinegems.io" title="Permalink to this heading"></a></h2>
 <p>Provides functions to load and write models, media definitions and the manual annotation table</p>
 <p>Depending on the application the model needs to be loaded with cobra (memote)
@@ -1156,8 +1155,8 @@ new_filename (Str): filename / path for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.modelseed">
+</section>
+<section id="module-refinegems.modelseed">
 <span id="refinegems-modelseed-module"></span><h2>refinegems.modelseed module<a class="headerlink" href="#module-refinegems.modelseed" title="Permalink to this heading"></a></h2>
 <p>Reports mismatches in charges and formulae based on ModelSEED</p>
 <p>Extracts modelseed data from a given tsv file, extracts all metabolites
@@ -1258,8 +1257,8 @@ modelseed_charges (df): charges and formulae of modelseed metabolites</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.pathways">
+</section>
+<section id="module-refinegems.pathways">
 <span id="refinegems-pathways-module"></span><h2>refinegems.pathways module<a class="headerlink" href="#module-refinegems.pathways" title="Permalink to this heading"></a></h2>
 <p>Provides functions for adding KEGG reactions as Group Pathways</p>
 <p>If your organism occurs in the KEGG database, extract the KEGG reaction ID from the
@@ -1355,8 +1354,8 @@ new_filename (Str): filename for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.polish">
+</section>
+<section id="module-refinegems.polish">
 <span id="refinegems-polish-module"></span><h2>refinegems.polish module<a class="headerlink" href="#module-refinegems.polish" title="Permalink to this heading"></a></h2>
 <p>Can be used to polish a model (created with CarveMe v.1.5.1)</p>
 <p>The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
@@ -1451,7 +1450,7 @@ new_filename (Str): filename for modified model</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish.change_qualifier_per_entity">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifier_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.polish.change_qualifier_per_entity" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifier_per_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#refinegems.polish.change_qualifier_per_entity" title="Permalink to this definition"></a></dt>
 <dd><p>Updates Qualifiers to be MIRIAM compliant for an entity</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
@@ -1468,7 +1467,7 @@ new_filename (Str): filename for modified model</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish.change_qualifiers">
-<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_qualifiers" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">change_qualifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_b_m_qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_db_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.change_qualifiers" title="Permalink to this definition"></a></dt>
 <dd><p>Updates Qualifiers to be MIRIAM compliant for an entity type of a given model</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
@@ -1769,8 +1768,8 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-refinegems.sboann">
+</section>
+<section id="module-refinegems.sboann">
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
 <p>Provides functions to automate the addition of SBO terms to the model</p>
 <p>Script written by Elisabeth Fritze in her bachelor thesis.
@@ -2320,8 +2319,8 @@ new_filename (Str): filename for modified model</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
