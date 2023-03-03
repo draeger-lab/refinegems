@@ -5,12 +5,12 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 """
 
 import re
-from libsbml import Model, Species, Reaction, Unit, UnitDefinition, SBase
+from libsbml import Model, Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import write_to_file, search_ncbi_for_gpr, parse_fasta_headers
+from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -886,17 +886,19 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fasta: str, lab_strain: bool):
+def polish(model: Model, email: str, id_db: str, protein_fasta: str, lab_strain: bool): 
     """completes all steps to polish a model
         (Tested for models having either BiGG or VMH identifiers.)
 
     Params:
         - model (Model): model loaded with libsbml
-        - new_filename (Str): filename for modified model
         - email (str): E-mail for Entrez
         - id_db (str): Main database identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
+        
+    Returns:
+        model: modified model
     """
     colorama_init(autoreset=True)
     
@@ -939,6 +941,5 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
-
-    ### write model ###
-    write_to_file(model, new_filename)
+    
+    return model
