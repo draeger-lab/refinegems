@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name='refineGEMs',
-      version='1.2',
+      version='1.0',
       description='Scripts to curate a GEM',
       author='Famke Baeuerle',
       author_email='famke.baeuerle@gmail.com',
