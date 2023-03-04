@@ -169,4 +169,7 @@ def main(configpath=None):
         logging.info('No valid model, investigation aborted!')
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.critical(e, exc_info=True)
