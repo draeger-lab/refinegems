@@ -6,7 +6,6 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 
 import re
 from libsbml import SBase, Model, Species, Reaction, Unit, UnitDefinition
-from libsbml import *
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
