@@ -25,7 +25,9 @@ If you run into an error with jinja2, just switch to version 3.0.3:
     
     pip install jinja2==3.0.3
 
-Development adjustments
------------------------
+Development notes
+-----------------
 
 You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
+
+If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
