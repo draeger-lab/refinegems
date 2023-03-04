@@ -847,7 +847,7 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
             for entity in tqdm(listOf_dict.get(entity_type)):
                 not_miriam_compliant = change_qualifier_per_entity(entity, new_qt, new_b_m_qt, specific_db_prefix)
         except(TypeError):
-            logging.info(entity_type + ' is not present in model.')        
+            logging.info('The entity ' +  entity_type + ' is not present in ' + model.getId())        
         
     if not_miriam_compliant:         
         print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
