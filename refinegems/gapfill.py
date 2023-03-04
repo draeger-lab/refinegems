@@ -84,6 +84,7 @@ import refinegems.analysis_biocyc as rga_biocyc
 from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
 from refinegems.entities import create_gp, create_species, create_reaction
 import pandas as pd
+import numpy as np
 from typing import Union
 from colorama import init as colorama_init
 from colorama import Fore
@@ -229,6 +230,10 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
         missing_genes_df = gp_analysis_res.get('genes')
         missing_metabs_df = gp_analysis_res.get('metabolites')
         missing_reacs_df = gp_analysis_res.get('reactions')
+        
+    missing_genes_df = missing_genes_df.replace(np.nan, None)
+    missing_metabs_df = missing_metabs_df.replace(np.nan, None)
+    missing_reacs_df = missing_reacs_df.replace(np.nan, None)
     
     # (1) Add all missing genes needed for the missing reactions
     for _, row in missing_genes_df.iterrows():
@@ -238,7 +243,7 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
     for _, row in missing_metabs_df.iterrows():
         sp, model = create_species(model_libsbml, row['bigg_id'], row['name'], row['compartment'], row['charge'], row['Chemical Formula'])
         if 'BioCyc' in missing_metabs_df.columns:
-            biocyc_row = ast.literal_eval(row['BioCyc'])
+            biocyc_row = ast.literal_eval(str(row['BioCyc']))
             if biocyc_row:
                 for biocyc_id in biocyc_row:
                     add_cv_term_metabolites(biocyc_id, 'BioCyc', sp)
@@ -254,7 +259,7 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
     
     # (3) Add all missing reactions
     for _, row in missing_reacs_df.iterrows():
-        reaction_dict = ast.literal_eval(row['bigg_reaction'])
+        reaction_dict = ast.literal_eval(str(row['bigg_reaction']))
         reactants = reaction_dict.get('reactants')
         products = reaction_dict.get('products')
         genes = ast.literal_eval(str(row['gene_product'])) if row['Spontaneous?'] != 'T' else 'G_spontaneous'
@@ -262,14 +267,14 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
         compartment = compartment if compartment != 'exchange' else None
         reac, model = create_reaction(
             model=model_libsbml, reaction_id=row['bigg_id'], name=row['name'], reactants=reactants, 
-            products=products, fluxes=ast.literal_eval(row['fluxes']), compartment=compartment, genes=genes
+            products=products, fluxes=ast.literal_eval(str(row['fluxes'])), compartment=compartment, genes=genes
             )
         if 'bigg_aliases' in missing_reacs_df.columns:
             bigg_aliases_row = ast.literal_eval(str(row['bigg_aliases']))
             if bigg_aliases_row:
                 for bigg_id in bigg_aliases_row:
-                    if bigg_id != sp.getId():
-                        add_cv_term_reactions(bigg_id, 'BIGG', sp)
+                    if bigg_id != reac.getId():
+                        add_cv_term_reactions(bigg_id, 'BIGG', reac)
         
         if 'KEGG' in missing_reacs_df.columns:
             kegg_row = ast.literal_eval(str(row['KEGG']).replace('nan', 'None'))
@@ -278,14 +283,14 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
                     add_cv_term_reactions(kegg_id, 'KEGG', reac)
                 
         if 'BioCyc' in missing_reacs_df.columns:
-            biocyc_row = ast.literal_eval(row['BioCyc'])
+            biocyc_row = ast.literal_eval(str(row['BioCyc']))
             if biocyc_row:
                 for biocyc_id in biocyc_row:
                     add_cv_term_reactions(biocyc_id, 'BioCyc', reac)
                     add_cv_term_reactions(biocyc_id, 'METACYC', reac)
                     
         if 'EC' in missing_reacs_df.columns:
-            ec_row = ast.literal_eval(row['EC'])
+            ec_row = ast.literal_eval(str(row['EC']))
             if ec_row:
                 for ec_num in ec_row:
                     add_cv_term_reactions(ec_num, 'EC', reac)

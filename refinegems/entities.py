@@ -144,7 +144,7 @@ def create_species(
     """
     metabolite = model.createSpecies()
     metabolite.setId(f'M_{metabolite_id}')
-    metabolite.setName(name)
+    if name: metabolite.setName(name)
     metabolite.setMetaId(f'meta_M_{metabolite_id}')
     metabolite.setSBOTerm('SBO:0000247')
     metabolite.setInitialAmount(float('NaN'))
@@ -193,7 +193,7 @@ def create_reaction(
     """
     reaction = model.createReaction()
     reaction.setId('R_' + reaction_id)
-    reaction.setName(name)
+    if name: reaction.setName(name)
     reaction.setMetaId('meta_R_' + reaction_id)
     sbo = sbo if sbo else 'SBO:0000167'  # SBO term for biochemical or transport reaction
     reaction.setSBOTerm(sbo)
