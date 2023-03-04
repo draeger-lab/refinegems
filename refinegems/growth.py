@@ -12,12 +12,18 @@ essential = metabolites not present in the medium but necessary for growth
 missing = all exchanges missing in the model but given in medium
 """
 
+import logging
 import pandas as pd
 import numpy as np
 from refinegems.io import load_medium_from_db
 from cobra.medium import minimal_medium
 
 __author__ = "Famke Baeuerle"
+
+def set_fluxes_to_simulate(reaction):
+    reaction.upper_bound = 1000.0
+    reaction.lower_bound = - 1000.0
+    return reaction
 
 
 def get_default_uptake(model):
@@ -128,7 +134,13 @@ def find_missing_essential(model, medium, default_uptake):
     with model:
         default_medium = {i: 10.0 for i in default_uptake}
         new_medium = {**medium, **default_medium}
-        model.medium = new_medium
+        try:
+            model.medium = new_medium
+        except(ValueError):
+            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 make model simulatable.')
+            for reaction in model.reactions:
+                set_fluxes_to_simulate(reaction)
+            model.medium = new_medium
         essential = []
         for metab in new_medium.keys():
             with model:
@@ -177,7 +189,13 @@ def simulate_minimum_essential(model, growth_medium, minimum):
         except KeyError:
             print('No Oxygen Exchange Reaction')
             pass
-        model.medium = new_medium
+        try:
+            model.medium = new_medium
+        except(ValueError):
+            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 make model simulatable.')
+            for reaction in model.reactions:
+                set_fluxes_to_simulate(reaction)
+            model.medium = new_medium
         sol = model.optimize()
     return sol.objective_value
 
