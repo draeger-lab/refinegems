@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage as standalone application &mdash; refinegems 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples on how to use refinegems" href="examples.html" />
+    <link rel="prev" title="Development" href="development.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage as standalone application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">refinegems</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage as standalone application</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/application.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="usage-as-standalone-application">
+<h1>Usage as standalone application<a class="headerlink" href="#usage-as-standalone-application" title="Permalink to this heading"></a></h1>
+<p>The script <code class="docutils literal notranslate"><span class="pre">main.py</span></code> can be used directly in the command line after
+entering the virtual environment with <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">shell</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file contains defaults for all variables that need
+to be set by the user.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">lab_strain=True</span></code> has the following two requirements:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><dl class="simple">
+<dt>The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.</dt><dd><p>If there is no available data for the modeled organism in any database these identifiers can be added with
+the pipeline described in <a class="reference internal" href="pipeline.html#pipeline-from-genome-sequence-to-draft-model"><span class="std std-ref">Pipeline: From genome sequence to draft model</span></a> before draft model creation.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Input of a FASTA file containing header lines similar to:</dt><dd><p>&gt;lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+Of the description part in the header line only locus_tag, protein and protein_id are important for <code class="docutils literal notranslate"><span class="pre">polish</span></code>.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">  </span><span class="no">This file can be adapted to choose what refinegems should do.</span>
+<span class="w">  </span><span class="no">Note: For windows use \ instead of / for the paths</span>
+
+
+<span class="nt">General Setting</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">  </span><span class="no">Path to GEM to be investigated</span>
+
+<span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/e_coli_core.xml&#39;</span>
+
+<span class="nt">Settings for scripts that investigate the model</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">  </span><span class="no">These are only necessary if none of the scripts to manipulate the model are used.</span>
+
+<span class="c1"># Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called &#39;visualization&#39;</span>
+<span class="nt">visualize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRUE</span>
+
+<span class="c1"># Set the out path for the csv created by multiple and a possible xlsx for model investigation</span>
+<span class="nt">out_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+
+<span class="c1"># Set the basis medium to simulate growth from</span>
+<span class="nt">growth_basis</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;minimal_uptake&#39;</span><span class="w"> </span><span class="c1"># &#39;default_uptake&#39; or &#39;minimal_uptake&#39;</span>
+
+<span class="c1"># Settings if you want to compare multiple models</span>
+<span class="nt">multiple</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">multiple_paths</span><span class="p">:</span><span class="w"> </span><span class="c1"># enter as many paths as you need below</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/e_coli_core.xml&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+
+<span class="c1"># media to simulate growth from, just comment the media you do not want with a #</span>
+<span class="nt">media</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;SNM3&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;RPMI&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;CGXlab&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;LB&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;M9&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;CGXII&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;CasA&#39;</span>
+
+<span class="c1"># determine whether the memote score should be calculated, default: FALSE</span>
+<span class="nt">memote</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+
+<span class="c1"># Determine if output file for single model should be created, default: cl</span>
+<span class="c1"># Filename is set as the models name</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xlsx</span><span class="w"> </span><span class="c1">#cl, xlsx, csv</span>
+
+<span class="c1"># compare metabolites to the ModelSEED database</span>
+<span class="nt">modelseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span><span class="w"> </span><span class="c1"># set to False if not needed</span>
+
+
+<span class="nt">Settings for scripts that manipulate the model</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">  </span><span class="no">They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.</span>
+
+<span class="nt">entrez_email</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># necessary to access NCBI API</span>
+
+<span class="c1">### Addition of KEGG Pathways as Groups ###</span>
+<span class="nt">keggpathways</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">kegg_path</span><span class="p">:</span><span class="w">  </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save model with KEGG Groups</span>
+
+<span class="c1">### SBO-Term Annotation ###</span>
+<span class="nt">sboterms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">sbo_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save model with sbo terms</span>
+
+<span class="c1">### Model polishing ### The database of the model identifiers needs to be specified with &#39;id_db&#39;</span>
+<span class="nt">polish</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">id_db</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;BIGG&#39;</span><span class="w"> </span><span class="c1"># Required!</span>
+<span class="c1"># Possible identifiers, currently: BiGG &amp; VMH</span>
+<span class="c1"># For other IDs the `polish` function in `polish.py` might need adjustment</span>
+<span class="nt">lab_strain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span><span class="w"> </span><span class="c1"># Needs to be set to ensure that protein IDs get the &#39;bqbiol:isHomologTo&#39; qualifier</span>
+<span class="w">                  </span><span class="c1"># &amp; to set the locus_tag to the ones obtained by the annotation</span>
+<span class="nt">protein_fasta</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True</span>
+<span class="nt">polish_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save the polished model</span>
+
+<span class="c1">### Charge correction ###</span>
+<span class="nt">charge_corr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">charge_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="nt">charge_report_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+
+<span class="c1">### Manual Curation ###</span>
+<span class="nt">man_cur</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">man_cur_type</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gapfill&#39;</span><span class="w"> </span><span class="c1"># either &#39;gapfill&#39; or &#39;metabs&#39;</span>
+<span class="nt">man_cur_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/manual_curation.xlsx&#39;</span>
+<span class="nt">man_cur_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save modified model</span>
+</pre></div>
+</div>
+<p>The repository structure has the following intention:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">refinegems/</span></code> contains all the functions needed in <code class="docutils literal notranslate"><span class="pre">main.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data/</span></code> contains all tables that are used by different parts of the script as well as a toy model <code class="docutils literal notranslate"><span class="pre">e_coli_core.xml</span></code></p></li>
+<li><p>Instead of using the files given in <code class="docutils literal notranslate"><span class="pre">data/</span></code>, you can use your own files and just change the paths in <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the <code class="docutils literal notranslate"><span class="pre">data/</span></code> folder and use the same formatting.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data/database/</span></code> contains the <code class="docutils literal notranslate"><span class="pre">sql</span></code> file along with the <code class="docutils literal notranslate"><span class="pre">db</span></code> file necessary for the SBOAnn script by Elisabeth Fritze as well as the modules <code class="docutils literal notranslate"><span class="pre">growth</span></code> and <code class="docutils literal notranslate"><span class="pre">modelseed</span></code>.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> enable creating a PyPi package called <code class="docutils literal notranslate"><span class="pre">refinegems</span></code>.</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="development.html" class="btn btn-neutral float-left" title="Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples on how to use refinegems" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Famke Bäuerle.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
