@@ -21,8 +21,7 @@ from cobra.medium import minimal_medium
 __author__ = "Famke Baeuerle"
 
 def set_fluxes_to_simulate(reaction):
-    reaction.upper_bound = 1000.0
-    reaction.lower_bound = - 1000.0
+    reaction.bounds = (-1000.0, 1000.0)
     return reaction
 
 

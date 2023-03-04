@@ -90,6 +90,10 @@ def main(configpath=None):
         model_libsbml = rg.io.load_model_libsbml(config['model'])
     
     if (config['sboterms']):
+        if (config['visualize']):
+            sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
+            # saving the created visualizations
+            sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_beforeUpdate_' + str(today) + '.png', bbox_inches='tight')
         model_libsbml = rg.sboann.sbo_annotation(model_libsbml)
         logging.info('SBO Terms updated for ' + model_libsbml.getId())
         
