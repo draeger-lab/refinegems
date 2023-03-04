@@ -442,6 +442,17 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         - protein_fasta (str): The path to the CarveMe protein.fasta input file
         - lab_strain (bool): Needs to be set to True if strain was self-annotated
                            and/or the locus tags in the CarveMe input file should be kept
+                           
+    .. warning:: 
+        Using ``lab_strain=True`` has the following two requirements:
+        
+        1. The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.
+            If there is no available data for the modeled organism in any database these identifiers can be added with 
+            the pipeline described in :ref:`Pipeline: From genome sequence to draft model` before draft model creation.
+        2. Input of a FASTA file containing header lines similar to:
+            >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+            Of the description part in the header line only locus_tag, protein and protein_id are important for ``cv_ncbiprotein``.
+        
     """
     Entrez.email = email
                     
@@ -901,8 +912,16 @@ def polish(model: Model, email: str, id_db: str, protein_fasta: str, lab_strain:
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
         
-    Returns:
-        model: modified model
+    .. warning:: 
+        Using ``lab_strain=True`` has the following two requirements:
+        
+        1. The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.
+            If there is no available data for the modeled organism in any database these identifiers can be added with 
+            the pipeline described in :ref:`Pipeline: From genome sequence to draft model` before draft model creation.
+        2. Input of a FASTA file containing header lines similar to:
+            >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+            Of the description part in the header line only locus_tag, protein and protein_id are important for ``polish``.
+        
     """
     colorama_init(autoreset=True)
     
