@@ -78,7 +78,6 @@
 """
 import ast
 from libsbml import Model
-from libsbml import *
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
 from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
