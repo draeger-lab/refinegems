@@ -136,7 +136,7 @@ def find_missing_essential(model, medium, default_uptake):
         try:
             model.medium = new_medium
         except(ValueError):
-            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 make model simulatable.')
+            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
             for reaction in model.reactions:
                 set_fluxes_to_simulate(reaction)
             model.medium = new_medium
@@ -191,7 +191,7 @@ def simulate_minimum_essential(model, growth_medium, minimum):
         try:
             model.medium = new_medium
         except(ValueError):
-            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 make model simulatable.')
+            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
             for reaction in model.reactions:
                 set_fluxes_to_simulate(reaction)
             model.medium = new_medium

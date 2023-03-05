@@ -503,6 +503,10 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                 elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
                     add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                     name, locus = search_ncbi_for_gpr(ncbi_id)
+                
+                # Catch all remaining cases that have no valid ID   
+                else: 
+                    genes_missing_annotation.append(ncbi_id)
             
                 # For lab strains use the locus tag from the annotation file   
                 if lab_strain and id2locus_name is not None:

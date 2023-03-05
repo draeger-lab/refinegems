@@ -106,7 +106,7 @@ def main(configpath=None):
         if config['man_cur_type'] == 'gapfill':
             gapfill = rg.io.load_manual_gapfill(config['man_cur_table'])
             model_libsbml = rg.curate.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
-            logging.info('Manual gapfilling was done for ' + model_libsbml.getId())
+            logging.info('Manual gap filling was done for ' + model_libsbml.getId())
         elif config['man_cur_type'] == 'metabs':
             man_ann = rg.io.load_manual_annotations(config['man_cur_table'])
             model_libsbml = rg.curate.update_annotations_from_table(model_libsbml, man_ann)
@@ -131,7 +131,7 @@ def main(configpath=None):
                 logging.info(errors)
             except (OSError):
                 model_cobra = None
-                logging.info('Model was invlidated during curation steps.')
+                logging.info('Model was invalidated during curation steps.')
 
     if (model_cobra != None):
         logging.info(model_cobra.id + ' will be investigated.')
