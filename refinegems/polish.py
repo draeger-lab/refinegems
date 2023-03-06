@@ -4,13 +4,13 @@
 The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.
 """
 
-import re
-from libsbml import Model, Species, Reaction, Unit, UnitDefinition, SBase
+import re, logging
+from libsbml import Model, Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez, SeqIO
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import write_to_file, search_ncbi_for_gpr, parse_fasta_headers
+from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -296,7 +296,7 @@ def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
         - contained_unit_defs (list): List of libSBML UnitDefinition objects
     """
     for unit_def in contained_unit_defs:
-        print(unit_def.toXMLNode())
+        logging.info(unit_def.toXMLNode())
 
 
 def print_remaining_UnitDefinitions(model: Model, list_of_fba_units: list[UnitDefinition]):
@@ -322,7 +322,7 @@ def print_remaining_UnitDefinitions(model: Model, list_of_fba_units: list[UnitDe
    
     # Only print list if it contains UnitDefinitions         
     if contained_unit_defs:
-        print('''
+        logging.info('''
         The following UnitDefinition objects were removed. 
         The reasoning is that
         \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
@@ -476,44 +476,49 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             gene.setLabel(locus)
         
         elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
-            id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
+            if 'prot_' in gene.getId():
+                id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
+                ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
+                
+                if (len(id_string) > 2):  # Identifier contains '_'
+                # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
+                # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
+                    if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
+                        ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
+                
+                # If identifier matches RefSeq ID pattern   
+                if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
+                    add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
+                    name, locus = search_ncbi_for_gpr(ncbi_id)
             
-            ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
-            if (len(id_string) > 2):  # Identifier contains '_'
-               # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
-               # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
-               if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
-                  ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
-               
-            # If identifier matches RefSeq ID pattern   
-            if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
-               add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
-               name, locus = search_ncbi_for_gpr(ncbi_id)
+                # If identifier only contains numbers 
+                # -> Get the corresponding data from the CarveMe input file
+                elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
+                    if id2locus_name is not None:
+                        name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
+                    else: 
+                        genes_missing_annotation.append(ncbi_id)
             
-            # If identifier only contains numbers 
-            # -> Get the corresponding data from the CarveMe input file
-            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
-                if id2locus_name is not None:
-                    name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
+                # If identifier matches ncbiprotein ID pattern
+                elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
+                    add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
+                    name, locus = search_ncbi_for_gpr(ncbi_id)
+                
+                # Catch all remaining cases that have no valid ID   
                 else: 
                     genes_missing_annotation.append(ncbi_id)
             
-            # If identifier matches ncbiprotein ID pattern
-            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
-               add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
-               name, locus = search_ncbi_for_gpr(ncbi_id)
+                # For lab strains use the locus tag from the annotation file   
+                if lab_strain and id2locus_name is not None:
+                    locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
             
-            # For lab strains use the locus tag from the annotation file   
-            if lab_strain and id2locus_name is not None:
-                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
-            
-            if ncbi_id not in genes_missing_annotation:      
-                gene.setName(name)
-                gene.setLabel(locus)
+                if ncbi_id not in genes_missing_annotation:      
+                    gene.setName(name)
+                    gene.setLabel(locus)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
-        print(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
+        logging.info(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
 
 
 #----------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
@@ -705,7 +710,7 @@ def improve_curie_per_entity(entity: SBase, new_pattern: bool):
         add_curie_set(entity, current_qt, current_b_m_qt, curie_set)
     
     if not_miriam_compliant:
-        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+        logging.info(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
 
 
 def improve_curies(entities: SBase, new_pattern: bool):
@@ -783,11 +788,11 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
         # if entity == Reaction or entity == UnitDefinition:
         # print(cvterm.getBiologicalQualifierType())
         if cvterm.getBiologicalQualifierType() == 9:  # 9 = BQB_OCCURS_IN (Reaction), Check for reactions with occursIn
-            print(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' +
+            logging.info(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' +
                   f' is left as {Fore.LIGHTYELLOW_EX}{BiolQualifierType_toString(cvterm.getBiologicalQualifierType())}{Style.RESET_ALL}')
         
         elif cvterm.getModelQualifierType() == 1:  # 1 = BQM_IS_DESCRIBED_BY (UnitDefinition), Check for UnitDefinitions with isDescribedBy
-            print(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' + 
+            logging.info(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' + 
                   f' is left as {Fore.LIGHTYELLOW_EX}{ModelQualifierType_toString(cvterm.getModelQualifierType())}{Style.RESET_ALL}')
         
         else:
@@ -852,10 +857,13 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
         for unit in listOf_dict.get('unit definition'):  # Unit needs to be handled within ListOfUnitDefinition
             not_miriam_compliant = change_qualifier_per_entity(unit, new_qt, new_b_m_qt, specific_db_prefix)
         
-    else: 
-        for entity in tqdm(listOf_dict.get(entity_type)):
-            not_miriam_compliant = change_qualifier_per_entity(entity, new_qt, new_b_m_qt, specific_db_prefix)
-                
+    else:
+        try: 
+            for entity in tqdm(listOf_dict.get(entity_type)):
+                not_miriam_compliant = change_qualifier_per_entity(entity, new_qt, new_b_m_qt, specific_db_prefix)
+        except(TypeError):
+            logging.info('The entity ' +  entity_type + ' is not present in ' + model.getId())        
+        
     if not_miriam_compliant:         
         print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
     
@@ -897,13 +905,12 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fasta: str, lab_strain: bool):
+def polish(model: Model, email: str, id_db: str, protein_fasta: str, lab_strain: bool): 
     """completes all steps to polish a model
         (Tested for models having either BiGG or VMH identifiers.)
 
     Params:
         - model (Model): model loaded with libsbml
-        - new_filename (Str): filename for modified model
         - email (str): E-mail for Entrez
         - id_db (str): Main database identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
@@ -961,6 +968,5 @@ def polish(model: Model, new_filename: str, email: str, id_db: str, protein_fast
     polish_annotations(model, True)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
-
-    ### write model ###
-    write_to_file(model, new_filename)
+    
+    return model

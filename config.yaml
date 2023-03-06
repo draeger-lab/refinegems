@@ -7,15 +7,14 @@ General Setting: >
   Path to GEM to be investigated
 
 model: 'data/e_coli_core.xml' 
+# Set the out path for all analysis files
+out_path: ''
 
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
 # Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
 visualize: TRUE
-
-# Set the out path for the csv created by multiple and a possible xlsx for model investigation
-out_path: ''
 
 # Set the basis medium to simulate growth from
 growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
@@ -40,10 +39,6 @@ media:
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
 
-# Determine if output file for single model should be created, default: cl
-# Filename is set as the models name
-output: xlsx #cl, xlsx, csv 
-
 # compare metabolites to the ModelSEED database
 modelseed: FALSE # set to False if not needed
 
@@ -51,15 +46,14 @@ modelseed: FALSE # set to False if not needed
 Settings for scripts that manipulate the model: >
   They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
+model_out: '' # path and filename to where to save the modified model
 entrez_email: '' # necessary to access NCBI API
 
 ### Addition of KEGG Pathways as Groups ###
 keggpathways: FALSE
-kegg_path:  '' # path where to save model with KEGG Groups
 
 ### SBO-Term Annotation ###
 sboterms: FALSE
-sbo_path: '' # path where to save model with sbo terms
 
 ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
 polish: FALSE
@@ -69,15 +63,11 @@ id_db: 'BIGG' # Required!
 lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
                   # & to set the locus_tag to the ones obtained by the annotation
 protein_fasta: '' # Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True
-polish_path: '' # path where to save the polished model
 
 ### Charge correction ###
 charge_corr: FALSE
-charge_path: ''
-charge_report_path: ''
 
 ### Manual Curation ###
 man_cur: FALSE
 man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
 man_cur_table: 'data/manual_curation.xlsx'
-man_cur_path: '' # path where to save modified model

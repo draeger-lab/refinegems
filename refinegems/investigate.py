@@ -237,18 +237,15 @@ def get_egc(model: cobraModel) -> pd.DataFrame:
             
         for rxn in model.reactions:
             if 'EX_' in rxn.id:
-                rxn.lower_bound = 0.0
-                rxn.upper_bound = 0.0
+                rxn.bounds = (0.0, 0.0)
                 #print('Set exchange rxn to 0', rxn.name)
             # set reversible reactions fluxes to [-1,1]    
             elif rxn.reversibility: 
-                rxn.lower_bound = -1.0
-                rxn.upper_bound = 1.0
+                rxn.bounds = (-1.0,1.0)
                 #print('Reversible rxn', rxn.name)
             # irreversible reactions have fluxes [0.1]    
             else:
-                rxn.lower_bound = 0.0
-                rxn.upper_bound = 1.0
+                rxn.bounds = (0.0, 1.0)
                 #print('Irreversible rxn', rxn.name)
                 
         df_fluxes = pd.DataFrame()

@@ -12,6 +12,7 @@ import os
 import re
 import gffutils
 import sqlalchemy
+import logging
 import pandas as pd
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
@@ -184,7 +185,7 @@ def write_to_file(model: Model, new_filename: str):
     """
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
-    print("Modified model written to " + new_filename)
+    logging.info("Modified model written to " + new_filename)
 
 
 def write_report(dataframe: pd.DataFrame, filepath: str):
@@ -421,40 +422,55 @@ def save_user_input(configpath):
         user_input['media'] = list_of_media
         user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
         user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
-        user_input['output'] = 'xlsx'
         
-        gapfill_analysis = click.confirm('Do you want to run the gapfill analysis?') 
-        user_input['gapfill_analysis'] = gapfill_analysis
-        if gapfill_analysis:
-            gapfill_params = {}
-            db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
-            gapfill_params['db_to_compare'] = db_to_compare
-            if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-                gapfill_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-            if db_to_compare == 'GFF':
-                gapfill_params['gff_file'] = click.prompt('Enter the path to your organisms GFF file')
-            if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
-                Path0 = click.prompt()
-                Path1 = click.prompt()
-                Path2 = click.prompt()
-                Path3 = click.prompt()
-                gapfill_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
-            user_input['gapfill_analysis_params'] = gapfill_params
-        else:
-            user_input['gapfill_model'] = False
+        # gapfill_analysis = click.confirm('Do you want to run the gapfill analysis?') 
+        # user_input['gapfill_analysis'] = gapfill_analysis
+        # if gapfill_analysis:
+        #     gapfill_params = {}
+        #     db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
+        #     gapfill_params['db_to_compare'] = db_to_compare
+        #     if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
+        #         gapfill_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
+        #     if db_to_compare == 'GFF':
+        #         gapfill_params['gff_file'] = click.prompt('Enter the path to your organisms GFF file')
+        #     if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
+        #         Path0 = click.prompt()
+        #         Path1 = click.prompt()
+        #         Path2 = click.prompt()
+        #         Path3 = click.prompt()
+        #         gapfill_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
+        #     user_input['gapfill_analysis_params'] = gapfill_params
+        # else:
+        #     user_input['gapfill_model'] = False
             
         mod = click.confirm('Do you want to use functions to modify your model?')
         if mod:
-            if gapfill_analysis:
-                user_input['gapfill_model'] = click.confirm('Do you want to gap fill your model?')
+            # if gapfill_analysis:
+            #     user_input['gapfill_model'] = click.confirm('Do you want to gap fill your model?')
             
-            kegg = click.confirm('Do you want to add KEGG Pathways?')
-            user_input['keggpathways'] = kegg
-
-            if kegg:
-                kegg_path = click.prompt('Enter the modified file name')
-                user_input['kegg_path'] = kegg_path
+            new_path = click.confirm('Do you want to save your modified model to ' + user_input['out_path'] + '<model.id>_modified_<today>.xml?')
+            if new_path:
+                user_input['model_out'] = 'stdout'
+            else:
+                user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
+            
+            user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
                 
+            user_input['sboterms'] = click.confirm('Do you want to update the SBO Terms?')
+            
+            user_input['charge_corr'] = click.confirm('Do you want to add charges to uncharged metabolites?')
+                
+            man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
+            user_input['man_cur'] = man_cur
+
+            if man_cur:
+                entrez_email = click.prompt('Email to access NCBI Entrez')
+                user_input['entrez_email'] = entrez_email
+                man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
+                user_input['man_cur_type'] = man_cur_type
+                man_cur_table = click.prompt('Enter the path to the manual curations table')
+                user_input['man_cur_table'] = man_cur_table
+
             polish = click.confirm('Do you want to polish the model?')
             user_input['polish'] = polish
 
@@ -467,37 +483,7 @@ def save_user_input(configpath):
                 user_input['lab_strain'] = lab_strain
                 protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
                 user_input['protein_fasta'] = protein_fasta
-                polish_path = click.prompt('Enter the modified file name')
-                user_input['polish_path'] = polish_path
                 
-            sboterms = click.confirm('Do you want to update the SBO Terms?')
-            user_input['sboterms'] = sboterms
-
-            if sboterms:
-                sbo_path = click.prompt('Enter the modified file name')
-                user_input['sbo_path'] = sbo_path
-            
-            charge_corr = click.confirm('Do you want to add charges to uncharged metabolites?')
-            user_input['charge_corr'] = charge_corr
-
-            if charge_corr:
-                charge_path = click.prompt('Enter the modified file name')
-                user_input['charge_path'] = charge_path
-                user_input['charge_report_path'] = '../rg_out/multiple_charges.csv'
-                
-            man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
-            user_input['man_cur'] = man_cur
-
-            if man_cur:
-                entrez_email = click.prompt('Email to access NCBI Entrez')
-                user_input['entrez_email'] = entrez_email
-                man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
-                user_input['man_cur_type'] = man_cur_type
-                man_cur_table = click.prompt('Enter the path to the manual curations table')
-                user_input['man_cur_table'] = man_cur_table
-                man_cur_path = click.prompt('Enter the modified file name')
-                user_input['man_cur_path'] = man_cur_path
-
         else:
             user_input['keggpathways'] = False
             user_input['polish'] = False

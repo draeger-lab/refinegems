@@ -285,7 +285,10 @@ def getECNums(reac):
     ECNums = []
     for line in lines:
         if 'ec-code' in line:
-            ECNums.append(line.split('ec-code/')[1][:-3])
+            try:
+                ECNums.append(line.split('ec-code:')[1][:-3])
+            except (IndexError):
+                ECNums.append(line.split('ec-code/')[1][:-3])
     return ECNums
 
 
