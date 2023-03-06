@@ -2,10 +2,6 @@
 """ Provides functions to simulate growth on any medium
 
 Tailored to work with the media denoted in the local db, should work with any medium as long as its defined in a csv with ; as delimiter and BiGG Ids for the compounds. Use refinegems.io.load_medium_custom and hand this to the growth_one_medium_from_default or growth_one_medium_from_minimum function.
-
-Outputs a table with the column headers:
-- essential = metabolites not present in the medium but necessary for growth
-- missing = all exchanges missing in the model but given in medium
 """
 
 import logging

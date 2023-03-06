@@ -1,10 +1,15 @@
-Ideas behind some implementations
+Growth simulation with RefineGEMs
 =================================
 
-Below you will find some arguing behind the implementation choices we made.
+Interpreting the results
+------------------------
+Outputs a table with the column headers:
+- essential = metabolites not present in the medium but necessary for growth
+- missing = all exchanges missing in the model but given in medium
 
-Growth simulation
------------------
+
+Implementation
+--------------
 
 Growth rates and thus doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.
 
