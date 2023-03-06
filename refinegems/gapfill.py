@@ -77,7 +77,7 @@
         
 """
 import ast
-from libsbml import Model
+from libsbml import Model as libModel
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
 from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
@@ -104,40 +104,33 @@ def gff_gene_comp():
 '''
 
 
-def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
+def gapfill_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
         to KEGG/BioCyc/both
-   
-        Args:
-            model_libsbml (Model): model loaded with libSBML
-            
-            gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
-            
-            filename (str): Path to output file for gapfill analysis result
-            
-        Returns:
-            Case 'KEGG' - A data frame containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
-            
-            Case 'BioCyc' - Five data frames:
-            
-                (1): Gap fill statistics with the columns 
-                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
-                    
-                (2): Genes with the columns 
-                    'locus_tag' 'protein_id' 'model_id' 'name'
+
+    Args:
+        - model_libsbml (libModel): Model loaded with libSBML
+        - gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings 
+        - filename (str): Path to output file for gapfill analysis result
+        
+    Returns:
+        - Case 'KEGG' - Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
+        - Case 'BioCyc' - Five tables:
+        
+            (1): Gap fill statistics with the columns 
+                'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+            (2): Genes with the columns 
+                'locus_tag' 'protein_id' 'model_id' 'name'
+            (3): Metabolites with the columns 
+                'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
+            (4): Metabolites without BiGG ID with the columns 
+                'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')  
+            (5): Reactions with the columns 
+                'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
+                'bigg_reaction'
                 
-                (3): Metabolites with the columns 
-                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'
-                    
-                (4): Metabolites without BiGG ID with the columns 
-                    'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')
-                    
-                (5): Reactions with the columns 
-                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
-                    'bigg_reaction'
-                    
-            Case 'KEGG+BioCyc': Same output as cases 'KEGG' & 'BioCyc' 
-                -> Data frame reactions contains additionally column 'KEGG'
+        - Case 'KEGG+BioCyc': Output of both cases 'KEGG' & 'BioCyc'
+            -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
     db_to_compare = gapfill_params['db_to_compare']
@@ -206,16 +199,15 @@ def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str], filen
     return result
     
     
-def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tuple]):
+def gapfill_model(model_libsbml: libModel, gapfill_analysis_result: Union[str, tuple]):
     """Main function to fill gaps in a model from a table
 
-        Args:
-            model_libsbml (Model): model loaded with libSBML
-            
-            gapfill_analysis_result (str | tuple): Path to Excel file from gapfill_analysis | Tuple of pandas data frames obtained from gapfill_analysis
-            
-        Return:
-            Gap filled model
+    Args:
+        - model_libsbml (libModel): Model loaded with libSBML
+        - gapfill_analysis_result (str|tuple): Path to Excel file from gapfill_analysis|Tuple of pd.DataFrames obtained from gapfill_analysis
+        
+    Returns:
+        libModel: Gap filled model
     """
     model = model_libsbml
     missing_genes_df, missing_metabs_df, missing_reacs_df = None, None, None
@@ -298,22 +290,21 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
 
 
 def gapfill(
-    model_libsbml: Model, gapfill_params: dict[str: str], filename: str
-    ) -> Union[tuple[pd.DataFrame, Model], tuple[tuple, Model]]:
+    model_libsbml: libModel, gapfill_params: dict[str: str], filename: str
+    ) -> Union[tuple[pd.DataFrame, libModel], tuple[tuple, libModel]]:
     """Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
         KEGG/BioCyc/(Genbank) GFF file
 
-        Args:
-            model_libsbml (Model): model loaded with libSBML
-            
-            gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
-            
-            filename (str): Path to output file for gapfill analysis result
-            
-            gapfill_model_out (str): Path where gapfilled model should be written to
-            
-        Return:
-            Result from gapfill_analysis() and gap filled model
+    Args:
+        - model_libsbml (libModel): Model loaded with libSBML
+        - gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
+        - filename (str): Path to output file for gapfill analysis result
+        - gapfill_model_out (str): Path where gapfilled model should be written to
+        
+    Returns:
+        tuple:
+            - pd.DataFrame|tuple(pd.DataFrame): Result from gapfill_analysis()
+            - libModel: Gap filled model
     """
     gapfill_analysis_result = gapfill_analysis(model_libsbml, gapfill_params, filename)
     model = gapfill_model(model_libsbml, gapfill_analysis_result)

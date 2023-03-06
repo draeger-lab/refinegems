@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 from refinegems.io import load_a_table_from_database
 from refinegems.databases import PATH_TO_DB
-from libsbml import *
 from typing import Literal
 from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
@@ -24,12 +23,12 @@ BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
 def get_search_regex(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool) -> str:
     """Retrieves the search regex for BioCyc/KEGG to be used in the BiGG mapping
 
-        Args:
-            other_db (Literal): specifies if the search regex should be for BioCyc or KEGG
-            metabolites (bool): is required if one wants to search for KEGG Compound IDs in the bigg_models_metabolites.txt
+    Args:
+        - other_db (Literal): Specifies if the search regex should be for BioCyc or KEGG
+        - metabolites (bool): Is required if one wants to search for KEGG Compound IDs in the bigg_models_metabolites.txt
             
-        Returns:
-            str: search regex
+    Returns:
+        str: Search regex
     """
     if other_db == 'BioCyc':
         return 'BioCyc: http://identifiers.org/biocyc/META:(.*?);'
@@ -44,8 +43,8 @@ def compare_ids(id1: str, id2: str) -> bool:
     """Compares two strings/IDs & Returns True if one string matches most of the other
 
     Args:
-        id1 (str): ID 1
-        id2 (str): ID 2
+        - id1 (str): ID 1
+        - id2 (str): ID 2
 
     Returns:
         bool: Indicates if most of one string contained in the other
@@ -87,16 +86,17 @@ def compare_ids(id1: str, id2: str) -> bool:
 
     return similar_ids
 
+
 def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compartments: tuple[str]) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments
-        & returns a dataframe containing only reactions which happen in one of the provided compartments
+        & returns table containing only reactions which happen in one of the provided compartments
         
-        Args:
-            complete_df (DataFrame): A pandas dataframe containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
-            compartments (tuple): A tuple of BiGG compartment identifiers for which reaction IDs should be kept
+    Args:
+        - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
+        - compartments (tuple): Tuple of BiGG compartment identifiers for which reaction IDs should be kept
         
-        Returns:
-            df: A pandas dataframe containing reactions & their compartments
+    Returns:
+        pd.DataFrame: Table containing reactions & their compartments
     """
     tqdm.pandas()
     db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
@@ -162,11 +162,11 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     """Uses list of BiGG reactions/metabolites to get a mapping from BiGG to KEGG/BioCyc Id
 
     Args:
-        other_db (Literal): Set to 'KEGG'/'BioCyc' to map KEGG/BioCyc IDs to BiGG IDs
-        metabolites (bool): set to True to map other_db IDs to BiGG IDs for metabolites
+        - other_db (Literal): Set to 'KEGG'/'BioCyc' to map KEGG/BioCyc IDs to BiGG IDs
+        - metabolites (bool): Set to True to map other_db IDs to BiGG IDs for metabolites
 
     Returns:
-        df: table containing BiGG Ids with corresponding KEGG/BioCyc Ids
+        pd.DataFrame: Table containing BiGG Ids with corresponding KEGG/BioCyc Ids
     """
     compartments = ('c', 'e', 'p')
     
@@ -213,12 +213,12 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
         Needed to back check previous comparisons.
 
     Args:
-        complete_df (df): pandas dataframe that contains BioCyc Id, BiGG Id & more
-        model_entities (df): BiGG Ids of entities in the model 
-        metabolites (bool): True if names of metabolites should be added, otherwise false
+        - complete_df (pd.DataFrame): Table that contains BioCyc Id, BiGG Id & more
+        - model_entities (pd.DataFrame): BiGG Ids of entities in the model 
+        - metabolites (bool): True if names of metabolites should be added, otherwise false
 
     Returns:
-        df: table containing entities present in KEGG/BioCyc but not in the model
+        pd.DataFrame: Table containing entities present in KEGG/BioCyc but not in the model
     """
     db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'  # Find out which database was used
     
@@ -266,11 +266,11 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
     """Adds for each reaction a dictionary containing the reactants & products as dictionaries with the BiGG Metabolite 
         ID as key & the respective absolute stoichiometric value as value
         
-        Args:
-            missing_reacs (df): A dataframe containing missing reactions (Only requires a column containing BiGG IDs)
+    Args:
+        - missing_reacs (pd.DataFrame): Table containing missing reactions (Only requires a column containing BiGG IDs)
             
-        Returns:
-            df: A table where for each BiGG reaction ID a dictionary containing reactants & products exists 
+    Returns:
+        pd.DataFrame: Table where for each BiGG reaction ID a dictionary containing reactants & products exists 
     """
     
     def get_reactants_and_products_dicts(reaction_id: str) -> list[dict]:

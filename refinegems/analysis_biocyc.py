@@ -7,7 +7,7 @@ the locus tag, the protein ID from NCBI, the EC number, the BiGG ID and the KEGG
 three TXT files from BioCyc as well as the protein FASTA file from the Genbank entry of the organism. 
 
 These three TXT files can be obtained through creating SmartTables in BioCyc and exporting these as 
-Spreadsheets with the parameter FrameID. 
+Spreadsheets with the parameter FrameID (one & two) or Common name (three). 
 SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
 SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
 SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
@@ -15,9 +15,9 @@ SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
 # Get all  possible genes by filtering .gff according to 'bio_type=protein_coding' & 'product=hypothetical protein'
 # Compare the list of genes with the ones already in the model & add all missing genes
 # Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
-# -> Create dataframes mapping locus tag to old ID, locus tag to new ID & merge 
+# -> Create tables mapping locus tag to old ID, locus tag to new ID & merge 
 # -> Specify user input locus_tag start from NCBI PGAP
-from libsbml import Model
+from libsbml import Model as libModel
 import numpy as np
 import pandas as pd
 import libchebipy
@@ -47,14 +47,14 @@ statistics_df = pd.DataFrame(statistics_dict).set_index('Missing entity')
 # Locus tags in GenBank GFF file == BioCyc Accession-2 == Old locus tags in RefSeq GFF file
 # Locus tags in RefSeq GFF file == BioCyc Accession-1
 # Label in model == Locus tag from GenBank GFF file == BioCyc Accession-2
-def get_biocyc_genes2reactions(inpath: str):
+def get_biocyc_genes2reactions(inpath: str) -> pd.DataFrame:
    """Parses TSV file from BioCyc to retrieve 'Accession-2' & the corresponding 'Reactions of gene'
    
-      Args:
-         - inpath (str): Path to file from BioCyc containing the 'Accession-2' to 'Reactions of gene' mapping
+   Args:
+      - inpath (str): Path to file from BioCyc containing the 'Accession-2' to 'Reactions of gene' mapping
       
-      Returns:
-         -> Pandas dataframe containing only rows where a 'Reaction of gene' exists
+   Returns:
+      pd.DataFrame: Table containing only rows where a 'Reaction of gene' exists
    """
    
    biocyc_genes = pd.read_table(inpath, usecols=['Accession-2', 'Reactions of gene'], dtype=str)
@@ -64,15 +64,15 @@ def get_biocyc_genes2reactions(inpath: str):
    return biocyc_genes
 
 
-def get_missing_genes2reactions(model_libsbml: Model, inpath:str) -> tuple[list[str], pd.DataFrame]:
+def get_missing_genes2reactions(model_libsbml: libModel, inpath: str) -> pd.DataFrame:
    """Retrieves the missing genes and reactions from the BioCyc table according to the 'Accession-2' identifiers
 
-      Args:
-         - model_libsbml (Model):   Model read in with libSBML
-         - inpath (str):            Path to file from BioCyc containing the Accession-2 to Reactions of gene mapping
+   Args:
+      - model_libsbml (libModel):   Model read in with libSBML
+      - inpath (str):               Path to file from BioCyc containing the Accession-2 to Reactions of gene mapping
       
-      Returns:
-         -> A pandas dataframe containing only 'Accession-2' & 'Reactions' for the missing genes
+   Returns: 
+      pd.DataFrame: Table containing only 'Accession-2' & 'Reactions' for the missing genes
    """
    
    gps_in_model = get_model_genes(model_libsbml)
@@ -97,13 +97,13 @@ def get_biocyc_reactions(inpath: str) -> pd.DataFrame:
    """Parses TSV file from BioCyc to retrieve 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number',
       'Reaction-Direction' & 'Spontaneous?'
    
-      Args:
-         - inpath (str):   Path to file from BioCyc containing the following columns:
-                           'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 
-                           'Spontaneous?'
+   Args:
+      - inpath (str):   Path to file from BioCyc containing the following columns:
+                        'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 
+                        'Spontaneous?'
       
-      Returns:
-         -> A pandas dataframe containing all biocyc reactions from provided file
+   Returns:
+      pd.DataFrame: Table containing all biocyc reactions from provided file
    """
    
    biocyc_reacs = pd.read_table(inpath, usecols=
@@ -121,15 +121,15 @@ def get_biocyc_reactions(inpath: str) -> pd.DataFrame:
    return biocyc_reacs
 
 
-def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame):
+def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame) -> pd.DataFrame:
    """Extracts a set of all reactants & products from the missing reactions
    
-      Args:
-         - missing_reactions (DataFrame): A pandas dataframe containing all missing reactions found through the 
-                                          missing genes
+   Args:
+      - missing_reactions (pd.DataFrame): Table containing all missing reactions found through the 
+                                       missing genes
                                           
-      Returns:
-         -> A pandas dataframe with the column Compound containing all compounds required for the missing reactions
+   Returns:
+      pd.DataFrame: Table with the column Compound containing all compounds required for the missing reactions
    """
    reactants = [r for row in missing_reactions['Reactants'] for r in row]
    products = [p for row in missing_reactions['Products'] for p in row]
@@ -138,25 +138,25 @@ def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame):
 
 
 def get_missing_reactions(
-   model_libsbml: Model, genes2reaction: pd.DataFrame, inpath: str
+   model_libsbml: libModel, genes2reaction: pd.DataFrame, inpath: str
    ) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Subsets the BioCyc table with the following columns: 
    'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
       to obtain the missing reactions with all the corresponding data 
       & Adds the according BiGG Reaction identifiers
 
-      Args:
-         - model_libsbml (Model):         Model read in with libSBML
-         - genes2reaction (pd.DataFrame): A pandas dataframe containing only 'Accession-2' & 'Reactions' for the 
-                                          missing genes
-         - inpath (str):                  Path to file from BioCyc containing the following columns:
-                                          'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 
-                                          'Reaction-Direction' 'Spontaneous?'
+   Args:
+      - model_libsbml (libModel):      Model read in with libSBML
+      - genes2reaction (pd.DataFrame): Table containing only 'Accession-2' & 'Reactions' for the 
+                                       missing genes
+      - inpath (str):                  Path to file from BioCyc containing the following columns:
+                                       'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 
+                                       'Reaction-Direction' 'Spontaneous?'
       
-      Returns:
-         -> Two pandas dataframes (1) & (2)
-            (1): A pandas dataframe containing only the metabolites corresponding to the missing reactions
-            (2): A pandas dataframe containing the missing reactions with the corresponding data
+   Returns:
+      -> Two tables (1) & (2):
+         (1): Table containing only the metabolites corresponding to the missing reactions
+         (2): Table containing the missing reactions with the corresponding data
    """
    model_reacs = get_model_reacs_or_metabs(model_libsbml)
    biocyc_reacs = get_biocyc_reactions(inpath)
@@ -199,12 +199,12 @@ def get_missing_reactions(
 def get_biocyc_metabolites(inpath: str) -> pd.DataFrame:
    """Parses TSV file from BioCyc to retrieve 'Compound (Object ID)' 'Chemical Formula' 'InChI-Key' 'ChEBI'
    
-      Args:
-         - inpath (str):   Path to file from BioCyc containing the following columns: 
-                           'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
+   Args:
+      - inpath (str):   Path to file from BioCyc containing the following columns: 
+                        'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
       
-      Returns:
-         -> A pandas dataframe containing all biocyc metabolites from provided file
+   Returns:
+      pd.DataFrame: Table containing all biocyc metabolites from provided file
    """
    
    biocyc_metabs = pd.read_table(inpath, usecols=['Object ID', 'Chemical Formula', 'InChI-Key', 'ChEBI'], dtype=str)
@@ -219,13 +219,13 @@ def get_missing_metabolites_wo_BiGG(
    ) -> pd.DataFrame:
    """Retrieves all missing metabolites that have no BiGG ID mapping
    
-      Args:
-         - missing_metabs_overall (DataFrame):  A pandas dataframe containing all missing metabolites retrieved from
-                                                all missing reactions
-         - missing_metabs_BiGG (DataFrame):     A pandas dataframe containing all missing metabolites with BiGG ID mappings
+   Args:
+      - missing_metabs_overall (pd.DataFrame):  Table containing all missing metabolites retrieved from
+                                             all missing reactions
+      - missing_metabs_BiGG (pd.DataFrame):     Table containing all missing metabolites with BiGG ID mappings
          
-      Returns:
-         -> A pandas dataframe containing all missing metabolites without BiGG ID mappings
+   Returns:
+      pd.DataFrame: Table containing all missing metabolites without BiGG ID mappings
    """
    all_missing_metabs = missing_metabs_overall.set_index('BioCyc')
    metabs_with_BiGG = missing_metabs_BiGG.set_index('BioCyc')
@@ -236,23 +236,23 @@ def get_missing_metabolites_wo_BiGG(
    
 
 def get_missing_metabolites(
-   model_libsbml: Model, metabs_from_reacs: pd.DataFrame, inpath: str
+   model_libsbml: libModel, metabs_from_reacs: pd.DataFrame, inpath: str
    ) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Subsets the BioCyc table with the following columns: 'Compound' 'Chemical Formula' 'InChI-Key' 'ChEBI'
       to obtain the missing metabolites with all the corresponding data
       & Adds the according BiGG Compound identifiers
       
-      Args:
-         - model_libsml (Model):             Model read in with libSBML 
-         - metabs_from_reacs (pd.DataFrame): A pandas dataframe containing only the metabolites corresponding to the 
-                                             missing reactions
-         - inpath (str):                     Path to file from BioCyc containing the following columns:
-                                             'Compound' 'Chemical Formula' 'InChI-Key'
+   Args:
+      - model_libsml (libModel):          Model read in with libSBML 
+      - metabs_from_reacs (pd.DataFrame): Table containing only the metabolites corresponding to the 
+                                          missing reactions
+      - inpath (str):                     Path to file from BioCyc containing the following columns:
+                                          'Compound' 'Chemical Formula' 'InChI-Key'
       
-      Returns:
-         -> Two pandas dataframes (1) & (2)
-            (1): A pandas dataframe containing the metabolites corresponding to the missing reactions without BiGG IDs
-            (2): A pandas dataframe containing the metabolites corresponding to the missing reactions with BiGG IDs
+   Returns:
+      -> Two tables (1) & (2):
+         (1): Table containing the metabolites corresponding to the missing reactions without BiGG IDs
+         (2): Table containing the metabolites corresponding to the missing reactions with BiGG IDs
    """
    model_metabs = get_model_reacs_or_metabs(model_libsbml, True)
    biocyc_metabs = get_biocyc_metabolites(inpath)
@@ -288,15 +288,15 @@ def get_missing_metabolites(
 def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.DataFrame, pd.DataFrame]:
    """Retrieves all missing genes that belong to the obtained missing reactions
    
-      Args: 
-         - missing_reactions (DataFrame): A pandas dataframe containing all obtained missing reactions
-         - fasta (str):                   Path to a FASTA file where the headers contain the information protein_id and locus_tag
+   Args: 
+      - missing_reactions (pd.DataFrame): Table containing all obtained missing reactions
+      - fasta (str):                   Path to a FASTA file where the headers contain the information protein_id and locus_tag
          
-      Returns:
-         -> Two dataframes:
-            (1): A pandas dataframe with the columns locus_tag, Protein_id & Model_id 
-                  (The model_id is similar to how CarveMe generates the GeneProduct ID.)
-            (2): The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
+   Returns:
+      -> Two tables (1) & (2):
+         (1): Table with the columns locus_tag, Protein_id & Model_id 
+               (The model_id is similar to how CarveMe generates the GeneProduct ID.)
+         (2): The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
    """
    # Get locus tags from the missing reactions
    locus_tags = list(set([lt for row in missing_reactions['locus_tag'] for lt in row]))
@@ -325,13 +325,13 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.D
 
 
 def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.DataFrame:
-   """Adds charges & chemical formulae from CHEBI to the provided dataframe
+   """Adds charges & chemical formulae from CHEBI/BiGG to the provided dataframe
 
-      Args:
-         - missing_metabs (DataFrame): A pandas dataframe containing metabolites & the respective CHEBI IDs
+   Args:
+      - missing_metabs (pd.DataFrame): Table containing metabolites & the respective CHEBI & BiGG IDs
          
-      Returns:
-         -> The input pandas dataframe extended with the charges & chemical formulas obtained from CHEBI
+   Returns:
+      pd.DataFrame: Input table extended with the charges & chemical formulas obtained from CHEBI/BiGG
    """
    
    # Finds the charges through the ChEBI/BiGG API, defaults to: 0
@@ -378,12 +378,12 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
 def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
    """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'
    
-      Args:
-         - missing_reacs (DataFrame): A pandas dataframe containing reactions & the respective Reaction-Directions
+   Args:
+      - missing_reacs (pd.DataFrame): Table containing reactions & the respective Reaction-Directions
          
-      Returns:
-         -> The input pandas dataframe extended with the fluxes lower & upper bounds obtained from 
-            the Reaction-Directions
+   Returns:
+      pd.DataFrame: Input table extended with the fluxes lower & upper bounds obtained from 
+                     the Reaction-Directions
    """
     
    def get_fluxes(row: pd.Series) -> dict[str: str]:
@@ -413,21 +413,21 @@ def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.Da
 
 
 def biocyc_gene_comp(
-   model_libsbml: Model, biocyc_file_paths: list[str]
+   model_libsbml: libModel, biocyc_file_paths: list[str]
    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-   """Main function to retrieve the dataframes for missing genes, metabolites and reactions from BioCyc
+   """Main function to retrieve the tables for missing genes, metabolites and reactions from BioCyc
    
-      Args:
-         - model_libsbml (Model):      libSBML Model object
-         - biocyc_file_paths (list):   A list of the files required for the BioCyc analysis
+   Args:
+      - model_libsbml (libModel):   libSBML Model object
+      - biocyc_file_paths (list):   List of the files required for the BioCyc analysis
          
-      Returns: 
-         -> Five dataframes (1) - (5):
-            (1): A pandas dataframe containing the statistics of the BioCyc gapfill analysis
-            (2): A pandas dataframe containing the missing genes that belong to the missing reactions
-            (3): A pandas dataframe containing the missing metabolites with BiGG IDs belonging to the missing reactions
-            (4): A pandas datafrane containing the missing metabolites without BiGG IDs belonging to the missing reactions
-            (5): A pandas dataframe containing the missing reactions
+   Returns: 
+      -> Five tables (1) - (5):
+         (1): Table containing the statistics of the BioCyc gapfill analysis
+         (2): Table containing the missing genes that belong to the missing reactions
+         (3): Table containing the missing metabolites with BiGG IDs belonging to the missing reactions
+         (4): Table containing the missing metabolites without BiGG IDs belonging to the missing reactions
+         (5): Table containing the missing reactions
    """
    # Extract missing reactions from all missing genes
    genes2reactions = get_missing_genes2reactions(model_libsbml, biocyc_file_paths[0])

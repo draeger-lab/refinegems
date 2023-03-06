@@ -2,7 +2,8 @@
 import re
 import pandas as pd
 from Bio import Entrez
-from libsbml import Model, GeneProduct, Species, Reaction
+from libsbml import Model as libModel
+from libsbml import GeneProduct, Species, Reaction
 from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from refinegems.io import search_ncbi_for_gpr
 from typing import Union
@@ -11,15 +12,15 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_model_genes(model: Model, kegg: bool=False) -> pd.DataFrame:
+def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
     """Extracts KEGG Genes/Locus tags from given model
 
     Args:
-        model (model-libsbml): model loaded with libsbml
-        kegg (bool): True if KEGG Genes should be extracted, otherwise False
+        - model (model-libsbml): Model loaded with libSBML
+        - kegg (bool): True if KEGG Genes should be extracted, otherwise False
 
     Returns:
-        df: table with all KEGG Genes/Locus tags in the model
+        pd.DataFrame: Table with all KEGG Genes/Locus tags in the model
     """
     genes_in_model = []
     for gene in model.getPlugin(0).getListOfGeneProducts():
@@ -38,12 +39,16 @@ def get_model_genes(model: Model, kegg: bool=False) -> pd.DataFrame:
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg: bool=True) -> pd.DataFrame:
-    """Compares the provided dataframes according to column 0/'Locus_tag'
+    """Compares the provided tables according to column 0/'Locus_tag'
     
-        Args:
-            gps_in_model (DataFrame): pandas dataframe containing the KEGG Gene IDs/Locus tags in the model
-            db_genes (DataFrame): pandas dataframe containing the KEGG Gene IDs for the organism from KEGG/
-                                    locus tags (Accession-2) from BioCyc
+    Args:
+        - gps_in_model (pd.DataFrame): Table containing the KEGG Gene IDs/Locus tags in the model
+        - db_genes (pd.DataFrame): Table containing the KEGG Gene IDs for the organism from KEGG/
+                                locus tags (Accession-2) from BioCyc
+        - kegg (bool): True if KEGG Genes should be extracted, otherwise False
+        
+    Returns:
+        pd.DataFrame: Table containing all missing genes
     """
     in_db = db_genes.set_index(0) if kegg else db_genes.set_index('locus_tag')
     in_model = gps_in_model.set_index(0)
@@ -54,15 +59,15 @@ def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg:
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_model_reacs_or_metabs(model_libsbml: Model, metabolites: bool=False) -> pd.DataFrame:
-    """Extracts table of reactions/metabolites with BiGG Ids from model
+def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False) -> pd.DataFrame:
+    """Extracts table of reactions/metabolites with BiGG IDs from model
 
     Args:
-        model_libsbml (Model): model loaded with libsbml
-        metabolites (bool): set to True if metabolites from model should be extracted
+        - model_libsbml (libModel): Model loaded with libSBML
+        - metabolites (bool): Set to True if metabolites from model should be extracted
 
     Returns:
-        df: table with BiGG Ids of reactions in the model
+        pd.DataFrame: Table with BiGG IDs of reactions in the model
     """
     reac_or_metab_list = model_libsbml.getListOfSpecies() if metabolites else model_libsbml.getListOfReactions()
 
@@ -76,13 +81,13 @@ def get_model_reacs_or_metabs(model_libsbml: Model, metabolites: bool=False) -> 
     return reac_or_metab_list_df
 
 
-def create_gpr_from_locus_tag(model, locus_tag, email):
-    """creates GeneProduct in the given model
+def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
+    """Creates GeneProduct in the given model
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        locus_tag (string): NCBI compatible locus_tag
-        email (string): User Email to access the NCBI Entrez database
+        - model (libModel): Model loaded with libSBML
+        - locus_tag (str): NCBI compatible locus_tag
+        - email (str): User Email to access the NCBI Entrez database
 
     Returns:
         tuple: (gpr, modified model)
@@ -99,15 +104,15 @@ def create_gpr_from_locus_tag(model, locus_tag, email):
     return gpr, model
 
 
-def create_gp(model: Model, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, Model]:
-    """creates GeneProduct in the given model
+def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, libModel]:
+    """Creates GeneProduct in the given model
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        model_id (str): ID identical to ID that CarveMe adds from the NCBI FASTA input file
-        name (str): Name of the GeneProduct
-        locus_tag (str): genome-specific locus tag used as label in the model
-        protein_id (str): NCBI Protein/RefSeq ID
+        - model (libModel): Model loaded with libSBML
+        - model_id (str): ID identical to ID that CarveMe adds from the NCBI FASTA input file
+        - name (str): Name of the GeneProduct
+        - locus_tag (str): Genome-specific locus tag used as label in the model
+        - protein_id (str): NCBI Protein/RefSeq ID
 
     Returns:
         tuple: (gpr, modified model)
@@ -127,16 +132,17 @@ def create_gp(model: Model, model_id: str, name: str, locus_tag: str, protein_id
 
 
 def create_species(
-    model: Model, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
-                   ) -> tuple[Species, Model]:
-    """creates Species/Metabolite in the given model
+    model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
+                   ) -> tuple[Species, libModel]:
+    """Creates Species/Metabolite in the given model
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        metabolite_id (string): metabolite ID within model (If model from CarveMe, preferable a BiGG ID)
-        name (str): name of the metabolite
-        compartment_id (str): Id of the compartment where metabolite resides
-        chem_formula (str): chemical formula for the metabolite
+        - model (libModel): Model loaded with libSBML
+        - metabolite_id (str): Metabolite ID within model (If model from CarveMe, preferable a BiGG ID)
+        - name (str): Name of the metabolite
+        - compartment_id (str): ID of the compartment where metabolite resides
+        - charge (int): Charge for the metabolite
+        - chem_formula (str): Chemical formula for the metabolite
 
     Returns:
         tuple: (metabolite, modified model)
@@ -160,32 +166,34 @@ def create_species(
 def get_reversible(fluxes: dict[str: str]) -> bool:
     """Infer if reaction is reversible from flux bounds
     
-        Args:
-            fluxes (dict): A dictionary containing the keys 'lower_bound' & 'upper_bound' 
-                            with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+    Args:
+        - fluxes (dict): Dictionary containing the keys 'lower_bound' & 'upper_bound' 
+                        with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+    Returns:
+        bool: True if reversible else False
     """
     return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
 
 
 def create_reaction(
-    model: Model, reaction_id: str, name:str, reactants: dict[str: int], products: dict[str: int], 
+    model: libModel, reaction_id: str, name:str, reactants: dict[str: int], products: dict[str: int], 
     fluxes: dict[str: str], reversible: bool=None, fast: bool=None, compartment: str=None, sbo: str=None, 
     genes: Union[str, list[str]]=None
-    ) -> tuple[Reaction, Model]:
-    """creates new reaction in the given model
+    ) -> tuple[Reaction, libModel]:
+    """Creates new reaction in the given model
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        reaction_id (str): BiGG id of the reaction to create
-        name (string): human readable name of the reaction
-        reactants (dict): metabolites as keys and their stoichiometry as values
-        products (dict): metabolites as keys and their stoichiometry as values
-        fluxes (dict): lower_bound and upper_bound as keys
-        reversible (bool): true/false for the reaction
-        fast (bool): true/false for the reaction
-        compartment (str): BiGG compartment ID of the reaction (if available)
-        sbo (string): SBO term of the reaction
-        genes (str|list): List of genes belonging to reaction
+        - model (libModel): Model loaded with libSBML
+        - reaction_id (str): BiGG ID of the reaction to create
+        - name (str): Human readable name of the reaction
+        - reactants (dict): Metabolites as keys and their stoichiometry as values
+        - products (dict): Metabolites as keys and their stoichiometry as values
+        - fluxes (dict): Dictionary with lower_bound and upper_bound as keys
+        - reversible (bool): True/False for the reaction
+        - fast (bool): True/False for the reaction
+        - compartment (str): BiGG compartment ID of the reaction (if available)
+        - sbo (str): SBO term of the reaction
+        - genes (str|list): List of genes belonging to reaction
 
     Returns:
         tuple: (reaction, modified model)
