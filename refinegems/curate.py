@@ -3,24 +3,25 @@
 
 While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.
 """
+import pandas as pd
 from tqdm.auto import tqdm
+from libsbml import Model as libModel
 from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
 from refinegems.entities import create_gpr, create_reaction
 
 __author__ = "Famke Baeuerle"
     
             
-def add_reactions_from_table(model, table, email):
-    """adds all reactions with their info given in the table to the given model
-       (wrapper function to use with table given in the data folder)
+def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -> libModel:
+    """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet gapfill
-        email (string): User Email to access the NCBI Entrez database
+        - model (libModel): Model loaded with libSBML
+        - table (pd-DataFrame): Table in format of sheet gapfill from manual_curation.xlsx located in the data folder
+        - email (str): User Email to access the NCBI Entrez database
 
     Returns:
-        model: modified model with new reactions
+        libModel: Modified model with new reactions
     """
     for reaction_info in tqdm(table.groupby('BIGG')):
         reac_id = reaction_info[0]
@@ -49,16 +50,15 @@ def add_reactions_from_table(model, table, email):
     return model
 
 
-def update_annotations_from_table(model, table):
-    """updates annotation of metabolites given in the table
-       (wrapper function to use with table given in the data folder)
+def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libModel:
+    """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet metabs: Updates annotation of metabolites given in the table
 
     Args:
-        model (libsbml-model): model loaded with libSBML
-        table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet metabs
+        - model (libModel): Model loaded with libSBML
+        - table (pd-DataFrame): Table in format of sheet metabs from manual_curation.xlsx located in the data folder
 
     Returns:
-        model: modified model with new annotations
+        libModel: Modified model with new annotations
     """
     table = table.drop(['Name', 'FORMULA', 'Notiz'], axis=1).fillna(0)
     table['PUBCHEM'] = table['PUBCHEM'].astype(int)
@@ -78,14 +78,15 @@ def update_annotations_from_table(model, table):
                 print(met + comp + ' not in model')
     return model
 
-def update_annotations_from_others(model):
+
+def update_annotations_from_others(model: libModel) -> libModel:
     """Synchronizes metabolite annotations for core, periplasm and extracelullar
 
     Args:
-        model (libsbml-model): model loaded with libSBML
+        - model (libModel): Model loaded with libSBML
 
     Returns:
-        model: modified with synchronized annotations
+        libModel: Modified model with synchronized annotations
     """
     for metab in model.getListOfSpecies():
         base = metab.getId()[:-2]
