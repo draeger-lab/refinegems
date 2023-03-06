@@ -9,7 +9,7 @@ import numpy as np
 from refinegems.io import load_a_table_from_database
 from cobra import Model as cobraModel
 
-__author__ = "Famke Baeuerle and Jan Leusch"
+__author__ = "Famke Baeuerle and  Jan-Philipp Leusch"
 
 
 def get_modelseed_compounds() -> pd.DataFrame:
@@ -192,8 +192,9 @@ def compare_to_modelseed(model: cobraModel) -> tuple(pd.DataFrame, pd.DataFrame)
     Args:
         - model (cobraModel): Model loaded with COBRApy
 
-    Returns:
-        tuple: (table with charge mismatches, formula mismatches)
+    Returns (tuple):
+        - (pd.DataFrame) Table with charge mismatches 
+        - (pd.DataFrame) Table with formula mismatches
     """
     ms_comp = get_modelseed_compounds()
     model_charges = get_model_charges(model)

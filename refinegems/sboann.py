@@ -10,18 +10,19 @@ It is splitted into a lot of small functions which are all annotated, however wh
 
 import re
 import sqlite3
-from libsbml import *
+from libsbml import SpeciesReference, Compartment, Reaction
+from libsbml import Model as libModel
 from refinegems.databases import PATH_TO_DB
 from refinegems.io import write_to_file
 
-__author__ = "Elisabeth Fritze, Gwendolyn O. Gusak & Nantia Leonidou"
+__author__ = "Elisabeth Fritze, Gwendolyn O. Gusak, Famke Baeuerle and Nantia Leonidou"
 
 
-def getCompartmentlessSpeciesId(speciesReference):
-    """determines wheter a species has compartment by its refernece
+def getCompartmentlessSpeciesId(speciesReference: SpeciesReference) -> str:
+    """Determines wheter a species has compartment by its refernece
 
     Args:
-        speciesReference (libsbml-speciesreference): reference to species
+        - speciesReference (SpeciesReference): Reference to species
 
     Returns:
         libsbml-species-id: id of species without compartment
@@ -33,14 +34,14 @@ def getCompartmentlessSpeciesId(speciesReference):
     return(speciesId[:-wasteStringLen])
 
 
-def getCompartmentFromSpeciesRef(speciesReference):
-    """extracts compartment from a species by its reference
+def getCompartmentFromSpeciesRef(speciesReference: SpeciesReference) -> Compartment:
+    """Extracts compartment from a species by its reference
 
     Args:
-        speciesReference (libsbml-speciesreference): reference to species
+        - speciesReference (SpeciesReference): Reference to species
 
     Returns:
-        libsbml-compartment: compartment which the species lives in
+        Compartment: Compartment which the species lives in
     """
     speciesId = speciesReference.getSpecies()
     species = speciesReference.getModel().getSpecies(speciesId)
@@ -49,18 +50,18 @@ def getCompartmentFromSpeciesRef(speciesReference):
 
 
 def returnCompartment(id):
-    """helper to split compartment id"""
+    """Helper to split compartment id"""
     return id[-1]
 
 
-def getReactantIds(reac):
-    """extracts reactants (metabolites) of reaction
+def getReactantIds(reac: Reaction) -> list[str]:
+    """Extracts reactants (metabolites) of reaction
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
-        list: reactants (metabolites) ids
+        list[str]: Reactants (metabolites) ids
     """
     list = []
     for metabolite in reac.getListOfReactants():
@@ -68,11 +69,11 @@ def getReactantIds(reac):
     return list
 
 
-def getCompartmentlessReactantIds(reac):
-    """extracts reactants which have no compartment information
+def getCompartmentlessReactantIds(reac: Reaction):
+    """Extracts reactants which have no compartment information
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: reactants (metabolites) without compartments
@@ -83,11 +84,11 @@ def getCompartmentlessReactantIds(reac):
     return list
 
 
-def getProductIds(reac):
-    """extracts products (metabolites) of reaction
+def getProductIds(reac: Reaction):
+    """Extracts products (metabolites) of reaction
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: products (metabolites) ids
@@ -98,11 +99,11 @@ def getProductIds(reac):
     return list
 
 
-def getCompartmentlessProductIds(reac):
-    """extracts products which have no compartment information
+def getCompartmentlessProductIds(reac: Reaction):
+    """Extracts products which have no compartment information
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: products (metabolites) without compartments
@@ -113,11 +114,11 @@ def getCompartmentlessProductIds(reac):
     return list
 
 
-def getListOfMetabolites(reac):
-    """extracts list of metabolites of the reaction
+def getListOfMetabolites(reac: Reaction):
+    """Extracts list of metabolites of the reaction
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: metabolites that are part of the reaction
@@ -130,11 +131,11 @@ def getListOfMetabolites(reac):
     return list
 
 
-def getMetaboliteIds(reac):
-    """extracts list of metabolite ids of reaction
+def getMetaboliteIds(reac: Reaction):
+    """Extracts list of metabolite ids of reaction
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: metabolite ids
@@ -142,11 +143,11 @@ def getMetaboliteIds(reac):
     return getReactantIds(reac) + getProductIds(reac)
 
 
-def getCompartmentlessMetaboliteIds(reac):
-    """extracts metabolites which have no compartment information
+def getCompartmentlessMetaboliteIds(reac: Reaction):
+    """Extracts metabolites which have no compartment information
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: all metabolites which have no compartment
@@ -155,11 +156,11 @@ def getCompartmentlessMetaboliteIds(reac):
         reac) + getCompartmentlessProductIds(reac)
 
 
-def getReactantCompartmentList(reac):
-    """extracts compartments of reactants
+def getReactantCompartmentList(reac: Reaction):
+    """Extracts compartments of reactants
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         set: compartment information of all reactants (metabolites)
@@ -171,11 +172,11 @@ def getReactantCompartmentList(reac):
     return set(compartments)
 
 
-def getProductCompartmentList(reac):
-    """extracts compartments of products
+def getProductCompartmentList(reac: Reaction):
+    """Extracts compartments of products
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         set: compartment information of all products (metabolites)
@@ -187,11 +188,11 @@ def getProductCompartmentList(reac):
     return set(compartments)
 
 
-def getCompartmentList(reac):
-    """extracts compartments of metabolites
+def getCompartmentList(reac: Reaction):
+    """Extracts compartments of metabolites
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         set: compartment information of all metabolites
@@ -203,11 +204,11 @@ def getCompartmentList(reac):
     return set(compartments)
 
 
-def getCompartmentDict(reac):
+def getCompartmentDict(reac: Reaction):
     """sorts metabolites by compartment
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         dict: compartment as key and metabolites as values
@@ -222,11 +223,11 @@ def getCompartmentDict(reac):
     return compartmentDict
 
 
-def moreThanTwoCompartmentTransport(reac):
+def moreThanTwoCompartmentTransport(reac: Reaction):
     """check if reaction traverses more than 2 compartments
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         bool: True if reaction traverses more than 2 compartments
@@ -234,11 +235,11 @@ def moreThanTwoCompartmentTransport(reac):
     return len(getCompartmentList(reac)) > 2
 
 
-def isProtonTransport(reac):
+def isProtonTransport(reac: Reaction):
     """check if reaction is proton transport
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         bool: True if reaction is proton transport
@@ -254,11 +255,11 @@ def isProtonTransport(reac):
     return protonTransport
 
 
-def soleProtonTransported(reac):
+def soleProtonTransported(reac: Reaction):
     """check if reaction is transport powered by one H
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         bool: True if reaction is transport powered by one H
@@ -272,11 +273,11 @@ def soleProtonTransported(reac):
         reac) and not moreThanTwoCompartmentTransport(reac)
 
 
-def getECNums(reac):
-    """extracts EC-Code from the reaction annotations
+def getECNums(reac: Reaction):
+    """Extracts EC-Code from the reaction annotations
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
 
     Returns:
         list: all EC-Numbers of the reaction
@@ -292,11 +293,11 @@ def getECNums(reac):
     return ECNums
 
 
-def splitTransportBiochem(reac):
-    """test if reaction traverses more than 1 compartment and set SBO Term
+def splitTransportBiochem(reac: Reaction):
+    """Tests if reaction traverses more than 1 compartment and set SBO Term
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getCompartmentList(reac)) > 1 and not soleProtonTransported(reac):
         reac.setSBOTerm('SBO:0000655')
@@ -304,41 +305,41 @@ def splitTransportBiochem(reac):
         reac.setSBOTerm('SBO:0000176')
 
 
-def checkSink(reac):
-    """tests if reac is sink and sets SBO Term if true
+def checkSink(reac: Reaction):
+    """Tests if reac is sink and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if "_SINK_" in reac.getId() or "_SK_" in reac.getId():
         reac.setSBOTerm('SBO:0000632')
 
 
-def checkExchange(reac):
-    """tests if reac is exchange and sets SBO Term if true
+def checkExchange(reac: Reaction):
+    """Tests if reac is exchange and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if "_EX_" in reac.getId():
         reac.setSBOTerm('SBO:0000627')
 
 
-def checkDemand(reac):
-    """tests if reac is demand and sets SBO Term if true
+def checkDemand(reac: Reaction):
+    """Tests if reac is demand and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if "_DM_" in reac.getId():
         reac.setSBOTerm('SBO:0000628')
 
 
-def checkBiomass(reac):  # memote says growth is biomass
-    """tests if reac is biomass / growth and sets SBO Term if true
+def checkBiomass(reac: Reaction):  # memote says growth is biomass
+    """Tests if reac is biomass / growth and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     # Use regex to generalise check for growth/biomass reaction
     regex = 'growth|_*biomass\d*_*'
@@ -346,11 +347,11 @@ def checkBiomass(reac):  # memote says growth is biomass
         reac.setSBOTerm('SBO:0000629')
 
 
-def checkPassiveTransport(reac):
-    """tests if reac is passive transport and sets SBO Term if true
+def checkPassiveTransport(reac: Reaction):
+    """Tests if reac is passive transport and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     reactants = reac.getListOfReactants()
     products = reac.getListOfProducts()
@@ -361,11 +362,11 @@ def checkPassiveTransport(reac):
             reac.setSBOTerm('SBO:0000658')
 
 
-def checkActiveTransport(reac):
-    """tests if reac is active transport (uses atp/pep) and sets SBO Term if true
+def checkActiveTransport(reac: Reaction):
+    """Tests if reac is active transport (uses atp/pep) and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     reactantIds = []
     for metabolite in reac.getListOfReactants():
@@ -376,22 +377,22 @@ def checkActiveTransport(reac):
             print("Error, active reaction but reversible " + reac.getId())
 
 
-def checkCoTransport(reac):
-    """tests if reac is co-transport and sets SBO Term if true
+def checkCoTransport(reac: Reaction):
+    """Tests if reac is co-transport and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     reactants = reac.getListOfReactants()
     if len(reactants) > 1:
         reac.setSBOTerm('SBO:0000654')
 
 
-def splitSymAntiPorter(reac):
-    """tests if reac is sym- or antiporter and sets SBO Term if true
+def splitSymAntiPorter(reac: Reaction):
+    """Tests if reac is sym- or antiporter and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getCompartmentList(reac)) > 2:
         pass
@@ -401,11 +402,11 @@ def splitSymAntiPorter(reac):
         reac.setSBOTerm('SBO:0000660')
 
 
-def checkPhosphorylation(reac):
-    """tests if reac is phosphorylase / kinase and sets SBO Term if true
+def checkPhosphorylation(reac: Reaction):
+    """Tests if reac is phosphorylase / kinase and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     name = reac.getName()
     atpIsReactant = 'M_atp_c' in getReactantIds(reac)
@@ -419,7 +420,7 @@ def hasReactantPair(reac, met1, met2):
        needed for special reactions like redox or deamination
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
         met1 (libsbml-metabolite): metabolite 1 of metabolite pair
         met2 (libsbml-metabolite): metabolite 2 of metabolite pair
 
@@ -432,11 +433,11 @@ def hasReactantPair(reac, met1, met2):
         met2 in reactants and met1 in products)
 
 
-def checkRedox(reac):
-    """tests if reac is redox and sets SBO Term if true
+def checkRedox(reac: Reaction):
+    """Tests if reac is redox and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     isRedox = False
     isRedox = isRedox or hasReactantPair(reac, 'M_pyr', 'M_lac_L')
@@ -449,11 +450,11 @@ def checkRedox(reac):
         reac.setSBOTerm('SBO:0000200')
 
 
-def checkGlycosylation(reac):
-    """tests if reac is glycosylation and sets SBO Term if true
+def checkGlycosylation(reac: Reaction):
+    """Tests if reac is glycosylation and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     isGlycosylation = False
     isGlycosylation = isGlycosylation or hasReactantPair(
@@ -464,33 +465,33 @@ def checkGlycosylation(reac):
         reac.setSBOTerm('SBO:0000217')
 
 
-def checkDecarbonylation(reac):
-    """tests if reac is decarbonylation and sets SBO Term if true
+def checkDecarbonylation(reac: Reaction):
+    """Tests if reac is decarbonylation and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if not reac.getReversible():
         if 'M_co' in getCompartmentlessProductIds(reac):
             reac.setSBOTerm('SBO:0000400')
 
 
-def checkDecarboxylation(reac):
-    """tests if reac is decarboxylation and sets SBO Term if true
+def checkDecarboxylation(reac: Reaction):
+    """Tests if reac is decarboxylation and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if not reac.getReversible():
         if 'M_co2' in getCompartmentlessProductIds(reac):
             reac.setSBOTerm('SBO:0000399')
 
 
-def checkDeamination(reac):
-    """_tests if reac is deamination and sets SBO Term if true
+def checkDeamination(reac: Reaction):
+    """_Tests if reac is deamination and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if not reac.getReversible():
         waterAdded = 'M_h2o' in getCompartmentlessReactantIds(reac)
@@ -499,111 +500,111 @@ def checkDeamination(reac):
             reac.setSBOTerm('SBO:0000401')
 
 
-def checkRedoxViaEC(reac):
-    """tests if reac is redox by its EC-Code and sets SBO Term if true
+def checkRedoxViaEC(reac: Reaction):
+    """Tests if reac is redox by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('1'):
             reac.setSBOTerm('SBO:0000200')
 
 
-def checkAcetylationViaEC(reac):
-    """tests if reac is acetylation by its EC-Code and sets SBO Term if true
+def checkAcetylationViaEC(reac: Reaction):
+    """Tests if reac is acetylation by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.3.1'):
             reac.setSBOTerm('SBO:0000215')
 
 
-def checkGlycosylationViaEC(reac):
-    """tests if reac is glycosylation by its EC-Code and sets SBO Term if true
+def checkGlycosylationViaEC(reac: Reaction):
+    """Tests if reac is glycosylation by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.4'):
             reac.setSBOTerm('SBO:0000217')
 
 
-def checkMethylationViaEC(reac):
-    """tests if reac is methylation by its EC-Code and sets SBO Term if true
+def checkMethylationViaEC(reac: Reaction):
+    """Tests if reac is methylation by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.1.1'):
             reac.setSBOTerm('SBO:0000214')
 
 
-def checkTransaminationViaEC(reac):
-    """tests if reac is transamination by its EC-Code and sets SBO Term if true
+def checkTransaminationViaEC(reac: Reaction):
+    """Tests if reac is transamination by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('2.6.1'):
             reac.setSBOTerm('SBO:0000403')
 
 
-def checkDeaminationViaEC(reac):
-    """tests if reac is deamination by its EC-Code and sets SBO Term if true
+def checkDeaminationViaEC(reac: Reaction):
+    """Tests if reac is deamination by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('3.5.4'):
             reac.setSBOTerm('SBO:0000401')
 
 
-def checkDecarboxylationViaEC(reac):
-    """tests if reac is decarboxylation by its EC-Code and sets SBO Term if true
+def checkDecarboxylationViaEC(reac: Reaction):
+    """Tests if reac is decarboxylation by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('4.1.1'):
             reac.setSBOTerm('SBO:0000399')
 
 
-def checkIsomerisationViaEC(reac):
-    """tests if reac is isomerisation by its EC-Code and sets SBO Term if true
+def checkIsomerisationViaEC(reac: Reaction):
+    """Tests if reac is isomerisation by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('5'):
             reac.setSBOTerm('SBO:0000377')
 
 
-def checkHydrolysisViaEC(reac):
-    """tests if reac is hydrolysis by its EC-Code and sets SBO Term if true
+def checkHydrolysisViaEC(reac: Reaction):
+    """Tests if reac is hydrolysis by its EC-Code and sets SBO Term if true
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
+        - reac (Reaction): Reaction from sbml model
     """
     if len(getECNums(reac)) == 1:
         if getECNums(reac)[0].startswith('3'):
             reac.setSBOTerm('SBO:0000376')
 
 
-def addSBOviaEC(reac, cur):
+def addSBOviaEC(reac: Reaction, cur: sqlite3.connect.cursor):
     """Adds SBO terms based on EC numbers given in the annotations of a reactions
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
-        cur (sqlite3.connect.cursor): used to access the sqlite3 database
+        - reac (Reaction): Reaction from sbml model
+        - cur (sqlite3.connect.cursor): Used to access the sqlite3 database
     """
     if len(getECNums(reac)) == 1:
         ECnum = getECNums(reac)[0]
@@ -645,12 +646,12 @@ def addSBOviaEC(reac, cur):
                             reac.setSBOTerm(sbo1)
 
 
-def addSBOfromDB(reac, cur):
+def addSBOfromDB(reac: Reaction, cur: sqlite3.connect.cursor) -> bool:
     """Adds SBO term based on bigg id of a reaction
 
     Args:
-        reac (libsbml-reaction): libsbml reaction from sbml model
-        cur (sqlite3.connect.cursor): used to access the sqlite3 database
+        - reac (Reaction): Reaction from sbml model
+        - cur (sqlite3.connect.cursor): Used to access the sqlite3 database
 
     Returns:
         bool: True if SBO Term was changed
@@ -713,15 +714,14 @@ def addSBOforCompartments(model):
 
 ### end functions from Nantia ###
 
-def sbo_annotation(model_libsbml):
-    """executes all steps to annotate SBO terms to a given model
-       (former main function of original script by Elisabeth Fritze)
+def sbo_annotation(model_libsbml: libModel) -> libModel:
+    """executes all steps to annotate SBO terms to a given model (former main function of original script by Elisabeth Fritze)
 
     Args:
-        model_libsbml (libsbml-model): model loaded with libsbml
+        model_libsbml (libModel): Model loaded with libsbml
       
     Returns:
-        libsbml-model: modified model with SBO terms
+        libModel: Modified model with SBO terms
     """
     open_con = sqlite3.connect(PATH_TO_DB)
     open_cur = open_con.cursor()
@@ -762,14 +762,3 @@ def sbo_annotation(model_libsbml):
     open_cur.close()
     open_con.close()
     return model_libsbml
-    
-
-def sbo_annotation_write(model_libsbml, new_filename):
-    """wrapper around sbo_annotation to include writing to a file
-
-    Args:
-        model_libsbml (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename for modified model
-    """
-    new_model = sbo_annotation(model_libsbml)
-    write_to_file(new_model, new_filename)

@@ -20,8 +20,9 @@ def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple(l
         - model (libModel): Model loaded with libsbml
         - compounds (pd.DataFrame): Containing database data with 'BiGG' (BiGG-Ids) and 'charge' (float or int) as columns
 
-    Returns:
-        tuple(libModel, dict): (Model with added charges, Metabolites with multiple charges)
+    Returns (tuple):
+        - (libModel) Model with added charges
+        - (dict) Metabolites with multiple charges
     """
     spe = model.getListOfSpecies()
     mulchar = dict()
