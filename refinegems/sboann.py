@@ -13,7 +13,6 @@ import sqlite3
 from libsbml import SpeciesReference, Compartment, Reaction
 from libsbml import Model as libModel
 from refinegems.databases import PATH_TO_DB
-from refinegems.io import write_to_file
 
 __author__ = "Elisabeth Fritze, Gwendolyn O. Gusak, Famke Baeuerle and Nantia Leonidou"
 

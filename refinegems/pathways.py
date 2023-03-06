@@ -36,7 +36,7 @@ def extract_kegg_reactions(model: libModel) -> tuple(dict, list):
     """Extract KEGG Ids from reactions
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): Model loaded with libSBML. Output of load_model_enable_groups.
 
     Returns (tuple): 
         - (dict) Reaction Id as key and Kegg Id as value
@@ -60,7 +60,7 @@ def extract_kegg_pathways(kegg_reactions: dict) -> dict:
     """Finds pathway for reactions in model with KEGG Ids, accesses KEGG API, uses tqdm to report progres to user
 
     Args:
-        kegg_reactions (dict): Reaction Id as key and Kegg Id as value. Output[0] from extract_kegg_reactions.
+        - kegg_reactions (dict): Reaction Id as key and Kegg Id as value. Output[0] from extract_kegg_reactions.
 
     Returns:
         dict: Reaction Id as key and Kegg Pathway Id as value
@@ -83,11 +83,11 @@ def extract_kegg_pathways(kegg_reactions: dict) -> dict:
 
 
 def add_kegg_pathways(model, kegg_pathways):
-    """add KEGG reactions as BQB_OCCURS_IN
+    """Add KEGG reactions as BQB_OCCURS_IN
 
     Args:
-        model (libsbml-model): model loaded with libsbml
-        kegg_pathways (dict): reaction Id as key and Kegg Pathway Id as value
+        - model (libModel): Model loaded with libSBML. Output of load_model_enable_groups.
+        - kegg_pathways (dict): Reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
 
     Returns:
         libsbml-model: modified model with Kegg pathways
@@ -103,10 +103,10 @@ def add_kegg_pathways(model, kegg_pathways):
 
 
 def get_pathway_groups(kegg_pathways):
-    """group reaction into pathways
+    """Group reaction into pathways
 
     Args:
-        kegg_pathways (dict): reaction Id as key and Kegg Pathway Id as value
+        - kegg_pathways (dict): reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
 
     Returns:
         dict: Kegg Pathway Id as key and reactions Ids as values
@@ -121,15 +121,15 @@ def get_pathway_groups(kegg_pathways):
     return pathway_groups
 
 
-def create_pathway_groups(model, pathway_groups):
-    """use group module to add reactions to Kegg pathway
+def create_pathway_groups(model: libModel, pathway_groups):
+    """Use group module to add reactions to Kegg pathway
 
     Args:
-        model (libsbml-model): model loaded with libsbml and containing Kegg pathways
-        pathway_groups (dict): Kegg Pathway Id as key and reactions Ids as values
+        - model (libModel): Model loaded with libSBML. Output of load_model_enable_groups.
+        - pathway_groups (dict): Kegg Pathway Id as key and reactions Ids as values. Output of get_pathway_groups.
 
     Returns:
-        libsbml-model: modified model with groups for pathways
+        libModel: modified model with groups for pathways
     """
     k = KEGG()
     groups = model.getPlugin('groups')
@@ -168,14 +168,15 @@ def create_pathway_groups(model, pathway_groups):
     return model
 
 
-def kegg_pathways(modelpath):
+def kegg_pathways(modelpath: str) -> tuple(libModel, list[str]):
     """Executes all steps to add KEGG pathways as groups
 
     Args:
-        modelpath (Str): Path to GEM
+        - modelpath (str): Path to GEM
         
-    Returns:
-        model, list: modified model, Ids of reactions without KEGG annotation
+    Returns (tuple):
+        - (libModel) Modified model with Pathways as groups
+        - (list) Ids of reactions without KEGG annotation
     """
     model = load_model_enable_groups(modelpath)
 
