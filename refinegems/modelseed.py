@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 """ Reports mismatches in charges and formulae based on ModelSEED
 
-Extracts modelseed data from a given tsv file, extracts all metabolites
-from a given model. Both lists of metabolites are compared by charge and
-formula.
+Extracts ModelSEED data from a given tsv file, extracts all metabolites from a given model. Both lists of metabolites are compared by charge and formula.
 """
 import pandas as pd
 import re
 import numpy as np
 from refinegems.io import load_a_table_from_database
+from cobra import Model as cobraModel
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Jan Leusch"
 
 
-def get_modelseed_compounds():
-    """extracts compounds from modelseed which have BiGG Ids
+def get_modelseed_compounds() -> pd.DataFrame:
+    """Extracts compounds from ModelSEED which have BiGG Ids
 
     Returns:
-        df: table containing modelseed data
+        pd.DataFrame: Table containing ModelSEED data
     """
     # Get only rows where BiGG is contained
     com = load_a_table_from_database("SELECT *, INSTR(aliases, 'BiGG:') bigg FROM modelseed_compounds WHERE bigg > 0")
@@ -35,14 +34,14 @@ def get_modelseed_compounds():
     return com.loc[:, ['id', 'name', 'formula', 'mass', 'charge', 'BiGG']]
 
 
-def get_model_charges(model):
-    """extracts all metabolites from model
+def get_model_charges(model: cobraModel) -> pd.DataFrame:
+    """Extracts all metabolites from model
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        df: table containing charges and formulae of model metabolites
+        pd.DataFrame: Table containing charges and formulae of model metabolites
     """
     charges = {}
     for metab in model.metabolites:
@@ -60,14 +59,14 @@ def get_model_charges(model):
     return df_charges
 
 
-def get_modelseed_charges(modelseed_compounds):
-    """extract table with BiGG, charges and formulae
+def get_modelseed_charges(modelseed_compounds: pd.DataFrame):
+    """Extract table with BiGG, charges and formulae
 
     Args:
-        modelseed_compounds (df): containing modelseed data
+        - modelseed_compounds (pd.DataFrame): ModelSEED data. Output from get_modelseed_compounds.
 
     Returns:
-        df: table containing charges and formulae of modelseed metabolites
+        pd.DataFrame: Table containing charges and formulae of ModelSEED metabolites
     """
     modelseed_compounds = modelseed_compounds.loc[:, ['charge', 'BiGG', 'formula']].rename(
         columns={'charge': 'charge_modelseed', 'formula': 'formula_modelseed'})
@@ -79,15 +78,15 @@ def get_modelseed_charges(modelseed_compounds):
     return df_ms
 
 
-def compare_model_modelseed(model_charges, modelseed_charges):
-    """compares tables with charges / formulae from model & modelseed
+def compare_model_modelseed(model_charges: pd.DataFrame, modelseed_charges: pd.DataFrame) -> pd.DataFrame:
+    """Compares tables with charges / formulae from model & modelseed
 
     Args:
-        model_charges (df): charges and formulae of model metabolites
-        modelseed_charges (df): charges and formulae of modelseed metabolites
+        - model_charges (pd.DataFrame): Charges and formulae of model metabolites. Output of get_model_charges.
+        - modelseed_charges (pd.DataFrame): Charges and formulae of ModelSEED metabolites. Output of get_modelseed_charges.
 
     Returns:
-        df: table containing info whether charges / formulae match
+        pd.DataFrame: Table containing info whether charges / formulae match
     """
     df_comp = pd.merge(model_charges, modelseed_charges, on='BiGG', how='left')
 
@@ -104,43 +103,44 @@ def compare_model_modelseed(model_charges, modelseed_charges):
     return df_comp
 
 
-def get_charge_mismatch(df_comp):
-    """extracts metabolites with charge mismatch of model & modelseed
+def get_charge_mismatch(df_comp: pd.DataFrame) -> pd.DataFrame:
+    """Extracts metabolites with charge mismatch of model & modelseed
 
     Args:
-        df_comp (df): charge and formula mismatches
+        df_comp (pd.DataFrame): Charge and formula mismatches. Output from compare_model_modelseed.
 
     Returns:
-        df: table containing metabolites with charge mismatch
+        pd.DataFrame: Table containing metabolites with charge mismatch
     """
     return df_comp.loc[~df_comp['charge_match']].dropna(
         subset=['charge_modelseed'])
 
 
-def get_formula_mismatch(df_comp):
-    """extracts metabolites with formula mismatch of model & modelseed
+def get_formula_mismatch(df_comp: pd.DataFrame) -> pd.DataFrame:
+    """Extracts metabolites with formula mismatch of model & modelseed
 
     Args:
-        df_comp (df): charge and formula mismatches
+        df_comp (pd.DataFrame): Charge and formula mismatches. Output from compare_model_modelseed.
 
     Returns:
-        df: table containing metabolites with formula mismatch
+        pd.DataFrame: Table containing metabolites with formula mismatch
     """
     return df_comp.loc[~df_comp['formula_match']].dropna(
         subset=['formula_modelseed'])
 
 
-def get_compared_formulae(formula_mismatch):
-    """compare formula by atom pattern
+def get_compared_formulae(formula_mismatch: pd.DataFrame) -> pd.DataFrame:
+    """Compare formula by atom pattern
 
     Args:
-        formula_mismatch (df): table with column containing atom comparison
+        formula_mismatch (pd.DataFrame): Table with column containing atom comparison. Output from get_formula_mismatch.
 
     Returns:
-        df: table containing metabolites with formula mismatch
+        pd.DataFrame: table containing metabolites with formula mismatch
     """
 
     def formula_comparison(f1, f2):
+        # from Jan Leusch
         formula_pattern = "[A-Z][a-z]?\\d*"
         atom_pattern = '[A-Z][a-z]?'
         atom_number_pattern = '\\d+'
@@ -186,11 +186,11 @@ def get_compared_formulae(formula_mismatch):
     return formula_mismatch
 
 
-def compare_to_modelseed(model):
-    """Executes all steps to compare model metabolites to modelseed metabolites
+def compare_to_modelseed(model: cobraModel) -> tuple(pd.DataFrame, pd.DataFrame):
+    """Executes all steps to compare model metabolites to ModelSEED metabolites
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
         tuple: (table with charge mismatches, formula mismatches)
