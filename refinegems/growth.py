@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 """ Provides functions to simulate growth on any medium
 
-Tailored to work with the Synthetic Nasal Medium (SNM), should
-work with any medium as long as its defined in a csv with ; as
-delimiter and BiGG Ids for the compounds.
+Tailored to work with the media denoted in the local db, should work with any medium as long as its defined in a csv with ; as delimiter and BiGG Ids for the compounds. Use refinegems.io.load_medium_custom and hand this to the growth_one_medium_from_default or growth_one_medium_from_minimum function.
 
-Outputs a table where
-
-essential = metabolites not present in the medium but necessary for growth
-
-missing = all exchanges missing in the model but given in medium
+Outputs a table with the column headers:
+- essential = metabolites not present in the medium but necessary for growth
+- missing = all exchanges missing in the model but given in medium
 """
 
 import logging
@@ -17,22 +13,32 @@ import pandas as pd
 import numpy as np
 from refinegems.io import load_medium_from_db
 from cobra.medium import minimal_medium
+from cobra import Reaction
+from cobra import Model as cobraModel
 
 __author__ = "Famke Baeuerle"
 
-def set_fluxes_to_simulate(reaction):
+def set_fluxes_to_simulate(reaction: Reaction) -> Reaction:
+    """Helper function: Set flux bounds to -1000.0 and 1000.0 to enable model simulation with growth_one_medium_from_minimal/default
+
+    Args:
+        - reaction (Reaction): Reaction with unusable flux bounds
+
+    Returns:
+        Reaction: Reaction with usable flux bounds
+    """
     reaction.bounds = (-1000.0, 1000.0)
     return reaction
 
 
-def get_default_uptake(model):
+def get_default_uptake(model: cobraModel) -> list[str]:
     """Determines which metabolites are used in the standard medium
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list: metabolites consumed in standard medium
+        list[str]: Metabolites consumed in standard medium
     """
     with model:
         sol = model.optimize()
@@ -45,14 +51,14 @@ def get_default_uptake(model):
     return default_uptake
 
 
-def get_minimal_uptake(model):
+def get_minimal_uptake(model: cobraModel) -> list[str]:
     """Determines which metabolites are used in a minimal medium
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list: metabolites consumed in minimal medium
+        list[str]: Metabolites consumed in minimal medium
     """
     with model:
         minimal = minimal_medium(model)
@@ -63,14 +69,14 @@ def get_minimal_uptake(model):
     return list(minimal.index)
 
 
-def get_default_secretion(model):
-    """Checks fluxes after fba, if positive the metabolite is produced
+def get_default_secretion(model: cobraModel) -> list[str]:
+    """Checks fluxes after FBA, if positive the metabolite is produced
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list: BiGG Ids of produced metabolites
+        list[str]: BiGG Ids of produced metabolites
     """
     with model:
         fluxes = model.optimize().fluxes
@@ -81,15 +87,15 @@ def get_default_secretion(model):
     return default_secretion
 
 
-def get_missing_exchanges(model, medium):
+def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
     """Look for exchange reactions needed by the medium but not in the model
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        medium (df): dataframe of medium
+        - model (cobraModel): Model loaded with COBRApy
+        - medium (pd.DataFrame): Dataframe with medium definition
 
     Returns:
-        list: all exchanges missing in the model but given in medium
+        list[str]: Ids of all exchanges missing in the model but given in medium
     """
     medium_list = medium['BiGG_EX'].dropna().tolist()
     missing_exchanges = []
@@ -101,38 +107,36 @@ def get_missing_exchanges(model, medium):
     return missing_exchanges
 
 
-def modify_medium(medium, missing_exchanges):
-    """Remove exchanges from medium that are not in the model
+def modify_medium(medium: pd.DataFrame, missing_exchanges: list[str]) -> dict:
+    """Helper function: Remove exchanges from medium that are not in the model to avoid KeyError
 
     Args:
-        medium (df): dataframe of medium
-        missing_exchanges (list): exchanges not in the model
+        - medium (pd.DataFrame): Dataframe with medium definition
+        - missing_exchanges (list): Ids of exchanges not in the model
 
     Returns:
-        dict: growth medium that can be used with the model
+        dict: Growth medium definition that can be used with the model (f.ex {'EX_glc__D_e' : 10.0})
     """
-    # needed or else KeyError later
-    medium_dict = dict.fromkeys(medium['BiGG_EX'].dropna().tolist(), 10.0)
+    growth_medium = dict.fromkeys(medium['BiGG_EX'].dropna().tolist(), 10.0)
     for exchange in missing_exchanges:
-        medium_dict.pop(exchange)
-    return medium_dict
+        growth_medium.pop(exchange)
+    return growth_medium
 
 
-def find_missing_essential(model, medium, default_uptake):
-    """Report which exchange reactions are needed for growth
-        combines default uptake and valid new medium
+def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptake: list[str]) -> list[str]:
+    """Report which exchange reactions are needed for growth, combines default uptake and valid new medium
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        medium (dict): custom medium with exchanges that are present in the model
-        default_uptake (list): metabolites consumed in standard medium
+        - model (cobraModel): Model loaded with COBRApy
+        - growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.
+        - default_uptake (list[str]): Metabolites consumed in standard medium
 
     Returns:
-        list: all metabolites which lead to zero growth if blocked
+        list[str]: Ids of exchanges of all metabolites which lead to zero growth if blocked
     """
     with model:
         default_medium = {i: 10.0 for i in default_uptake}
-        new_medium = {**medium, **default_medium}
+        new_medium = {**growth_medium, **default_medium}
         try:
             model.medium = new_medium
         except(ValueError):
@@ -151,15 +155,15 @@ def find_missing_essential(model, medium, default_uptake):
     return essential
 
 
-def find_minimum_essential(medium, essential):
+def find_minimum_essential(medium: pd.DataFrame, essential: list[str]) -> list[str]:
     """Report metabolites necessary for growth and not in custom medium
 
     Args:
-        medium (df): dataframe of medium
-        essential (list): echanges of metabolites which lead to zero growth if blocked
+        - medium (pd.DataFrame): Dataframe with medium definition
+        - essential (list[str]): Ids of all metabolites which lead to zero growth if blocked. Output of find_missing_essential.
 
     Returns:
-        list: metabolites not present in the medium but necessary for growth
+        list[str]: Ids of exchanges of metabolites not present in the medium but necessary for growth
     """
     minimum = []
     for metab in essential:
@@ -168,16 +172,16 @@ def find_minimum_essential(medium, essential):
     return minimum
 
 
-def simulate_minimum_essential(model, growth_medium, minimum):
+def simulate_minimum_essential(model: cobraModel, growth_medium: dict, minimum: list[str]) -> float:
     """Simulate growth with custom medium plus necessary uptakes
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        growth_medium (dict): growth medium with exchanges present in the model
-        minimum (list): exchanges of metabolites not present in the medium but necessary for growth
+        - model (cobraModel): Model loaded with COBRApy
+        - growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.
+        - minimum (list[str]): Ids of exchanges of metabolites not present in the medium but necessary for growth. Output of find_minimum_essential.
 
     Returns:
-        float: growth value
+        float: Growth value in mmol per (gram dry weight) per hour
     """
     with model:
         min_medium = {i: 10.0 for i in minimum}
@@ -199,15 +203,15 @@ def simulate_minimum_essential(model, growth_medium, minimum):
     return sol.objective_value
 
 
-def get_all_minimum_essential(model, media: list[str]):
+def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFrame:
     """Returns metabolites necessary for growth and not in media
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        media (list): a list containing the names of all media for which the growth essential metabolites not contained in the media should be returned
+        - model (cobraModel): Model loaded with COBRApy
+        - media (list[str]): Containing the names of all media for which the growth essential metabolites not contained in the media should be returned
 
     Returns:
-        DataFrame: information on different media which metabs are missing
+        pd.DataFrame: information on different media which metabs are missing
     """
     default_uptake = get_default_uptake(model)
     mins = pd.DataFrame()
@@ -221,15 +225,15 @@ def get_all_minimum_essential(model, media: list[str]):
     return mins
 
 
-def growth_one_medium_from_default(model, medium):
+def growth_one_medium_from_default(model: cobraModel, medium: pd.DataFrame) -> pd.DataFrame:
     """Simulates growth on given medium, adding missing metabolites from the default uptake
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        medium (pandas-DataFrame): table containing metabolites present in the medium
+        - model (cobraModel): Model loaded with COBRApy
+        - medium (pd.DataFrame): Dataframe with medium definition
 
     Returns:
-        DataFrame: information on growth behaviour on medium
+        pd.DataFrame: Information on growth behaviour on given medium
     """
     default_uptake = get_default_uptake(model)
     missing_exchanges = get_missing_exchanges(model, medium)
@@ -251,15 +255,15 @@ def growth_one_medium_from_default(model, medium):
     return df_growth
 
 
-def growth_one_medium_from_minimal(model, medium):
+def growth_one_medium_from_minimal(model: cobraModel, medium: pd.DataFrame) -> pd.DataFrame:
     """Simulates growth on given medium, adding missing metabolites from a minimal uptake
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        medium (pandas-DataFrame): table containing metabolites present in the medium
+        - model (cobraModel): Model loaded with COBRApy
+        - medium (pd.DataFrame): Dataframe with medium definition
 
     Returns:
-        DataFrame: information on growth behaviour on medium
+        pd.DataFrame: Information on growth behaviour on given medium
     """
     minimal_uptake = get_minimal_uptake(
         model)  # use this instead of default_uptake
@@ -282,16 +286,16 @@ def growth_one_medium_from_minimal(model, medium):
     return df_growth
 
 
-def get_growth_selected_media(model, media, basis):
-    """Simulates growth on all selected media
+def get_growth_selected_media(model: cobraModel, media: list[str], basis: str) -> pd.DataFrame:
+    """Simulates growth on all given media
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        media (list): media to simulate on (must be in csv)
-        basis (string): either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
+        - model (cobraModel): Model loaded with COBRApy
+        - media (list[str]): Ids of media to simulate on
+        - basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
 
     Returns:
-        DataFrame: information on growth behaviour on selected media
+        pd.DataFrame: Information on growth behaviour on given media
     """
     growth = pd.DataFrame()
     for medium in media:
@@ -304,14 +308,14 @@ def get_growth_selected_media(model, media, basis):
     return growth
 
 
-def get_essential_reactions(model):
+def get_essential_reactions(model: cobraModel) -> list[str]:
     """Knocks out each reaction, if no growth is detected the reaction is seen as essential
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list: BiGG Ids of essential reactions
+        list[str]: BiGG Ids of essential reactions
     """
     ess = []
     for reaction in model.reactions:
@@ -326,15 +330,15 @@ def get_essential_reactions(model):
     return ess
 
 
-def get_essential_reactions_via_bounds(model):
+def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
     """Knocks out reactions by setting their bounds to 0, if no growth is detected the reaction is seen as essential
 
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list: BiGG Ids of essential reactions
+        list[str]: BiGG Ids of essential reactions
     """
     medium = model.medium
     ess = []
@@ -348,15 +352,15 @@ def get_essential_reactions_via_bounds(model):
     return ess
 
 
-def find_additives(model, base_medium):
+def find_additives(model:cobraModel, base_medium: dict) -> pd.DataFrame:
     """Iterates through all exchanges to find metabolites that lead to a higher growth rate compared to the growth rate yielded on the base_medium
 
     Args:
-        model (cobra-model): model loaded with cobrapy
-        base_medium (dict): exchanges as keys and their flux bound as value (f.ex {'EX_glc__D_e' : 10.0})
+        - model (cobraModel): Model loaded with COBRApy
+        - base_medium (dict): Exchanges as keys and their flux bound as value (f.ex {'EX_glc__D_e' : 10.0})
 
     Returns:
-        DataFrame: exchanges sorted from highest to lowest growth rate improvement
+        pd.DataFrame: Exchanges sorted from highest to lowest growth rate improvement
     """
     with model:
         medium = model.medium
