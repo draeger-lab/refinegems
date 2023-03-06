@@ -7,22 +7,21 @@ It is possible to use the correct_charges_from_db function with other databases.
 """
 
 import pandas as pd
-from libsbml import *
-#from refinegems.io import write_to_file
+from libsbml import Model as libModel
 from refinegems.modelseed import get_modelseed_compounds
 
 __author__ = "Famke Baeuerle"
 
 
-def correct_charges_from_db(model, compounds):
+def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple(libModel, dict):
     """Adds charges taken from given database to metabolites which have no defined charge
 
     Args:
-        model (libsbml-model): model loaded with libsbml
-        compounds (df): containing database data with 'BiGG' (BiGG-Ids) and 'charge' (float or int) as columns
+        - model (libModel): Model loaded with libsbml
+        - compounds (pd.DataFrame): Containing database data with 'BiGG' (BiGG-Ids) and 'charge' (float or int) as columns
 
     Returns:
-        tuple: (model with added charges, metabolites with multiple charges as pd df)
+        tuple(libModel, dict): (Model with added charges, Metabolites with multiple charges)
     """
     spe = model.getListOfSpecies()
     mulchar = dict()
@@ -47,14 +46,14 @@ def correct_charges_from_db(model, compounds):
     return model, mulchar
 
 
-def correct_charges_modelseed(model):
-    """wrapper function which completes the steps to charge correction
+def correct_charges_modelseed(model: libModel) -> tuple(libModel, dict):
+    """Wrapper function which completes the steps to charge correction with the ModelSEED database
 
     Args:
-        model (libsbml-model): model loaded with libsbml
+        - model (libModel): Model loaded with libsbml
 
     Returns:
-        model, dict: modified model, BiGG Id and possible charges of metabolites
+        tuple(libModel, dict): (Model with added charges, Metabolites with multiple charges)
     """
     modelseed_compounds = get_modelseed_compounds()
     model_corr, multiple_charges = correct_charges_from_db(
