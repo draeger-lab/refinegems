@@ -66,7 +66,7 @@ OLD_MIRIAM = 'http://identifiers.org/'
 def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
     '''Adds CVTerm to a unit
 
-       Params:
+       Args:
          unit_id (string):    ID to add as URI to annotation
          unit (libSBML Unit): Unit to add CVTerm to
          relation (str):      Provides model qualifier to be added
@@ -190,7 +190,7 @@ def generate_cvterm(qt, b_m_qt) -> CVTerm:
     ''' Generates a CVTerm with the provided qualifier &
         biological or model qualifier types
         
-        Params:
+        Args:
             - qt: libSBML qualifier type
             - b_m_qt: libSBML biological or model qualifier
         
@@ -213,7 +213,7 @@ def print_cvterm(cvterm: CVTerm):
         Prints the URIs contained in the provided CVTerm 
         along with the provided qualifier & biological/model qualifier types
         
-        Params:
+        Args:
             - cvterm (CVTerm): A libSBML CVTerm
     '''
     if cvterm == None:

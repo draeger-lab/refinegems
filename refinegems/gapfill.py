@@ -22,7 +22,7 @@ def gff_gene_comp():
     pass
 
 
-def gapfill_analysis(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
+def gapfill_analysis(model_libsbml: Model, gapfill_Args: dict[str: str]) -> Union[DataFrame, tuple]:
     """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
         to KEGG/BioCyc/(Genbank) GFF file
 
@@ -105,7 +105,7 @@ def gapfill_model(model_libsbml: Model, gapfill_analysis_result: Union[str, tupl
     pass
 
 
-def gapfill(model_libsbml: Model, gapfill_params: dict[str: str]) -> Union[DataFrame, tuple]:
+def gapfill(model_libsbml: Model, gapfill_Args: dict[str: str]) -> Union[DataFrame, tuple]:
     """Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
         KEGG/BioCyc/(Genbank) GFF file
 

@@ -137,7 +137,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span></dt>
 <dd><dl class="simple">
 <dt>completes all steps to polish a model</dt><dd><p>(Tested for models having either BiGG or VMH identifiers.)</p>
-</dd>
+</ddArgs:
 <dt>Params:</dt><dd><ul class="simple">
 <li><p>model (Model): model loaded with libsbml</p></li>
 <li><p>email (str): E-mail for Entrez</p></li>
@@ -392,7 +392,7 @@ will also save the user input to a config if no config was given</p>
 <dd><p>Debug method: Validates a libSBML model with the libSBML validator</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
-<li><p>model (Model): A libSBML Model</p></li>
+<li>Args:l (Model): A libSBML Model</p></li>
 </ul>
 </dd>
 </dl>
@@ -632,7 +632,7 @@ reac (libsbml-reaction): reaction to add CVTerm to</p>
 <dd><p>Adds CVTerm to a unit</p>
 <dl class="simple">
 <dt>Params:</dt><dd><p>unit_id (string):    ID to add as URI to annotation
-unit (libSBML Unit): Unit to add CVTerm to
+unitArgs:ML Unit): Unit to add CVTerm to
 relation (str):      Provides model qualifier to be added</p>
 </dd>
 </dl>
@@ -645,7 +645,7 @@ relation (str):      Provides model qualifier to be added</p>
 biological or model qualifier types</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
-<li><p>qt: libSBML qualifier type</p></li>
+<li>Args:libSBML qualifier type</p></li>
 <li><p>b_m_qt: libSBML biological or model qualifier</p></li>
 </ul>
 </dd>
@@ -675,7 +675,7 @@ Prints the URIs contained in the provided CVTerm
 along with the provided qualifier &amp; biological/model qualifier types</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
-<li><p>cvterm (CVTerm): A libSBML CVTerm</p></li>
+<li>Args:rm (CVTerm): A libSBML CVTerm</p></li>
 </ul>
 </dd>
 </dl>

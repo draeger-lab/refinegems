@@ -542,7 +542,7 @@ basis (string): either default_uptake (adding metabs from default) or minimal_up
 <span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_minimal_uptake</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.growth.get_minimal_uptake" title="Permalink to this definition"></a></dt>
 <dd><p>Determines which metabolites are used in a minimal medium</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: metabolites consumed in minimal medium</p>
 </dd>
@@ -555,7 +555,7 @@ basis (string): either default_uptake (adding metabs from default) or minimal_up
 <dd><p>Look for exchange reactions needed by the medium but not in the model</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy
-medium (df): dataframe of medium</p>
+mediArgs:: dataframe of medium</p>
 </dd>
 <dt>Returns:</dt><dd><p>list: all exchanges missing in the model but given in medium</p>
 </dd>
@@ -585,7 +585,7 @@ medium (pandas-DataFrame): table containing metabolites present in the medium</p
 </dd>
 <dt>Returns:</dt><dd><p>DataFrame: information on growth behaviour on medium</p>
 </dd>
-</dl>
+</dlArgs:
 </dd></dl>
 
 <dl class="py function">
@@ -1126,7 +1126,7 @@ pathway_groups (dict): Kegg Pathway Id as key and reactions Ids as values</p>
 <dt>Returns:</dt><dd><p>dict: reaction Id as key and Kegg Pathway Id as value</p>
 </dd>
 </dl>
-</dd></dl>
+</ddArgs:
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.pathways.extract_kegg_reactions">
@@ -1365,7 +1365,7 @@ units (list):        All units the defined unit consists of</p>
 <li><p>protein_fasta (str): The path to the CarveMe protein.fasta input file</p></li>
 <li><dl class="simple">
 <dt>lab_strain (bool): Needs to be set to True if strain was self-annotated</dt><dd><p>and/or the locus tags in the CarveMe input file should be kept</p>
-</dd>
+</ddArgs:
 </dl>
 </li>
 </ul>
@@ -1377,7 +1377,7 @@ units (list):        All units the defined unit consists of</p>
 <ol class="arabic simple">
 <li><dl class="simple">
 <dt>The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.</dt><dd><p>If there is no available data for the modeled organism in any database these identifiers can be added with 
-the pipeline described in <a class="reference internal" href="pipeline.html#pipeline-from-genome-sequence-to-draft-model"><span class="std std-ref">Pipeline: From genome sequence to draft model</span></a> before draft model creation.</p>
+the Args:e described in <a class="reference internal" href="pipeline.html#pipeline-from-genome-sequence-to-draft-model"><span class="std std-ref">Pipeline: From genome sequence to draft model</span></a> before draft model creation.</p>
 </dd>
 </dl>
 </li>
@@ -1401,7 +1401,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 </dd>
 </dl>
 </dd></dl>
-
+Args:
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.polish.cv_notes_reac">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">cv_notes_reac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaction_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Reaction</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.cv_notes_reac" title="Permalink to this definition"></a></dt>
@@ -1438,7 +1438,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <li><p>curie_list (list[str]): List containing CURIEs</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt><dd><p>Dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs</p>
+<dt>Args::</dt><dd><p>Dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1453,7 +1453,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <li><p>new_pattern (bool):  True if new pattern is wanted, otherwise False</p></li>
 </ul>
 </dd>
-</dl>
+</dlArgs:
 </dd></dl>
 
 <dl class="py function">
@@ -1470,7 +1470,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.polish.polish">
+<dt Args:sig sig-object py" id="refinegems.polish.polish">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.polish.polish" title="Permalink to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>completes all steps to polish a model</dt><dd><p>(Tested for models having either BiGG or VMH identifiers.)</p>
@@ -1488,7 +1488,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <p class="admonition-title">Warning</p>
 <p>Using <code class="docutils literal notranslate"><span class="pre">lab_strain=True</span></code> has the following two requirements:</p>
 <ol class="arabic simple">
-<li><dl class="simple">
+<li>Args:ss="simple">
 <dt>The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.</dt><dd><p>If there is no available data for the modeled organism in any database these identifiers can be added with 
 the pipeline described in <a class="reference internal" href="pipeline.html#pipeline-from-genome-sequence-to-draft-model"><span class="std std-ref">Pipeline: From genome sequence to draft model</span></a> before draft model creation.</p>
 </dd>
@@ -1536,7 +1536,7 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 <dl class="simple">
 <dt>Params:</dt><dd><ul class="simple">
 <li><p>contained_unit_defs (list): List of libSBML UnitDefinition objects</p></li>
-</ul>
+</ulArgs:
 </dd>
 </dl>
 </dd></dl>
@@ -1595,7 +1595,7 @@ metabolite (boolean): flag to determine whether entity = metabolite</p>
 <span id="refinegems-sboann-module"></span><h2>refinegems.sboann module<a class="headerlink" href="#module-refinegems.sboann" title="Permalink to this heading"></a></h2>
 <p>Provides functions to automate the addition of SBO terms to the model</p>
 <p>Script written by Elisabeth Fritze in her bachelor thesis.
-Modified by Gwendolyn O. Gusak during her master thesis.
+ModiArgs: Gwendolyn O. Gusak during her master thesis.
 Commented by Famke Bäuerle and extended by Nantia Leonidou.</p>
 <p>It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the “main” function: sbo_annotation_write(model_libsbml, database_user, database_name, new_filename) if you want to write the modified model to a SBML file or sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.</p>
 <dl class="py function">
@@ -1611,7 +1611,7 @@ Commented by Famke Bäuerle and extended by Nantia Leonidou.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.addSBOforGroups">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforGroups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforGroups" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd>Args:dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.addSBOforMetabolites">
@@ -1625,7 +1625,7 @@ Commented by Famke Bäuerle and extended by Nantia Leonidou.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.addSBOforParameters">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforParameters" title="Permalink to this definition"></a></dt>
+<spaArgs:="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">addSBOforParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.addSBOforParameters" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -1638,7 +1638,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 </dd>
 <dt>Returns:</dt><dd><p>bool: True if SBO Term was changed</p>
 </dd>
-</dl>
+</dlArgs:
 </dd></dl>
 
 <dl class="py function">
@@ -1652,7 +1652,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl Args:py function">
 <dt class="sig sig-object py" id="refinegems.sboann.checkAcetylationViaEC">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkAcetylationViaEC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkAcetylationViaEC" title="Permalink to this definition"></a></dt>
 <dd><p>tests if reac is acetylation by its EC-Code and sets SBO Term if true</p>
@@ -1688,7 +1688,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 <dd><p>tests if reac is co-transport and sets SBO Term if true</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
-</dd>
+</ddArgs:
 </dl>
 </dd></dl>
 
@@ -1712,7 +1712,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl Args:py function">
 <dt class="sig sig-object py" id="refinegems.sboann.checkDecarbonylation">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkDecarbonylation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkDecarbonylation" title="Permalink to this definition"></a></dt>
 <dd><p>tests if reac is decarbonylation and sets SBO Term if true</p>
@@ -1724,7 +1724,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.checkDecarboxylation">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkDecarboxylation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkDecarboxylation" title="Permalink to this definition"></a></dt>
+<spaArgs:="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkDecarboxylation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkDecarboxylation" title="Permalink to this definition"></a></dt>
 <dd><p>tests if reac is decarboxylation and sets SBO Term if true</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
@@ -1737,7 +1737,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkDecarboxylationViaEC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkDecarboxylationViaEC" title="Permalink to this definition"></a></dt>
 <dd><p>tests if reac is decarboxylation by its EC-Code and sets SBO Term if true</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
+<dt>Args:dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1749,7 +1749,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>reac (libsbml-reaction): libsbml reaction from sbml model</p>
 </dd>
-</dl>
+</dlArgs:
 </dd></dl>
 
 <dl class="py function">
@@ -1761,7 +1761,7 @@ cur (sqlite3.connect.cursor): used to access the sqlite3 database</p>
 </dd>
 </dl>
 </dd></dl>
-
+Args:
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.sboann.checkGlycosylation">
 <span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">checkGlycosylation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.sboann.checkGlycosylation" title="Permalink to this definition"></a></dt>

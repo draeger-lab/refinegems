@@ -242,7 +242,7 @@ def create_unit_definition(model_specs: tuple[int], identifier: str, name: str,
 def create_fba_units(model: Model) -> list[UnitDefinition]:
     """Creates all fba units required for a constraint-based model
    
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
          
     Return:
@@ -292,7 +292,7 @@ def create_fba_units(model: Model) -> list[UnitDefinition]:
 def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
     """Prints a list of libSBML UnitDefinitions as XMLNodes
    
-    Params:
+    Args:
         - contained_unit_defs (list): List of libSBML UnitDefinition objects
     """
     for unit_def in contained_unit_defs:
@@ -302,7 +302,7 @@ def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
 def print_remaining_UnitDefinitions(model: Model, list_of_fba_units: list[UnitDefinition]):
     """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
 
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
         - list_of_fba_units (list):  List of libSBML UnitDefinitions  
     """
@@ -342,7 +342,7 @@ def add_fba_units(model: Model):
  
         to the list of unit definitions (needed for FBA)
 
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
     """
     list_of_fba_units = create_fba_units(model)
@@ -359,7 +359,7 @@ def add_fba_units(model: Model):
 def set_default_units(model: Model):
     """ Sets default units of model
 
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
     """ 
     for unit in model.getListOfUnitDefinitions():
@@ -385,7 +385,7 @@ def set_default_units(model: Model):
 def set_units(model: Model):
     """Sets units of parameters in model
 
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
     """
     for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
@@ -402,7 +402,7 @@ def add_compartment_structure_specs(model: Model):
     """ Adds the required specifications for the compartment structure
         if not set (size & spatial dimension)
         
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
     """ 
     for compartment in model.getListOfCompartments():
@@ -423,7 +423,7 @@ def add_compartment_structure_specs(model: Model):
 def set_initial_amount(model: Model):
     """Sets initial amount to all metabolites if not already set or if initial concentration is not set
     
-    Params:
+    Args:
         - model (Model): Model loaded with libSBML
     """
     for species in model.getListOfSpecies():
@@ -436,7 +436,7 @@ def set_initial_amount(model: Model):
 def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
-    Params:
+    Args:
         - gene_list (list): libSBML ListOfGenes
         - email (str): User Email to access the Entrez database
         - protein_fasta (str): The path to the CarveMe protein.fasta input file
@@ -521,7 +521,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         logging.info(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
 
 
-#----------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
+#-------Args:--------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
 def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
     ''' Gets a list of CURIEs
         & maps the database prefixes to their respective identifier sets
@@ -614,7 +614,7 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
         curie_dict[prefix].add(identifier)
             
     return curie_dict
-
+Args:
 
 def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
     ''' Generate a set of complete CURIEs from the provided prefix to identifier mapping
@@ -655,7 +655,7 @@ def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_patte
             curie_set.add(curie)
             
     return curie_set
-
+Args:
 
 def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
     ''' Add a complete CURIE set to the provided CVTerm
@@ -672,7 +672,7 @@ def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
         new_cvterm.addResource(curie)
             
     entity.addCVTerm(new_cvterm)
-
+Args:
 
 def improve_curie_per_entity(entity: SBase, new_pattern: bool):
     ''' Helper function: Removes duplicates & changes pattern according to new_pattern
@@ -711,7 +711,7 @@ def improve_curie_per_entity(entity: SBase, new_pattern: bool):
     
     if not_miriam_compliant:
         logging.info(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
-
+Args:
 
 def improve_curies(entities: SBase, new_pattern: bool):
     ''' Removes duplicates & changes pattern according to new_pattern
@@ -731,7 +731,7 @@ def improve_curies(entities: SBase, new_pattern: bool):
                 for unit in entity.getListOfUnits():  # Unit needs to be handled within ListOfUnitDefinition
                     improve_curie_per_entity(unit, new_pattern)
 
-
+Args:
 def polish_annotations(model: Model, new_pattern: bool):
     ''' Polishes all annotations in a model such that no duplicates are present 
         & the same pattern is used for all CURIEs
@@ -761,7 +761,7 @@ def polish_annotations(model: Model, new_pattern: bool):
         improve_curies(listOf_dict[listOf], new_pattern)
     
     return model
-
+Args:
 
 def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_prefix: str=None) -> list:
     """Updates Qualifiers to be MIRIAM compliant for an entity
@@ -819,7 +819,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
                 
     if not_miriam_compliant:
         return not_miriam_compliant
-
+Args:
 
 def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specific_db_prefix: str = None):
     """Updates Qualifiers to be MIRIAM compliant for an entity type of a given model 
@@ -865,7 +865,7 @@ def change_qualifiers(model: Model, entity_type: str, new_qt, new_b_m_qt, specif
             logging.info('The entity ' +  entity_type + ' is not present in ' + model.getId())        
         
     if not_miriam_compliant:         
-        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+    Args:nt(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
     
     return model
 
@@ -901,7 +901,7 @@ def change_all_qualifiers(model: Model, lab_strain: bool):
         else:
             model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
         
-    return model
+    Args:model
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
