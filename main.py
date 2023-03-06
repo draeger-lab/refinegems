@@ -147,7 +147,7 @@ def main(configpath=None):
             sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
         
         if (config['memote']):
-            score = rg.investigate.run_memote(model_cobra)
+            score = rg.investigate.get_memote_score(rg.investigate.run_memote(model_cobra))
             
         if(config['modelseed']):
             charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)

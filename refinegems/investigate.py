@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-""" Provides functions to investigate the model and test with memote
+""" Provides functions to investigate the model and test with MEMOTE
 
-These functions enable simple testing of any model using memote and
-access to its number of reactions, metabolites and genes.
+These functions enable simple testing of any model using MEMOTE and access to its number of reactions, metabolites and genes.
 """
 
 import os
@@ -18,7 +17,7 @@ from memote.support import consistency
 from memote.support import consistency_helpers as con_helpers
 from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Alina Renz"
 
 DISSIPATION_RXNS = {
     'ATP':'atp_c + h2o_c --> adp_c + h_c + pi_c',
@@ -40,38 +39,48 @@ DISSIPATION_RXNS = {
 
 
 def run_memote_sys(model: cobraModel):
-    """run memote on linux machine
+    """Run MEMOTE on the local linux machine
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
     """
     cmd = 'memote report snapshot ' + str(model)
     os.system(cmd)
 
 
-def run_memote(model: cobraModel) -> float:
-    """runs memote to obtain total score
+def run_memote(model: cobraModel) -> dict:
+    """Runs MEMOTE to obtain report as dict
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        float: memote score of model
+        dict: MEMOTE report as json in dict format
     """
     ret, res = memote.suite.api.test_model(model, sbml_version=None, results=True,
                                            pytest_args=None, exclusive=None, skip=None, 
                                            experimental=None, solver_timeout=10)
     snap = memote.suite.api.snapshot_report(res, html=False)
     result = json.loads(snap)
-    totalScore = result['score']['total_score']
-    return totalScore
+    return result
 
-
-def initial_analysis(model: libModel):
-    """extracts most important numbers of GEM
+def get_memote_score(memote_report: dict) -> float:
+    """Extracts MEMOTE score from report
 
     Args:
-        model (libsbml-model): model loaded with libsbml
+        - memote_report (dict): Output from run_memote.
+
+    Returns:
+        float: MEMOTE score
+    """
+    return memote_report['score']['total_score']
+
+
+def initial_analysis(model: libModel) -> tuple(str, int, int, int):
+    """Extracts most important numbers of GEM
+
+    Args:
+        - model (libModel): Model loaded with libSBML
 
     Returns:
         tuple: (name of model, no of reactions, no of metabolites, no of genes)
@@ -83,11 +92,11 @@ def initial_analysis(model: libModel):
     return name, reactions, metabolites, genes
 
 
-def get_orphans_deadends_disconnected(model: cobraModel):
-    """Uses memote functions to extract orphans, deadends and disconnected metabolites
+def get_orphans_deadends_disconnected(model: cobraModel) -> tuple(list[str], list[str], list[str]):
+    """Uses MEMOTE functions to extract orphans, deadends and disconnected metabolites
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
         tuple: (list of orphans, deadends, disconnected metabolites)
@@ -114,12 +123,11 @@ def get_orphans_deadends_disconnected(model: cobraModel):
     return orphan_list, deadend_list, disconnected_list
 
 
-def get_mass_charge_unbalanced(model: cobraModel):
-    """creates lists of mass and charge unbalanced reactions,
-       without exchange reactions since they are unbalanced per definition
+def get_mass_charge_unbalanced(model: cobraModel) -> tuple(list[str], list[str]):
+    """Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
         tuple: (list of mass unbalanced, charge unbalanced reactions)
@@ -145,14 +153,14 @@ def get_mass_charge_unbalanced(model: cobraModel):
     return mass_list, charge_list
 
 
-def get_model_info(modelpath: str):
+def get_model_info(modelpath: str) -> pd.DataFrame:
     """Reports core information of given model
 
     Args:
-        modelpath (string): path to model file
+        - modelpath (str): Path to model file
 
     Returns:
-        DataFrame: overview on model parameters
+        pd.DataFrame: Overview on model parameters
     """
     model_libsbml = load_model_libsbml(modelpath)
     model_cobra = load_model_cobra(modelpath)
@@ -181,16 +189,18 @@ def get_model_info(modelpath: str):
 
     return model_info
 
-def parse_reaction(eq: str, model: cobraModel) -> dict: # from alina
-    """Parses a reaction equation string to dictionary
+
+def parse_reaction(eq: str, model: cobraModel) -> dict:
+    """Parses a reaction equation string to dictionary 
 
     Args:
-        eq (string): Equation of a reaction
-        model (cobra-model): model loaded with cobrapy
-
+        - eq (str): Equation of a reaction
+        - model (cobraModel): Model loaded with COBRApy
+        
     Returns:
-       dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)
+       dict: Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
     """
+    # from Alina Renz
     eq = eq.split(' ')
     eq_matrix={}
     are_products = False
@@ -212,14 +222,15 @@ def parse_reaction(eq: str, model: cobraModel) -> dict: # from alina
             coeff = 1
     return eq_matrix
 
+
 def get_egc(model: cobraModel) -> pd.DataFrame:
     """Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)
 
     Args:
-        model (cobra-model): model loaded with cobrapy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        df: table with possible EGCs
+        pd.DataFrame: Table with possible EGCs
     """
     dissipation_rxns = pd.DataFrame(DISSIPATION_RXNS.items(), columns=['type','equation'])
     
@@ -263,15 +274,14 @@ def get_egc(model: cobraModel) -> pd.DataFrame:
         df_fluxes = pd.concat([df_fluxes,pd.DataFrame.from_dict([objval])])
     return df_fluxes.T.reset_index().rename({'index':'BOF', 0:'objective value'}, axis=1).fillna('')
 
-def get_metabs_with_one_cvterm(model: libModel) -> list:
-    """reports metabolites which have only one annotation, 
-    can be used as basis for further annotation research
+def get_metabs_with_one_cvterm(model: libModel) -> list[str]:
+    """Reports metabolites which have only one annotation, can be used as basis for further annotation research
 
     Args:
-        model (libsbml-model): model loaded with libsbml
+        - model (libModel): Model loaded with libSBML
 
     Returns:
-        list: metabolite Ids
+        list: Metabolite Ids with only one annotation
     """
     spe = model.getListOfSpecies()
 
@@ -288,7 +298,7 @@ def get_reactions_per_sbo(model: libModel) -> dict:
     """Counts number of reactions of all SBO Terms present
 
     Args:
-        model (libModel): model loaded with libsbml
+        - model (libModel): Model loaded with libSBML
 
     Returns:
         dict: SBO Term as keys and number of reactions as values
@@ -306,10 +316,10 @@ def plot_rea_sbo_single(model: libModel):
     """Plots reactions per SBO Term in horizontal bar chart
 
     Args:
-        model (libModel): model loaded with libsbml
+        - model (libModel): Model loaded with libSBML
 
     Returns:
-        plot: pandas plot object
+        plot: Pandas Barchart
     """
     df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
     df = df[df[model.id]>3]
