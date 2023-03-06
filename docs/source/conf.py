@@ -33,6 +33,7 @@ release = '1.0'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.mathjax',
     'nbsphinx',
     'sphinx_rtd_theme',
@@ -92,5 +93,14 @@ autodoc_mock_imports = ["psycopg2",
                         "Bio",
                         "sqlalchemy",
                         "ratelimit",
-                        "libchebipy"
+                        "libchebipy",
+                        "ols_client",
+                        "charges",
+                        "click",
+                        "yaml",
+                        "sortedcontainers",
+                        "colorama",
+                        "matplotlib",
+                        "seaborn",
+                        "venn"
                         ]

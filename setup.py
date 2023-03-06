@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name='refineGEMs',
-      version='1.2',
+      version='1.0',
       description='Scripts to curate a GEM',
       author='Famke Baeuerle',
       author_email='famke.baeuerle@gmail.com',
@@ -15,7 +15,7 @@ setup(name='refineGEMs',
             "memote==0.13.0",
             "pandas==1.2.4",
             "numpy==1.20.3",
-            "pyyaml==5.4.1",
+            # "pyyaml==5.4.1",
             "gffutils==0.10.1",
             "markupsafe==2.0.1", 
             "depinfo==1.7.0",
@@ -25,8 +25,8 @@ setup(name='refineGEMs',
             "sqlalchemy==1.4.43",
             "venn==0.1.3",
             "ols-client==0.1.3",
-            "seaborn==0.12.2"
+            "seaborn==0.12.2",
+            "sqlalchemy==1.4.43",
+            "click==8.1.3"
             ],
       zip_safe=False)
-
-# pip install ipywidgets

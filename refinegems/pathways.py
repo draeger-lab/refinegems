@@ -10,7 +10,6 @@ to the respective reaction.
 from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from bioservices import KEGG
-from refinegems.io import write_to_file
 from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"
@@ -172,15 +171,14 @@ def create_pathway_groups(model, pathway_groups):
     return model
 
 
-def kegg_pathways(modelpath, new_filename):
+def kegg_pathways(modelpath):
     """Executes all steps to add KEGG pathways as groups
 
     Args:
         modelpath (Str): Path to GEM
-        new_filename (Str): filename for modified model
         
     Returns:
-        list: Ids of reactions without KEGG annotation
+        model, list: modified model, Ids of reactions without KEGG annotation
     """
     model = load_model_enable_groups(modelpath)
 
@@ -191,7 +189,5 @@ def kegg_pathways(modelpath, new_filename):
     model_pathways = add_kegg_pathways(model, pathways)
     model_pathway_groups = create_pathway_groups(
         model_pathways, pathway_groups)
-
-    write_to_file(model_pathway_groups, new_filename)
     
-    return non_kegg_reactions
+    return model_pathway_groups, non_kegg_reactions

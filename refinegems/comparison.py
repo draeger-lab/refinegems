@@ -80,13 +80,14 @@ def plot_rea_sbo_multiple(models: list[libModel], rename=None):
     fig.legend(loc='lower right')
     return fig
 
-def plot_venn(models: list[cobraModel], entity: str, perc: bool=False):
+def plot_venn(models: list[cobraModel], entity: str, perc: bool=False, rename=None):
     """Creates venn diagram to show the overlap of model entities
 
     Args:
         models (list[cobraModel]): Models loaded with cobrapy
         entity (str): Compare on metabolite|reaction
         perc (bool, optional): True if percentages should be used. Defaults to False.
+        rename (dict, optional): Rename model ids to custom names. Defaults to None.
 
     Returns:
         plot: venn diagram
@@ -100,9 +101,12 @@ def plot_venn(models: list[cobraModel], entity: str, perc: bool=False):
         if entity == 'reaction':
             for rea in model.reactions:
                 reas.append(rea.id)
-        intersec[model.id] = set(reas)
+        if rename is not None:
+            intersec[rename[model.id]] = set(reas)
+        else:
+            intersec[model.id] = set(reas)
     if perc:
-        fig = venn(intersec, fmt="{percentage:.0f}%")
+        fig = venn(intersec, fmt="{percentage:.1f}%")
     else:
         fig = venn(intersec)
     return fig
