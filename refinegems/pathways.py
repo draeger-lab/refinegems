@@ -1,29 +1,26 @@
 #!/usr/bin/env python
 """ Provides functions for adding KEGG reactions as Group Pathways
 
-If your organism occurs in the KEGG database, extract the KEGG reaction ID from the
-annotations of your reactions and identify, in which KEGG pathways this reaction occurs. Add
-all KEGG pathways for a reaction then as annotations with the biological qualifier ‘OCCURS_IN’
-to the respective reaction.
+If your organism occurs in the KEGG database, extract the KEGG reaction ID from the annotations of your reactions and identify, in which KEGG pathways this reaction occurs. Add all KEGG pathways for a reaction then as annotations with the biological qualifier ‘OCCURS_IN’ to the respective reaction.
 """
 
 from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
+from libsbml import Model as libModel
 from bioservices import KEGG
 from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"
 
 
-def load_model_enable_groups(modelpath):
-    """loads model as document using libsbml
-        enables groups extension
+def load_model_enable_groups(modelpath: str) -> libModel:
+    """Loads model as document using libSBML and enables groups extension
 
     Args:
-        modelpath (Str): Path to GEM
+        - modelpath (str): Path to GEM
 
     Returns:
-        libsbml-document: loaded document by libsbml
+        libModel: Model loaded with libSBML
     """
     reader = SBMLReader()
     read = reader.readSBMLFromFile(modelpath)  # read from file
@@ -35,14 +32,15 @@ def load_model_enable_groups(modelpath):
     return model
 
 
-def extract_kegg_reactions(model):
-    """extract KEGG Ids from reactions
+def extract_kegg_reactions(model: libModel) -> tuple(dict, list):
+    """Extract KEGG Ids from reactions
 
     Args:
-        model (libsbml-model): model loaded with libsbml
+        - model (libModel): Model loaded with libSBML
 
-    Returns:
-        (dict, list): reaction Id as key and Kegg Id as value, Ids of reactions without KEGG annotation
+    Returns (tuple): 
+        - (dict) Reaction Id as key and Kegg Id as value
+        - (list[str]) Ids of reactions without KEGG annotation
     """
     list_reac = model.getListOfReactions()
     kegg_reactions = {}
@@ -58,15 +56,14 @@ def extract_kegg_reactions(model):
     return kegg_reactions, non_kegg_reac
 
 
-def extract_kegg_pathways(kegg_reactions):
-    """finds pathway for reactions in model with KEGG Ids
-        accesses KEGG API, uses tqdm to report progres to user
+def extract_kegg_pathways(kegg_reactions: dict) -> dict:
+    """Finds pathway for reactions in model with KEGG Ids, accesses KEGG API, uses tqdm to report progres to user
 
     Args:
-        kegg_reactions (dict): reaction Id as key and Kegg Id as value
+        kegg_reactions (dict): Reaction Id as key and Kegg Id as value. Output[0] from extract_kegg_reactions.
 
     Returns:
-        dict: reaction Id as key and Kegg Pathway Id as value
+        dict: Reaction Id as key and Kegg Pathway Id as value
     """
     k = KEGG()
     kegg_pathways = {}
