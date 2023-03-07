@@ -259,9 +259,11 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.polish.</span></span><span class="sig-name descname"><span class="pre">polish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.Model</span></span></span></dt>
-<dd><dl class="simple">
-<dt>Completes all steps to polish a model</dt><dd><p>(Tested for models having either BiGG or VMH identifiers.)</p>
-</dd>
+<dd><div class="line-block">
+<div class="line">Completes all steps to polish a model
+| (Tested for models having either BiGG or VMH identifiers.)</div>
+</div>
+<dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (libModel): model loaded with libSBML</p></li>
 <li><p>email (str): E-mail for Entrez</p></li>
@@ -339,9 +341,11 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">load_a_table_from_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name_or_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
-<dd><dl class="simple">
-<dt>Loads the table for which the name is provided or a table containing all rows for which the query evaluates to </dt><dd><p>true from the refineGEMs database (‘data/database/data.db’)</p>
-</dd>
+<dd><div class="line-block">
+<div class="line">Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
+| true from the refineGEMs database (‘data/database/data.db’)</div>
+</div>
+<dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>table_name_or_query (str): Name of a table contained in the database ‘data.db’/ a SQL query</p></li>
 </ul>
@@ -485,22 +489,16 @@ or with libSBML (activation of groups). The media definitions are denoted in a c
 <span class="sig-prename descclassname"><span class="pre">refinegems.io.</span></span><span class="sig-name descname"><span class="pre">parse_fasta_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_for_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
 <dd><p>Parses FASTA file headers to obtain:</p>
 <blockquote>
-<div><blockquote>
 <div><ul class="simple">
 <li><p>the protein_id</p></li>
 <li><p>and the model_id (like it is obtained from CarveMe)</p></li>
 </ul>
 </div></blockquote>
 <p>corresponding to the locus_tag</p>
-</div></blockquote>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>filepath (str): Path to FASTA file</p></li>
-<li><dl class="simple">
-<dt>id_for_model (bool): True if model_id similar to autogenerated </dt><dd><p>GeneProduct ID should be contained in resulting table</p>
-</dd>
-</dl>
-</li>
+<li><p>id_for_model (bool): True if model_id similar to autogenerated GeneProduct ID should be contained in resulting table</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>pd.DataFrame: Table containing the columns locus_tag, Protein_id &amp; Model_id</p>
@@ -729,11 +727,15 @@ Args:</p>
 <li><p>model (libModel): Model loaded with libSBML</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt><dd><p>tuple: Model name (1) &amp; corresponding amounts of entities (2) - (4)
-(1) str: Name of model
-(2) int: Number of reactions 
-(3) int: Number of metabolites
-(4) int: Number of genes</p>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: Model name (1) &amp; corresponding amounts of entities (2) - (4)</dt><dd><ol class="arabic simple">
+<li><p>str: Name of model</p></li>
+<li><p>int: Number of reactions</p></li>
+<li><p>int: Number of metabolites</p></li>
+<li><p>int: Number of genes</p></li>
+</ol>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
