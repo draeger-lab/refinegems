@@ -84,10 +84,10 @@ def initial_analysis(model: libModel) -> tuple[str, int, int, int]:
 
     Returns:
         tuple: Model name (1) & corresponding amounts of entities (2) - (4)
-        (1) str: Name of model
-        (2) int: Number of reactions 
-        (3) int: Number of metabolites
-        (4) int: Number of genes
+            (1) str: Name of model
+            (2) int: Number of reactions 
+            (3) int: Number of metabolites
+            (4) int: Number of genes
     """
     name = model.getId()
     reactions = model.getNumReactions()

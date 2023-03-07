@@ -107,7 +107,7 @@ def get_pathway_groups(kegg_pathways):
     """Group reaction into pathways
 
     Args:
-        - kegg_pathways (dict): reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
+        - kegg_pathways (dict): Reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
 
     Returns:
         dict: Kegg Pathway Id as key and reactions Ids as values

@@ -4,12 +4,9 @@
     
     Run times: 
     
-        'KEGG': ~ 2h
-        
-        'BioCyc': ~ 45mins - 1h
-        
-        'KEGG+BioCyc': ~ 3 - 4h
-        
+        * 'KEGG': ~ 2h
+        * 'BioCyc': ~ 45mins - 1h
+        * 'KEGG+BioCyc': ~ 3 - 4h  
 """
 import ast
 from libsbml import Model as libModel
@@ -40,8 +37,8 @@ def gff_gene_comp():
 
 
 def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
-    """Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
-        to KEGG/BioCyc/both
+    """| Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
+       | to KEGG/BioCyc/both
 
     Args:
         - model_libsbml (libModel): Model loaded with libSBML
@@ -229,8 +226,8 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
 def gapfill(
     model_libsbml: libModel, gapfill_params: dict[str: str], filename: str
     ) -> Union[tuple[pd.DataFrame, libModel], tuple[tuple, libModel]]:
-    """Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
-        KEGG/BioCyc/(Genbank) GFF file
+    """| Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
+       | KEGG/BioCyc/(Genbank) GFF file
 
     Args:
         - model_libsbml (libModel): Model loaded with libSBML

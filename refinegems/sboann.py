@@ -415,8 +415,8 @@ def checkPhosphorylation(reac: Reaction):
 
 
 def hasReactantPair(reac: Reaction, met1: Species, met2: Species) -> bool:
-    """checks if a pair of metabolites is present in reaction
-       needed for special reactions like redox or deamination
+    """| Checks if a pair of metabolites is present in reaction
+       | needed for special reactions like redox or deamination
 
     Args:
         - reac (Reaction): Reaction from sbml model
@@ -487,7 +487,7 @@ def checkDecarboxylation(reac: Reaction):
 
 
 def checkDeamination(reac: Reaction):
-    """_Tests if reac is deamination and sets SBO Term if true
+    """Tests if reac is deamination and sets SBO Term if true
 
     Args:
         - reac (Reaction): Reaction from sbml model

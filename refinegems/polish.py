@@ -20,9 +20,9 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
  
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
 def add_metab(entity_list: list[Species], id_db: str):
-    """Adds the ID of metabolites as URI to the annotation field
-       For a VMH model, additionally, the corresponding BiGG IDs are added! 
-		(Currently, only BiGG & VMH IDs supported!)
+    """| Adds the ID of metabolites as URI to the annotation field
+       | For a VMH model, additionally, the corresponding BiGG IDs are added! 
+	   | (Currently, only BiGG & VMH IDs supported!)
 
     Args:
         - entity_list (list): libSBML ListOfSpecies
@@ -61,8 +61,8 @@ def add_metab(entity_list: list[Species], id_db: str):
             
            
 def add_reac(entity_list: list[Reaction], id_db: str):
-    """Adds the ID of reactions as URI to the annotation field
-            (Currently, only BiGG & VMH IDs supported!)
+    """| Adds the ID of reactions as URI to the annotation field
+       | (Currently, only BiGG & VMH IDs supported!)
 
         Args:
             - entity_list (list): libSBML ListOfReactions
@@ -94,8 +94,8 @@ def add_reac(entity_list: list[Reaction], id_db: str):
 
 #----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
 def cv_notes_metab(species_list: list[Species]):
-    """Checks the notes field for information which should be in the annotation field
-       removes entry from notes and adds it as URL to the CVTerms of a metabolite
+    """| Checks the notes field for information which should be in the annotation field
+       | removes entry from notes and adds it as URL to the CVTerms of a metabolite
 
     Args:
         - species_list (list): libSBML ListOfSpecies
@@ -132,8 +132,8 @@ def cv_notes_metab(species_list: list[Species]):
 
 
 def cv_notes_reac(reaction_list: list[Reaction]):
-    """Checks the notes field for information which should be in the annotation field
-       removes entry from notes and adds it as URL to the CVTerms of a reaction
+    """| Checks the notes field for information which should be in the annotation field
+       | removes entry from notes and adds it as URL to the CVTerms of a reaction
 
     Args:
         - reaction_list (list): libSBML ListOfReactions
@@ -338,13 +338,13 @@ def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[Uni
 
 #-------------------------------------- Function to add units & UnitDefinitions ---------------------------------------#
 def add_fba_units(model: libModel):
-    """Adds:
-            - mmol per gDW per h
-            - mmol per gDW 
-            - hour (h)
-            - femto litre (fL)
- 
-        to the list of unit definitions (needed for FBA)
+    """| Adds:
+       |     - mmol per gDW per h
+       |     - mmol per gDW 
+       |     - hour (h)
+       |     - femto litre (fL)
+       |
+       | to the list of unit definitions (needed for FBA)
 
     Args:
         - model (libModel): Model loaded with libSBML
@@ -403,8 +403,8 @@ def set_units(model: libModel):
 
 #-------------------------- Functions to add default settings for compartments & metabolites --------------------------#            
 def add_compartment_structure_specs(model: libModel):
-    """Adds the required specifications for the compartment structure
-        if not set (size & spatial dimension)
+    """| Adds the required specifications for the compartment structure
+       | if not set (size & spatial dimension)
         
     Args:
         - model (libModel): Model loaded with libSBML
@@ -516,8 +516,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
 
 #---------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
 def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
-    """Gets a list of CURIEs
-        & maps the database prefixes to their respective identifier sets
+    """| Gets a list of CURIEs
+       | & maps the database prefixes to their respective identifier sets
         
     Args:
         - curie_list (list[str]): List containing CURIEs
@@ -722,8 +722,8 @@ def improve_curies(entities: SBase, new_pattern: bool):
 
 
 def polish_annotations(model: libModel, new_pattern: bool) -> libModel:
-    """Polishes all annotations in a model such that no duplicates are present 
-        & the same pattern is used for all CURIEs
+    """| Polishes all annotations in a model such that no duplicates are present 
+       | & the same pattern is used for all CURIEs
         
     Args:
         - model (libModel):     Model loaded with libSBML
@@ -898,8 +898,8 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
 def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool) -> libModel: 
-    """Completes all steps to polish a model
-        (Tested for models having either BiGG or VMH identifiers.)
+    """| Completes all steps to polish a model
+       | (Tested for models having either BiGG or VMH identifiers.)
 
     Args:
         - model (libModel): model loaded with libSBML
