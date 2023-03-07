@@ -71,3 +71,27 @@ charge_corr: FALSE
 man_cur: FALSE
 man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
 man_cur_table: 'data/manual_curation.xlsx'
+
+### Automatic gap filling ###
+# All parameters are required for all db_to_compare choices except:
+# - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
+# - and biocyc_files which is not required for 'KEGG'
+gap_analysis: FALSE
+gap_analysis_params:
+  db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc
+  organismid: 'T05059'  # Needs to be specified for KEGG
+  gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
+  biocyc_files: 
+    - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
+    - 'Path1'  # Path to TXT file containing a SmartTable with all reaction relevant information (*)
+    - 'Path2'  # Path to TXT file containing a SmartTable with all metabolite relevant information (+)
+    - 'Path3'  # Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)
+# (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence
+# (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
+# (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
+# For all BioCyc files the order should be the same. If the organism does not occur in the BioCyc database the
+# complete tables for reactions can be used with the same columns.
+gapfill_model: FALSE
+gap_analysis_file: 'Path to Excel file with which gaps in model should be filled'
+# Either obtained by running gapfill_analysis/Created by hand with the same structure as the result file from gapfill_analysis
+# Example Excel file to fill in by hand: data/modelName_gapfill_analysis_date_example.xlsx
