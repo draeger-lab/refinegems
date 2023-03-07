@@ -63,11 +63,10 @@ This module can be used either with KEGG were you only need the KEGG organism ID
             
         iv. Afterwards `Export to Spreadsheet File` and choose `common names`.
     
-    Run times: 
-    
-        'KEGG': ~ 2h
-        'BioCyc': ~ 45mins - 1h
-        'KEGG+BioCyc': ~ 3 - 4h
+    Run times:
+        * 'KEGG': ~ 2h
+        * 'BioCyc': ~ 45mins - 1h
+        * 'KEGG+BioCyc': ~ 3 - 4h
         
 You can either use it with refineGEMs, just edit the config ...
 
