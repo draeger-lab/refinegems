@@ -107,15 +107,16 @@
 <h2>Manual gap filling<a class="headerlink" href="#manual-gap-filling" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">add_reactions_from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span></em><span class="sig-paren">)</span></dt>
-<dd><dl class="simple">
-<dt>adds all reactions with their info given in the table to the given model</dt><dd><p>(wrapper function to use with table given in the data folder)</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.curate.</span></span><span class="sig-name descname"><span class="pre">add_reactions_from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.Model</span></span></span></dt>
+<dd><p>Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (libModel): Model loaded with libSBML</p></li>
+<li><p>table (pd-DataFrame): Table in format of sheet gapfill from manual_curation.xlsx located in the data folder</p></li>
+<li><p>email (str): User Email to access the NCBI Entrez database</p></li>
+</ul>
 </dd>
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libSBML
-table (pd-DataFrame): manual_curation tabel loaded with pandas, sheet gapfill
-email (string): User Email to access the NCBI Entrez database</p>
-</dd>
-<dt>Returns:</dt><dd><p>model: modified model with new reactions</p>
+<dt>Returns:</dt><dd><p>libModel: Modified model with new reactions</p>
 </dd>
 </dl>
 </dd></dl>

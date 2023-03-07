@@ -148,37 +148,48 @@ Of the description part in the header line only locus_tag, protein and protein_i
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">compare_to_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Executes all steps to compare model metabolites to modelseed metabolites</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.modelseed.</span></span><span class="sig-name descname"><span class="pre">compare_to_modelseed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Executes all steps to compare model metabolites to ModelSEED metabolites</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>tuple: (table with charge mismatches, formula mismatches)</p>
+<dt>Returns (tuple):</dt><dd><ul class="simple">
+<li><p>(pd.DataFrame) Table with charge mismatches</p></li>
+<li><p>(pd.DataFrame) Table with formula mismatches</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.pathways.</span></span><span class="sig-name descname"><span class="pre">kegg_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.pathways.</span></span><span class="sig-name descname"><span class="pre">kegg_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
 <dd><p>Executes all steps to add KEGG pathways as groups</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>modelpath (Str): Path to GEM</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>modelpath (str): Path to GEM</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>model, list: modified model, Ids of reactions without KEGG annotation</p>
+<dt>Returns (tuple):</dt><dd><ul class="simple">
+<li><p>(libModel) Modified model with Pathways as groups</p></li>
+<li><p>(list) Ids of reactions without KEGG annotation</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">sbo_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_libsbml</span></span></em><span class="sig-paren">)</span></dt>
-<dd><dl class="simple">
-<dt>executes all steps to annotate SBO terms to a given model</dt><dd><p>(former main function of original script by Elisabeth Fritze)</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.sboann.</span></span><span class="sig-name descname"><span class="pre">sbo_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_libsbml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.Model</span></span></span></dt>
+<dd><p>Executes all steps to annotate SBO terms to a given model (former main function of original script by Elisabeth Fritze)</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model_libsbml (libModel): Model loaded with libsbml</p></li>
+</ul>
 </dd>
-<dt>Args:</dt><dd><p>model_libsbml (libsbml-model): model loaded with libsbml</p>
-</dd>
-<dt>Returns:</dt><dd><p>libsbml-model: modified model with SBO terms</p>
+<dt>Returns:</dt><dd><p>libModel: Modified model with SBO terms</p>
 </dd>
 </dl>
 </dd></dl>
@@ -465,28 +476,30 @@ Args:</p>
 <section id="investigate">
 <h2><code class="docutils literal notranslate"><span class="pre">investigate</span></code><a class="headerlink" href="#investigate" title="Permalink to this heading"></a></h2>
 <p>provides a couple of functions to get parameters of your model</p>
-<p>Provides functions to investigate the model and test with memote</p>
-<p>These functions enable simple testing of any model using memote and
-access to its number of reactions, metabolites and genes.</p>
+<p>Provides functions to investigate the model and test with MEMOTE</p>
+<p>These functions enable simple testing of any model using MEMOTE and access to its number of reactions, metabolites and genes.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_egc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
 <dd><p>Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>df: table with possible EGCs</p>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Table with possible EGCs</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
-<dd><dl class="simple">
-<dt>creates lists of mass and charge unbalanced reactions,</dt><dd><p>without exchange reactions since they are unbalanced per definition</p>
-</dd>
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_mass_charge_unbalanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (list of mass unbalanced, charge unbalanced reactions)</p>
 </dd>
@@ -495,35 +508,54 @@ access to its number of reactions, metabolites and genes.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span></dt>
-<dd><p>reports metabolites which have only one annotation, 
-can be used as basis for further annotation research</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_memote_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memote_report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span></dt>
+<dd><p>Extracts MEMOTE score from report</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>memote_report (dict): Output from run_memote.</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>list: metabolite Ids</p>
+<dt>Returns:</dt><dd><p>float: MEMOTE score</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_metabs_with_one_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Reports metabolites which have only one annotation, can be used as basis for further annotation research</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (libModel): Model loaded with libSBML</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>list: Metabolite Ids with only one annotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span></dt>
 <dd><p>Reports core information of given model</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>modelpath (string): path to model file</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>modelpath (str): Path to model file</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>DataFrame: overview on model parameters</p>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Overview on model parameters</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Uses memote functions to extract orphans, deadends and disconnected metabolites</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_orphans_deadends_disconnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Uses MEMOTE functions to extract orphans, deadends and disconnected metabolites</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (list of orphans, deadends, disconnected metabolites)</p>
 </dd>
@@ -535,7 +567,9 @@ can be used as basis for further annotation research</p>
 <span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">get_reactions_per_sbo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span></dt>
 <dd><p>Counts number of reactions of all SBO Terms present</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (libModel): Model loaded with libSBML</p></li>
+</ul>
 </dd>
 <dt>Returns:</dt><dd><p>dict: SBO Term as keys and number of reactions as values</p>
 </dd>
@@ -544,10 +578,12 @@ can be used as basis for further annotation research</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>extracts most important numbers of GEM</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">initial_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Extracts most important numbers of GEM</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (libsbml-model): model loaded with libsbml</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (libModel): Model loaded with libSBML</p></li>
+</ul>
 </dd>
 <dt>Returns:</dt><dd><p>tuple: (name of model, no of reactions, no of metabolites, no of genes)</p>
 </dd>
@@ -559,10 +595,12 @@ can be used as basis for further annotation research</p>
 <span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">parse_reaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span></dt>
 <dd><p>Parses a reaction equation string to dictionary</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>eq (string): Equation of a reaction
-model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>eq (str): Equation of a reaction</p></li>
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>dict: metabolite ids as keys and their coefficients as values (negative = educts, positive = products)</p>
+<dt>Returns:</dt><dd><p>dict: Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -572,21 +610,25 @@ model (cobra-model): model loaded with cobrapy</p>
 <span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">plot_rea_sbo_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Plots reactions per SBO Term in horizontal bar chart</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (libModel): model loaded with libsbml</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (libModel): Model loaded with libSBML</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>plot: pandas plot object</p>
+<dt>Returns:</dt><dd><p>plot: Pandas Barchart</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span></dt>
-<dd><p>runs memote to obtain total score</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span></dt>
+<dd><p>Runs MEMOTE to obtain report as dict</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>float: memote score of model</p>
+<dt>Returns:</dt><dd><p>dict: MEMOTE report as json in dict format</p>
 </dd>
 </dl>
 </dd></dl>
@@ -594,9 +636,11 @@ model (cobra-model): model loaded with cobrapy</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.investigate.</span></span><span class="sig-name descname"><span class="pre">run_memote_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>run memote on linux machine</p>
+<dd><p>Run MEMOTE on the local linux machine</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>model (cobra-model): model loaded with cobrapy</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model (cobraModel): Model loaded with COBRApy</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -609,60 +653,71 @@ model (cobra-model): model loaded with cobrapy</p>
 <p>Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Add CVTerm to a gene</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.GeneProduct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab_strain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Adds CVTerm to a gene</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entry (string): id to add as annotation
-db_id (string): database to which entry belongs
-gene (libsbml-gene): gene to add CVTerm to</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entry (str): Id to add as annotation</p></li>
+<li><p>db_id (str): Database to which entry belongs. Must be in gene_db_dict.keys().</p></li>
+<li><p>gene (GeneProduct): Gene to add CVTerm to</p></li>
+<li><p>lab_strain (bool, optional): For locally sequenced strains the qualifiers are always HOMOLOG_TO. Defaults to False.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_metabolites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metab</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Add CVTerm to a metabolite</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_metabolites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Species</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Adds CVTerm to a metabolite</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entry (string): id to add as annotation
-db_id (string): database to which entry belongs
-metab (libsbml-species): metabolite to add CVTerm to</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entry (str): Id to add as annotation</p></li>
+<li><p>db_id (str): Database to which entry belongs. Must be in metabol_db_dict.keys().</p></li>
+<li><p>metab (Species): Metabolite to add CVTerm to</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Group</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Add CVTerm to a groups pathway</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entry (string): id to add as annotation
-db_id (string): database to which entry belongs
-entity (libsbml-group): pathway to add CVTerm to</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entry (str): Id to add as annotation</p></li>
+<li><p>db_id (str): Database to which entry belongs. Must be in pathway_db_dict.keys().</p></li>
+<li><p>path (Group): Pathway to add CVTerm to</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways_to_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Add CVTerm to a entity as OCCURS IN pathway</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_pathways_to_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Reaction</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Add CVTerm to a reaction as OCCURS IN pathway</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entry (string): id to add as annotation
-db_id (string): database to which entry belongs
-entity (libsbml-group): entity to add CVTerm to</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entry (str): Id to add as annotation</p></li>
+<li><p>db_id (str): Database to which entry belongss</p></li>
+<li><p>reac (Reaction): Reaction to add CVTerm to</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Add CVTerm to a reaction</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_reactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Reaction</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Adds CVTerm to a reaction</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entry (string): id to add as annotation
-db_id (string): database to which entry belongs
-reac (libsbml-reaction): reaction to add CVTerm to</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entry (str): Id to add as annotation</p></li>
+<li><p>db_id (str): Database to which entry belongs. Must be in reaction_db_dict.keys().</p></li>
+<li><p>reac (Reaction): Reaction to add CVTerm to</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -672,9 +727,11 @@ reac (libsbml-reaction): reaction to add CVTerm to</p>
 <span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">add_cv_term_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Adds CVTerm to a unit</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>unit_id (string):    ID to add as URI to annotation
-unit (libSBML Unit): Unit to add CVTerm to
-relation (str):      Provides model qualifier to be added</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>unit_id (str): ID to add as URI to annotation</p></li>
+<li><p>unit (Unit): Unit to add CVTerm to</p></li>
+<li><p>relation (int): Provides model qualifier to be added</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -682,28 +739,29 @@ relation (str):      Provides model qualifier to be added</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">generate_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_m_qt</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.CVTerm</span></span></span></dt>
-<dd><p>Generates a CVTerm with the provided qualifier &amp;
-biological or model qualifier types</p>
+<dd><p>Generates a CVTerm with the provided qualifier &amp; biological or model qualifier types</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
-<li><p>qt: libSBML qualifier type</p></li>
-<li><p>b_m_qt: libSBML biological or model qualifier</p></li>
+<li><p>qt (libSBML qualifier type): BIOLOGICAL_QUALIFIER or MODEL_QUALIFIER</p></li>
+<li><p>b_m_qt (libSBML qualifier): BQM_IS, BQM_IS_HOMOLOG_TO, etc.</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt><dd><p>-&gt; A libSBML CVTerm with the provided qualifier &amp; biological or model qualifier types</p>
+<dt>Returns:</dt><dd><p>CVTerm: With provided qualifier &amp; biological or model qualifier types</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">get_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>extract id for a specific database from CVTerm</p>
+<span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">get_id_from_cv_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.SBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Extract Id for a specific database from CVTerm</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>entity (libsbml Object): Species, Reaction, Gene
-db_id (string): database of interest</p>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>entity (SBase): Species, Reaction, Gene, Pathway</p></li>
+<li><p>db_id (str): Database of interest</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>list: ids of entity belonging to db_id</p>
+<dt>Returns:</dt><dd><p>list[str]: Ids of entity belonging to db_id</p>
 </dd>
 </dl>
 </dd></dl>
@@ -711,13 +769,9 @@ db_id (string): database of interest</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">refinegems.cvterms.</span></span><span class="sig-name descname"><span class="pre">print_cvterm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cvterm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.CVTerm</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Debug function: 
-Prints the URIs contained in the provided CVTerm 
-along with the provided qualifier &amp; biological/model qualifier types</p>
+<dd><p>Debug function: Prints the URIs contained in the provided CVTerm along with the provided qualifier &amp; biological/model qualifier types</p>
 <dl class="simple">
-<dt>Args:</dt><dd><ul class="simple">
-<li><p>cvterm (CVTerm): A libSBML CVTerm</p></li>
-</ul>
+<dt>Args:</dt><dd><p>cvterm (CVTerm): A libSBML CVTerm</p>
 </dd>
 </dl>
 </dd></dl>
