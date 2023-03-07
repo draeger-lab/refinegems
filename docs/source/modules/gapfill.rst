@@ -74,6 +74,7 @@ You can either use it with refineGEMs, just edit the config ...
 or you can use it in your local script with
 
 .. code:: python
-    from refinegems import gapfill as rgg
+    :linenos:
 
+    from refinegems import gapfill as rgg
     rgg.gapfill_analysis(<your model>, gapfill_params, new filename)

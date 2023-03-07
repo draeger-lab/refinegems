@@ -29,12 +29,11 @@ Other applications of ``refinegems`` include curation of a given model these inc
    :caption: Contents:
 
    installation
-   development
-   application
-   examples
    usage
+   main-modules
+   API access <api>
    pipeline
-   modules
+   Notes for developers <development>
 
 * :ref:`genindex`
 * :ref:`search`

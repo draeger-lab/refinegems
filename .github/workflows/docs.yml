@@ -31,6 +31,7 @@ jobs:
         pip install nbsphinx
         pip install sphinx_rtd_theme
         pip install ipython
+        pip install accessible-pygments
 
     - name: Build the site
       run: |

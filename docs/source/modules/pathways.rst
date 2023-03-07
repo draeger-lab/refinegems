@@ -15,6 +15,8 @@ The only function that you will need to access is ``kegg_pathways``:
     :noindex:
 
 .. code:: python
+    :linenos:
+    
     import refinegems as rg 
     model_pathway_groups, non_kegg_reactions = rg.pathways.kegg_pathways(<path to your model>)
     rg.io.write_to_file(model_pathway_groups, <path to modified model>)

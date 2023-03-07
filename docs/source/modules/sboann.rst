@@ -9,6 +9,8 @@ The ``sboann`` module is splitted into a lot of small functions which are all an
     :noindex:
 
 .. code:: python
+    :linenos:
+    
     import refinegems as rg 
     model_sboann = rg.sboann.sbo_annotation(<path to your model>)
     rg.io.write_to_file(model_sboann, <path to modified model>)
