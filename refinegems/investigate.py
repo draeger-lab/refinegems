@@ -83,7 +83,11 @@ def initial_analysis(model: libModel) -> tuple[str, int, int, int]:
         - model (libModel): Model loaded with libSBML
 
     Returns:
-        tuple: (name of model, no of reactions, no of metabolites, no of genes)
+        tuple: Model name (1) & corresponding amounts of entities (2) - (4)
+        (1) str: Name of model
+        (2) int: Number of reactions 
+        (3) int: Number of metabolites
+        (4) int: Number of genes
     """
     name = model.getId()
     reactions = model.getNumReactions()
@@ -99,7 +103,10 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
         - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        tuple: (list of orphans, deadends, disconnected metabolites)
+        tuple: Lists of metabolites that might cause errors (1) - (3) 
+            (1) list: List of orphans
+            (2) list: List of deadends
+            (3) list: List of disconnected metabolites
     """
     orphans = consistency.find_orphans(model)
     deadends = consistency.find_deadends(model)
@@ -130,7 +137,9 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
         - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        tuple: (list of mass unbalanced, charge unbalanced reactions)
+        tuple: Lists of reactions that might cause errors (1) & (2)
+        (1) list: List of mass unbalanced reactions
+        (2) list: List of charge unbalanced reactions
     """
 
     mass_unbalanced = consistency.find_mass_unbalanced_reactions(
