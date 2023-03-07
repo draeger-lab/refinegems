@@ -352,6 +352,7 @@ def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
 
+
 def search_sbo_label(sbo_number: str) -> str:
     """Looks up the SBO label corresponding to a given SBO Term number
 
@@ -385,14 +386,6 @@ def save_user_input(configpath: str) -> dict[str: str]:
     else:
         print('No config or no valid config given, you will be asked for input')
         user_input = {}
-        not_valid = True
-        while not_valid:
-            model = click.prompt('Path to your model file.')
-            if os.path.isfile(model):
-                user_input['model'] = model
-                not_valid = False
-            else:
-                print('File does not exist. Please enter a valid file path')
 
         out_path = click.confirm('Do you want to keep the out path "../rg_out/"?', default=True)
         if not out_path:
@@ -437,77 +430,90 @@ def save_user_input(configpath: str) -> dict[str: str]:
             else:
                 print('Please choose a medium from the given list.')
         user_input['media'] = list_of_media
-        user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
-        user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
         
-        gap_analysis = click.confirm('Do you want to run the gap analysis?') 
-        user_input['gap_analysis'] = gap_analysis
-        if gap_analysis:
-            gap_analysis_params = {}
-            db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
-            gap_analysis_params['db_to_compare'] = db_to_compare
-            if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-                gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-            if db_to_compare == 'GFF':
-                gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
-            if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
-                Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
-                Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
-                Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information')
-                Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe')
-                gap_analysis_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
-            user_input['gap_analysis_params'] = gap_analysis_params
-            
-        mod = click.confirm('Do you want to use functions to modify your model?')
-        if mod:
-            
-            new_path = click.confirm('Do you want to save your modified model to ' + user_input['out_path'] + '<model.id>_modified_<today>.xml?')
-            if new_path:
-                user_input['model_out'] = 'stdout'
+        single = click.confirm('Do you want to investigate or curate a single model?')
+        user_input['single'] = single
+        if single:
+            not_valid = True
+            while not_valid:
+                model = click.prompt('Path to your model file.')
+                if os.path.isfile(model):
+                    user_input['model'] = model
+                    not_valid = False
+                else:
+                    print('File does not exist. Please enter a valid file path')
+        
+            user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
+            user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
+        
+            gap_analysis = click.confirm('Do you want to run the gap analysis?') 
+            user_input['gap_analysis'] = gap_analysis
+            if gap_analysis:
+                gap_analysis_params = {}
+                db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
+                gap_analysis_params['db_to_compare'] = db_to_compare
+                if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
+                    gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
+                if db_to_compare == 'GFF':
+                    gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
+                if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
+                    Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
+                    Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
+                    Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information')
+                    Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe')
+                    gap_analysis_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
+                user_input['gap_analysis_params'] = gap_analysis_params
+                
+            mod = click.confirm('Do you want to use functions to modify your model?')
+            if mod:
+                
+                new_path = click.confirm('Do you want to save your modified model to ' + user_input['out_path'] + '<model.id>_modified_<today>.xml?')
+                if new_path:
+                    user_input['model_out'] = 'stdout'
+                else:
+                    user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
+                
+                user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
+                
+                if not gap_analysis:
+                    user_input['gap_analysis_file'] = click.confirm('Enter path to Excel file with which gaps should be filled')
+                
+                user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
+                    
+                user_input['sboterms'] = click.confirm('Do you want to update the SBO Terms?')
+                
+                user_input['charge_corr'] = click.confirm('Do you want to add charges to uncharged metabolites?')
+                    
+                man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
+                user_input['man_cur'] = man_cur
+
+                if man_cur:
+                    entrez_email = click.prompt('Email to access NCBI Entrez')
+                    user_input['entrez_email'] = entrez_email
+                    man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
+                    user_input['man_cur_type'] = man_cur_type
+                    man_cur_table = click.prompt('Enter the path to the manual curations table')
+                    user_input['man_cur_table'] = man_cur_table
+
+                polish = click.confirm('Do you want to polish the model?')
+                user_input['polish'] = polish
+
+                if polish:
+                    entrez_email = click.prompt('Email to access NCBI Entrez')
+                    user_input['entrez_email'] = entrez_email
+                    id_db = click.prompt('What database is your model based on? BIGG|VMH')
+                    user_input['id_db'] = id_db
+                    lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
+                    user_input['lab_strain'] = lab_strain
+                    protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
+                    user_input['protein_fasta'] = protein_fasta
+                    
             else:
-                user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
-            
-            user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
-             
-            if not gap_analysis:
-                user_input['gap_analysis_file'] = click.confirm('Enter path to Excel file with which gaps should be filled')
-            
-            user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
-                
-            user_input['sboterms'] = click.confirm('Do you want to update the SBO Terms?')
-            
-            user_input['charge_corr'] = click.confirm('Do you want to add charges to uncharged metabolites?')
-                
-            man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
-            user_input['man_cur'] = man_cur
-
-            if man_cur:
-                entrez_email = click.prompt('Email to access NCBI Entrez')
-                user_input['entrez_email'] = entrez_email
-                man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
-                user_input['man_cur_type'] = man_cur_type
-                man_cur_table = click.prompt('Enter the path to the manual curations table')
-                user_input['man_cur_table'] = man_cur_table
-
-            polish = click.confirm('Do you want to polish the model?')
-            user_input['polish'] = polish
-
-            if polish:
-                entrez_email = click.prompt('Email to access NCBI Entrez')
-                user_input['entrez_email'] = entrez_email
-                id_db = click.prompt('What database is your model based on? BIGG|VMH')
-                user_input['id_db'] = id_db
-                lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
-                user_input['lab_strain'] = lab_strain
-                protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
-                user_input['protein_fasta'] = protein_fasta
-                
-        else:
-            user_input['keggpathways'] = False
-            user_input['polish'] = False
-            user_input['sboterms'] = False
-            user_input['charge_corr'] = False
-            user_input['man_cur'] = False
+                user_input['keggpathways'] = False
+                user_input['polish'] = False
+                user_input['sboterms'] = False
+                user_input['charge_corr'] = False
+                user_input['man_cur'] = False
             
         today = date.today().strftime("%Y%m%d")
         
