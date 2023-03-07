@@ -49,23 +49,25 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
         - filename (str): Path to output file for gapfill analysis result
         
     Returns:
-        - Case 'KEGG' - Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
-        - Case 'BioCyc' - Five tables:
-        
-            (1): Gap fill statistics with the columns 
-                'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
-            (2): Genes with the columns 
-                'locus_tag' 'protein_id' 'model_id' 'name'
-            (3): Metabolites with the columns 
-                'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
-            (4): Metabolites without BiGG ID with the columns 
-                'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')  
-            (5): Reactions with the columns 
-                'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
-                'bigg_reaction'
+        - Case 'KEGG'
+            pd.DataFrame: Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
+        - Case 'BioCyc'
+            tuple: Five tables (1) - (5)
+                (1) pd.DataFrame: Gap fill statistics with the columns 
+                                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+                (2) pd.DataFrame: Genes with the columns 
+                                    'locus_tag' 'protein_id' 'model_id' 'name'
+                (3) pd.DataFrame: Metabolites with the columns 
+                                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
+                (4) pd.DataFrame: Metabolites without BiGG ID with the columns 
+                                    'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')  
+                (5) pd.DataFrame: Reactions with the columns 
+                                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
+                                    'bigg_reaction'
                 
-        - Case 'KEGG+BioCyc': Output of both cases 'KEGG' & 'BioCyc'
-            -> Table reactions contains additionally column 'KEGG'
+        - Case 'KEGG+BioCyc': 
+            tuple: Six tables (1)-(5) from output of 'BioCyc' & (6) from output of 'KEGG'
+                    -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
     db_to_compare = gapfill_params['db_to_compare']
@@ -134,24 +136,24 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
     return result
     
     
-def gapfill_model(model_libsbml: libModel, gapfill_analysis_result: Union[str, tuple]):
+def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple]) -> libModel:
     """Main function to fill gaps in a model from a table
 
     Args:
         - model_libsbml (libModel): Model loaded with libSBML
-        - gapfill_analysis_result (str|tuple): Path to Excel file from gapfill_analysis|Tuple of pd.DataFrames obtained from gapfill_analysis
+        - gap_analysis_result (str|tuple): Path to Excel file from gap_analysis|Tuple of pd.DataFrames obtained from gap_analysis
         
     Returns:
         libModel: Gap filled model
     """
     model = model_libsbml
     missing_genes_df, missing_metabs_df, missing_reacs_df = None, None, None
-    if type(gapfill_analysis_result) == tuple:  # Tuple of pandas dataframes from gapfill_analysis
-        missing_genes_df = gapfill_analysis_result[1]
-        missing_metabs_df = gapfill_analysis_result[2]
-        missing_reacs_df = gapfill_analysis_result[4]
+    if type(gap_analysis_result) == tuple:  # Tuple of pandas dataframes from gap_analysis
+        missing_genes_df = gap_analysis_result[1]
+        missing_metabs_df = gap_analysis_result[2]
+        missing_reacs_df = gap_analysis_result[4]
     else:  # Excel file from user-input
-        with pd.ExcelFile(gapfill_analysis_result) as reader:
+        with pd.ExcelFile(gap_analysis_result) as reader:
             gp_analysis_res = pd.read_excel(reader, sheet_name=['genes', 'metabolites', 'reactions'])
         missing_genes_df = gp_analysis_res.get('genes')
         missing_metabs_df = gp_analysis_res.get('metabolites')
@@ -237,11 +239,11 @@ def gapfill(
         - gapfill_model_out (str): Path where gapfilled model should be written to
         
     Returns:
-        tuple:
-            - pd.DataFrame|tuple(pd.DataFrame): Result from gapfill_analysis()
-            - libModel: Gap filled model
+        tuple: ``gap_analysis()`` table(s) (1) & libSBML model (2)
+            (1) pd.DataFrame|tuple(pd.DataFrame): Result from function ``gap_analysis()``
+            (2) libModel: Gap filled model
     """
-    gapfill_analysis_result = gap_analysis(model_libsbml, gapfill_params, filename)
-    model = gapfill_model(model_libsbml, gapfill_analysis_result)
+    gap_analysis_result = gap_analysis(model_libsbml, gapfill_params, filename)
+    model = gapfill_model(model_libsbml, gap_analysis_result)
     
-    return gapfill_analysis_result, model
+    return gap_analysis_result, model
