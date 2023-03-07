@@ -1,7 +1,7 @@
 [![Update Docs](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml/badge.svg)](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
-<img src="https://github.com/draeger-lab/refinegems/blob/cb4ca930ac022a5ee20e482a49ce8d07b78ad6e5/docs/source/images/refineGEMs_logo.png" height="200"/>
+<img src="https://github.com/draeger-lab/refinegems/blob/18a7baa1696a278942acea101261b0fb59e99d88/docs/source/images/refineGEMs_logo.png" height="200"/>
 </p>
 
 # refineGEMs
