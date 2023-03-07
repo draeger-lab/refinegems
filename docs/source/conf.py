@@ -71,12 +71,6 @@ html_theme_options = {
     'display_version': False
 }
 
-# Adds logo as favicon to tab
-html_favicon = 'images/refineGEMs_logo.png'
-
-# Changes code highlighting
-pygments_style = 'blinds-light'
-
 # Explicitly assign the master document
 master_doc = 'index'
 

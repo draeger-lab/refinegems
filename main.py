@@ -112,12 +112,39 @@ def main(configpath=None):
             model_libsbml = rg.curate.update_annotations_from_table(model_libsbml, man_ann)
             model_libsbml = rg.curate.update_annotations_from_others(model_libsbml)
             logging.info('Manual update of annotations was done for ' + model_libsbml.getId())
+            
+    if config['gap_analysis'] and config['gapfill_model']:
+        filename = f'{config["out_path"]}{name}_gap_analysis_{str(today)}.xlsx'
+        if config['gap_analysis_params'].get('db_to_compare') not in ('BioCyc', 'KEGG+BioCyc'):
+            logging.warning('Currently, only the result from the \'BioCyc\' or \'KEGG+BioCyc\' runs can be directly added to a model.')
+            gap_analysis = rg.gapfill.gap_analysis(model_libsbml, config['gap_analysis_params'], filename)
+            logging.info(f'Gap analysis for {model_libsbml.getId()} with {config["gap_analysis_params"].get("db_to_compare")} was performed.')
+            logging.info(f'Complete Excel table is in file: {filename}.')
+        else:
+            gapfill = rg.gapfill.gapfill(model_libsbml, config['gap_analysis_params'], filename)
+            gap_analysis_stats = gapfill[0]
+            logging.info(f'Statistics on missing entites for {model_libsbml.getId()}:')
+            logging.info(gap_analysis_stats)
+            logging.info(f'Complete Excel table is in file: {filename}.')
+            model_libsbml = gapfill[-1]
+            logging.info(f'Gaps were filled in {model_libsbml.getId()}.')
+    elif config['gap_analysis']:
+        filename = f'{config["out_path"]}{name}_gap_analysis_{str(today)}.xlsx'
+        gap_analysis = rg.gapfill.gap_analysis(model_libsbml, config['gap_analysis_params'], filename)
+        logging.info(f'Gap analysis for {model_libsbml.getId()} with {config["gap_analysis_params"].get("db_to_compare")} was performed.')
+        if  config["gap_analysis_params"].get("db_to_compare") != 'KEGG':
+            logging.info(f'Statistics on missing entites for {model_libsbml.getId()}:')
+            logging.info(gap_analysis[0])
+        logging.info(f'Complete Excel table is in file: {filename}.')
+    elif config['gapfill_model']:
+        model_libsbml = rg.gapfill.gapfill_model(model_libsbml, config['gap_analysis_file'])
+        logging.info(f'Gaps were filled in {model_libsbml.getId()}.')
     
     if (config['polish']):
         model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['protein_fasta'], config['lab_strain'])
         logging.info(model_libsbml.getId() + ' has been polished')
     
-    mods = [config['keggpathways'], config['sboterms'], config['charge_corr'], config['man_cur'], config['polish']]
+    mods = [config['keggpathways'], config['sboterms'], config['charge_corr'], config['man_cur'], config['gapfill_model'], config['polish']]
     
     if any(mods):
         if config['model_out'] == 'stdout':   

@@ -7,16 +7,14 @@
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
-    <link rel="shortcut icon" href="_static/refineGEMs_logo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
@@ -48,9 +46,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems package</a></li>
 </ul>
@@ -259,6 +255,12 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules.html#refinegems.gapfill.gap_analysis">gap_analysis() (in module refinegems.gapfill)</a>
+</li>
+      <li><a href="modules.html#refinegems.gapfill.gapfill">gapfill() (in module refinegems.gapfill)</a>
+</li>
+      <li><a href="modules.html#refinegems.gapfill.gapfill_model">gapfill_model() (in module refinegems.gapfill)</a>
+</li>
       <li><a href="modules.html#refinegems.cvterms.generate_cvterm">generate_cvterm() (in module refinegems.cvterms)</a>
 </li>
       <li><a href="modules.html#refinegems.polish.generate_new_curie_set">generate_new_curie_set() (in module refinegems.polish)</a>
@@ -297,12 +299,12 @@
 </li>
       <li><a href="modules.html#refinegems.investigate.get_model_info">get_model_info() (in module refinegems.investigate)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.modelseed.get_modelseed_charges">get_modelseed_charges() (in module refinegems.modelseed)</a>
 </li>
       <li><a href="modules.html#refinegems.modelseed.get_modelseed_compounds">get_modelseed_compounds() (in module refinegems.modelseed)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#refinegems.investigate.get_orphans_deadends_disconnected">get_orphans_deadends_disconnected() (in module refinegems.investigate)</a>
 </li>
       <li><a href="modules.html#refinegems.pathways.get_pathway_groups">get_pathway_groups() (in module refinegems.pathways)</a>
@@ -427,6 +429,8 @@
 </li>
         <li><a href="modules.html#module-refinegems.cvterms">refinegems.cvterms</a>
 </li>
+        <li><a href="modules.html#module-refinegems.gapfill">refinegems.gapfill</a>
+</li>
         <li><a href="modules.html#module-refinegems.growth">refinegems.growth</a>
 </li>
         <li><a href="modules.html#module-refinegems.investigate">refinegems.investigate</a>
@@ -516,6 +520,13 @@
 
       <ul>
         <li><a href="modules.html#module-refinegems.cvterms">module</a>
+</li>
+      </ul></li>
+      <li>
+    refinegems.gapfill
+
+      <ul>
+        <li><a href="modules.html#module-refinegems.gapfill">module</a>
 </li>
       </ul></li>
       <li>

@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Development &mdash; refinegems 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
-    <link rel="shortcut icon" href="_static/refineGEMs_logo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -54,9 +53,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems package</a></li>
 </ul>
@@ -109,9 +106,9 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="development">
+<section id="development">
 <h1>Development<a class="headerlink" href="#development" title="Permalink to this heading"></a></h1>
-<div class="section" id="development-installation">
+<section id="development-installation">
 <h2>Development installation<a class="headerlink" href="#development-installation" title="Permalink to this heading"></a></h2>
 <div class="admonition attention">
 <p class="admonition-title">Attention</p>
@@ -125,20 +122,20 @@
 </ul>
 </div>
 <p>You can install the packages via pip to your local environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>nbsphinx<span class="w"> </span>sphinx_rtd_theme<span class="w"> </span>pandoc<span class="w"> </span>ipython
 </pre></div>
 </div>
 <p>If you run into an error with jinja2, just switch to version 3.0.3:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="nv">jinja2</span><span class="o">==</span><span class="m">3</span>.0.3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">jinja2</span><span class="o">==</span><span class="m">3</span>.0.3
 </pre></div>
 </div>
-</div>
-<div class="section" id="development-notes">
+</section>
+<section id="development-notes">
 <h2>Development notes<a class="headerlink" href="#development-notes" title="Permalink to this heading"></a></h2>
 <p>You can enable debug logging by replacing <code class="docutils literal notranslate"><span class="pre">level=logging.INFO</span></code>  with <code class="docutils literal notranslate"><span class="pre">level=logging.DEBUG</span></code>.</p>
 <p>If you want your print message to show in the log file, replace the <code class="docutils literal notranslate"><span class="pre">`print()</span></code> statement by <code class="docutils literal notranslate"><span class="pre">logging.info()</span></code>.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

@@ -15,6 +15,7 @@ Note that at this time most of the modules only make sense when you use the resp
         >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
         Of the description part in the header line only locus_tag, protein and protein_id are important for ``polish``.
 
+
 .. autofunction:: refinegems.polish.polish
     :noindex:
 .. autofunction:: refinegems.modelseed.compare_to_modelseed
