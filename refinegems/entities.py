@@ -90,7 +90,9 @@ def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tu
         - email (str): User Email to access the NCBI Entrez database
 
     Returns:
-        tuple: (gpr, modified model)
+        tuple: libSBML GeneProduct (1) & libSBML model (2)
+            (1) GeneProduct: Created gene product
+            (2) libModel: Model containing the created gene product
     """
     Entrez.email = email
     name, locus = search_ncbi_for_gpr(locus_tag)
@@ -115,7 +117,9 @@ def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein
         - protein_id (str): NCBI Protein/RefSeq ID
 
     Returns:
-        tuple: (gpr, modified model)
+        tuple: libSBML GeneProduct (1) & libSBML model (2)
+            (1) GeneProduct: Created gene product
+            (2) libModel: Model containing the created gene product
     """
     id_db = None
     gp = model.getPlugin(0).createGeneProduct()
@@ -145,7 +149,9 @@ def create_species(
         - chem_formula (str): Chemical formula for the metabolite
 
     Returns:
-        tuple: (metabolite, modified model)
+        tuple: libSBML Species (1) & libSBML model (2)
+        (1) Species: Created species/metabolite
+        (2) libModel: Model containing the created metabolite
     """
     metabolite = model.createSpecies()
     metabolite.setId(f'M_{metabolite_id}')
@@ -196,7 +202,9 @@ def create_reaction(
         - genes (str|list): List of genes belonging to reaction
 
     Returns:
-        tuple: (reaction, modified model)
+        tuple: libSBML reaction (1) & libSBML model (2)
+            (1) Reaction: Created reaction 
+            (2) libModel: Model containing the created reaction
     """
     reaction = model.createReaction()
     reaction.setId('R_' + reaction_id)
