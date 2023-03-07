@@ -4,6 +4,7 @@ Growth simulation with RefineGEMs
 Interpreting the results
 ------------------------
 Outputs a table with the column headers:
+
 - essential = metabolites not present in the medium but necessary for growth
 - missing = all exchanges missing in the model but given in medium
 
