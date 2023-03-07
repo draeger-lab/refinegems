@@ -440,36 +440,37 @@ def save_user_input(configpath: str) -> dict[str: str]:
         user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
         user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
         
-        # gapfill_analysis = click.confirm('Do you want to run the gapfill analysis?') 
-        # user_input['gapfill_analysis'] = gapfill_analysis
-        # if gapfill_analysis:
-        #     gapfill_params = {}
-        #     db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
-        #     gapfill_params['db_to_compare'] = db_to_compare
-        #     if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-        #         gapfill_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-        #     if db_to_compare == 'GFF':
-        #         gapfill_params['gff_file'] = click.prompt('Enter the path to your organisms GFF file')
-        #     if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
-        #         Path0 = click.prompt()
-        #         Path1 = click.prompt()
-        #         Path2 = click.prompt()
-        #         Path3 = click.prompt()
-        #         gapfill_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
-        #     user_input['gapfill_analysis_params'] = gapfill_params
-        # else:
-        #     user_input['gapfill_model'] = False
+        gap_analysis = click.confirm('Do you want to run the gap analysis?') 
+        user_input['gap_analysis'] = gap_analysis
+        if gap_analysis:
+            gap_analysis_params = {}
+            db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
+            gap_analysis_params['db_to_compare'] = db_to_compare
+            if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
+                gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
+            if db_to_compare == 'GFF':
+                gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
+            if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
+                Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
+                Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
+                Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information')
+                Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe')
+                gap_analysis_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
+            user_input['gap_analysis_params'] = gap_analysis_params
             
         mod = click.confirm('Do you want to use functions to modify your model?')
         if mod:
-            # if gapfill_analysis:
-            #     user_input['gapfill_model'] = click.confirm('Do you want to gap fill your model?')
             
             new_path = click.confirm('Do you want to save your modified model to ' + user_input['out_path'] + '<model.id>_modified_<today>.xml?')
             if new_path:
                 user_input['model_out'] = 'stdout'
             else:
                 user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
+            
+            user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
+             
+            if not gap_analysis:
+                user_input['gap_analysis_file'] = click.confirm('Enter path to Excel file with which gaps should be filled')
             
             user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
                 
