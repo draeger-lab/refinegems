@@ -38,9 +38,10 @@ def extract_kegg_reactions(model: libModel) -> tuple[dict, list]:
     Args:
         - model (libModel): Model loaded with libSBML. Output of load_model_enable_groups.
 
-    Returns (tuple): 
-        - (dict) Reaction Id as key and Kegg Id as value
-        - (list[str]) Ids of reactions without KEGG annotation
+    Returns:
+        tuple: Dictionary 'reaction_id': 'KEGG_id' (1) & List of reactions without KEGG Id (2)
+            (1) dict: Reaction Id as key and Kegg Id as value
+            (2) list: Ids of reactions without KEGG annotation
     """
     list_reac = model.getListOfReactions()
     kegg_reactions = {}
@@ -174,9 +175,10 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
     Args:
         - modelpath (str): Path to GEM
         
-    Returns (tuple):
-        - (libModel) Modified model with Pathways as groups
-        - (list) Ids of reactions without KEGG annotation
+    Returns:
+        tuple: libSBML model (1) & List of reactions without KEGG Id (2)
+            (1) libModel: Modified model with Pathways as groups
+            (2) list: Ids of reactions without KEGG annotation
     """
     model = load_model_enable_groups(modelpath)
 
