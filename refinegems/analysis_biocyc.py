@@ -154,9 +154,9 @@ def get_missing_reactions(
                                        'Reaction-Direction' 'Spontaneous?'
       
    Returns:
-      -> Two tables (1) & (2):
-         (1): Table containing only the metabolites corresponding to the missing reactions
-         (2): Table containing the missing reactions with the corresponding data
+      tuple: Two tables (1) & (2)
+         (1) pd.DataFrame: Table containing only the metabolites corresponding to the missing reactions
+         (2) pd.DataFrame: Table containing the missing reactions with the corresponding data
    """
    model_reacs = get_model_reacs_or_metabs(model_libsbml)
    biocyc_reacs = get_biocyc_reactions(inpath)
@@ -250,7 +250,7 @@ def get_missing_metabolites(
                                           'Compound' 'Chemical Formula' 'InChI-Key'
       
    Returns:
-      -> Two tables (1) & (2):
+      tuple: Two tables (1) & (2)
          (1): Table containing the metabolites corresponding to the missing reactions without BiGG IDs
          (2): Table containing the metabolites corresponding to the missing reactions with BiGG IDs
    """
@@ -293,10 +293,10 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.D
       - fasta (str):                   Path to a FASTA file where the headers contain the information protein_id and locus_tag
          
    Returns:
-      -> Two tables (1) & (2):
-         (1): Table with the columns locus_tag, Protein_id & Model_id 
-               (The model_id is similar to how CarveMe generates the GeneProduct ID.)
-         (2): The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
+      tuple: Two tables (1) & (2)
+         (1) pd.DataFrame: Table with the columns locus_tag, Protein_id & Model_id 
+                           (The model_id is similar to how CarveMe generates the GeneProduct ID.)
+         (2) pd.DataFrame: The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
    """
    # Get locus tags from the missing reactions
    locus_tags = list(set([lt for row in missing_reactions['locus_tag'] for lt in row]))
@@ -422,12 +422,12 @@ def biocyc_gene_comp(
       - biocyc_file_paths (list):   List of the files required for the BioCyc analysis
          
    Returns: 
-      -> Five tables (1) - (5):
-         (1): Table containing the statistics of the BioCyc gapfill analysis
-         (2): Table containing the missing genes that belong to the missing reactions
-         (3): Table containing the missing metabolites with BiGG IDs belonging to the missing reactions
-         (4): Table containing the missing metabolites without BiGG IDs belonging to the missing reactions
-         (5): Table containing the missing reactions
+      tuple: Five tables (1) - (5)
+         (1) pd.DataFrame: Table containing the statistics of the BioCyc gapfill analysis
+         (2) pd.DataFrame: Table containing the missing genes that belong to the missing reactions
+         (3) pd.DataFrame: Table containing the missing metabolites with BiGG IDs belonging to the missing reactions
+         (4) pd.DataFrame: Table containing the missing metabolites without BiGG IDs belonging to the missing reactions
+         (5) pd.DataFrame: Table containing the missing reactions
    """
    # Extract missing reactions from all missing genes
    genes2reactions = get_missing_genes2reactions(model_libsbml, biocyc_file_paths[0])
