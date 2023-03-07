@@ -32,7 +32,7 @@ def load_model_enable_groups(modelpath: str) -> libModel:
     return model
 
 
-def extract_kegg_reactions(model: libModel) -> tuple(dict, list):
+def extract_kegg_reactions(model: libModel) -> tuple[dict, list]:
     """Extract KEGG Ids from reactions
 
     Args:
@@ -168,7 +168,7 @@ def create_pathway_groups(model: libModel, pathway_groups):
     return model
 
 
-def kegg_pathways(modelpath: str) -> tuple(libModel, list[str]):
+def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
 
     Args:

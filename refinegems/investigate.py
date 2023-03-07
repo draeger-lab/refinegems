@@ -76,7 +76,7 @@ def get_memote_score(memote_report: dict) -> float:
     return memote_report['score']['total_score']
 
 
-def initial_analysis(model: libModel) -> tuple(str, int, int, int):
+def initial_analysis(model: libModel) -> tuple[str, int, int, int]:
     """Extracts most important numbers of GEM
 
     Args:
@@ -92,7 +92,7 @@ def initial_analysis(model: libModel) -> tuple(str, int, int, int):
     return name, reactions, metabolites, genes
 
 
-def get_orphans_deadends_disconnected(model: cobraModel) -> tuple(list[str], list[str], list[str]):
+def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], list[str], list[str]]:
     """Uses MEMOTE functions to extract orphans, deadends and disconnected metabolites
 
     Args:
@@ -123,7 +123,7 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple(list[str], lis
     return orphan_list, deadend_list, disconnected_list
 
 
-def get_mass_charge_unbalanced(model: cobraModel) -> tuple(list[str], list[str]):
+def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]:
     """Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition
 
     Args:

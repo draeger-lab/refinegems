@@ -59,7 +59,7 @@ def get_model_charges(model: cobraModel) -> pd.DataFrame:
     return df_charges
 
 
-def get_modelseed_charges(modelseed_compounds: pd.DataFrame):
+def get_modelseed_charges(modelseed_compounds: pd.DataFrame) -> pd.DataFrame:
     """Extract table with BiGG, charges and formulae
 
     Args:
@@ -186,7 +186,7 @@ def get_compared_formulae(formula_mismatch: pd.DataFrame) -> pd.DataFrame:
     return formula_mismatch
 
 
-def compare_to_modelseed(model: cobraModel) -> tuple(pd.DataFrame, pd.DataFrame):
+def compare_to_modelseed(model: cobraModel) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Executes all steps to compare model metabolites to ModelSEED metabolites
 
     Args:

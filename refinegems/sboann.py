@@ -10,7 +10,7 @@ It is splitted into a lot of small functions which are all annotated, however wh
 
 import re
 import sqlite3
-from libsbml import SpeciesReference, Compartment, Reaction
+from libsbml import SpeciesReference, Compartment, Reaction, Species
 from libsbml import Model as libModel
 from refinegems.databases import PATH_TO_DB
 
@@ -414,14 +414,14 @@ def checkPhosphorylation(reac: Reaction):
         reac.setSBOTerm('SBO:0000216')
 
 
-def hasReactantPair(reac, met1, met2):
+def hasReactantPair(reac: Reaction, met1: Species, met2: Species) -> bool:
     """checks if a pair of metabolites is present in reaction
        needed for special reactions like redox or deamination
 
     Args:
         - reac (Reaction): Reaction from sbml model
-        met1 (libsbml-metabolite): metabolite 1 of metabolite pair
-        met2 (libsbml-metabolite): metabolite 2 of metabolite pair
+        - met1 (Species): metabolite 1 of metabolite pair
+        - met2 (Species): metabolite 2 of metabolite pair
 
     Returns:
         bool: True if one of the metabolites is in reactants and the other in products
@@ -598,7 +598,7 @@ def checkHydrolysisViaEC(reac: Reaction):
             reac.setSBOTerm('SBO:0000376')
 
 
-def addSBOviaEC(reac: Reaction, cur: sqlite3.connect.cursor):
+def addSBOviaEC(reac: Reaction, cur):
     """Adds SBO terms based on EC numbers given in the annotations of a reactions
 
     Args:
@@ -645,7 +645,7 @@ def addSBOviaEC(reac: Reaction, cur: sqlite3.connect.cursor):
                             reac.setSBOTerm(sbo1)
 
 
-def addSBOfromDB(reac: Reaction, cur: sqlite3.connect.cursor) -> bool:
+def addSBOfromDB(reac: Reaction, cur) -> bool:
     """Adds SBO term based on bigg id of a reaction
 
     Args:
@@ -714,10 +714,10 @@ def addSBOforCompartments(model):
 ### end functions from Nantia ###
 
 def sbo_annotation(model_libsbml: libModel) -> libModel:
-    """executes all steps to annotate SBO terms to a given model (former main function of original script by Elisabeth Fritze)
+    """Executes all steps to annotate SBO terms to a given model (former main function of original script by Elisabeth Fritze)
 
     Args:
-        model_libsbml (libModel): Model loaded with libsbml
+        - model_libsbml (libModel): Model loaded with libsbml
       
     Returns:
         libModel: Modified model with SBO terms

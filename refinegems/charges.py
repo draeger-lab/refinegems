@@ -13,7 +13,7 @@ from refinegems.modelseed import get_modelseed_compounds
 __author__ = "Famke Baeuerle"
 
 
-def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple(libModel, dict):
+def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple[libModel, dict]:
     """Adds charges taken from given database to metabolites which have no defined charge
 
     Args:
@@ -47,7 +47,7 @@ def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple(l
     return model, mulchar
 
 
-def correct_charges_modelseed(model: libModel) -> tuple(libModel, dict):
+def correct_charges_modelseed(model: libModel) -> tuple[libModel, dict]:
     """Wrapper function which completes the steps to charge correction with the ModelSEED database
 
     Args:
