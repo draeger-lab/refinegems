@@ -192,9 +192,10 @@ def compare_to_modelseed(model: cobraModel) -> tuple[pd.DataFrame, pd.DataFrame]
     Args:
         - model (cobraModel): Model loaded with COBRApy
 
-    Returns (tuple):
-        - (pd.DataFrame) Table with charge mismatches 
-        - (pd.DataFrame) Table with formula mismatches
+    Returns:
+        tuple: Tables with charge (1) & formula (2) mismatches
+            (1) pd.DataFrame: Table with charge mismatches 
+            (2) pd.DataFrame: Table with formula mismatches
     """
     ms_comp = get_modelseed_compounds()
     model_charges = get_model_charges(model)
