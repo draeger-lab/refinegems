@@ -67,7 +67,7 @@ def add_reac(entity_list: list[Reaction], id_db: str):
         Args:
             - entity_list (list): libSBML ListOfReactions
             - id_db (str): Name of the database of the IDs contained in a model             
-        """
+    """
     # Use regex to generalise check for growth/biomass reaction
     regex = 'growth|_*biomass\d*_*'
     
@@ -201,8 +201,8 @@ def create_unit(
         - uri_is (str):           URI supporting the specified unit
         - uri_idf (str):          URI supporting the derived from unit
       
-    Return:
-        libSBML unit object
+    Returns:
+        Unit: libSBML unit object
     """
     unit = Unit(*model_specs)
     unit.setKind(kind)
@@ -227,8 +227,8 @@ def create_unit_definition(model_specs: tuple[int], identifier: str, name: str,
         - name (str):          Full name of the defined unit
         - units (list):        All units the defined unit consists of
          
-    Return:
-        libSBML unit definition object
+    Returns:
+        UnitDefinition: libSBML unit definition object
     """
     unit_definition = UnitDefinition(*model_specs)
     unit_definition.setId(identifier)
@@ -249,8 +249,8 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
     Args:
         - model (libModel): Model loaded with libSBML
          
-    Return:
-        list of libSBML UnitDefinitions
+    Returns:
+        list: List of libSBML UnitDefinitions
     """
     # Get model level & version for unit & unit definition
     model_specs = model.getLevel(), model.getVersion()
@@ -361,7 +361,7 @@ def add_fba_units(model: libModel):
           
 
 def set_default_units(model: libModel):
-    """ Sets default units of model
+    """Sets default units of model
 
     Args:
         - model (libModel): Model loaded with libSBML
@@ -523,7 +523,7 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
         - curie_list (list[str]): List containing CURIEs
             
     Returns:
-        Dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
+        SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
     """
     curie_dict = SortedDict()
     
@@ -616,7 +616,7 @@ def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_patte
         - new_pattern (bool):                          True if new pattern is wanted, otherwise False
             
     Returns:
-        A sorted set containing complete CURIEs
+        SortedSet: Sorted set containing complete CURIEs
     """
     curie_set = SortedSet()
     
@@ -721,13 +721,16 @@ def improve_curies(entities: SBase, new_pattern: bool):
                     improve_curie_per_entity(unit, new_pattern)
 
 
-def polish_annotations(model: libModel, new_pattern: bool):
+def polish_annotations(model: libModel, new_pattern: bool) -> libModel:
     """Polishes all annotations in a model such that no duplicates are present 
         & the same pattern is used for all CURIEs
         
     Args:
-        - model (libModel):        Model loaded with libSBML
-        - new_pattern (bool):   True if new pattern is wanted, otherwise False  
+        - model (libModel):     Model loaded with libSBML
+        - new_pattern (bool):   True if new pattern is wanted, otherwise False
+        
+    Returns:
+        libModel: libSBML model with polished annotations
     """
     listOf_dict = {
         'model': model,
@@ -894,7 +897,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool): 
+def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool) -> libModel: 
     """Completes all steps to polish a model
         (Tested for models having either BiGG or VMH identifiers.)
 
@@ -904,6 +907,9 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
         - id_db (str): Main database identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
+    
+    Returns:
+        libModel: Polished libSBML model
     """
     colorama_init(autoreset=True)
     
