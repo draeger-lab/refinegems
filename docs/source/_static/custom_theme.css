@@ -28,6 +28,9 @@
 a:link {
     color: #b4a069 !important;
 }
+a.reference {
+    color: #b4a069 !important;
+}
 a.reference:visited {
     color: inherit;
 }
