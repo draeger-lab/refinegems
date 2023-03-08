@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pipeline: From genome sequence to draft model &mdash; refinegems 1.0 documentation</title>
+  <title>Pipeline: From genome sequence to draft model &mdash; refineGEMs 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
@@ -61,7 +61,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">refinegems</a>
+          <a href="index.html">refineGEMs</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -105,7 +105,44 @@
 </style>
 <section id="pipeline-from-genome-sequence-to-draft-model">
 <h1>Pipeline: From genome sequence to draft model<a class="headerlink" href="#pipeline-from-genome-sequence-to-draft-model" title="Permalink to this heading"></a></h1>
-<img alt="Workflow from genome sequence to a draft model" src="_images/genome2draft.svg" /></section>
+<p>Generating a model for an organism where no information on genes and proteins is obtainable via any database
+causes the problem that the model will not contain valid database identifiers for any GeneProduct. To resolve this issue the
+workflow in Figure <a class="reference internal" href="#workflow"><span class="std std-numref">Fig. 1</span></a> can be used.</p>
+<ol class="arabic">
+<li><p>First annotate the genome with NCBI’s Prokaryotic Genome Annotation Pipeline (PGAP) to obtain the same FASTA format as used in NCBI.</p></li>
+<li><p>Then use diamond with the <code class="docutils literal notranslate"><span class="pre">nr</span></code> database from NCBI and the obtained annotated FASTA file as input. Restrict the search to your organism’s taxon if known and use the flag for taxonomy checking.</p></li>
+<li><p>Check if any protein in the annotation FASTA file still has no database identifier.</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">-&gt; YES: Rerun diamond without the taxonomy check and without the restriction for the organism’s taxon.</div>
+<div class="line"><br /></div>
+<div class="line">-&gt; NO: Continue with step 4.</div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Add the diamond result to the annotated FASTA file.</p></li>
+<li><p>Run e.g. <a href="#id1"><span class="problematic" id="id2">``</span></a>CarveME``to obtain a draft model.</p></li>
+<li><p>Check if in the model any GeneProducts without NCBI Protein or RefSeq identifiers occur.</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">-&gt; YES:</div>
+<div class="line-block">
+<div class="line">i. Use individual BLAST searches for the remaining GeneProducts.</div>
+<div class="line">ii. Add the results to the annotated and refined FASTA file.</div>
+<div class="line">iii. Create again a draft model with the same program with the newly refined FASTA file.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">-&gt; NO: The draft model is done.</div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+<figure class="align-default" id="id3">
+<span id="workflow"></span><img alt="Workflow from genome sequence to a draft model" src="_images/genome2draft.svg" /><figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Workflow from genome sequence to a draft model</span><a class="headerlink" href="#id3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
 
 
            </div>
@@ -118,7 +155,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Famke Bäuerle.</p>
+    <p>&#169; Copyright 2023, Famke Bäuerle and Gwendolyn O. Gusak.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
