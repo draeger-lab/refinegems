@@ -77,6 +77,8 @@ html_favicon = 'images/refineGEMs_logo.png'
 # Changes code highlighting
 pygments_style = 'blinds-light'
 
+# Make figures numbered
+numfig = True
 
 # Explicitly assign the master document
 master_doc = 'index'
