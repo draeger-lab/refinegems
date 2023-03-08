@@ -449,11 +449,10 @@ def save_user_input(configpath: str) -> dict[str: str]:
             user_input['gap_analysis'] = gap_analysis
             if gap_analysis:
                 gap_analysis_params = {}
-                db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
+                db_to_compare = click.prompt('One of the choices KEGG|BioCyc|KEGG+BioCyc') #|GFF
                 gap_analysis_params['db_to_compare'] = db_to_compare
                 if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
                     gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-                if db_to_compare == 'GFF':
                     gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
                 if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
                     Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
