@@ -309,9 +309,6 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.D
    missing_genes = locus_tags_df.merge(ids_df, on='locus_tag')
    statistics_df.loc['Protein', 'Can be added'] = len(missing_genes['locus_tag'].unique().tolist())
    
-   missing_genes.to_csv('./missing_genes_df.tsv', sep='\t')
-   missing_reactions.to_csv('./missing_reactions.tsv', sep='\t')
-   
    # Replace the locus tags in the reaction dataframe with the gene model ID
    def transform_lt_into_gp_model_id(locus_tag_list: list[str]) -> list[str]:
       return [missing_genes.loc[lt, 'model_id'] for lt in locus_tag_list]
