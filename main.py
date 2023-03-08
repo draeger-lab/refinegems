@@ -126,7 +126,7 @@ def main(configpath=None):
                 logging.info(f'Complete Excel table is in file: {filename}.')
             else:
                 gapfill = rg.gapfill.gapfill(model_libsbml, config['gap_analysis_params'], filename)
-                gap_analysis_stats = gapfill[0]
+                gap_analysis_stats = gapfill[0][0]
                 logging.info(f'Statistics on missing entites for {model_libsbml.getId()}:')
                 logging.info(gap_analysis_stats)
                 logging.info(f'Complete Excel table is in file: {filename}.')
