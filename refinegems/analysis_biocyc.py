@@ -333,7 +333,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
    
    # Finds the charges through the ChEBI/BiGG API, defaults to: 0
    def find_charge(row: pd.Series) -> int:
-      chebi_id, bigg_id = str(row.get('ChEBI')), str(row.get('bigg_id'))
+      chebi_id, bigg_id = str(int(row.get('ChEBI'))), str(row.get('bigg_id'))
       charge = None
       if chebi_id != 'nan':  # Get charge from ChEBI (Returns always a charge)
          chebi_entity = libchebipy.ChebiEntity('CHEBI:' + chebi_id)
@@ -348,7 +348,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
    
    # Finds the chemical formula through the ChEBI/BiGG API, defaults to: 'No formula'
    def find_formula(row: pd.Series) -> str:
-      chebi_id, bigg_id, chem_form = str(row.get('ChEBI')), str(row.get('bigg_id')), str(row.get('Chemical Formula'))
+      chebi_id, bigg_id, chem_form = str(int(row.get('ChEBI'))), str(row.get('bigg_id')), str(row.get('Chemical Formula'))
       chem_formula = None
       if chebi_id != 'nan': # Get formula from ChEBI
          chebi_entity = libchebipy.ChebiEntity('CHEBI:' + chebi_id)
