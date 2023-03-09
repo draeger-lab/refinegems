@@ -22,10 +22,10 @@ def plot_initial_analysis(models: list[libModel]):
     """Creates bar plot of number of entities per Model
 
     Args:
-        models (list[libModel]): Models loaded with libSBML
+        - models (list[libModel]): Models loaded with libSBML
 
     Returns:
-        plot: pandas plot object
+        plot: Pandas Barchart
     """
     numbers = pd.DataFrame([initial_analysis(model) for model in models], columns=['model', 'metabolites', 'reactions', 'genes'])
     ax = numbers.set_index('model').plot.bar(y=['metabolites', 'reactions', 'genes'], figsize=(8, 5), cmap='Paired', rot=0)
@@ -42,13 +42,13 @@ def plot_initial_analysis(models: list[libModel]):
     return ax
 
 def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
-    """Determines number of reactions per SBO Term and adss label of SBO Terms
+    """Determines number of reactions per SBO Term and adds label of SBO Terms
 
     Args:
-        models (list[libModel]): Models loaded with libSBML
+        - models (list[libModel]): Models loaded with libSBML
 
     Returns:
-        pd.DataFrame: SBO Terms, no of reactions per model and SBO Label
+        pd.DataFrame: SBO Terms, number of reactions per Model and SBO Label
     """
     mappings = {}
     for model in models:
@@ -62,11 +62,11 @@ def plot_rea_sbo_multiple(models: list[libModel], rename=None):
     """Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models
 
     Args:
-        models (list[libModel]): Models loaded with libSBML
-        rename (dict, optional): Rename model ids to custom names. Defaults to None.
+        - models (list[libModel]): Models loaded with libSBML
+        - rename (dict, optional): Rename model ids to custom names. Defaults to None.
 
     Returns:
-        plot: pandas plot object
+        plot: Pandas stacked barchart
     """
     map = get_sbo_mapping_multiple(models)
     id_list = [mod.id for mod in models]
@@ -80,16 +80,17 @@ def plot_rea_sbo_multiple(models: list[libModel], rename=None):
     fig.legend(loc='lower right')
     return fig
 
-def plot_venn(models: list[cobraModel], entity: str, perc: bool=False):
-    """Creates venn diagram to show the overlap of model entities
+def plot_venn(models: list[cobraModel], entity: str, perc: bool=False, rename=None):
+    """Creates Venn diagram to show the overlap of model entities
 
     Args:
-        models (list[cobraModel]): Models loaded with cobrapy
-        entity (str): Compare on metabolite|reaction
-        perc (bool, optional): True if percentages should be used. Defaults to False.
+        - models (list[cobraModel]): Models loaded with cobrapy
+        - entity (str): Compare on metabolite|reaction
+        - perc (bool, optional): True if percentages should be used. Defaults to False.
+        - rename (dict, optional): Rename model ids to custom names. Defaults to None.
 
     Returns:
-        plot: venn diagram
+        plot: Venn diagram 
     """
     intersec = {}
     for model in models:
@@ -100,9 +101,12 @@ def plot_venn(models: list[cobraModel], entity: str, perc: bool=False):
         if entity == 'reaction':
             for rea in model.reactions:
                 reas.append(rea.id)
-        intersec[model.id] = set(reas)
+        if rename is not None:
+            intersec[rename[model.id]] = set(reas)
+        else:
+            intersec[model.id] = set(reas)
     if perc:
-        fig = venn(intersec, fmt="{percentage:.0f}%")
+        fig = venn(intersec, fmt="{percentage:.1f}%")
     else:
         fig = venn(intersec)
     return fig
@@ -111,10 +115,10 @@ def plot_heatmap_dt(growth: pd.DataFrame):
     """Creates heatmap of simulated doubling times with additives
     
     Args:
-        growth (pd.DataFrame): Containing growth data from simulate_all
+        - growth (pd.DataFrame): Containing growth data from simulate_all
         
     Returns:
-        plot: sns heatmap plot
+        plot: Seaborn Heatmap
     """
     growth=growth.set_index(['medium', 'model']).sort_index().T.stack()
     growth.columns.name=None
@@ -138,29 +142,17 @@ def plot_heatmap_dt(growth: pd.DataFrame):
                 ax=ax,
                 fmt='.0f'
                 )
-    plt.xticks(rotation=0)
-    plt.yticks(rotation=0)
-    plt.tick_params(
-        axis='x',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        bottom=False,      # ticks along the bottom edge are off
-        top=False,         # ticks along the top edge are off
-        )
-    plt.tick_params(
-        axis='y',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        left=False,
-        )
+    plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
     return fig
 
 def plot_heatmap_binary(growth: pd.DataFrame):
     """Creates a plot were if growth without additives is possible is marked blue otherwise red
 
     Args:
-        growth (pd.DataFrame): Containing growth data from simulate_all
+        - growth (pd.DataFrame): Containing growth data from simulate_all
         
     Returns:
-        plot: sns heatmap plot
+        plot: Seaborn Heatmap
     """
     def get_native_growth(row):
         if row == True:
@@ -184,27 +176,16 @@ def plot_heatmap_binary(growth: pd.DataFrame):
                 )
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
-    plt.tick_params(
-        axis='x',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        bottom=False,      # ticks along the bottom edge are off
-        top=False,         # ticks along the top edge are off
-        )
-    plt.tick_params(
-        axis='y',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        left=False,
-        )
+    plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
     return fig
 
 def simulate_all(models: list[cobraModel], media: list[str], basis: str) -> pd.DataFrame:
     """Does a run of growth simulation for multiple models on different media
 
     Args:
-        models (list[cobraModel]): Models loaded with cobrapy
-        mediumpath (string): Path to csv containing medium definitions
-        media (list): Media of interest (f.ex. LB, M9, ...)
-        basis (string): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
+        - models (list[cobraModel]): Models loaded with cobrapy
+        - media (list[str]): Media of interest (f.ex. LB, M9, ...)
+        - basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
 
     Returns:
         pd.DataFrame: table containing the results of the growth simulation

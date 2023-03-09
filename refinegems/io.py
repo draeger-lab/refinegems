@@ -12,37 +12,40 @@ import os
 import re
 import gffutils
 import sqlalchemy
+import logging
 import pandas as pd
+from cobra import Model as cobraModel
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
 from refinegems.databases import PATH_TO_DB
-from libsbml import SBMLReader, writeSBMLToFile, Model, SBMLValidator, SBMLDocument
+from libsbml import Model as libModel
+from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
 
 
-def load_model_cobra(modelpath: str) -> cobra.Model:
-    """loads model using cobrapy
+def load_model_cobra(modelpath: str) -> cobraModel:
+    """Loads model using COBRApy
 
     Args:
-        modelpath (str): Path to GEM
+        - modelpath (str): Path to GEM
 
     Returns:
-        cobra-model: loaded model by cobrapy
+        cobraModel: Loaded model by COBRApy
     """
     mod = cobra.io.read_sbml_model(modelpath)
     return mod
 
 
-def load_model_libsbml(modelpath: str) -> Model:
-    """loads model using libsbml
+def load_model_libsbml(modelpath: str) -> libModel:
+    """Loads model using libSBML
 
     Args:
-        modelpath (str): Path to GEM
+        - modelpath (str): Path to GEM
 
     Returns:
-        libsbml-model: loaded model by libsbml
+        libModel: loaded model by libSBML
     """
     reader = SBMLReader()
     read = reader.readSBMLFromFile(modelpath)  # read from file
@@ -51,6 +54,15 @@ def load_model_libsbml(modelpath: str) -> Model:
 
 
 def load_multiple_models(models: list[str], package: str) -> list:
+    """Loads multiple models into a list
+
+    Args:
+        - models (list): List of paths to models
+        - package (str): COBRApy|libSBML
+
+    Returns:
+        list: List of model objects loaded with COBRApy|libSBML
+    """
     loaded_models = []
     for modelpath in models:
         if package == 'cobra':
@@ -61,13 +73,13 @@ def load_multiple_models(models: list[str], package: str) -> list:
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
-    """loads model document using libsbml
+    """Loads model document using libSBML
 
     Args:
-        modelpath (str): Path to GEM
+        - modelpath (str): Path to GEM
 
     Returns:
-        libsbml-document: loaded document by libsbml
+        SBMLDocument: Loaded document by libSBML
     """
     reader = SBMLReader()
     read = reader.readSBMLFromFile(modelpath)  # read from file
@@ -78,10 +90,10 @@ def load_medium_custom(mediumpath: str) -> pd.DataFrame:
     """Helper function to read medium csv
 
     Args:
-        mediumpath (Str): path to csv file with medium
+        - mediumpath (str): path to csv file with medium
 
     Returns:
-        df: pandas dataframe of csv
+        pd.DataFrame: Table of csv
     """
     medium = pd.read_csv(mediumpath, sep=';')
     medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
@@ -93,10 +105,10 @@ def load_medium_from_db(mediumname: str) -> pd.DataFrame:
     """Wrapper function to extract subtable for the requested medium from the database 'data.db'
 
     Args:
-        mediumname (Str): name of medium to test growth on
+        - mediumname (str): Name of medium to test growth on
 
     Returns:
-        df: pandas dataframe containing composition for one medium with metabs added as BiGG_EX exchange reactions
+        pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
     medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'" 
     medium = load_a_table_from_database(medium_query)
@@ -110,10 +122,10 @@ def load_all_media_from_db(mediumpath: str) -> pd.DataFrame:
     """Helper function to extract media definitions from media_db.csv
 
     Args:
-        mediumpath (Str): path to csv file with medium database
+        - mediumpath (str): Path to csv file with medium database
 
     Returns:
-        df: pandas dataframe of csv with metabs added as BiGG_EX exchange reactions
+        pd.DataFrame: Table from csv with metabs added as BiGG_EX exchange reactions
     """
     media = pd.read_csv(mediumpath, sep=';')
     media['BiGG_R'] = 'R_EX_' + media['BiGG'] + '_e'
@@ -128,25 +140,25 @@ def load_all_media_from_db(mediumpath: str) -> pd.DataFrame:
 
 
 def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_name: str='metab') -> pd.DataFrame:
-    """loads metabolite sheet from manual curation table
+    """Loads metabolite sheet from manual curation table
 
     Args:
-        tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        sheet_name (str): Sheet name for metabolite annotations. Defaults to 'metab'.
+        - tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        - sheet_name (str): Sheet name for metabolite annotations. Defaults to 'metab'.
 
     Returns:
-        df: table as pandas df
+        pd.DataFrame: Table containing specified sheet from Excel file
     """
     man_ann = pd.read_excel(tablepath, sheet_name)
     return man_ann
 
 
 def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
-    """Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
-        true from the refineGEMs database ('data/database/data.db')
+    """| Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
+       | true from the refineGEMs database ('data/database/data.db')
 
     Args:
-        table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
+        - table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
 
     Returns:
         pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
@@ -162,49 +174,51 @@ def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
 
 
 def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
-    """loads gapfill sheet from manual curation table
+    """Loads gapfill sheet from manual curation table
 
     Args:
-        tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
+        - tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        - sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
 
     Returns:
-        df: table as pandas df
+        pd.DataFrame: Table containing sheet with name 'gapfill'|specified sheet_name from Excel file
     """
     man_gapf = pd.read_excel(tablepath, sheet_name)
     return man_gapf
 
 
-def write_to_file(model: Model, new_filename: str):
+def write_to_file(model: libModel, new_filename: str):
     """Writes modified model to new file
 
     Args:
-        model (libsbml-model): model loaded with libsbml
-        new_filename (Str): filename / path for modified model
+        - model (libModel): Model loaded with libSBML
+        - new_filename (str): Filename|Path for modified model
     """
     new_document = model.getSBMLDocument()
     writeSBMLToFile(new_document, new_filename)
-    print("Modified model written to " + new_filename)
+    logging.info("Modified model written to " + new_filename)
 
 
 def write_report(dataframe: pd.DataFrame, filepath: str):
     """Writes reports stored in dataframes to xlsx file
 
     Args:
-        dataframe (pd.DataFrame): table containing output
-        filepath (str): path to file with filename
+        - dataframe (pd.DataFrame): Table containing output
+        - filepath (str): Path to file with filename
     """
     writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
     dataframe.to_excel(writer)
     writer.save()
 
 
-def validate_libsbml_model(model: Model):
-    ''' Debug method: Validates a libSBML model with the libSBML validator
-    
-        Params:
-            - model (Model): A libSBML Model
-    '''
+def validate_libsbml_model(model: libModel) -> int:
+    """Debug method: Validates a libSBML model with the libSBML validator
+    Args:
+        - model (libModel): A libSBML model
+        
+    Returns:
+        int: Integer specifying if vaidate was successful or not
+    """
     validator = SBMLValidator()
     doc = model.getSBMLDocument()
     
@@ -213,15 +227,18 @@ def validate_libsbml_model(model: Model):
 
 def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
     """Parses FASTA file headers to obtain:
+    
         - the protein_id
         - and the model_id (like it is obtained from CarveMe)
-        corresponding to the locus_tag
-        
-        Args:
-            filepath (str): Path to FASTA file
             
-        Returns:
-            a pandas dataframe containing the columns locus_tag, Protein_id & Model_id
+    corresponding to the locus_tag
+        
+    Args:
+        - filepath (str): Path to FASTA file
+        - id_for_model (bool): True if model_id similar to autogenerated GeneProduct ID should be contained in resulting table
+        
+    Returns:
+        pd.DataFrame: Table containing the columns locus_tag, Protein_id & Model_id
     """
     keyword_list = ['protein', 'locus_tag']
     tmp_dict = dict()
@@ -270,14 +287,14 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     return pd.DataFrame(locus2ids)
 
 
-def search_ncbi_for_gpr(locus):
-    """fetches protein name from NCBI
+def search_ncbi_for_gpr(locus: str) -> str:
+    """Fetches protein name from NCBI
 
     Args:
-        locus (string): NCBI compatible locus_tag
+        - locus (str): NCBI compatible locus_tag
 
     Returns:
-        str: protein name / description
+        str: Protein name|description
     """
     handle = Entrez.efetch(
         db="protein",
@@ -295,14 +312,14 @@ def search_ncbi_for_gpr(locus):
                     return record.description, feature.qualifiers["locus_tag"][0]
 
 
-def parse_gff_for_gp_info(gff_file):
+def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
     """Parses gff file of organism to find gene protein reactions based on locus tags
 
     Args:
-        gff_file (Str): path to gff file of organism of interest
+        - gff_file (str): Path to gff file of organism of interest
 
     Returns:
-        df: table containing mapping from locus tag to GPR
+        pd.DataFrame: Table containing mapping from locus tag to GPR
     """
     db = gffutils.create_db(
         gff_file,
@@ -334,14 +351,15 @@ def parse_gff_for_gp_info(gff_file):
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
 
+
 def search_sbo_label(sbo_number: str) -> str:
-    """looks up the SBO label corresponding to a given SBO Term number
+    """Looks up the SBO label corresponding to a given SBO Term number
 
     Args:
-        sbo_number (str): Last three digits of SBO-Term as str
+        - sbo_number (str): Last three digits of SBO-Term as str
 
     Returns:
-        str: denoted label for given SBO Term
+        str: Denoted label for given SBO Term
     """
     sbo_number = str(sbo_number)
     client = EBIClient()
@@ -349,15 +367,15 @@ def search_sbo_label(sbo_number: str) -> str:
     return sbo['_embedded']['terms'][0]['label']
 
 
-def save_user_input(configpath):
+def save_user_input(configpath: str) -> dict[str: str]:
     """This aims to collect user input from the command line to create a config file, 
     will also save the user input to a config if no config was given
 
     Args:
-        configpath (str): path to config file if present
+        - configpath (str): Path to config file if present
         
     Returns:
-        dict: either loaded config file or created from user input
+        dict: Either loaded config file or created from user input
     """
     if os.path.isfile(configpath):
         with open(configpath) as f:
@@ -367,18 +385,10 @@ def save_user_input(configpath):
     else:
         print('No config or no valid config given, you will be asked for input')
         user_input = {}
-        not_valid = True
-        while not_valid:
-            model = click.prompt('Path to your model file.')
-            if os.path.isfile(model):
-                user_input['model'] = model
-                not_valid = False
-            else:
-                print('File does not exist. Please enter a valid file path')
 
-        out_path = click.confirm('Do you want to keep the out path "../rg_out/"?', default=True)
+        out_path = click.confirm('Do you want to keep the output path "../rg_out/"?', default=True)
         if not out_path:
-            user_input['out_path'] = click.prompt('Enter you desired output path')
+            user_input['out_path'] = click.prompt('Enter your desired output path')
         else:
             user_input['out_path'] = '../rg_out/'
         
@@ -419,91 +429,89 @@ def save_user_input(configpath):
             else:
                 print('Please choose a medium from the given list.')
         user_input['media'] = list_of_media
-        user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
-        user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
-        user_input['output'] = 'xlsx'
         
-        gapfill_analysis = click.confirm('Do you want to run the gapfill analysis?') 
-        user_input['gapfill_analysis'] = gapfill_analysis
-        if gapfill_analysis:
-            gapfill_params = {}
-            db_to_compare = click.prompt('One of the choices KEGG|BioCyc|GFF|KEGG+BioCyc')
-            gapfill_params['db_to_compare'] = db_to_compare
-            if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-                gapfill_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-            if db_to_compare == 'GFF':
-                gapfill_params['gff_file'] = click.prompt('Enter the path to your organisms GFF file')
-            if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
-                Path0 = click.prompt()
-                Path1 = click.prompt()
-                Path2 = click.prompt()
-                Path3 = click.prompt()
-                gapfill_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
-            user_input['gapfill_analysis_params'] = gapfill_params
-        else:
-            user_input['gapfill_model'] = False
-            
-        mod = click.confirm('Do you want to use functions to modify your model?')
-        if mod:
-            if gapfill_analysis:
-                user_input['gapfill_model'] = click.confirm('Do you want to gap fill your model?')
-            
-            kegg = click.confirm('Do you want to add KEGG Pathways?')
-            user_input['keggpathways'] = kegg
-
-            if kegg:
-                kegg_path = click.prompt('Enter the modified file name')
-                user_input['kegg_path'] = kegg_path
+        single = click.confirm('Do you want to investigate or curate a single model?')
+        user_input['single'] = single
+        if single:
+            not_valid = True
+            while not_valid:
+                model = click.prompt('Path to your model file.')
+                if os.path.isfile(model):
+                    user_input['model'] = model
+                    not_valid = False
+                else:
+                    print('File does not exist. Please enter a valid file path')
+        
+            user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
+            user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
+        
+            gap_analysis = click.confirm('Do you want to run a gap analysis?') 
+            user_input['gap_analysis'] = gap_analysis
+            if gap_analysis:
+                gap_analysis_params = {}
+                db_to_compare = click.prompt('One of the choices KEGG|BioCyc|KEGG+BioCyc') #|GFF
+                gap_analysis_params['db_to_compare'] = db_to_compare
+                if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
+                    gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
+                    gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
+                if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
+                    Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
+                    Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
+                    Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information')
+                    Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe')
+                    gap_analysis_params['biocyc_files'] = [Path0, Path1, Path2, Path3]
+                user_input['gap_analysis_params'] = gap_analysis_params
                 
-            polish = click.confirm('Do you want to polish the model?')
-            user_input['polish'] = polish
-
-            if polish:
-                entrez_email = click.prompt('Email to access NCBI Entrez')
-                user_input['entrez_email'] = entrez_email
-                id_db = click.prompt('What database is your model based on? BIGG|VMH')
-                user_input['id_db'] = id_db
-                lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
-                user_input['lab_strain'] = lab_strain
-                protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
-                user_input['protein_fasta'] = protein_fasta
-                polish_path = click.prompt('Enter the modified file name')
-                user_input['polish_path'] = polish_path
+            mod = click.confirm('Do you want to use functions to modify your model?')
+            if mod:
                 
-            sboterms = click.confirm('Do you want to update the SBO Terms?')
-            user_input['sboterms'] = sboterms
-
-            if sboterms:
-                sbo_path = click.prompt('Enter the modified file name')
-                user_input['sbo_path'] = sbo_path
-            
-            charge_corr = click.confirm('Do you want to add charges to uncharged metabolites?')
-            user_input['charge_corr'] = charge_corr
-
-            if charge_corr:
-                charge_path = click.prompt('Enter the modified file name')
-                user_input['charge_path'] = charge_path
-                user_input['charge_report_path'] = '../rg_out/multiple_charges.csv'
+                new_path = click.confirm('Do you want to save your modified model to ' + user_input['out_path'] + '<model.id>_modified_<today>.xml?')
+                if new_path:
+                    user_input['model_out'] = 'stdout'
+                else:
+                    user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
                 
-            man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
-            user_input['man_cur'] = man_cur
+                user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
+                
+                if not gap_analysis:
+                    user_input['gap_analysis_file'] = click.prompt('Enter path to Excel file with which gaps should be filled')
+                
+                user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
+                    
+                user_input['sboterms'] = click.confirm('Do you want to update the SBO Terms?')
+                
+                user_input['charge_corr'] = click.confirm('Do you want to add charges to uncharged metabolites?')
+                    
+                man_cur = click.confirm('Do you want to modify your model with the manual curations table?')
+                user_input['man_cur'] = man_cur
 
-            if man_cur:
-                entrez_email = click.prompt('Email to access NCBI Entrez')
-                user_input['entrez_email'] = entrez_email
-                man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
-                user_input['man_cur_type'] = man_cur_type
-                man_cur_table = click.prompt('Enter the path to the manual curations table')
-                user_input['man_cur_table'] = man_cur_table
-                man_cur_path = click.prompt('Enter the modified file name')
-                user_input['man_cur_path'] = man_cur_path
+                if man_cur:
+                    entrez_email = click.prompt('Email to access NCBI Entrez')
+                    user_input['entrez_email'] = entrez_email
+                    man_cur_type = click.prompt('Enter type of curation (gapfill|metabs)')
+                    user_input['man_cur_type'] = man_cur_type
+                    man_cur_table = click.prompt('Enter the path to the manual curations table')
+                    user_input['man_cur_table'] = man_cur_table
 
-        else:
-            user_input['keggpathways'] = False
-            user_input['polish'] = False
-            user_input['sboterms'] = False
-            user_input['charge_corr'] = False
-            user_input['man_cur'] = False
+                polish = click.confirm('Do you want to polish the model?')
+                user_input['polish'] = polish
+
+                if polish:
+                    entrez_email = click.prompt('Email to access NCBI Entrez')
+                    user_input['entrez_email'] = entrez_email
+                    id_db = click.prompt('What database is your model based on? BIGG|VMH')
+                    user_input['id_db'] = id_db
+                    lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
+                    user_input['lab_strain'] = lab_strain
+                    protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
+                    user_input['protein_fasta'] = protein_fasta
+                    
+            else:
+                user_input['keggpathways'] = False
+                user_input['polish'] = False
+                user_input['sboterms'] = False
+                user_input['charge_corr'] = False
+                user_input['man_cur'] = False
             
         today = date.today().strftime("%Y%m%d")
         

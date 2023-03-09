@@ -81,42 +81,6 @@ following steps:
 The ``pipenv`` package can also be installed via Anaconda (recommended
 if you are a Windows user).
 
-Further Dependencies (obsolete)
--------------------------------
-
-If you want to use the SBO terms annotation part you will need to
-install PostgreSQL to your machine.
-
-Make sure that you will be able to use psql from the command line.
-
-The database containing the BiGG ID and EC number mappings
-
-::
-
-   data/sbo/create_dbs.sql
-
-must be imported to a local PostgreSQL database to a selected user.
-
-You can use the following command, run it from this directory:
-
-.. code:: bash
-
-   psql -U {your postgres username} -h localhost -d {your database name} < data/sbo/create_dbs.sql 
-
-If you are a Windows user you will need to use a different command:
-Enter into the psql shell by typing ``psql``, then create the database
-with
-
-.. code:: sql
-
-   CREATE DATABASE sbo_ann;
-
-Afterwards load the database with
-
-.. code:: bash
-
-   psql.exe -U postgres -d sbo_ann -f data\\sbo\\create_dbs.sql
-
 
 Troubleshooting
 ---------------
@@ -129,23 +93,14 @@ Troubleshooting
    ``Pipfile`` entry to ``python_version = "3.8"`` before running
    ``pipenv install``.
 
--  If you can’t use ``psql``\ from the command line, a common issue is
-   that its not added to PATH:
+- If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
+- If you use vscode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:
 
 .. code:: bash
 
-   locate psql | grep /bin
-   export PATH={Output from the line above with /bin as line end}:$PATH
-
--  If you are a Windows user you will want to locate the installation
-   manually. The path should look like something like this
-   ``C:\Program Files\PostgreSQL\13\lib``.
-
--  If you run into
-   ``psycopg2.OperationalError: fe_sendauth: no password supplied``:
-   Change ``scram-sha256`` to ``trust`` in your file ``pg_hba.conf``
-   (located probably in ``C:\Program Files\PostgreSQL\13\data``)
-
-- If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
+   conda deactivate
+   conda deactivate
+   conda activate base
+   conda activate <your conda env>
 
 

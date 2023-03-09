@@ -20,7 +20,7 @@ class ValidationCodes(Enum):
    """Validation codes for the database
 
       Args:
-         Enum (Enum): Provided as input to get a number mapping for the codes
+         - Enum (Enum): Provided as input to get a number mapping for the codes
    """
    COMPLETE = 0,  # All tables are in data.db
    EMPTY = 1,  # data.db is either empty or incorrect
@@ -39,11 +39,11 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
          - 2 tables with names 'media' & 'media_composition'
          - 1 table with name 'modelseed_compounds'
    
-      Args:
-         db_cursor (sqlite3.Cursor): sqlite3.Cursor object of a database
- 
-      Returns:
-         int: corresponding to one of the ValidationCodes
+   Args:
+      - db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
+
+   Returns:
+      int: Corresponding to one of the ValidationCodes
    """
    print('Verifying database...')
    
@@ -76,8 +76,8 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """Creates the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
       & the media database with 2 tables ('media', 'media_compositions') from file './data/database/sbo_media_db.sql'
 
-      Args:
-         db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
+   Args:
+      - db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
    """
    print('Adding SBO and media tables...')
    
@@ -88,9 +88,9 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
 def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
-      Args:
-         latest_version (str): String containing the latest version of the BiGG database
-         db_connection (sqlite3.Connection): Open connection to the database (data.db)
+   Args:
+      - latest_version (str): String containing the latest version of the BiGG database
+      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
    print('Adding BiGG tables...')
    db_connection.execute('DROP TABLE IF EXISTS bigg_metabolites')
@@ -119,9 +119,9 @@ def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: boo
          - The version in the local version file is NOT the latest
          - No BiGG tables currently exist in the database
 
-      Args:
-         db_connection (sqlite3.Connection): Open connection to the database (data.db)
-         is_missing (bool, optional): True if no BiGG tables are in the database. Defaults to True.
+   Args:
+      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
+      - is_missing (bool, optional): True if no BiGG tables are in the database. Defaults to True.
    """
    # Check if BiGG database had an update
    LATEST_VERSION = requests.get(VERSION_URL).json()['bigg_models_version']
@@ -141,7 +141,7 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    """Retrieves the compounds table from ModelSEED from the respective GitHub repository
 
    Args:
-       db_connection (sqlite3.Connection): Open connection to the database (data.db)
+      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
    print('Adding the ModelSEED compounds table...')
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'

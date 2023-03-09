@@ -4,10 +4,11 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; refinegems 1.0 documentation</title>
+  <title>Installation &mdash; refineGEMs 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/refineGEMs_logo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -20,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Development" href="development.html" />
+    <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="Welcome to refineGEMs!" href="index.html" /> 
 </head>
 
@@ -49,16 +50,14 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation-via-pip">Installation via pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-via-github">Installation via github</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#further-dependencies-obsolete">Further Dependencies (obsolete)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="application.html">Usage as standalone application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples on how to use refinegems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage as python module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="explanation.html">Ideas behind some implementations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">refinegems package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main-modules.html">Main modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Notes for developers</a></li>
 </ul>
 
         </div>
@@ -67,7 +66,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">refinegems</a>
+          <a href="index.html">refineGEMs</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -182,31 +181,6 @@ pipenv<span class="w"> </span>shell
 <p>The <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> package can also be installed via Anaconda (recommended
 if you are a Windows user).</p>
 </section>
-<section id="further-dependencies-obsolete">
-<h2>Further Dependencies (obsolete)<a class="headerlink" href="#further-dependencies-obsolete" title="Permalink to this heading"></a></h2>
-<p>If you want to use the SBO terms annotation part you will need to
-install PostgreSQL to your machine.</p>
-<p>Make sure that you will be able to use psql from the command line.</p>
-<p>The database containing the BiGG ID and EC number mappings</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span><span class="o">/</span><span class="n">sbo</span><span class="o">/</span><span class="n">create_dbs</span><span class="o">.</span><span class="n">sql</span>
-</pre></div>
-</div>
-<p>must be imported to a local PostgreSQL database to a selected user.</p>
-<p>You can use the following command, run it from this directory:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql<span class="w"> </span>-U<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>postgres<span class="w"> </span>username<span class="o">}</span><span class="w"> </span>-h<span class="w"> </span>localhost<span class="w"> </span>-d<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>database<span class="w"> </span>name<span class="o">}</span><span class="w"> </span>&lt;<span class="w"> </span>data/sbo/create_dbs.sql
-</pre></div>
-</div>
-<p>If you are a Windows user you will need to use a different command:
-Enter into the psql shell by typing <code class="docutils literal notranslate"><span class="pre">psql</span></code>, then create the database
-with</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">sbo_ann</span><span class="p">;</span>
-</pre></div>
-</div>
-<p>Afterwards load the database with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>psql.exe<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>sbo_ann<span class="w"> </span>-f<span class="w"> </span>data<span class="se">\\</span>sbo<span class="se">\\</span>create_dbs.sql
-</pre></div>
-</div>
-</section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
 <ul class="simple">
@@ -216,23 +190,15 @@ and add it to PATH.</p></li>
 <li><p>If you use python 3.8 it everything should work, just edit the
 <code class="docutils literal notranslate"><span class="pre">Pipfile</span></code> entry to <code class="docutils literal notranslate"><span class="pre">python_version</span> <span class="pre">=</span> <span class="pre">&quot;3.8&quot;</span></code> before running
 <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code>.</p></li>
-<li><p>If you can’t use <code class="docutils literal notranslate"><span class="pre">psql</span></code>from the command line, a common issue is
-that its not added to PATH:</p></li>
+<li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
+<li><p>If you use vscode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>locate<span class="w"> </span>psql<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>/bin
-<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">={</span>Output<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>line<span class="w"> </span>above<span class="w"> </span>with<span class="w"> </span>/bin<span class="w"> </span>as<span class="w"> </span>line<span class="w"> </span>end<span class="o">}</span>:<span class="nv">$PATH</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>deactivate
+conda<span class="w"> </span>deactivate
+conda<span class="w"> </span>activate<span class="w"> </span>base
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;your<span class="w"> </span>conda<span class="w"> </span>env&gt;
 </pre></div>
 </div>
-<ul class="simple">
-<li><p>If you are a Windows user you will want to locate the installation
-manually. The path should look like something like this
-<code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\lib</span></code>.</p></li>
-<li><p>If you run into
-<code class="docutils literal notranslate"><span class="pre">psycopg2.OperationalError:</span> <span class="pre">fe_sendauth:</span> <span class="pre">no</span> <span class="pre">password</span> <span class="pre">supplied</span></code>:
-Change <code class="docutils literal notranslate"><span class="pre">scram-sha256</span></code> to <code class="docutils literal notranslate"><span class="pre">trust</span></code> in your file <code class="docutils literal notranslate"><span class="pre">pg_hba.conf</span></code>
-(located probably in <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\PostgreSQL\13\data</span></code>)</p></li>
-<li><p>If you run into a problem with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> not locking after f.ex. moving the repository try uninstalling <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> and reinstalling it via pip. Then  run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and it should work again.</p></li>
-</ul>
 </section>
 </section>
 
@@ -241,13 +207,13 @@ Change <code class="docutils literal notranslate"><span class="pre">scram-sha256
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to refineGEMs!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="development.html" class="btn btn-neutral float-right" title="Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Famke Bäuerle.</p>
+    <p>&#169; Copyright 2023, Famke Bäuerle and Gwendolyn O. Gusak.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

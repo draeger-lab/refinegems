@@ -18,9 +18,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'refinegems'
-copyright = '2022, Famke Bäuerle'
-author = 'Famke Bäuerle'
+project = 'refineGEMs'
+project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Gusak'
+author = 'Famke Bäuerle and Gwendolyn O. Gusak'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0'
@@ -33,6 +33,7 @@ release = '1.0'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.mathjax',
     'nbsphinx',
     'sphinx_rtd_theme',
@@ -69,6 +70,15 @@ html_theme_options = {
     'logo_only': True,
     'display_version': False
 }
+
+#Adds logo as favicon to tab
+html_favicon = 'images/refineGEMs_logo.png'
+
+# Changes code highlighting
+pygments_style = 'blinds-light'
+
+# Make figures numbered
+numfig = True
 
 # Explicitly assign the master document
 master_doc = 'index'
