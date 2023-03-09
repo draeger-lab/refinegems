@@ -14,7 +14,7 @@ workflow in Figure :numref:`workflow` can be used.
     | -> NO: Continue with step 4.
 
 4. Add the diamond result to the annotated FASTA file.
-5. Run e.g. ``CarveME``to obtain a draft model.
+5. Run e.g. ``CarveME`` to obtain a draft model.
 6. Check if in the model any GeneProducts without NCBI Protein or RefSeq identifiers occur.
 
     | -> YES: 
