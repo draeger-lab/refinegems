@@ -103,7 +103,7 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
         else:
             metab.addCVTerm(cv)
     else:
-            metab.addCVTerm(cv)
+        metab.addCVTerm(cv)
 
 
 def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
