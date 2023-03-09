@@ -32,15 +32,14 @@ to be set by the user.
     Path to GEM to be investigated
 
   model: 'data/e_coli_core.xml' 
+  # Set the out path for all analysis files
+  out_path: ''
 
   Settings for scripts that investigate the model: >
     These are only necessary if none of the scripts to manipulate the model are used.
 
   # Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
   visualize: TRUE
-
-  # Set the out path for the csv created by multiple and a possible xlsx for model investigation
-  out_path: ''
 
   # Set the basis medium to simulate growth from
   growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
@@ -51,6 +50,7 @@ to be set by the user.
     - 'data/e_coli_core.xml'
     - ''
     - ''
+  single: TRUE # set to False if you only want to work with the multiple models
 
   # media to simulate growth from, just comment the media you do not want with a #
   media: 
@@ -65,10 +65,6 @@ to be set by the user.
   # determine whether the memote score should be calculated, default: FALSE
   memote: FALSE
 
-  # Determine if output file for single model should be created, default: cl
-  # Filename is set as the models name
-  output: xlsx #cl, xlsx, csv 
-
   # compare metabolites to the ModelSEED database
   modelseed: FALSE # set to False if not needed
 
@@ -76,36 +72,53 @@ to be set by the user.
   Settings for scripts that manipulate the model: >
     They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
 
+  model_out: '' # path and filename to where to save the modified model
   entrez_email: '' # necessary to access NCBI API
 
   ### Addition of KEGG Pathways as Groups ###
   keggpathways: FALSE
-  kegg_path:  '' # path where to save model with KEGG Groups
 
   ### SBO-Term Annotation ###
   sboterms: FALSE
-  sbo_path: '' # path where to save model with sbo terms
 
   ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
   polish: FALSE
-  id_db: 'BIGG' # Required! 
+  id_db: 'BIGG' # Required!
   # Possible identifiers, currently: BiGG & VMH
   # For other IDs the `polish` function in `polish.py` might need adjustment
   lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
                     # & to set the locus_tag to the ones obtained by the annotation
   protein_fasta: '' # Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True
-  polish_path: '' # path where to save the polished model
 
   ### Charge correction ###
   charge_corr: FALSE
-  charge_path: ''
-  charge_report_path: ''
 
   ### Manual Curation ###
   man_cur: FALSE
   man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
   man_cur_table: 'data/manual_curation.xlsx'
-  man_cur_path: '' # path where to save modified model
+
+  ### Automatic gap filling ###
+  # All parameters are required for all db_to_compare choices except:
+  # - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
+  # - and biocyc_files which is not required for 'KEGG'
+  gap_analysis: FALSE
+  gap_analysis_params:
+    db_to_compare: 'KEGG'  # One of the choices KEGG|BioCyc|KEGG+BioCyc
+    organismid: 'T05059'  # Needs to be specified for KEGG
+    gff_file: 'data/cstr.gff'  # Path to RefSeq GFF file 
+    biocyc_files: 
+      - 'Path0'  # Path to TXT file containing a SmartTable from BioCyc with the columns 'Accession-2' 'Reaction of gene' (-)
+      - 'Path1'  # Path to TXT file containing a SmartTable with all reaction relevant information (*)
+      - 'Path2'  # Path to TXT file containing a SmartTable with all metabolite relevant information (+)
+      - 'Path3'  # Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)
+  # (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence
+  # (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
+  # (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
+  gapfill_model: FALSE
+  gap_analysis_file: 'Path to Excel file with which gaps in model should be filled'
+  # Either obtained by running gapfill_analysis/Created by hand with the same structure as the result file from gapfill_analysis
+  # Example Excel file to fill in by hand: data/modelName_gapfill_analysis_date_example.xlsx
 
 The repository structure has the following intention: 
 

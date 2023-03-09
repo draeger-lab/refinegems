@@ -149,15 +149,14 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="w">  </span><span class="no">Path to GEM to be investigated</span>
 
 <span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/e_coli_core.xml&#39;</span>
+<span class="c1"># Set the out path for all analysis files</span>
+<span class="nt">out_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
 
 <span class="nt">Settings for scripts that investigate the model</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <span class="w">  </span><span class="no">These are only necessary if none of the scripts to manipulate the model are used.</span>
 
 <span class="c1"># Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called &#39;visualization&#39;</span>
 <span class="nt">visualize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRUE</span>
-
-<span class="c1"># Set the out path for the csv created by multiple and a possible xlsx for model investigation</span>
-<span class="nt">out_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
 
 <span class="c1"># Set the basis medium to simulate growth from</span>
 <span class="nt">growth_basis</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;minimal_uptake&#39;</span><span class="w"> </span><span class="c1"># &#39;default_uptake&#39; or &#39;minimal_uptake&#39;</span>
@@ -168,6 +167,7 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/e_coli_core.xml&#39;</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;&#39;</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="nt">single</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRUE</span><span class="w"> </span><span class="c1"># set to False if you only want to work with the multiple models</span>
 
 <span class="c1"># media to simulate growth from, just comment the media you do not want with a #</span>
 <span class="nt">media</span><span class="p">:</span>
@@ -182,10 +182,6 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="c1"># determine whether the memote score should be calculated, default: FALSE</span>
 <span class="nt">memote</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
 
-<span class="c1"># Determine if output file for single model should be created, default: cl</span>
-<span class="c1"># Filename is set as the models name</span>
-<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xlsx</span><span class="w"> </span><span class="c1">#cl, xlsx, csv</span>
-
 <span class="c1"># compare metabolites to the ModelSEED database</span>
 <span class="nt">modelseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span><span class="w"> </span><span class="c1"># set to False if not needed</span>
 
@@ -193,15 +189,14 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="nt">Settings for scripts that manipulate the model</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <span class="w">  </span><span class="no">They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.</span>
 
+<span class="nt">model_out</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path and filename to where to save the modified model</span>
 <span class="nt">entrez_email</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># necessary to access NCBI API</span>
 
 <span class="c1">### Addition of KEGG Pathways as Groups ###</span>
 <span class="nt">keggpathways</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
-<span class="nt">kegg_path</span><span class="p">:</span><span class="w">  </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save model with KEGG Groups</span>
 
 <span class="c1">### SBO-Term Annotation ###</span>
 <span class="nt">sboterms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
-<span class="nt">sbo_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save model with sbo terms</span>
 
 <span class="c1">### Model polishing ### The database of the model identifiers needs to be specified with &#39;id_db&#39;</span>
 <span class="nt">polish</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
@@ -211,18 +206,36 @@ Of the description part in the header line only locus_tag, protein and protein_i
 <span class="nt">lab_strain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span><span class="w"> </span><span class="c1"># Needs to be set to ensure that protein IDs get the &#39;bqbiol:isHomologTo&#39; qualifier</span>
 <span class="w">                  </span><span class="c1"># &amp; to set the locus_tag to the ones obtained by the annotation</span>
 <span class="nt">protein_fasta</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True</span>
-<span class="nt">polish_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save the polished model</span>
 
 <span class="c1">### Charge correction ###</span>
 <span class="nt">charge_corr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
-<span class="nt">charge_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
-<span class="nt">charge_report_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
 
 <span class="c1">### Manual Curation ###</span>
 <span class="nt">man_cur</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
 <span class="nt">man_cur_type</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gapfill&#39;</span><span class="w"> </span><span class="c1"># either &#39;gapfill&#39; or &#39;metabs&#39;</span>
 <span class="nt">man_cur_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/manual_curation.xlsx&#39;</span>
-<span class="nt">man_cur_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># path where to save modified model</span>
+
+<span class="c1">### Automatic gap filling ###</span>
+<span class="c1"># All parameters are required for all db_to_compare choices except:</span>
+<span class="c1"># - organismid which is only required for db_to_compare: &#39;KEGG&#39;/&#39;KEGG+BioCyc&#39;</span>
+<span class="c1"># - and biocyc_files which is not required for &#39;KEGG&#39;</span>
+<span class="nt">gap_analysis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">gap_analysis_params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">db_to_compare</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;KEGG&#39;</span><span class="w">  </span><span class="c1"># One of the choices KEGG|BioCyc|KEGG+BioCyc</span>
+<span class="w">  </span><span class="nt">organismid</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;T05059&#39;</span><span class="w">  </span><span class="c1"># Needs to be specified for KEGG</span>
+<span class="w">  </span><span class="nt">gff_file</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/cstr.gff&#39;</span><span class="w">  </span><span class="c1"># Path to RefSeq GFF file</span>
+<span class="w">  </span><span class="nt">biocyc_files</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;Path0&#39;</span><span class="w">  </span><span class="c1"># Path to TXT file containing a SmartTable from BioCyc with the columns &#39;Accession-2&#39; &#39;Reaction of gene&#39; (-)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;Path1&#39;</span><span class="w">  </span><span class="c1"># Path to TXT file containing a SmartTable with all reaction relevant information (*)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;Path2&#39;</span><span class="w">  </span><span class="c1"># Path to TXT file containing a SmartTable with all metabolite relevant information (+)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;Path3&#39;</span><span class="w">  </span><span class="c1"># Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)</span>
+<span class="c1"># (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence</span>
+<span class="c1"># (*) &#39;Reaction&#39; &#39;Reactants of reaction&#39; &#39;Products of reaction&#39; &#39;EC-Number&#39; &#39;Reaction-Direction&#39; &#39;Spontaneous?&#39;</span>
+<span class="c1"># (+) &#39;Compound&#39; &#39;Object ID&#39; &#39;Chemical Formula&#39; &#39;InChI-Key&#39; &#39;ChEBI&#39;</span>
+<span class="nt">gapfill_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FALSE</span>
+<span class="nt">gap_analysis_file</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Path</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">Excel</span><span class="nv"> </span><span class="s">file</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">which</span><span class="nv"> </span><span class="s">gaps</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">model</span><span class="nv"> </span><span class="s">should</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">filled&#39;</span>
+<span class="c1"># Either obtained by running gapfill_analysis/Created by hand with the same structure as the result file from gapfill_analysis</span>
+<span class="c1"># Example Excel file to fill in by hand: data/modelName_gapfill_analysis_date_example.xlsx</span>
 </pre></div>
 </div>
 <p>The repository structure has the following intention:</p>
