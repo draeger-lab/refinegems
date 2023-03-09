@@ -93,17 +93,15 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
         - db_id (str): Database to which entry belongs. Must be in metabol_db_dict.keys().
         - metab (Species): Metabolite to add CVTerm to
     """
+    if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
+        if entry[:4] == 'HMDB':
+            entry = entry[4:]
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
     cv.setBiologicalQualifierType(BQB_IS)
     cv.addResource('https://identifiers.org/' + metabol_db_dict[db_id] + entry)
-    if db_id == 'hmdb':
-        if len(entry) > 9:
-            return
-        else:
-            metab.addCVTerm(cv)
-    else:
-        metab.addCVTerm(cv)
+    metab.addCVTerm(cv)
+    metab.addCVTerm(cv)
 
 
 def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
@@ -188,16 +186,9 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     for i in range(0, num_cvs):
         ann_string = entity.getCVTerm(i)
         num_res = ann_string.getNumResources()
-        if str(db_id) == 'HMDB':
-            ids = [ann_string.getResourceURI(r).split(
+        ids = [ann_string.getResourceURI(r).split(
             '/')[-1] for r in range(0, num_res) if str(db_id) in ann_string.getResourceURI(r)]
-            print(ids)
-            ids = [id_string.split(':')[-1] for id_string in ids if ':' in id_string]
-            print(ids)
-        else:
-            ids = [ann_string.getResourceURI(r).split(
-            '/')[-1] for r in range(0, num_res) if str(db_id) in ann_string.getResourceURI(r)]
-            ids = [id_string.split(':')[-1] for id_string in ids if ':' in id_string]
+        ids = [id_string.split(':')[-1] for id_string in ids if ':' in  id_string]
         all_ids.extend(ids)
 
     return all_ids
