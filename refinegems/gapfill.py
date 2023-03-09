@@ -12,6 +12,7 @@ import ast
 from libsbml import Model as libModel
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
+from refinegems.curate import update_annotations_from_others
 from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
 from refinegems.entities import create_gp, create_species, create_reaction
 import pandas as pd
@@ -176,11 +177,14 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
                 
         if 'InChI-Key' in missing_metabs_df.columns:
             if row['InChI-Key']:
-                add_cv_term_metabolites(str(row['InChI-Key']), 'InChI-Key', sp)
+                inchi_key = str(row['InChI-Key']).removeprefix('InChIKey=')
+                add_cv_term_metabolites(inchi_key, 'InChI-Key', sp)
                 
         if 'ChEBI' in missing_metabs_df.columns:
             if row['ChEBI']:
-                add_cv_term_metabolites(str(row['ChEBI']), 'ChEBI', sp)
+                add_cv_term_metabolites(str(int(row['ChEBI'])), 'ChEBI', sp)
+                
+    model = update_annotations_from_others(model)
     
     # (3) Add all missing reactions
     for _, row in missing_reacs_df.iterrows():
