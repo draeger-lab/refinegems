@@ -112,6 +112,9 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
         - db_id (str): Database to which entry belongs. Must be in reaction_db_dict.keys().
         - reac (Reaction): Reaction to add CVTerm to
     """
+    if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
+        if entry[:4] == 'HMDB':
+            entry = entry[4:]
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
     cv.setBiologicalQualifierType(BQB_IS)
