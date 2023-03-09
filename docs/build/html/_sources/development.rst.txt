@@ -31,3 +31,29 @@ Development notes
 You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
 
 If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
+
+Documentation notes
+-------------------
+
+We use the autoDocstring extension (njpwerner.autodocstring) for vscode with the google format to generate function docstrings. To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
+
+.. code:: python
+    :linenos:
+
+    """Description of the function...
+
+    Args:
+        - input1 (type): this is what input1 does
+
+    Returns:
+        tuple: Two tables (1) & (2)
+            (1) pd.DataFrame: Table with charge mismatches
+            (2) pd.DataFrame: Table with formula mismatches
+    """
+
+We are also trying to make input and return types explicit by declaring those in the function header:
+
+.. code:: python
+    :linenos:
+
+    def my_func(input1: int, input2: str, input3: Model) -> tuple[str, int]:
