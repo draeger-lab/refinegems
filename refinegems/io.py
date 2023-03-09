@@ -386,9 +386,9 @@ def save_user_input(configpath: str) -> dict[str: str]:
         print('No config or no valid config given, you will be asked for input')
         user_input = {}
 
-        out_path = click.confirm('Do you want to keep the out path "../rg_out/"?', default=True)
+        out_path = click.confirm('Do you want to keep the output path "../rg_out/"?', default=True)
         if not out_path:
-            user_input['out_path'] = click.prompt('Enter you desired output path')
+            user_input['out_path'] = click.prompt('Enter your desired output path')
         else:
             user_input['out_path'] = '../rg_out/'
         
@@ -445,7 +445,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
             user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
             user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
         
-            gap_analysis = click.confirm('Do you want to run the gap analysis?') 
+            gap_analysis = click.confirm('Do you want to run a gap analysis?') 
             user_input['gap_analysis'] = gap_analysis
             if gap_analysis:
                 gap_analysis_params = {}
@@ -474,7 +474,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
                 
                 if not gap_analysis:
-                    user_input['gap_analysis_file'] = click.confirm('Enter path to Excel file with which gaps should be filled')
+                    user_input['gap_analysis_file'] = click.prompt('Enter path to Excel file with which gaps should be filled')
                 
                 user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
                     
