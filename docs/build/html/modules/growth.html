@@ -21,7 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Addition of KEGG Pathways" href="pathways.html" />
+    <link rel="next" title="Casamino Acids (CasA)" href="media/casa.html" />
     <link rel="prev" title="Filling gaps with refineGEMs" href="gapfill.html" /> 
 </head>
 
@@ -54,6 +54,16 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Growth simulation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#interpreting-the-results">Interpreting the results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#implementation">Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-media">Available media</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="media/casa.html">Casamino Acids (CasA)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/cgxii.html">Minimal medium for <em>Corynebacterium glutamicum</em> (CGXII)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/lb.html">Lysogeny Broth (LB)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/m9.html">M9 minimal medium (M9)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/rpmi.html">Roswell Park Memorial Institute 1640 (RPMI)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/smm.html">Synthetic Minimal Medium (SMM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="media/snm3.html">Synthetic Nasal Medium x3 (SNM3)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pathways.html">Pathway addition</a></li>
@@ -129,8 +139,24 @@
 <section id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this heading"></a></h2>
 <p>Growth rates and thus doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.</p>
-<a class="reference internal image-reference" href="modules/images/growth_algorithm.png"><img alt="Pseudocode representation of the algorithm implemented for growth simulation." src="modules/images/growth_algorithm.png" style="width: 400px;" /></a>
+<a class="reference internal image-reference" href="../_images/growth_algorithm.png"><img alt="Pseudocode representation of the algorithm implemented for growth simulation." src="../_images/growth_algorithm.png" style="width: 400px;" /></a>
 <p>There is a flag called basis which can be set to either default_uptake or minimal_uptake. You can decide from which uptake you want to fill your medium of interest when looking for missing metabolites. Either the default_uptake which is the uptake that the model has when no specific medium is set or the minimal_uptake which is the uptake resulting from cobrapys minimal_medium optimization.</p>
+</section>
+<section id="available-media">
+<h2>Available media<a class="headerlink" href="#available-media" title="Permalink to this heading"></a></h2>
+<p>The following media are directly available to be used with the <code class="docutils literal notranslate"><span class="pre">growth</span></code> module via a <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file.
+In the section for the respective medium the description along with the definition is provided.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="media/casa.html">Casamino Acids (CasA)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/cgxii.html">Minimal medium for <em>Corynebacterium glutamicum</em> (CGXII)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/lb.html">Lysogeny Broth (LB)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/m9.html">M9 minimal medium (M9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/rpmi.html">Roswell Park Memorial Institute 1640 (RPMI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/smm.html">Synthetic Minimal Medium (SMM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="media/snm3.html">Synthetic Nasal Medium x3 (SNM3)</a></li>
+</ul>
+</div>
 </section>
 </section>
 
@@ -139,7 +165,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="gapfill.html" class="btn btn-neutral float-left" title="Filling gaps with refineGEMs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="pathways.html" class="btn btn-neutral float-right" title="Addition of KEGG Pathways" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="media/casa.html" class="btn btn-neutral float-right" title="Casamino Acids (CasA)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
