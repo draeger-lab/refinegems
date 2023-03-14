@@ -19,6 +19,8 @@ ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm')
 BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
 BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
 
+COMPARTMENTS = ('c', 'e', 'p')
+
 
 def get_search_regex(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool) -> str:
     """Retrieves the search regex for BioCyc/KEGG to be used in the BiGG mapping
@@ -87,13 +89,12 @@ def compare_ids(id1: str, id2: str) -> bool:
     return similar_ids
 
 
-def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compartments: tuple[str]) -> pd.DataFrame:
+def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments
         & returns table containing only reactions which happen in one of the provided compartments
         
     Args:
         - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
-        - compartments (tuple): Tuple of BiGG compartment identifiers for which reaction IDs should be kept
         
     Returns:
         pd.DataFrame: Table containing reactions & their compartments
@@ -124,7 +125,7 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
         metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
                 
         comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
-        contained_in_compartments = [(comp in compartments) for comp in comps]  # Get True for correct compartment        
+        contained_in_compartments = [(comp in COMPARTMENTS) for comp in comps]  # Get True for correct compartment        
         if not all(contained_in_compartments):  # At least one compartment not correct
             return np.nan
         else:  # All compartments correct
@@ -147,7 +148,7 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, compa
     complete_df.rename(columns={'bigg_id_list': 'bigg_id'}, inplace=True)  # Rename 'bigg_id_list' to 'bigg_id'
     
     # (2) Get all compartments for each reaction from BiGG database API
-    print(f'Getting all IDs with correct compartment {compartments}...')
+    print(f'Getting all IDs with correct compartment {COMPARTMENTS}...')
     complete_df.loc[:, 'compartment'] = complete_df.loc[:, 'bigg_id'].progress_map(get_reaction_compartment)
     #complete_df.progress_apply(get_reaction_compartment, axis=1)  # (2)
     
@@ -168,7 +169,6 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     Returns:
         pd.DataFrame: Table containing BiGG Ids with corresponding KEGG/BioCyc Ids
     """
-    compartments = ('c', 'e', 'p')
     
     # Get only rows with BioCyc/KEGG entries
     db_table_name = 'bigg_metabolites' if metabolites else 'bigg_reactions'
@@ -190,7 +190,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
     
     def get_compartment_from_id(bigg_id: str):
         compartment = bigg_id[-1]
-        return compartment if compartment in compartments else np.nan  # To filter the incorrect compartments out
+        return compartment if compartment in COMPARTMENTS else np.nan  # To filter the incorrect compartments out
     
     bigg_db_df[other_db] = bigg_db_df.apply(
         lambda row: find_other_db(row['database_links']), axis=1)
@@ -200,7 +200,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
             lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
         bigg_db_df.dropna(subset=['compartment'], inplace=True)  # Drop all BiGG metabolite IDs which have no valid compartment
     else:
-        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df, compartments)
+        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df)
         
     bigg_df = bigg_db_df[['bigg_id', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
 
@@ -258,6 +258,15 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
     entities_missing_in_model['name'] = entities_missing_in_model['bigg_id'].map(get_name_from_bigg)
     con.close()
+    
+    # Add compartment ID to all BiGG metabolites that were added due to filtering for BiGG metabolites in BiGG reactions
+    if metabolites:
+        def get_missing_compartment_from_id(row: pd.Series) -> str:
+            bigg_id, compartment = str(row['bigg_id']), str(row['compartment'])
+            if compartment == 'nan':
+                compartment = bigg_id[-1]
+                return compartment
+        entities_missing_in_model['compartment'] = entities_missing_in_model.apply(get_missing_compartment_from_id, axis=1)
     
     return entities_missing_in_model
 
