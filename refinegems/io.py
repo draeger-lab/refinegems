@@ -511,6 +511,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 user_input['polish'] = False
                 user_input['sboterms'] = False
                 user_input['charge_corr'] = False
+                user_input['gapfill_model'] = False
                 user_input['man_cur'] = False
             
         today = date.today().strftime("%Y%m%d")

@@ -9,6 +9,7 @@
         * 'KEGG+BioCyc': ~ 3 - 4h  
 """
 import ast
+import math
 from libsbml import Model as libModel
 import refinegems.analysis_kegg as rga_kegg
 import refinegems.analysis_biocyc as rga_biocyc
@@ -176,13 +177,16 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
                     add_cv_term_metabolites(biocyc_id, 'METACYC', sp)
                 
         if 'InChI-Key' in missing_metabs_df.columns:
-            if row['InChI-Key']:
-                inchi_key = str(row['InChI-Key']).removeprefix('InChIKey=')
+            inchi_key = str(row['InChI-Key'])
+            inchi_key = inchi_key.removeprefix('InChIKey=') if 'InChIKey=' in inchi_key else inchi_key
+            inchi_key = inchi_key if inchi_key != 'nan' else None  
+            if inchi_key:
                 add_cv_term_metabolites(inchi_key, 'InChI-Key', sp)
                 
         if 'ChEBI' in missing_metabs_df.columns:
-            if row['ChEBI']:
-                add_cv_term_metabolites(str(int(row['ChEBI'])), 'ChEBI', sp)
+            chebi_id = str(int(row.get('ChEBI'))) if not math.isnan(float(row.get('ChEBI'))) else None 
+            if chebi_id:
+                add_cv_term_metabolites(chebi_id, 'ChEBI', sp)
                 
     model = update_annotations_from_others(model)
     
