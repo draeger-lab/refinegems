@@ -188,21 +188,14 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=Fal
         else:
             return None
     
-    def get_compartment_from_id(bigg_id: str):
-        compartment = bigg_id[-1]
-        return compartment if compartment in COMPARTMENTS else np.nan  # To filter the incorrect compartments out
-    
     bigg_db_df[other_db] = bigg_db_df.apply(
         lambda row: find_other_db(row['database_links']), axis=1)
     bigg_db_df = bigg_db_df.explode(other_db, ignore_index=True)
-    if metabolites:
-        bigg_db_df['compartment'] = bigg_db_df.apply(
-            lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
-        bigg_db_df.dropna(subset=['compartment'], inplace=True)  # Drop all BiGG metabolite IDs which have no valid compartment
-    else:
+    
+    if not metabolites:
         bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df)
         
-    bigg_df = bigg_db_df[['bigg_id', other_db, 'compartment']] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
+    bigg_df = bigg_db_df[['bigg_id', other_db]] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
 
     return bigg_df
  
@@ -261,12 +254,13 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     
     # Add compartment ID to all BiGG metabolites that were added due to filtering for BiGG metabolites in BiGG reactions
     if metabolites:
-        def get_missing_compartment_from_id(row: pd.Series) -> str:
-            bigg_id, compartment = str(row['bigg_id']), str(row['compartment'])
-            if compartment == 'nan':
-                compartment = bigg_id[-1]
-                return compartment
-        entities_missing_in_model['compartment'] = entities_missing_in_model.apply(get_missing_compartment_from_id, axis=1)
+        def get_compartment_from_id(bigg_id: str):
+            compartment = bigg_id[-1]
+            return compartment if compartment in COMPARTMENTS else np.nan  # To filter the incorrect compartments out
+        
+        entities_missing_in_model['compartment'] = entities_missing_in_model.apply(
+            lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
+        entities_missing_in_model.dropna(subset=['compartment'], inplace=True)  # Drop all BiGG metabolite IDs which have no valid compartment
     
     return entities_missing_in_model
 
