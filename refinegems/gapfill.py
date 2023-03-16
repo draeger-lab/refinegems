@@ -51,21 +51,19 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
         - Case 'KEGG'
             pd.DataFrame: Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
         - Case 'BioCyc'
-            tuple: Five tables (1) - (5)
+            tuple: Five tables (1) - (4)
                 (1) pd.DataFrame: Gap fill statistics with the columns 
                                     'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
                 (2) pd.DataFrame: Genes with the columns 
                                     'locus_tag' 'protein_id' 'model_id' 'name'
                 (3) pd.DataFrame: Metabolites with the columns 
                                     'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
-                (4) pd.DataFrame: Metabolites without BiGG ID with the columns 
-                                    'BioCyc' 'Chemical Formula' 'InChI-Key' 'ChEBI' ('charge')  
-                (5) pd.DataFrame: Reactions with the columns 
+                (4) pd.DataFrame: Reactions with the columns 
                                     'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
                                     'bigg_reaction'
                 
         - Case 'KEGG+BioCyc': 
-            tuple: Six tables (1)-(5) from output of 'BioCyc' & (6) from output of 'KEGG'
+            tuple: Five tables (1)-(4) from output of 'BioCyc' & (5) from output of 'KEGG'
                     -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
@@ -89,7 +87,9 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
             result = missing_kegg
         else:
             print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid is obligatory.\n' +
-                  'If there is no organismid available for your organism in KEGG, use one of the options \'BioCyc\' or \'GFF\'.')
+                  'If there is no organismid available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
+                  'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
+            # use one of the options \'BioCyc\' or \'GFF\'
         
     elif db_to_compare == 'BioCyc':
         missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
@@ -114,9 +114,9 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
         missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
                                                      gapfill_params['biocyc_files']
                                                      )
-        stats, missing_biocyc_genes, missing_biocyc_metabs, missing_metabs_wo_BiGG_df, missing_biocyc_reacs = missing_biocyc
+        stats, missing_biocyc_genes, missing_biocyc_metabs, missing_biocyc_reacs = missing_biocyc 
         missing_combined_reacs = missing_biocyc_reacs.merge(missing_kegg_reacs[['bigg_id', 'KEGG']], how='left', on='bigg_id')
-        result = (stats, missing_biocyc_genes, missing_biocyc_metabs, missing_metabs_wo_BiGG_df, missing_combined_reacs, missing_kegg_reacs)
+        result = (stats, missing_biocyc_genes, missing_biocyc_metabs, missing_combined_reacs, missing_kegg_reacs)
         
         
     if type(result) == tuple:
@@ -124,10 +124,9 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
             result[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
             result[1].to_excel(writer, sheet_name='genes', index=False)
             result[2].to_excel(writer, sheet_name='metabolites', index=False)
-            result[3].to_excel(writer, sheet_name='metabolites without BiGG IDs', index=False)
-            result[4].to_excel(writer, sheet_name='reactions', index=False)
-            if len(result) == 6:
-                result[5].to_excel(writer, sheet_name='KEGG reactions', index=False)
+            result[3].to_excel(writer, sheet_name='reactions', index=False)
+            if len(result) == 5:
+                result[4].to_excel(writer, sheet_name='KEGG reactions', index=False)
     else:
         with pd.ExcelWriter(filename) as writer:
             result.to_excel(writer, sheet_name='KEGG reactions', index=False)
@@ -150,7 +149,7 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
     if type(gap_analysis_result) == tuple:  # Tuple of pandas dataframes from gap_analysis
         missing_genes_df = gap_analysis_result[1]
         missing_metabs_df = gap_analysis_result[2]
-        missing_reacs_df = gap_analysis_result[4]
+        missing_reacs_df = gap_analysis_result[3]
     else:  # Excel file from user-input
         with pd.ExcelFile(gap_analysis_result) as reader:
             gp_analysis_res = pd.read_excel(reader, sheet_name=['genes', 'metabolites', 'reactions'])
@@ -170,11 +169,12 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
     for _, row in missing_metabs_df.iterrows():
         sp, model = create_species(model_libsbml, row['bigg_id'], row['name'], row['compartment'], row['charge'], row['Chemical Formula'])
         if 'BioCyc' in missing_metabs_df.columns:
-            biocyc_row = ast.literal_eval(str(row['BioCyc']))
+            biocyc_row = ast.literal_eval(str(row['BioCyc']).replace('nan', 'None'))
             if biocyc_row:
                 for biocyc_id in biocyc_row:
-                    add_cv_term_metabolites(biocyc_id, 'BioCyc', sp)
-                    add_cv_term_metabolites(biocyc_id, 'METACYC', sp)
+                    if biocyc_id:
+                        add_cv_term_metabolites(biocyc_id, 'BioCyc', sp)
+                        add_cv_term_metabolites(biocyc_id, 'METACYC', sp)
                 
         if 'InChI-Key' in missing_metabs_df.columns:
             inchi_key = str(row['InChI-Key'])
@@ -213,7 +213,8 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
             kegg_row = ast.literal_eval(str(row['KEGG']).replace('nan', 'None'))
             if kegg_row:
                 for kegg_id in kegg_row:
-                    add_cv_term_reactions(kegg_id, 'KEGG', reac)
+                    if kegg_id:
+                        add_cv_term_reactions(kegg_id, 'KEGG', reac)
                 
         if 'BioCyc' in missing_reacs_df.columns:
             biocyc_row = ast.literal_eval(str(row['BioCyc']))
@@ -223,10 +224,11 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
                     add_cv_term_reactions(biocyc_id, 'METACYC', reac)
                     
         if 'EC' in missing_reacs_df.columns:
-            ec_row = ast.literal_eval(str(row['EC']))
+            ec_row = ast.literal_eval(str(row['EC']).replace('nan', 'None'))
             if ec_row:
                 for ec_num in ec_row:
-                    add_cv_term_reactions(ec_num, 'EC', reac)
+                    if ec_num:
+                        add_cv_term_reactions(ec_num, 'EC', reac)
                          
     return model
 
