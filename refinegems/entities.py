@@ -223,10 +223,10 @@ def create_reaction(
             elif len(genes) == 1:
                 reaction.getPlugin(0).createGeneProductAssociation().createGeneProductRef().setGeneProduct(genes[0])
             else:
-                gp_ass_and = reaction.getPlugin(0).createGeneProductAssociation().createAnd()
+                gp_ass_or = reaction.getPlugin(0).createGeneProductAssociation().createOr()
                 for gene in genes:
                     # Set GeneProductReferences if available
-                    gp_ass_and.createGeneProductRef().setGeneProduct(gene)
+                    gp_ass_or.createGeneProductRef().setGeneProduct(gene)
     for metab, stoich in reactants.items(): #reactants as dict with metab:stoich
         reaction.addReactant(model.getSpecies('M_' + metab), stoich)
     for metab, stoich in products.items(): #reactants as dict with metab:stoich
