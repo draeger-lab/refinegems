@@ -28,7 +28,7 @@ from refinegems.entities import get_model_genes, get_model_reacs_or_metabs, comp
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
 from refinegems.io import parse_fasta_headers
 
-__author__ = "Gwendolyn O. Gusak"
+__author__ = "Gwendolyn O. Gusak and Dr. Reihaneh Mostolizadeh"
 
 
 # Global variable for statistics
