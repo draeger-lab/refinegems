@@ -9516,7 +9516,9 @@ INSERT INTO media(medium, medium_description) VALUES
 	('RPMI', 'RPMI 1640'),
 	('CGXII', 'corynebacterium glutamicum'),
 	('CasA', 'Casamino Acids'),
-	('CGXlab', NULL);
+	('CGXlab', NULL),
+	('Blood', 'Bloodstream environment'),
+	('Urine', 'Urinary tract environment');
 
 --
 -- D'ata for Name: media_compositions; Type: TABLE DATA; Schema: public; Owner: -
@@ -9877,6 +9879,45 @@ INSERT INTO media_compositions(BiGG, substance, medium_id) VALUES
 	('o2', NULL, (SELECT id from media WHERE medium='CGXlab')),
 	('na1', NULL, (SELECT id from media WHERE medium='CGXlab')),
 	('h', NULL, (SELECT id from media WHERE medium='CGXlab')),
-	('34dhbz', NULL, (SELECT id from media WHERE medium='CGXlab'));
+	('34dhbz', NULL, (SELECT id from media WHERE medium='CGXlab')),
+	('akg', '2-Oxoglutarate', (SELECT id from media WHERE medium='Blood')),
+	('acac', 'Acetoacetate', (SELECT id from media WHERE medium='Blood')),
+	('adn', 'Adenosine', (SELECT id from media WHERE medium='Blood')),
+	('alltn', 'Allantoin', (SELECT id from media WHERE medium='Blood')),
+	('alltn__R', 'Allantoin', (SELECT id from media WHERE medium='Blood')),
+	('but', 'Butyrate', (SELECT id from media WHERE medium='Blood')),
+	('cit', 'Citrate', (SELECT id from media WHERE medium='Blood')),
+	('fum', 'Fumarate', (SELECT id from media WHERE medium='Blood')),
+	('gam', 'Glucosamine', (SELECT id from media WHERE medium='Blood')),
+	('glc__D', 'Glucose', (SELECT id from media WHERE medium='Blood')),
+	('glc__bD', 'Glucose', (SELECT id from media WHERE medium='Blood')),
+	('glcur', 'Glucuronate', (SELECT id from media WHERE medium='Blood')),
+	('lac__D', 'D-Lactate', (SELECT id from media WHERE medium='Blood')),
+	('lac__L', 'L-Lactate', (SELECT id from media WHERE medium='Blood')),
+	('mal__L', 'L-Malate', (SELECT id from media WHERE medium='Blood')),
+	('mal__D', 'D-Malate', (SELECT id from media WHERE medium='Blood')),
+	('inost', 'Myo-Inositol', (SELECT id from media WHERE medium='Blood')),
+	('nac', 'Nicotinate', (SELECT id from media WHERE medium='Blood')),
+	('nicnt', 'Nicotinate ', (SELECT id from media WHERE medium='Blood')),
+	('pyr', 'Pyruvate', (SELECT id from media WHERE medium='Blood')),
+	('succ', 'Succinate', (SELECT id from media WHERE medium='Blood')),
+	('thm', 'Thiamin', (SELECT id from media WHERE medium='Blood')),
+	('ade', 'Adenine', (SELECT id from media WHERE medium='Urine')),
+	('alltn', 'Allantoin', (SELECT id from media WHERE medium='Urine')),
+	('alltn__R', 'Allantoin', (SELECT id from media WHERE medium='Urine')),
+	('but', 'Butyrate', (SELECT id from media WHERE medium='Urine')),
+	('cit', 'Citrate', (SELECT id from media WHERE medium='Urine')),
+	('etha', 'Ethanolamine', (SELECT id from media WHERE medium='Urine')),
+	('etham', 'Ethanolamine', (SELECT id from media WHERE medium='Urine')),
+	('for', 'Formate', (SELECT id from media WHERE medium='Urine')),
+	('glc__D', 'Glucose', (SELECT id from media WHERE medium='Urine')),
+	('glc__bD', 'Glucose', (SELECT id from media WHERE medium='Urine')),
+	('glcur', 'Glucuronate', (SELECT id from media WHERE medium='Urine')),
+	('gua', 'Guanine', (SELECT id from media WHERE medium='Urine')),
+	('lac__D', 'D-Lactate', (SELECT id from media WHERE medium='Urine')),
+	('lac__L', 'L-Lactate', (SELECT id from media WHERE medium='Urine')),
+	('inost', 'Myo-Inositol', (SELECT id from media WHERE medium='Urine')),
+	('pyr', 'Pyruvate', (SELECT id from media WHERE medium='Urine')),
+	('taur', 'Taurine', (SELECT id from media WHERE medium='Urine'));
 
 END;

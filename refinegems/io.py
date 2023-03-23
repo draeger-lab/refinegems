@@ -418,10 +418,10 @@ def save_user_input(configpath: str) -> dict[str: str]:
             user_input['multiple_paths'] = list_of_models
         list_of_media = []
         while True:
-            medium = click.prompt('Enter medium to simulate growth on (SNM3|LB|M9|SMM|CGXII|RPMI) (or "stop" to stop)')
+            medium = click.prompt('Enter medium to simulate growth on (SNM3|LB|M9|SMM|CGXII|RPMI|Blood|Urine) (or "stop" to stop)')
             if medium.lower() == 'stop':
                 break
-            elif medium in ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA']:
+            elif medium in ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA', 'Blood', 'Urine']:
                 if medium not in list_of_media:
                     list_of_media.append(medium)
                 else:
