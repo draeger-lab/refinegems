@@ -4,6 +4,7 @@ Description:
 Definition:
 
 .. list-table:: Title4
+   :align: center
    :widths: 25 25 50
    :header-rows: 1
 
