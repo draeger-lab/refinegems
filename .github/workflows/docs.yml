@@ -32,6 +32,7 @@ jobs:
         pip install sphinx_rtd_theme
         pip install ipython
         pip install accessible-pygments
+        pip install sphinxcontrib-bibtex
 
     - name: Build the site
       run: |
