@@ -915,13 +915,13 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     
     if lab_strain and not protein_fasta:
         print(Fore.LIGHTRED_EX + '''
-              Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
-              Otherwise, polish will not change anything for the GeneProducts.
-              The header lines should look similar to the following line:
-              >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-              It would also be a valid input if the header lines looked similar to the following line:
-              >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
-              ''')
+                Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
+                Otherwise, polish will not change anything for the GeneProducts.
+                The header lines should look similar to the following line:
+                >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+                It would also be a valid input if the header lines looked similar to the following line:
+                >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
+                ''')
         return
     
     metab_list = model.getListOfSpecies()

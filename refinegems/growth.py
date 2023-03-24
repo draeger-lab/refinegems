@@ -14,6 +14,10 @@ from cobra import Model as cobraModel
 
 __author__ = "Famke Baeuerle"
 
+def simulate_anaerob():
+    """ Placeholder until we implement anaerobic simulation"""
+    return
+
 def set_fluxes_to_simulate(reaction: Reaction) -> Reaction:
     """Helper function: Set flux bounds to -1000.0 and 1000.0 to enable model simulation with growth_one_medium_from_minimal/default
 
