@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lysogeny Broth (LB) &mdash; refineGEMs 1.0 documentation</title>
+  <title>Urinary tract environment (Urine) &mdash; refineGEMs 1.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom_theme.css" type="text/css" />
@@ -22,8 +22,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="M9 minimal medium (M9)" href="m9.html" />
-    <link rel="prev" title="Minimal medium for Corynebacterium glutamicum (CGXII)" href="cgxii.html" /> 
+    <link rel="next" title="Addition of KEGG Pathways" href="../pathways.html" />
+    <link rel="prev" title="Synthetic Nasal Medium x3 (SNM3)" href="snm3.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -59,12 +59,12 @@
 <li class="toctree-l4"><a class="reference internal" href="blood.html">Bloodstream environment (Blood)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="casa.html">Casamino Acids (CasA)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cgxii.html">Minimal medium for <em>Corynebacterium glutamicum</em> (CGXII)</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">Lysogeny Broth (LB)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lb.html">Lysogeny Broth (LB)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="m9.html">M9 minimal medium (M9)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rpmi.html">Roswell Park Memorial Institute 1640 (RPMI)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="smm.html">Synthetic Minimal Medium (SMM)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="snm3.html">Synthetic Nasal Medium x3 (SNM3)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="urine.html">Urinary tract environment (Urine)</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Urinary tract environment (Urine)</a></li>
 </ul>
 </li>
 </ul>
@@ -96,9 +96,9 @@
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../main-modules.html">Main modules</a></li>
           <li class="breadcrumb-item"><a href="../growth.html">Growth simulation with RefineGEMs</a></li>
-      <li class="breadcrumb-item active">Lysogeny Broth (LB)</li>
+      <li class="breadcrumb-item active">Urinary tract environment (Urine)</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/modules/media/lb.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/modules/media/urine.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -106,42 +106,91 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="lysogeny-broth-lb">
-<h1>Lysogeny Broth (LB)<a class="headerlink" href="#lysogeny-broth-lb" title="Permalink to this heading"></a></h1>
-<p>Description:
-Definition:</p>
-<table class="docutils align-center" id="id1">
-<caption><span class="caption-number">Table 4 </span><span class="caption-text">Title1</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+  <section id="urinary-tract-environment-urine">
+<h1>Urinary tract environment (Urine)<a class="headerlink" href="#urinary-tract-environment-urine" title="Permalink to this heading"></a></h1>
+<p>The Urinary tract environment medium (Urine) is composed of all compounds contained within the urinary tract as described in
+‘Predicting Essential Metabolic Genome Content of Niche-Specific Enterobacterial Human Pathogens during Simulation of
+Host Environments’<a class="footnote-reference brackets" href="#footcite-ding2016" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
+<table class="docutils align-center" id="id3">
+<caption><span class="caption-number">Table 9 </span><span class="caption-text">Urine composition</span><a class="headerlink" href="#id3" title="Permalink to this table"></a></caption>
 <colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
+<col style="width: 50%" />
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>Heading row 1, column 1</p></th>
-<th class="head"><p>Heading row 1, column 2</p></th>
-<th class="head"><p>Heading row 1, column 3</p></th>
+<tr class="row-odd"><th class="head"><p>BiGG ID</p></th>
+<th class="head"><p>Compound name</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Row 1, column 1</p></td>
-<td></td>
-<td><p>Row 1, column 3</p></td>
+<tr class="row-even"><td><p>ade</p></td>
+<td><p>Adenine</p></td>
 </tr>
-<tr class="row-odd"><td><p>Row 2, column 1</p></td>
-<td><p>Row 2, column 2</p></td>
-<td><p>Row 2, column 3</p></td>
+<tr class="row-odd"><td><p>alltn</p></td>
+<td><p>Allantoin</p></td>
+</tr>
+<tr class="row-even"><td><p>alltn__R</p></td>
+<td><p>Allantoin</p></td>
+</tr>
+<tr class="row-odd"><td><p>but</p></td>
+<td><p>Butyrate</p></td>
+</tr>
+<tr class="row-even"><td><p>cit</p></td>
+<td><p>Citrate</p></td>
+</tr>
+<tr class="row-odd"><td><p>etha</p></td>
+<td><p>Ethanolamine</p></td>
+</tr>
+<tr class="row-even"><td><p>etham</p></td>
+<td><p>Ethanolamine</p></td>
+</tr>
+<tr class="row-odd"><td><p>for</p></td>
+<td><p>Formate</p></td>
+</tr>
+<tr class="row-even"><td><p>glc__D</p></td>
+<td><p>Glucose</p></td>
+</tr>
+<tr class="row-odd"><td><p>glc__bD</p></td>
+<td><p>Glucose</p></td>
+</tr>
+<tr class="row-even"><td><p>glcur</p></td>
+<td><p>Glucuronate</p></td>
+</tr>
+<tr class="row-odd"><td><p>gua</p></td>
+<td><p>Guanine</p></td>
+</tr>
+<tr class="row-even"><td><p>lac__D</p></td>
+<td><p>D-Lactate</p></td>
+</tr>
+<tr class="row-odd"><td><p>lac__L</p></td>
+<td><p>L-Lactate</p></td>
+</tr>
+<tr class="row-even"><td><p>inost</p></td>
+<td><p>Myo-Inositol</p></td>
+</tr>
+<tr class="row-odd"><td><p>pyr</p></td>
+<td><p>Pyruvate</p></td>
+</tr>
+<tr class="row-even"><td><p>taur</p></td>
+<td><p>Taurine</p></td>
 </tr>
 </tbody>
 </table>
+<div class="docutils container" id="id2">
+<aside class="footnote brackets" id="footcite-ding2016" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Tong Ding, Kyle A. Case, Morrine A. Omolo, Holly A. Reiland, Zachary P. Metz, Xinyu Diao, and David J. Baumler. Predicting essential metabolic genome content of niche-specific enterobacterial human pathogens during simulation of host environments. <em>PLOS ONE</em>, 11(2):1–10, 02 2016. URL: <a class="reference external" href="https://doi.org/10.1371/journal.pone.0149423">https://doi.org/10.1371/journal.pone.0149423</a>, <a class="reference external" href="https://doi.org/10.1371/journal.pone.0149423">doi:10.1371/journal.pone.0149423</a>.</p>
+</aside>
+</aside>
+</div>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="cgxii.html" class="btn btn-neutral float-left" title="Minimal medium for Corynebacterium glutamicum (CGXII)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="m9.html" class="btn btn-neutral float-right" title="M9 minimal medium (M9)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="snm3.html" class="btn btn-neutral float-left" title="Synthetic Nasal Medium x3 (SNM3)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../pathways.html" class="btn btn-neutral float-right" title="Addition of KEGG Pathways" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
