@@ -24,7 +24,8 @@ There is a flag called basis which can be set to either default_uptake or minima
 Available media
 ---------------
 The following media are directly available to be used with the ``growth`` module via a ``config.yaml`` file. 
-In the section for the respective medium the description along with the definition is provided.
+In the section for the respective medium the description along with the definition is provided. The rules used to get 
+the media definitions are described in the Section :ref:`From laboratory to *in silico* medium`.
 
 .. toctree:: 
 
