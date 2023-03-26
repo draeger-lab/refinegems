@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pipeline: From genome sequence to draft model &mdash; refineGEMs 1.0 documentation</title>
+  <title>From laboratory to in silico medium &mdash; refineGEMs 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_theme.css" type="text/css" />
@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Development" href="development.html" />
-    <link rel="prev" title="refinegems package" href="api.html" /> 
+    <link rel="next" title="refinegems package" href="api.html" />
+    <link rel="prev" title="Examples on how to use refinegems" href="modules/examples.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,9 +51,9 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="main-modules.html">Main modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">From laboratory to <em>in silico</em> medium</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API access</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Pipeline: From genome sequence to draft model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Notes for developers</a></li>
 </ul>
 
@@ -71,9 +71,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Pipeline: From genome sequence to draft model</li>
+      <li class="breadcrumb-item active">From laboratory to <em>in silico</em> medium</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/pipeline.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/in_silico_media_generation.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -81,53 +81,71 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="pipeline-from-genome-sequence-to-draft-model">
-<h1>Pipeline: From genome sequence to draft model<a class="headerlink" href="#pipeline-from-genome-sequence-to-draft-model" title="Permalink to this heading"></a></h1>
-<p>Generating a model for an organism where no information on genes and proteins is obtainable via any database
-causes the problem that the model will not contain valid database identifiers for any GeneProduct. To resolve this issue the
-workflow in Figure <a class="reference internal" href="#workflow"><span class="std std-numref">Fig. 1</span></a> can be used.</p>
+  <section id="from-laboratory-to-in-silico-medium">
+<h1>From laboratory to <em>in silico</em> medium<a class="headerlink" href="#from-laboratory-to-in-silico-medium" title="Permalink to this heading"></a></h1>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>If you want to use the medium with <code class="docutils literal notranslate"><span class="pre">refineGEMs.growth</span></code> add the definition to the database schema <code class="docutils literal notranslate"><span class="pre">sbo_media_db.sql</span></code>
+in the folder <em>data/database</em> in the downloaded repository. To update the database with the newly added table just
+delete the file <code class="docutils literal notranslate"><span class="pre">data.db</span></code> in the same folder and run refineGEMs.</p>
+</div>
 <ol class="arabic">
-<li><p>First annotate the genome with NCBI’s Prokaryotic Genome Annotation Pipeline (PGAP) to obtain the same FASTA format as used in NCBI.</p></li>
-<li><p>Then use diamond with the <code class="docutils literal notranslate"><span class="pre">nr</span></code> database from NCBI and the obtained annotated FASTA file as input. Restrict the search to your organism’s taxon if known and use the flag for taxonomy checking.</p></li>
-<li><p>Check if any protein in the annotation FASTA file still has no database identifier.</p>
+<li><p>Search papers containing medium definitions/ Search paper or provider information for a medium that could be
+interesting for your organism</p></li>
+<li><div class="line-block">
+<div class="line">If the paper contains already an <em>in silico</em> defintion: Go to step 3.</div>
+<div class="line">If not:</div>
+</div>
 <blockquote>
-<div><div class="line-block">
-<div class="line">-&gt; YES: Rerun diamond without the taxonomy check and without the restriction for the organism’s taxon.</div>
-<div class="line"><br /></div>
-<div class="line">-&gt; NO: Continue with step 4.</div>
+<div><ol class="lowerroman">
+<li><p>Collect all components in a table</p></li>
+<li><p>Add a column for the BiGG IDs of the components</p></li>
+<li><div class="line-block">
+<div class="line">Search for all components in the BiGG database</div>
+<div class="line">If component not in BiGG database:</div>
 </div>
-</div></blockquote>
-</li>
-<li><p>Add the diamond result to the annotated FASTA file.</p></li>
-<li><p>Run e.g. <code class="docutils literal notranslate"><span class="pre">CarveME</span></code> to obtain a draft model.</p></li>
-<li><p>Check if in the model any GeneProducts without NCBI Protein or RefSeq identifiers occur.</p>
 <blockquote>
-<div><div class="line-block">
-<div class="line">-&gt; YES:</div>
-<div class="line-block">
-<div class="line">i. Use individual BLAST searches for the remaining GeneProducts.</div>
-<div class="line">ii. Add the results to the annotated and refined FASTA file.</div>
-<div class="line">iii. Create again a draft model with the same program with the newly refined FASTA file.</div>
-<div class="line"><br /></div>
+<div><ol class="loweralpha">
+<li><p>Search component in PubChem &amp; try to find component with similar name and formula in BiGG database</p></li>
+<li><div class="line-block">
+<div class="line">Search component in KEGG database &amp; provide KEGG identifier in parenthesis behind the component name</div>
+<div class="line">(In this case the BiGG ID column remains empty.)</div>
 </div>
-<div class="line">-&gt; NO: The draft model is done.</div>
-</div>
-</div></blockquote>
 </li>
 </ol>
-<figure class="align-default" id="id1">
-<span id="workflow"></span><img alt="Workflow from genome sequence to a draft model" src="_images/genome2draft.svg" /><figcaption>
-<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Workflow from genome sequence to a draft model</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
-</figcaption>
-</figure>
+</div></blockquote>
+</li>
+<li><p>Add the Bigg ID name to the component column &amp; Add brackets around the original component name</p></li>
+<li><div class="line-block">
+<div class="line">For salts create an extra table where each ion is listed separately</div>
+<div class="line">-&gt; For how the salts should be separated into their ions search the salt in PubChem and look at the 2D Structure.</div>
+</div>
+</li>
+<li><p>Search each ion in the BiGG database &amp; add if available (Otherwise just leave the column empty)</p></li>
+<li><div class="line-block">
+<div class="line">Transfer the results for the salts into the original table:</div>
+</div>
+<div class="line-block">
+<div class="line">Add the BiGG ID of each ion to the component containing the ion such that in each row only one ion is represented.</div>
+<div class="line">If duplicates occur only add the according ion to the first component containing it.</div>
+</div>
+</li>
+</ol>
+</div></blockquote>
+</li>
+<li><p>Check if the medium definition misses relevant components like water, iron, oxygen or carbondioxide.</p></li>
+<li><p>If relevant components are missing, search for reasonable explanations to add the according components or justify why
+these are missing.</p></li>
+<li><p>The medium is now ready to be used for growth simulation! :)</p></li>
+</ol>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="api.html" class="btn btn-neutral float-left" title="refinegems package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="development.html" class="btn btn-neutral float-right" title="Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="modules/examples.html" class="btn btn-neutral float-left" title="Examples on how to use refinegems" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="refinegems package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

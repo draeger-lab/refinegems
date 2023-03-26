@@ -31,6 +31,7 @@ Other applications of ``refinegems`` include curation of a given model these inc
    installation
    usage
    main-modules
+   in_silico_media_generation
    API access <api>
    pipeline
    Notes for developers <development>
