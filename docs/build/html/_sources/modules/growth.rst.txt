@@ -31,6 +31,7 @@ In the section for the respective medium the description along with the definiti
     media/blood
     media/casa
     media/cgxii
+    media/gmm
     media/lb
     media/m9
     media/rpmi
