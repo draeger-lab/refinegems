@@ -10,10 +10,9 @@ The Gut Microbiota Medium (GMM) is composed of all compounds described for the d
  
    * - BiGG
      - Substance
-
    * - glc__D
      - D-Glucose
-   * - glc__b
+   * - glc__bD
      - D-Glucose
    * - fru
      - Fructose
@@ -111,8 +110,10 @@ The Gut Microbiota Medium (GMM) is composed of all compounds described for the d
      - Isobutyric acid [Butyric acid]
    * - ibt
      - Isobutyrate [Butyric acid]
-   * - 
-     - KH2PO4
+   * - h2
+     - Hydrogen [KH2PO4]
+   * - pi
+     - Phosphate [KH2PO4]
    * - 
      - EDTA (KEGG: C00284)
 
