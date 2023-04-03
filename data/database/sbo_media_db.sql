@@ -10117,7 +10117,8 @@ INSERT INTO media_compositions(BiGG, substance, medium_id) VALUES
 	('but', 'Butyrate [Butyric acid]', (SELECT id from media WHERE medium='GMM')),
 	('isobuta', 'Isobutyric acid [Butyric acid]', (SELECT id from media WHERE medium='GMM')),
 	('ibt', 'Isobutyrate [Butyric acid]', (SELECT id from media WHERE medium='GMM')),
-	(NULL, 'KH2PO4', (SELECT id from media WHERE medium='GMM')),
+	('h2', 'Hydrogen [KH2PO4]', (SELECT id from media WHERE medium='GMM')),
+	('pi', 'Phosphate [KH2PO4]', (SELECT id from media WHERE medium='GMM')),
 	(NULL, 'EDTA (KEGG: C00284)', (SELECT id from media WHERE medium='GMM'));
 
 END;
