@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Urinary tract environment (Urine) &mdash; refineGEMs 1.0 documentation</title>
+  <title>Multi-Purpose Artificial Urine (MP-AU) &mdash; refineGEMs 1.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom_theme.css" type="text/css" />
@@ -22,8 +22,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Addition of KEGG Pathways" href="../pathways.html" />
-    <link rel="prev" title="Synthetic Nasal Medium x3 (SNM3)" href="snm3.html" /> 
+    <link rel="next" title="Roswell Park Memorial Institute 1640 (RPMI)" href="rpmi.html" />
+    <link rel="prev" title="M9 minimal medium (M9)" href="m9.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -62,10 +62,10 @@
 <li class="toctree-l4"><a class="reference internal" href="gmm.html">Gut Microbiota Medium (GMM)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="lb.html">Lysogeny Broth (LB)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="m9.html">M9 minimal medium (M9)</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Multi-Purpose Artificial Urine (MP-AU)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rpmi.html">Roswell Park Memorial Institute 1640 (RPMI)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="smm.html">Synthetic Minimal Medium (SMM)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="snm3.html">Synthetic Nasal Medium x3 (SNM3)</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">Urinary tract environment (Urine)</a></li>
 </ul>
 </li>
 </ul>
@@ -98,9 +98,9 @@
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../main-modules.html">Main modules</a></li>
           <li class="breadcrumb-item"><a href="../growth.html">Growth simulation with RefineGEMs</a></li>
-      <li class="breadcrumb-item active">Urinary tract environment (Urine)</li>
+      <li class="breadcrumb-item active">Multi-Purpose Artificial Urine (MP-AU)</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/modules/media/urine.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/modules/media/mp-au.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -108,13 +108,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="urinary-tract-environment-urine">
-<h1>Urinary tract environment (Urine)<a class="headerlink" href="#urinary-tract-environment-urine" title="Permalink to this heading"></a></h1>
-<p>The Urinary tract environment medium (Urine) is composed of all compounds contained within the urinary tract as described in
-‘Predicting Essential Metabolic Genome Content of Niche-Specific Enterobacterial Human Pathogens during Simulation of
-Host Environments’<a class="footnote-reference brackets" href="#footcite-ding2016" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
+  <section id="multi-purpose-artificial-urine-mp-au">
+<h1>Multi-Purpose Artificial Urine (MP-AU)<a class="headerlink" href="#multi-purpose-artificial-urine-mp-au" title="Permalink to this heading"></a></h1>
+<p>The Mulit-Purpose Artificial Urine is composed of compounds contained within urine as described in
+‘A New Artificial Urine Protocol to Better Imitate Human Urine’<a class="footnote-reference brackets" href="#footcite-sarigul2019" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
 <table class="docutils align-center" id="id3">
-<caption><span class="caption-number">Table 10 </span><span class="caption-text">Urine composition</span><a class="headerlink" href="#id3" title="Permalink to this table"></a></caption>
+<caption><span class="caption-number">Table 7 </span><span class="caption-text">MP-AU composition</span><a class="headerlink" href="#id3" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -125,63 +124,60 @@ Host Environments’<a class="footnote-reference brackets" href="#footcite-ding2
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>ade</p></td>
-<td><p>Adenine</p></td>
+<tr class="row-even"><td><p>na1</p></td>
+<td><p>Sodium [NaCl]</p></td>
 </tr>
-<tr class="row-odd"><td><p>alltn</p></td>
-<td><p>Allantoin</p></td>
+<tr class="row-odd"><td><p>cl</p></td>
+<td><p>Chloride [NaCl]</p></td>
 </tr>
-<tr class="row-even"><td><p>alltn__R</p></td>
-<td><p>Allantoin</p></td>
+<tr class="row-even"><td><p>so4</p></td>
+<td><p>Sulfate [Na2SO4]</p></td>
 </tr>
-<tr class="row-odd"><td><p>but</p></td>
-<td><p>Butyrate</p></td>
+<tr class="row-odd"><td><p>urate</p></td>
+<td><p>Urate [Uric acid (C5H4N4O3)]</p></td>
 </tr>
 <tr class="row-even"><td><p>cit</p></td>
-<td><p>Citrate</p></td>
+<td><p>Citrate [Sodium citrate (Na3C6H5O7.2H2O)]</p></td>
 </tr>
-<tr class="row-odd"><td><p>etha</p></td>
-<td><p>Ethanolamine</p></td>
+<tr class="row-odd"><td><p>crtn</p></td>
+<td><p>Creatinine [C4H7N3O]</p></td>
 </tr>
-<tr class="row-even"><td><p>etham</p></td>
-<td><p>Ethanolamine</p></td>
+<tr class="row-even"><td><p>urea</p></td>
+<td><p>Urea [CH4N2O]</p></td>
 </tr>
-<tr class="row-odd"><td><p>for</p></td>
-<td><p>Formate</p></td>
+<tr class="row-odd"><td><p>k</p></td>
+<td><p>Potassium [KCl]</p></td>
 </tr>
-<tr class="row-even"><td><p>glc__D</p></td>
-<td><p>Glucose</p></td>
+<tr class="row-even"><td><p>ca2</p></td>
+<td><p>Calcium [CaCl2]</p></td>
 </tr>
-<tr class="row-odd"><td><p>glc__bD</p></td>
-<td><p>Glucose</p></td>
+<tr class="row-odd"><td><p>nh4</p></td>
+<td><p>Ammonium [NH4Cl]</p></td>
 </tr>
-<tr class="row-even"><td><p>glcur</p></td>
-<td><p>Glucuronate</p></td>
+<tr class="row-even"><td><p>oxa</p></td>
+<td><p>Oxalate [Potassium Oxalate (K2C2O4.H2O)]</p></td>
 </tr>
-<tr class="row-odd"><td><p>gua</p></td>
-<td><p>Guanine</p></td>
+<tr class="row-odd"><td><p>mg2</p></td>
+<td><p>Magnesium [MgSO4.7H2O]</p></td>
 </tr>
-<tr class="row-even"><td><p>lac__D</p></td>
-<td><p>D-Lactate</p></td>
+<tr class="row-even"><td><p>h2</p></td>
+<td><p>Hydrogen [NaH2PO4.2H2O]</p></td>
 </tr>
-<tr class="row-odd"><td><p>lac__L</p></td>
-<td><p>L-Lactate</p></td>
+<tr class="row-odd"><td><p>pi</p></td>
+<td><p>Phosphate [NaH2PO4.2H2O]</p></td>
 </tr>
-<tr class="row-even"><td><p>inost</p></td>
-<td><p>Myo-Inositol</p></td>
+<tr class="row-even"><td><p>h</p></td>
+<td><p>H+ [Na2HPO4.2H2O]</p></td>
 </tr>
-<tr class="row-odd"><td><p>pyr</p></td>
-<td><p>Pyruvate</p></td>
-</tr>
-<tr class="row-even"><td><p>taur</p></td>
-<td><p>Taurine</p></td>
+<tr class="row-odd"><td><p>h2o</p></td>
+<td><p>H2O</p></td>
 </tr>
 </tbody>
 </table>
 <div class="docutils container" id="id2">
-<aside class="footnote brackets" id="footcite-ding2016" role="note">
+<aside class="footnote brackets" id="footcite-sarigul2019" role="note">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
-<p>Tong Ding, Kyle A. Case, Morrine A. Omolo, Holly A. Reiland, Zachary P. Metz, Xinyu Diao, and David J. Baumler. Predicting essential metabolic genome content of niche-specific enterobacterial human pathogens during simulation of host environments. <em>PLOS ONE</em>, 11(2):1–10, 02 2016. URL: <a class="reference external" href="https://doi.org/10.1371/journal.pone.0149423">https://doi.org/10.1371/journal.pone.0149423</a>, <a class="reference external" href="https://doi.org/10.1371/journal.pone.0149423">doi:10.1371/journal.pone.0149423</a>.</p>
+<p>Neslihan Sarigul, Filiz Korkmaz, and İlhan Kurultak. A new artificial urine protocol to better imitate human urine. <em>Scientific Reports</em>, 9(1):20159, Dec 2019. URL: <a class="reference external" href="https://doi.org/10.1038/s41598-019-56693-4">https://doi.org/10.1038/s41598-019-56693-4</a>, <a class="reference external" href="https://doi.org/10.1038/s41598-019-56693-4">doi:10.1038/s41598-019-56693-4</a>.</p>
 </aside>
 </aside>
 </div>
@@ -191,8 +187,8 @@ Host Environments’<a class="footnote-reference brackets" href="#footcite-ding2
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="snm3.html" class="btn btn-neutral float-left" title="Synthetic Nasal Medium x3 (SNM3)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../pathways.html" class="btn btn-neutral float-right" title="Addition of KEGG Pathways" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="m9.html" class="btn btn-neutral float-left" title="M9 minimal medium (M9)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rpmi.html" class="btn btn-neutral float-right" title="Roswell Park Memorial Institute 1640 (RPMI)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
