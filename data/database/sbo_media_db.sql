@@ -9513,7 +9513,7 @@ INSERT INTO media(medium, medium_description) VALUES
 	('RPMI', 'Roswell Park Memorial Institute 1640 Medium'),
 	('CGXII', 'Corynebacterium glutamicum optimized growth medium'),
 	('CasA', 'Casamino Acids'),
-	('Blood', 'Bloodstream environment'),
+	('Blood', 'Blood medium'),
 	('MP-AU', 'Multi-Purpose Artificial Urine'),
 	('GMM', 'Gut Microbiota Medium');
 
