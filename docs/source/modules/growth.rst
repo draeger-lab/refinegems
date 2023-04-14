@@ -35,7 +35,7 @@ the media definitions are described in the Section :ref:`From laboratory to *in 
     media/gmm
     media/lb
     media/m9
+    media/mp-au
     media/rpmi
     media/smm
     media/snm3
-    media/urine
