@@ -41,12 +41,13 @@ def main(configpath=None):
     rg.databases.initialise_database()
     
     # check if the output directory is already present, if not create it
-    dir = os.path.join(config['out_path'] + 'visualization/')
     if not os.path.isdir(config['out_path']):
         logging.info('Given out_path is not yet a directory, creating ' + config['out_path'])
         os.makedirs(config['out_path'])
-    if not os.path.isdir(dir): 
-        os.makedirs(dir)
+    if (config['visualize']):
+        dir = os.path.join(config['out_path'] + 'visualization/')
+        if not os.path.isdir(dir): 
+            os.makedirs(dir)
         
     logging.info('Your output will be saved to ' + config['out_path']) 
     
