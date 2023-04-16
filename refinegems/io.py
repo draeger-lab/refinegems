@@ -399,6 +399,8 @@ def save_user_input(configpath: str) -> dict[str: str]:
             user_input['growth_basis'] = 'default_uptake'
         if growth_basis == 'm':
             user_input['growth_basis'] = 'minimal_uptake'
+            
+        user_input['anaerobic_growth'] = click.confirm('Do you want to simulate anaerobic growth?')
         
         multiple = click.confirm('Do you want to simulate and compare multiple models?')
         user_input['multiple'] = multiple
