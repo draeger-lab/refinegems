@@ -1,7 +1,10 @@
 Defined Gut Microbiota Medium (dGMM)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The defined Gut Microbiota Medium (dGMM) is composed of all compounds described in 
-'Nutritional preferences of human gut bacteria reveal their metabolic idiosyncrasies'\ :footcite:p:`Tramontano2018`. 
+'Nutritional preferences of human gut bacteria reveal their metabolic idiosyncrasies'\ :footcite:p:`Tramontano2018`.
+The dGMM was used under anaerobic conditions in the paper and, thus, does not contain any oxygen. However, a gas mix 
+containing carbon dioxide, nitrogen and hydrogen was added to the anaerobic chamber. As hydrogen is already present in 
+the definition only carbon dioxide and nitrogen were added.
 
 .. list-table:: dGMM composition
    :align: center
