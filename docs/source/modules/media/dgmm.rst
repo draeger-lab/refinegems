@@ -1,9 +1,9 @@
-Gut Microbiota Medium (GMM)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The Gut Microbiota Medium (GMM) is composed of all compounds described for the defined GMM in 
+Defined Gut Microbiota Medium (dGMM)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The defined Gut Microbiota Medium (dGMM) is composed of all compounds described in 
 'Nutritional preferences of human gut bacteria reveal their metabolic idiosyncrasies'\ :footcite:p:`Tramontano2018`. 
 
-.. list-table:: GMM composition
+.. list-table:: dGMM composition
    :align: center
    :widths: 25 25
    :header-rows: 1
@@ -116,5 +116,9 @@ The Gut Microbiota Medium (GMM) is composed of all compounds described for the d
      - Phosphate [KH2PO4]
    * - 
      - EDTA (KEGG: C00284)
+   * - co2
+     - CO2 [Carbon dioxide]
+   * - n2
+     - Nitrogen
 
 .. footbibliography::
