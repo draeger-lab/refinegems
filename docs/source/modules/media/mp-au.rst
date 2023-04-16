@@ -12,7 +12,6 @@ to the definition.
 
    * - BiGG ID
      - Compound name
-
    * - na1
      - Sodium [NaCl]
    * - cl
