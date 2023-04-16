@@ -53,9 +53,10 @@ def main(configpath=None):
     if (config['multiple']):
         logging.info('Growth simulation for multiple models: ')
         models_cobra = rg.io.load_multiple_models(config['multiple_paths'], 'cobra')
-        growth_all = rg.comparison.simulate_all(models_cobra, config['media'], config['growth_basis'])
-        growth_all.to_csv(config['out_path'] + 'growth_' + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
-        logging.info('Multiple model growth simulation results are saved to ' +  'growth_' + str(today) + '_' + config['growth_basis'] + '.csv')
+        growth_all = rg.comparison.simulate_all(models_cobra, config['media'], config['growth_basis'], config['anaerobic_growth'])
+        growth_prefix = 'anaerobic_growth_' if config['anaerobic_growth'] else 'growth_'
+        growth_all.to_csv(config['out_path'] + growth_prefix + str(today) + '_' + config['growth_basis'] + '.csv', index=False)
+        logging.info('Multiple model growth simulation results are saved to ' +  growth_prefix + str(today) + '_' + config['growth_basis'] + '.csv')
         
         # visualizations
         if (config['visualize']):
@@ -70,8 +71,10 @@ def main(configpath=None):
             sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
             venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
-            heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_dt_additives_' + str(today) + '.png')
-            binary_heatmap.savefig(config['out_path'] + 'visualization/' + 'heatmap_native_' + str(today) + '.png', bbox_inches='tight')
+            heatmap_dt_prefix = 'heatmap_dt_additives_anaerobic_' if config['anaerobic_growth'] else 'heatmap_dt_additives_'
+            heatmap.savefig(config['out_path'] + 'visualization/' + heatmap_dt_prefix + str(today) + '.png')
+            binary_heatmap_prefix = 'heatmap_native_anaerobic_' if config['anaerobic_growth'] else 'heatmap_native_'
+            binary_heatmap.savefig(config['out_path'] + 'visualization/' + binary_heatmap_prefix + str(today) + '.png', bbox_inches='tight')
             ini_plot.savefig(config['out_path'] + 'visualization/' + 'model_status_' + str(today) + '.png', bbox_inches='tight')
     
     if (config['single']):        
@@ -184,7 +187,7 @@ def main(configpath=None):
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)
             
             if (config['media'] != None):
-                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media'], config['growth_basis'])
+                growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media'], config['growth_basis'], config['anaerobic_growth'])
             
             if (config['memote'] == True):
                 information = [[name], [reac], [metab], [genes], [score], orphans, deadends, disconnected, mass_unbal, charge_unbal]
@@ -194,7 +197,8 @@ def main(configpath=None):
                 model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
             with pd.ExcelWriter(config['out_path'] + name + '_' + str(today) + '.xlsx') as writer:  
                 model_params.to_excel(writer, sheet_name='model params', index=False)
-                growth_sim.to_excel(writer, sheet_name='growth simulation', index=False)
+                growth_sim_name = 'anaerobic growth simulation' if config['anaerobic_growth'] else 'growth simulation'
+                growth_sim.to_excel(writer, sheet_name=growth_sim_name, index=False)
                 egc.to_excel(writer, sheet_name='EGC test', index=False)
                 if(config['modelseed']):
                     charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
