@@ -10065,6 +10065,7 @@ INSERT INTO media_compositions(BiGG, substance, medium_id) VALUES
 	('pi', 'Phosphate [NaH2PO4.2H2O]', (SELECT id from media WHERE medium='MP-AU')),
 	('h', 'H+ [Na2HPO4.2H2O]', (SELECT id from media WHERE medium='MP-AU')),
 	('h2o', 'H2O', (SELECT id from media WHERE medium='MP-AU')),
+	('o2', 'O2 [Oxygen]', (SELECT id from media WHERE medium='MP-AU')),
 --dGMM
 	('glc__D', 'D-Glucose', (SELECT id from media WHERE medium='dGMM')),
 	('glc__bD', 'D-Glucose', (SELECT id from media WHERE medium='dGMM')),
