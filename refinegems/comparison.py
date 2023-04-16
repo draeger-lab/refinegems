@@ -179,13 +179,14 @@ def plot_heatmap_binary(growth: pd.DataFrame):
     plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
     return fig
 
-def simulate_all(models: list[cobraModel], media: list[str], basis: str) -> pd.DataFrame:
+def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
     """Does a run of growth simulation for multiple models on different media
 
     Args:
         - models (list[cobraModel]): Models loaded with cobrapy
         - media (list[str]): Media of interest (f.ex. LB, M9, ...)
         - basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
+        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
 
     Returns:
         pd.DataFrame: table containing the results of the growth simulation
@@ -196,9 +197,9 @@ def simulate_all(models: list[cobraModel], media: list[str], basis: str) -> pd.D
         for model in models:
             essentials_given = False
             if (basis=='default_uptake'):
-                growth_one = growth_one_medium_from_default(model, medium).drop('missing exchanges', axis=1)
+                growth_one = growth_one_medium_from_default(model, medium, anaerobic).drop('missing exchanges', axis=1)
             elif (basis == 'minimal_uptake'):
-                growth_one = growth_one_medium_from_minimal(model, medium).drop('missing exchanges', axis=1)
+                growth_one = growth_one_medium_from_minimal(model, medium, anaerobic).drop('missing exchanges', axis=1)
             if growth_one['essential'].dropna().size == 0:
                 essentials_given = True
             else:
