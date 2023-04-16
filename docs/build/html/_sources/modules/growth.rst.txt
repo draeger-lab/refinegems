@@ -32,7 +32,7 @@ the media definitions are described in the Section :ref:`From laboratory to *in 
     media/blood
     media/casa
     media/cgxii
-    media/gmm
+    media/dgmm
     media/lb
     media/m9
     media/mp-au
