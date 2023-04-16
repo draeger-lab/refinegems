@@ -1,7 +1,9 @@
 Multi-Purpose Artificial Urine (MP-AU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Mulit-Purpose Artificial Urine is composed of compounds contained within urine as described in 
-'A New Artificial Urine Protocol to Better Imitate Human Urine'\ :footcite:p:`Sarigul2019`.
+'A New Artificial Urine Protocol to Better Imitate Human Urine'\ :footcite:p:`Sarigul2019`. Pan, Altenried and Scheibler 
+*et al.*:footcite:p:`Pan2023` used MP-AU with *Pseudomonas aeruginosa* under aerobic conditions. Thus, oxygen is added 
+to the definition.
 
 .. list-table:: MP-AU composition
    :align: center
@@ -43,6 +45,8 @@ The Mulit-Purpose Artificial Urine is composed of compounds contained within uri
      - H+ [Na2HPO4.2H2O]
    * - h2o
      - H2O
+   * - o2
+     - O2 [Oxygen]
 
 .. footbibliography::
      
