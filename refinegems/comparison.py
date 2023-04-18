@@ -5,6 +5,7 @@ Can mainly be used to compare growth behaviour of multiple models. All other sta
 """
 
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -125,28 +126,33 @@ def plot_heatmap_dt(growth: pd.DataFrame):
     growth.index.names = (None,None)
     growth.index.name=None
     growth.index = growth.index.get_level_values(1)
-    growth[growth > 500] = np.nan
-    growth[growth < 0] = np.nan
-    growth.replace([np.inf, -np.inf], np.nan, inplace=True)
-    vmin=growth.min().min() - 5
+    growth[growth > 500] = 0
+    growth[growth < 0] = 0
+    growth.replace([np.inf, -np.inf], 0, inplace=True)
+    vmin=1e-5 #Use same threshhold as in find_missing_essential in growth
     vmax=growth.max().max() + 5
+    annot = growth.copy()
+    annot = annot.round().astype(int)
+    annot[annot < 1e-5] = ''
+    cmap=matplotlib.cm.get_cmap('YlGn').copy()
+    cmap.set_under('black')
     fig, ax = plt.subplots(figsize=(10,8))
     sns.heatmap(growth.T, 
-                annot=True, 
+                annot=annot.T, 
                 annot_kws={"fontsize":15},
                 vmin=vmin, 
                 vmax=vmax,
-                #cmap='crest', 
+                cmap=cmap, 
                 linewidth=.5, 
-                cbar_kws = {'orientation':'horizontal', 'label':'doubling time [min]'},
+                cbar_kws = {'orientation':'horizontal', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
                 ax=ax,
-                fmt='.0f'
+                fmt=''
                 )
     plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
     return fig
 
-def plot_heatmap_binary(growth: pd.DataFrame):
-    """Creates a plot were if growth without additives is possible is marked blue otherwise red
+def plot_heatmap_native(growth: pd.DataFrame):
+    """Creates a plot were if growth without additives is possible is marked from yellow to green otherwise black
 
     Args:
         - growth (pd.DataFrame): Containing growth data from simulate_all
@@ -155,24 +161,39 @@ def plot_heatmap_binary(growth: pd.DataFrame):
         plot: Seaborn Heatmap
     """
     def get_native_growth(row):
-        if row == True:
-            return 1
+        if row['complete'] == True:
+            return row['doubling_time [min]']
         else:
             return 0
-    growth['native_growth'] = growth['complete'].apply(get_native_growth)
+    
+    growth['native_growth'] = growth.apply(get_native_growth, axis=1)
     growth = growth[['medium', 'model', 'native_growth']]
     growth=growth.set_index(['medium', 'model']).sort_index().T.stack()
     growth.columns.name=None
     growth.index.names = (None,None)
     growth.index.name=None
     growth.index = growth.index.get_level_values(1)
+    growth[growth > 500] = 0
+    growth[growth < 0] = 0
+    growth.replace([np.inf, -np.inf], 0, inplace=True)
+    annot = growth.copy()
+    annot = annot.round().astype(int)
+    annot[annot < 1e-5] = ''
+    vmin=1e-5 #Use same threshhold as in find_missing_essential in growth
+    vmax=growth.max().max() + 5
+    cmap=matplotlib.cm.get_cmap('YlGn').copy()
+    cmap.set_under('black')
     fig, ax = plt.subplots(figsize=(10,8))
-    sns.heatmap(growth.T, 
+    sns.heatmap(growth.T,
+                annot=annot.T, 
                 annot_kws={"fontsize":15},
-                cmap='RdYlBu', 
+                vmin=vmin,
+                vmax=vmax,
+                cmap=cmap,
                 linewidth=.5, 
                 ax=ax,
-                cbar=False,
+                cbar_kws={'orientation':'horizontal', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
+                fmt=''
                 )
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)

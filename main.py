@@ -66,15 +66,15 @@ def main(configpath=None):
             venn_reac = rg.comparison.plot_venn(models_cobra, 'reaction', True).get_figure()
             venn_metab = rg.comparison.plot_venn(models_cobra, 'metabolite', True).get_figure()
             heatmap = rg.comparison.plot_heatmap_dt(growth_all[['model', 'medium', 'doubling_time [min]']])
-            binary_heatmap = rg.comparison.plot_heatmap_binary(growth_all)
+            native_heatmap = rg.comparison.plot_heatmap_native(growth_all)
             # saving them
             sbo_fig_all.savefig(config['out_path'] + 'visualization/' + 'all_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             venn_reac.savefig(config['out_path'] + 'visualization/' + 'all_ReacOverlap_' + str(today) + '.png', bbox_inches='tight')
             venn_metab.savefig(config['out_path'] + 'visualization/' + 'all_MetabOverlap_' + str(today) + '.png', bbox_inches='tight')
             heatmap_dt_prefix = 'heatmap_dt_additives_anaerobic_' if config['anaerobic_growth'] else 'heatmap_dt_additives_'
             heatmap.savefig(config['out_path'] + 'visualization/' + heatmap_dt_prefix + str(today) + '.png')
-            binary_heatmap_prefix = 'heatmap_native_anaerobic_' if config['anaerobic_growth'] else 'heatmap_native_'
-            binary_heatmap.savefig(config['out_path'] + 'visualization/' + binary_heatmap_prefix + str(today) + '.png', bbox_inches='tight')
+            native_heatmap_prefix = 'heatmap_native_anaerobic_' if config['anaerobic_growth'] else 'heatmap_native_'
+            native_heatmap.savefig(config['out_path'] + 'visualization/' + native_heatmap_prefix + str(today) + '.png', bbox_inches='tight')
             ini_plot.savefig(config['out_path'] + 'visualization/' + 'model_status_' + str(today) + '.png', bbox_inches='tight')
     
     if (config['single']):        
