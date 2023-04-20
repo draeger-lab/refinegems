@@ -418,12 +418,14 @@ def save_user_input(configpath: str) -> dict[str: str]:
             print('The following models will be compared:')
             print(list_of_models)
             user_input['multiple_paths'] = list_of_models
+        possible_media = load_a_table_from_database('media')['medium'].to_list()
+        possible_media_str = '|'.join(possible_media)
         list_of_media = []
         while True:
-            medium = click.prompt('Enter medium to simulate growth on (SNM3|LB|M9|SMM|CGXII|RPMI|Blood|MP-AU|dGMM) (or "stop" to stop)')
+            medium = click.prompt(f'Enter medium to simulate growth on ({possible_media_str}) (or "stop" to stop)')
             if medium.lower() == 'stop':
                 break
-            elif medium in ['SNM3', 'RPMI', 'LB', 'M9', 'CGXII', 'CasA', 'Blood', 'MP-AU', 'dGMM']:
+            elif medium in possible_media:
                 if medium not in list_of_media:
                     list_of_media.append(medium)
                 else:
