@@ -129,13 +129,18 @@ def plot_heatmap_dt(growth: pd.DataFrame):
     growth[growth > 500] = 0
     growth[growth < 0] = 0
     growth.replace([np.inf, -np.inf], 0, inplace=True)
-    vmin=1e-5 #Use same threshhold as in find_missing_essential in growth
-    vmax=growth.max().max() + 5
+    over_growth = growth.max().max() + 6
+    growth.replace(np.nan, over_growth, inplace=True)
+    under_growth = growth.min().min() - 5
+    vmin= under_growth if under_growth > 1e-5 else 1e-5 #Use same threshhold as in find_missing_essential in growth
+    vmax=over_growth - 1
     annot = growth.copy()
     annot = annot.round().astype(int)
     annot[annot < 1e-5] = ''
+    annot.replace(over_growth.round().astype(int), 'No data', inplace=True)
     cmap=matplotlib.cm.get_cmap('YlGn').copy()
     cmap.set_under('black')
+    cmap.set_over('white')
     fig, ax = plt.subplots(figsize=(10,8))
     sns.heatmap(growth.T, 
                 annot=annot.T, 
@@ -144,11 +149,13 @@ def plot_heatmap_dt(growth: pd.DataFrame):
                 vmax=vmax,
                 cmap=cmap, 
                 linewidth=.5, 
-                cbar_kws = {'orientation':'horizontal', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
+                cbar_kws = {'orientation':'vertical', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
                 ax=ax,
                 fmt=''
                 )
+    rotation = 40 if len(growth.index) > 3 else 0
     plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
     return fig
 
 def plot_heatmap_native(growth: pd.DataFrame):
@@ -176,13 +183,19 @@ def plot_heatmap_native(growth: pd.DataFrame):
     growth[growth > 500] = 0
     growth[growth < 0] = 0
     growth.replace([np.inf, -np.inf], 0, inplace=True)
+    over_growth = growth.max().max() + 6
+    growth.replace(np.nan, over_growth, inplace=True)
     annot = growth.copy()
     annot = annot.round().astype(int)
+    annot[annot == np.nan] = 'No data'
     annot[annot < 1e-5] = ''
-    vmin=1e-5 #Use same threshhold as in find_missing_essential in growth
-    vmax=growth.max().max() + 5
+    annot.replace(over_growth.round().astype(int), 'No data', inplace=True)
+    under_growth = growth.min().min() - 5
+    vmin= under_growth if under_growth > 1e-5 else 1e-5 #Use same threshhold as in find_missing_essential in growth
+    vmax= over_growth - 1
     cmap=matplotlib.cm.get_cmap('YlGn').copy()
     cmap.set_under('black')
+    cmap.set_over('white')
     fig, ax = plt.subplots(figsize=(10,8))
     sns.heatmap(growth.T,
                 annot=annot.T, 
@@ -192,12 +205,14 @@ def plot_heatmap_native(growth: pd.DataFrame):
                 cmap=cmap,
                 linewidth=.5, 
                 ax=ax,
-                cbar_kws={'orientation':'horizontal', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
+                cbar_kws={'orientation':'vertical', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
                 fmt=''
                 )
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
+    rotation = 40 if len(growth.index) > 3 else 0
     plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
     return fig
 
 def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
