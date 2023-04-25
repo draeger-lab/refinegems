@@ -59,10 +59,6 @@ def get_minimal_uptake(model: cobraModel) -> list[str]:
     """
     with model:
         minimal = minimal_medium(model)
-        uptake = []
-        for index, value in minimal.items():
-            if value < 0:
-                uptake.append(index)
     return list(minimal.index)
 
 
