@@ -1,20 +1,52 @@
 M9 minimal medium (M9)
 ^^^^^^^^^^^^^^^^^^^^^^
-Description:
-Definition:
+The M9 minimal medium (M9) *in silico* definition consists of all compounds described by `Sigma-Aldrich <https://www.sigmaaldrich.com/DE/de/product/sigma/m6030>`__.
 
-.. list-table:: Title2
+.. list-table:: M9 composition
    :align: center
-   :widths: 25 25 50
+   :widths: 25 25
    :header-rows: 1
 
-   * - Heading row 1, column 1
-     - Heading row 1, column 2
-     - Heading row 1, column 3
-   * - Row 1, column 1
-     -
-     - Row 1, column 3
-   * - Row 2, column 1
-     - Row 2, column 2
-     - Row 2, column 3
+   * - BiGG ID
+     - Compound name
+   * - ca2
+     - Ca2+
+   * - cl
+     - Cl-
+   * - cobalt2
+     - Co2+
+   * - cu2
+     - Cu2+
+   * - fe2
+     - Fe2+
+   * - fe3
+     - Fe3+
+   * - glc__D
+     - D-Glucose
+   * - h2o
+     - H2O
+   * - h
+     - H+
+   * - k
+     - K+
+   * - mg2
+     - Mg
+   * - mn2
+     - Mn2+
+   * - mobd
+     - Molybdate
+   * - na1
+     - Na+
+   * - nh4
+     - Ammonium
+   * - ni2
+     - Ni2+
+   * - o2
+     - O2
+   * - pi
+     - Phosphate
+   * - so4
+     - Sulfate
+   * - zn2
+     - Zn2+
      
