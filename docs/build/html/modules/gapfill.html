@@ -13,7 +13,8 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
@@ -53,6 +54,8 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Gap filling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#manual-gap-filling">Manual gap filling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#automated-gap-filling">Automated gap filling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-module-gapfill-can-be-used-to">The module <code class="docutils literal notranslate"><span class="pre">gapfill</span></code> can be used to:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#relevant-parameters">Relevant parameters</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#data-acquisition-from-biocyc">Data acquisition from BioCyc</a></li>
 </ul>
 </li>
@@ -65,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Application examples</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API access</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development.html">Notes for developers</a></li>
@@ -95,31 +99,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="filling-gaps-with-refinegems">
+  <section id="filling-gaps-with-refinegems">
 <h1>Filling gaps with refineGEMs<a class="headerlink" href="#filling-gaps-with-refinegems" title="Permalink to this heading"></a></h1>
 <p>There are two possibilities to use refineGEMs to fill gaps.</p>
 <section id="manual-gap-filling">
@@ -154,44 +134,142 @@
 </dd>
 </dl>
 </div>
-<dl>
+<dl class="simple">
 <dt>Run times:</dt><dd><ul class="simple">
 <li><p>‘KEGG’: ~ 2h</p></li>
 <li><p>‘BioCyc’: ~ 45mins - 1h</p></li>
 <li><p>‘KEGG+BioCyc’: ~ 3 - 4h</p></li>
 </ul>
 </dd>
-<dt>The module <code class="docutils literal notranslate"><span class="pre">gapfill</span></code> can be used to:</dt><dd><p>a. perform gap analysis
-.. autofunction:: refinegems.gapfill.gap_analysis</p>
-<blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">noindex<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
 </dl>
-</div></blockquote>
-<p>b. add genes, metabolites and reactions from an Excel table to a model
-.. autofunction:: refinegems.gapfill.gapfill_model</p>
-<blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">noindex<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
-</div></blockquote>
-<p>c. or perform gap analysis and add the result directly to a model.
-.. autofunction:: refinegems.gapfill.gapfill</p>
-<blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">noindex<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
-</div></blockquote>
+<section id="the-module-gapfill-can-be-used-to">
+<h3>The module <code class="docutils literal notranslate"><span class="pre">gapfill</span></code> can be used to:<a class="headerlink" href="#the-module-gapfill-can-be-used-to" title="Permalink to this heading"></a></h3>
+<section id="a-perform-gap-analysis">
+<h4>a. perform gap analysis<a class="headerlink" href="#a-perform-gap-analysis" title="Permalink to this heading"></a></h4>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gap_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model_libsbml:</span> <span class="pre">libsbml.Model,</span> <span class="pre">gapfill_params:</span> <span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">None)],</span> <span class="pre">filename:</span> <span class="pre">str</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></span></dt>
+<dd><div class="line-block">
+<div class="line">Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
+| to KEGG/BioCyc/both</div>
+</div>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model_libsbml (libModel): Model loaded with libSBML</p></li>
+<li><p>gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings</p></li>
+<li><p>filename (str): Path to output file for gapfill analysis result</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Case ‘KEGG’</dt><dd><p>pd.DataFrame: Table containing the columns ‘bigg_id’ ‘locus_tag’ ‘EC’ ‘KEGG’ ‘name’ ‘GPR’</p>
 </dd>
 </dl>
+</li>
+<li><dl class="simple">
+<dt>Case ‘BioCyc’</dt><dd><dl class="simple">
+<dt>tuple: Five tables (1) - (5)</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt>pd.DataFrame: Gap fill statistics with the columns </dt><dd><p>‘Missing entity’ ‘Total’ ‘Have BiGG ID’ ‘Can be added’ ‘Notes’</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>pd.DataFrame: Genes with the columns </dt><dd><p>‘locus_tag’ ‘protein_id’ ‘model_id’ ‘name’</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>pd.DataFrame: Metabolites with the columns </dt><dd><p>‘bigg_id’ ‘name’ ‘BioCyc’ ‘compartment’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ ‘charge’</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>pd.DataFrame: Metabolites without BiGG ID with the columns </dt><dd><p>‘BioCyc’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ (‘charge’)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>pd.DataFrame: Reactions with the columns </dt><dd><p>‘bigg_id’ ‘name’ ‘BioCyc’ ‘locus_tag’ ‘Reactants’ ‘Products’ ‘EC’ ‘Fluxes’ ‘Spontaneous?’ 
+‘bigg_reaction’</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Case ‘KEGG+BioCyc’: </dt><dd><dl class="simple">
+<dt>tuple: Six tables (1)-(5) from output of ‘BioCyc’ &amp; (6) from output of ‘KEGG’</dt><dd><p>-&gt; Table reactions contains additionally column ‘KEGG’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="b-add-genes-metabolites-and-reactions-from-an-excel-table-to-a-model">
+<h4>b. add genes, metabolites and reactions from an Excel table to a model<a class="headerlink" href="#b-add-genes-metabolites-and-reactions-from-an-excel-table-to-a-model" title="Permalink to this heading"></a></h4>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gapfill_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_libsbml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">libsbml.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_analysis_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">libsbml.Model</span></span></span></dt>
+<dd><p>Main function to fill gaps in a model from a table</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model_libsbml (libModel): Model loaded with libSBML</p></li>
+<li><p>gap_analysis_result (str|tuple): Path to Excel file from gap_analysis|Tuple of pd.DataFrames obtained from gap_analysis</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><p>libModel: Gap filled model</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="c-or-perform-gap-analysis-and-add-the-result-directly-to-a-model">
+<h4>c. or perform gap analysis and add the result directly to a model.<a class="headerlink" href="#c-or-perform-gap-analysis-and-add-the-result-directly-to-a-model" title="Permalink to this heading"></a></h4>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>To use the gap analysis and directly add the result to a model, currently, one of the options ‘BioCyc’ or ‘KEGG+BioCyc’ has to be selected.
 For all other options the usage of gap_analysis combined with gapfill_model will result in an error.</p>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">refinegems.gapfill.</span></span><span class="sig-name descname"><span class="pre">gapfill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model_libsbml:</span> <span class="pre">libsbml.Model,</span> <span class="pre">gapfill_params:</span> <span class="pre">dict[slice(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">None)],</span> <span class="pre">filename:</span> <span class="pre">str</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">libsbml.Model</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><div class="line-block">
+<div class="line">Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
+| KEGG/BioCyc/(Genbank) GFF file</div>
+</div>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>model_libsbml (libModel): Model loaded with libSBML</p></li>
+<li><p>gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings</p></li>
+<li><p>filename (str): Path to output file for gapfill analysis result</p></li>
+<li><p>gapfill_model_out (str): Path where gapfilled model should be written to</p></li>
+</ul>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: <code class="docutils literal notranslate"><span class="pre">gap_analysis()</span></code> table(s) (1) &amp; libSBML model (2)</dt><dd><ol class="arabic simple">
+<li><p>pd.DataFrame|tuple(pd.DataFrame): Result from function <code class="docutils literal notranslate"><span class="pre">gap_analysis()</span></code></p></li>
+<li><p>libModel: Gap filled model</p></li>
+</ol>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+<section id="relevant-parameters">
+<h3>Relevant parameters<a class="headerlink" href="#relevant-parameters" title="Permalink to this heading"></a></h3>
 <p>To perform the gap analysis the following parameters are relevant for the config.yaml file:
 (See <a class="reference internal" href="#data-acquisition-from-biocyc"><span class="std std-ref">Data acquisition from BioCyc</span></a> on how to obtain the files 1 to 3)</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">gap_analysis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRUE</span>
@@ -213,6 +291,7 @@ An example Excel file to fill in by hand can be found in the cloned repository u
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">gap_analysis_file</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;Path</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">Excel</span><span class="nv"> </span><span class="s">file</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">which</span><span class="nv"> </span><span class="s">gaps</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">model</span><span class="nv"> </span><span class="s">should</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">filled&#39;</span>
 </pre></div>
 </div>
+</section>
 <section id="data-acquisition-from-biocyc">
 <h3>Data acquisition from BioCyc<a class="headerlink" href="#data-acquisition-from-biocyc" title="Permalink to this heading"></a></h3>
 <ol class="arabic">

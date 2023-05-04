@@ -13,7 +13,8 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
@@ -58,6 +59,7 @@
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Application examples</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API access</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development.html">Notes for developers</a></li>
@@ -88,31 +90,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="polishing-a-carveme-model">
+  <section id="polishing-a-carveme-model">
 <h1>Polishing a CarveME model<a class="headerlink" href="#polishing-a-carveme-model" title="Permalink to this heading"></a></h1>
 <p>The newer version of CarveMe leads to some irritations in the model, the scripts in <code class="docutils literal notranslate"><span class="pre">polish</span></code> enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.</p>
 <div class="admonition warning">

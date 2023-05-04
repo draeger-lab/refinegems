@@ -37,8 +37,12 @@ extensions = [
     'sphinx.ext.mathjax',
     'nbsphinx',
     'sphinx_rtd_theme',
-    'IPython.sphinxext.ipython_console_highlighting'
+    'IPython.sphinxext.ipython_console_highlighting',
+    'sphinxcontrib.bibtex'
 ]
+
+# For citations
+bibtex_bibfiles = ['library.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

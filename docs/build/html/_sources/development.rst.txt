@@ -12,12 +12,13 @@ Development installation
     * `sphinx_rtd_theme`
     * `pandoc`
     * `ipython`
+    * `sphinxcontrib-bibtex`
 
 You can install the packages via pip to your local environment:
 
 .. code:: bash
 
-    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython
+    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex
 
 If you run into an error with jinja2, just switch to version 3.0.3:
 

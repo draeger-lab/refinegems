@@ -55,24 +55,29 @@ a.reference:visited {
     color: #b4a069;
 }
 .wy-menu-vertical li.current a {
-    border-right: 1px solid #f0ebe0;
-  }
+    border-right: 1px #f0ebe0;
+}
 .wy-menu-vertical li.current > a, .wy-menu-vertical li.on a {
     color: #b4a069 !important;
     background: #f7f4ee !important;
 }
-.wy-menu-vertical li.current > a span.pre, .wy-menu-vertical li.on > a span.pre {
+.wy-menu-vertical li.current > a *, .wy-menu-vertical li.on > a * {
     color: #b4a069 !important;
     background: #f7f4ee !important;
 }
-.wy-menu-vertical li.current > a button.toctree-expand, .wy-menu-vertical li.on a button.toctree-expand{
-    color: #b4a069 !important;
+.wy-menu-vertical li.current {
+    border-bottom: 1px solid #b4a069 !important;
+    border-top: 1px solid #b4a069 !important;
 }
 .wy-menu-vertical li.toctree-l1.current > a {
     border-bottom: 1px solid #b4a069 !important;
     border-top: 1px solid #b4a069 !important;
 }
 .wy-menu-vertical li.toctree-l2.current > a {
+    border-bottom: 1px solid #b4a069 !important;
+    border-top: 1px solid #b4a069 !important;
+}
+.wy-menu-vertical li.toctree-l3.current > a {
     border-bottom: 1px solid #b4a069 !important;
     border-top: 1px solid #b4a069 !important;
 }
@@ -87,11 +92,7 @@ a.reference:visited {
     background: #d2c5a3 !important;
     color: #000000 !important;
 }
-.wy-menu-vertical a:hover span.pre {
-    background: #d2c5a3 !important;
-    color: #000000 !important;
-}
-.wy-menu-vertical a:hover button.toctree-expand {
+.wy-menu-vertical a:hover * {
     background: #d2c5a3 !important;
     color: #000000 !important;
 }

@@ -13,7 +13,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
@@ -49,6 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="main-modules.html">Main modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API access</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline: From genome sequence to draft model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Notes for developers</a></li>
@@ -78,34 +80,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="welcome-to-refinegems">
+  <section id="welcome-to-refinegems">
 <h1>Welcome to refineGEMs!<a class="headerlink" href="#welcome-to-refinegems" title="Permalink to this heading"></a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">refineGEMs</span></code> is a python package intended
 to help with the curation of genome-scale metabolic models (GEMS).</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>For bug reports please write issues on the <a class="reference external" href="https://github.com/draeger-lab/refinegems/issues">GitHub page</a>.</p>
+</div>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>Currently <code class="docutils literal notranslate"><span class="pre">refineGEMs</span></code> can be used for the investigation of a GEM, it can complete the following tasks:</p>
@@ -148,6 +130,7 @@ to help with the curation of genome-scale metabolic models (GEMS).</p>
 <li class="toctree-l2"><a class="reference internal" href="modules/examples.html">Application examples</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API access</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-refinegems.charges">refinegems.charges module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-refinegems.comparison">refinegems.comparison module</a></li>
