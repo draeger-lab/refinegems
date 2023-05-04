@@ -11,8 +11,8 @@ the definition only carbon dioxide and nitrogen were added.
    :widths: 25 25
    :header-rows: 1
  
-   * - BiGG
-     - Substance
+   * - BiGG ID
+     - Compound name
    * - glc__D
      - D-Glucose
    * - glc__bD

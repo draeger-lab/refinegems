@@ -11,10 +11,104 @@ The Synthetic Nasal Medium x3 (SNM3) definition contains all components as descr
 
    * - BiGG ID
      - Compound name
-   * - Row 1, column 1
+   * - ala__L	
      -
-   * - Row 2, column 1
-     - Row 2, column 2
+   * - arg__L	
+     -
+   * - cys__L	
+     -
+   * - glu__L	
+     -
+   * - gly	
+     -
+   * - his__L	
+     -
+   * - leu__L	
+     -
+   * - lys__L	
+     -
+   * - orn	
+     -
+   * - phe__L	
+     -
+   * - pro__L	
+     -
+   * - ser__L	
+     -
+   * - thr__L	
+     -
+   * - trp__L	
+     -
+   * - val__L	
+     -
+   * - cit	
+     -
+   * - fum	
+     -
+   * - male	
+     -
+   * - pyr	
+     -
+   * - succ	
+     -
+   * - glc__D	
+     -
+   * - urea	
+     -
+   * - na1	
+     -
+   * - cl	
+     -
+   * - k	
+     -
+   * - pi	
+     -
+   * - mg2	
+     -
+   * - so4	
+     -
+   * - 	
+     - 2,2-Bipyridine
+   * - ca2	
+     -
+   * - zn2	
+     -
+   * - mn2	
+     -
+   * -
+     - H3BO3
+   * - cobalt2
+     -	
+   * - cu2	
+     -
+   * - ni2	
+     -
+   * - mobd	
+     -
+   * - adocbl	
+     -
+   * - 4abz	
+     -
+   * - btn	
+     -
+   * - nac	
+     -
+   * - pnto__R
+     -	
+   * - pydam	
+     -
+   * - thm	
+     -
+   * - ribflv	
+     -
+   * - o2	
+     -
+   * - fe2	
+     -
+   * - h2o	
+     -
+   * - co2
+     -
 
 .. footbibliography::
      
