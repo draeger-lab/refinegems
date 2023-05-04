@@ -1,7 +1,6 @@
 Lysogeny Broth (LB)
 ^^^^^^^^^^^^^^^^^^^
-Description:
-Definition:
+LB is a complex medium that was developed in 1951\ :footcite:p:`bertaniSTUDIESLYSOGENESIS1951`.
 
 .. list-table:: LB composition
   :name: lb_comp
