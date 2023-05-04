@@ -60,8 +60,8 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-refinegems.comparison">refinegems.comparison module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.get_sbo_mapping_multiple"><code class="docutils literal notranslate"><span class="pre">get_sbo_mapping_multiple()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_binary"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_binary()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_dt"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_dt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_heatmap_native"><code class="docutils literal notranslate"><span class="pre">plot_heatmap_native()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_initial_analysis"><code class="docutils literal notranslate"><span class="pre">plot_initial_analysis()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_rea_sbo_multiple"><code class="docutils literal notranslate"><span class="pre">plot_rea_sbo_multiple()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#refinegems.comparison.plot_venn"><code class="docutils literal notranslate"><span class="pre">plot_venn()</span></code></a></li>
@@ -351,9 +351,9 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_binary">
-<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_binary" title="Permalink to this definition"></a></dt>
-<dd><p>Creates a plot were if growth without additives is possible is marked blue otherwise red</p>
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_dt">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_dt" title="Permalink to this definition"></a></dt>
+<dd><p>Creates heatmap of simulated doubling times with additives</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>growth (pd.DataFrame): Containing growth data from simulate_all</p></li>
@@ -365,9 +365,9 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_dt">
-<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_dt" title="Permalink to this definition"></a></dt>
-<dd><p>Creates heatmap of simulated doubling times with additives</p>
+<dt class="sig sig-object py" id="refinegems.comparison.plot_heatmap_native">
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refinegems.comparison.plot_heatmap_native" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a plot were if growth without additives is possible is marked from yellow to green otherwise black</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>growth (pd.DataFrame): Containing growth data from simulate_all</p></li>
@@ -426,13 +426,14 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.comparison.simulate_all">
-<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">simulate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.simulate_all" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.comparison.</span></span><span class="sig-name descname"><span class="pre">simulate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">cobra.Model</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.comparison.simulate_all" title="Permalink to this definition"></a></dt>
 <dd><p>Does a run of growth simulation for multiple models on different media</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>models (list[cobraModel]): Models loaded with cobrapy</p></li>
 <li><p>media (list[str]): Media of interest (f.ex. LB, M9, …)</p></li>
 <li><p>basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>pd.DataFrame: table containing the results of the growth simulation</p>
@@ -655,7 +656,7 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 </li>
 <li><dl class="simple">
 <dt>Case ‘BioCyc’</dt><dd><dl class="simple">
-<dt>tuple: Five tables (1) - (5)</dt><dd><ol class="arabic simple">
+<dt>tuple: Five tables (1) - (4)</dt><dd><ol class="arabic simple">
 <li><dl class="simple">
 <dt>pd.DataFrame: Gap fill statistics with the columns </dt><dd><p>‘Missing entity’ ‘Total’ ‘Have BiGG ID’ ‘Can be added’ ‘Notes’</p>
 </dd>
@@ -668,11 +669,6 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 </li>
 <li><dl class="simple">
 <dt>pd.DataFrame: Metabolites with the columns </dt><dd><p>‘bigg_id’ ‘name’ ‘BioCyc’ ‘compartment’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ ‘charge’</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>pd.DataFrame: Metabolites without BiGG ID with the columns </dt><dd><p>‘BioCyc’ ‘Chemical Formula’ ‘InChI-Key’ ‘ChEBI’ (‘charge’)</p>
 </dd>
 </dl>
 </li>
@@ -690,7 +686,7 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 </li>
 <li><dl class="simple">
 <dt>Case ‘KEGG+BioCyc’: </dt><dd><dl class="simple">
-<dt>tuple: Six tables (1)-(5) from output of ‘BioCyc’ &amp; (6) from output of ‘KEGG’</dt><dd><p>-&gt; Table reactions contains additionally column ‘KEGG’</p>
+<dt>tuple: Five tables (1)-(4) from output of ‘BioCyc’ &amp; (5) from output of ‘KEGG’</dt><dd><p>-&gt; Table reactions contains additionally column ‘KEGG’</p>
 </dd>
 </dl>
 </dd>
@@ -779,13 +775,14 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.find_missing_essential">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_missing_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">growth_medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_uptake</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#refinegems.growth.find_missing_essential" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">find_missing_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">growth_medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_uptake</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#refinegems.growth.find_missing_essential" title="Permalink to this definition"></a></dt>
 <dd><p>Report which exchange reactions are needed for growth, combines default uptake and valid new medium</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (cobraModel): Model loaded with COBRApy</p></li>
 <li><p>growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.</p></li>
 <li><p>default_uptake (list[str]): Metabolites consumed in standard medium</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>list[str]: Ids of exchanges of all metabolites which lead to zero growth if blocked</p>
@@ -866,13 +863,14 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.get_growth_selected_media">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_selected_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.get_growth_selected_media" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">get_growth_selected_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.get_growth_selected_media" title="Permalink to this definition"></a></dt>
 <dd><p>Simulates growth on all given media</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (cobraModel): Model loaded with COBRApy</p></li>
 <li><p>media (list[str]): Ids of media to simulate on</p></li>
 <li><p>basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>pd.DataFrame: Information on growth behaviour on given media</p>
@@ -911,12 +909,13 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.growth_one_medium_from_default">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">growth_one_medium_from_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.growth_one_medium_from_default" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">growth_one_medium_from_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.growth_one_medium_from_default" title="Permalink to this definition"></a></dt>
 <dd><p>Simulates growth on given medium, adding missing metabolites from the default uptake</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (cobraModel): Model loaded with COBRApy</p></li>
 <li><p>medium (pd.DataFrame): Dataframe with medium definition</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>pd.DataFrame: Information on growth behaviour on given medium</p>
@@ -926,12 +925,13 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.growth_one_medium_from_minimal">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">growth_one_medium_from_minimal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.growth_one_medium_from_minimal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">growth_one_medium_from_minimal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#refinegems.growth.growth_one_medium_from_minimal" title="Permalink to this definition"></a></dt>
 <dd><p>Simulates growth on given medium, adding missing metabolites from a minimal uptake</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (cobraModel): Model loaded with COBRApy</p></li>
 <li><p>medium (pd.DataFrame): Dataframe with medium definition</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>pd.DataFrame: Information on growth behaviour on given medium</p>
@@ -970,13 +970,14 @@ For how to obtain the BioCyc tables look into the documentation under ‘Filling
 
 <dl class="py function">
 <dt class="sig sig-object py" id="refinegems.growth.simulate_minimum_essential">
-<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">simulate_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">growth_medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#refinegems.growth.simulate_minimum_essential" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">refinegems.growth.</span></span><span class="sig-name descname"><span class="pre">simulate_minimum_essential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cobra.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">growth_medium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anaerobic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#refinegems.growth.simulate_minimum_essential" title="Permalink to this definition"></a></dt>
 <dd><p>Simulate growth with custom medium plus necessary uptakes</p>
 <dl class="simple">
 <dt>Args:</dt><dd><ul class="simple">
 <li><p>model (cobraModel): Model loaded with COBRApy</p></li>
 <li><p>growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.</p></li>
 <li><p>minimum (list[str]): Ids of exchanges of metabolites not present in the medium but necessary for growth. Output of find_minimum_essential.</p></li>
+<li><p>anaerobic (bool): If True ‘EX_o2_e’ is set to 0.0 to simulate anaerobic conditions</p></li>
 </ul>
 </dd>
 <dt>Returns:</dt><dd><p>float: Growth value in mmol per (gram dry weight) per hour</p>
