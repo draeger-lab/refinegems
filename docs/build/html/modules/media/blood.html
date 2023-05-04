@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blood Medium (Blood) &mdash; refineGEMs 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom_theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/refineGEMs_logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Casamino Acids (CasA)" href="casa.html" />
+    <link rel="prev" title="Growth simulation with RefineGEMs" href="../growth.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/refineGEMs_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../main-modules.html">Main modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../gapfill.html">Gap filling</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../growth.html">Growth simulation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../growth.html#interpreting-the-results">Interpreting the results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../growth.html#implementation">Implementation</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../growth.html#available-media">Available media</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Blood Medium (Blood)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="casa.html">Casamino Acids (CasA)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cgxii.html">Minimal medium for <em>Corynebacterium glutamicum</em> (CGXII)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dgmm.html">Defined Gut Microbiota Medium (dGMM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lb.html">Lysogeny Broth (LB)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="m9.html">M9 minimal medium (M9)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mp-au.html">Multi-Purpose Artificial Urine (MP-AU)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rpmi.html">Roswell Park Memorial Institute 1640 (RPMI)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="snm3.html">Synthetic Nasal Medium x3 (SNM3)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pathways.html">Pathway addition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sboann.html">SBO-Term annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../polish.html">Automated polishing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html">Application examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../in_silico_media_generation.html">From laboratory to <em>in silico</em> medium</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">Pipeline: From genome sequence to draft model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development.html">Notes for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">refineGEMs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../main-modules.html">Main modules</a></li>
+          <li class="breadcrumb-item"><a href="../growth.html">Growth simulation with RefineGEMs</a></li>
+      <li class="breadcrumb-item active">Blood Medium (Blood)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/media/blood.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="blood-medium-blood">
+<h1>Blood Medium (Blood)<a class="headerlink" href="#blood-medium-blood" title="Permalink to this heading"></a></h1>
+<p>The Blood Medium (Blood) definition was obtained from Nantia Leonidou, one of the authors of the paper ‘New workflow
+predicts drug targets against sars-cov-2 via metabolic changes in infected cells’<a class="footnote-reference brackets" href="#footcite-leonidou2023" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> where the
+Blood medium composition from <a class="reference internal" href="#blood-comp"><span class="std std-numref">Table 1</span></a> was already used.</p>
+<table class="docutils align-center" id="blood-comp">
+<caption><span class="caption-number">Table 1 </span><span class="caption-text">Blood composition</span><a class="headerlink" href="#blood-comp" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>BiGG ID</p></th>
+<th class="head"><p>Compound name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>akg</p></td>
+<td><p>2-Oxoglutarate [Oxoglutaric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>acac</p></td>
+<td><p>Acetoacetate [Acetoacetic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>adn</p></td>
+<td><p>Adenosine</p></td>
+</tr>
+<tr class="row-odd"><td><p>but</p></td>
+<td><p>Butyrate [Butyric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>cit</p></td>
+<td><p>Citrate [Citric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>fum</p></td>
+<td><p>Fumarate [Fumeric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>gam</p></td>
+<td><p>Glucosamine</p></td>
+</tr>
+<tr class="row-odd"><td><p>glcur</p></td>
+<td><p>Glucuronate [D-Glucuronic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>lac__D</p></td>
+<td><p>D-Lactate [D-Lactic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>lac__L</p></td>
+<td><p>L-Lactate [L-Lactic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>mal__L</p></td>
+<td><p>L-Malate [L-Malic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>mal__D</p></td>
+<td><p>D-Malate</p></td>
+</tr>
+<tr class="row-even"><td><p>inost</p></td>
+<td><p>Myo-Inositol</p></td>
+</tr>
+<tr class="row-odd"><td><p>nac</p></td>
+<td><p>Nicotinate [Nicotinic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>nicnt</p></td>
+<td><p>Nicotinate [Nicotinic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>pyr</p></td>
+<td><p>Pyruvate [Pyruvic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>succ</p></td>
+<td><p>Succinate [Succinic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>thm</p></td>
+<td><p>Thiamin [Thiamine]</p></td>
+</tr>
+<tr class="row-even"><td><p>2hb</p></td>
+<td><p>2 Hydroxybutyrate [2-Hydroxybutyric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>bhb</p></td>
+<td><p>(R)-3-Hydroxybutanoate [(R)-3-Hydroxybutyric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>duri</p></td>
+<td><p>Deoxyuridine</p></td>
+</tr>
+<tr class="row-odd"><td><p>dcyt</p></td>
+<td><p>Deoxycytidine</p></td>
+</tr>
+<tr class="row-even"><td><p>4pyrdx</p></td>
+<td><p>4-Pyridoxate [4-Pyridoxic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>3mob</p></td>
+<td><p>3-Methyl-2-oxobutanoate [alpha-Ketoisovaleric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>4hphac</p></td>
+<td><p>4-Hydroxyphenylacetate [p-Hydroxyphenylacetic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>btn</p></td>
+<td><p>Biotin</p></td>
+</tr>
+<tr class="row-even"><td><p>andrstrn</p></td>
+<td><p>Andrstrn [Androsterone]</p></td>
+</tr>
+<tr class="row-odd"><td><p>carn</p></td>
+<td><p>L-Carnosine [Carnosine]</p></td>
+</tr>
+<tr class="row-even"><td><p>ade</p></td>
+<td><p>Adenine</p></td>
+</tr>
+<tr class="row-odd"><td><p>tchola</p></td>
+<td><p>Taurocholic acid</p></td>
+</tr>
+<tr class="row-even"><td><p>ac</p></td>
+<td><p>Acetate [Acetic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>glyb</p></td>
+<td><p>Glycine betaine [Betaine]</p></td>
+</tr>
+<tr class="row-even"><td><p>ascb__L</p></td>
+<td><p>L-Ascorbate [Ascorbic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>amp</p></td>
+<td><p>AMP [Adenosine monophosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>nh3</p></td>
+<td><p>Ammonia</p></td>
+</tr>
+<tr class="row-odd"><td><p>bilirub</p></td>
+<td><p>Billirubin</p></td>
+</tr>
+<tr class="row-even"><td><p>ala_B</p></td>
+<td><p>beta-Alanine</p></td>
+</tr>
+<tr class="row-odd"><td><p>camp</p></td>
+<td><p>CAMP [Cyclic AMP]</p></td>
+</tr>
+<tr class="row-even"><td><p>crn</p></td>
+<td><p>L-Carnitine</p></td>
+</tr>
+<tr class="row-odd"><td><p>crtsl</p></td>
+<td><p>Crtsl [Cortisol]</p></td>
+</tr>
+<tr class="row-even"><td><p>creat</p></td>
+<td><p>Creatine</p></td>
+</tr>
+<tr class="row-odd"><td><p>chsterol</p></td>
+<td><p>Chsterol [Cholesterol]</p></td>
+</tr>
+<tr class="row-even"><td><p>cgly</p></td>
+<td><p>Cys Gly [Cysteinylglycine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>cytd</p></td>
+<td><p>Cytidine</p></td>
+</tr>
+<tr class="row-even"><td><p>chol</p></td>
+<td><p>Choline</p></td>
+</tr>
+<tr class="row-odd"><td><p>xyl__D</p></td>
+<td><p>D-Xylose</p></td>
+</tr>
+<tr class="row-even"><td><p>etoh</p></td>
+<td><p>Ethanol</p></td>
+</tr>
+<tr class="row-odd"><td><p>4abut</p></td>
+<td><p>4-Aminobutanoate [gamma-Aminobutyric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>fol</p></td>
+<td><p>Folate [Folic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>gly</p></td>
+<td><p>Glycine</p></td>
+</tr>
+<tr class="row-even"><td><p>gthrd</p></td>
+<td><p>Reduced glutathione [Glutathione]</p></td>
+</tr>
+<tr class="row-odd"><td><p>glyc3p</p></td>
+<td><p>Glycerol 3-phosphate</p></td>
+</tr>
+<tr class="row-even"><td><p>glyc</p></td>
+<td><p>Glycerol</p></td>
+</tr>
+<tr class="row-odd"><td><p>gsn</p></td>
+<td><p>Guanosine</p></td>
+</tr>
+<tr class="row-even"><td><p>gchola</p></td>
+<td><p>Glycocholate [Glycocholic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>for</p></td>
+<td><p>Formate [Formic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>gal</p></td>
+<td><p>D-Galactose</p></td>
+</tr>
+<tr class="row-odd"><td><p>glu__L</p></td>
+<td><p>L-Glutamate [L-Glutamic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>hxan</p></td>
+<td><p>Hypoxanthine</p></td>
+</tr>
+<tr class="row-odd"><td><p>tyr__L</p></td>
+<td><p>L-Tyrosine</p></td>
+</tr>
+<tr class="row-even"><td><p>phe__L</p></td>
+<td><p>L-Phenylalanine</p></td>
+</tr>
+<tr class="row-odd"><td><p>ala__L</p></td>
+<td><p>L-Alanine</p></td>
+</tr>
+<tr class="row-even"><td><p>pro__L</p></td>
+<td><p>L-Proline</p></td>
+</tr>
+<tr class="row-odd"><td><p>thr__L</p></td>
+<td><p>L-Threonine</p></td>
+</tr>
+<tr class="row-even"><td><p>asn__L</p></td>
+<td><p>L-Asparagine</p></td>
+</tr>
+<tr class="row-odd"><td><p>man</p></td>
+<td><p>D-Mannose</p></td>
+</tr>
+<tr class="row-even"><td><p>ile__L</p></td>
+<td><p>L-Isoleucine</p></td>
+</tr>
+<tr class="row-odd"><td><p>imp</p></td>
+<td><p>IMP [Inosinic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>his__L</p></td>
+<td><p>L-Histidine</p></td>
+</tr>
+<tr class="row-odd"><td><p>34dhphe</p></td>
+<td><p>3,4-Dihydroxy-L-phenylalanine [L-Dopa]</p></td>
+</tr>
+<tr class="row-even"><td><p>lys__L</p></td>
+<td><p>L-Lysine</p></td>
+</tr>
+<tr class="row-odd"><td><p>ser__L</p></td>
+<td><p>L-Serine</p></td>
+</tr>
+<tr class="row-even"><td><p>asp__L</p></td>
+<td><p>L-Aspartate [L-Aspartic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>cysi__L</p></td>
+<td><p>L Cystine [L-Cystine]</p></td>
+</tr>
+<tr class="row-even"><td><p>cyst__L</p></td>
+<td><p>L-Cystathionine [L-Cystine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ins</p></td>
+<td><p>Inosine</p></td>
+</tr>
+<tr class="row-even"><td><p>ocdcea</p></td>
+<td><p>Octadecenoate [Oleic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>pnto__R</p></td>
+<td><p>(R)-Pantothenate [Pantothenic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>orn</p></td>
+<td><p>Ornithine</p></td>
+</tr>
+<tr class="row-odd"><td><p>nrpphr</p></td>
+<td><p>Norepinephrine</p></td>
+</tr>
+<tr class="row-even"><td><p>nadp</p></td>
+<td><p>Nicotinamide adenine dinucleotide phosphate [NADP]</p></td>
+</tr>
+<tr class="row-odd"><td><p>hdca</p></td>
+<td><p>Hexadecanoate [Palmitic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>orot</p></td>
+<td><p>Orotate [Orotic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>tststerone</p></td>
+<td><p>Tststerone [Testosterone]</p></td>
+</tr>
+<tr class="row-even"><td><p>ppa</p></td>
+<td><p>Propionate [Propionic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>pydxn</p></td>
+<td><p>Pyridoxine</p></td>
+</tr>
+<tr class="row-even"><td><p>so3</p></td>
+<td><p>Sulfite</p></td>
+</tr>
+<tr class="row-odd"><td><p>ribflv</p></td>
+<td><p>Riboflavin</p></td>
+</tr>
+<tr class="row-even"><td><p>sbt__D</p></td>
+<td><p>D-Sorbitol [Sorbitol]</p></td>
+</tr>
+<tr class="row-odd"><td><p>sbt__L</p></td>
+<td><p>L-Sorbitol [Sorbitol]</p></td>
+</tr>
+<tr class="row-even"><td><p>thyox__L</p></td>
+<td><p>L-Thyroxine [Thyroxine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ppi</p></td>
+<td><p>Diphosphate [Pyrophosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>taur</p></td>
+<td><p>Taurine</p></td>
+</tr>
+<tr class="row-odd"><td><p>tsul</p></td>
+<td><p>Thiosulfate</p></td>
+</tr>
+<tr class="row-even"><td><p>sucr</p></td>
+<td><p>Sucrose</p></td>
+</tr>
+<tr class="row-odd"><td><p>srtn</p></td>
+<td><p>Serotonin</p></td>
+</tr>
+<tr class="row-even"><td><p>5oxpro</p></td>
+<td><p>5-Oxoproline [Pyroglutamic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>sarcs</p></td>
+<td><p>Sarcosine</p></td>
+</tr>
+<tr class="row-even"><td><p>thymd</p></td>
+<td><p>Thymidine</p></td>
+</tr>
+<tr class="row-odd"><td><p>sphs1p</p></td>
+<td><p>Sphingosine 1-phosphate</p></td>
+</tr>
+<tr class="row-even"><td><p>prpp</p></td>
+<td><p>5-Phospho-alpha-D-ribose 1-diphosphate [Phosphoribosyl pyrophosphate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>rib__D</p></td>
+<td><p>D-Ribose</p></td>
+</tr>
+<tr class="row-even"><td><p>udpg</p></td>
+<td><p>UDPglucose [Uridine diphosphate glucose]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ump</p></td>
+<td><p>UMP [Uridine 5’-monophosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>urate</p></td>
+<td><p>Urate [Uric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>urea</p></td>
+<td><p>Urea</p></td>
+</tr>
+<tr class="row-even"><td><p>udp</p></td>
+<td><p>UDP [Uridine 5’-diphosphate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>uri</p></td>
+<td><p>Uridine</p></td>
+</tr>
+<tr class="row-even"><td><p>ura</p></td>
+<td><p>Uracil</p></td>
+</tr>
+<tr class="row-odd"><td><p>retinol</p></td>
+<td><p>All-trans-Retinol [Vitamin A]</p></td>
+</tr>
+<tr class="row-even"><td><p>retinol_9_cis</p></td>
+<td><p>9-cis-retinol [Vitamin A]</p></td>
+</tr>
+<tr class="row-odd"><td><p>34dhoxpeg</p></td>
+<td><p>3,4-Dihydroxyphenylethyleneglycol [3,4-Dihydroxyphenylglycol]</p></td>
+</tr>
+<tr class="row-even"><td><p>2mcit</p></td>
+<td><p>2-Methylcitrate [2-Methylcitric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ca2</p></td>
+<td><p>Calcium</p></td>
+</tr>
+<tr class="row-even"><td><p>5htrp</p></td>
+<td><p>5-Hydroxy-L-tryptophan</p></td>
+</tr>
+<tr class="row-odd"><td><p>octa</p></td>
+<td><p>Octanoate [Caprylic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>3mop</p></td>
+<td><p>(S)-3-Methyl-2-oxopentanoate [3-Methyl-2-Oxovaleric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>cl</p></td>
+<td><p>Chloride [Chloride ion]</p></td>
+</tr>
+<tr class="row-even"><td><p>rbt</p></td>
+<td><p>Ribitol</p></td>
+</tr>
+<tr class="row-odd"><td><p>dca</p></td>
+<td><p>Decanoate [Capric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>arg__L</p></td>
+<td><p>L-Arginine</p></td>
+</tr>
+<tr class="row-odd"><td><p>C02528</p></td>
+<td><p>Chenodeoxycholate [Chenodeoxycholic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>atp</p></td>
+<td><p>ATP [Adenosine triphosphate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>caro</p></td>
+<td><p>Beta-Carotene [B-Carotene]</p></td>
+</tr>
+<tr class="row-even"><td><p>elaid</p></td>
+<td><p>Elaidic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>cys__L</p></td>
+<td><p>L-Cysteine</p></td>
+</tr>
+<tr class="row-even"><td><p>k</p></td>
+<td><p>Potassium</p></td>
+</tr>
+<tr class="row-odd"><td><p>na1</p></td>
+<td><p>Sodium</p></td>
+</tr>
+<tr class="row-even"><td><p>hco3</p></td>
+<td><p>Bicarbonate [Hydrogen carbonate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>cholate</p></td>
+<td><p>Cholate [Cholic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>dchac</p></td>
+<td><p>Deoxycholate [Deoxycholic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>csn</p></td>
+<td><p>Cytosine</p></td>
+</tr>
+<tr class="row-even"><td><p>dgchol</p></td>
+<td><p>Chenodeoxyglycocholate [Chenodeoxycholic acid glycine conjugate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ddca</p></td>
+<td><p>Dodecanoate [Dodecanoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>gln__L</p></td>
+<td><p>L-Glutamine</p></td>
+</tr>
+<tr class="row-odd"><td><p>arab__L</p></td>
+<td><p>L-Arabinose</p></td>
+</tr>
+<tr class="row-even"><td><p>c10crn</p></td>
+<td><p>Decanoyl Carnitine [Decanoylcarnithine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>fru</p></td>
+<td><p>D-Fructose</p></td>
+</tr>
+<tr class="row-even"><td><p>lnlc</p></td>
+<td><p>Linoleic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>leu__L</p></td>
+<td><p>L-Leucine</p></td>
+</tr>
+<tr class="row-even"><td><p>ivcrn</p></td>
+<td><p>Isovaleryl Carnitine</p></td>
+</tr>
+<tr class="row-odd"><td><p>fe2</p></td>
+<td><p>Fe2+</p></td>
+</tr>
+<tr class="row-even"><td><p>fe3</p></td>
+<td><p>Iron (Fe3+)</p></td>
+</tr>
+<tr class="row-odd"><td><p>4mop</p></td>
+<td><p>4-Methyl-2-oxopentanoate [Ketoleucine]</p></td>
+</tr>
+<tr class="row-even"><td><p>met__L</p></td>
+<td><p>L-Methionine</p></td>
+</tr>
+<tr class="row-odd"><td><p>HC02193</p></td>
+<td><p>Glycolithocolate [Lithocholic acid glycine conjugate]</p></td>
+</tr>
+<tr class="row-even"><td><p>1mncam</p></td>
+<td><p>1 Methylnicotinamide [1-Methylnicothinamide]</p></td>
+</tr>
+<tr class="row-odd"><td><p>34hpp</p></td>
+<td><p>3-(4-Hydroxyphenyl)pyruvate [4-Hydroxyphenylpyruvic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>HC02196</p></td>
+<td><p>Glycoursodeoxycholate [Glycoursodeoxycholic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>hom__L</p></td>
+<td><p>L-Homoserine</p></td>
+</tr>
+<tr class="row-even"><td><p>HC02192</p></td>
+<td><p>Taurolithocholate [Lithocholyltaurine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>HC02191</p></td>
+<td><p>Lithocholate [Lithocholic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>c8crn</p></td>
+<td><p>Octanoyl carnitine [L-Octanoylcarnitine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>phyt</p></td>
+<td><p>Phytanic acid</p></td>
+</tr>
+<tr class="row-even"><td><p>ttdca</p></td>
+<td><p>Tetradecanoate [Myristic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>ptdca</p></td>
+<td><p>Pentadecanoate [Pentadecanoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>ocdca</p></td>
+<td><p>Octadecanoate [Stearic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>vitd3</p></td>
+<td><p>Calciol; (+)-Vitamin D3 [Vitamin D3]</p></td>
+</tr>
+<tr class="row-even"><td><p>C02470</p></td>
+<td><p>Xanthurenic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>val__L</p></td>
+<td><p>L-Valine</p></td>
+</tr>
+<tr class="row-even"><td><p>tdechola</p></td>
+<td><p>Taurodeoxycholate [Taurodeoxycholic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>vitd2</p></td>
+<td><p>Vitamin D2; Ergocalciferol</p></td>
+</tr>
+<tr class="row-even"><td><p>nad</p></td>
+<td><p>Nicotinamide adenine dinucleotide [NAD]</p></td>
+</tr>
+<tr class="row-odd"><td><p>citr__L</p></td>
+<td><p>L-Citrulline [Citrulline]</p></td>
+</tr>
+<tr class="row-even"><td><p>trp__L</p></td>
+<td><p>L-Tryptophan</p></td>
+</tr>
+<tr class="row-odd"><td><p>docosac</p></td>
+<td><p>Behenate, Docosanoate [Behenic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>HC02194</p></td>
+<td><p>Ursodeoxycholate [Ursodeoxycholic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>tdchola</p></td>
+<td><p>Taurochenodeoxycholate [Taurochenodesoxycholic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>acald</p></td>
+<td><p>Acetaldehyde</p></td>
+</tr>
+<tr class="row-odd"><td><p>dheas</p></td>
+<td><p>Dehydroepiandrosterone sulfate</p></td>
+</tr>
+<tr class="row-even"><td><p>arachd</p></td>
+<td><p>Arachidonic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>dhf</p></td>
+<td><p>7,8-Dihydrofolate [Dihydrofolic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>anth</p></td>
+<td><p>Anthranilate [2-Aminobenzoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>mthgxl</p></td>
+<td><p>Methylglyoxal [Pyruvaldehyde]</p></td>
+</tr>
+<tr class="row-even"><td><p>gdp</p></td>
+<td><p>GDP [Guanosine diphosphate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>fad</p></td>
+<td><p>Flavin adenine dinucleotide oxidized [FAD]</p></td>
+</tr>
+<tr class="row-even"><td><p>sprm</p></td>
+<td><p>Spermine</p></td>
+</tr>
+<tr class="row-odd"><td><p>spmd</p></td>
+<td><p>Spermidine</p></td>
+</tr>
+<tr class="row-even"><td><p>dhdascb</p></td>
+<td><p>Dehydroascorbate [Dehydroascorbic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>gtp</p></td>
+<td><p>GTP [Guanosine triphosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>ala__D</p></td>
+<td><p>D-Alanine</p></td>
+</tr>
+<tr class="row-odd"><td><p>23cgmp</p></td>
+<td><p>2’,3’-Cyclic GMP [Cyclic GMP]</p></td>
+</tr>
+<tr class="row-even"><td><p>35cgmp</p></td>
+<td><p>3’,5’-Cyclic GMP [Cyclic GMP]</p></td>
+</tr>
+<tr class="row-odd"><td><p>adp</p></td>
+<td><p>ADP</p></td>
+</tr>
+<tr class="row-even"><td><p>retinal</p></td>
+<td><p>All-trans-Retinal [Retinal]</p></td>
+</tr>
+<tr class="row-odd"><td><p>co</p></td>
+<td><p>Carbon monoxide</p></td>
+</tr>
+<tr class="row-even"><td><p>o2</p></td>
+<td><p>O2 [Oxygen]</p></td>
+</tr>
+<tr class="row-odd"><td><p>sph1p</p></td>
+<td><p>Sphinganine 1 phosphate [Sphinganine 1-phosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>lnlnca</p></td>
+<td><p>Alpha-Linolenic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>alpla</p></td>
+<td><p>Alpha linolenic acid [Alpha-Linolenic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>5mthf</p></td>
+<td><p>5-Methyltetrahydrofolate [5-Methyltetrahydrofolic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>gmp</p></td>
+<td><p>GMP [Guanosine monophosphate]</p></td>
+</tr>
+<tr class="row-even"><td><p>ncam</p></td>
+<td><p>Niacinamide</p></td>
+</tr>
+<tr class="row-odd"><td><p>ptrc</p></td>
+<td><p>Putrescine</p></td>
+</tr>
+<tr class="row-even"><td><p>estrones</p></td>
+<td><p>Estrone sulfate</p></td>
+</tr>
+<tr class="row-odd"><td><p>fald</p></td>
+<td><p>Formaldehyde</p></td>
+</tr>
+<tr class="row-even"><td><p>pi</p></td>
+<td><p>Phosphate</p></td>
+</tr>
+<tr class="row-odd"><td><p>pydam</p></td>
+<td><p>Pyridoxamine</p></td>
+</tr>
+<tr class="row-even"><td><p>25hvitd2</p></td>
+<td><p>25-Hydroxyvitamin D2</p></td>
+</tr>
+<tr class="row-odd"><td><p>so4</p></td>
+<td><p>Sulfate</p></td>
+</tr>
+<tr class="row-even"><td><p>lipt</p></td>
+<td><p>Lipoate [(R)-lipoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>lipoate</p></td>
+<td><p>Lipoate [(R)-lipoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>tcynt</p></td>
+<td><p>Thiocyanate</p></td>
+</tr>
+<tr class="row-odd"><td><p>thioc</p></td>
+<td><p>Thiocyanate</p></td>
+</tr>
+<tr class="row-even"><td><p>dhap</p></td>
+<td><p>Dihydroxyacetone phosphate</p></td>
+</tr>
+<tr class="row-odd"><td><p>pydx5p</p></td>
+<td><p>Pyridoxal 5’-phosphate</p></td>
+</tr>
+<tr class="row-even"><td><p>fmn</p></td>
+<td><p>FMN [Flavin Mononucleotide]</p></td>
+</tr>
+<tr class="row-odd"><td><p>pydx</p></td>
+<td><p>Pyridoxal</p></td>
+</tr>
+<tr class="row-even"><td><p>cdp</p></td>
+<td><p>CDP</p></td>
+</tr>
+<tr class="row-odd"><td><p>crtstrn</p></td>
+<td><p>Corticosterone</p></td>
+</tr>
+<tr class="row-even"><td><p>5fthf</p></td>
+<td><p>5-Formyltetrahydrofolate [Folinic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>5fothf</p></td>
+<td><p>5 Formyltetrahydrofolate [Folinic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>acetone</p></td>
+<td><p>Acetone</p></td>
+</tr>
+<tr class="row-odd"><td><p>prgstrn</p></td>
+<td><p>Prgstrn [Progesterone]</p></td>
+</tr>
+<tr class="row-even"><td><p>thf</p></td>
+<td><p>5,6,7,8-Tetrahydrofolate [Tetrahydrofolic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>abt</p></td>
+<td><p>L Arabinitol [L-Arabitol]</p></td>
+</tr>
+<tr class="row-even"><td><p>abt__L</p></td>
+<td><p>L Arabinitol [L-Arabitol]</p></td>
+</tr>
+<tr class="row-odd"><td><p>retn</p></td>
+<td><p>Retinoate [All-trans-retinoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>bz</p></td>
+<td><p>Benzoate [Benzoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>meoh</p></td>
+<td><p>Methanol</p></td>
+</tr>
+<tr class="row-even"><td><p>avite1</p></td>
+<td><p>Alpha-Tocopherol</p></td>
+</tr>
+<tr class="row-odd"><td><p>co2</p></td>
+<td><p>CO2 [Carbon dioxide]</p></td>
+</tr>
+<tr class="row-even"><td><p>tmndnc</p></td>
+<td><p>Timnodonic acid [Eicosapentaenoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>lgn</p></td>
+<td><p>Lignoceric acid or tetracosanoicacid [Tetracosanoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>lgnc</p></td>
+<td><p>Lignoceric acid [Tetracosanoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>q10</p></td>
+<td><p>Ubiquinone-10</p></td>
+</tr>
+<tr class="row-even"><td><p>c4crn</p></td>
+<td><p>Butyryl carnitine</p></td>
+</tr>
+<tr class="row-odd"><td><p>ha</p></td>
+<td><p>Hyaluronan [Hyaluronic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>nrpphrsf</p></td>
+<td><p>Sulfate derivative of norepinephrine [Norepinephrine sulfate]</p></td>
+</tr>
+<tr class="row-odd"><td><p>doco13ac</p></td>
+<td><p>13Z)-13-docosenoic acid [Erucic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>cynt</p></td>
+<td><p>Cyanate</p></td>
+</tr>
+<tr class="row-odd"><td><p>h2o</p></td>
+<td><p>H2O [Water]</p></td>
+</tr>
+<tr class="row-even"><td><p>3aib</p></td>
+<td><p>L-3-Amino-isobutanoate [(S)-b-aminoisobutyric acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>eicostet</p></td>
+<td><p>Eicosatetranoic acid [Cis-8,11,14,17-Eicosatetranoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>crvnc</p></td>
+<td><p>Cervonic acid [Docosahexaenoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>arach</p></td>
+<td><p>Arachidic acid</p></td>
+</tr>
+<tr class="row-even"><td><p>adrn</p></td>
+<td><p>Adrenic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>hpdca</p></td>
+<td><p>Heptadecanoate [Heptadecanoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>oxa</p></td>
+<td><p>Oxalate [Oxalic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>hexc</p></td>
+<td><p>Hexacosanoate [Hexacosanoic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>nrvnc</p></td>
+<td><p>Nervonic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>HC02197</p></td>
+<td><p>Sulfoglycolithocholate [Sulfolithocholylglycine]</p></td>
+</tr>
+<tr class="row-even"><td><p>no2</p></td>
+<td><p>Nitrite</p></td>
+</tr>
+<tr class="row-odd"><td><p>3mlda</p></td>
+<td><p>3-Methylimidazoleacetic acid [Methylimidazoleacetic acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>andrstrnglc</p></td>
+<td><p>Androsterone glucuronide</p></td>
+</tr>
+<tr class="row-odd"><td><p>xylt</p></td>
+<td><p>Xylitol [D-Xylitol]</p></td>
+</tr>
+<tr class="row-even"><td><p>dlnlcg</p></td>
+<td><p>Dihomo-gamma-linolenic acid [8,11,14-Eicosatrienoic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>5adtststerone</p></td>
+<td><p>5alpha-Dihydrotestosterone [Dihydrotestosterone]</p></td>
+</tr>
+<tr class="row-even"><td><p>aprgstrn</p></td>
+<td><p>20alpha-Dihydroprogesterone [20a-Dihydroprogesterone]</p></td>
+</tr>
+<tr class="row-odd"><td><p>lnlncg</p></td>
+<td><p>Gamma-Linolenic acid</p></td>
+</tr>
+<tr class="row-even"><td><p>h2o2</p></td>
+<td><p>Hydrogen peroxide</p></td>
+</tr>
+<tr class="row-odd"><td><p>retnglc</p></td>
+<td><p>Retinoyl glucuronide [Retinoyl b-glucuronide]</p></td>
+</tr>
+<tr class="row-even"><td><p>hdcea</p></td>
+<td><p>Hexadecenoate [Palmitoleic acid]</p></td>
+</tr>
+<tr class="row-odd"><td><p>vacc</p></td>
+<td><p>Vaccenic acid</p></td>
+</tr>
+<tr class="row-even"><td><p>HC02180</p></td>
+<td><p>Thromboxane-b2 [Thromboxane B2]</p></td>
+</tr>
+<tr class="row-odd"><td><p>HC00250</p></td>
+<td><p>Hydrosulfide [Hydrogen sulfide]</p></td>
+</tr>
+<tr class="row-even"><td><p>h2s</p></td>
+<td><p>Hydrogen sulfide</p></td>
+</tr>
+<tr class="row-odd"><td><p>gthox</p></td>
+<td><p>Oxidized glutathione</p></td>
+</tr>
+<tr class="row-even"><td><p>limnen</p></td>
+<td><p>Limnen (D-Limonene)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ser__D</p></td>
+<td><p>D-Serine</p></td>
+</tr>
+<tr class="row-even"><td><p>25hvitd3</p></td>
+<td><p>25-Hydroxyvitamin D3 [Calcidiol]</p></td>
+</tr>
+<tr class="row-odd"><td><p>phyQ</p></td>
+<td><p>Phylloquinone (old identifier for [Vitamin K1])</p></td>
+</tr>
+<tr class="row-even"><td><p>phllqne</p></td>
+<td><p>Phylloquinone [Vitamin K1]</p></td>
+</tr>
+<tr class="row-odd"><td><p>mepi</p></td>
+<td><p>Metanephrine</p></td>
+</tr>
+<tr class="row-even"><td><p>gbside_hs</p></td>
+<td><p>Globoside (homo sapiens) [Tetrahexosylceramide (d18:1/12:0)] <a class="footnote-reference brackets" href="#id3" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>*<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>dopasf</p></td>
+<td><p>Dopamine 3-O-Sulfate</p></td>
+</tr>
+<tr class="row-even"><td><p>avite2</p></td>
+<td><p>Alpha-Tocotrienol</p></td>
+</tr>
+<tr class="row-odd"><td><p>bvite</p></td>
+<td><p>Beta-Tocopherol</p></td>
+</tr>
+<tr class="row-even"><td><p>pheacgln</p></td>
+<td><p>Alpha-N-Phenylacetyl-L-glutamine</p></td>
+</tr>
+<tr class="row-odd"><td><p>glyc__S</p></td>
+<td><p>(S)-Glycerate [L-Glyceric acid]</p></td>
+</tr>
+<tr class="row-even"><td><p>4hdebrisoquine</p></td>
+<td><p>4hdebrisoquine [4-Hydroxydebrisoquine]</p></td>
+</tr>
+<tr class="row-odd"><td><p>debrisoquine</p></td>
+<td><p>Debrisoquine</p></td>
+</tr>
+<tr class="row-even"><td><p>strdnc</p></td>
+<td><p>Stearidonic acid</p></td>
+</tr>
+<tr class="row-odd"><td><p>c81crn</p></td>
+<td><p>Octenoyl Carnithine [2-Octenoylcarnithine]</p></td>
+</tr>
+<tr class="row-even"><td><p>3hexdcrn</p></td>
+<td><p>3-Hydroxyhexadecanoylcarnithine</p></td>
+</tr>
+<tr class="row-odd"><td><p>h</p></td>
+<td><p>H+ [Protons]</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id3" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">*</a><span class="fn-bracket">]</span></span>
+<p>Equality of both compounds Tetrahexosylceramide and Globoside was found through literature.
+See Mack and Szuchet<a class="footnote-reference brackets" href="#footcite-mack1981-synthesisofmyelin" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>, Müsken <em>et al.</em><a class="footnote-reference brackets" href="#footcite-musken2010-applicationofthinlayer" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a> and
+Detzner <em>et al.</em><a class="footnote-reference brackets" href="#footcite-detzner2020-validpresumptionof" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a>.</p>
+</aside>
+</aside>
+<div class="docutils container" id="id7">
+<aside class="footnote brackets" id="footcite-leonidou2023" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Nantia Leonidou, Alina Renz, Reihaneh Mostolizadeh, and Andreas Dräger. New workflow predicts drug targets against sars-cov-2 via metabolic changes in infected cells. <em>PLOS Computational Biology</em>, 19(3):1–32, 03 2023. URL: <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1010903">https://doi.org/10.1371/journal.pcbi.1010903</a>, <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1010903">doi:10.1371/journal.pcbi.1010903</a>.</p>
+</aside>
+<aside class="footnote brackets" id="footcite-mack1981-synthesisofmyelin" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">2</a><span class="fn-bracket">]</span></span>
+<p>Stephen R. Mack and Sara Szuchet. Synthesis of myelin glycosphingolipids by isolated oligodendrocytes in tissue culture. <em>Brain Research</em>, 214(1):180–185, 1981. URL: <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0006899381904510">https://www.sciencedirect.com/science/article/pii/0006899381904510</a>, <a class="reference external" href="https://doi.org/10.1016/0006-8993(81)90451-0">doi:10.1016/0006-8993(81)90451-0</a>.</p>
+</aside>
+<aside class="footnote brackets" id="footcite-musken2010-applicationofthinlayer" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id5">3</a><span class="fn-bracket">]</span></span>
+<p>Anne Müsken, Jamal Souady, Klaus Dreisewerd, Wenlan Zhang, Ute Distler, Jasna Peter-Katalinić, Halina Miller-Podraza, Helge Karch, and Johannes Müthing. Application of thin-layer chromatography/infrared matrix-assisted laser desorption/ionization orthogonal time-of-flight mass spectrometry to structural analysis of bacteria-binding glycosphingolipids selected by affinity detection. <em>Rapid communications in mass spectrometry : RCM</em>, 24(7):1032–1038, 2010. Journal Article Research Support, Non-U.S. Gov’t. <a class="reference external" href="https://arxiv.org/abs/20213676">arXiv:20213676</a>, <a class="reference external" href="https://doi.org/10.1002/rcm.4480">doi:10.1002/rcm.4480</a>.</p>
+</aside>
+<aside class="footnote brackets" id="footcite-detzner2020-validpresumptionof" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id6">4</a><span class="fn-bracket">]</span></span>
+<p>Johanna Detzner, Gottfried Pohlentz, and Johannes Müthing. Valid presumption of shiga toxin-mediated damage of developing erythrocytes in ehec-associated hemolytic uremic syndrome. <em>Toxins</em>, 12(6):373, 2020. URL: <a class="reference external" href="https://www.mdpi.com/2072-6651/12/6/373">https://www.mdpi.com/2072-6651/12/6/373</a>, <a class="reference external" href="https://doi.org/10.3390/toxins12060373">doi:10.3390/toxins12060373</a>.</p>
+</aside>
+</aside>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../growth.html" class="btn btn-neutral float-left" title="Growth simulation with RefineGEMs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="casa.html" class="btn btn-neutral float-right" title="Casamino Acids (CasA)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Famke Bäuerle and Gwendolyn O. Gusak.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
