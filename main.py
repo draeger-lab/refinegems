@@ -38,7 +38,6 @@ def main(configpath=None):
     logging.getLogger('requests').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.info('----------- New run of refineGEMs -----------')
-    rg.databases.initialise_database()
     
     # check if the output directory is already present, if not create it
     if not os.path.isdir(config['out_path']):

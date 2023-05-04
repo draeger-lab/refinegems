@@ -17,7 +17,7 @@ import pandas as pd
 from cobra import Model as cobraModel
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
-from refinegems.databases import PATH_TO_DB
+from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
@@ -385,6 +385,12 @@ def save_user_input(configpath: str) -> dict[str: str]:
     else:
         print('No config or no valid config given, you will be asked for input')
         user_input = {}
+        
+        update_db = click.confirm('Do you want to update the database?')
+        user_input['db_update'] = update_db
+        
+        if update_db:
+            initialise_database()
 
         out_path = click.confirm('Do you want to keep the output path "../rg_out/"?', default=True)
         if not out_path:
