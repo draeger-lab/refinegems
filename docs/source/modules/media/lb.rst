@@ -140,3 +140,5 @@ LB is a complex medium that was developed in 1951\ :footcite:p:`bertaniSTUDIESLY
     - L-Valine
   * - zn2
     - Zn2+
+
+.. footbibliography::

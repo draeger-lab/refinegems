@@ -100,3 +100,5 @@ RPMI is a medium used in cell culture and was developed in 1966 at the Roswell P
     -
   * - co2
     -
+
+.. footbibliography::

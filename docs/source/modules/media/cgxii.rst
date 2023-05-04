@@ -55,3 +55,5 @@ Since *C. glutamicum* is used widely in biotechnology applications, it was of in
     - O2
   * - glc__D
     - D-Glucose
+
+.. footbibliography::
