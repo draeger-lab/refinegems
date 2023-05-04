@@ -25,22 +25,28 @@ Run times:
     * 'KEGG+BioCyc': ~ 3 - 4h
 
 The module ``gapfill`` can be used to:
-    a. perform gap analysis
-    .. autofunction:: refinegems.gapfill.gap_analysis
-        :noindex:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+a. perform gap analysis
+"""""""""""""""""""""""
+.. autofunction:: refinegems.gapfill.gap_analysis
+   :noindex:
 
-    b. add genes, metabolites and reactions from an Excel table to a model
-    .. autofunction:: refinegems.gapfill.gapfill_model
-        :noindex:
+b. add genes, metabolites and reactions from an Excel table to a model
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.. autofunction:: refinegems.gapfill.gapfill_model
+   :noindex:
 
-    c. or perform gap analysis and add the result directly to a model.
-    .. autofunction:: refinegems.gapfill.gapfill
-        :noindex:
-
+c. or perform gap analysis and add the result directly to a model.
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .. warning:: 
     To use the gap analysis and directly add the result to a model, currently, one of the options 'BioCyc' or 'KEGG+BioCyc' has to be selected.
     For all other options the usage of gap_analysis combined with gapfill_model will result in an error.
 
+.. autofunction:: refinegems.gapfill.gapfill
+   :noindex:
+
+Relevant parameters
+^^^^^^^^^^^^^^^^^^^
 To perform the gap analysis the following parameters are relevant for the config.yaml file:
 (See :ref:`Data acquisition from BioCyc` on how to obtain the files 1 to 3)
 

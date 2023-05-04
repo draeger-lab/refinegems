@@ -17,7 +17,7 @@ import pandas as pd
 from cobra import Model as cobraModel
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
-from refinegems.databases import PATH_TO_DB
+from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
@@ -385,6 +385,12 @@ def save_user_input(configpath: str) -> dict[str: str]:
     else:
         print('No config or no valid config given, you will be asked for input')
         user_input = {}
+        
+        update_db = click.confirm('Do you want to update the database?')
+        user_input['db_update'] = update_db
+        
+        if update_db:
+            initialise_database()
 
         out_path = click.confirm('Do you want to keep the output path "../rg_out/"?', default=True)
         if not out_path:
@@ -399,6 +405,8 @@ def save_user_input(configpath: str) -> dict[str: str]:
             user_input['growth_basis'] = 'default_uptake'
         if growth_basis == 'm':
             user_input['growth_basis'] = 'minimal_uptake'
+            
+        user_input['anaerobic_growth'] = click.confirm('Do you want to simulate anaerobic growth?')
         
         multiple = click.confirm('Do you want to simulate and compare multiple models?')
         user_input['multiple'] = multiple
@@ -416,12 +424,14 @@ def save_user_input(configpath: str) -> dict[str: str]:
             print('The following models will be compared:')
             print(list_of_models)
             user_input['multiple_paths'] = list_of_models
+        possible_media = load_a_table_from_database('media')['medium'].to_list()
+        possible_media_str = '|'.join(possible_media)
         list_of_media = []
         while True:
-            medium = click.prompt('Enter medium to simulate growth on (SNM3|LB|M9|SMM|CGXII|RPMI) (or "stop" to stop)')
+            medium = click.prompt(f'Enter medium to simulate growth on ({possible_media_str}) (or "stop" to stop)')
             if medium.lower() == 'stop':
                 break
-            elif medium in ['SNM3', 'RPMI', 'CGXlab', 'LB', 'M9', 'CGXII', 'CasA']:
+            elif medium in possible_media:
                 if medium not in list_of_media:
                     list_of_media.append(medium)
                 else:

@@ -3,6 +3,8 @@ Welcome to refineGEMs!
 ``refineGEMs`` is a python package intended
 to help with the curation of genome-scale metabolic models (GEMS).
 
+.. hint:: For bug reports please write issues on the `GitHub page <https://github.com/draeger-lab/refinegems/issues>`__.
+
 Overview
 --------
 
@@ -31,6 +33,7 @@ Other applications of ``refinegems`` include curation of a given model these inc
    installation
    usage
    main-modules
+   in_silico_media_generation
    API access <api>
    pipeline
    Notes for developers <development>

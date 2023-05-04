@@ -1,0 +1,56 @@
+M9 minimal medium (M9)
+^^^^^^^^^^^^^^^^^^^^^^
+The M9 minimal medium (M9) *in silico* definition consists of all compounds described by `Sigma-Aldrich <https://www.sigmaaldrich.com/DE/de/product/sigma/m6030>`__.
+M9 is a minimal medium commonly used in microbiology and was developed in 1988\ :footcite:p:`becardEarlyEventsVesicular1988`. 
+Since then, M9 has been adapted with different kinds of additives and used to gather insight into carbon or nitrogen sources\ :footcite:p:`hawkeyCuratedCollectionKlebsiella2022`. 
+The medium definition used in this study is based on the provider reference\ :footcite:p:`M9Minimalsalze5XPowder` and was further supplemented with MgSO\ :sub:`4`\ \* 7H\ :sub:`2`\ O, CaCl\ :sub:`2`\ \* 2H\ :sub:`2`\ O and Glucose.
+
+.. list-table:: M9 composition
+   :align: center
+   :widths: 25 25
+   :header-rows: 1
+
+   * - BiGG ID
+     - Compound name
+   * - ca2
+     - Ca2+
+   * - cl
+     - Cl-
+   * - cobalt2
+     - Co2+
+   * - cu2
+     - Cu2+
+   * - fe2
+     - Fe2+
+   * - fe3
+     - Fe3+
+   * - glc__D
+     - D-Glucose
+   * - h2o
+     - H2O
+   * - h
+     - H+
+   * - k
+     - K+
+   * - mg2
+     - Mg
+   * - mn2
+     - Mn2+
+   * - mobd
+     - Molybdate
+   * - na1
+     - Na+
+   * - nh4
+     - Ammonium
+   * - ni2
+     - Ni2+
+   * - o2
+     - O2
+   * - pi
+     - Phosphate
+   * - so4
+     - Sulfate
+   * - zn2
+     - Zn2+
+     
+.. footbibliography::

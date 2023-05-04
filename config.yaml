@@ -19,6 +19,9 @@ visualize: TRUE
 # Set the basis medium to simulate growth from
 growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
 
+# Set to TRUE if you want to simulate anaerobic growth
+anaerobic_growth: FALSE
+
 # Settings if you want to compare multiple models
 multiple: FALSE
 multiple_paths: # enter as many paths as you need below
@@ -29,13 +32,15 @@ single: TRUE # set to False if you only want to work with the multiple models
 
 # media to simulate growth from, just comment the media you do not want with a #
 media: 
-  - 'SNM3'
-  - 'RPMI'
-  - 'CGXlab'
   - 'LB'
+  - 'RPMI'
   - 'M9'
+  - 'SNM3'
   - 'CGXII'
   - 'CasA'
+  - 'Blood'
+  - 'dGMM'
+  - 'MP-AU'
 
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE

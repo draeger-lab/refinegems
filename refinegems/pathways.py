@@ -48,7 +48,7 @@ def extract_kegg_reactions(model: libModel) -> tuple[dict, list]:
     non_kegg_reac = []
     
     for reaction in list_reac:
-        kegg_ids = get_id_from_cv_term(reaction, 'kegg')
+        kegg_ids = get_id_from_cv_term(reaction, 'kegg.reaction')
         if len(kegg_ids) > 0:
             kegg_reactions[reaction.getId()] = kegg_ids[0]
         else:
