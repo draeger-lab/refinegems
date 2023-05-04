@@ -111,4 +111,3 @@ The Synthetic Nasal Medium x3 (SNM3) definition contains all components as descr
      -
 
 .. footbibliography::
-     

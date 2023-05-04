@@ -1,7 +1,6 @@
 Casamino Acids (CasA)
 ^^^^^^^^^^^^^^^^^^^^^
-Description:
-Definition:
+Casamino acids are a mixture of amino acids that potentially enhance growth. The composition is known since 1971\ :footcite:p:`nolanAminoAcidsGrowth1971`.
 
 .. list-table:: CasA composition
   :name: casa_comp
@@ -37,3 +36,5 @@ Definition:
     - Tyrosine
   * - phe__L
     - Phenylalanine
+
+.. footbibliography::
