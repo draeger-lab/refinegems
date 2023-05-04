@@ -9,7 +9,7 @@ import numpy as np
 from refinegems.io import load_a_table_from_database
 from cobra import Model as cobraModel
 
-__author__ = "Famke Baeuerle and  Jan-Philipp Leusch"
+__author__ = "Famke Baeuerle and Jan-Philipp Leusch"
 
 
 def get_modelseed_compounds() -> pd.DataFrame:
