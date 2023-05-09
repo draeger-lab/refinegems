@@ -3,11 +3,13 @@ Installation
 
 Installation via pip
 --------------------
-To install refinegmes as python package, simply install it via ``pip``:
+To install refinegems as Python package, simply install it via ``pip``:
 
 .. code:: bash
 
    pip install refinegems
+
+The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
 Installation via github
 -----------------------
