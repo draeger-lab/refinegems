@@ -29,7 +29,14 @@ Other applications of `refineGEMs` include curation of a given model these inclu
 
 ## Installation
 
-`refineGEMs` is distributed via this github repository, all dependencies are denoted in the `setup.py` file which can be used to install refineGEMs to a local conda environment:
+You can install `refineGEMs` pip
+
+```bash
+pip install refinegems
+
+```
+
+or to a local conda environment where `refineGEMs` is distributed via this github repository and all dependencies are denoted in the `setup.py` file:
 
 ```bash
 # clone or pull the latest source code
