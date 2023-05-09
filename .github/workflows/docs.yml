@@ -2,10 +2,10 @@ name: Update Docs
 
 on: 
   workflow_dispatch:
-  push:
-    paths:
-    - '**.rst'
-    - 'docs/*'
+ # push:
+  #  paths:
+   # - '**.rst'
+   # - 'docs/*'
 
 jobs:
   run:
