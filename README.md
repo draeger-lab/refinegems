@@ -8,7 +8,7 @@
 `refineGEMs` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
 
 ## Documentation
-To access the documentation please enter `<path to refineGEMs>/refinegems/docs/build/html/index.html` into your favourite browser. As soon as the repository is made public this will be moved to a standalone website.
+The docs can be found [here](https://refinegems.readthedocs.io/en/latest/).
 
 ## Overview
 
