@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/359867657.svg)](https://zenodo.org/badge/latestdoi/359867657) [![Update Docs](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml/badge.svg)](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Update Docs](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml/badge.svg)](https://github.com/draeger-lab/refinegems/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
 <img src="https://github.com/draeger-lab/refinegems/blob/4db6de15e0d780ac73223a907b0b92b39742cd86/docs/source/images/refineGEMs_logo.png" height="200"/>
