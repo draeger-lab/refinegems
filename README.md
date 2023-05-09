@@ -29,7 +29,7 @@ Other applications of `refineGEMs` include curation of a given model these inclu
 
 ## Installation
 
-You can install `refineGEMs` pip
+You can install `refineGEMs` via pip:
 
 ```bash
 pip install refinegems
