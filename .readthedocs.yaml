@@ -3,10 +3,11 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: 
-      version: "3.9"
-      install:
-        - requirements: docs/requirements.txt
+    python: "3.9"
 
 sphinx:
   configuration: docs/source/conf.py
+
+python:
+  install:
+    - requirements: docs/requirements.txt
