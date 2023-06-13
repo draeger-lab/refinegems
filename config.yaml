@@ -42,6 +42,9 @@ media:
   - 'dGMM'
   - 'MP-AU'
 
+# Determine whether the biomass function should be checked & normalised, default: TRUE
+biomass: TRUE
+
 # determine whether the memote score should be calculated, default: FALSE
 memote: FALSE
 

@@ -150,8 +150,15 @@ def main(configpath=None):
         if (config['polish']):
             model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['protein_fasta'], config['lab_strain'])
             logging.info(model_libsbml.getId() + ' has been polished')
+            
+        if (config['biomass']):
+            result = rg.biomass.check_normalise_biomass(model_cobra)
+            if result:
+                model_libsbml = result
+                logging.info(model_libsbml.getId() + '\'s biomass function has been checked.')
+            else: logging.info('For ' + model_libsbml.getId() + 'no biomass function was found.')
         
-        mods = [config['keggpathways'], config['sboterms'], config['charge_corr'], config['man_cur'], config['gapfill_model'], config['polish']]
+        mods = [config['keggpathways'], config['sboterms'], config['charge_corr'], config['man_cur'], config['gapfill_model'], config['polish'], config['biomass']]
         
         if any(mods):
             if config['model_out'] == 'stdout':   
