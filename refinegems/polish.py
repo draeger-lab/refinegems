@@ -5,13 +5,16 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 """
 
 import re, logging
+import pandas as pd
+from bioservices.kegg import KEGG
 from libsbml import Model as libModel
+from libsbml import GeneProduct
 from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers
+from refinegems.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, load_a_table_from_database
 from colorama import init as colorama_init
 from colorama import Fore, Style
 
@@ -29,6 +32,10 @@ def add_metab(entity_list: list[Species], id_db: str):
         - id_db (str): Name of the database of the IDs contained in a model 
     """
     vmh_cut_pattern = '__\d+_' # To extract BiGG identifier
+    
+    if id_db == 'VMH':
+        bigg_metabs_ids = load_a_table_from_database('SELECT universal_bigg_id FROM bigg_metabolites')
+        bigg_metabs_ids = bigg_metabs_ids['universal_bigg_id'].tolist()
     
     for entity in entity_list:
         
@@ -56,8 +63,10 @@ def add_metab(entity_list: list[Species], id_db: str):
         add_cv_term_metabolites(id_for_anno, id_db, entity)
         
         if id_db == 'VMH':
-            # Add BiGG ID to annotation, additionally
-            add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
+            # Check if valid BiGG ID
+            if id_for_anno in bigg_metabs_ids:
+                # Add BiGG ID to annotation, additionally
+                add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
             
            
 def add_reac(entity_list: list[Reaction], id_db: str):
@@ -68,6 +77,10 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             - entity_list (list): libSBML ListOfReactions
             - id_db (str): Name of the database of the IDs contained in a model             
     """
+    if id_db == 'VMH':
+       bigg_reacs_ids = load_a_table_from_database('SELECT bigg_id FROM bigg_reactions')
+       bigg_reacs_ids = bigg_reacs_ids['bigg_id'].tolist()
+    
     # Use regex to generalise check for growth/biomass reaction
     regex = 'growth|_*biomass\d*_*'
     
@@ -90,6 +103,10 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             
             # Add ID as URI to annotation   
             add_cv_term_reactions(current_id, id_db, entity)
+
+            # If VMH ID == BiGG ID, add BiGG ID as well
+            if (id_db == 'VMH') and (current_id in bigg_reacs_ids):
+                add_cv_term_reactions(current_id, 'BiGG', entity)
 
 
 #----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
@@ -116,9 +133,11 @@ def cv_notes_metab(species_list: list[Species]):
                     if (';') in fill_in and db != 'INCHI':
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_metabolites(entry.strip(), db, species)
+                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                                add_cv_term_metabolites(entry.strip(), db, species)
                     else:
-                        add_cv_term_metabolites(fill_in, db, species)
+                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                            add_cv_term_metabolites(fill_in, db, species)
 
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -155,9 +174,11 @@ def cv_notes_reac(reaction_list: list[Reaction]):
                     if (';') in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_reactions(entry.strip(), db, reaction)
+                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                                add_cv_term_reactions(entry.strip(), db, reaction)
                     else:
-                        add_cv_term_reactions(fill_in, db, reaction)
+                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                            add_cv_term_reactions(fill_in, db, reaction)
 
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -437,22 +458,26 @@ def set_initial_amount(model: libModel):
          
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
-def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False):
+def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
     Args:
         - gene_list (list): libSBML ListOfGenes
         - email (str): User Email to access the Entrez database
+        - locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
         - protein_fasta (str): The path to the CarveMe protein.fasta input file
         - lab_strain (bool): Needs to be set to True if strain was self-annotated
                            and/or the locus tags in the CarveMe input file should be kept   
     """
     Entrez.email = email
+    if not locus2id:
+        locus2id = locus2id.set_index('ProteinID')
                     
     id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
-    if (protein_fasta is not None) and protein_fasta.strip() != '': 
-       id2locus_name = parse_fasta_headers(protein_fasta)
-       id2locus_name.set_index('protein_id')
+    if protein_fasta:
+        if protein_fasta.strip() != '': 
+            id2locus_name = parse_fasta_headers(protein_fasta)
+            id2locus_name.set_index('protein_id')
     
     genes_missing_annotation = []
 
@@ -466,55 +491,102 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = search_ncbi_for_gpr(entry)
             gene.setName(name)
+            if locus2id and entry in locus2id.index:
+                locus = locus2id.loc[entry, 'LocusTag']
             gene.setLabel(locus)
         
-        elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+        elif (gene.getId() != 'G_spontaneous') or (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
             if 'prot_' in gene.getId():
                 id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
                 ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
-                
-                if (len(id_string) > 2):  # Identifier contains '_'
-                # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
-                # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
-                    if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
-                        ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
-                
-                # If identifier matches RefSeq ID pattern   
-                if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
-                    add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
-                    name, locus = search_ncbi_for_gpr(ncbi_id)
+            else:
+                id_string = gene.getId().removeprefix('G_').split('_')
+                if '_peg' in id_string: continue
+              
+            if len(id_string) == 2: # Can be the case if ID is locus tag, for example
+                ncbi_id = '_'.join(id_string)  
+            if (len(id_string) > 2):  # Identifier contains '_'
+            # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
+            # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
+                if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
+                    ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
+                    
             
-                # If identifier only contains numbers 
-                # -> Get the corresponding data from the CarveMe input file
-                elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
-                    if id2locus_name is not None:
-                        name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
-                    else: 
-                        genes_missing_annotation.append(ncbi_id)
-            
-                # If identifier matches ncbiprotein ID pattern
-                elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
-                    add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
-                    name, locus = search_ncbi_for_gpr(ncbi_id)
-                
-                # Catch all remaining cases that have no valid ID   
+            # If identifier matches RefSeq ID pattern   
+            if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
+                add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
+                add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
+                name, locus = search_ncbi_for_gpr(ncbi_id)
+                if locus2id and entry in locus2id.index:
+                    locus = locus2id.loc[entry, 'LocusTag']
+        
+            # If identifier only contains numbers 
+            # -> Get the corresponding data from the CarveMe input file
+            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
+                if id2locus_name is not None:
+                    name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
                 else: 
                     genes_missing_annotation.append(ncbi_id)
+        
+            # If identifier matches ncbiprotein ID pattern
+            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
+                add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
+                name, locus = search_ncbi_for_gpr(ncbi_id)
             
-                # For lab strains use the locus tag from the annotation file   
-                if lab_strain and id2locus_name is not None:
-                    locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
-            
-                if ncbi_id not in genes_missing_annotation:      
-                    gene.setName(name)
-                    gene.setLabel(locus)
+            # Catch all remaining cases that have no valid ID   
+            else: 
+                genes_missing_annotation.append(ncbi_id)
+        
+            # For lab strains use the locus tag from the annotation file   
+            if lab_strain and id2locus_name is not None:
+                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
+        
+            if ncbi_id not in genes_missing_annotation:      
+                gene.setName(name)
+                gene.setLabel(locus)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
         logging.info(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
+       
+#----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
+def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
+    """Adds URIs to GeneProducts based on locus tag to indentifier mapping
 
+    Args:
+        locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
+        gene_list (list[GeneProduct]): libSBML ListOfGenes
+    """
+    locus2id.set_index('LocusTag')
 
-#---------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
+    for gp in tqdm(gene_list):
+        locus = gp.getLabel()
+
+        if locus in locus2id.index:
+            add_cv_term_genes(locus2id.loc[locus, 'ProteinID'].split('.')[0], 'REFSEQ', gp)
+
+          
+def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
+    """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
+
+    Args:
+        gene_list (list[GeneProduct]): libSBML ListOfGenes
+        kegg_organism_id (str): Organism identifier in the KEGG database
+    """
+    k = KEGG()
+    mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
+
+    for gp in tqdm(gene_list):
+    
+        if gp.getId() != 'G_spontaneous':
+            kegg_gene_id = f'{kegg_organism_id}:{gp.getLabel()}'
+            uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+
+            add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
+            add_cv_term_genes(uniprot_id.split('up:')[1], 'UNIPROT', gp)
+            
+
+#------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------# 
 def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
     """| Gets a list of CURIEs
        | & maps the database prefixes to their respective identifier sets
@@ -539,7 +611,9 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
         if '/' in extracted_curie:
             extracted_curie = extracted_curie.split('/')
             
-            # Check for certain special cases
+            # Check for NaNs & certain special cases
+            if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                continue
             if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
                 prefix = extracted_curie[0].lower()
                 identifier = '/'.join(extracted_curie[1:len(extracted_curie)])
@@ -897,7 +971,8 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool) -> libModel: 
+def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
+           protein_fasta: str, lab_strain: bool, kegg_organism_id: str) -> libModel: 
     """| Completes all steps to polish a model
        | (Tested for models having either BiGG or VMH identifiers.)
 
@@ -905,8 +980,10 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
         - model (libModel): model loaded with libSBML
         - email (str): E-mail for Entrez
         - id_db (str): Main database identifiers in model come from
+        - refseq_gff (str): Path to RefSeq GFF file of organism
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
+        - kegg_organism_id (str): KEGG organism identifier
     
     Returns:
         libModel: Polished libSBML model
@@ -927,6 +1004,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+    if refseq_gff: locus2id = parse_gff_for_refseq_info(refseq_gff)
 
     ### unit definition ###
     add_fba_units(model)
@@ -935,12 +1013,16 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     add_compartment_structure_specs(model)
     set_initial_amount(model)
     
-    ## improve metabolite, reaction and gene annotations ###
+    ### improve metabolite, reaction and gene annotations ###
     add_metab(metab_list, id_db)
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
     cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    
+    ### add additional URIs to GeneProducts ###
+    add_gp_id_from_gff(locus2id, gene_list)
+    add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
     
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)

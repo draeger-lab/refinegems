@@ -217,7 +217,7 @@ def validate_libsbml_model(model: libModel) -> int:
         - model (libModel): A libSBML model
         
     Returns:
-        int: Integer specifying if vaidate was successful or not
+        int: Integer specifying if validate was successful or not
     """
     validator = SBMLValidator()
     doc = model.getSBMLDocument()
@@ -310,6 +310,37 @@ def search_ncbi_for_gpr(locus: str) -> str:
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
+                
+def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame():
+    """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
+
+    Args:
+        gff_file (str): RefSeq GFF file of the input organism
+
+    Returns:
+        pd.DataFrame: Table mapping locus tags to their respective RefSeq identifiers
+    """
+
+    locus_tag2id = {}
+    locus_tag2id['LocusTag'] = []
+    locus_tag2id['ProteinID'] = []  
+    gff_db = gffutils.create_db(gff_file, ':memory:', merge_strategy='create_unique')
+
+    for feature in gff_db.all_features():
+        
+        if (feature.featuretype == 'gene') and ('old_locus_tag' in feature.attributes):  # Get locus_tag & old_locus_tag
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['old_locus_tag'][0])
+        elif (feature.featuretype == 'gene') and ('locus_tag' in feature.attributes):
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['locus_tag'][0])
+        
+        if (feature.featuretype == 'CDS') and (feature.attributes['locus_tag'] == current_locus_tag): # Get protein_id if locus_tag the same
+            locus_tag2id['ProteinID'].append(feature.attributes['protein_id'][0])
+
+    locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
+
+    return pd.DataFrame(locus_tag2id)
 
 
 def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
