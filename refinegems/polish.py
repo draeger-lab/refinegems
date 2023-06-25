@@ -470,7 +470,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                            and/or the locus tags in the CarveMe input file should be kept   
     """
     Entrez.email = email
-    if not locus2id:
+    if locus2id is not None:
         locus2id = locus2id.set_index('ProteinID')
                     
     id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
@@ -541,7 +541,10 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             if lab_strain and id2locus_name is not None:
                 locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
         
-            if ncbi_id not in genes_missing_annotation:      
+            if ncbi_id not in genes_missing_annotation:  
+                print(ncbi_id)
+                print(name)
+                print(locus)    
                 gene.setName(name)
                 gene.setLabel(locus)
             
@@ -1004,7 +1007,7 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-    if refseq_gff: locus2id = parse_gff_for_refseq_info(refseq_gff)
+    locus2id = parse_gff_for_refseq_info(refseq_gff) if refseq_gff else None
 
     ### unit definition ###
     add_fba_units(model)
@@ -1018,11 +1021,11 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, lab_strain)
     
     ### add additional URIs to GeneProducts ###
-    add_gp_id_from_gff(locus2id, gene_list)
-    add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
+    if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
+    if kegg_organism_id: add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
     
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
