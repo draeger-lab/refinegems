@@ -148,7 +148,8 @@ def main(configpath=None):
             logging.info(f'Gaps were filled in {model_libsbml.getId()}.')
         
         if (config['polish']):
-            model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['protein_fasta'], config['lab_strain'])
+            model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['gff_file'], 
+                                             config['protein_fasta'], config['lab_strain'], config['organismid'])
             logging.info(model_libsbml.getId() + ' has been polished')
             
         if (config['biomass']):
