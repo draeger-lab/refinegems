@@ -9,7 +9,7 @@ import pandas as pd
 from bioservices.kegg import KEGG
 from libsbml import Model as libModel
 from libsbml import GeneProduct
-from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
+from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez
 from tqdm.auto import tqdm
 from sortedcontainers import SortedDict, SortedSet
@@ -106,7 +106,7 @@ def add_reac(entity_list: list[Reaction], id_db: str):
 
             # If VMH ID == BiGG ID, add BiGG ID as well
             if (id_db == 'VMH') and (current_id in bigg_reacs_ids):
-                add_cv_term_reactions(current_id, 'BiGG', entity)
+                add_cv_term_reactions(current_id, 'BIGG', entity)
 
 
 #----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
@@ -487,39 +487,40 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             gene.setMetaId('meta_' + gene.getId())
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
-            entry = gene.getId()[2:-2]
+            entry = gene.getId()
+            entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
+            add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = search_ncbi_for_gpr(entry)
             gene.setName(name)
-            if locus2id and entry in locus2id.index:
+            if (locus2id is not None) and (entry in locus2id.index):
                 locus = locus2id.loc[entry, 'LocusTag']
             gene.setLabel(locus)
         
-        elif (gene.getId() != 'G_spontaneous') or (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+        elif (gene.getId() != 'G_spontaneous') and (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
             if 'prot_' in gene.getId():
                 id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
                 ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
             else:
                 id_string = gene.getId().removeprefix('G_').split('_')
-                if '_peg' in id_string: continue
+                if 'peg' in id_string: continue
               
             if len(id_string) == 2: # Can be the case if ID is locus tag, for example
-                ncbi_id = '_'.join(id_string)  
+                continue # Ignore locus tags as no valid identifiers
             if (len(id_string) > 2):  # Identifier contains '_'
             # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
             # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
                 if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
                     ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
                     
-            
             # If identifier matches RefSeq ID pattern   
             if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
                 add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
-                if locus2id and entry in locus2id.index:
+                if (locus2id is not None) and (entry in locus2id.index):
                     locus = locus2id.loc[entry, 'LocusTag']
-        
+
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
             elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
@@ -539,12 +540,9 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         
             # For lab strains use the locus tag from the annotation file   
             if lab_strain and id2locus_name is not None:
-                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
+                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0][0]
         
-            if ncbi_id not in genes_missing_annotation:  
-                print(ncbi_id)
-                print(name)
-                print(locus)    
+            if ncbi_id not in genes_missing_annotation: 
                 gene.setName(name)
                 gene.setLabel(locus)
             
@@ -578,16 +576,25 @@ def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
     """
     k = KEGG()
     mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
+    no_valid_kegg = []
 
     for gp in tqdm(gene_list):
     
         if gp.getId() != 'G_spontaneous':
             kegg_gene_id = f'{kegg_organism_id}:{gp.getLabel()}'
-            uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
-
-            add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
-            add_cv_term_genes(uniprot_id.split('up:')[1], 'UNIPROT', gp)
             
+            try:
+                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+
+                add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
+                add_cv_term_genes(uniprot_id.split('up:')[1], 'UNIPROT', gp)
+                
+            except KeyError:
+                no_valid_kegg.append(gp.getLabel())
+    
+    if no_valid_kegg:      
+        logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
+
 
 #------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------# 
 def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
@@ -641,6 +648,10 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
                 
                 prefix = new_curie[0].upper()
                 identifier = new_curie[1]
+            
+            elif re.search('^sbo:', extracted_curie[1], re.IGNORECASE):
+                prefix = extracted_curie[0]
+                identifier = extracted_curie[1].split(':')[1]
                 
             else:
                 if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
@@ -710,6 +721,7 @@ def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_patte
 
             if re.search('o$', prefix, re.IGNORECASE):  # Ontologies seem only to work with new pattern!
                 separator = ':'
+                prefix = prefix.upper()
             
             elif re.fullmatch('^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
                 prefix = f'chebi/{current_prefix}'
@@ -851,6 +863,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     #for i in range(len(cvterms)):
     for cvterm in cvterms:
         tmp_set = SortedSet()
+        sbo_set = SortedSet()
         #cvterm = cvterms.get(i)
         
         # include check for reaction and unit definition
@@ -878,11 +891,13 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
                     current_curie = cc
                     
                 if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                    tmp_set.add(current_curie)
+                    if re.search('sbo:', current_curie, re.IGNORECASE): sbo_set.add(current_curie)
+                    else: tmp_set.add(current_curie)
                     cvterm.removeResource(current_curie)
                 else:
                     not_miriam_compliant.append(current_curie)
             
+            if sbo_set: add_curie_set(entity, BIOLOGICAL_QUALIFIER, BQB_HAS_PROPERTY, sbo_set)
             add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
             #cvterms.remove(i)
                 
@@ -934,7 +949,7 @@ def change_qualifiers(model: libModel, entity_type: str, new_qt, new_b_m_qt, spe
             logging.info('The entity ' +  entity_type + ' is not present in ' + model.getId())        
         
     if not_miriam_compliant:         
-        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+        logging.warning(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
     
     return model
 
