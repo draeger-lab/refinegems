@@ -557,6 +557,9 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
                 user_input['biomass'] = biomass
                     
+                biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
+                user_input['biomass'] = biomass
+                    
             else:
                 user_input['keggpathways'] = False
                 user_input['polish'] = False

@@ -13,7 +13,7 @@ out_path: ''
 Settings for scripts that investigate the model: >
   These are only necessary if none of the scripts to manipulate the model are used.
 
-# Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
+# Set to TRUE if you want pngs that aid in model investigation, will be saved to a folder called 'visualization'
 visualize: TRUE
 
 # Set the basis medium to simulate growth from
