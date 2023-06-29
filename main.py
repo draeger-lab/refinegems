@@ -156,7 +156,6 @@ def main(configpath=None):
             if result:
                 model_libsbml = result
                 logging.info(model_libsbml.getId() + '\'s biomass function has been checked.')
-            else: logging.info('For ' + model_libsbml.getId() + 'no biomass function was found.')
         
         mods = [config['keggpathways'], config['sboterms'], config['charge_corr'], config['man_cur'], config['gapfill_model'], config['polish'], config['biomass']]
         

@@ -6,6 +6,7 @@ This module provides functions to be used to assess the biomass weight as well a
 
 import os
 import cobra
+import logging
 from cobra import Reaction
 from cobra import Model as cobraModel
 from refinegems.io import load_model_libsbml
@@ -49,7 +50,7 @@ def test_biomass_presence(model: cobraModel) -> Union[list[str], None]:
     """
     biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
     outcome = len(biomass_rxn) > 0
-    print(
+    logging.info(
         """In this model the following {} biomass reaction(s) were
         identified: {}""".format(
             len(biomass_rxn), truncate(biomass_rxn)
@@ -119,7 +120,7 @@ def test_biomass_consistency(model: cobraModel, reaction_id: str) -> Union[float
         return message
     else:
         if ((1 - 1e-03) < biomass_weight < (1 + 1e-06)):
-            print(            
+            logging.info(            
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
@@ -127,7 +128,7 @@ def test_biomass_consistency(model: cobraModel, reaction_id: str) -> Union[float
                     )
                 )
         else:
-            print(
+            logging.warning(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
@@ -178,12 +179,13 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
     if biomass_rxn:
         for bm_rxn in biomass_rxn:
             bm_weight = test_biomass_consistency(model, bm_rxn)
-            if type(bm_weight) == str: print(f'Reaction {bm_rxn}: {bm_weight}')
+            if type(bm_weight) == str: logging.error(f'Reaction {bm_rxn}: {bm_weight}')
             else:
                 while not ((1 - 1e-03) < bm_weight < (1 + 1e-06)):
-                    normalise_biomass(model.reactions.get_by_id(bm_rxn), bm_weight)
+                    #normalise_biomass(model.reactions.get_by_id(bm_rxn), bm_weight)
+                    model.reactions.get_by_id(bm_rxn).__imul__(1/bm_weight) # -> Maybe add like this?
                     bm_weight = test_biomass_consistency(model, bm_rxn)
-                    print(f'For reaction \'{bm_rxn}\' the coefficients changed.')
+                    logging.info(f'For reaction \'{bm_rxn}\' the coefficients changed.')
                 
         cobra.io.write_sbml_model(model, f'../{model.id}_tmp.xml')
         model = load_model_libsbml(f'../{model.id}_tmp.xml')
@@ -191,4 +193,6 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
             
         return model
     
-    else: return biomass_rxn
+    else:
+        logging.error(f'No biomass objective function was found in the provided model {model.id}.')
+        return biomass_rxn
