@@ -33,16 +33,17 @@ def test_biomass_presence(model: cobraModel) -> Union[list[str], None]:
 
     Implementation:
     Identifies possible biomass reactions using two principal steps:
+    
         1. Return reactions that include the SBO annotation "SBO:0000629" for
         biomass.
-    If no reactions can be identifies this way:
-        1. Look for the ``buzzwords`` "biomass", "growth" and "bof" in reaction
-        IDs.
-        2. Look for metabolite IDs or names that contain the ``buzzword``
-        "biomass" and obtain the set of reactions they are involved in.
-        3. Remove boundary reactions from this set.
-        4. Return the union of reactions that match the buzzwords and of the
-        reactions that metabolites are involved in that match the buzzword.
+        
+        2. If no reactions can be identified this way:
+        
+            1. Look for the ``buzzwords`` "biomass", "growth" and "bof" in reaction IDs.
+            2. Look for metabolite IDs or names that contain the ``buzzword`` "biomass" and obtain the set of reactions they are involved in.
+            3. Remove boundary reactions from this set.
+            4. Return the union of reactions that match the buzzwords and of the reactions that metabolites are involved in that match the buzzword.
+        
     This test checks if at least one biomass reaction is present.
     
     If no reaction can be identified return None.
@@ -161,11 +162,12 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     return biomass
 
 def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
-    """1. Checks if at least one biomass reaction is present
+    """
+       1. Checks if at least one biomass reaction is present
        2. For each found biomass reaction checks if it sums up to 1g[CDW]
-       3. Normalises the coefficients of each biomass reaction where the sum is not 1g[CDW]
-       until the sum is 1g[CDW]
+       3. Normalises the coefficients of each biomass reaction where the sum is not 1g[CDW] until the sum is 1g[CDW]
        4. Returns model with adjusted biomass function(s)
+       
 
     Args:
         model (cobraModel): Model loaded with COBRApy

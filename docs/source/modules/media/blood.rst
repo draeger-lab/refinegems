@@ -1,7 +1,7 @@
 Blood Medium (Blood)
 ^^^^^^^^^^^^^^^^^^^^
 The Blood Medium (Blood) definition was obtained from Nantia Leonidou, one of the authors of the paper 'New workflow 
-predicts drug targets against sars-cov-2 via metabolic changes in infected cells'\ :footcite:p:`Leonidou2023` where the 
+predicts drug targets against sars-cov-2 via metabolic changes in infected cells'\ :footcite:p:`Leonidou2023_blood` where the 
 Blood medium composition from :numref:`blood_comp` was already used.
 
 .. list-table:: Blood composition
