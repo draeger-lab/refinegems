@@ -113,7 +113,7 @@ def cv_notes_metab(species_list: list[Species]):
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
                     fill_in = re.split(':\s*', elem.strip()[:-4])[1]
-                    if (';') in fill_in and db != 'INCHI':
+                    if (';') in fill_in and not re.search('inchi', db, re.IGNORECASE):
                         entries = fill_in.split(';')
                         for entry in entries:
                             add_cv_term_metabolites(entry.strip(), db, species)
@@ -540,9 +540,14 @@ def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
             extracted_curie = extracted_curie.split('/')
             
             # Check for certain special cases
-            if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
-                prefix = extracted_curie[0].lower()
-                identifier = '/'.join(extracted_curie[1:len(extracted_curie)])
+            if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
+                if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
+                    prefix = extracted_curie[0].lower()
+                    identifier = '/'.join(extracted_curie[1:len(extracted_curie)])
+                else:
+                    wrong_prefix = extracted_curie[0].split(':')
+                    prefix = wrong_prefix[0]
+                    identifier = f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}'
             elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
                 prefix = 'ec-code'
                 identifier = extracted_curie[1]
