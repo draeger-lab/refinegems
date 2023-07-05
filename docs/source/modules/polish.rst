@@ -1,4 +1,4 @@
-Polishing a CarveME model
+Polishing a CarveMe model
 =========================
 
 The newer version of CarveMe leads to some irritations in the model, the scripts in ``polish`` enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.

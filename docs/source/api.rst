@@ -1,9 +1,17 @@
-refinegems package
+refineGEMs package
 ==================
 
 Here is an overview on all functions. All imports are mocked in ``autodoc_mock_imports`` in the ``conf.py`` file to enable automatic building.
 
-refinegems.charges module
+refineGEMs.biomass module
+-------------------------
+
+.. automodule:: refinegems.biomass
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+refineGEMs.charges module
 -------------------------
 
 .. automodule:: refinegems.charges
@@ -11,7 +19,7 @@ refinegems.charges module
    :undoc-members:
    :show-inheritance:
 
-refinegems.comparison module
+refineGEMs.comparison module
 ----------------------------
 
 .. automodule:: refinegems.comparison
@@ -19,7 +27,7 @@ refinegems.comparison module
    :undoc-members:
    :show-inheritance:
 
-refinegems.curate module
+refineGEMs.curate module
 ------------------------
 
 .. automodule:: refinegems.curate
@@ -27,7 +35,7 @@ refinegems.curate module
    :undoc-members:
    :show-inheritance:
 
-refinegems.cvterms module
+refineGEMs.cvterms module
 -------------------------
 
 .. automodule:: refinegems.cvterms
@@ -35,7 +43,7 @@ refinegems.cvterms module
    :undoc-members:
    :show-inheritance:
 
-refinegems.gapfill module
+refineGEMs.gapfill module
 -------------------------
 
 .. automodule:: refinegems.gapfill
@@ -43,7 +51,7 @@ refinegems.gapfill module
    :undoc-members:
    :show-inheritance:
 
-refinegems.growth module
+refineGEMs.growth module
 ------------------------
 
 .. automodule:: refinegems.growth
@@ -51,7 +59,7 @@ refinegems.growth module
    :undoc-members:
    :show-inheritance:
 
-refinegems.investigate module
+refineGEMs.investigate module
 -----------------------------
 
 .. automodule:: refinegems.investigate
@@ -59,7 +67,7 @@ refinegems.investigate module
    :undoc-members:
    :show-inheritance:
 
-refinegems.io module
+refineGEMs.io module
 --------------------
 
 .. automodule:: refinegems.io
@@ -67,7 +75,7 @@ refinegems.io module
    :undoc-members:
    :show-inheritance:
 
-refinegems.modelseed module
+refineGEMs.modelseed module
 ---------------------------
 
 .. automodule:: refinegems.modelseed
@@ -75,7 +83,7 @@ refinegems.modelseed module
    :undoc-members:
    :show-inheritance:
 
-refinegems.pathways module
+refineGEMs.pathways module
 --------------------------
 
 .. automodule:: refinegems.pathways
@@ -83,7 +91,7 @@ refinegems.pathways module
    :undoc-members:
    :show-inheritance:
 
-refinegems.polish module
+refineGEMs.polish module
 ------------------------
 
 .. automodule:: refinegems.polish
@@ -91,7 +99,7 @@ refinegems.polish module
    :undoc-members:
    :show-inheritance:
 
-refinegems.sboann module
+refineGEMs.sboann module
 ------------------------
 
 .. automodule:: refinegems.sboann

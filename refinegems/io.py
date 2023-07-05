@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """ Provides functions to load and write models, media definitions and the manual annotation table
 
-Depending on the application the model needs to be loaded with cobra (memote)
-or with libSBML (activation of groups). The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
+Depending on the application the model needs to be loaded with cobra (memote) or with libSBML (activation of groups). 
+The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. 
+The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
 """
 
 import cobra
