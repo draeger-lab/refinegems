@@ -553,10 +553,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
                     lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
                     user_input['lab_strain'] = lab_strain
                     organismid = click.prompt('If possible, provide the KEGG organism code of your organism')
-                    user_input['organismid'] = organismid if organismid != 'None' else None
-                    
-                biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
-                user_input['biomass'] = biomass
+                    user_input['organismid'] = organismid if (organismid != 'None') else None
                     
                 biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
                 user_input['biomass'] = biomass
