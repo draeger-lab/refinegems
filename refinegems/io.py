@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """ Provides functions to load and write models, media definitions and the manual annotation table
 
-Depending on the application the model needs to be loaded with cobra (memote)
-or with libSBML (activation of groups). The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
+Depending on the application the model needs to be loaded with cobra (memote) or with libSBML (activation of groups). 
+The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. 
+The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
 """
 
 import cobra
@@ -451,7 +452,6 @@ def save_user_input(configpath: str) -> dict[str: str]:
                     not_valid = False
                 else:
                     print('File does not exist. Please enter a valid file path')
-        
             user_input['memote'] = click.confirm('Do you want to run MEMOTE (takes some time)?')    
             user_input['modelseed'] = click.confirm('Do you want to compare your model entities to the ModelSEED database?')
         
@@ -481,10 +481,12 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 else:
                     user_input['model_out'] = click.prompt('Enter path and filename to where to save the modified model')
                 
-                user_input['gapfill_model'] = click.confirm('Do you want to fill gaps in your model?')
+                gapfill_model = click.confirm('Do you want to fill gaps in your model?')
+                user_input['gapfill_model'] = gapfill_model
                 
-                if not gap_analysis:
-                    user_input['gap_analysis_file'] = click.prompt('Enter path to Excel file with which gaps should be filled')
+                if gapfill_model:
+                    if not gap_analysis:
+                        user_input['gap_analysis_file'] = click.prompt('Enter path to Excel file with which gaps should be filled')
                 
                 user_input['keggpathways'] = click.confirm('Do you want to add KEGG Pathways?')
                     
@@ -516,9 +518,13 @@ def save_user_input(configpath: str) -> dict[str: str]:
                     protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
                     user_input['protein_fasta'] = protein_fasta
                     
+                biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
+                user_input['biomass'] = biomass
+                    
             else:
                 user_input['keggpathways'] = False
                 user_input['polish'] = False
+                user_input['biomass'] = False
                 user_input['sboterms'] = False
                 user_input['charge_corr'] = False
                 user_input['gapfill_model'] = False

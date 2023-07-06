@@ -3,7 +3,7 @@ Installation
 
 Installation via pip
 --------------------
-To install refinegems as Python package, simply install it via ``pip``:
+To install refineGEMs as Python package, simply install it via ``pip``:
 
 .. code:: bash
 
@@ -14,7 +14,7 @@ The corresponding project site can be found `here <https://pypi.org/project/refi
 Installation via github
 -----------------------
 
-``refinegems`` is distributed via github repository.
+``refineGEMs`` is distributed via the GitHub repository.
 
 The package and all its dependencies can be installed within virtual environments.
 
@@ -62,7 +62,7 @@ If `which pip` does not show pip in the conda environment you can also create a 
 
 You can use
 `pipenv <https://pipenv.pypa.io/en/latest/>`__ to keep all dependencies together. You will need to install
-``pipenv`` first. To install ``refinegems`` locally complete the
+``pipenv`` first. To install ``refineGEMs`` locally complete the
 following steps:
 
 .. code:: bash
@@ -91,7 +91,7 @@ Troubleshooting
    when running main.py. Locate the ``sqlite3.dll`` file on you machine
    and add it to PATH.
 
--  If you use python 3.8 it everything should work, just edit the
+-  If you use python 3.8 everything should work, just edit the
    ``Pipfile`` entry to ``python_version = "3.8"`` before running
    ``pipenv install``.
 

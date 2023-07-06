@@ -1,4 +1,4 @@
-Growth simulation with RefineGEMs
+Growth simulation with refineGEMs
 =================================
 
 Interpreting the results

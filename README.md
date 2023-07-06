@@ -1,4 +1,11 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7915766.svg)](https://doi.org/10.5281/zenodo.7915766) [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![GitHub Pipenv locked dependency version](https://img.shields.io/github/pipenv/locked/dependency-version/draeger-lab/refinegems/refinegems)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
+[![PyPI version](https://badge.fury.io/py/refineGEMs.svg)](https://badge.fury.io/py/refineGEMs)
+![PyPI - Format](https://img.shields.io/pypi/format/refinegems)
+[![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg)](https://pypistats.org/packages/refinegems)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7915766.svg)](https://doi.org/10.5281/zenodo.7915766)
 
 <p align="center">
 <img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/refineGEMs_logo.png" height="200"/>

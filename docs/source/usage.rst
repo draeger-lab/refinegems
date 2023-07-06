@@ -24,26 +24,29 @@ to be set by the user.
 .. code:: yaml
 
   Description: > 
-    This file can be adapted to choose what refinegems should do.
+    This file can be adapted to choose what refineGEMs should do.
     Note: For windows use \ instead of / for the paths
-
-
+  
+  
   General Setting: >
     Path to GEM to be investigated
-
+  
   model: 'data/e_coli_core.xml' 
   # Set the out path for all analysis files
   out_path: ''
-
+  
   Settings for scripts that investigate the model: >
     These are only necessary if none of the scripts to manipulate the model are used.
-
-  # Set to TRUE if you want pngs that aid in model inevstigation, will be saved to a folder called 'visualization'
+  
+  # Set to TRUE if you want pngs that aid in model investigation, will be saved to a folder called 'visualization'
   visualize: TRUE
-
+  
   # Set the basis medium to simulate growth from
   growth_basis: 'minimal_uptake' # 'default_uptake' or 'minimal_uptake'
-
+  
+  # Set to TRUE if you want to simulate anaerobic growth
+  anaerobic_growth: FALSE
+  
   # Settings if you want to compare multiple models
   multiple: FALSE
   multiple_paths: # enter as many paths as you need below
@@ -51,36 +54,41 @@ to be set by the user.
     - ''
     - ''
   single: TRUE # set to False if you only want to work with the multiple models
-
+  
   # media to simulate growth from, just comment the media you do not want with a #
   media: 
-    - 'SNM3'
-    - 'RPMI'
-    - 'CGXlab'
     - 'LB'
+    - 'RPMI'
     - 'M9'
+    - 'SNM3'
     - 'CGXII'
     - 'CasA'
-
+    - 'Blood'
+    - 'dGMM'
+    - 'MP-AU'
+  
+  # Determine whether the biomass function should be checked & normalised
+  biomass: TRUE
+  
   # determine whether the memote score should be calculated, default: FALSE
   memote: FALSE
-
+  
   # compare metabolites to the ModelSEED database
   modelseed: FALSE # set to False if not needed
-
-
+  
+  
   Settings for scripts that manipulate the model: >
     They are all split into the ON / OFF switch (TRUE / FALSE) and additional settings like a path to where the new model should be saved.
-
+  
   model_out: '' # path and filename to where to save the modified model
   entrez_email: '' # necessary to access NCBI API
-
+  
   ### Addition of KEGG Pathways as Groups ###
   keggpathways: FALSE
-
+  
   ### SBO-Term Annotation ###
   sboterms: FALSE
-
+  
   ### Model polishing ### The database of the model identifiers needs to be specified with 'id_db'
   polish: FALSE
   id_db: 'BIGG' # Required!
@@ -89,15 +97,15 @@ to be set by the user.
   lab_strain: FALSE # Needs to be set to ensure that protein IDs get the 'bqbiol:isHomologTo' qualifier
                     # & to set the locus_tag to the ones obtained by the annotation
   protein_fasta: '' # Path to used CarveMe input file, if exists; Needs to be set for lab_strain: True
-
+  
   ### Charge correction ###
   charge_corr: FALSE
-
+  
   ### Manual Curation ###
   man_cur: FALSE
   man_cur_type: 'gapfill' # either 'gapfill' or 'metabs'
   man_cur_table: 'data/manual_curation.xlsx'
-
+  
   ### Automatic gap filling ###
   # All parameters are required for all db_to_compare choices except:
   # - organismid which is only required for db_to_compare: 'KEGG'/'KEGG+BioCyc'
@@ -122,11 +130,11 @@ to be set by the user.
 
 The repository structure has the following intention: 
 
-* ``refinegems/`` contains all the functions needed in ``main.py`` 
+* ``refineGEMs/`` contains all the functions needed in ``main.py`` 
 * ``data/`` contains all tables that are used by different parts of the script as well as a toy model ``e_coli_core.xml`` 
 * Instead of using the files given in ``data/``, you can use your own files and just change the paths in ``config.yaml``. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the ``data/`` folder and use the same formatting. 
 * ``databases/`` contains the ``sql`` file as well as the ``db`` file necessary for the SBOAnn script by Elisabeth Fritze as well as the modules ``gapfill``, ``growth`` and ``modelseed``.
-* The ``setup.py`` and ``pyproject.toml`` enable creating a PyPi package called ``refinegems``.
+* The ``setup.py`` and ``pyproject.toml`` enable creating a PyPi package called ``refineGEMs``.
 
 
 Usage as python module
@@ -155,12 +163,14 @@ Note that at this time most of the modules only make sense when you use the resp
     :noindex:
 .. autofunction:: refinegems.sboann.sbo_annotation
     :noindex:
+.. autofunction:: refinegems.biomass.check_normalise_biomass
+    :noindex:
 
 The modules ``io``, ``cvterms`` and ``investigate`` provide functions that can be used by themselves.
 
 ``io`` 
 ^^^^^^
-provides a couple of helper functions to load models, databases and parse gfffiles
+Provides a couple of helper functions to load models, databases and parse gfffiles
 
 .. automodule:: refinegems.io
     :members:
@@ -168,7 +178,7 @@ provides a couple of helper functions to load models, databases and parse gfffil
 
 ``investigate``
 ^^^^^^^^^^^^^^^
-provides a couple of functions to get parameters of your model
+Provides a couple of functions to get parameters of your model
 
 .. automodule:: refinegems.investigate
     :members:
@@ -176,7 +186,7 @@ provides a couple of functions to get parameters of your model
 
 ``cvterms``
 ^^^^^^^^^^^
-provides functions to work with cvterms
+Provides functions to work with cvterms
 
 .. automodule:: refinegems.cvterms
     :members:
