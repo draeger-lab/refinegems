@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/refineGEMs.svg)](https://badge.fury.io/py/refineGEMs)
 ![PyPI - Format](https://img.shields.io/pypi/format/refinegems)
 [![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg)](https://pypistats.org/packages/refinegems)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7915766.svg)](https://doi.org/10.5281/zenodo.7915766)
+[![DOI](https://zenodo.org/badge/359867657.svg)](https://zenodo.org/badge/latestdoi/359867657)
 
 <p align="center">
 <img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/refineGEMs_logo.png" height="200"/>
