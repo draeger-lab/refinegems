@@ -120,7 +120,7 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
         
         
     if type(result) == tuple:
-        with pd.ExcelWriter(filename) as writer:
+        with pd.ExcelWriter(f'{filename}.xlsx') as writer:
             result[0].to_excel(writer, sheet_name='gap fill statistics', index=False)
             result[1].to_excel(writer, sheet_name='genes', index=False)
             result[2].to_excel(writer, sheet_name='metabolites', index=False)
@@ -128,7 +128,7 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
             if len(result) == 5:
                 result[4].to_excel(writer, sheet_name='KEGG reactions', index=False)
     else:
-        with pd.ExcelWriter(filename) as writer:
+        with pd.ExcelWriter(f'{filename}.xlsx') as writer:
             result.to_excel(writer, sheet_name='KEGG reactions', index=False)
         
     return result
