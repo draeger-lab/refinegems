@@ -5,15 +5,18 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 """
 
 import re, logging
+from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
 from libsbml import Model as libModel
-from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
+from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez
 from tqdm.auto import tqdm
+from functools import reduce
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers
+from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers, parse_dict_to_dataframe
 from colorama import init as colorama_init
 from colorama import Fore, Style
+from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
     
@@ -450,9 +453,10 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
     Entrez.email = email
                     
     id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
-    if (protein_fasta is not None) and protein_fasta.strip() != '': 
-       id2locus_name = parse_fasta_headers(protein_fasta)
-       id2locus_name.set_index('protein_id')
+    if protein_fasta:
+        if protein_fasta.strip() != '': 
+            id2locus_name = parse_fasta_headers(protein_fasta)
+            id2locus_name.set_index('protein_id')
     
     genes_missing_annotation = []
 
@@ -462,168 +466,212 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             gene.setMetaId('meta_' + gene.getId())
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
-            entry = gene.getId()[2:-2]
+            entry = gene.getId()
+            entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
+            add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = search_ncbi_for_gpr(entry)
             gene.setName(name)
             gene.setLabel(locus)
         
-        elif (gene.getId() != 'G_spontaneous'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+        elif (gene.getId() != 'G_spontaneous') and (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
             if 'prot_' in gene.getId():
                 id_string = gene.getId().split('prot_')[1].split('_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
                 ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
-                
-                if (len(id_string) > 2):  # Identifier contains '_'
-                # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
-                # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
-                    if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
-                        ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
-                
-                # If identifier matches RefSeq ID pattern   
-                if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
-                    add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
-                    name, locus = search_ncbi_for_gpr(ncbi_id)
-            
-                # If identifier only contains numbers 
-                # -> Get the corresponding data from the CarveMe input file
-                elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
-                    if id2locus_name is not None:
-                        name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
-                    else: 
-                        genes_missing_annotation.append(ncbi_id)
-            
-                # If identifier matches ncbiprotein ID pattern
-                elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
-                    add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
-                    name, locus = search_ncbi_for_gpr(ncbi_id)
-                
-                # Catch all remaining cases that have no valid ID   
+            else:
+                id_string = gene.getId().removeprefix('G_').split('_')
+                if 'peg' in id_string: 
+                    genes_missing_annotation.append(id_string)
+                    continue
+              
+            if len(id_string) == 2: # Can be the case if ID is locus tag, for example
+                genes_missing_annotation.append(id_string)
+                continue # Ignore locus tags as no valid identifiers
+            if (len(id_string) > 2):  # Identifier contains '_'
+            # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
+            # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
+                if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
+                    ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
+           
+            # If identifier matches RefSeq ID pattern   
+            if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
+                add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
+                add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
+                name, locus = search_ncbi_for_gpr(ncbi_id)
+
+            # If identifier only contains numbers 
+            # -> Get the corresponding data from the CarveMe input file
+            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
+                if id2locus_name is not None:
+                    name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
                 else: 
                     genes_missing_annotation.append(ncbi_id)
+        
+            # If identifier matches ncbiprotein ID pattern
+            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
+                add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
+                name, locus = search_ncbi_for_gpr(ncbi_id)
             
-                # For lab strains use the locus tag from the annotation file   
-                if lab_strain and id2locus_name is not None:
-                    locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0]
-            
-                if ncbi_id not in genes_missing_annotation:      
-                    gene.setName(name)
-                    gene.setLabel(locus)
+            # Catch all remaining cases that have no valid ID   
+            else: 
+                genes_missing_annotation.append(ncbi_id)
+        
+            # For lab strains use the locus tag from the annotation file   
+            if lab_strain and id2locus_name is not None:
+                locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0][0]
+        
+            if ncbi_id not in genes_missing_annotation:
+                gene.setName(name)
+                gene.setLabel(locus)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
-        logging.info(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
+        logging.warning(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
 
 
 #---------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
-def get_set_of_curies(curie_list: list[str]) -> SortedDict[str: SortedSet[str]]:
-    """| Gets a list of CURIEs
+def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[str]], list[str]]:
+    """| Gets a list of URIs
        | & maps the database prefixes to their respective identifier sets
         
     Args:
-        - curie_list (list[str]): List containing CURIEs
+        - uri_list (list[str]): List containing CURIEs
             
     Returns:
-        SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
+        tuple: Two dictionaries (1) & (2)
+            (1) SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
+            (2) list: List of CURIEs that are invalid according to bioregistry
     """
     curie_dict = SortedDict()
+    prefix, identifier = None, None
+    invalid_curies = []
     
-    for curie in curie_list:
+    for uri in uri_list:
         
-        # Extracts the prefix & identifier part
-        if MIRIAM in curie:
-            extracted_curie = curie.split(MIRIAM)[1]
+        # Extracts the CURIE part from the URI/IRI
+        if MIRIAM in uri:
+            extracted_curie = uri.split(MIRIAM)[1]
         else:
-            extracted_curie = curie.split(OLD_MIRIAM)[1]
+            extracted_curie = uri.split(OLD_MIRIAM)[1]
         
-        # Get CURIEs irrespective of pattern
-        if '/' in extracted_curie:
-            extracted_curie = extracted_curie.split('/')
+        curie = manager.parse_curie(extracted_curie) # Contains valid db prefix to identifiers pairs
+        curie = list(curie) # Turn tuple into list to allow item assignment
+        
+        if not curie[0]: # Need to do own parsing if prefix is not valid
+
+            # Get CURIEs irrespective of pattern
+            if '/' in extracted_curie:
+                extracted_curie = extracted_curie.split('/')
+
+                # Check for certain special cases
+                if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
+                    if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
+                        curie = (extracted_curie[0].lower(), '/'.join(extracted_curie[1:len(extracted_curie)]))
+                    else:
+                        wrong_prefix = extracted_curie[0].split(':')
+                        curie = (wrong_prefix[0], f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}')
+                elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE): # Brenda & EC code is the same
+                    curie = ('eccode', extracted_curie[1])
+                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
+                    curie = ['biocyc', extracted_curie[1]]
+                    
+                    if is_valid_identifier(*curie): # Get all valid identifiers
+                        prefix, identifier = normalize_parsed_curie(*curie)
+                        
+                        if not curie_dict or (prefix not in curie_dict):
+                            curie_dict[prefix] = SortedSet()
+                        curie_dict[prefix].add(identifier)
+                    
+                    else:
+                        invalid_curies.append(f'{prefix}:{identifier}')
+
+                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                        curie[0] = 'metacyc.reaction'
+                    else:
+                        curie[0] = 'metacyc.compound'
+
+                elif re.fullmatch('^chebi$', extracted_curie[0], re.IGNORECASE):
+                    new_curie = extracted_curie[1].split(':')
+
+                    curie = (new_curie[0].lower(), new_curie[1])
+
+                else:
+                    if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
+                        curie[0] = 'eccode'
+                    else:
+                        curie[0] = extracted_curie[0]
+
+                    curie[1] = extracted_curie[1]
+
+            elif ':' in extracted_curie:
+                extracted_curie = extracted_curie.split(':')
+
+                if re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
+                    curie = ['biocyc', extracted_curie[-1]]
+
+                    if is_valid_identifier(*curie): # Get all valid identifiers
+                        prefix, identifier = normalize_parsed_curie(*curie)
+                        
+                        if not curie_dict or (prefix not in curie_dict):
+                            curie_dict[prefix] = SortedSet()
+                        curie_dict[prefix].add(identifier)
+                    
+                    else:
+                        invalid_curies.append(f'{prefix}:{identifier}')
+                        
+                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                        curie[0] = 'metacyc.reaction'
+                    else:
+                        curie[0] = 'metacyc.compound'
+
+                else:
+                    if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
+                        curie[0] = 'eccode'
+                    else:
+                        curie[0] = extracted_curie[0]
+
+                    if re.fullmatch('^kegg.genes$', extracted_curie[0], re.IGNORECASE):
+                        curie[1] = ':'.join(extracted_curie[1:len(extracted_curie)])
+                    else:
+                        curie[1] = extracted_curie[1]
+                    
+        if is_valid_identifier(*curie): # Get all valid identifiers
+            prefix, identifier = normalize_parsed_curie(*curie)
+        else:
             
-            # Check for certain special cases
-            if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
-                if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
-                    prefix = extracted_curie[0].lower()
-                    identifier = '/'.join(extracted_curie[1:len(extracted_curie)])
-                else:
-                    wrong_prefix = extracted_curie[0].split(':')
-                    prefix = wrong_prefix[0]
-                    identifier = f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}'
-            elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
-                prefix = 'ec-code'
-                identifier = extracted_curie[1]
-            elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
-                prefix = 'biocyc'
-                identifier = extracted_curie[1].replace('META:', '')
-                
-                if not curie_dict or (prefix not in curie_dict):
-                    curie_dict[prefix] = SortedSet()
-                    curie_dict[prefix].add(identifier)
-                
-                if re.search('^rxn-|-rxn$', identifier, re.IGNORECASE):
-                    prefix = 'metacyc.reaction'
-                else:
-                    prefix = 'metacyc.compound'
-                
-            elif re.fullmatch('^chebi$', extracted_curie[0], re.IGNORECASE):
-                new_curie = extracted_curie[1].split(':')
-                
-                prefix = new_curie[0].upper()
-                identifier = new_curie[1]
-                
+            if curie[0] == 'eccode':
+                correct_id = curie[1] # EC number needs to have 4 places if splitted at the dots
+                while len(correct_id.split('.')) < 4:
+                    correct_id = f'{correct_id}.-'
+                prefix, identifier = normalize_parsed_curie(curie[0], correct_id)
+                # Add too long EC codes back in model BUT report as invalid CURIEs!
+                if (len(correct_id.split('.')) > 4): invalid_curies.append(f'{prefix}:{identifier}')
+            # Rhea identifier should only contain 5 numbers but added by CarveMe the Rhea identifier contains '#1'
+            elif (curie[0] == 'rhea') and ('#' in curie[1]):
+                prefix, identifier = normalize_parsed_curie(curie[0], curie[1].split('#')[0])
             else:
-                if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
-                    prefix = 'ec-code'
-                else:
-                    prefix = extracted_curie[0]
+                invalid_curies.append(f'{curie[0]}:{curie[1]}')
                 
-                identifier = extracted_curie[1]
-                
-        elif ':' in extracted_curie:
-            extracted_curie = extracted_curie.split(':')
+        if prefix and identifier: # Check that a prefix & identifier pair was found!
+            # Use prefix as key & the corresponding set of identifiers as values   
+            if not curie_dict or (prefix not in curie_dict):
+                curie_dict[prefix] = SortedSet()
+
+            curie_dict[prefix].add(identifier)
             
-            if re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
-                prefix = 'biocyc'
-                identifier = extracted_curie[-1]
-                
-                if not curie_dict or (prefix not in curie_dict):
-                    curie_dict[prefix] = SortedSet()
-                curie_dict[prefix].add(identifier)
-                
-                if re.search('^rxn-|-rxn$', identifier, re.IGNORECASE):
-                    prefix = 'metacyc.reaction'
-                else:
-                    prefix = 'metacyc.compound'
-                
-            else:
-                if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE):
-                    prefix = 'ec-code'
-                else:
-                    prefix = extracted_curie[0]
+    return curie_dict, invalid_curies
 
-                if re.fullmatch('^kegg.genes$', extracted_curie[0], re.IGNORECASE):
-                    identifier = ':'.join(extracted_curie[1:len(extracted_curie)])
-                else:
-                    identifier = extracted_curie[1]
-    
-        # Use prefix as key & the corresponding set of identifiers as values   
-        if not curie_dict or (prefix not in curie_dict):
-            curie_dict[prefix] = SortedSet()
-
-        curie_dict[prefix].add(identifier)
-            
-    return curie_dict
-
-def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
-    """Generate a set of complete CURIEs from the provided prefix to identifier mapping
+def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
+    """Generate a set of complete URIs from the provided prefix to identifier mapping
         
     Args:
         - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets 
         - new_pattern (bool):                          True if new pattern is wanted, otherwise False
             
     Returns:
-        SortedSet: Sorted set containing complete CURIEs
+        SortedSet: Sorted set containing complete URIs
     """
-    curie_set = SortedSet()
+    uri_set = SortedSet()
     
     if new_pattern:
         SEPARATOR = ':'
@@ -648,35 +696,61 @@ def generate_new_curie_set(prefix2id: SortedDict[str: SortedSet[str]], new_patte
                 separator = ':'
 
             
-            curie = MIRIAM + prefix + separator + identifier
-            curie_set.add(curie)
+            uri = MIRIAM + prefix + separator + identifier
+            uri_set.add(uri)
             
-    return curie_set
+    return uri_set
 
-def add_curie_set(entity: SBase, qt, b_m_qt, curie_set: SortedSet[str]):
-    """Add a complete CURIE set to the provided CVTerm
+
+def generate_miriam_compliant_uri_set(prefix2id: SortedDict[str: SortedSet[str]]) -> SortedSet[str]: 
+    """Generate a set of complete MIRIAM compliant URIs from the provided prefix to identifier mapping
+        
+    Args:
+        - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets
+            
+    Returns:
+        SortedSet: Sorted set containing complete URIs
+    """
+    uri_set = SortedSet()
+    
+    for prefix in prefix2id:    
+        for identifier in prefix2id.get(prefix):
+            uri = get_identifiers_org_iri(prefix, identifier)
+            uri_set.add(uri)
+            
+    return uri_set
+
+def add_uri_set(entity: SBase, qt, b_m_qt, uri_set: SortedSet[str]) -> list[str]:
+    """Add a complete URI set to the provided CVTerm
         
     Args:
         - entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.
         - qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
         - b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS
-        - curie_set (SortedSet[str]):   SortedSet containing CURIEs
+        - uri_set (SortedSet[str]):     SortedSet containing URIs
     """        
     new_cvterm = generate_cvterm(qt, b_m_qt)
         
-    for curie in curie_set:
-        new_cvterm.addResource(curie)
+    for uri in uri_set:
+        new_cvterm.addResource(uri)
             
     entity.addCVTerm(new_cvterm)
 
-def improve_curie_per_entity(entity: SBase, new_pattern: bool):
+def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) -> tuple[list[str], list[str]]:
     """Helper function: Removes duplicates & changes pattern according to new_pattern
 
     Args:
-        - entity (SBase):      A libSBML SBase object, either a model or an entity
-        - new_pattern (bool):  True if new pattern is wanted, otherwise False
+        - entity (SBase):       A libSBML SBase object, either a model or an entity
+        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
+        - new_pattern (bool):   True if new pattern is wanted, otherwise False
+        
+    Returns:
+        tuple: Two lists (1) & (2)
+            (1) list: List of all collected invalid annotations of one entity
+            (2) list: List of all collected invalid CURIEs of one entity
     """
     not_miriam_compliant = []
+    collected_invalid_curies = []
     pattern = f'{MIRIAM}|{OLD_MIRIAM}'
     cvterms = entity.getCVTerms()
     
@@ -691,52 +765,75 @@ def improve_curie_per_entity(entity: SBase, new_pattern: bool):
         elif current_qt == MODEL_QUALIFIER:
             current_b_m_qt = cvterm.getModelQualifierType()
             
-        current_curies = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
+        current_uris = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
     
-        for cc in current_curies:
-            if re.match(pattern, cc, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                tmp_list.append(cc)
-                cvterm.removeResource(cc)
+        for cu in current_uris:
+            if re.match(pattern, cu, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
+                tmp_list.append(cu)
+                # Remove all valid URIs to add these back later again
+                # In case of EC numbers, remove all EC number URIs as EC numbers not containing four numbers are sometimes invalid and sometimes not
+                if is_valid_identifier(*manager.parse_uri(cu)) or (manager.parse_uri(cu)[0] == 'eccode'): cvterm.removeResource(cu)
             else:
-                not_miriam_compliant.append(cc)
+                not_miriam_compliant.append(cu)
             
-        prefix2id = get_set_of_curies(tmp_list)
-        curie_set = generate_new_curie_set(prefix2id, new_pattern)
-        add_curie_set(entity, current_qt, current_b_m_qt, curie_set)
+        prefix2id, invalid_curies = get_set_of_curies(tmp_list)
+        collected_invalid_curies.extend(invalid_curies)
+        if bioregistry: uri_set = generate_miriam_compliant_uri_set(prefix2id)
+        else: uri_set = generate_uri_set_with_specific_pattern(prefix2id, new_pattern)
+        add_uri_set(entity, current_qt, current_b_m_qt, uri_set)
     
-    if not_miriam_compliant:
-        logging.info(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+    return not_miriam_compliant, collected_invalid_curies
 
-def improve_curies(entities: SBase, new_pattern: bool):
-    """Removes duplicates & changes pattern according to new_pattern
+def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple[dict[str:list[str]], dict[str:list[str]]]:
+    """Removes duplicates & changes pattern according to bioregistry or new_pattern
     
     Args:
         - entities (SBase):     A libSBML SBase object, either a model or a list of entities
-        - new_pattern (bool):  True if new pattern is wanted, otherwise False
+        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
+        - new_pattern (bool):   True if new pattern is wanted, otherwise False
+
+    Returns:
+        tuple: Two dictionnaries (1) & (2)
+            (1) dictionary: Mapping of entity identifier to list of corresponding not MIRIAM compliant annotations 
+            (2) dictionary: Mapping of entity identifier to list of corresponding invalid CURIEs
     """
+    entity2not_miriam = {}
+    entity2invalid_curies = {}
+    
     if type(entities) == libModel:  # Model needs to be handled like entity!
-        improve_curie_per_entity(entities, new_pattern)
+        not_miriam_compliant, invalid_curies = improve_uri_per_entity(entities, bioregistry, new_pattern)
+        if not_miriam_compliant: entity2not_miriam[entities.getId()] = not_miriam_compliant
+        if invalid_curies: entity2invalid_curies[entities.getId()] = invalid_curies
     
     else: 
         for entity in tqdm(entities):
-            improve_curie_per_entity(entity, new_pattern)
+            not_miriam_compliant, invalid_curies = improve_uri_per_entity(entity, bioregistry, new_pattern)
+            if not_miriam_compliant: entity2not_miriam[entity.getId()] = not_miriam_compliant
+            if invalid_curies: entity2invalid_curies[entity.getId()] = invalid_curies
             
             if type(entity) == UnitDefinition:
                 for unit in entity.getListOfUnits():  # Unit needs to be handled within ListOfUnitDefinition
-                    improve_curie_per_entity(unit, new_pattern)
+                    not_miriam_compliant, invalid_curies = improve_uri_per_entity(unit, bioregistry, new_pattern)
+                    if not_miriam_compliant: entity2not_miriam[unit.getId()] = not_miriam_compliant
+                    if invalid_curies: entity2invalid_curies[unit.getId()] = invalid_curies
+                    
+    return entity2not_miriam, entity2invalid_curies
 
 
-def polish_annotations(model: libModel, new_pattern: bool) -> libModel:
+def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, filename: str) -> libModel:
     """| Polishes all annotations in a model such that no duplicates are present 
        | & the same pattern is used for all CURIEs
         
     Args:
         - model (libModel):     Model loaded with libSBML
+        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
         - new_pattern (bool):   True if new pattern is wanted, otherwise False
+        - filename (str):       Path to output file for invalid CURIEs detected by improve_uris
         
     Returns:
         libModel: libSBML model with polished annotations
     """
+    list_of_entity2not_miriam, list_of_entity2invalid_curies = [], []
     listOf_dict = {
         'model': model,
         'compartment': model.getListOfCompartments(),
@@ -755,7 +852,30 @@ def polish_annotations(model: libModel, new_pattern: bool) -> libModel:
     # Adjust annotations in model
     for listOf in listOf_dict:
         print(f'Polish {listOf} annotations...')
-        improve_curies(listOf_dict[listOf], new_pattern)
+        entity2not_miriam, entity2invalid_curies = improve_uris(listOf_dict[listOf], bioregistry, new_pattern)
+        list_of_entity2not_miriam.append(entity2not_miriam)
+        list_of_entity2invalid_curies.append(entity2invalid_curies)
+        
+    all_entity2not_miriam = reduce(lambda d1, d2: {**d1, **d2}, list_of_entity2not_miriam)
+    all_entity2invalid_curies = reduce(lambda d1, d2: {**d1, **d2}, list_of_entity2invalid_curies)
+        
+    if all_entity2not_miriam:
+        miriam_filename = f'{filename}_invalid_annotations_{str(date.today().strftime("%Y%m%d"))}.tsv'
+        logging.warning(f'In the provided model {model.getId()} for {len(all_entity2not_miriam)} entities invalid annotations were detected. ' +
+                     f'These invalid annotations are saved to {miriam_filename}')
+        not_miriam_compliant_df = parse_dict_to_dataframe(all_entity2not_miriam)
+        not_miriam_compliant_df.columns = ['entity', 'not_miriam']
+        not_miriam_compliant_df.to_csv(miriam_filename, sep='\t')
+    
+    if all_entity2invalid_curies: 
+        curies_filename = f'{filename}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.tsv'      
+        logging.warning(f'In the provided model {model.getId()} for {len(all_entity2invalid_curies)} entities invalid CURIEs were detected. ' +
+                     f'These invalid CURIEs are saved to {curies_filename}')      
+        invalid_curies_df = parse_dict_to_dataframe(all_entity2invalid_curies)
+        invalid_curies_df.columns = ['entity', 'invalid_curie']
+        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(':', expand = True)
+        invalid_curies_df = invalid_curies_df.drop('invalid_curie', axis=1)
+        invalid_curies_df.to_csv(curies_filename, sep='\t')
     
     return model
 
@@ -779,6 +899,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     #for i in range(len(cvterms)):
     for cvterm in cvterms:
         tmp_set = SortedSet()
+        sbo_set = SortedSet()
         #cvterm = cvterms.get(i)
         
         # include check for reaction and unit definition
@@ -805,13 +926,15 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
                 else:
                     current_curie = cc
                     
-                if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                    tmp_set.add(current_curie)
+                if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept
+                    if re.search('sbo:', current_curie, re.IGNORECASE): sbo_set.add(current_curie)
+                    else: tmp_set.add(current_curie)
                     cvterm.removeResource(current_curie)
                 else:
                     not_miriam_compliant.append(current_curie)
-            
-            add_curie_set(entity, new_qt, new_b_m_qt, tmp_set)
+                    
+            if sbo_set: add_uri_set(entity, BIOLOGICAL_QUALIFIER, BQB_HAS_PROPERTY, sbo_set)
+            add_uri_set(entity, new_qt, new_b_m_qt, tmp_set)
             #cvterms.remove(i)
                 
     if not_miriam_compliant:
@@ -902,7 +1025,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool) -> libModel: 
+def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool, path: str) -> libModel: 
     """| Completes all steps to polish a model
        | (Tested for models having either BiGG or VMH identifiers.)
 
@@ -912,6 +1035,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
         - id_db (str): Main database identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
+        - path (str): Output path for incorrect annotations file(s)
     
     Returns:
         libModel: Polished libSBML model
@@ -919,7 +1043,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     colorama_init(autoreset=True)
     
     if lab_strain and not protein_fasta:
-        print(Fore.LIGHTRED_EX + '''
+        logging.error(Fore.LIGHTRED_EX + '''
                 Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
                 Otherwise, polish will not change anything for the GeneProducts.
                 The header lines should look similar to the following line:
@@ -954,7 +1078,8 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    polish_annotations(model, True)
+    filename = f'{path}{model.getId()}'
+    polish_annotations(model, True, True, filename)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
     
