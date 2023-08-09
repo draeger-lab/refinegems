@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from functools import reduce
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers, parse_dict_to_dataframe
+from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
@@ -33,6 +33,10 @@ def add_metab(entity_list: list[Species], id_db: str):
     """
     vmh_cut_pattern = '__\d+_' # To extract BiGG identifier
     
+    if id_db == 'VMH':
+        bigg_metabs_ids = load_a_table_from_database('SELECT universal_bigg_id FROM bigg_metabolites')
+        bigg_metabs_ids = bigg_metabs_ids['universal_bigg_id'].tolist()
+
     for entity in entity_list:
         
         # Get ID and remove 'M_'
@@ -59,8 +63,10 @@ def add_metab(entity_list: list[Species], id_db: str):
         add_cv_term_metabolites(id_for_anno, id_db, entity)
         
         if id_db == 'VMH':
-            # Add BiGG ID to annotation, additionally
-            add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
+            # Check if valid BiGG ID
+            if id_for_anno in bigg_metabs_ids:
+                # Add BiGG ID to annotation, additionally
+                add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
             
            
 def add_reac(entity_list: list[Reaction], id_db: str):
@@ -71,6 +77,10 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             - entity_list (list): libSBML ListOfReactions
             - id_db (str): Name of the database of the IDs contained in a model             
     """
+    if id_db == 'VMH':
+       bigg_reacs_ids = load_a_table_from_database('SELECT bigg_id FROM bigg_reactions')
+       bigg_reacs_ids = bigg_reacs_ids['bigg_id'].tolist()
+
     # Use regex to generalise check for growth/biomass reaction
     regex = 'growth|_*biomass\d*_*'
     
@@ -93,6 +103,10 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             
             # Add ID as URI to annotation   
             add_cv_term_reactions(current_id, id_db, entity)
+
+            # If VMH ID == BiGG ID, add BiGG ID as well
+            if (id_db == 'VMH') and (current_id in bigg_reacs_ids):
+                add_cv_term_reactions(current_id, 'BIGG', entity)
 
 
 #----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
@@ -119,9 +133,11 @@ def cv_notes_metab(species_list: list[Species]):
                     if (';') in fill_in and not re.search('inchi', db, re.IGNORECASE):
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_metabolites(entry.strip(), db, species)
+                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                                add_cv_term_metabolites(entry.strip(), db, species)
                     else:
-                        add_cv_term_metabolites(fill_in, db, species)
+                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                            add_cv_term_metabolites(fill_in, db, species)
 
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -158,9 +174,11 @@ def cv_notes_reac(reaction_list: list[Reaction]):
                     if (';') in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
-                            add_cv_term_reactions(entry.strip(), db, reaction)
+                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                                add_cv_term_reactions(entry.strip(), db, reaction)
                     else:
-                        add_cv_term_reactions(fill_in, db, reaction)
+                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                            add_cv_term_reactions(fill_in, db, reaction)
 
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:
@@ -481,11 +499,11 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             else:
                 id_string = gene.getId().removeprefix('G_').split('_')
                 if 'peg' in id_string: 
-                    genes_missing_annotation.append(id_string)
+                    genes_missing_annotation.append('_'.join(id_string))
                     continue
               
             if len(id_string) == 2: # Can be the case if ID is locus tag, for example
-                genes_missing_annotation.append(id_string)
+                genes_missing_annotation.append('_'.join(id_string))
                 continue # Ignore locus tags as no valid identifiers
             if (len(id_string) > 2):  # Identifier contains '_'
             # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
@@ -529,7 +547,7 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         logging.warning(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
 
 
-#---------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type ----------------------# 
+#------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------# 
 def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[str]], list[str]]:
     """| Gets a list of URIs
        | & maps the database prefixes to their respective identifier sets
@@ -553,7 +571,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
             extracted_curie = uri.split(MIRIAM)[1]
         else:
             extracted_curie = uri.split(OLD_MIRIAM)[1]
-        
+
         curie = manager.parse_curie(extracted_curie) # Contains valid db prefix to identifiers pairs
         curie = list(curie) # Turn tuple into list to allow item assignment
         
@@ -563,6 +581,11 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
             if '/' in extracted_curie:
                 extracted_curie = extracted_curie.split('/')
 
+                # Check for NaN identifiers
+                if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                        invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
+                    continue
                 # Check for certain special cases
                 if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
                     if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
@@ -574,14 +597,14 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                     curie = ('eccode', extracted_curie[1])
                 elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
                     curie = ['biocyc', extracted_curie[1]]
-                    
+
                     if is_valid_identifier(*curie): # Get all valid identifiers
                         prefix, identifier = normalize_parsed_curie(*curie)
                         
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
                         curie_dict[prefix].add(identifier)
-                    
+
                     else:
                         invalid_curies.append(f'{prefix}:{identifier}')
 
@@ -595,6 +618,11 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     curie = (new_curie[0].lower(), new_curie[1])
 
+                # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
+                elif re.search('^sbo:', extracted_curie[1], re.IGNORECASE):
+                    prefix = extracted_curie[0]
+                    identifier = extracted_curie[1].split(':')[1]
+
                 else:
                     if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
                         curie[0] = 'eccode'
@@ -605,20 +633,24 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
             elif ':' in extracted_curie:
                 extracted_curie = extracted_curie.split(':')
+                
+                # Check for NaN identifiers
+                if re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                    continue
 
                 if re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
                     curie = ['biocyc', extracted_curie[-1]]
 
                     if is_valid_identifier(*curie): # Get all valid identifiers
                         prefix, identifier = normalize_parsed_curie(*curie)
-                        
+
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
                         curie_dict[prefix].add(identifier)
-                    
+
                     else:
                         invalid_curies.append(f'{prefix}:{identifier}')
-                        
+
                     if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
                         curie[0] = 'metacyc.reaction'
                     else:
@@ -634,7 +666,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                         curie[1] = ':'.join(extracted_curie[1:len(extracted_curie)])
                     else:
                         curie[1] = extracted_curie[1]
-                    
+
         if is_valid_identifier(*curie): # Get all valid identifiers
             prefix, identifier = normalize_parsed_curie(*curie)
         else:
@@ -656,7 +688,6 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
             # Use prefix as key & the corresponding set of identifiers as values   
             if not curie_dict or (prefix not in curie_dict):
                 curie_dict[prefix] = SortedSet()
-
             curie_dict[prefix].add(identifier)
             
     return curie_dict, invalid_curies
@@ -686,6 +717,7 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
 
             if re.search('o$', prefix, re.IGNORECASE):  # Ontologies seem only to work with new pattern!
                 separator = ':'
+                prefix = prefix.upper()
             
             elif re.fullmatch('^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
                 prefix = f'chebi/{current_prefix}'
@@ -719,6 +751,7 @@ def generate_miriam_compliant_uri_set(prefix2id: SortedDict[str: SortedSet[str]]
             uri_set.add(uri)
             
     return uri_set
+
 
 def add_uri_set(entity: SBase, qt, b_m_qt, uri_set: SortedSet[str]) -> list[str]:
     """Add a complete URI set to the provided CVTerm
@@ -799,7 +832,7 @@ def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple
     """
     entity2not_miriam = {}
     entity2invalid_curies = {}
-    
+
     if type(entities) == libModel:  # Model needs to be handled like entity!
         not_miriam_compliant, invalid_curies = improve_uri_per_entity(entities, bioregistry, new_pattern)
         if not_miriam_compliant: entity2not_miriam[entities.getId()] = not_miriam_compliant
@@ -932,7 +965,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
                     cvterm.removeResource(current_curie)
                 else:
                     not_miriam_compliant.append(current_curie)
-                    
+            
             if sbo_set: add_uri_set(entity, BIOLOGICAL_QUALIFIER, BQB_HAS_PROPERTY, sbo_set)
             add_uri_set(entity, new_qt, new_b_m_qt, tmp_set)
             #cvterms.remove(i)
@@ -985,7 +1018,7 @@ def change_qualifiers(model: libModel, entity_type: str, new_qt, new_b_m_qt, spe
             logging.info('The entity ' +  entity_type + ' is not present in ' + model.getId())        
         
     if not_miriam_compliant:         
-        print(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
+        logging.warning(f'The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}')
     
     return model
 
@@ -1032,7 +1065,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     Args:
         - model (libModel): model loaded with libSBML
         - email (str): E-mail for Entrez
-        - id_db (str): Main database identifiers in model come from
+        - id_db (str): Main database where identifiers in model come from
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
         - path (str): Output path for incorrect annotations file(s)
@@ -1064,7 +1097,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     add_compartment_structure_specs(model)
     set_initial_amount(model)
     
-    ## improve metabolite, reaction and gene annotations ###
+    ### improve metabolite, reaction and gene annotations ###
     add_metab(metab_list, id_db)
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
