@@ -5,8 +5,8 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(name='refineGEMs',
-      version='1.1.0',
-      description='refineGEMs is a python package inteded to help with the curation of genome-scale metabolic models (GEMS)',
+      version='1.2.0',
+      description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)',
       long_description=readme,
       long_description_content_type='text/markdown',
       author='Famke Baeuerle and Gwendolyn O. Gusak',
@@ -17,7 +17,9 @@ setup(name='refineGEMs',
       install_requires = [
             "cobra==0.22.0",
             "biopython==1.79",
+            "bioregistry",
             "bioservices",
+            "importlib_resources==5.13.0",
             "memote==0.13.0",
             "pandas==1.2.4",
             "numpy==1.20.3",

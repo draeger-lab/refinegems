@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 cobra = "==0.22.0"
 biopython = "==1.79"
+bioregistry = "==0.10.1"
 bioservices = "==1.7.11"
 memote = "==0.13.0"
 pandas = "==1.2.4"

@@ -188,6 +188,31 @@ def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name:
     return man_gapf
 
 
+def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
+    """| Parses dictionary of form {str: list} & 
+       | Transforms it into a table with a column containing the strings and a column containing the lists
+
+    Args:
+        str2list (dict): Dictionary mapping strings to lists
+
+    Returns:
+        pd.DataFrame: Table with column containing the strings and column containing the lists
+    """
+    # Get max number of list length
+    max_len_of_list = max(map(len, str2list.values()))
+
+    # Fill lists with None until all lists have the same size -> Required for pd.DataFrame
+    for key in str2list:
+       current_list = str2list.get(key)
+       while len(current_list) != max_len_of_list:
+          str2list.get(key).append(None)
+
+    df = pd.DataFrame.from_dict(str2list).stack().T.reset_index()
+    df = df.drop('level_0', axis=1)
+    
+    return df
+
+
 def write_to_file(model: libModel, new_filename: str):
     """Writes modified model to new file
 
