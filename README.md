@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![GitHub Pipenv locked dependency version](https://img.shields.io/github/pipenv/locked/dependency-version/draeger-lab/refinegems/refinegems)
+![GitHub Pipenv locked dependency version](https://img.shields.io/github/pipenv/locked/dependency-version/draeger-lab/refinegems/refinegems?label=refineGEMs&color=B4A069)
 ![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/draeger-lab/refinegems)
 [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
