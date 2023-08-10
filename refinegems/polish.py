@@ -1114,7 +1114,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
 def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
-           protein_fasta: str, lab_strain: bool, path: str, kegg_organism_id: str) -> libModel: 
+           protein_fasta: str, lab_strain: bool, kegg_organism_id: str, path: str) -> libModel: 
     """| Completes all steps to polish a model
        | (Tested for models having either BiGG or VMH identifiers.)
 
@@ -1125,8 +1125,8 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
         - refseq_gff (str): Path to RefSeq GFF file of organism
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
-        - path (str): Output path for incorrect annotations file(s)
         - kegg_organism_id (str): KEGG organism identifier
+        - path (str): Output path for incorrect annotations file(s)
     
     Returns:
         libModel: Polished libSBML model

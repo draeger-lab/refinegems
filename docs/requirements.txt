@@ -1,5 +1,4 @@
 nbsphinx
 ipython
-ipython 
 sphinxcontrib-bibtex
 accessible-pygments

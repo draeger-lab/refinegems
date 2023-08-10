@@ -121,7 +121,7 @@ def main(configpath=None):
                 logging.info('Manual update of annotations was done for ' + model_libsbml.getId())
                 
         if config['gap_analysis'] and config['gapfill_model']:
-            filename = f'{config["out_path"]}{model_libsbml.getId()}_gap_analysis_{str(today)}.xlsx'
+            filename = f'{config["out_path"]}{model_libsbml.getId()}_gap_analysis_{str(today)}'
             if config['gap_analysis_params'].get('db_to_compare') not in ('BioCyc', 'KEGG+BioCyc'):
                 logging.warning('Currently, only the result from the \'BioCyc\' or \'KEGG+BioCyc\' runs can be directly added to a model.')
                 gap_analysis = rg.gapfill.gap_analysis(model_libsbml, config['gap_analysis_params'], filename)
@@ -136,7 +136,7 @@ def main(configpath=None):
                 model_libsbml = gapfill[-1]
                 logging.info(f'Gaps were filled in {model_libsbml.getId()}.')
         elif config['gap_analysis']:
-            filename = f'{config["out_path"]}{model_libsbml.getId()}_gap_analysis_{str(today)}.xlsx'
+            filename = f'{config["out_path"]}{model_libsbml.getId()}_gap_analysis_{str(today)}'
             gap_analysis = rg.gapfill.gap_analysis(model_libsbml, config['gap_analysis_params'], filename)
             logging.info(f'Gap analysis for {model_libsbml.getId()} with {config["gap_analysis_params"].get("db_to_compare")} was performed.')
             if  config["gap_analysis_params"].get("db_to_compare") != 'KEGG':
@@ -149,7 +149,7 @@ def main(configpath=None):
         
         if (config['polish']):
             model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['gff_file'], 
-                                             config['protein_fasta'], config['lab_strain'], config['organismid'])
+                                             config['protein_fasta'], config['lab_strain'], config['organismid'], config['out_path'])
             logging.info(model_libsbml.getId() + ' has been polished')
             
         if (config['biomass']):
