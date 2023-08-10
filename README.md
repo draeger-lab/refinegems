@@ -4,7 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
 ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems)
-[![PyPI version](https://badge.fury.io/py/refineGEMs.svg)](https://badge.fury.io/py/refineGEMs)
+![PyPI version](https://img.shields.io/pypi/v/refinegems?label=PyPI%20package&color=neongreen)
 ![PyPI - Format](https://img.shields.io/pypi/format/refinegems)
 [![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg)](https://pypistats.org/packages/refinegems)
 [![DOI](https://zenodo.org/badge/359867657.svg)](https://zenodo.org/badge/latestdoi/359867657)
