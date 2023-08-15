@@ -19,6 +19,10 @@ from colorama import Fore, Style
 from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+
+
+#------------------------------------------------ Constant variables --------------------------------------------------#
+BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN']
     
  
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
@@ -577,6 +581,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
         
         if curie[0]:
             if re.fullmatch('^biocyc$', curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                # Always add META if BioCyc sub-datbase prefixes are missing
+                curie = curie if curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else [curie[0], f'META:{curie[1]}']
                 if is_valid_identifier(*curie): # Get all valid identifiers
                     prefix, identifier = normalize_parsed_curie(*curie)
 
@@ -615,7 +621,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                 # Check for NaN identifiers
                 if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
-                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                    # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
+                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and (re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) == None): 
                         invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
                 # Check for certain special cases
@@ -628,6 +635,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE): # Brenda & EC code is the same
                     curie = ('eccode', extracted_curie[1])
                 elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                    # Always add META if BioCyc sub-datbase prefixes are missing
+                    extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
                     curie = ['biocyc', extracted_curie[1]]
                     if is_valid_identifier(*curie): # Get all valid identifiers
                         prefix, identifier = normalize_parsed_curie(*curie)
@@ -678,6 +687,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 if re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
                     continue
                 elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                    # Always add META if BioCyc sub-datbase prefixes are missing
+                    extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
                     curie = ['biocyc', ':'.join(extracted_curie[1:len(extracted_curie)])]
                     if is_valid_identifier(*curie): # Get all valid identifiers
                         prefix, identifier = normalize_parsed_curie(*curie)
@@ -956,7 +967,7 @@ def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, fi
                      f'These invalid CURIEs are saved to {curies_filename}')      
         invalid_curies_df = parse_dict_to_dataframe(all_entity2invalid_curies)
         invalid_curies_df.columns = ['entity', 'invalid_curie']
-        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(':', expand = True)
+        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(':', n=1, expand = True) # Required for identifiers that aso contain a ':'
         invalid_curies_df = invalid_curies_df.drop('invalid_curie', axis=1)
         invalid_curies_df.to_csv(curies_filename, sep='\t')
     
