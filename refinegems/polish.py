@@ -579,7 +579,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
         curie = manager.parse_curie(extracted_curie) # Contains valid db prefix to identifiers pairs
         curie = list(curie) # Turn tuple into list to allow item assignment
         
-        if curie[0]:
+        if curie[0]: # Prefix is valid but to have same result for same databases need to do a bit of own parsing
             if re.fullmatch('^biocyc$', curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
                 # Always add META if BioCyc sub-datbase prefixes are missing
                 curie = curie if curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else [curie[0], f'META:{curie[1]}']
@@ -590,7 +590,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                         curie_dict[prefix] = SortedSet()
                     curie_dict[prefix].add(identifier)
                 else:
-                    invalid_curies.append(f'{prefix}:{identifier}')
+                    invalid_curies.append(f'{curie[0]}:{curie[1]}')
 
                 if 'META' in curie[1]: 
                     curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
@@ -599,7 +599,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                     else:
                         curie[0] = 'metacyc.compound'
 
-            elif 'metacyc.' in extracted_curie[0]:
+            elif 'metacyc.' in curie[0]:
                 if is_valid_identifier(*curie): # Get all valid identifiers
                     prefix, identifier = normalize_parsed_curie(*curie)
 
@@ -607,14 +607,13 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                         curie_dict[prefix] = SortedSet()
                     curie_dict[prefix].add(identifier)
                 else:
-                    invalid_curies.append(f'{prefix}:{identifier}')
+                    invalid_curies.append(f'{curie[0]}:{curie[1]}')
 
                 curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
             elif re.fullmatch('^brenda$', curie[0], re.IGNORECASE): # Brenda & EC code is the same
                 curie[0] = 'eccode'
         
-        if not curie[0]: # Need to do own parsing if prefix is not valid
-
+        elif not curie[0]: # Need to do own parsing if prefix is not valid
             # Get CURIEs irrespective of pattern
             if '/' in extracted_curie:
                 extracted_curie = extracted_curie.split('/')
@@ -622,7 +621,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 # Check for NaN identifiers
                 if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
                     # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
-                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and (re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) == None): 
+                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
                         invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
                 # Check for certain special cases
@@ -684,7 +683,10 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 extracted_curie = extracted_curie.split(':')
                 
                 # Check for NaN identifiers
-                if re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                    # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
+                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                        invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
                 elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
                     # Always add META if BioCyc sub-datbase prefixes are missing
