@@ -23,7 +23,7 @@ project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Gusak'
 author = 'Famke Bäuerle and Gwendolyn O. Gusak'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2.1'
+release = '1.2.2'
 
 
 # -- General configuration ---------------------------------------------------
