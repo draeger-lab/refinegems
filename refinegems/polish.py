@@ -22,6 +22,10 @@ from colorama import Fore, Style
 from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+
+
+#------------------------------------------------ Constant variables --------------------------------------------------#
+BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN']
     
  
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
@@ -602,7 +606,7 @@ def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
         logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
 
 
-#------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------# 
+#------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------#
 def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[str]], list[str]]:
     """| Gets a list of URIs
        | & maps the database prefixes to their respective identifier sets
@@ -630,14 +634,50 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
         curie = manager.parse_curie(extracted_curie) # Contains valid db prefix to identifiers pairs
         curie = list(curie) # Turn tuple into list to allow item assignment
         
-        if not curie[0]: # Need to do own parsing if prefix is not valid
+        if curie[0]: # Prefix is valid but to have same result for same databases need to do a bit of own parsing
+            if re.fullmatch('^biocyc$', curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                # Always add META if BioCyc sub-datbase prefixes are missing
+                curie = curie if curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else [curie[0], f'META:{curie[1]}']
 
+                if 'META' in curie[1]: 
+                    if is_valid_identifier(*curie): # Get the valid BioCyc identifier & Add to dictionary
+                        prefix, identifier = normalize_parsed_curie(*curie)
+
+                        if not curie_dict or (prefix not in curie_dict):
+                            curie_dict[prefix] = SortedSet()
+                        curie_dict[prefix].add(identifier)
+                    else:
+                        invalid_curies.append(f'{curie[0]}:{curie[1]}')
+
+                    # Add the MetaCyc identifier additionally
+                    curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
+                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                        curie[0] = 'metacyc.reaction'
+                    else:
+                        curie[0] = 'metacyc.compound'
+            elif 'metacyc.' in curie[0]:
+                if is_valid_identifier(*curie): # Get the valid MetaCyc identifier & Add to dictionary
+                    prefix, identifier = normalize_parsed_curie(*curie)
+
+                    if not curie_dict or (prefix not in curie_dict):
+                        curie_dict[prefix] = SortedSet()
+                    curie_dict[prefix].add(identifier)
+                else:
+                    invalid_curies.append(f'{curie[0]}:{curie[1]}')
+
+                # Add the BioCyc identifier additionally
+                curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
+            elif re.fullmatch('^brenda$', curie[0], re.IGNORECASE): # Brenda & EC code is the same
+                curie[0] = 'eccode'
+        
+        elif not curie[0]: # Need to do own parsing if prefix is not valid
             # Get CURIEs irrespective of pattern
             if '/' in extracted_curie:
                 extracted_curie = extracted_curie.split('/')
 
                 # Check for NaN identifiers
                 if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                    # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
                     if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
                         invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
@@ -650,34 +690,45 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                         curie = (wrong_prefix[0], f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}')
                 elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE): # Brenda & EC code is the same
                     curie = ('eccode', extracted_curie[1])
-                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
+                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                    # Always add META if BioCyc sub-datbase prefixes are missing
+                    extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
                     curie = ['biocyc', extracted_curie[1]]
 
-                    if is_valid_identifier(*curie): # Get all valid identifiers
+                    if 'META' in curie[1]: 
+                        if is_valid_identifier(*curie): # Get the valid BioCyc identifier & Add to dictionary
+                            prefix, identifier = normalize_parsed_curie(*curie)
+
+                            if not curie_dict or (prefix not in curie_dict):
+                                curie_dict[prefix] = SortedSet()
+                            curie_dict[prefix].add(identifier)
+                        else:
+                            invalid_curies.append(f'{curie[0]}:{curie[1]}')
+
+                        # Add additionallly the MetaCyc identifier 
+                        curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
+                        if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                            curie[0] = 'metacyc.reaction'
+                        else:
+                            curie[0] = 'metacyc.compound'
+                elif 'metacyc.' in extracted_curie[0]:
+                    curie = extracted_curie
+                    if is_valid_identifier(*curie): # Get the valid MetaCyc identifier & Add to dictionary
                         prefix, identifier = normalize_parsed_curie(*curie)
-                        
+
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
                         curie_dict[prefix].add(identifier)
-
                     else:
-                        invalid_curies.append(f'{prefix}:{identifier}')
+                        invalid_curies.append(f'{curie[0]}:{curie[1]}')
 
-                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
-                        curie[0] = 'metacyc.reaction'
-                    else:
-                        curie[0] = 'metacyc.compound'
-
+                    # Add BioCyc identfier additionally
+                    curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
                 elif re.fullmatch('^chebi$', extracted_curie[0], re.IGNORECASE):
                     new_curie = extracted_curie[1].split(':')
-
                     curie = (new_curie[0].lower(), new_curie[1])
-
-                # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
-                elif re.search('^sbo:', extracted_curie[1], re.IGNORECASE):
-                    prefix = extracted_curie[0]
-                    identifier = extracted_curie[1].split(':')[1]
-
+                elif re.search('^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
+                    curie = [extracted_curie[0], extracted_curie[1].split(':')[1]]
                 else:
                     if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
                         curie[0] = 'eccode'
@@ -690,27 +741,45 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 extracted_curie = extracted_curie.split(':')
                 
                 # Check for NaN identifiers
-                if re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                    # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
+                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                        invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
+                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                    # Always add META if BioCyc sub-datbase prefixes are missing
+                    extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
+                    curie = ['biocyc', extracted_curie[1]]
 
-                if re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE) or ('metacyc.' in extracted_curie[0]):  # Check for bio- & metacyc
-                    curie = ['biocyc', extracted_curie[-1]]
+                    if 'META' in curie[1]:
+                        if is_valid_identifier(*curie): # Get the valid BioCyc identifier & Add to dictionary
+                            prefix, identifier = normalize_parsed_curie(*curie)
 
-                    if is_valid_identifier(*curie): # Get all valid identifiers
+                            if not curie_dict or (prefix not in curie_dict):
+                                curie_dict[prefix] = SortedSet()
+                            curie_dict[prefix].add(identifier)
+                        else:
+                            invalid_curies.append(f'{curie[0]}:{curie[1]}')
+
+                        # Add MetaCyc identifier additionally
+                        curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
+                        if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                            curie[0] = 'metacyc.reaction'
+                        else:
+                            curie[0] = 'metacyc.compound'
+                elif 'metacyc.' in extracted_curie[0]:
+                    curie = extracted_curie
+                    if is_valid_identifier(*curie): # Get the valid MetaCyc identifier & Add to dictionary
                         prefix, identifier = normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
                         curie_dict[prefix].add(identifier)
-
                     else:
-                        invalid_curies.append(f'{prefix}:{identifier}')
+                        invalid_curies.append(f'{curie[0]}:{curie[1]}')
 
-                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
-                        curie[0] = 'metacyc.reaction'
-                    else:
-                        curie[0] = 'metacyc.compound'
-
+                    # Add BioCyc identifier additionally
+                    curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
                 else:
                     if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
                         curie[0] = 'eccode'
@@ -961,7 +1030,7 @@ def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, fi
                      f'These invalid CURIEs are saved to {curies_filename}')      
         invalid_curies_df = parse_dict_to_dataframe(all_entity2invalid_curies)
         invalid_curies_df.columns = ['entity', 'invalid_curie']
-        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(':', expand = True)
+        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(':', n=1, expand = True) # Required for identifiers that aso contain a ':'
         invalid_curies_df = invalid_curies_df.drop('invalid_curie', axis=1)
         invalid_curies_df.to_csv(curies_filename, sep='\t')
     
