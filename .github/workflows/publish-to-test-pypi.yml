@@ -1,6 +1,6 @@
 name: Publish new refineGEMs release to PyPI and TestPyPI
 
-on: workflow_dispatch
+on: push
 
 jobs:
   build-n-publish:
