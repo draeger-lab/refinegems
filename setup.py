@@ -5,7 +5,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(name='refineGEMs',
-      version='1.2.2-pre0',
+      version='1.2.3-pre0',
       description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)',
       long_description=readme,
       long_description_content_type='text/markdown',
