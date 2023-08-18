@@ -36,4 +36,11 @@ setup(name='refineGEMs',
             "sqlalchemy==1.4.43",
             "click==8.1.3"
             ],
-      zip_safe=False)
+      zip_safe=False,
+      package_data={
+            'refinegems': [
+                  '/database/current_bigg_db_version.txt',
+                  '/database/sbo_media_db.sql',
+                  '/database/data.db'
+                  ]
+      })
