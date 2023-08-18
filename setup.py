@@ -5,7 +5,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(name='refineGEMs',
-      version='1.2.2',
+      version='1.2.2-pre0',
       description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)',
       long_description=readme,
       long_description_content_type='text/markdown',
@@ -37,6 +37,7 @@ setup(name='refineGEMs',
             "click==8.1.3"
             ],
       zip_safe=False,
+      include_package_data=True,
       package_data={
             'refinegems': [
                   '/database/current_bigg_db_version.txt',
