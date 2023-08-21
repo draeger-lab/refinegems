@@ -5,7 +5,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(name='refineGEMs',
-      version='1.2.2',
+      version='1.3.0-pre0',
       description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)',
       long_description=readme,
       long_description_content_type='text/markdown',
@@ -14,12 +14,13 @@ setup(name='refineGEMs',
       url='https://github.com/draeger-lab/refinegems',
       license='MIT',
       packages=['refinegems'],
+      python_requires ='>=3.8, <3.10',
       install_requires = [
             "cobra==0.22.0",
             "biopython==1.79",
             "bioregistry",
             "bioservices",
-            "importlib_resources==5.13.0",
+            "importlib-resources<=5.13.0",
             "memote==0.13.0",
             "pandas==1.2.4",
             "numpy==1.20.3",
@@ -33,7 +34,14 @@ setup(name='refineGEMs',
             "venn==0.1.3",
             "ols-client==0.1.3",
             "seaborn==0.12.2",
-            "sqlalchemy==1.4.43",
             "click==8.1.3"
             ],
-      zip_safe=False)
+      zip_safe=False,
+      include_package_data=True,
+      package_data={
+            'refinegems': [
+                  'database/current_bigg_db_version.txt',
+                  'database/sbo_media_db.sql',
+                  'database/data.db'
+                  ]
+      })

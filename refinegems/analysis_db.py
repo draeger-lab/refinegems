@@ -22,23 +22,23 @@ BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
 COMPARTMENTS = ('c', 'e', 'p')
 
 
-def get_search_regex(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool) -> str:
-    """Retrieves the search regex for BioCyc/KEGG to be used in the BiGG mapping
+def get_search_regex(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: bool) -> str:
+    """Retrieves the search regex for BioCyc/KEGG/SEED to be used in the BiGG mapping
 
     Args:
-        - other_db (Literal): Specifies if the search regex should be for BioCyc or KEGG
-        - metabolites (bool): Is required if one wants to search for KEGG Compound IDs in the bigg_models_metabolites.txt
+        - other_db (Literal): Specifies if the search regex should be for BioCyc/KEGG/SEED
+        - metabolites (bool): Is required if one wants to search for KEGG/SEED Compound IDs in the bigg_models_metabolites.txt
             
     Returns:
         str: Search regex
     """
     if other_db == 'BioCyc':
         return 'BioCyc: http://identifiers.org/biocyc/META:(.*?);'
-    elif other_db == 'KEGG':
+    elif other_db == 'KEGG' or other_db == 'SEED':
         if metabolites:
-            return 'KEGG Compound: http://identifiers.org/kegg.compound/(.*?);'
+            return f'{other_db} Compound: http://identifiers.org/{other_db.lower()}.compound/(.*?);'
         else:
-            return 'KEGG Reaction: http://identifiers.org/kegg.reaction/(.*?);'
+            return f'{other_db} Reaction: http://identifiers.org/{other_db.lower()}.reaction/(.*?);'
         
         
 def compare_ids(id1: str, id2: str) -> bool:
@@ -159,15 +159,15 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
 
  
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc'], metabolites: bool=False) -> pd.DataFrame:
+def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: bool=False) -> pd.DataFrame:
     """Uses list of BiGG reactions/metabolites to get a mapping from BiGG to KEGG/BioCyc Id
 
     Args:
-        - other_db (Literal): Set to 'KEGG'/'BioCyc' to map KEGG/BioCyc IDs to BiGG IDs
+        - other_db (Literal): Set to 'KEGG'/'BioCyc'/'SEED' to map KEGG/BioCyc/SEED IDs to BiGG IDs
         - metabolites (bool): Set to True to map other_db IDs to BiGG IDs for metabolites
 
     Returns:
-        pd.DataFrame: Table containing BiGG Ids with corresponding KEGG/BioCyc Ids
+        pd.DataFrame: Table containing BiGG Ids with corresponding KEGG/BioCyc/SEED Ids
     """
     
     # Get only rows with BioCyc/KEGG entries
@@ -206,7 +206,7 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
         Needed to back check previous comparisons.
 
     Args:
-        - complete_df (pd.DataFrame): Table that contains BioCyc Id, BiGG Id & more
+        - complete_df (pd.DataFrame): Table that contains KEGG/BioCyc Id, BiGG Id & more
         - model_entities (pd.DataFrame): BiGG Ids of entities in the model 
         - metabolites (bool): True if names of metabolites should be added, otherwise false
 
@@ -223,12 +223,12 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     
     db_ids = entities_missing_in_model.groupby('bigg_id')[db].agg(set)  # Get a set of all BioCyc/KEGG IDs belonging to one BiGG ID
     
-    # Add set of BioCyc IDs belonging to one BiGG ID to the dataframe
+    # Add set of BioCyc/KEGG IDs belonging to one BiGG ID to the dataframe
     entities_missing_in_model.set_index('bigg_id', inplace=True)
     entities_missing_in_model.loc[:, db] = db_ids
     entities_missing_in_model.reset_index(inplace=True)
     
-    if 'id_group' in entities_missing_in_model.columns:  # Remove reaction ID duplicates but keep all realted BiGG & BioCyc IDs in a list
+    if 'id_group' in entities_missing_in_model.columns:  # Remove reaction ID duplicates but keep all related BiGG & BioCyc/KEGG IDs in a list
         aliases = entities_missing_in_model.groupby(['compartment', 'id_group'])['bigg_id'].agg(set)  # Get a set of the 'duplicated' BiGG reaction IDs -> aliases
         entities_missing_in_model.drop_duplicates(['compartment', 'id_group'], inplace=True, ignore_index=True)  # Drop duplicates where compartments & id_group same
         
@@ -252,7 +252,7 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     entities_missing_in_model['name'] = entities_missing_in_model['bigg_id'].map(get_name_from_bigg)
     con.close()
     
-    # Add compartment ID to all BiGG metabolites that were added due to filtering for BiGG metabolites in BiGG reactions
+    # Add compartment ID to all BiGG metabolites
     if metabolites:
         def get_compartment_from_id(bigg_id: str):
             compartment = bigg_id[-1]

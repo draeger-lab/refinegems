@@ -11,7 +11,7 @@ from os import path
 __author__ = 'Gwendolyn O. Gusak'
 
 
-PATH_TO_DB_DATA = path.join(path.abspath(path.dirname(path.dirname(__file__))), 'data/database')
+PATH_TO_DB_DATA = path.join(path.dirname(path.realpath(__file__)), 'database')
 PATH_TO_DB = path.join(PATH_TO_DB_DATA, 'data.db')
 VERSION_FILE = path.join(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
