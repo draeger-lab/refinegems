@@ -59,15 +59,16 @@ def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg:
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False) -> pd.DataFrame:
+def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False, col_name: str='bigg_id') -> pd.DataFrame:
     """Extracts table of reactions/metabolites with BiGG IDs from model
 
     Args:
         - model_libsbml (libModel): Model loaded with libSBML
         - metabolites (bool): Set to True if metabolites from model should be extracted
+        - col_name (str): Name to be used for column in Table, default: 'bigg_id'
 
     Returns:
-        pd.DataFrame: Table with BiGG IDs of reactions in the model
+        pd.DataFrame: Table with model identifiers for either metabolites or reactions
     """
     reac_or_metab_list = model_libsbml.getListOfSpecies() if metabolites else model_libsbml.getListOfReactions()
 
@@ -76,7 +77,7 @@ def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False) 
         list_of_reacs_or_metabs.append(reac_or_metab.id[2:])
 
     reac_or_metab_list_df = pd.Series(list_of_reacs_or_metabs)
-    reac_or_metab_list_df = pd.DataFrame(reac_or_metab_list_df, columns=['bigg_id'])
+    reac_or_metab_list_df = pd.DataFrame(reac_or_metab_list_df, columns=[col_name])
 
     return reac_or_metab_list_df
 

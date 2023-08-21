@@ -23,7 +23,7 @@ project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Gusak'
 author = 'Famke Bäuerle and Gwendolyn O. Gusak'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2.2'
+release = '1.3.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,11 +35,15 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.mathjax',
+    'sphinx_copybutton',
     'nbsphinx',
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib.bibtex'
 ]
+
+# For copy buttons in code blocks
+copybutton_selector =  "div.copyable pre"
 
 # For citations
 bibtex_bibfiles = ['library.bib']

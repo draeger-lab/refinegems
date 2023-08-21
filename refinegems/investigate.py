@@ -13,7 +13,7 @@ from cobra import Reaction
 from libsbml import Model as libModel
 from cobra import Model as cobraModel
 from memote.support import consistency
-# needed by memote.support.consitency
+# needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
 

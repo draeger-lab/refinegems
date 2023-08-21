@@ -13,12 +13,13 @@ Development installation
     * `pandoc`
     * `ipython`
     * `sphinxcontrib-bibtex`
+    * `sphinx_copybutton`
 
 You can install the packages via pip to your local environment:
 
 .. code:: bash
 
-    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex
+    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
 
 If you run into an error with jinja2, just switch to version 3.0.3:
 
@@ -36,7 +37,7 @@ If you want your print message to show in the log file, replace the ```print()``
 Documentation notes
 -------------------
 
-We use the autoDocstring extension (njpwerner.autodocstring) for vscode with the google format to generate function docstrings. To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
+We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
 
 .. code:: python
     :linenos:
@@ -58,3 +59,5 @@ We are also trying to make input and return types explicit by declaring those in
     :linenos:
 
     def my_func(input1: int, input2: str, input3: Model) -> tuple[str, int]:
+
+More details for certain specifics can also be found `here <https://github.com/draeger-lab/refinegems/issues/74>`__.
