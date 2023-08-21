@@ -65,7 +65,7 @@ To perform the gap analysis the following parameters are relevant for the config
 
 To add genes, metabolites and reactions from an Excel table to a model the following parameters need to be set:
 (The Excel file is either obtained by running gapfill_analysis or created by hand with the same structure as the result file from gapfill_analysis.
-An example Excel file to fill in by hand can be found in the cloned repository under 'data/modelName_gapfill_analysis_date_example.xlsx')
+An example Excel file to fill in by hand can be found in the cloned repository under ``data/modelName_gapfill_analysis_date_example.xlsx``)
 
 .. code:: yaml
 

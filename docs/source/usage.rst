@@ -5,7 +5,7 @@ Usage as standalone application
 -------------------------------
 
 The script ``main.py`` can be used directly in the command line after
-entering the virtual environment with ``pipenv shell``.
+entering the virtual environment with ``pipenv shell`` or ``conda activate <EnvName>``.
 
 The ``config.yaml`` file contains defaults for all variables that need
 to be set by the user.
@@ -130,11 +130,11 @@ to be set by the user.
 
 The repository structure has the following intention: 
 
-* ``refineGEMs/`` contains all the functions needed in ``main.py`` 
-* ``data/`` contains all tables that are used by different parts of the script as well as a toy model ``e_coli_core.xml`` 
+* ``refinegems/`` contains all the functions needed in ``main.py`` 
+* ``data/`` contains all example tables that can be used as input for the curation scripts as well as the ``media_db.csv`` and a toy model ``e_coli_core.xml`` 
 * Instead of using the files given in ``data/``, you can use your own files and just change the paths in ``config.yaml``. Please be aware that some functions rely on input in a certain format so make sure to check the files given in the ``data/`` folder and use the same formatting. 
-* ``databases/`` contains the ``sql`` file as well as the ``db`` file necessary for the SBOAnn script by Elisabeth Fritze as well as the modules ``gapfill``, ``growth`` and ``modelseed``.
-* The ``setup.py`` and ``pyproject.toml`` enable creating a PyPi package called ``refineGEMs``.
+* ``refinegems/databases/`` contains the SQL Schema file for the media and ``sboann``-related tables as well as the ready-to-use database file necessary for the SBOAnn script by Elisabeth Fritze as well as the modules ``gapfill``, ``growth`` and ``modelseed``.
+* The ``setup.py`` and ``pyproject.toml`` enable creating a PyPI package called ``refineGEMs``.
 
 
 Usage as python module

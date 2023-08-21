@@ -3,11 +3,12 @@ Installation
 
 Installation via pip
 --------------------
-To install refineGEMs as Python package, simply install it via ``pip``:
+To install refineGEMs as Python package from `PyPI <https://pypi.org/project/refineGEMs/>`__, simply install it via ``pip``:
 
-.. code:: bash
+.. code:: console
+   :class: copyable
 
-   pip install refinegems
+   pip install refineGEMs
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
@@ -60,6 +61,10 @@ If `which pip` does not show pip in the conda environment you can also create a 
 
 **Pipenv**
 
+.. warning::
+   | Since version 1.1.0 the Pipfile and Pipfile.lock files are not up to date anymore.
+   | This installation method might not work.
+
 You can use
 `pipenv <https://pipenv.pypa.io/en/latest/>`__ to keep all dependencies together. You will need to install
 ``pipenv`` first. To install ``refineGEMs`` locally complete the
@@ -96,7 +101,7 @@ Troubleshooting
    ``pipenv install``.
 
 - If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
-- If you use vscode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:
+- If you use VSCode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:
 
 .. code:: bash
 
@@ -104,5 +109,3 @@ Troubleshooting
    conda deactivate
    conda activate base
    conda activate <your conda env>
-
-

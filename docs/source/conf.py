@@ -35,11 +35,15 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.mathjax',
+    'sphinx_copybutton',
     'nbsphinx',
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib.bibtex'
 ]
+
+# For copy buttons in code blocks
+copybutton_selector =  "div.copyable pre"
 
 # For citations
 bibtex_bibfiles = ['library.bib']
