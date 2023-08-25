@@ -6,14 +6,14 @@ import requests
 import pandas as pd
 from enum import Enum
 from sqlite3 import Error
-from os import path
+from pathlib import Path
 
 __author__ = 'Gwendolyn O. Gusak'
 
 
-PATH_TO_DB_DATA = path.join(path.dirname(path.realpath(__file__)), 'database')
-PATH_TO_DB = path.join(PATH_TO_DB_DATA, 'data.db')
-VERSION_FILE = path.join(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
+PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')
+PATH_TO_DB = Path(PATH_TO_DB_DATA, 'data.db')
+VERSION_FILE = Path(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
 
 class ValidationCodes(Enum):
@@ -81,7 +81,7 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """
    print('Adding SBO and media tables...')
    
-   with open(path.join(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
+   with open(Path(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
 
 
@@ -93,8 +93,6 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
       - db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
    print('Adding BiGG tables...')
-   db_connection.execute('DROP TABLE IF EXISTS bigg_metabolites')
-   db_connection.execute('DROP TABLE IF EXISTS bigg_reactions')
    
    # Store currently used version
    with open(VERSION_FILE, 'w') as file:
@@ -104,13 +102,13 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    BIGG_MODELS_METABS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
    bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
-   bigg_models_metabs_df.to_sql('bigg_metabolites', db_connection, index=False)
+   bigg_models_metabs_df.to_sql('bigg_metabolites', db_connection, if_exists='replace', index=False)
 
    # Create BiGG reactions table
    BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
    bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
-   bigg_models_reacs_df.to_sql('bigg_reactions', db_connection, index=False)
+   bigg_models_reacs_df.to_sql('bigg_reactions', db_connection, if_exists='replace', index=False)
    
 
 def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: bool=True):
@@ -126,7 +124,7 @@ def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: boo
    # Check if BiGG database had an update
    LATEST_VERSION = requests.get(VERSION_URL).json()['bigg_models_version']
    
-   if not path.exists(VERSION_FILE) or is_missing:
+   if not Path.exists(VERSION_FILE) or is_missing:
       update_bigg_db(LATEST_VERSION, db_connection)
       
    else:
@@ -147,7 +145,7 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
    modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t')
-   modelseed_df.to_sql('modelseed_compounds', db_connection, index=False, if_exists='replace')
+   modelseed_df.to_sql('modelseed_compounds', db_connection, if_exists='replace', index=False, )
     
          
 def initialise_database():
