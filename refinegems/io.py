@@ -15,6 +15,7 @@ import gffutils
 import sqlalchemy
 import logging
 import pandas as pd
+from pathlib import Path
 from cobra import Model as cobraModel
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
@@ -87,19 +88,59 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def load_medium_custom(mediumpath: str) -> pd.DataFrame:
-    """Helper function to read medium csv
+def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
+    """Helper function to read a medium/media definition(s) from a CSV/TSV file into the database 'data.db' 
 
     Args:
-        - mediumpath (str): path to csv file with medium
-
-    Returns:
-        pd.DataFrame: Table of csv
+        - mediapath (str): Path to a .csv/.tsv file containing one or more media definitions
     """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
-    medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
-    return medium
+    mediapath_filetype = Path(mediapath).suffix # Get file type from file extension
+    
+    # Check if file has valid extension/type & get according separator
+    if mediapath_filetype.lower() == 'csv': seperator = ';'
+    elif mediapath_filetype.lower() == 'tsv': seperator = '\t'
+    else: 
+        logging.error('Either no valid file type was provided or the extension of the file is not one of \'.tsv\' or \'.csv\'.')
+        return
+    
+    custom_media = pd.read_csv(mediapath, sep=seperator)
+    
+    # Get table format for media table in database
+    media_info = custom_media.drop_duplicates(subset=['medium'], keep='first') # Get first column per medium
+    media_info = media_info[['medium', 'medium_description']] # Get fields required for media table
+    
+    # Get table format for media_compositions table in database
+    media_comp = custom_media.drop('medium_description', axis=1) # Remove for media_compositions table unnecessary column
+    media_comp.insert(2, 'medium', media_comp.pop('medium')) # Extract medium column & Set as last column
+    
+    # Connect to database
+    sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
+    engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
+    open_con = engine.connect()
+    
+    # Collect existing media to avoid duplicates
+    existing_media = load_a_table_from_database('media')
+    
+    # Remove duplicated media from the DataFrames:
+    ## 1. Set indeces of the 'media' table from database (existing_media) & the two dataframes to 'medium'
+    media_info.set_index('medium', inplace=True)
+    existing_media.set_index('medium', inplace=True)
+    media_comp.set_index('medium', inplace=True)
+    ## 2. Keep all entries in media_info where there is not match in the medium name compared to the existing_media table
+    media_info = media_info[~media_info.index.isin(existing_media.index)] # Get new media for database
+    ## 3. Keep all entries in media_comp that belong to the new media
+    media_comp = media_comp[media_comp.index.isin(media_info.index)].reset_index()
+    media_info.reset_index(inplace=True) # Reset index as only columns are inserted into database
+    
+    
+    # Add new entry/entries for media table first
+    media_info.to_sql('media', con=open_con, if_exists='append', index=False)
+    
+    # Add new entries for media_compositions table
+    
+    
+    # Close connection after insertion again
+    open_con.close()
 
 
 def load_medium_from_db(mediumname: str) -> pd.DataFrame:
