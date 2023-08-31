@@ -23,6 +23,7 @@ from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
+from typing import Union
 
 __author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
@@ -88,29 +89,73 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
-    """Helper function to read a medium/media definition(s) from a CSV/TSV file into the database 'data.db' 
+def write_media_to_file(media_file_name: str, media: Union[list[str], str]='all', tsv: bool=True):
+    """ Extracts all user-specified media from the database data.db 
+        & Writes them to a CSV/TSV file
+        Defaults to all media written to a TSV file.
 
     Args:
-        - mediapath (str): Path to a .csv/.tsv file containing one or more media definitions
+        - media_file_name (str): File name without file extension/Path to file with 
+            file name without file extension
+        - media (Union[list[str], str], optional): String of medium name/
+            List of media names. Defaults to 'all'.
+        - tsv (bool, optional): Specifies if a CSV/TSV file should be returned. 
+            Defaults to True.
     """
-    mediapath_filetype = Path(mediapath).suffix # Get file type from file extension
+    # Generate list of pandas dataframes
+    media_dfs = []
+    
+    # Find out if default should be used
+    media = load_a_table_from_database('media')['medium'].to_list() if media == 'all' else media
+    # Turn string input into a list/Sort list of media
+    if isinstance(media, str): media = [media]
+    else: media.sort()
+    # Semi-colon is used for CSV file as ',' can be in substance name
+    file_sep = '\t' if tsv else ';'
+    file_extension = '.tsv' if tsv else '.csv'
+    
+    # Iterate over list to get all media pandas dataframes
+    for medium in media:
+        medium_df = load_medium_from_db(medium)
+        media_dfs.append(medium_df)
+        
+    requested_media = media_dfs[0] if len(media_dfs) == 1 else pd.concat(media_dfs)
+    
+    requested_media.to_csv(f'{media_file_name}{file_extension}', sep=file_sep, 
+                           index=False)
+
+
+def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
+    """ Helper function to read a medium/media definition(s) from a CSV/TSV file 
+        into the database 'data.db' 
+
+    Args:
+        - mediapath (str): Path to a .csv/.tsv file containing one or more media 
+            definitions
+    """
+    # Get file type from file extension
+    mediapath_filetype = Path(mediapath).suffix
     
     # Check if file has valid extension/type & get according separator
     if mediapath_filetype.lower() == '.csv': seperator = ';'
     elif mediapath_filetype.lower() == '.tsv': seperator = '\t'
     else: 
-        logging.error('Either no valid file type was provided or the extension of the file is not one of \'.tsv\' or \'.csv\'.')
+        logging.error(
+            'Either no valid file type was provided or the extension of the ' 
+            'file is not one of \'.tsv\' or \'.csv\'.'
+            )
         return
     
     custom_media = pd.read_csv(mediapath, sep=seperator)
     
     # Get table format for media table in database
-    media_info = custom_media.drop_duplicates(subset=['medium'], keep='first') # Get first column per medium
-    media_info = media_info[['medium', 'medium_description']] # Get fields required for media table
+    # Get first column per medium
+    media_info = custom_media.drop_duplicates(subset=['medium'], keep='first')
+    # Get fields required for media table
+    media_info = media_info[['medium', 'medium_description']]
     
-    # Get table format for media_compositions table in database
-    media_comp = custom_media.drop('medium_description', axis=1) # Remove for media_compositions table unnecessary column
+    # Remove for media_compositions table unnecessary column
+    media_comp = custom_media.drop('medium_description', axis=1)
     
     # Connect to database
     sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
@@ -121,33 +166,44 @@ def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
     existing_media = load_a_table_from_database('media')
     
     # Remove duplicated media from the DataFrames:
-    ## 1. Set indeces of the 'media' table from database (existing_media) & the two dataframes to 'medium'
+    ## 1. Set indeces of the 'media' table from database (existing_media) 
+    ##      & the two dataframes to 'medium'
     media_info.set_index('medium', inplace=True)
     existing_media.set_index('medium', inplace=True)
     media_comp.set_index('medium', inplace=True)
-    ## 2. Keep all entries in media_info where there is not match in the medium name compared to the existing_media table
-    media_info = media_info[~media_info.index.isin(existing_media.index)] # Get new media for database
+    ## 2. Keep all entries in media_info where there is not match in the medium 
+    ##      name compared to the existing_media table
+    # Get new media for database
+    media_info = media_info[~media_info.index.isin(existing_media.index)]
     ## 3. Keep all entries in media_comp that belong to the new media
     media_comp = media_comp[media_comp.index.isin(media_info.index)].reset_index()
-    media_info.reset_index(inplace=True) # Reset index as only columns are inserted into database
+    # Reset index as only columns are inserted into database
+    media_info.reset_index(inplace=True)
     
     # Add new entry/entries for media table first
     media_info.to_sql('media', con=open_con, if_exists='append', index=False)
     
     # Turn medium column into medium_id column
-    media_comp['medium_query'] = media_comp['medium'].apply(lambda x: f'SELECT id from media WHERE medium=\'{x}\'') # Generate SQL query to retrieve link to medium
-    media_comp['medium_id'] = media_comp['medium_query'].apply(lambda x: open_con.execute(x).scalar()) # Extract medium_id from media table
-    media_comp.drop(['medium', 'medium_query'], axis=1, inplace=True) # Remove for media_compositions table unnecessary columns
+    media_comp['medium_query'] = media_comp['medium'].apply(
+        lambda x: f'SELECT id from media WHERE medium=\'{x}\''
+        ) # Generate SQL query to retrieve link to medium
+    media_comp['medium_id'] = media_comp['medium_query'].apply(
+        lambda x: open_con.execute(x).scalar()
+        ) # Extract medium_id from media table
+    # Remove for media_compositions table unnecessary columns
+    media_comp.drop(['medium', 'medium_query'], axis=1, inplace=True)
     
     # Add new entries for media_compositions table
-    media_comp.to_sql('media_compositions', con=open_con, if_exists='append', index=False)
+    media_comp.to_sql('media_compositions', con=open_con, if_exists='append', 
+                      index=False)
     
     # Close connection after insertion
     open_con.close()
 
 
 def load_medium_from_db(mediumname: str) -> pd.DataFrame:
-    """Wrapper function to extract subtable for the requested medium from the database 'data.db'
+    """ Helper function to extract subtable for the requested medium from the 
+        database 'data.db'
 
     Args:
         - mediumname (str): Name of medium to test growth on
@@ -155,9 +211,27 @@ def load_medium_from_db(mediumname: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'"
+    medium_query = (
+        "SELECT * FROM media m JOIN media_compositions mc ON m.id = " 
+        f"mc.medium_id WHERE m.medium = '{mediumname}'"
+    )
     medium = load_a_table_from_database(medium_query)
     medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
+    return medium
+
+
+def load_medium_from_db_for_growth(mediumname: str) -> pd.DataFrame:
+    """ Wrapper function to extract subtable for the requested medium from the 
+        database 'data.db' & Add the columns 'BiGG_R' and 'BiGG_EX'
+
+    Args:
+        - mediumname (str): Name of medium to test growth on
+
+    Returns:
+        pd.DataFrame: Table containing composition for one medium with metabs 
+            added as BiGG_EX exchange reactions
+    """
+    medium = load_medium_from_db(mediumname)
     medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
     medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
