@@ -97,8 +97,8 @@ def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
     mediapath_filetype = Path(mediapath).suffix # Get file type from file extension
     
     # Check if file has valid extension/type & get according separator
-    if mediapath_filetype.lower() == 'csv': seperator = ';'
-    elif mediapath_filetype.lower() == 'tsv': seperator = '\t'
+    if mediapath_filetype.lower() == '.csv': seperator = ';'
+    elif mediapath_filetype.lower() == '.tsv': seperator = '\t'
     else: 
         logging.error('Either no valid file type was provided or the extension of the file is not one of \'.tsv\' or \'.csv\'.')
         return
@@ -111,7 +111,6 @@ def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
     
     # Get table format for media_compositions table in database
     media_comp = custom_media.drop('medium_description', axis=1) # Remove for media_compositions table unnecessary column
-    media_comp.insert(2, 'medium', media_comp.pop('medium')) # Extract medium column & Set as last column
     
     # Connect to database
     sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
@@ -132,14 +131,18 @@ def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
     media_comp = media_comp[media_comp.index.isin(media_info.index)].reset_index()
     media_info.reset_index(inplace=True) # Reset index as only columns are inserted into database
     
-    
     # Add new entry/entries for media table first
     media_info.to_sql('media', con=open_con, if_exists='append', index=False)
     
+    # Turn medium column into medium_id column
+    media_comp['medium_query'] = media_comp['medium'].apply(lambda x: f'SELECT id from media WHERE medium=\'{x}\'') # Generate SQL query to retrieve link to medium
+    media_comp['medium_id'] = media_comp['medium_query'].apply(lambda x: open_con.execute(x).scalar()) # Extract medium_id from media table
+    media_comp.drop(['medium', 'medium_query'], axis=1, inplace=True) # Remove for media_compositions table unnecessary columns
+    
     # Add new entries for media_compositions table
+    media_comp.to_sql('media_compositions', con=open_con, if_exists='append', index=False)
     
-    
-    # Close connection after insertion again
+    # Close connection after insertion
     open_con.close()
 
 
