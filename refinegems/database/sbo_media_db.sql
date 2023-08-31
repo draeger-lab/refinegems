@@ -38,7 +38,7 @@ CREATE TABLE ec_to_sbo (
 CREATE TABLE media (
 	id INTEGER PRIMARY KEY,
 	medium TEXT NOT NULL,
-	medium_description TEXT
+	medium_description NTEXT
 );
 
 
@@ -49,7 +49,7 @@ CREATE TABLE media (
 CREATE TABLE media_compositions (
 	substance_id INTEGER PRIMARY KEY,
 	BiGG TEXT,
-	substance TEXT,
+	substance NTEXT,
 	medium_id INTEGER,
 	FOREIGN KEY(medium_id) REFERENCES media(id)
 );
