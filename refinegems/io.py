@@ -211,10 +211,7 @@ def load_medium_from_db(mediumname: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium_query = (
-        "SELECT * FROM media m JOIN media_compositions mc ON m.id = " 
-        f"mc.medium_id WHERE m.medium = '{mediumname}'"
-    )
+    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'"
     medium = load_a_table_from_database(medium_query)
     medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
     return medium
@@ -286,7 +283,7 @@ def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
     engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
     open_con = engine.connect()
     
-    db_table = pd.read_sql(table_name_or_query, open_con)
+    db_table = pd.read_sql(sqlalchemy.text(table_name_or_query), open_con)
     
     open_con.close()
     return db_table
@@ -338,9 +335,12 @@ def write_to_file(model: libModel, new_filename: str):
         - model (libModel): Model loaded with libSBML
         - new_filename (str): Filename|Path for modified model
     """
-    new_document = model.getSBMLDocument()
-    writeSBMLToFile(new_document, new_filename)
-    logging.info("Modified model written to " + new_filename)
+    try:
+        new_document = model.getSBMLDocument()
+        writeSBMLToFile(new_document, new_filename)
+        logging.info("Modified model written to " + new_filename)
+    except (OSError) as e:
+        print("Could not write to file. Wrong path?")
 
 
 def write_report(dataframe: pd.DataFrame, filepath: str):

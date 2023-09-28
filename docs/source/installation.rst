@@ -61,10 +61,6 @@ If `which pip` does not show pip in the conda environment you can also create a 
 
 **Pipenv**
 
-.. warning::
-   | Since version 1.1.0 the Pipfile and Pipfile.lock files are not up to date anymore.
-   | This installation method might not work.
-
 You can use
 `pipenv <https://pipenv.pypa.io/en/latest/>`__ to keep all dependencies together. You will need to install
 ``pipenv`` first. To install ``refineGEMs`` locally complete the
@@ -80,7 +76,7 @@ following steps:
    cd refinegems
 
    # install all dependencies from Pipfile
-   pipenv install
+   pipenv install .
 
    # initiate a session in the virtual environment
    pipenv shell
@@ -95,11 +91,6 @@ Troubleshooting
 -  If you get ``ImportError: DLL load failed while importing _sqlite3``
    when running main.py. Locate the ``sqlite3.dll`` file on you machine
    and add it to PATH.
-
--  If you use python 3.8 everything should work, just edit the
-   ``Pipfile`` entry to ``python_version = "3.8"`` before running
-   ``pipenv install``.
-
 - If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 - If you use VSCode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:
 

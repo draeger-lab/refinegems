@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![GitHub Pipenv locked dependency version](https://img.shields.io/github/pipenv/locked/dependency-version/draeger-lab/refinegems/refinegems?label=refineGEMs&color=B4A069)
-![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/draeger-lab/refinegems)
+![PyPI - Version](https://img.shields.io/pypi/v/refineGEMs?label=refineGEMs&color=B4A069)
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml)
 [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
 ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems)
@@ -14,7 +14,7 @@
 </p>
 
 # refineGEMs
-`refineGEMs` is a python package inteded to help with the curation of genome-scale metabolic models (GEMS).
+`refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS).
 
 ## Documentation
 The docs can be found [here](https://refinegems.readthedocs.io/en/latest/).
@@ -22,30 +22,35 @@ The docs can be found [here](https://refinegems.readthedocs.io/en/latest/).
 ## Overview
 
 Currently `refineGEMs` can be used for the investigation of a GEM, it can complete the following tasks:
-- loading GEMS with `cobrapy` and `libSBML`
+
+- loading GEMs with `COBRApy` and `libSBML`
 - report number of metabolites, reactions and genes
 - report orphaned, deadends and disconnected metabolites
 - report mass and charge unbalanced reactions
 - report [Memote](https://memote.readthedocs.io/en/latest/index.html) score
-- compare the genes present in the model to the genes found in the [KEGG](https://www.genome.jp/kegg/kegg1.html) Database (Note: this requires a gff file of your organism and the KEGG identifier of your organism)
-- compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database
+- compare the genes present in the model to the genes found in:
+  - the [KEGG](https://www.genome.jp/kegg/kegg1.html) Database (Note: This requires the GFF file and the KEGG identifier of your organism.)
+  - Or the [BioCyc](https://biocyc.org) Database (Note: This requires that a database entry for your organism exists in BioCyc.)
+- compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database.
 
-Other applications of `refineGEMs` include curation of a given model these include:
-- correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v.1.5.1 (for example moving all relevant information from the notes to the annotation field) this includes automated annotation of NCBI genes to the GeneProtein section of the model
-- addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin)
-- SBO-Term annotation based on a script by Elisabeth Fritze
-- annotation of metabolites based using a table created by the user `data/manual_annotations.xlsx`
+Other applications of `refineGEMs` to curate a given model include: 
+
+- The correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers),
+- The addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin),
+- Updating the SBO-Term annotations based on [SBOannotator](https://github.com/draeger-lab/SBOannotator),
+- Updating the annotation of metabolites and extending the model with reactions (for the purpose of filling gaps) based on a table filled by the user `data/manual_annotations.xlsx` (Note: This only works when the structure of the [example Excel file](https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/manual_curation.xlsx) is used.),
+- And extending the model with all information surrounding reactions including the corresponding GeneProducts and metabolites by filling in the table `data/modelName_gapfill_analysis_date_example.xlsx` (Note: This also only works when the structure of the [example Excel file](https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/modelName_gapfill_analysis_date_example.xlsx) is used).
 
 ## Installation
 
 You can install `refineGEMs` via pip:
 
 ```bash
-pip install refinegems
+pip install refineGEMs
 
 ```
 
-or to a local conda environment where `refineGEMs` is distributed via this github repository and all dependencies are denoted in the `setup.py` file:
+or to a local conda environment where `refineGEMs` is distributed via this GitHub repository and all dependencies are denoted in the `setup.py` file:
 
 ```bash
 # clone or pull the latest source code
