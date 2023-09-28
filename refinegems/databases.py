@@ -30,6 +30,25 @@ class ValidationCodes(Enum):
    MODELSEED_COMPOUNDS = 5,  # Only ModelSEED compounds table is in data.db
    BIGG_MSEED_COMPPOUNDS = 6,  # Only Bigg and ModelSEED compounds tables are in data.db
    SBO_MEDIA_MSEED_COMPOUNDS = 7  # Only SBO, media and ModelSEED compounds tables are in data.db
+   
+validation_messages = {
+   ValidationCodes.COMPLETE: 
+      'All tables in data up-to-date. Initialisation complete.',
+   ValidationCodes.EMPTY: 
+      'No table in data. An error must have occurred during initialisation.',
+   ValidationCodes.BIGG: 
+      'Data only contains the BiGG tables. Please check the remaining tables.',
+   ValidationCodes.SBO_MEDIA: 
+      'Data only contains the SBO and media tables. Please check the BiGG and ModelSEED tables.',
+   ValidationCodes.BIGG_SBO_MEDIA: 
+      'Data only contains the BiGG, SBO and media tables. Please check the ModelSEED table.',
+   ValidationCodes.MODELSEED_COMPOUNDS: 
+      'Data only contains the ModelSEED table. Please check the BiGG, SBO and media tables.',
+   ValidationCodes.BIGG_MSEED_COMPPOUNDS: 
+      'Data only contains the BiGG and ModelSEED tables. Please check the SBO and media tables.',
+   ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: 
+      'Data only contains the SBO, media and ModelSEED tables. Please check the BiGG tables.'
+}
 
 
 def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
@@ -53,7 +72,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    
    bigg_tables_contained = len([s for s in tables if re.match('^bigg_(?!to)(.*?)', s, re.IGNORECASE)]) == 2
    sbo_tables_contained = len([s for s in tables if re.match('(.*?)_sbo$', s, re.IGNORECASE)]) == 2
-   media_tables_contained = len([s for s in tables if re.match('media', s, re.IGNORECASE)]) == 2
+   media_tables_contained = len([s for s in tables if re.match('^medium(.*?)|^substance(.*?)', s, re.IGNORECASE)]) == 4
    sbo_media_tables_contained = sbo_tables_contained and media_tables_contained  # These can only occur together
    modelseed_cmpd_tbl_contained = len([s for s in tables if s == 'modelseed_compounds']) == 1
    
@@ -102,13 +121,22 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    BIGG_MODELS_METABS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
    bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
-   bigg_models_metabs_df.to_sql('bigg_metabolites', db_connection, if_exists='replace', index=False)
+   bigg_models_metabs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
+   bigg_models_metabs_df.to_sql(
+      'bigg_metabolites', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={'id':'TEXT PRIMARY KEY'}
+      )
 
    # Create BiGG reactions table
    BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
    bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
-   bigg_models_reacs_df.to_sql('bigg_reactions', db_connection, if_exists='replace', index=False)
+   bigg_models_reacs_df.to_sql(
+      'bigg_reactions', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={'id':'TEXT PRIMARY KEY'}
+      )
    
 
 def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: bool=True):
@@ -145,7 +173,11 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
    modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t')
-   modelseed_df.to_sql('modelseed_compounds', db_connection, if_exists='replace', index=False, )
+   modelseed_df.to_sql(
+      'modelseed_compounds', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={'id':'TEXT PRIMARY KEY'}
+      )
     
          
 def initialise_database():
@@ -154,7 +186,7 @@ def initialise_database():
       After initialisation the database contains:
          - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
          - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 2 tables with names 'media' & 'media_composition'
+         - 2 tables with names 'medium', 'substance', 'medium2substance' & 'substance2db'
          - 1 table with name 'modelseed_compounds' 
    """
    # Initialise empty connection
@@ -209,7 +241,11 @@ def initialise_database():
    except Error as e:
       print(e)
    finally:
-      if con:
-         print('All tables in database up-to-date. Initialisation complete.')
-         con.close()
+      if con: con.close()
       
+      # Validate initialised database
+      con = sqlite3.connect(PATH_TO_DB)
+      cursor = con.cursor()
+      validity_code = is_valid_database(cursor)
+      print(validation_messages.get(validity_code))
+      con.close()
