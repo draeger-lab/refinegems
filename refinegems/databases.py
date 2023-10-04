@@ -3,6 +3,7 @@ import io
 import re
 import sqlite3
 import requests
+import logging
 import pandas as pd
 from enum import Enum
 from sqlite3 import Error
@@ -122,16 +123,28 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
    bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
    bigg_models_metabs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
-   bigg_models_metabs_df.to_sql(
+   bigg_id_duplicates = bigg_models_metabs_df.duplicated(subset=['id'], keep=False)
+   bigg_id_duplicates_df = bigg_models_metabs_df[bigg_id_duplicates]
+   bigg_id_duplicates_set = set(bigg_id_duplicates_df['id'].tolist())
+   bigg_models_metabs_df[~bigg_id_duplicates].to_sql(
       'bigg_metabolites', db_connection, 
       if_exists='replace', index=False, 
       dtype={'id':'TEXT PRIMARY KEY'}
       )
+   
+   if bigg_id_duplicates_set:
+      logging.warning(
+         'The BiGG metabolite table contains the following '
+         f'{len(bigg_id_duplicates_set)} duplicate(s):\n'
+         f'{bigg_id_duplicates_set}\n'
+         'Duplicate(s) are completely removed from the table.'
+         )
 
    # Create BiGG reactions table
    BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
    bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
+   bigg_models_reacs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
    bigg_models_reacs_df.to_sql(
       'bigg_reactions', db_connection, 
       if_exists='replace', index=False, 
