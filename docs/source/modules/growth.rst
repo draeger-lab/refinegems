@@ -21,20 +21,9 @@ Growth rates and, thus, doubling times can be determined with Flux Balance Analy
 
 There is a flag called basis which can be set to either ``default_uptake`` or ``minimal_uptake``. You can decide from which uptake you want to fill your medium of interest when looking for missing metabolites. Either the ``default_uptake`` which is the uptake that the model has when no specific medium is set or the ``minimal_uptake`` which is the uptake resulting from COBRApy's minimal_medium optimization.
 
-Available media
----------------
-The following media are directly available to be used with the ``growth`` module via a ``config.yaml`` file. 
-In the section for the respective medium the description along with the definition is provided. The rules used to get 
-the media definitions are described in the Section :ref:`From laboratory to *in silico* medium`.
+Usable Media
+------------
+The media to be used with the ``growth`` module via a ``config.yaml`` file.
+More information about which media are provided by the database and how to generate *in silico* media can be found in Section :ref:`Media`.
 
-.. toctree:: 
 
-    media/blood
-    media/casa
-    media/cgxii
-    media/dgmm
-    media/lb
-    media/m9
-    media/mp-au
-    media/rpmi
-    media/snm3

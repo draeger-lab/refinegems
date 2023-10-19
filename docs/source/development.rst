@@ -7,19 +7,21 @@ Development installation
 .. attention::
     The following packages need to be installed to be able to add content to the refineGEMs documentation.
     
-    * `sphinx`
-    * `nbsphinx`
-    * `sphinx_rtd_theme`
-    * `pandoc`
+    * `accessible-pygments`
     * `ipython`
-    * `sphinxcontrib-bibtex`
+    * `nbsphinx`
+    * `pandoc`
+    * `sphinx`
     * `sphinx_copybutton`
+    * `sphinx_rtd_theme`
+    * `sphinxcontrib-bibtex`
+    
 
 You can install the packages via pip to your local environment:
 
 .. code:: bash
 
-    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
+    pip install accessible-pygments sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
 
 If you run into an error with jinja2, just switch to version 3.0.3:
 

@@ -36,7 +36,7 @@ Other applications of ``refineGEMs`` to curate a given model include:
    installation
    usage
    main-modules
-   in_silico_media_generation
+   database/intro
    API access <api>
    pipeline
    Notes for developers <development>
