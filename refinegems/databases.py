@@ -185,11 +185,15 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    print('Adding the ModelSEED compounds table...')
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
-   modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t')
+   modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t', dtype={'mass': float, 'linked_compound': str})
    modelseed_df.to_sql(
       'modelseed_compounds', db_connection, 
       if_exists='replace', index=False, 
-      dtype={'id':'TEXT PRIMARY KEY'}
+      dtype={
+         'id':'TEXT PRIMARY KEY',
+         'mass': 'NUMERIC',
+         'linked_compound': 'TEXT'
+         }
       )
     
          
