@@ -182,14 +182,15 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
             inchi_key = inchi_key if inchi_key != 'nan' else None  
             if inchi_key:
                 add_cv_term_metabolites(inchi_key, 'InChI-Key', sp)
-                
+
         if 'ChEBI' in missing_metabs_df.columns:
-            chebi_id = str(int(row.get('ChEBI'))) if not math.isnan(float(row.get('ChEBI'))) else None 
-            if chebi_id:
+            chebi_value = row.get('ChEBI')
+            if chebi_value is not None:
+                chebi_id = str(int(chebi_value))
                 add_cv_term_metabolites(chebi_id, 'ChEBI', sp)
-                
+
     model = update_annotations_from_others(model)
-    
+
     # (3) Add all missing reactions
     for _, row in missing_reacs_df.iterrows():
         reaction_dict = ast.literal_eval(str(row['bigg_reaction']))
