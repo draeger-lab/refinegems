@@ -27,6 +27,7 @@ import requests
 from refinegems.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
 from refinegems.io import parse_fasta_headers
+import os
 
 __author__ = "Gwendolyn O. Gusak and Dr. Reihaneh Mostolizadeh"
 
@@ -353,7 +354,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
          if bigg_id != 'nan': # Get formula from BiGG
             try:
                chem_formula = requests.get(BIGG_METABOLITES_URL + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
-            except ValueError:
+            except (ValueError, IndexError) as e:
                pass
          if not chem_formula: # If no formula was found with BiGG ID
             # Get formula already existing in dataframe or set to 'No formula'
@@ -422,6 +423,12 @@ def biocyc_gene_comp(
          (4) pd.DataFrame: Table containing the missing metabolites without BiGG IDs belonging to the missing reactions
          (5) pd.DataFrame: Table containing the missing reactions
    """
+   # check paths
+   for path in biocyc_file_paths:
+      if not os.path.exists(path):
+         print(f"{path} does not exists, check input!")
+         break
+
    # Extract missing reactions from all missing genes
    genes2reactions = get_missing_genes2reactions(model_libsbml, biocyc_file_paths[0])
    metabs_from_reacs, missing_reactions_df = get_missing_reactions(model_libsbml, genes2reactions, biocyc_file_paths[1])
@@ -438,4 +445,3 @@ def biocyc_gene_comp(
    statistics_df.reset_index(inplace=True)
    
    return (statistics_df, missing_genes_df, missing_metabolites_df, missing_reactions_df) 
-   
