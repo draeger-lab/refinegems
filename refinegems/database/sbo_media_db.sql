@@ -40,7 +40,8 @@ CREATE TABLE ec_to_sbo (
 CREATE TABLE medium (
 	id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL UNIQUE,
-	description NTEXT
+	description NTEXT,
+	reference NTEXT
 );
 
 --
@@ -9530,16 +9531,16 @@ INSERT INTO EC_to_SBO(ECnum, SBO_term) VALUES
 --
 -- Data for Name: medium; Type: TABLE DATA; Schema: public; Owner: -
 --
-INSERT INTO medium(name, description) VALUES
-	('LB', 'Lysogeny broth'),
-	('M9', 'M9 minimal medium'),
-	('SNM3', 'Synthetic Nasal Medium Version 3'),
-	('RPMI', 'Roswell Park Memorial Institute 1640 Medium'),
-	('CGXII', 'Corynebacterium glutamicum optimized growth medium'),
-	('CasA', 'Casamino Acids'),
-	('Blood', 'Blood medium'),
-	('MP-AU', 'Multi-Purpose Artificial Urine'),
-	('dGMM', 'Defined Gut Microbiota Medium');
+INSERT INTO medium(name, description, reference) VALUES
+	('Blood', 'Blood medium', 'https://doi.org/10.1371/journal.pcbi.1010903'),
+	('CasA', 'Casamino Acids', 'https://doi.org/10.1080/00275514.1971.12019223'),
+	('CGXII', 'Corynebacterium glutamicum optimized growth medium', 'https://doi.org/10.1002/bit.25103'),
+	('dGMM', 'Defined Gut Microbiota Medium', 'https://doi.org/10.1038/s41564-018-0123-9'),
+	('LB', 'Lysogeny broth', 'https://doi.org/10.1093/nar/gky537, https://doi.org/10.1074/jbc.M703759200'),
+	('M9', 'M9 minimal medium', 'https://www.sigmaaldrich.com/DE/de/product/sigma/m6030, https://doi.org/10.3389/fbinf.2023.1214074'),
+	('MP-AU', 'Multi-Purpose Artificial Urine', 'https://doi.org/10.1038/s41598-019-56693-4, https://doi.org/10.1016/j.bios.2022.114962'),
+	('RPMI', 'Roswell Park Memorial Institute 1640 Medium', 'https://www.thermofisher.com/de/de/home/technical-resources/media-formulation.114.html (visited on 2023-03-22)'),
+	('SNM3', 'Synthetic Nasal Medium Version 3', 'https://doi.org/10.1371/journal.ppat.1003862');
 
 --
 -- Data for Name: substance; Type: TABLE DATA; Schema: public; Owner: -
