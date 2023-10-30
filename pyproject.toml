@@ -11,6 +11,10 @@ authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel"},
 ]
+maintainers = [
+    {name = "Tobias Fehrenbach"}
+]
+
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'
 license = {text = "MIT"}
 readme = 'README.md'
