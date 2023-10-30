@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from datetime import date
 
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
 @click.command()
 @click.option('-c', '--configpath', required=True, prompt='Enter path to config file or press Enter if you want to create one.',
