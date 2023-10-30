@@ -16,12 +16,13 @@ setup(name='refineGEMs',
       packages=['refinegems'],
       python_requires ='>=3.8, <3.11',
       install_requires = [
-            "cobra>=0.26.0", # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
+            "cobra>=0.26.0, <0.28.0", # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
+            # COBRApy > 0.28.0 -> depinfo >=2.0.0
             "biopython>=1.79",
             "bioregistry",
             "bioservices",
             "importlib-resources<=5.13.0",
-            "memote>=0.13.0",
+            "memote>=0.13.0, <2.0.0", # MEMOTE > 0.14.0 -> depinfo >=2.0.0
             "pandas>=1.2.4",
             "numpy>=1.20.3",
             "gffutils>=0.10.1",
