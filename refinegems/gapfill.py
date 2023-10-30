@@ -22,7 +22,7 @@ from typing import Union
 from colorama import init as colorama_init
 from colorama import Fore
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 '''Skeleton for functions that could be used for a lab strain/organism which is in no database contained
 def get_genes_from_gff():

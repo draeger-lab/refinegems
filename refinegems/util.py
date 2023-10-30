@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from refinegems.analysis_db import BIGG_METABOLITES_URL
 
-__author__ = "Gwendolyn O. Gusak, Carolin Brune"
+__author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
 def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=True, iupac=True) -> pd.DataFrame:
    """Adds information from CHEBI/BiGG to the provided dataframe.
