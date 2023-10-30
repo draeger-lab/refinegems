@@ -7,7 +7,7 @@ authors:
 - family-names: "Döbel"
   given-names: "Gwendolyn O."
   orcid: "https://orcid.org/0000-0002-8206-2576"
-title: "My Research Software"
+title: "refineGEMs"
 version: 1.3.1
 doi: 10.5281/zenodo.8270303 
 date-released: 2023-10-30
