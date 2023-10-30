@@ -89,19 +89,19 @@ def compare_ids(id1: str, id2: str) -> bool:
     return similar_ids
 
 
-def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
+def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame, other_db: str) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments
         & returns table containing only reactions which happen in one of the provided compartments
         
     Args:
-        - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
+        - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'/'SEED'
+        - other_db (str): String specifying the column name of the identifiers from the not BiGG namespace
         
     Returns:
         pd.DataFrame: Table containing reactions & their compartments
     """
     tqdm.pandas()
-    db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
-    complete_df = complete_df[['bigg_id', db]]  # Remove all unnecessary columns
+    complete_df = complete_df[['bigg_id', other_db]]  # Remove all unnecessary columns
     
     # (1) Find all occurrencs of a BiGG reaction ID in bigg_reactions table in database
     def get_all_similar_bigg_ids(bigg_id_in: str) -> list[str]:
@@ -193,7 +193,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: 
     bigg_db_df = bigg_db_df.explode(other_db, ignore_index=True)
     
     if not metabolites:
-        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df)
+        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df, other_db)
         
     bigg_df = bigg_db_df[['bigg_id', other_db]] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
 

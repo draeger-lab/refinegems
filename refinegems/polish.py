@@ -18,7 +18,7 @@ from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 
 #------------------------------------------------ Constant variables --------------------------------------------------#

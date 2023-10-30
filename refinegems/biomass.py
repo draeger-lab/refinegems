@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Gusak.
+"""Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Döbel.
 
 This module provides functions to be used to assess the biomass weight as well as normalise it.
 """
@@ -15,7 +15,7 @@ import memote.support.helpers as helpers
 from memote.utils import truncate
 from typing import Union
 
-__author__ = "MEMOTE and Gwendolyn O. Gusak"
+__author__ = "MEMOTE and Gwendolyn O. Döbel"
 
 
 def test_biomass_presence(model: cobraModel) -> Union[list[str], None]:

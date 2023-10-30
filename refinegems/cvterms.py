@@ -6,7 +6,7 @@ Stores dictionaries which hold information the identifiers.org syntax, has funct
 import logging
 from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
