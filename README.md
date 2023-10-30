@@ -68,3 +68,10 @@ which pip
 pip install .
 
 ```
+
+## How to cite
+When using `refineGEMs`, please cite the latest publication:
+
+Famke Bäuerle, Gwendolyn O. Döbel, Laura Camus, Simon Heilbronner, and Andreas Dräger. 
+Genome-scale metabolic models consistently predict in vitro characteristics of Corynebacterium
+striatum. Front. Bioinform., oct 2023. [doi:10.3389/fbinf.2023.1214074](https://doi.org/10.3389/fbinf.2023.1214074).
