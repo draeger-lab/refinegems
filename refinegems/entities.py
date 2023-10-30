@@ -8,7 +8,7 @@ from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_c
 from refinegems.io import search_ncbi_for_gpr
 from typing import Union
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
