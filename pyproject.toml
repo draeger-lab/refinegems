@@ -1,3 +1,5 @@
+application/toml
+
 # needed for installation of refinegems
 [build-system]
 requires = ["setuptools"]
