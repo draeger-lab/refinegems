@@ -306,7 +306,7 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
             growth_one = growth_one_medium_from_default(model, medium_df, anaerobic)
         elif (basis == 'minimal_uptake'):
             growth_one = growth_one_medium_from_minimal(model, medium_df, anaerobic)
-        growth = pd.concat([growth, growth_one], ignore_index=True) # pd.append is deprecated
+        growth = pd.concat([growth, growth_one], ignore_index=True)
     return growth
 
 
