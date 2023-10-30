@@ -28,6 +28,16 @@ Other applications of ``refineGEMs`` to curate a given model include:
 * Updating the annotation of metabolites and extending the model with reactions (for the purpose of filling gaps) based on a table filled by the user ``data/manual_annotations.xlsx`` (Note: This only works when the structure of the `example Excel file <https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/manual_curation.xlsx>`__ is used.),
 * And extending the model with all information surrounding reactions including the corresponding GeneProducts and metabolites by filling in the table ``data/modelName_gapfill_analysis_date_example.xlsx`` (Note: This also only works when the structure of the `example Excel file <https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/modelName_gapfill_analysis_date_example.xlsx>`__ is used).
 
+How to cite
+-----------
+
+When using refineGEMs, please cite the latest publication:
+
+  Famke Bäuerle, Gwendolyn O. Döbel, Laura Camus, Simon Heilbronner, and Andreas Dräger. 
+  Genome-scale metabolic models consistently predict in vitro characteristics of corynebacterium
+  striatum. Front. Bioinform., oct 2023. `doi:10.3389/fbinf.2023.1214074 <https://doi.org/10.3389/fbinf.2023.1214074>`__.
+
+
 
 .. toctree::
    :maxdepth: 2
