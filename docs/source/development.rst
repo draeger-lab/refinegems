@@ -1,8 +1,8 @@
 Development
 ===========
 
-Development installation
-------------------------
+Additional packages required for development
+--------------------------------------------
 
 .. attention::
     The following packages need to be installed to be able to add content to the refineGEMs documentation.
@@ -27,15 +27,15 @@ If you run into an error with jinja2, just switch to version 3.0.3:
     
     pip install jinja2==3.0.3
 
-Development notes
------------------
+Debugging switches
+------------------
 
-You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
+- You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
+- If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
+- For debugging of pandas warnings or issues ``pd.options.mode.chained_assignment = None`` needs to be commented out.
 
-If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
-
-Documentation notes
--------------------
+Guidelines for code documentation
+---------------------------------
 
 We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
 
