@@ -31,12 +31,26 @@ class Medium:
     # add functionalities from SPECIMEN ?
     # ------------------------------------
 
+    def format_substance_table(self, format:str) -> pd.DataFrame:
+
+        formatted_table = self.substance_table.copy()
+
+        match format:
+            # for enabling usage of this new medium class with the old growth functions
+            case 'growth_old':
+                formatted_table = formatted_table[['BiGG', 'flux']]
+                formatted_table['mediumname'] = self.name
+
+            # raise error for unknow input
+            case _:
+                raise ValueError(f'Unknown format type for table: {format}')
+            
+        return formatted_table
 
 ############################################################################
 # functions for loading from DB
 ############################################################################
 
-# TODO
 def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.DataFrame:
     
     # build connection to DB
@@ -58,16 +72,9 @@ def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.
                                     WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
                                     """, (mediumname,)) 
             substance_table = result.fetchall()
-        # create table with information for growth simulation
-        case 'growth':
-            result = cursor.execute("""SELECT medium2substance.flux , substance2db.db_id
-                                    FROM medium, medium2substance, substance, substance2db
-                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
-                                    """, (mediumname,)) 
-            substance_table = result.fetchall()
-        # create table with information for gapfilling
-        case 'gapfill':
-            result = cursor.execute("""SELECT substance.name, substance.formula , substance2db.db_id, substance2db.db_type
+        # create table with all information, standard for generating the Medium table
+        case 'standard':
+            result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
                                     FROM medium, medium2substance, substance, substance2db
                                     WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
                                     """, (mediumname,)) 
@@ -83,7 +90,7 @@ def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.
     return substance_table
 
 
-def load_medium_from_db(name:str, database:str, type:str) -> Medium:
+def load_medium_from_db(name:str, database:str, type='standard') -> Medium:
     
     # build connection to DB
     connection = sqlite3.connect(database)
