@@ -29,7 +29,7 @@ from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_st
 from refinegems.io import parse_fasta_headers
 import os
 
-__author__ = "Gwendolyn O. Gusak and Dr. Reihaneh Mostolizadeh"
+__author__ = "Gwendolyn O. Döbel and Dr. Reihaneh Mostolizadeh"
 
 
 # Global variable for statistics
