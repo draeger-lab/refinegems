@@ -3,13 +3,14 @@ import re
 import requests
 import sqlite3
 import pandas as pd
+pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 import numpy as np
 from refinegems.io import load_a_table_from_database
 from refinegems.databases import PATH_TO_DB
 from typing import Literal
 from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
-
+from multiprocessing import Pool
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
@@ -87,6 +88,24 @@ def compare_ids(id1: str, id2: str) -> bool:
     else: similar_ids = False
 
     return similar_ids
+ 
+    
+# (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
+@sleep_and_retry
+@limits(calls=10, period=1)
+def get_reaction_compartment(bigg_id: str) -> str:
+    
+    metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
+            
+    comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
+    contained_in_compartments = [(comp in COMPARTMENTS) for comp in comps]  # Get True for correct compartment        
+    if not all(contained_in_compartments):  # At least one compartment not correct
+        return np.nan
+    else:  # All compartments correct
+        if len(set(comps)) == 1:  # Set of found compartments of reaction = 1: Reaction happens in one compartment
+            return comps[0]
+        else:  # Not so important but do not remove reaction as reaction in correct compartments
+            return 'exchange'  # Probably exchange reaction
 
 
 def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
@@ -117,47 +136,51 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
         result = [res for res in result if compare_ids(bigg_id, res)]
         return result
     
-    # (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
-    @sleep_and_retry
-    @limits(calls=10, period=1)
-    def get_reaction_compartment(bigg_id: str) -> str:
-        
-        metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
-                
-        comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
-        contained_in_compartments = [(comp in COMPARTMENTS) for comp in comps]  # Get True for correct compartment        
-        if not all(contained_in_compartments):  # At least one compartment not correct
-            return np.nan
-        else:  # All compartments correct
-            if len(set(comps)) == 1:  # Set of found compartments of reaction = 1: Reaction happens in one compartment
-                return comps[0]
-            else:  # Not so important but do not remove reaction as reaction in correct compartments
-                return 'exchange'  # Probably exchange reaction
     
+    # (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
+    # get_react_compartment moved to outer scope due to multiprocessing Pool
+    
+
+    def multi_get_reaction_compartment(complete_df: pd.DataFrame) -> list:
+        """
+        Takes complete_df and runs get_reaction_compartment() in multiple
+        processes on the 'bigg_id' column.
+        
+        Returns: list with compartments
+        """        
+        with Pool() as pool:
+            results = []
+            for out in tqdm(pool.imap(get_reaction_compartment, complete_df.loc[:, "bigg_id"], chunksize=20), total=len(complete_df)):
+                results.append(out)
+
+        return results
+
     # Connect to database & get similar IDs (1)
     print('Getting all similar IDs...')
     con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
-    complete_df.loc[:,'bigg_id_list'] = complete_df.loc[:, 'bigg_id'].progress_map(get_all_similar_bigg_ids)
-    #complete_df.progress_apply(get_all_similar_bigg_ids, axis=1)
+    complete_df.loc[:, 'bigg_id_list'] = complete_df.loc[:, 'bigg_id'].progress_map(get_all_similar_bigg_ids)
+    # complete_df.progress_apply(get_all_similar_bigg_ids, axis=1)
     con.close()  # Close connection to database
-    
+
     # Adjust table to contain one BiGG ID per row from bigg_id_list (1)
     complete_df.loc[:, 'id_group'] = complete_df['bigg_id'].ne(complete_df['bigg_id'].shift()).cumsum()  # Group similar IDs
     complete_df.drop(labels='bigg_id', axis=1, inplace=True)  # Drop 'bigg_id' as no longer required
     complete_df = complete_df.explode('bigg_id_list', ignore_index=True)  # Expand 'bigg_id_list' column
     complete_df.rename(columns={'bigg_id_list': 'bigg_id'}, inplace=True)  # Rename 'bigg_id_list' to 'bigg_id'
-    
+
     # (2) Get all compartments for each reaction from BiGG database API
     print(f'Getting all IDs with correct compartment {COMPARTMENTS}...')
-    complete_df.loc[:, 'compartment'] = complete_df.loc[:, 'bigg_id'].progress_map(get_reaction_compartment)
-    #complete_df.progress_apply(get_reaction_compartment, axis=1)  # (2)
-    
+    results = multi_get_reaction_compartment(complete_df)
+    complete_df["compartment"] = results
+
+    # complete_df.progress_apply(get_reaction_compartment, axis=1)  # (2)
+
     # (3) Remove reactions with compartment = NaN
     complete_df.dropna(subset=['compartment'], inplace=True)
-        
+
     return complete_df
 
- 
+
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: bool=False) -> pd.DataFrame:
     """Uses list of BiGG reactions/metabolites to get a mapping from BiGG to KEGG/BioCyc Id
