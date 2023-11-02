@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import sqlite3
 import sys
 
@@ -8,6 +9,9 @@ __author__ = "Carolin Brune"
 ############################################################################
 # variables
 ############################################################################
+
+PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')
+PATH_TO_DB = Path(PATH_TO_DB_DATA, 'data.db')
 
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
@@ -47,6 +51,37 @@ class Medium:
     # add functionalities from SPECIMEN ?
     # ------------------------------------
 
+    def is_aerobic(self) -> bool:
+        """Check if the medium contains O2 / dioxygen.
+
+        Returns:
+            bool: Results of the test, True if pure oxygen is in the medium.
+        """
+
+        test = self.substance_table.loc[(self.substance_table['name'] == 'Dioxygen [O2]') & (self.substance_table['formula'] == 'O2')].any().all()
+        return test
+    
+    def make_aerobic(self):
+        if not self.is_aerobic():
+            # build connection to DB
+            connection = sqlite3.connect(PATH_TO_DB)
+            cursor = connection.cursor()
+            result = cursor.execute(""" SELECT substance.name, substance.formula, substance2db.db_id, substance2db.db_type 
+                                    FROM substance, substance2db 
+                                    WHERE substance.formula = 'O2' AND substance.name = 'Dioxygen [O2]' AND substance.id = substance2db.substance_id""")
+            oxygen = result.fetchall()
+            # TODO 
+            pass
+
+    def make_anaerobic(self):
+        if self.is_aerobic():
+            # remove dioxygen // O2 from the substance table
+            self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
+
+
+    # functions for retrieving 
+    # ------------------------
+
     def format_substance_table(self, format:str) -> pd.DataFrame:
         """Produce a reformatted version of the substance table for different purposes.
 
@@ -63,12 +98,18 @@ class Medium:
             pd.DataFrame: The reformatted substance table (copy).
         """
 
-        formatted_table = self.substance_table.copy()
-
         match format:
             # for enabling usage of this new medium class with the old growth functions
             case 'growth_old':
-                formatted_table = formatted_table[['BiGG', 'flux']]
+
+                formatted_table = self.substance_table.loc[self.substance_table['db_type']=='BiGG'][['name','flux','db_id']]
+                formatted_table.rename(columns={'db_id':'BiGG'})
+
+                # ..............................................................
+                # TODO / WARNING
+                # currently only substances WITH a BiGG ID are kept in this step
+                # ..............................................................
+                
                 formatted_table['mediumname'] = self.name
 
             # raise error for unknow input
@@ -77,6 +118,9 @@ class Medium:
             
         return formatted_table
     
+
+    # TODO
+    # def convert_to_cobra
 
 ############################################################################
 # functions for loading from DB
@@ -116,6 +160,8 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
                                     WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id
                                     """, (mediumname,)) 
             substance_table = result.fetchall()
+            substance_table = pd.DataFrame(substance_table, columns=['id','name','formula','flux'])
+
         # create table for documentation
         case 'documentation':
             result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
@@ -123,6 +169,8 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
                                     WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
                                     """, (mediumname,)) 
             substance_table = result.fetchall()
+            substance_table = pd.DataFrame(substance_table, columns=['name','formula','flux','source','db_id','db_type'])
+
         # create table with all information, standard for generating the Medium table
         case 'standard':
             result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
@@ -130,6 +178,8 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
                                     WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
                                     """, (mediumname,)) 
             substance_table = result.fetchall()
+            substance_table = pd.DataFrame(substance_table, columns=['name','formula','flux','source','db_id','db_type'])
+
         # default: throw error
         case _:
             connection.close()
