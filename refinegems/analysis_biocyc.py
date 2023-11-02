@@ -358,7 +358,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
                pass
          if not chem_formula: # If no formula was found with BiGG ID
             # Get formula already existing in dataframe or set to 'No formula'
-            chem_formula = chem_form if chem_form != 'nan' else 'No formula'
+            chem_formula = chem_form if chem_form != 'nan' else '*'
       return chem_formula
    
    missing_metabs['charge'] = missing_metabs.apply(find_charge, axis=1)
