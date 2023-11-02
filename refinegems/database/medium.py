@@ -18,8 +18,24 @@ REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
 
 
 class Medium:
+    """Class describing a medium.
+
+    Attributes:
+        name (str): The name or abbreviation of the medium.
+        substance_table (pd.DataFrame): A table containing information about the medium in silico compounds. Long format.
+        description (str, optional): Short description of the medium. Defaults to None.
+        doi (str): Reference(s) to the original publication of the medium. Defaults to None.
+    """
 
     def __init__(self, name:str, substance_table:pd.DataFrame, description=None, doi=None):
+        """Initialise a Medium object.
+
+        Args:
+            name (str): The name or abbreviation of the medium.
+            substance_table (pd.DataFrame):  A table containing information about the medium in silico compounds. Long format.
+            description (str, optional): Short description of the medium.. Defaults to None.
+            doi (str, optional): Reference(s) to the original publication of the medium.. Defaults to None.
+        """
         
         self.name = name
         self.description = description
@@ -32,6 +48,20 @@ class Medium:
     # ------------------------------------
 
     def format_substance_table(self, format:str) -> pd.DataFrame:
+        """Produce a reformatted version of the substance table for different purposes.
+
+        Possible formats
+        - 'growth_old': for working with the old version of the growth module.
+
+        Args:
+            format (str): Specifies the output format type.
+
+        Raises:
+            ValueError: Unknown format type for table.
+
+        Returns:
+            pd.DataFrame: The reformatted substance table (copy).
+        """
 
         formatted_table = self.substance_table.copy()
 
@@ -46,12 +76,33 @@ class Medium:
                 raise ValueError(f'Unknown format type for table: {format}')
             
         return formatted_table
+    
 
 ############################################################################
 # functions for loading from DB
 ############################################################################
 
-def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.DataFrame:
+def load_substance_table_from_db(mediumname: str, database:str, type='standard') -> pd.DataFrame:
+    """Load a substance table from a database.
+
+    Currently available types:
+    - 'testing': for debugging
+    - 'documentation': for downloading a table for the docs
+    - 'standard': The standard format containing all information in long format.
+
+    Note: 'documentation' currently object to change
+
+    Args:
+        name (str): The name (or identifier) of the medium.
+        database (str): Path to the database.
+        type (str, optional): How to load the table. Defaults to 'standard'.
+
+    Raises:
+        ValueError: Unknown type for loading the substance table.
+
+    Returns:
+        pd.DataFrame: The substance table in the specified type retrieved from the database.
+    """
     
     # build connection to DB
     connection = sqlite3.connect(database)
@@ -82,7 +133,7 @@ def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.
         # default: throw error
         case _:
             connection.close()
-            sys.exit("Unknown type for loading the substance table.")
+            raise ValueError(f"Unknown type for loading the substance table: {type}")
 
     # close connection
     connection.close()
@@ -91,6 +142,19 @@ def load_substance_table_from_db(mediumname: str, database:str, type:str) -> pd.
 
 
 def load_medium_from_db(name:str, database:str, type='standard') -> Medium:
+    """Load a medium from a database.
+
+    Args:
+        name (str): The name (or identifier) of the medium.
+        database (str): Path to the database.
+        type (str, optional): How to load the medium. Defaults to 'standard'.
+
+    Raises:
+        ValueError: Unknown medium name.
+
+    Returns:
+        Medium: The medium retrieved from the database.
+    """
     
     # build connection to DB
     connection = sqlite3.connect(database)
@@ -101,8 +165,7 @@ def load_medium_from_db(name:str, database:str, type='standard') -> Medium:
     if result:
         description = result.fetchone()[0] # each name should be unique
     else:
-        print('ERROR: Unknown medium name', file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f'Unknown medium name: {name}')
 
     # get DOI(s)
     result = cursor.execute("SELECT medium.reference FROM medium WHERE medium.name = ?",(name,))
@@ -122,7 +185,7 @@ def load_medium_from_db(name:str, database:str, type='standard') -> Medium:
 ############################################################################
 
 def read_substances_from_file(path: str) -> pd.DataFrame: 
-    """...
+    """Read in a TSV with substance in formation into a table.
 
     Format of the TSV:
     name | formula | flux | source | X | X | ...
@@ -131,7 +194,7 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
     X = see ALLOWED_DATABASE_LINKS
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: The table of substance information read from the file
     """
 
     # read in the table
@@ -157,6 +220,20 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 
 
 def read_external_medium(how:str) -> Medium:
+    """Read in an external medium. 
+
+    Currently available options for how:
+    - 'console': read in medium via the console
+
+    Args:
+        how (str): How (or from where) the medium should be read in.
+
+    Raises:
+        ValueError: Unknown description for how.
+
+    Returns:
+        Medium: The read-in medium.
+    """
 
     match how:
         # interactive mode using the console
@@ -196,7 +273,18 @@ def read_external_medium(how:str) -> Medium:
 # functions for adding entries to DB
 ############################################################################
 
-def get_last_idx_table(tablename, connection, cursor):
+def get_last_idx_table(tablename: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> int:
+    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    Retrieves the last row id of a specified table of the database.
+
+    Args:
+        tablename (str): The name of the table to retrieve the last row id from
+        connection (sqlite3.Connection): Connection to the database.
+        cursor (sqlite3.Cursor): Cursor for the database.
+
+    Returns:
+        int: The last row ID of the specified table.
+    """
 
     match tablename:
         case 'medium':
@@ -216,7 +304,18 @@ def get_last_idx_table(tablename, connection, cursor):
     return last_rowid
 
 
-def enter_substance_row(row: pd.Series, connection, cursor):
+def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:sqlite3.Cursor) -> int:
+    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    Enters a new entry in the medium2substance table.
+
+    Args:
+        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
+        connection (sqlite3.Connection): Connection to the database.
+        cursor (sqlite3.Cursor): Cursor for the database.
+
+    Returns:
+        int: The substance ID in the database of the substance.
+    """
 
     # check if a perfect match exists in database
     exact_match_res = cursor.execute("SELECT * FROM substance WHERE substance.formula = ? AND substance.name = ? ",(row['formula'],row['name']))
@@ -265,13 +364,31 @@ def enter_substance_row(row: pd.Series, connection, cursor):
     return substance_id
 
 
-def enter_m2s_row(row: pd.Series, medium_id, connection, cursor):
+def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    Enters a new entry in the medium2substance table.
+
+    Args:
+        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
+        medium_id (int): The row id of the medium.
+        connection (sqlite3.Connection): Connection to the database.
+        cursor (sqlite3.Cursor): Cursor for the database.
+    """
 
     cursor.execute('INSERT INTO medium2substance VALUES(?,?,?,?)',(medium_id,row['substance_id'],row['flux'],row['source'],))
     connection.commit()
     
 
-def enter_s2db_row(row: pd.Series, db_type: str, connection, cursor):
+def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    Enters a new entry in the substance2db table after checking is has yet to be added.
+
+    Args:
+        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
+        db_type (str): Type of database identifier to be added.
+        connection (sqlite3.Connection): Connection to the database.
+        cursor (sqlite3.Cursor): Cursor for the database.
+    """
 
     # only need to enter if ID exists
     if row[db_type]:
@@ -284,6 +401,12 @@ def enter_s2db_row(row: pd.Series, db_type: str, connection, cursor):
 
 
 def enter_medium_into_db(database: str, medium: Medium):
+    """Enter a new medium to an already existing database.
+
+    Args:
+        database (str): Path to the database.
+        medium (Medium): A medium object to be added to the database.
+    """
 
     # build connection to DB
     connection = sqlite3.connect(database)
