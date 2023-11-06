@@ -11,8 +11,7 @@ __author__ = "Carolin Brune"
 # variables
 ############################################################################
 
-PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')
-PATH_TO_DB = Path(PATH_TO_DB_DATA, 'data.db')
+PATH_TO_DB = Path(Path(__file__).parent.resolve(), 'data.db')
 
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
@@ -59,22 +58,35 @@ class Medium:
             bool: Results of the test, True if pure oxygen is in the medium.
         """
 
-        test = self.substance_table.loc[(self.substance_table['name'] == 'Dioxygen [O2]') & (self.substance_table['formula'] == 'O2')].any().all()
+        test = self.substance_table[['name','formula']].loc[(self.substance_table['name'] == 'Dioxygen [O2]') & (self.substance_table['formula'] == 'O2')].any().all()
         return test
     
-    def make_aerobic(self):
+    
+    def make_aerobic(self, flux=None):
+        """If the medium is curretly anaerobic, add oxygen to the medium to make is aerobic.
+        
+        Args:
+            flux(float,optional): The flux value for the oxygen to be added. Defaults to None.
+        """
         if not self.is_aerobic():
             # build connection to DB
             connection = sqlite3.connect(PATH_TO_DB)
             cursor = connection.cursor()
+            # fetch oxygen
             result = cursor.execute(""" SELECT substance.name, substance.formula, substance2db.db_id, substance2db.db_type 
                                     FROM substance, substance2db 
                                     WHERE substance.formula = 'O2' AND substance.name = 'Dioxygen [O2]' AND substance.id = substance2db.substance_id""")
             oxygen = result.fetchall()
-            # TODO 
-            pass
+            # add oxygen to substance table
+            oxygen_table = pd.DataFrame(oxygen, columns=['name','formula','db_id','db_type'])
+            oxygen_table.insert(2,'flux',flux)
+            oxygen_table.insert(3,'source',None)
+            self.substance_table = pd.concat([self.substance_table, oxygen_table], ignore_index=True)
+
 
     def make_anaerobic(self):
+        """If the medium is currently aerobic, deletes the oxygen from it to make is anaerobic.
+        """
         if self.is_aerobic():
             # remove dioxygen // O2 from the substance table
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
@@ -435,7 +447,7 @@ def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection
         cursor.execute('INSERT INTO medium2substance VALUES(?,?,?,?)',(medium_id,row['substance_id'],row['flux'],row['source'],))
         connection.commit()
     else:
-        warnings.warn(f'Medium2substance connection {medium_id} - {row['substance_id']} already exists, skipped second assignment.')
+        warnings.warn(f'Medium2substance connection {medium_id} - {row["substance_id"]} already exists, skipped second assignment.')
     
 
 def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
