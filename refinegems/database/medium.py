@@ -1,3 +1,5 @@
+import cobra
+import copy
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -92,9 +94,57 @@ class Medium:
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
 
 
+    def set_default_flux(self,flux=10.0, replace=False, double_o2=True):
+        """Set a default flux for the model.
+
+        Args:
+            flux (float, optional): Default flux for the medium. Defaults to 10.0.
+            replace (bool, optional): 
+            double_o2 (bool, optional): Tag to double the flux for oxygen only. Works only with replace=True. Defaults to True.
+        """
+
+        if replace:
+            self.substance_table['flux'] = flux
+            if self.is_aerobic() and double_o2:
+                self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = 2*flux
+        else:
+            self.substance_table['flux'] = self.substance_table['flux'].fillna(flux)
+
+
+    def combine(self,other):
+        """Combine two media into a new one.
+
+        Args:
+            other (Medium): A second medium the first one is to be combined with.
+
+        Returns:
+            Medium: The combined medium, without fluxes and sources.
+        """
+
+        combined = copy.deepcopy(self)
+        combined.name = self.name + '+' + other.name
+        combined.description = f'Combined medium contructed from {self.name} and {other.name}.'
+        combined.substance_table = pd.concat([combined.substance_table, other.substance_table], ignore_index=True)
+        combined.doi = self.doi + ', ' + other.doi
+
+        # remove fluxes and sources, as they are no longer a fit
+        combined.substance_table['flux'] = None
+        combined.substance_table['source'] = None
+
+        # remove duplicate rows
+        combined.substance_table.drop_duplicates(inplace=True,ignore_index=True)
+
+        return combined
+    
+    
+    def __add__(self,other):
+        return self.combine(other)
+    
+
     # functions for retrieving 
     # ------------------------
 
+    # @TODO
     def format_substance_table(self, format:str) -> pd.DataFrame:
         """Produce a reformatted version of the substance table for different purposes.
 
@@ -132,8 +182,28 @@ class Medium:
         return formatted_table
     
 
-    # TODO
+    # functions for conversion
+    # ------------------------
     # def convert_to_cobra
+    # @TODO
+    def export_to_cobra(self, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True):
+        
+        match namespace:
+            case 'BiGG':
+                self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
+                biggs = self.substance_table[self.substance_table['db_type']=='BiGG'][['name','db_id','flux']]
+                biggs['db_id_EX'] = 'EX_' + biggs['db_id'] + '_e'
+                cobra_medium = pd.Series(biggs.flux.values,index=biggs.db_id_EX).to_dict()       
+
+                # .....................................
+                # TODO
+                #    what about those without BiGG IDs?
+                # .....................................
+
+                return cobra_medium         
+
+            case _:
+                raise ValueError(f'Unknown namespace: {namespace}')
 
 ############################################################################
 # functions for loading from DB
@@ -330,6 +400,41 @@ def read_external_medium(how:str) -> Medium:
         # unknown case, raise error
         case _:
             raise ValueError(f'Unknown input for parameter how: {how}')
+
+
+def extract_medium_info_from_model_bigg(row, model):
+
+    db_id = row['db_id_EX'].replace('EX_','').replace('_e','')
+    meta = model.metabolites.get_by_id(db_id+'_e')
+    name = meta.name
+    formula = meta.formula
+
+    return pd.Series([name,formula,db_id])
+
+
+def read_from_cobra_model(model: cobra.Model) -> Medium:
+
+    # retrieve the medium from the model
+    cobra_medium = model.medium.copy()
+    substances = pd.DataFrame(cobra_medium.items(),columns=['db_id_EX','flux'])
+    substances['db_type'] = 'BiGG'
+
+    # retrieve additional information
+    substances['source'] = model.id
+    substances['name'] = None
+    substances.apply(extract_medium_info_from_model_bigg, model=model, axis=1)
+
+    # reformat table 
+    substances.drop(columns=['db_id_EX'],inplace=True)
+    sorted_cols = ['name','formula','flux','source','db_id','db_type']
+    substances = substances.reindex(columns=sorted_cols)
+
+    # construct the medium 
+    name = f'medium_{model.id}'
+    description = f'Medium imported from model {model.id}'
+    imported_medium = Medium(name, substances, description)
+
+    return imported_medium
 
 
 ############################################################################
@@ -555,6 +660,24 @@ def enter_medium_into_db(database: str, medium: Medium):
     # in any case close connection to database
     finally:
         connection.close()
+
+
+############################################################################
+# working with models
+############################################################################
+
+# @Testing
+def add_medium_to_model(model:cobra.Model, medium:Medium, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True):
+    
+    # export medium to cobra
+    exported_medium = medium.export_to_cobra(namespace=namespace, default_flux=default_flux, replace=replace, double_o2=double_o2)
+
+    # remove exchanges that do not exists in model
+    model_exchanges = [_.id for _ in model.exchanges]
+    exported_medium = {k:v for k,v in exported_medium.items() if k not in model_exchanges}
+
+    # add to model
+    model.medium = exported_medium
 
 
 ############################################################################
