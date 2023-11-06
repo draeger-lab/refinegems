@@ -3,6 +3,7 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import sys
+import warnings
 
 __author__ = "Carolin Brune"
 
@@ -425,8 +426,16 @@ def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection
         cursor (sqlite3.Cursor): Cursor for the database.
     """
 
-    cursor.execute('INSERT INTO medium2substance VALUES(?,?,?,?)',(medium_id,row['substance_id'],row['flux'],row['source'],))
-    connection.commit()
+    # check if entry already exists in database
+    exact_match_res = cursor.execute("SELECT 1 FROM medium2substance WHERE medium2substance.medium_id = ? AND medium2substance.substance_id = ? ",(medium_id,row['substance_id']))
+    exact_match = exact_match_res.fetchone()
+
+    # else
+    if not exact_match:
+        cursor.execute('INSERT INTO medium2substance VALUES(?,?,?,?)',(medium_id,row['substance_id'],row['flux'],row['source'],))
+        connection.commit()
+    else:
+        warnings.warn(f'Medium2substance connection {medium_id} - {row['substance_id']} already exists, skipped second assignment.')
     
 
 def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
