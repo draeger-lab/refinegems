@@ -183,10 +183,7 @@ def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
     engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
     open_con = engine.connect()
 
-    try:
-        db_table = pd.read_sql(table_name_or_query, open_con)
-    except sqlalchemy.exc.ObjectNotExecutableError as e:
-        db_table = pd.read_sql(sqlalchemy.text(table_name_or_query), open_con)
+    db_table = pd.read_sql(table_name_or_query, open_con)
 
     open_con.close()
     return db_table
