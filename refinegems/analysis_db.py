@@ -2,6 +2,7 @@
 import re
 import requests
 import sqlite3
+import sqlalchemy
 import pandas as pd
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 import numpy as np
@@ -209,7 +210,7 @@ def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: 
     reaction_or_compound = 'Compound' if metabolites else 'Reaction'
     other_db_query = other_db if other_db == 'BioCyc' else ' '.join([other_db, reaction_or_compound])
     bigg_db_query = f"SELECT *, INSTR(database_links, '{other_db_query}:') o_db FROM {db_table_name} WHERE o_db > 0"
-    bigg_db_df = load_a_table_from_database(bigg_db_query)
+    bigg_db_df = load_a_table_from_database(sqlalchemy.text(bigg_db_query))
     
     db_search_regex = get_search_regex(other_db, metabolites)
     
