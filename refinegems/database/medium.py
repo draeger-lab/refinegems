@@ -18,6 +18,20 @@ PATH_TO_DB = Path(Path(__file__).parent.resolve(), 'data.db')
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
 
+# subset addable to media
+# -----------------------
+
+CAS_DB_NAMES = ['L-Alanine', 'L-Arginine', 'L-Aspartate', 'L-Glutamate', 'Glycine', 'L-Histidine', 'L-Isoleucine', 'L-Leucine', 
+                'L-Lysine', 'L-Methionine', 
+                'L-Phenylalanine', 'L-Proline', 'L-Serine','L-Threonine','L-Tryptophan', 'L-Tyrosine', 'L-Valine', 'L-Cystine']
+PROTEINOGENIC_AA_DB_NAMES = ['L-Alanine', 'L-Arginine', 'L-Asparagine', 'L-Aspartate', 'L-Cysteine', 
+                             'L-Glutamine', 'L-Glutamate', 'Glycine', 'L-Histidine', 'L-Isoleucine', 
+                             'L-Leucine', 'L-Lysine', 'L-Methionine', 'L-Phenylalanine', 'L-Proline', 
+                             'L-Serine', 'L-Threonine', 'L-Tryptophan', 'L-Tyrosine', 'L-Valine']
+SUBSET_MEDIA_MAPPING = {'casamino':CAS_DB_NAMES, 
+                        'aa':PROTEINOGENIC_AA_DB_NAMES}
+
+
 ############################################################################
 # classes
 ############################################################################
@@ -141,8 +155,49 @@ class Medium:
         return self.combine(other)
     
 
-    def add_aa():
-        pass
+    def add_subset(self, type:str):
+        """Add a subset of substances to the medium, returning a newly generated one.
+        Available subset are the following:
+        - aa: the 20n proteinogenic amino acids
+        - casamino: casamino acid, based on USBiological Life Sciences
+
+        Args:
+            type(str): The type of subset to be added. Choices are 'aa' and 'casamino'.
+
+        Returns:
+            medium: A new medium that is the combination of the set subset and the old one.
+        """
+
+        # get substance names based on type
+        subset_names = SUBSET_MEDIA_MAPPING[type]
+
+        # open connection to database
+        connection = sqlite3.connect(PATH_TO_DB)
+        cursor = connection.cursor()
+
+        # extract amino acids from DB
+        substances = []
+        for name in subset_names:
+            result = cursor.execute("""SELECT 1 FROM substance WHERE substance.name = ?""",(name,))
+            check = result.fetchone()
+            if check:
+                result = cursor.execute("""SELECT substance.name, substance.formula, substance2db.db_id, substance2db.db_type
+                                        FROM substance, substance2db
+                                        WHERE substance.name = ? AND substance.id = substance2db.substance_id""",(name,))
+                subs = result.fetchone()
+                substances.append(subs)
+            else:
+                warnings.warn(f'Could not find substance in DB: {name}')
+
+        # reformat into Medium object
+        substances = pd.DataFrame(substances, columns=['name','formula','db_id','db_type'])
+        substances.insert(2,'flux',None)
+        substances.insert(3,'source',None)
+
+        aa_medium = Medium(name=type, substance_table=substances, description=type)
+
+        # combine with current one 
+        return self.add(aa_medium)
 
 
     # functions for retrieving 
@@ -406,7 +461,17 @@ def read_external_medium(how:str) -> Medium:
             raise ValueError(f'Unknown input for parameter how: {how}')
 
 
-def extract_medium_info_from_model_bigg(row, model):
+def extract_medium_info_from_model_bigg(row, model:cobra.Model) -> pd.Series:
+    """Helper function for :py:func:`read_from_cobra_model`. 
+    Extracts more information about the medium.
+
+    Args:
+        row (pd.Series): A row of the datatable of :py:func:`read_from_cobra_model`.
+        model (cobra.Model): The cobra Model
+
+    Returns:
+        pd.Series: _description_
+    """
 
     db_id = row['db_id_EX'].replace('EX_','').replace('_e','')
     meta = model.metabolites.get_by_id(db_id+'_e')
@@ -417,6 +482,14 @@ def extract_medium_info_from_model_bigg(row, model):
 
 
 def read_from_cobra_model(model: cobra.Model) -> Medium:
+    """Read and import a medium from a cobra model into a Medium object.
+
+    Args:
+        model (cobra.Model): An open cobra Model.
+
+    Returns:
+        Medium: The imported medium.
+    """
 
     # retrieve the medium from the model
     cobra_medium = model.medium.copy()
