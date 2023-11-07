@@ -141,6 +141,10 @@ class Medium:
         return self.combine(other)
     
 
+    def add_aa():
+        pass
+
+
     # functions for retrieving 
     # ------------------------
 
