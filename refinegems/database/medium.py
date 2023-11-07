@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import sys
+import tabulate
 import warnings
 
 __author__ = "Carolin Brune"
@@ -65,6 +66,14 @@ class Medium:
     # -----------------------------------
     # TODO:
     # add functionalities from SPECIMEN ?
+
+    # possible @TODO
+    # ..............
+    # add compound
+    # has compound
+    # remove compound
+    # get source of
+    # set source of
     # ------------------------------------
 
     def is_aerobic(self) -> bool:
@@ -200,8 +209,8 @@ class Medium:
         return self.add(aa_medium)
 
 
-    # functions for retrieving 
-    # ------------------------
+    # functions for export table
+    # --------------------------
 
     # @TODO
     def format_substance_table(self, format:str) -> pd.DataFrame:
@@ -240,6 +249,34 @@ class Medium:
             
         return formatted_table
     
+
+    def export_to_file(self, type='tsv',dir='./'):
+        """Export medium, especially substance table.
+
+        Args:
+            type (str, optional): Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
+            dir (str, optional): Path to the directory to write the file to. Defaults to './'.
+
+        Raises:
+            ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
+        """
+
+        path_no_ext = dir + self.name + '_substances'
+
+        match type:
+            case 'tsv':
+                self.substance_table.to_csv(path_no_ext + '.tsv', sep='\t', index=False)
+            case 'csv':
+                self.substance_table.to_csv(path_no_ext + '.csv', sep=';', index=False)
+            case 'docs' | 'rst':
+                # @TODO 
+                #    make it better 
+                headers = ['name','formula','flux','source']
+                table = tabulate.tabulate(self.substance_table[['name','formula','flux','source']].values.tolist(), headers, tablefmt="rst")
+                print(table)
+            case _:
+                raise ValueError('Unknown export type: {type}')
+            
 
     # functions for conversion
     # ------------------------
@@ -333,12 +370,12 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
     return substance_table
 
 
-def load_medium_from_db(name:str, database:str, type='standard') -> Medium:
+def load_medium_from_db(name:str, database=PATH_TO_DB, type='standard') -> Medium:
     """Load a medium from a database.
 
     Args:
         name (str): The name (or identifier) of the medium.
-        database (str): Path to the database.
+        database (str, optional): Path to the database. Defaults to the in-built database.
         type (str, optional): How to load the medium. Defaults to 'standard'.
 
     Raises:
