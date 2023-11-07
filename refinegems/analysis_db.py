@@ -12,7 +12,7 @@ from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
 from multiprocessing import Pool
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+__author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Tobias Fehrenbach"
 
 
 ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y')
@@ -89,11 +89,22 @@ def compare_ids(id1: str, id2: str) -> bool:
 
     return similar_ids
  
-    
-# (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
+
 @sleep_and_retry
 @limits(calls=10, period=1)
 def get_reaction_compartment(bigg_id: str) -> str:
+    """Retrieves the compatment(s) a reaction is hapening in from the BiGG reaction identifier
+        via the metabolites
+
+    Args:
+        - bigg_id (str): BiGG reaction identifier
+
+    Returns:
+        (1) str: 
+            - Compartment of the provided reaction if reaction in single compartment
+            - 'exchange' if reaction in multiple compartments
+        (2) np.nan: 'NaN' if one of the found compartments is not in COMPARTMENTS
+    """
     
     metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
             
@@ -136,18 +147,18 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
         result = [res for res in result if compare_ids(bigg_id, res)]
         return result
     
-    
     # (2) Use list of all BiGG IDs obtained from database table bigg_reactions to get 'metabolites'
-    # get_react_compartment moved to outer scope due to multiprocessing Pool
-    
-
+    # get_react_compartment moved to outer scope due to multiprocessing Pool (see line 95)
     def multi_get_reaction_compartment(complete_df: pd.DataFrame) -> list:
+        """Takes a dataframe and runs get_reaction_compartment() in multiple
+            processes on the 'bigg_id' column
+
+        Args:
+            - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
+
+        Returns:
+            list: List of compartments
         """
-        Takes complete_df and runs get_reaction_compartment() in multiple
-        processes on the 'bigg_id' column.
-        
-        Returns: list with compartments
-        """        
         with Pool() as pool:
             results = []
             for out in tqdm(pool.imap(get_reaction_compartment, complete_df.loc[:, "bigg_id"], chunksize=20), total=len(complete_df)):

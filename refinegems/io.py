@@ -200,7 +200,7 @@ def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name:
         - sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
 
     Returns:
-        pd.DataFrame: Table containing sheet with name 'gapfill'|specified sheet_name from Excel file
+        pd.DataFrame: Table from Excel file sheet with name 'gapfill'/ specified sheet_name
     """
     man_gapf = pd.read_excel(tablepath, sheet_name)
     return man_gapf
@@ -260,11 +260,12 @@ def write_report(dataframe: pd.DataFrame, filepath: str):
 
 def validate_libsbml_model(model: libModel) -> int:
     """Debug method: Validates a libSBML model with the libSBML validator
+    
     Args:
         - model (libModel): A libSBML model
         
     Returns:
-        int: Integer specifying if vaidate was successful or not
+        int: Integer specifying if validate was successful or not
     """
     validator = SBMLValidator()
     doc = model.getSBMLDocument()
