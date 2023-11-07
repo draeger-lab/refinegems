@@ -6,24 +6,30 @@ Additional packages required for development
 
 .. attention::
     The following packages need to be installed to be able to add content to the refineGEMs documentation.
-    
-    * `sphinx`
-    * `nbsphinx`
-    * `sphinx_rtd_theme`
-    * `pandoc`
+
+    * `accessible-pygments`
     * `ipython`
-    * `sphinxcontrib-bibtex`
+    * `nbsphinx`
+    * `pandoc`
+    * `sphinx`
     * `sphinx_copybutton`
+    * `sphinx_rtd_theme`
+    * `sphinxcontrib-bibtex`
+
 
 You can install the packages via pip to your local environment:
 
 .. code:: bash
+    :class: copyable
 
-    pip install sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
+    pip install accessible-pygments ipython nbsphinx pandoc sphinx sphinx_copybutton sphinx_rtd_theme sphinxcontrib-bibtex
+
+If you run into an error with pandoc, `here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
 
 If you run into an error with jinja2, just switch to version 3.0.3:
 
 .. code:: bash
+    :class: copyable
     
     pip install jinja2==3.0.3
 
@@ -42,6 +48,7 @@ We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the
 .. code:: python
     :linenos:
 
+    # Tuple output & Single input 
     """Description of the function...
 
     Args:
@@ -51,6 +58,21 @@ We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the
         tuple: Two tables (1) & (2)
             (1) pd.DataFrame: Table with charge mismatches
             (2) pd.DataFrame: Table with formula mismatches
+    """
+
+    # Single output with multiple possibilities & multiple inputs
+    """Description of the function...
+
+    Args:
+        - input1 (type): this is what input1 does
+        - input2 (type): this is what input2 does
+        - input3 (type): this is what input3 does
+
+    Returns:
+        (1) str:
+            - Return value 1
+            - Return value 2
+        (2) np.nan: Return value 3
     """
 
 We are also trying to make input and return types explicit by declaring those in the function header:
