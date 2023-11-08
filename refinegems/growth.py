@@ -274,7 +274,7 @@ def growth_one_medium_from_minimal(model: cobraModel, medium: pd.DataFrame, anae
 
     medium_dict = modify_medium(medium, missing_exchanges)
     growth_value = simulate_minimum_essential(model, medium_dict, minimum, anaerobic)
-    doubling_time = (np.log(2) / growth_value) * 60
+    doubling_time = (np.log(2)/growth_value)*60 if growth_value != 0 else 0
     medium_name = medium['medium'][0] if not anaerobic else f'{medium["medium"][0]}[-O2]'
     exchanges = [[medium_name], minimum,
                  missing_exchanges, [growth_value], [doubling_time]]
