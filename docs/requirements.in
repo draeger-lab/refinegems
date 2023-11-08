@@ -1,0 +1,8 @@
+sphinx
+nbsphinx
+ipython
+sphinxcontrib-bibtex
+sphinx_rtd_theme
+sphinx_copybutton
+accessible-pygments
+pandoc
