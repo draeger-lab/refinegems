@@ -20,9 +20,9 @@ The ``gapfill`` module was created to enable an automatic way of filling gaps in
         - Only models where the organisms have entries in KEGG and/or BioCyc can be gap filled.
     
 Run times:
-    * 'KEGG': ~ 2h
-    * 'BioCyc': ~ 45mins - 1h
-    * 'KEGG+BioCyc': ~ 3 - 4h
+    * 'KEGG': ~ 1h 10mins
+    * 'BioCyc': ~ 10mins
+    * 'KEGG+BioCyc': ~ 1h 20mins
 
 The module ``gapfill`` can be used to:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
