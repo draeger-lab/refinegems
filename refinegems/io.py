@@ -169,16 +169,18 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     return man_ann
 
 
-def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
+def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd.DataFrame:
     """| Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
        | true from the refineGEMs database ('data/database/data.db')
 
     Args:
         - table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
+        - query (bool): Specifies if a query or a table name is provided with table_name_or_query
 
     Returns:
         pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
     """
+    table_name_or_query = sqlalchemy.text(table_name_or_query) if query else table_name_or_query
     sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
     engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
     open_con = engine.connect()
@@ -469,7 +471,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
             print('The following models will be compared:')
             print(list_of_models)
             user_input['multiple_paths'] = list_of_models
-        possible_media = load_a_table_from_database('media')['medium'].to_list()
+        possible_media = load_a_table_from_database('media', False)['medium'].to_list()
         possible_media_str = '|'.join(possible_media)
         list_of_media = []
         while True:
