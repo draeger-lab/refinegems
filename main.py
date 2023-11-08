@@ -23,14 +23,24 @@ def main(configpath=None):
     
     config = rg.io.save_user_input(configpath)
     today = date.today().strftime("%Y%m%d")
+    log_file = f'{config["out_path"]}rg_{str(today)}.log'
     
-    print('The following logs are saved to '+ config['out_path'] + 'rg_' + str(today) + '.log')
+    # check if the output directory is already present, if not create it
+    if not os.path.isdir(config['out_path']):
+        logging.info('Given out_path is not yet a directory, creating ' + config['out_path'])
+        os.makedirs(config['out_path'])
+    if config['visualize']:
+        dir = os.path.join(config['out_path'] + 'visualization/')
+        if not os.path.isdir(dir): 
+            os.makedirs(dir) 
+    
+    print(f'The following logs are saved to: {log_file}')
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s:%(name)s] %(message)s",
         handlers=[
-            logging.FileHandler(config['out_path'] + 'rg_' + str(today) + '.log'),
+            logging.FileHandler(log_file),
             logging.StreamHandler()
         ]
     )
@@ -39,18 +49,9 @@ def main(configpath=None):
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.info('----------- New run of refineGEMs -----------')
     
-    # check if the output directory is already present, if not create it
-    if not os.path.isdir(config['out_path']):
-        logging.info('Given out_path is not yet a directory, creating ' + config['out_path'])
-        os.makedirs(config['out_path'])
-    if (config['visualize']):
-        dir = os.path.join(config['out_path'] + 'visualization/')
-        if not os.path.isdir(dir): 
-            os.makedirs(dir)
-        
-    logging.info('Your output will be saved to ' + config['out_path']) 
+    logging.info(f'Your output will be saved to: {config["out_path"]}')
     
-    if (config['multiple']):
+    if config['multiple']:
         logging.info('Growth simulation for multiple models: ')
         models_cobra = rg.io.load_multiple_models(config['multiple_paths'], 'cobra')
         growth_all = rg.comparison.simulate_all(models_cobra, config['media'], config['growth_basis'], config['anaerobic_growth'])
@@ -59,7 +60,7 @@ def main(configpath=None):
         logging.info('Multiple model growth simulation results are saved to ' +  growth_prefix + str(today) + '_' + config['growth_basis'] + '.csv')
         
         # visualizations
-        if (config['visualize']):
+        if config['visualize']:
             models_libsbml = rg.io.load_multiple_models(config['multiple_paths'], 'libsbml')
             ini_plot = rg.comparison.plot_initial_analysis(models_libsbml).get_figure()
             sbo_fig_all = rg.comparison.plot_rea_sbo_multiple(models_libsbml).get_figure()
@@ -77,7 +78,7 @@ def main(configpath=None):
             native_heatmap.savefig(config['out_path'] + 'visualization/' + native_heatmap_prefix + str(today) + '.png', bbox_inches='tight')
             ini_plot.savefig(config['out_path'] + 'visualization/' + 'model_status_' + str(today) + '.png', bbox_inches='tight')
     
-    if (config['single']):        
+    if config['single']:        
         try:    
             model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model'])
             #logging.info(errors)
@@ -85,7 +86,7 @@ def main(configpath=None):
             model_cobra = None
             logging.info('No or no valid model given, please enter a valid path in the model field in the config file.')
 
-        if (config['keggpathways']):
+        if config['keggpathways']:
             model_libsbml, non_kegg = rg.pathways.kegg_pathways(config['model'])
             file = open(config['out_path'] + model_libsbml.getId() + '_reac_wo_kegg_' + str(today) + '.txt','w')
             for reaction in non_kegg:
@@ -96,20 +97,20 @@ def main(configpath=None):
         else:
             model_libsbml = rg.io.load_model_libsbml(config['model'])
         
-        if (config['sboterms']):
-            if (config['visualize']):
+        if config['sboterms']:
+            if config['visualize']:
                 sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
                 # saving the created visualizations
                 sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_beforeUpdate_' + str(today) + '.png', bbox_inches='tight')
             model_libsbml = rg.sboann.sbo_annotation(model_libsbml)
             logging.info('SBO Terms updated for ' + model_libsbml.getId())
             
-        if (config['charge_corr']):
+        if config['charge_corr']:
             model_libsbml, multiple_charges = rg.charges.correct_charges_modelseed(model_libsbml)
             pd.DataFrame.from_dict(multiple_charges, orient='index').to_csv(config['out_path'] + model_libsbml.getId() + '_mulchar_' + str(today) + '.csv', sep=',', header=False)
             logging.info('Charges were corrected for ' + model_libsbml.getId() + '. A table with metabolites with multiple charges can be found under ' + model_libsbml.getId() + '_mulchar_' + str(today) + '.csv')
             
-        if(config['man_cur']):
+        if config['man_cur']:
             if config['man_cur_type'] == 'gapfill':
                 gapfill = rg.io.load_manual_gapfill(config['man_cur_table'])
                 model_libsbml = rg.curate.add_reactions_from_table(model_libsbml, gapfill, config['entrez_email'])
@@ -147,11 +148,11 @@ def main(configpath=None):
             model_libsbml = rg.gapfill.gapfill_model(model_libsbml, config['gap_analysis_file'])
             logging.info(f'Gaps were filled in {model_libsbml.getId()}.')
         
-        if (config['polish']):
+        if config['polish']:
             model_libsbml = rg.polish.polish(model_libsbml, config['entrez_email'], config['id_db'], config['protein_fasta'], config['lab_strain'], config['out_path'])
             logging.info(model_libsbml.getId() + ' has been polished')
             
-        if (config['biomass']):
+        if config['biomass']:
             result = rg.biomass.check_normalise_biomass(model_cobra)
             if result:
                 model_libsbml = result
@@ -169,7 +170,7 @@ def main(configpath=None):
                 logging.info(e)
                 logging.info("Model could not be saved...")
             
-            if model_cobra is not None:                                          
+            if model_cobra:                                          
                 try:    
                     model_cobra, errors = cobra.io.sbml.validate_sbml_model(config['model_out'])
                     logging.info(errors)
@@ -178,29 +179,29 @@ def main(configpath=None):
                     model_cobra = None
                     logging.info('Model was invalidated during curation steps.')
 
-        if (model_cobra != None):
+        if model_cobra:
             logging.info(model_cobra.id + ' will be investigated.')
             name, reac, metab, genes = rg.investigate.initial_analysis(model_libsbml)
             orphans, deadends, disconnected = rg.investigate.get_orphans_deadends_disconnected(model_cobra)
             mass_unbal, charge_unbal = rg.investigate.get_mass_charge_unbalanced(model_cobra)
             egc = rg.investigate.get_egc(model_cobra)
-            if (config['visualize']):
+            if config['visualize']:
                 logging.info('All visualizations can be found in the subfolder "visualization".')
                 sbo_fig = rg.investigate.plot_rea_sbo_single(model_libsbml).get_figure()
                 
                 # saving the created visualizations
                 sbo_fig.savefig(config['out_path'] + 'visualization/' + str(model_cobra.id) + '_ReacPerSBO_' + str(today) + '.png', bbox_inches='tight')
             
-            if (config['memote']):
+            if config['memote']:
                 score = rg.investigate.get_memote_score(rg.investigate.run_memote(model_cobra))
                 
-            if(config['modelseed']):
+            if config['modelseed']:
                 charge_mismatch, formula_mismatch = rg.modelseed.compare_to_modelseed(model_cobra)
             
-            if (config['media'] != None):
+            if config['media']:
                 growth_sim = rg.growth.get_growth_selected_media(model_cobra, config['media'], config['growth_basis'], config['anaerobic_growth'])
             
-            if (config['memote'] == True):
+            if config['memote']:
                 information = [[name], [reac], [metab], [genes], [score], orphans, deadends, disconnected, mass_unbal, charge_unbal]
                 model_params = pd.DataFrame(information, ['model name', '#reactions', '#metabolites', '#genes', 'memote score', 'orphans', 'deadends', 'disconnected', 'mass unbalanced', 'charge unbalanced']).T
             else:
@@ -209,12 +210,13 @@ def main(configpath=None):
             with pd.ExcelWriter(config['out_path'] + name + '_' + str(today) + '.xlsx') as writer:  
                 model_params.to_excel(writer, sheet_name='model params', index=False)
                 growth_sim_name = 'anaerobic growth simulation' if config['anaerobic_growth'] else 'growth simulation'
-                growth_sim.to_excel(writer, sheet_name=growth_sim_name, index=False)
+                if config['media']:
+                    growth_sim.to_excel(writer, sheet_name=growth_sim_name, index=False)
                 egc.to_excel(writer, sheet_name='EGC test', index=False)
-                if(config['modelseed']):
+                if config['modelseed']:
                     charge_mismatch.to_excel(writer, sheet_name='charge mismatches', index=False)
                     formula_mismatch.to_excel(writer, sheet_name='formula mismatches', index=False)
-                logging.info('Single model growth simulation results are saved to ' + name + '_' + str(today) + '.xlsx')
+                logging.info('Single model analyses results are saved to ' + name + '_analyses_' + str(today) + '.xlsx')
         else:
             logging.info('No valid model, investigation aborted!')
 
