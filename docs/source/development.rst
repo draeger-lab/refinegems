@@ -16,7 +16,10 @@ Additional packages required for development
     * `sphinx_rtd_theme`
     * `sphinxcontrib-bibtex`
 
+    In addition, `pip-compile` should be installed to update the `requirements.txt` for the next release.
 
+Installing the packages
+^^^^^^^^^^^^^^^^^^^^^^^
 You can install the packages via pip to your local environment:
 
 .. code:: bash
@@ -24,7 +27,20 @@ You can install the packages via pip to your local environment:
 
     pip install accessible-pygments ipython nbsphinx pandoc sphinx sphinx_copybutton sphinx_rtd_theme sphinxcontrib-bibtex
 
-If you run into an error with pandoc, `here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
+.. code:: bash
+    :class: copyable
+
+    python -m pip install pip-tools
+
+Troubleshooting of installation issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+| If you run into an error with pandoc, `here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
+| If you install pandoc with conda use:
+
+.. code:: bash
+    :class: copyable
+    
+    conda install -c conda-forge pandoc
 
 If you run into an error with jinja2, just switch to version 3.0.3:
 
@@ -32,6 +48,23 @@ If you run into an error with jinja2, just switch to version 3.0.3:
     :class: copyable
     
     pip install jinja2==3.0.3
+
+Updating the `requirements.txt`
+-------------------------------
+| To create the `requirements.txt` adjust the `requirements.in` file as needed in the folder docs.
+| Then navigate to the folder docs in the command line:
+
+.. code-block:: bash
+    :class: copyable
+
+    cd docs
+
+and use the following command to automatically generate the new `requirements.txt`:
+
+.. code-block:: bash
+    :class: copyable
+    
+    python3.9 -m piptools compile --output-file=requirements.txt requirements.in
 
 Debugging switches
 ------------------
