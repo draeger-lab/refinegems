@@ -1,4 +1,74 @@
 # needed for installation of refinegems
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "refineGEMs"
+version = "1.4.1"
+requires-python = ">=3.9, <3.11"
+authors = [
+    {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
+    {name = "Gwendolyn O. Döbel"},
+]
+maintainers = [
+    {name = "Tobias Fehrenbach"}
+]
+
+description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'
+license = {text = "MIT"}
+readme = 'README.md'
+
+keywords = ['Systems Biology', 'GEM', 'Metabolic Modelling', 'Python Package']
+
+classifiers = [
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python",
+    "Programming Language :: SQL",
+    "License :: OSI Approved :: MIT License",
+]
+
+
+# dynamic = ['version']
+
+dependencies = [
+    # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
+    "cobra>=0.26.0, <0.28.0", 
+    # COBRApy > 0.28.0 -> depinfo >=2.0.0
+    "biopython>=1.79",
+    "bioregistry",
+    "bioservices",
+    "importlib-resources<=5.13.0",
+    # MEMOTE > 0.14.0 -> depinfo >=2.0.0
+    "memote>=0.13.0, <2.0.0", 
+    "pandas>=1.2.4",
+    "numpy>=1.20.3",
+    "gffutils>=0.10.1",
+    "markupsafe>=2.0.1", 
+    "depinfo>=1.7.0",
+    "sortedcontainers>=2.4.0",
+    "libchebipy>=1.0.10",
+    "ratelimit>=2.2.1",
+    "sqlalchemy>=2.0.0",
+    "venn>=0.1.3",
+    "ols-client>=0.1.3",
+    "seaborn>=0.12.2",
+    "click>=8.1.3",
+]
+
+[project.urls]
+homepage = 'https://github.com/draeger-lab/refinegems'
+documentation = 'https://refinegems.readthedocs.io/en/latest/'
+
+# [tool.setuptools]
+# zip_safe = False
+
+# [tool.setuptools.dynamic]
+# version = {attr = "refinegems.VERSION"}
+
+[tool.setuptools.packages.find]
+where = ['refinegems']
+
+[tools.setuptools.package-data]
+database = ['*.txt', '*.sql', '*.db']
+

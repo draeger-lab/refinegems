@@ -21,7 +21,7 @@ from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 
 #------------------------------------------------ Constant variables --------------------------------------------------#
@@ -685,6 +685,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
                     if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), '/'.join(extracted_curie[1:len(extracted_curie)]))
+                    elif re.fullmatch('^inchikey$', extracted_curie[0], re.IGNORECASE):
+                        curie = (extracted_curie[0].lower(), extracted_curie[1])
                     else:
                         wrong_prefix = extracted_curie[0].split(':')
                         curie = (wrong_prefix[0], f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}')

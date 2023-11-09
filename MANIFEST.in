@@ -1,4 +1,0 @@
-include LICENSE
-include refinegems/database/current_bigg_db_version.txt
-include refinegems/database/sbo_media_db.sql
-include refinegems/database/data.db

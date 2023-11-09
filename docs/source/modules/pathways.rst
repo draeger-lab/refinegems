@@ -1,13 +1,13 @@
 Addition of KEGG Pathways
 =========================
 
-The KEGG database holds information on metabolic pathways. If your organism occurs in the KEGG database, you can use this module to add KEGG pathways with the libSBML Groups plugin.
+The KEGG database holds information on metabolic pathways. You can use this module to add KEGG pathways with the libSBML Groups plugin.
 
 The workflow of the script is as follows:
-1. Extraction of the KEGG reaction ID from the annotations of your reactions
-2. Identification, in which KEGG pathways this reaction occurs
-3. Addition of all KEGG pathways for a reaction then as annotations with the biological qualifier ‘OCCURS_IN’ to the respective reaction.
-4. Addition of all KEGG pathways as groups with references to the contained reactions as groups:member
+1. Extraction of the KEGG reaction IDs from the annotations of your reactions
+2. Identification, in which KEGG pathways these reactions occur
+3. Addition of all KEGG pathways for a reaction with the biological qualifier ``OCCURS_IN`` to the annotations
+4. Addition of all KEGG pathways as groups with references to the contained reactions as ``groups:member``
 
 The only function that you will need to access is ``kegg_pathways``:
 
