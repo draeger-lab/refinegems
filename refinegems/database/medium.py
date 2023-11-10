@@ -250,12 +250,88 @@ class Medium:
         return formatted_table
     
 
-    def export_to_file(self, type='tsv',dir='./'):
+    def produce_medium_docs_table(self, folder = './', max_width = 80):
+        """Produces a rst-file containing reStructuredText for the substance table for documentation.
+
+        Args:
+            folder (str, optional): Path to folder/directory to save the rst-file to. Defaults to './'.
+            max_width (int, optional): Maximal table width of the rst-table. Defaults to 80.
+        """
+
+        def calculate_column_widths_docs(header: list, max_width: int, flux_width = 8) -> str:
+            """Helper function for :py:func:`produce_medium_docs_table`. 
+            Calculates the columns widths based on the header lengths and maximal widths.
+
+            Args:
+                header (list): List of column names of the table.
+                max_width (int): Maximal widths of the output table.
+                flux_width (int, optional): Widths of the flux column, if 'flux' is part of 'header'. Defaults to 8.
+ 
+            Returns:
+                str: The columns widths as a string, separated by a whitespace.
+            """
+
+            if len(header) == 2:
+                partition = max_width // 3
+                return f"{str(max_width-partition)} {partition}"
+            else:
+                partition = (max_width - flux_width) // 2
+                return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
+
+        def produce_medium_docs_table_row(row: pd.Series, file):
+            """Helper function for :py:func:`produce_medium_docs_table`.
+            Tranforms each row of the substance table into a row of the rst-file.
+
+            Args:
+                row (pd.Series): The row of the Medium.substance_table.
+                file (io.TextIOWrapper): The connection to the file to write the rows into.
+            """
+
+            list = row.to_list()
+            file.write(f"  * - {list[0]}\n")
+            for l in list[1:]:
+                file.write(f"    - {l}\n")
+
+        with open(folder + f'{self.name}.rst', 'w') as f:
+
+            print(type(f))
+
+            # slim table to columns of interest for documentation
+            m_subs = self.substance_table[['name','flux','source']]
+
+            if all(m_subs['flux'].values == None):
+                m_subs = m_subs.drop('flux', axis=1)
+
+            header = m_subs.columns
+
+            widths = calculate_column_widths_docs(header, max_width)
+
+            # produce descriptor
+            f.write(f".. list-table:: {self.name} composition\n"
+                    f"  :name: {self.name.lower()}_comp\n"
+                    "  :align: center\n"
+                    f"  :widths: {widths}\n"
+                    "  :header-rows: 1\n\n")
+            
+            # produce header
+            f.write(f"  * - {header[0]}\n")
+            for l in header[1:]:
+                f.write(f"    - {l}\n")
+
+            # produce table body
+            m_subs.apply(produce_medium_docs_table_row, file=f, axis=1)
+
+            f.close()
+
+
+    def export_to_file(self, type='tsv',dir='./', max_widths = 80):
         """Export medium, especially substance table.
 
         Args:
             type (str, optional): Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
             dir (str, optional): Path to the directory to write the file to. Defaults to './'.
+            max_widths (int, optional): Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'.
+                Defaults to 80.
 
         Raises:
             ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
@@ -269,11 +345,11 @@ class Medium:
             case 'csv':
                 self.substance_table.to_csv(path_no_ext + '.csv', sep=';', index=False)
             case 'docs' | 'rst':
-                # @TODO 
-                #    make it better 
-                headers = ['name','formula','flux','source']
-                table = tabulate.tabulate(self.substance_table[['name','formula','flux','source']].values.tolist(), headers, tablefmt="rst")
-                print(table)
+                self.produce_medium_docs_table(folder = dir, max_width = max_widths)
+                # old version - can be deleted if truly obsolete
+                # headers = ['name','formula','flux','source']
+                # table = tabulate.tabulate(self.substance_table[['name','formula','flux','source']].values.tolist(), headers, tablefmt="rst")
+                # print(table)
             case _:
                 raise ValueError('Unknown export type: {type}')
             
