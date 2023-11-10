@@ -1,11 +1,28 @@
 """Collection of utility functions."""
 
+import cobra
 import libchebipy
 import pandas as pd
 import requests
 from refinegems.analysis_db import BIGG_METABOLITES_URL
 
-__author__ = "Gwendolyn O. Gusak, Carolin Brune"
+__author__ = "Gwendolyn O. Döbel, Carolin Brune"
+
+################################################################################
+# variables
+################################################################################
+
+# SBO terms
+# ---------
+SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
+                   "SBO:0000660", "SBO:0000178", "SBO:0000200", "SBO:0000214",
+                   "SBO:0000215", "SBO:0000217", "SBO:0000218", "SBO:0000219",
+                   "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
+                   "SBO:0000376", "SBO:0000401"]
+
+################################################################################
+# functions
+################################################################################
 
 def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=True, iupac=True) -> pd.DataFrame:
    """Adds information from CHEBI/BiGG to the provided dataframe.
@@ -104,3 +121,25 @@ def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=
       missing_metabs['ChEBI_IUPAC'] = missing_metabs.apply(find_iupac, axis=1)
    
    return missing_metabs
+
+
+def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
+   """Reannotate the SBO annotations (e.g. from SBOannotator) of a model 
+   into the SBO scheme accessible by memote.
+
+   Args:
+       model (cobra.Model): The cobra Model to be reannotated.
+
+   Returns:
+       cobra.Model: The reannotated model (@TODO: check if return is really necessary)
+   """
+
+   # biochem reactions
+   for r in model.reactions:
+      if 'sbo' in r.annotation:
+         if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
+            r.annotation['sbo'] = "SBO:0000176"
+
+    # @TODO: add transport reactions?
+
+   return model
