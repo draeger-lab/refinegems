@@ -2,7 +2,7 @@
 """Provides functions to automate the addition of SBO terms to the model
 
 Script written by Elisabeth Fritze in her bachelor thesis.
-Modified by Gwendolyn O. Gusak during her master thesis.
+Modified by Gwendolyn O. Döbel during her master thesis.
 Commented by Famke Bäuerle and extended by Nantia Leonidou.
 
 It is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the "main" function: sbo_annotation(model_libsbml, database_user, database_name) if you want to continue with the model. The smaller functions might be useful if special information is needed for a reaction without the context of a bigger model or when the automated annotation fails for some reason.
@@ -14,7 +14,7 @@ from libsbml import SpeciesReference, Compartment, Reaction, Species
 from libsbml import Model as libModel
 from refinegems.databases import PATH_TO_DB
 
-__author__ = "Elisabeth Fritze, Gwendolyn O. Gusak, Famke Baeuerle and Nantia Leonidou"
+__author__ = "Elisabeth Fritze, Gwendolyn O. Döbel, Famke Baeuerle and Nantia Leonidou"
 
 
 def getCompartmentlessSpeciesId(speciesReference: SpeciesReference) -> str:

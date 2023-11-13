@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from refinegems.analysis_db import BIGG_METABOLITES_URL
 
-__author__ = "Gwendolyn O. Döbel, Carolin Brune"
+__author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
 ################################################################################
 # variables

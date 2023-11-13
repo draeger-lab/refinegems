@@ -251,7 +251,7 @@ def get_egc(model: cobraModel) -> pd.DataFrame:
                 rxn = Reaction(row['type'])
                 rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
                 rxn.add_metabolites(met_atp)
-                model.add_reactions([rxn]) # add_reactions instead of add_reaction -> needs list of reactions
+                model.add_reactions([rxn])
             except(KeyError):
                 dissipation_rxns.drop(dissipation_rxns[dissipation_rxns['type'] == row['type']].index, inplace=True)
             

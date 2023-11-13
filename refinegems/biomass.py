@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Gusak.
+"""Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Döbel.
 
 This module provides functions to be used to assess the biomass weight as well as normalise it.
 """
@@ -15,7 +15,7 @@ import memote.support.helpers as helpers
 from memote.utils import truncate
 from typing import Union
 
-__author__ = "MEMOTE and Gwendolyn O. Gusak"
+__author__ = "MEMOTE and Gwendolyn O. Döbel"
 
 
 def test_biomass_presence(model: cobraModel) -> Union[list[str], None]:
@@ -70,15 +70,11 @@ def sum_biomass_weight(reaction: Reaction) -> float:
     This function expects all metabolites of the biomass reaction to have
     formula information assigned.
 
-    Parameters
-    ----------
-    reaction : cobra.core.reaction.Reaction
-        The biomass reaction of the model under investigation.
+    Args:
+        - reaction (Reaction): The biomass reaction of the model under investigation.
 
-    Returns
-    -------
-    float
-        The molecular weight of the biomass reaction in units of g/mmol.
+    Returns:
+        float: The molecular weight of the biomass reaction in units of g/mmol.
 
     """
     return (
@@ -146,8 +142,8 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     """Normalises the coefficients according to current biomass weight to one g[CDW]
 
     Args:
-        biomass (Reaction): Biomass function/reaction
-        current_sum (float): Biomass weight calculated with sum_biomass_weight in g/mmol
+        - biomass (Reaction): Biomass function/reaction
+        - current_sum (float): Biomass weight calculated with sum_biomass_weight in g/mmol
 
     Returns:
         Reaction: Biomass function/reaction with updated coefficients
@@ -170,7 +166,7 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
        
 
     Args:
-        model (cobraModel): Model loaded with COBRApy
+        - model (cobraModel): Model loaded with COBRApy
 
     Returns:
         cobraModel: COBRApy model with adjusted biomass functions
