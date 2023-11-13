@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'refineGEMs'
-project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Gusak'
-author = 'Famke Bäuerle and Gwendolyn O. Gusak'
+project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Döbel'
+author = 'Famke Bäuerle and Gwendolyn O. Döbel'
 
 # The full version, including alpha/beta/rc tags
-release = '1.3.0'
+release = '1.4.1'
 
 
 # -- General configuration ---------------------------------------------------
