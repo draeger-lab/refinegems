@@ -9,7 +9,7 @@ from enum import Enum
 from sqlite3 import Error
 from pathlib import Path
 
-__author__ = 'Gwendolyn O. Gusak'
+__author__ = 'Gwendolyn O. Döbel'
 
 
 PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')

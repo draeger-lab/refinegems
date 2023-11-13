@@ -25,7 +25,7 @@ from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
 from typing import Union
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Gusak"
+__author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
 
 def load_model_cobra(modelpath: str) -> cobraModel:
@@ -211,7 +211,10 @@ def load_medium_from_db(mediumname: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'"
+    medium_query = (
+        "SELECT * FROM media m JOIN media_compositions mc ON m.id = " 
+        f"mc.medium_id WHERE m.medium = '{mediumname}'"
+    )
     medium = load_a_table_from_database(medium_query)
     medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
     return medium
@@ -269,22 +272,24 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     return man_ann
 
 
-def load_a_table_from_database(table_name_or_query: str) -> pd.DataFrame:
+def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd.DataFrame:
     """| Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 
        | true from the refineGEMs database ('data/database/data.db')
 
     Args:
         - table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
+        - query (bool): Specifies if a query or a table name is provided with table_name_or_query
 
     Returns:
         pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
     """
+    table_name_or_query = sqlalchemy.text(table_name_or_query) if query else table_name_or_query
     sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
     engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
     open_con = engine.connect()
-    
-    db_table = pd.read_sql(sqlalchemy.text(table_name_or_query), open_con)
-    
+
+    db_table = pd.read_sql(table_name_or_query, open_con)
+
     open_con.close()
     return db_table
 
@@ -297,7 +302,7 @@ def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name:
         - sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
 
     Returns:
-        pd.DataFrame: Table containing sheet with name 'gapfill'|specified sheet_name from Excel file
+        pd.DataFrame: Table from Excel file sheet with name 'gapfill'/ specified sheet_name
     """
     man_gapf = pd.read_excel(tablepath, sheet_name)
     return man_gapf
@@ -357,11 +362,12 @@ def write_report(dataframe: pd.DataFrame, filepath: str):
 
 def validate_libsbml_model(model: libModel) -> int:
     """Debug method: Validates a libSBML model with the libSBML validator
+    
     Args:
         - model (libModel): A libSBML model
         
     Returns:
-        int: Integer specifying if vaidate was successful or not
+        int: Integer specifying if validate was successful or not
     """
     validator = SBMLValidator()
     doc = model.getSBMLDocument()
@@ -568,7 +574,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
             print('The following models will be compared:')
             print(list_of_models)
             user_input['multiple_paths'] = list_of_models
-        possible_media = load_a_table_from_database('media')['medium'].to_list()
+        possible_media = load_a_table_from_database('media', False)['medium'].to_list()
         possible_media_str = '|'.join(possible_media)
         list_of_media = []
         while True:
