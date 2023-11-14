@@ -1,7 +1,8 @@
 BEGIN;
 
 ---
---- Originally from Elisabeth Fritze (SBO part), Modified by Gwendolyn O. Gusak (medium part)
+--- Originally from Elisabeth Fritze (SBO part)
+--- Modified by Gwendolyn O. Döbel, Famke Baeuerle & Carolin Brune (medium part)
 ---
 
 DROP TABLE IF EXISTS bigg_to_sbo;
