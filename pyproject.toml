@@ -60,9 +60,6 @@ dependencies = [
 homepage = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
 
-# [tool.setuptools]
-# zip_safe = False
-
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
 
