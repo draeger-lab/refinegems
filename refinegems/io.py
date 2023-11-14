@@ -460,6 +460,39 @@ def search_ncbi_for_gpr(locus: str) -> str:
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
+                
+def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame():
+    """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
+
+    Args:
+        gff_file (str): RefSeq GFF file of the input organism
+
+    Returns:
+        pd.DataFrame: Table mapping locus tags to their respective RefSeq identifiers
+    """
+
+    locus_tag2id = {}
+    locus_tag2id['LocusTag'] = []
+    locus_tag2id['ProteinID'] = []
+      
+    gff_db = gffutils.create_db(gff_file, ':memory:', merge_strategy='create_unique')
+
+    for feature in gff_db.all_features():
+        
+        if (feature.featuretype == 'gene') and ('old_locus_tag' in feature.attributes):  # Get locus_tag & old_locus_tag
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['old_locus_tag'][0])
+        elif (feature.featuretype == 'gene') and ('locus_tag' in feature.attributes):
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['locus_tag'][0])
+            
+        if (feature.featuretype == 'CDS') and ('protein_id' in feature.attributes): # Check if CDS has protein_id
+            if feature.attributes['locus_tag'] == current_locus_tag:# Get protein_id if locus_tag the same
+                locus_tag2id['ProteinID'].append(feature.attributes['protein_id'][0])
+
+    locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
+
+    return pd.DataFrame(locus_tag2id)
 
 
 def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
@@ -611,8 +644,8 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 db_to_compare = click.prompt('One of the choices KEGG|BioCyc|KEGG+BioCyc') #|GFF
                 gap_analysis_params['db_to_compare'] = db_to_compare
                 if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-                    gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-                    gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
+                    user_input['organismid'] = click.prompt('Enter the KEGG Organism code')
+                    user_input['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
                 if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
                     Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
                     Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
@@ -662,10 +695,14 @@ def save_user_input(configpath: str) -> dict[str: str]:
                     user_input['entrez_email'] = entrez_email
                     id_db = click.prompt('What database is your model based on? BIGG|VMH')
                     user_input['id_db'] = id_db
+                    gff_file = click.prompt('If possible, provide the path to the RefSeq GFF file of your organism')
+                    user_input['gff_file'] = gff_file if gff_file != 'None' else None
+                    protein_fasta = click.prompt('If possible, provide the path to the Protein FASTA file used for CarveMe')
+                    user_input['protein_fasta'] = protein_fasta if protein_fasta != 'None' else None
                     lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
                     user_input['lab_strain'] = lab_strain
-                    protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
-                    user_input['protein_fasta'] = protein_fasta
+                    organismid = click.prompt('If possible, provide the KEGG organism code of your organism')
+                    user_input['organismid'] = organismid if (organismid != 'None') else None
                     
                 biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
                 user_input['biomass'] = biomass
