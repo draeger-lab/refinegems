@@ -7,7 +7,7 @@ Tailored to work with the media denoted in the local db, should work with any me
 import logging
 import pandas as pd
 import numpy as np
-from refinegems.io import load_medium_from_db
+from refinegems.io import load_medium_from_db_for_growth
 from cobra.medium import minimal_medium
 from cobra import Reaction
 from cobra import Model as cobraModel
@@ -213,7 +213,7 @@ def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFra
     default_uptake = get_default_uptake(model)
     mins = pd.DataFrame()
     for medium in media:
-        medium_df = load_medium_from_db(medium)
+        medium_df = load_medium_from_db_for_growth(medium)
         missing_exchanges = get_missing_exchanges(model, medium_df)
         medium_dict = modify_medium(medium_df, missing_exchanges)
         essential = find_missing_essential(model, medium_dict, default_uptake)
@@ -301,7 +301,7 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
     """
     growth = pd.DataFrame()
     for medium in media:
-        medium_df = load_medium_from_db(medium)
+        medium_df = load_medium_from_db_for_growth(medium)
         if (basis == 'default_uptake'):
             growth_one = growth_one_medium_from_default(model, medium_df, anaerobic)
         elif (basis == 'minimal_uptake'):
