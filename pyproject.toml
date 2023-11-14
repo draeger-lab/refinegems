@@ -28,7 +28,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
-
 # dynamic = ['version']
 
 dependencies = [
@@ -60,6 +59,12 @@ dependencies = [
 homepage = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
 
+# [project.scripts]
+# data = 'refinegems.databases:main'
+# curate = 'refinegems.curate:main'
+# investigate = 'refinegems.investigate:main'
+# refine = 'refinegems.refine:main'
+
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
 
@@ -68,4 +73,3 @@ where = ['refinegems']
 
 [tools.setuptools.package-data]
 database = ['*.txt', '*.sql', '*.db']
-
