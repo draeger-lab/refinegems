@@ -8,29 +8,13 @@ import logging
 import pandas as pd
 import numpy as np
 from refinegems.io import load_medium_from_db_for_growth
-from cobra.medium import minimal_medium
 from cobra import Reaction
 from cobra import Model as cobraModel
 import cobra
+import re
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
-
-# change to:
-#     set_bounds_to_default(model: cobra.Model) 
-#     set all reaction bounds to default cobra_config = cobra.Configuration(), cobra_config.bounds
-#     if "correct" bounds exist, keep zeros (retain irreversibility)
-# def set_bounds_to_default(reaction: Reaction) -> Reaction:
-#     """Helper function: Set flux bounds to -1000.0 and 1000.0 to enable model simulation with growth_one_medium_from_minimal/default
-# 
-#     Args:
-#         - reaction (Reaction): Reaction with unusable flux bounds
-# 
-#     Returns:
-#         Reaction: Reaction with usable flux bounds
-#     """
-#     reaction.bounds = (-1000.0, 1000.0)
-#     return reaction
 
 
 # @TEST
@@ -78,64 +62,81 @@ def set_bounds_to_default(model: cobraModel, reac_bounds = None):
             reaction.bounds = reac_bounds
 
 
-# rename to get_model_uptake
-# note 'EX' - does it count for all namespaces? 
-# -> if not, change is to a parameter or so to make it namespace independant (at least in future)
-def get_model_uptake(model: cobraModel) -> list[str]:
-    """Determines which metabolites are used in the standard medium
+# @TEST
+def get_uptake(model: cobraModel, type: str, exchange_regex='^EX') -> list[str]:
+    """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
+        model (cobraModel): A cobra Model to be tested.
+        type (str): Type of uptake, can be 'minimal'/'min' or 'standard'/'std'.
+        exchange_regex (str, optional): Regex-compatible string to determine exchange reactions. Defaults to '^EX'.
+
+    Raises:
+        ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
 
     Returns:
-        list[str]: Metabolites consumed in standard medium
+        list[str]: List of non-zero flux exchange reactions under the set type.
     """
+
+    match type:
+        # return minimal 
+        case 'minimal' | 'min':
+            with model:
+                minimal = cobra.medium.minimal_medium(model)
+                print(minimal)
+                return list(minimal.index)
+        # return standart, non-zero flux compounds
+        case 'standard' | 'std':
+            with model:
+                sol = model.optimize()
+                fluxes = sol.fluxes
+                uptake = []
+                regexp = re.compile(exchange_regex)
+                for index, value in fluxes.items():
+                    if regexp.search(index):
+                        if value < 0:
+                            uptake.append(index)
+            return uptake
+        case _:
+            raise ValueError(f'Unknown type for uptake: {type}')
+
+
+
+def get_secretion(model: cobraModel) -> list[str]:
+    """Returns the list of exchange reactions for compounds that are secreted in the current version of the model.
+
+    Args:
+        model (cobraModel): The cobra model to be tested.
+
+    Returns:
+        list[str]: The list of IDs of secretion reactions
+    """
+
     with model:
-        sol = model.optimize()
-        fluxes = sol.fluxes
-        uptake = []
-        for index, value in fluxes.items():
-            if "EX" in index:
-                if value < 0:
-                    uptake.append(index)
-    return uptake
 
-# ? merge with above ?
-def get_minimal_uptake(model: cobraModel) -> list[str]:
-    """Determines which metabolites are used in a minimal medium
+        sf = model.summary().secretion_flux
+        s = sf[sf['flux'] < 0.0].index.tolist()
+
+    return s
+    
+def get_production(model: cobraModel) -> list[str]:
+    """Checks fluxes after FBA, if positive the metabolite is produced.
 
     Args:
         - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list[str]: Metabolites consumed in minimal medium
+        list[str]: Ids of produced metabolites
     """
-    with model:
-        minimal = minimal_medium(model)
-    return list(minimal.index)
 
-
-# ????
-# entkoppelt + does not return what it says it should 
-# should be something like:
-# sf = model.summary().secretion_flux
-# s = sf[sf['flux'] < 0.0].index.tolist()
-def get_default_secretion(model: cobraModel) -> list[str]:
-    """Checks fluxes after FBA, if positive the metabolite is produced
-
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-
-    Returns:
-        list[str]: BiGG Ids of produced metabolites
-    """
     with model:
         fluxes = model.optimize().fluxes
-        default_secretion = []
+        production = []
         for index, value in fluxes.items():
             if value > 0:
-                default_secretion.append(index)
-    return default_secretion
+                production.append(index)
+    return production
+
 
 # combine with below
 def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
@@ -156,6 +157,7 @@ def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
         except(KeyError):
             missing_exchanges.append(exchange)
     return missing_exchanges
+
 
 # already done with medium.py add_medium_to_model
 def modify_medium(medium: pd.DataFrame, missing_exchanges: list[str]) -> dict:
@@ -285,7 +287,7 @@ def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFra
     Returns:
         pd.DataFrame: information on different media which metabs are missing
     """
-    default_uptake = get_model_uptake(model)
+    default_uptake = get_uptake(model,'std')
     mins = pd.DataFrame()
     for medium in media:
         medium_df = load_medium_from_db_for_growth(medium)
@@ -310,7 +312,7 @@ def growth_one_medium_from_default(model: cobraModel, medium: pd.DataFrame, anae
     Returns:
         pd.DataFrame: Information on growth behaviour on given medium
     """
-    default_uptake = get_model_uptake(model)
+    default_uptake = get_uptake(model,'std')
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
     essential = find_missing_essential(model, medium_dict, default_uptake, anaerobic)
@@ -342,8 +344,8 @@ def growth_one_medium_from_minimal(model: cobraModel, medium: pd.DataFrame, anae
     Returns:
         pd.DataFrame: Information on growth behaviour on given medium
     """
-    minimal_uptake = get_minimal_uptake(
-        model)  # use this instead of default_uptake
+    minimal_uptake = get_uptake(
+        model, 'min')  # use this instead of default_uptake
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
     essential = find_missing_essential(model, medium_dict, minimal_uptake, anaerobic)
