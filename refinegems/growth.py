@@ -8,6 +8,7 @@ import logging
 import pandas as pd
 import numpy as np
 from refinegems.io import load_medium_from_db_for_growth
+from refinegems.database import medium
 from cobra import Reaction
 from cobra import Model as cobraModel
 import cobra
@@ -15,7 +16,9 @@ import re
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
-
+############################################################################
+# functionss
+############################################################################
 
 # @TEST
 def set_bounds_to_default(model: cobraModel, reac_bounds = None):
@@ -101,7 +104,6 @@ def get_uptake(model: cobraModel, type: str, exchange_regex='^EX') -> list[str]:
             raise ValueError(f'Unknown type for uptake: {type}')
 
 
-
 def get_secretion(model: cobraModel) -> list[str]:
     """Returns the list of exchange reactions for compounds that are secreted in the current version of the model.
 
@@ -138,77 +140,40 @@ def get_production(model: cobraModel) -> list[str]:
     return production
 
 
-# combine with below
-def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
-    """Look for exchange reactions needed by the medium but not in the model
+# @TEST
+def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine=False):
+    """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
+    which can be added to the new one to enable growths.
+
+    @WARNING this functions currently only check via single deletions not via correlated ones. MIght lead to problems in 
+    complecated cases, e.g. missing carbon source but multiple ones in the standard medium.
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - medium (pd.DataFrame): Dataframe with medium definition
+        model (cobraModel): The model to add the medium to.
+        growth_medium (dict): A medium definition, ready to be added to a COBRApy model.
+            This is for the new medium for growth testing.
+        standard_uptake (list[str]): A list of exchange reactions, e.g. Output of get_uptake.
+            This is for the old medium where the model can grow on.
+        combine (bool, optional): Flag to directly combine the additives with the new medium or just return the additive's IDs.
+            Defaults to False (returns reaction IDs).
 
     Returns:
-        list[str]: Ids of all exchanges missing in the model but given in medium
+        list[str] or dict: List of the exchange reaction IDs of the additives or the supplemented medium, if combine is set to True.
     """
-    medium_list = medium['BiGG_EX'].dropna().tolist()
-    missing_exchanges = []
-    for exchange in medium_list:
-        try:
-            model.reactions.get_by_id(exchange)
-        except(KeyError):
-            missing_exchanges.append(exchange)
-    return missing_exchanges
-
-
-# already done with medium.py add_medium_to_model
-def modify_medium(medium: pd.DataFrame, missing_exchanges: list[str]) -> dict:
-    """Helper function: Remove exchanges from medium that are not in the model to avoid KeyError
-
-    Args:
-        - medium (pd.DataFrame): Dataframe with medium definition
-        - missing_exchanges (list): Ids of exchanges not in the model
-
-    Returns:
-        dict: Growth medium definition that can be used with the model (f.ex {'EX_glc__D_e' : 10.0})
-    """
-    growth_medium = dict.fromkeys(medium['BiGG_EX'].dropna().tolist(), 10.0)
-    for exchange in missing_exchanges:
-        growth_medium.pop(exchange)
-    return growth_medium
-
-
-# idea: remove default uptake from params list
-# recheck connection to add_medium_to_model from medium.py
-# where to elegantly put anaerobic option
-# not exhaustive, might lead to problems
-# rename?
-def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptake: list[str], anaerobic: bool) -> list[str]:
-    """Report which exchange reactions are needed for growth, combines default uptake and valid new medium
-
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.
-        - default_uptake (list[str]): Metabolites consumed in standard medium
-        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
-
-    Returns:
-        list[str]: Ids of exchanges of all metabolites which lead to zero growth if blocked
-    """
+    
     with model:
-        default_medium = {i: 10.0 for i in default_uptake}
-        if anaerobic and ('EX_o2_e' in default_medium): default_medium['EX_o2_e'] = 0.0
-        if anaerobic and ('EX_o2_e' in growth_medium): growth_medium['EX_o2_e'] = 0.0
-        new_medium = {**growth_medium, **default_medium}
+        # combine standard and second medium, set all fluxes to 10.0 for standard
+        standard_medium = {i: 10.0 for i in standard_uptake}
+        new_medium = {**growth_medium, **standard_medium}
+        # add new medium to model
         try:
             model.medium = new_medium
         except(ValueError):
-            logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
-            # ..................................
-            #for reaction in model.reactions:
-            #    set_bounds_to_default(reaction)
-            # replace with new
+            logging.info('Change upper bounds to COBRApy defaults to make model simulatable.')
             set_bounds_to_default(model)
-            # ..................................
             model.medium = new_medium
+        # find essentials 
+        # @WARNING: only single deletions are tested
         essential = []
         for metab in new_medium.keys():
             with model:
@@ -216,154 +181,87 @@ def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptak
                 sol = model.optimize()
                 if sol.objective_value < 1e-5:  # and sol.objective_value > -1e-9: # == 0 no negative growth!
                     essential.append(metab)
-                model.reactions.get_by_id(metab).lower_bound = -10
-    return essential
 
-# combine with above, only occur together
-def find_minimum_essential(medium: pd.DataFrame, essential: list[str]) -> list[str]:
-    """Report metabolites necessary for growth and not in custom medium
-
-    Args:
-        - medium (pd.DataFrame): Dataframe with medium definition
-        - essential (list[str]): Ids of all metabolites which lead to zero growth if blocked. Output of find_missing_essential.
-
-    Returns:
-        list[str]: Ids of exchanges of metabolites not present in the medium but necessary for growth
-    """
-    minimum = []
+    # find the essential compounds not in the growth medium
+    additives = []
     for metab in essential:
-        if metab not in medium['BiGG_EX'].tolist():
-            minimum.append(metab)
-    return minimum
+        if metab not in growth_medium.keys():
+            additives.append(metab)
 
-# anaerobic see above
-# rename: simulate_growth_with essential_supplements()
-# verallgemeinern?
-def simulate_minimum_essential(model: cobraModel, growth_medium: dict, minimum: list[str], anaerobic: bool) -> float:
-    """Simulate growth with custom medium plus necessary uptakes
+    # return ... 
+    if combine:
+        # ... the supplemented medium
+        supplements = {_: 10.0 for _ in additives}
+        suppl_medium = {**growth_medium,**supplements}
+        return suppl_medium
+    else:
+        # ... the list of suplements
+        return additives
+
+# @TEST
+def growth_on_one_medium(model: cobraModel, m: medium.Medium, supplement = None, anaerobic = False) -> dict:
+    """Simulate the growth of a model on a given medium.
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - growth_medium (dict): Growth medium definition that can be used with the model. Output of modify_medium.
-        - minimum (list[str]): Ids of exchanges of metabolites not present in the medium but necessary for growth. Output of find_minimum_essential.
-        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
+        model (cobraModel): The model.
+        m (medium.Medium): The medium.
+        supplement (str, optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
+            Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
+        anaerobic (bool, optional): Set medium to anaerobic/aerobic. Defaults to False (aerobic growth).
 
     Returns:
-        float: Growth value in mmol per (gram dry weight) per hour
+        dict: Dictionary with the simulation results
     """
+
     with model:
-        min_medium = {i: 10.0 for i in minimum}
-        new_medium = {**growth_medium, **min_medium}
+        # check for (an)aerobic conditions
+        if anaerobic and m.is_aerobic():
+            m.make_anaerobic()
+        if not anaerobic and not m.is_aerobic():
+            m.make_aerobic(flux=10.0)
+
+        # convert to a cobrapy medium
+        exported_m = medium.medium_to_model(medium=m, model=model, add=False)
+
+        # supplement, if tag is set
+        match supplement:
+            case 'std':
+                uptake = get_uptake(model,'std')
+                new_m = find_additives_to_enable_growth(model, exported_m, uptake, combine=True)
+            case 'min':
+                uptake = get_uptake(model,'min')
+                new_m = find_additives_to_enable_growth(model, exported_m, uptake, combine=True)
+            case _:
+                new_m = exported_m
+    
+        # add medium to model 
         try:
-            if (new_medium['EX_o2_e'] == 10.0):
-                new_medium['EX_o2_e'] = 20.0 if not anaerobic else 0.0
-        except KeyError:
-            print('No Oxygen Exchange Reaction')
-            pass
-        try:
-            model.medium = new_medium
+            model.medium = new_m
         except(ValueError):
             logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
-            # ..................................
-            # changed old to new
-            # for reaction in model.reactions:
-            #     set_bounds_to_default(reaction)
-            
             set_bounds_to_default(model)
-            # ..................................
-            model.medium = new_medium
-        sol = model.optimize()
-    return sol.objective_value
+            model.medium = new_m
 
-# entkoppelt
-# ??????????
-def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFrame:
-    """Returns metabolites necessary for growth and not in media
+        # simulate growth
+        growth_value = model.optimize().objective_value
+        doubling_time = (np.log(2)/growth_value)*60 if growth_value != 0 else 0
+        medium_name = m.name
+        additives = [_ for _ in new_m if _ not in exported_m]
+        no_exchange = [_ for _ in m.export_to_cobra().keys() if _ not in exported_m]
 
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - media (list[str]): Containing the names of all media for which the growth essential metabolites not contained in the media should be returned
-
-    Returns:
-        pd.DataFrame: information on different media which metabs are missing
-    """
-    default_uptake = get_uptake(model,'std')
-    mins = pd.DataFrame()
-    for medium in media:
-        medium_df = load_medium_from_db_for_growth(medium)
-        missing_exchanges = get_missing_exchanges(model, medium_df)
-        medium_dict = modify_medium(medium_df, missing_exchanges)
-        essential = find_missing_essential(model, medium_dict, default_uptake)
-        minimum = find_minimum_essential(medium_df, essential)
-        mins[medium['medium'][0]] = pd.Series(minimum)
-    return mins
-
-# combine with below
-# growth_one_medium
-# output?
-def growth_one_medium_from_default(model: cobraModel, medium: pd.DataFrame, anaerobic: bool) -> pd.DataFrame:
-    """Simulates growth on given medium, adding missing metabolites from the default uptake
-
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - medium (pd.DataFrame): Dataframe with medium definition
-        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
-
-    Returns:
-        pd.DataFrame: Information on growth behaviour on given medium
-    """
-    default_uptake = get_uptake(model,'std')
-    missing_exchanges = get_missing_exchanges(model, medium)
-    medium_dict = modify_medium(medium, missing_exchanges)
-    essential = find_missing_essential(model, medium_dict, default_uptake, anaerobic)
-    minimum = find_minimum_essential(medium, essential)
-
-    medium_dict = modify_medium(medium, missing_exchanges)
-    growth_value = simulate_minimum_essential(model, medium_dict, minimum, anaerobic)
-    doubling_time = (np.log(2) / growth_value) * 60
-    medium_name = medium['medium'][0] if not anaerobic else f'{medium["medium"][0]}[-O2]'
-    exchanges = [[medium_name], minimum,
-                 missing_exchanges, [growth_value], [doubling_time]]
-    df_growth = pd.DataFrame(exchanges,
-                             ['medium',
-                              'essential',
-                              'missing exchanges',
-                              'growth_value',
-                              'doubling_time [min]']).T
-    return df_growth
+    return {'growth value':growth_value, 
+            'doubling time':doubling_time, 
+            'medium name':medium_name, 
+            'additives': additives, 
+            'no exchanges': no_exchange}
 
 
-def growth_one_medium_from_minimal(model: cobraModel, medium: pd.DataFrame, anaerobic: bool) -> pd.DataFrame:
-    """Simulates growth on given medium, adding missing metabolites from a minimal uptake
 
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - medium (pd.DataFrame): Dataframe with medium definition
-        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
+# wrapper function for loading/collecting + simulation
 
-    Returns:
-        pd.DataFrame: Information on growth behaviour on given medium
-    """
-    minimal_uptake = get_uptake(
-        model, 'min')  # use this instead of default_uptake
-    missing_exchanges = get_missing_exchanges(model, medium)
-    medium_dict = modify_medium(medium, missing_exchanges)
-    essential = find_missing_essential(model, medium_dict, minimal_uptake, anaerobic)
-    minimum = find_minimum_essential(medium, essential)
+# report class for output maybe?
 
-    medium_dict = modify_medium(medium, missing_exchanges)
-    growth_value = simulate_minimum_essential(model, medium_dict, minimum, anaerobic)
-    doubling_time = (np.log(2)/growth_value)*60 if growth_value != 0 else 0
-    medium_name = medium['medium'][0] if not anaerobic else f'{medium["medium"][0]}[-O2]'
-    exchanges = [[medium_name], minimum,
-                 missing_exchanges, [growth_value], [doubling_time]]
-    df_growth = pd.DataFrame(exchanges,
-                             ['medium',
-                              'essential',
-                              'missing exchanges',
-                              'growth_value',
-                              'doubling_time [min]']).T
-    return df_growth
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # recheck
 def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
@@ -387,6 +285,10 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
             growth_one = growth_one_medium_from_minimal(model, medium_df, anaerobic)
         growth = pd.concat([growth, growth_one], ignore_index=True)
     return growth
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
 # single knockout simulation
 # NOT SIMPLY ESSENTIALS

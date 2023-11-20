@@ -857,17 +857,21 @@ def enter_medium_into_db(database: str, medium: Medium):
 ############################################################################
 
 # @Testing
-def add_medium_to_model(model:cobra.Model, medium:Medium, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True):
+def medium_to_model(model:cobra.Model, medium:Medium, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True, add=True):
     
     # export medium to cobra
     exported_medium = medium.export_to_cobra(namespace=namespace, default_flux=default_flux, replace=replace, double_o2=double_o2)
 
     # remove exchanges that do not exists in model
     model_exchanges = [_.id for _ in model.exchanges]
-    exported_medium = {k:v for k,v in exported_medium.items() if k not in model_exchanges}
+    exported_medium = {k:v for k,v in exported_medium.items() if k in model_exchanges}
 
-    # add to model
-    model.medium = exported_medium
+    if add:
+        # add to model
+        model.medium = exported_medium
+        return 
+    else:
+        return exported_medium
 
 
 ############################################################################
