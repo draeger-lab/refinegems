@@ -11,24 +11,77 @@ from refinegems.io import load_medium_from_db_for_growth
 from cobra.medium import minimal_medium
 from cobra import Reaction
 from cobra import Model as cobraModel
+import cobra
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Carolin Brune"
 
 
-def set_fluxes_to_simulate(reaction: Reaction) -> Reaction:
-    """Helper function: Set flux bounds to -1000.0 and 1000.0 to enable model simulation with growth_one_medium_from_minimal/default
+# change to:
+#     set_bounds_to_default(model: cobra.Model) 
+#     set all reaction bounds to default cobra_config = cobra.Configuration(), cobra_config.bounds
+#     if "correct" bounds exist, keep zeros (retain irreversibility)
+# def set_bounds_to_default(reaction: Reaction) -> Reaction:
+#     """Helper function: Set flux bounds to -1000.0 and 1000.0 to enable model simulation with growth_one_medium_from_minimal/default
+# 
+#     Args:
+#         - reaction (Reaction): Reaction with unusable flux bounds
+# 
+#     Returns:
+#         Reaction: Reaction with usable flux bounds
+#     """
+#     reaction.bounds = (-1000.0, 1000.0)
+#     return reaction
+
+
+# @TEST
+def set_bounds_to_default(model: cobraModel, reac_bounds = None):
+    """Set the reactions bounds of a model to given default values.
+    (Ir)reversibility is retained.
 
     Args:
-        - reaction (Reaction): Reaction with unusable flux bounds
+        model (cobraModel): The model loaded with COBRApy.
+        reac_bounds ([NoneType, str, tuple[float]], optional): The setting for the new reaction bounds. 
+            Defaults to None. If None or "cobra", uses the COBRApy in-built default values (-1000.0, 1000.0).
+            The user can set personal values by entering a tuple of two floats.
 
-    Returns:
-        Reaction: Reaction with usable flux bounds
+    Raises:
+        ValueError: Problematic input for bounds, if neither None, "cobra" or a tuple of floats is entered for reac_bounds.
     """
-    reaction.bounds = (-1000.0, 1000.0)
-    return reaction
+
+    # user-specific default bounds (tuple of two floats)
+    if (type(reac_bounds) is tuple 
+         and len(reac_bounds) == 2 
+         and type(reac_bounds[0]) is float 
+         and type(reac_bounds[1]) is float):
+        pass
+    # use COBRApy-internal default bounds (None or string 'cobra')
+    elif reac_bounds is None or (type(reac_bounds) is str and reac_bounds == 'cobra'):
+        reac_bounds = cobra.Configuration().bounds
+    # unknown input
+    else:
+        raise ValueError(f'Problematic input for bounds: {reac_bounds}')
+    
+    # apply the bounds to the model
+    for reaction in model.reactions:
+
+        # reactions is originally disabled
+        if reaction.upper_bound == 0.0 and reaction.lower_bound == 0.0:
+            pass
+        # forward only
+        elif reaction.lower_bound == 0.0:
+            reaction.upper_bound = reac_bounds[1]
+        # backward only
+        elif reaction.upper_bound == 0.0:
+            reaction.lower_bound = reac_bounds[0]
+        # reversible or broken
+        else:
+            reaction.bounds = reac_bounds
 
 
-def get_default_uptake(model: cobraModel) -> list[str]:
+# rename to get_model_uptake
+# note 'EX' - does it count for all namespaces? 
+# -> if not, change is to a parameter or so to make it namespace independant (at least in future)
+def get_model_uptake(model: cobraModel) -> list[str]:
     """Determines which metabolites are used in the standard medium
 
     Args:
@@ -40,14 +93,14 @@ def get_default_uptake(model: cobraModel) -> list[str]:
     with model:
         sol = model.optimize()
         fluxes = sol.fluxes
-        default_uptake = []
+        uptake = []
         for index, value in fluxes.items():
             if "EX" in index:
                 if value < 0:
-                    default_uptake.append(index)
-    return default_uptake
+                    uptake.append(index)
+    return uptake
 
-
+# ? merge with above ?
 def get_minimal_uptake(model: cobraModel) -> list[str]:
     """Determines which metabolites are used in a minimal medium
 
@@ -62,6 +115,11 @@ def get_minimal_uptake(model: cobraModel) -> list[str]:
     return list(minimal.index)
 
 
+# ????
+# entkoppelt + does not return what it says it should 
+# should be something like:
+# sf = model.summary().secretion_flux
+# s = sf[sf['flux'] < 0.0].index.tolist()
 def get_default_secretion(model: cobraModel) -> list[str]:
     """Checks fluxes after FBA, if positive the metabolite is produced
 
@@ -79,7 +137,7 @@ def get_default_secretion(model: cobraModel) -> list[str]:
                 default_secretion.append(index)
     return default_secretion
 
-
+# combine with below
 def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
     """Look for exchange reactions needed by the medium but not in the model
 
@@ -99,7 +157,7 @@ def get_missing_exchanges(model: cobraModel, medium: pd.DataFrame) -> list[str]:
             missing_exchanges.append(exchange)
     return missing_exchanges
 
-
+# already done with medium.py add_medium_to_model
 def modify_medium(medium: pd.DataFrame, missing_exchanges: list[str]) -> dict:
     """Helper function: Remove exchanges from medium that are not in the model to avoid KeyError
 
@@ -116,6 +174,11 @@ def modify_medium(medium: pd.DataFrame, missing_exchanges: list[str]) -> dict:
     return growth_medium
 
 
+# idea: remove default uptake from params list
+# recheck connection to add_medium_to_model from medium.py
+# where to elegantly put anaerobic option
+# not exhaustive, might lead to problems
+# rename?
 def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptake: list[str], anaerobic: bool) -> list[str]:
     """Report which exchange reactions are needed for growth, combines default uptake and valid new medium
 
@@ -137,8 +200,12 @@ def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptak
             model.medium = new_medium
         except(ValueError):
             logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
-            for reaction in model.reactions:
-                set_fluxes_to_simulate(reaction)
+            # ..................................
+            #for reaction in model.reactions:
+            #    set_bounds_to_default(reaction)
+            # replace with new
+            set_bounds_to_default(model)
+            # ..................................
             model.medium = new_medium
         essential = []
         for metab in new_medium.keys():
@@ -150,7 +217,7 @@ def find_missing_essential(model: cobraModel, growth_medium: dict, default_uptak
                 model.reactions.get_by_id(metab).lower_bound = -10
     return essential
 
-
+# combine with above, only occur together
 def find_minimum_essential(medium: pd.DataFrame, essential: list[str]) -> list[str]:
     """Report metabolites necessary for growth and not in custom medium
 
@@ -167,7 +234,9 @@ def find_minimum_essential(medium: pd.DataFrame, essential: list[str]) -> list[s
             minimum.append(metab)
     return minimum
 
-
+# anaerobic see above
+# rename: simulate_growth_with essential_supplements()
+# verallgemeinern?
 def simulate_minimum_essential(model: cobraModel, growth_medium: dict, minimum: list[str], anaerobic: bool) -> float:
     """Simulate growth with custom medium plus necessary uptakes
 
@@ -193,13 +262,19 @@ def simulate_minimum_essential(model: cobraModel, growth_medium: dict, minimum: 
             model.medium = new_medium
         except(ValueError):
             logging.info('Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable.')
-            for reaction in model.reactions:
-                set_fluxes_to_simulate(reaction)
+            # ..................................
+            # changed old to new
+            # for reaction in model.reactions:
+            #     set_bounds_to_default(reaction)
+            
+            set_bounds_to_default(model)
+            # ..................................
             model.medium = new_medium
         sol = model.optimize()
     return sol.objective_value
 
-
+# entkoppelt
+# ??????????
 def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFrame:
     """Returns metabolites necessary for growth and not in media
 
@@ -210,7 +285,7 @@ def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFra
     Returns:
         pd.DataFrame: information on different media which metabs are missing
     """
-    default_uptake = get_default_uptake(model)
+    default_uptake = get_model_uptake(model)
     mins = pd.DataFrame()
     for medium in media:
         medium_df = load_medium_from_db_for_growth(medium)
@@ -221,7 +296,9 @@ def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFra
         mins[medium['medium'][0]] = pd.Series(minimum)
     return mins
 
-
+# combine with below
+# growth_one_medium
+# output?
 def growth_one_medium_from_default(model: cobraModel, medium: pd.DataFrame, anaerobic: bool) -> pd.DataFrame:
     """Simulates growth on given medium, adding missing metabolites from the default uptake
 
@@ -233,7 +310,7 @@ def growth_one_medium_from_default(model: cobraModel, medium: pd.DataFrame, anae
     Returns:
         pd.DataFrame: Information on growth behaviour on given medium
     """
-    default_uptake = get_default_uptake(model)
+    default_uptake = get_model_uptake(model)
     missing_exchanges = get_missing_exchanges(model, medium)
     medium_dict = modify_medium(medium, missing_exchanges)
     essential = find_missing_essential(model, medium_dict, default_uptake, anaerobic)
@@ -286,7 +363,7 @@ def growth_one_medium_from_minimal(model: cobraModel, medium: pd.DataFrame, anae
                               'doubling_time [min]']).T
     return df_growth
 
-
+# recheck
 def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
     """Simulates growth on all given media
 
@@ -309,7 +386,9 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
         growth = pd.concat([growth, growth_one], ignore_index=True)
     return growth
 
-
+# single knockout simulation
+# NOT SIMPLY ESSENTIALS
+# entkoppelt
 def get_essential_reactions(model: cobraModel) -> list[str]:
     """Knocks out each reaction, if no growth is detected the reaction is seen as essential
 
@@ -331,7 +410,8 @@ def get_essential_reactions(model: cobraModel) -> list[str]:
 
     return ess
 
-
+# same issue as above
+# entkoppelt
 def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
     """Knocks out reactions by setting their bounds to 0, if no growth is detected the reaction is seen as essential
 
@@ -353,7 +433,7 @@ def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
 
     return ess
 
-
+# rename: find_growth_enhancing_exchanges
 def find_additives(model:cobraModel, base_medium: dict) -> pd.DataFrame:
     """Iterates through all exchanges to find metabolites that lead to a higher growth rate compared to the growth rate yielded on the base_medium
 
