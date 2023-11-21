@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 """ Provides functions to simulate growth on any medium
 
+@REWRITE
 Tailored to work with the media denoted in the local db, should work with any medium as long as its defined in a csv with ; as delimiter and BiGG Ids for the compounds. Use refinegems.io.load_medium_custom and hand this to the growth_one_medium_from_default or growth_one_medium_from_minimum function.
 """
 
 import logging
 import pandas as pd
 import numpy as np
-from refinegems.io import load_medium_from_db_for_growth
+# from refinegems.io import load_medium_from_db_for_growth # only needed for the old ones
 from refinegems.database import medium
 from refinegems import reports
 from cobra import Reaction
@@ -284,17 +285,43 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 
 # @TODO
 # main objective: read in models and media from input (command line, YAML etc.) 
-# -> compile a complete list media 
+# -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like)
 # -> run simulation 
 # -> visulise also here?
 def growth_analysis():
     pass
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# some old function to recheck, if everything still fits
+"""
+
+# entkoppelt
+# ??????????
+# just deleted from growth - rewrite?
+def get_all_minimum_essential(model: cobraModel, media: list[str]) -> pd.DataFrame:
+    Returns metabolites necessary for growth and not in media
+
+    Args:
+        - model (cobraModel): Model loaded with COBRApy
+        - media (list[str]): Containing the names of all media for which the growth essential metabolites not contained in the media should be returned
+
+    Returns:
+        pd.DataFrame: information on different media which metabs are missing
+    
+    default_uptake = get_uptake(model,'std')
+    mins = pd.DataFrame()
+    for medium in media:
+        medium_df = load_medium_from_db_for_growth(medium)
+        missing_exchanges = get_missing_exchanges(model, medium_df)
+        medium_dict = modify_medium(medium_df, missing_exchanges)
+        essential = find_missing_essential(model, medium_dict, default_uptake)
+        minimum = find_minimum_essential(medium_df, essential)
+        mins[medium['medium'][0]] = pd.Series(minimum)
+    return mins
 
 # recheck
 def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
-    """Simulates growth on all given media
+    Simulates growth on all given media
 
     Args:
         - model (cobraModel): Model loaded with COBRApy
@@ -304,7 +331,7 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
 
     Returns:
         pd.DataFrame: Information on growth behaviour on given media
-    """
+    
     growth = pd.DataFrame()
     for medium in media:
         medium_df = load_medium_from_db_for_growth(medium)
@@ -317,7 +344,7 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
 
 
 def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
-    """Does a run of growth simulation for multiple models on different media
+    Does a run of growth simulation for multiple models on different media
 
     Args:
         - models (list[cobraModel]): Models loaded with cobrapy
@@ -327,7 +354,7 @@ def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerob
 
     Returns:
         pd.DataFrame: table containing the results of the growth simulation
-    """
+    
     growth = pd.DataFrame()
     for medium_id in tqdm(media):
         medium = load_medium_from_db(medium_id)
@@ -355,24 +382,19 @@ def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerob
                 ignore_index=True)
 
     return growth
-
-
-
+"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-
-# single knockout simulation
-# NOT SIMPLY ESSENTIALS
-# entkoppelt
-def get_essential_reactions(model: cobraModel) -> list[str]:
+# @RENAMED
+def get_essential_reactions_via_single_knockout(model: cobraModel) -> list[str]:
     """Knocks out each reaction, if no growth is detected the reaction is seen as essential
 
     Args:
         - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list[str]: BiGG Ids of essential reactions
+        list[str]: Ids of essential reactions
     """
     ess = []
     for reaction in model.reactions:
@@ -386,9 +408,8 @@ def get_essential_reactions(model: cobraModel) -> list[str]:
 
     return ess
 
-# same issue as above
-# entkoppelt
-def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
+# @RENAMED
+def get_essential_exchanges_via_bounds(model: cobraModel) -> list[str]:
     """Knocks out reactions by setting their bounds to 0, if no growth is detected the reaction is seen as essential
 
 
@@ -396,7 +417,7 @@ def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
         - model (cobraModel): Model loaded with COBRApy
 
     Returns:
-        list[str]: BiGG Ids of essential reactions
+        list[str]: Ids of essential reactions
     """
     medium = model.medium
     ess = []
@@ -409,8 +430,8 @@ def get_essential_reactions_via_bounds(model: cobraModel) -> list[str]:
 
     return ess
 
-# rename: find_growth_enhancing_exchanges
-def find_additives(model:cobraModel, base_medium: dict) -> pd.DataFrame:
+# @RENAMED
+def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.DataFrame:
     """Iterates through all exchanges to find metabolites that lead to a higher growth rate compared to the growth rate yielded on the base_medium
 
     Args:
