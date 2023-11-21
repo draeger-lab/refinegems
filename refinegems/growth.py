@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from refinegems.io import load_medium_from_db_for_growth
 from refinegems.database import medium
+from refinegems import reports
 from cobra import Reaction
 from cobra import Model as cobraModel
 import cobra
@@ -17,7 +18,7 @@ import re
 __author__ = "Famke Baeuerle and Carolin Brune"
 
 ############################################################################
-# functionss
+# functions
 ############################################################################
 
 # @TEST
@@ -199,7 +200,7 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
         return additives
 
 # @TEST
-def growth_on_one_medium(model: cobraModel, m: medium.Medium, supplement = None, anaerobic = False) -> dict:
+def growth_sim_single(model: cobraModel, m: medium.Medium, supplement = None, anaerobic = False) -> reports.SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
     Args:
@@ -210,7 +211,7 @@ def growth_on_one_medium(model: cobraModel, m: medium.Medium, supplement = None,
         anaerobic (bool, optional): Set medium to anaerobic/aerobic. Defaults to False (aerobic growth).
 
     Returns:
-        dict: Dictionary with the simulation results
+        reports.SingleGrowthSimulationReport: Object with the simulation results
     """
 
     with model:
@@ -243,23 +244,51 @@ def growth_on_one_medium(model: cobraModel, m: medium.Medium, supplement = None,
             model.medium = new_m
 
         # simulate growth
-        growth_value = model.optimize().objective_value
-        doubling_time = (np.log(2)/growth_value)*60 if growth_value != 0 else 0
-        medium_name = m.name
-        additives = [_ for _ in new_m if _ not in exported_m]
-        no_exchange = [_ for _ in m.export_to_cobra().keys() if _ not in exported_m]
+        report = reports.SingleGrowthSimulationReport(model_name = model.name, medium_name = m.name)
+        report.growth_value = model.optimize().objective_value
+        report.doubling_time = (np.log(2)/report.growth_value)*60 if report.growth_value != 0 else 0
+        report.additives = [_ for _ in new_m if _ not in exported_m]
+        report.no_exchange = [_ for _ in m.export_to_cobra().keys() if _ not in exported_m]
 
-    return {'growth value':growth_value, 
-            'doubling time':doubling_time, 
-            'medium name':medium_name, 
-            'additives': additives, 
-            'no exchanges': no_exchange}
+    return report
 
 
+# @TEST
+def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium]) -> reports.GrowthSimulationReport:
+    """Simulate the growth of (at least one) models on (at least one) media.
 
-# wrapper function for loading/collecting + simulation
+    Args:
+        models (cobraModel | list[cobraModel]): A COBRApy model or a list of multiple.
+        media (medium.Medium | list[medium.Medium]): A refinegems Medium object or a list of multiple.
 
-# report class for output maybe?
+    Returns:
+        reports.GrowthSimulationReport: The compiled information of the simulation results.
+    """
+
+    # check input 
+    if type(models) != list:
+        models = [models]
+    if type(media) != list:
+        media = [media]
+
+    # simulate the growth of the models on the different media
+    report = reports.GrowthSimulationReport()
+    for mod in models:
+        for med in media:
+            o2_check = med.is_aerobic()
+            r = growth_sim_single(mod, med, anaerobic = not o2_check)
+            report.add_sim_results(r)
+
+    return report     
+
+
+# @TODO
+# main objective: read in models and media from input (command line, YAML etc.) 
+# -> compile a complete list media 
+# -> run simulation 
+# -> visulise also here?
+def growth_analysis():
+    pass
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -285,6 +314,49 @@ def get_growth_selected_media(model: cobraModel, media: list[str], basis: str, a
             growth_one = growth_one_medium_from_minimal(model, medium_df, anaerobic)
         growth = pd.concat([growth, growth_one], ignore_index=True)
     return growth
+
+
+def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
+    """Does a run of growth simulation for multiple models on different media
+
+    Args:
+        - models (list[cobraModel]): Models loaded with cobrapy
+        - media (list[str]): Media of interest (f.ex. LB, M9, ...)
+        - basis (str): Either default_uptake (adding metabs from default) or minimal_uptake (adding metabs from minimal medium)
+        - anaerobic (bool): If True 'EX_o2_e' is set to 0.0 to simulate anaerobic conditions
+
+    Returns:
+        pd.DataFrame: table containing the results of the growth simulation
+    """
+    growth = pd.DataFrame()
+    for medium_id in tqdm(media):
+        medium = load_medium_from_db(medium_id)
+        for model in models:
+            essentials_given = False
+            if (basis=='default_uptake'):
+                growth_one = growth_one_medium_from_default(model, medium, anaerobic).drop('missing exchanges', axis=1)
+            elif (basis == 'minimal_uptake'):
+                growth_one = growth_one_medium_from_minimal(model, medium, anaerobic).drop('missing exchanges', axis=1)
+            if growth_one['essential'].dropna().size == 0:
+                essentials_given = True
+            else:
+                growth_list = growth_one['essential'].dropna().to_list()
+                growth_string = ', '.join(growth_list)
+                essentials_given = growth_string
+            growth_one = growth_one.drop('essential', axis=1)
+            growth_one['complete'] = essentials_given
+            growth_one = growth_one.dropna()
+            growth_one['model'] = model.id
+            growth_one = growth_one[['model', 'medium', 'doubling_time [min]', 'growth_value', 'complete']]
+            growth_one['doubling_time [min]'].astype(float).round(2)
+            growth_one['growth_value'].astype(float).round(2)
+            growth = growth.append(
+                growth_one, 
+                ignore_index=True)
+
+    return growth
+
+
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
