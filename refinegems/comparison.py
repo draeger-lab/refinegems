@@ -215,6 +215,7 @@ def plot_heatmap_native(growth: pd.DataFrame):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
     return fig
 
+# @NOTE: moved to growth + overhauled there
 def simulate_all(models: list[cobraModel], media: list[str], basis: str, anaerobic: bool) -> pd.DataFrame:
     """Does a run of growth simulation for multiple models on different media
 
