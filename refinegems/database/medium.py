@@ -1,3 +1,4 @@
+import io
 import cobra
 import copy
 import numpy as np
@@ -7,6 +8,7 @@ import sqlite3
 import sys
 import tabulate
 import warnings
+from typing import Literal, Union
 
 __author__ = "Carolin Brune"
 
@@ -48,7 +50,7 @@ class Medium:
         doi (str): Reference(s) to the original publication of the medium. Defaults to None.
     """
 
-    def __init__(self, name:str, substance_table:pd.DataFrame, description=None, doi=None):
+    def __init__(self, name:str, substance_table:pd.DataFrame, description:str=None, doi:str=None):
         """Initialise a Medium object.
 
         Args:
@@ -87,8 +89,8 @@ class Medium:
         return test
     
     
-    def make_aerobic(self, flux=None):
-        """If the medium is curretly anaerobic, add oxygen to the medium to make is aerobic.
+    def make_aerobic(self, flux:float=None):
+        """If the medium is curretly anaerobic, add oxygen to the medium to make it aerobic.
         
         Args:
             flux(float,optional): The flux value for the oxygen to be added. Defaults to None.
@@ -110,14 +112,14 @@ class Medium:
 
 
     def make_anaerobic(self):
-        """If the medium is currently aerobic, deletes the oxygen from it to make is anaerobic.
+        """If the medium is currently aerobic, deletes the oxygen from it to make it anaerobic.
         """
         if self.is_aerobic():
             # remove dioxygen // O2 from the substance table
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
 
 
-    def set_default_flux(self,flux=10.0, replace=False, double_o2=True):
+    def set_default_flux(self,flux:float =10.0, replace:bool =False, double_o2:bool =True):
         """Set a default flux for the model.
 
         Args:
@@ -134,7 +136,7 @@ class Medium:
             self.substance_table['flux'] = self.substance_table['flux'].fillna(flux)
 
 
-    def combine(self,other):
+    def combine(self,other:'Medium') -> 'Medium':
         """Combine two media into a new one.
 
         Args:
@@ -160,11 +162,11 @@ class Medium:
         return combined
     
     
-    def __add__(self,other):
+    def __add__(self,other:'Medium') -> 'Medium':
         return self.combine(other)
     
 
-    def add_subset(self, type:str):
+    def add_subset(self, type: Literal['aa', 'casamino']) -> 'Medium':
         """Add a subset of substances to the medium, returning a newly generated one.
         Available subset are the following:
         - aa: the 20n proteinogenic amino acids
@@ -250,7 +252,7 @@ class Medium:
         return formatted_table
     
 
-    def produce_medium_docs_table(self, folder = './', max_width = 80):
+    def produce_medium_docs_table(self, folder: str = './', max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
         Args:
@@ -278,7 +280,7 @@ class Medium:
                 partition = (max_width - flux_width) // 2
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
 
-        def produce_medium_docs_table_row(row: pd.Series, file):
+        def produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
             """Helper function for :py:func:`produce_medium_docs_table`.
             Tranforms each row of the substance table into a row of the rst-file.
 
@@ -305,13 +307,22 @@ class Medium:
             header = m_subs.columns
 
             widths = calculate_column_widths_docs(header, max_width)
+            
+            title = f'{self.description} ({self.name})'
+            
+            # Produce header/title of HTML page
+            f.write(
+                f"{title}\n"
+                f"{'^' * len(title)}\n\n"
+            )
 
             # produce descriptor
             f.write(f".. list-table:: {self.name} composition\n"
                     f"  :name: {self.name.lower()}_comp\n"
                     "  :align: center\n"
                     f"  :widths: {widths}\n"
-                    "  :header-rows: 1\n\n")
+                    "  :header-rows: 1\n"
+                    "  :class: no-scrollbar-table\n\n")
             
             # produce header
             f.write(f"  * - {header[0]}\n")
@@ -324,7 +335,7 @@ class Medium:
             f.close()
 
 
-    def export_to_file(self, type='tsv',dir='./', max_widths = 80):
+    def export_to_file(self, type:str='tsv',dir:str='./', max_widths: int = 80):
         """Export medium, especially substance table.
 
         Args:
@@ -346,10 +357,6 @@ class Medium:
                 self.substance_table.to_csv(path_no_ext + '.csv', sep=';', index=False)
             case 'docs' | 'rst':
                 self.produce_medium_docs_table(folder = dir, max_width = max_widths)
-                # old version - can be deleted if truly obsolete
-                # headers = ['name','formula','flux','source']
-                # table = tabulate.tabulate(self.substance_table[['name','formula','flux','source']].values.tolist(), headers, tablefmt="rst")
-                # print(table)
             case _:
                 raise ValueError('Unknown export type: {type}')
             
@@ -446,7 +453,7 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
     return substance_table
 
 
-def load_medium_from_db(name:str, database=PATH_TO_DB, type='standard') -> Medium:
+def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') -> Medium:
     """Load a medium from a database.
 
     Args:
@@ -490,7 +497,7 @@ def load_medium_from_db(name:str, database=PATH_TO_DB, type='standard') -> Mediu
 ############################################################################
 
 def read_substances_from_file(path: str) -> pd.DataFrame: 
-    """Read in a TSV with substance in formation into a table.
+    """Read in a TSV with substance information into a table.
 
     Format of the TSV:
     name | formula | flux | source | X | X | ...
@@ -857,12 +864,12 @@ def enter_medium_into_db(database: str, medium: Medium):
 ############################################################################
 
 # @Testing
-def medium_to_model(model:cobra.Model, medium:Medium, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True, add=True):
+def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True, add:bool=True) -> Union[None, dict[str, float]]:
     
     # export medium to cobra
     exported_medium = medium.export_to_cobra(namespace=namespace, default_flux=default_flux, replace=replace, double_o2=double_o2)
 
-    # remove exchanges that do not exists in model
+    # remove exchanges that do not exist in model
     model_exchanges = [_.id for _ in model.exchanges]
     exported_medium = {k:v for k,v in exported_medium.items() if k in model_exchanges}
 
