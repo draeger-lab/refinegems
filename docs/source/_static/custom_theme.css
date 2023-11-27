@@ -112,3 +112,7 @@ a.reference:visited {
 .icon.icon-home:visited {
     color: #b4a069 !important;
 }
+
+.no-scrollbar-table td {
+    white-space: normal !important;
+}
