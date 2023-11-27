@@ -3,17 +3,18 @@ import io
 import re
 import sqlite3
 import requests
+import logging
 import pandas as pd
 from enum import Enum
 from sqlite3 import Error
-from os import path
+from pathlib import Path
 
 __author__ = 'Gwendolyn O. Döbel'
 
 
-PATH_TO_DB_DATA = path.join(path.dirname(path.realpath(__file__)), 'database')
-PATH_TO_DB = path.join(PATH_TO_DB_DATA, 'data.db')
-VERSION_FILE = path.join(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
+PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')
+PATH_TO_DB = Path(PATH_TO_DB_DATA, 'data.db')
+VERSION_FILE = Path(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
 
 class ValidationCodes(Enum):
@@ -30,6 +31,25 @@ class ValidationCodes(Enum):
    MODELSEED_COMPOUNDS = 5,  # Only ModelSEED compounds table is in data.db
    BIGG_MSEED_COMPPOUNDS = 6,  # Only Bigg and ModelSEED compounds tables are in data.db
    SBO_MEDIA_MSEED_COMPOUNDS = 7  # Only SBO, media and ModelSEED compounds tables are in data.db
+   
+validation_messages = {
+   ValidationCodes.COMPLETE: 
+      'All tables in data up-to-date. Initialisation complete.',
+   ValidationCodes.EMPTY: 
+      'No table in data. An error must have occurred during initialisation.',
+   ValidationCodes.BIGG: 
+      'Data only contains the BiGG tables. Please check the remaining tables.',
+   ValidationCodes.SBO_MEDIA: 
+      'Data only contains the SBO and media tables. Please check the BiGG and ModelSEED tables.',
+   ValidationCodes.BIGG_SBO_MEDIA: 
+      'Data only contains the BiGG, SBO and media tables. Please check the ModelSEED table.',
+   ValidationCodes.MODELSEED_COMPOUNDS: 
+      'Data only contains the ModelSEED table. Please check the BiGG, SBO and media tables.',
+   ValidationCodes.BIGG_MSEED_COMPPOUNDS: 
+      'Data only contains the BiGG and ModelSEED tables. Please check the SBO and media tables.',
+   ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: 
+      'Data only contains the SBO, media and ModelSEED tables. Please check the BiGG tables.'
+}
 
 
 def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
@@ -53,7 +73,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    
    bigg_tables_contained = len([s for s in tables if re.match('^bigg_(?!to)(.*?)', s, re.IGNORECASE)]) == 2
    sbo_tables_contained = len([s for s in tables if re.match('(.*?)_sbo$', s, re.IGNORECASE)]) == 2
-   media_tables_contained = len([s for s in tables if re.match('media', s, re.IGNORECASE)]) == 2
+   media_tables_contained = len([s for s in tables if re.match('^medium(.*?)|^substance(.*?)', s, re.IGNORECASE)]) == 4
    sbo_media_tables_contained = sbo_tables_contained and media_tables_contained  # These can only occur together
    modelseed_cmpd_tbl_contained = len([s for s in tables if s == 'modelseed_compounds']) == 1
    
@@ -81,7 +101,7 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """
    print('Adding SBO and media tables...')
    
-   with open(path.join(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
+   with open(Path(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
 
 
@@ -93,8 +113,6 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
       - db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
    print('Adding BiGG tables...')
-   db_connection.execute('DROP TABLE IF EXISTS bigg_metabolites')
-   db_connection.execute('DROP TABLE IF EXISTS bigg_reactions')
    
    # Store currently used version
    with open(VERSION_FILE, 'w') as file:
@@ -104,13 +122,34 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    BIGG_MODELS_METABS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
    bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
-   bigg_models_metabs_df.to_sql('bigg_metabolites', db_connection, index=False)
+   bigg_models_metabs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
+   bigg_id_duplicates = bigg_models_metabs_df.duplicated(subset=['id'], keep=False)
+   bigg_id_duplicates_df = bigg_models_metabs_df[bigg_id_duplicates]
+   bigg_id_duplicates_set = set(bigg_id_duplicates_df['id'].tolist())
+   bigg_models_metabs_df[~bigg_id_duplicates].to_sql(
+      'bigg_metabolites', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={'id':'TEXT PRIMARY KEY'}
+      )
+   
+   if bigg_id_duplicates_set:
+      logging.warning(
+         'The BiGG metabolite table contains the following '
+         f'{len(bigg_id_duplicates_set)} duplicate(s):\n'
+         f'{bigg_id_duplicates_set}\n'
+         'Duplicate(s) are completely removed from the table.'
+         )
 
    # Create BiGG reactions table
    BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
    bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
-   bigg_models_reacs_df.to_sql('bigg_reactions', db_connection, index=False)
+   bigg_models_reacs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
+   bigg_models_reacs_df.to_sql(
+      'bigg_reactions', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={'id':'TEXT PRIMARY KEY'}
+      )
    
 
 def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: bool=True):
@@ -126,7 +165,7 @@ def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: boo
    # Check if BiGG database had an update
    LATEST_VERSION = requests.get(VERSION_URL).json()['bigg_models_version']
    
-   if not path.exists(VERSION_FILE) or is_missing:
+   if not Path.exists(VERSION_FILE) or is_missing:
       update_bigg_db(LATEST_VERSION, db_connection)
       
    else:
@@ -146,8 +185,16 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    print('Adding the ModelSEED compounds table...')
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
-   modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t')
-   modelseed_df.to_sql('modelseed_compounds', db_connection, index=False, if_exists='replace')
+   modelseed_df = pd.read_csv(io.StringIO(modelseed_compounds), sep='\t', dtype={'linked_compound': str}) #'mass': float, 
+   modelseed_df.to_sql(
+      'modelseed_compounds', db_connection, 
+      if_exists='replace', index=False, 
+      dtype={
+         'id':'TEXT PRIMARY KEY',
+         'mass': 'NUMERIC',
+         'linked_compound': 'TEXT'
+         }
+      )
     
          
 def initialise_database():
@@ -156,7 +203,7 @@ def initialise_database():
       After initialisation the database contains:
          - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
          - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 2 tables with names 'media' & 'media_composition'
+         - 2 tables with names 'medium', 'substance', 'medium2substance' & 'substance2db'
          - 1 table with name 'modelseed_compounds' 
    """
    # Initialise empty connection
@@ -211,7 +258,11 @@ def initialise_database():
    except Error as e:
       print(e)
    finally:
-      if con:
-         print('All tables in database up-to-date. Initialisation complete.')
-         con.close()
+      if con: con.close()
       
+      # Validate initialised database
+      con = sqlite3.connect(PATH_TO_DB)
+      cursor = con.cursor()
+      validity_code = is_valid_database(cursor)
+      print(validation_messages.get(validity_code))
+      con.close()

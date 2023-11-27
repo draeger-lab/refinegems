@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""The `gapfill` module can be used either with KEGG were you only need the KEGG organism ID or with BioCyc or with both (Options: 'KEGG', 'BioCyc', 'KEGG+BioCyc').
-    For how to obtain the BioCyc tables look into the documentation under 'Filling gaps with refineGEMs' > 'Automated gap filling'.
+"""The `gapfill` module can be used either with KEGG were you only need the KEGG organism code or with BioCyc or with both (Options: 'KEGG', 'BioCyc', 'KEGG+BioCyc').
+    For how to obtain the BioCyc tables look into the documentation under: 'Main modules' > 'Gap filling' > 'Automated gap filling'.
     
     Run times: 
     
@@ -38,12 +38,14 @@ def gff_gene_comp():
 '''
 
 
-def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
+def gap_analysis(model_libsbml: libModel, gff_file: str, organismid:str, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """| Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
        | to KEGG/BioCyc/both
 
     Args:
         - model_libsbml (libModel): Model loaded with libSBML
+        - gff_file (str): Path to RefSeq GFF file
+        - organismid (str): KEGG organism code
         - gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings 
         - filename (str): Path to output file for gapfill analysis result
         
@@ -71,30 +73,26 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
     result = None
     
     if db_to_compare not in ['KEGG', 'BioCyc', 'KEGG+BioCyc']:  # 'GFF', 
-        print(f'{Fore.RED}To use the module gapfill the parameter of db_to_compare has to be set to one of the following' 
-              + ' options:\n- \'KEGG\'\n- \'BioCyc\'\n- \'KEGG+BioCyc\'\nAdditionally, the required parameters' 
-              + ' for each option need to be specified.\n- \'biggreactions\' and \'gapfill\' are required for all options.'
-              + '\n- \'organismid\' is required only for the options \'KEGG\' and \'KEGG+BioCyc\'.\n- \'biocyc_tables\'' 
-              + ' is only required for the options \'BioCyc\' and \'KEGG+BioCyc\'.')  # \n- \'GFF\'
+        print(f'{Fore.RED}To analyze gaps in your model the parameter gap_analysis has to be set to TRUE. ' 
+              + 'In addition, db_to_compare has to be set to one of the following options:' 
+              + '\n- \'KEGG\'\n- \'BioCyc\'\n- \'KEGG+BioCyc\'\nand the required parameters' 
+              + ' for each option need to be specified.' 
+              + '\n- \'organismid\' and \'gff_file\' are only required for the options \'KEGG\' and \'KEGG+BioCyc\'.'
+              + '\n- \'biocyc_files\' is only required for the options \'BioCyc\' and \'KEGG+BioCyc\'.')  # \n- \'GFF\'
         return
    
     if db_to_compare == 'KEGG':
-        if gapfill_params['organismid']:
-            missing_kegg = rga_kegg.kegg_gene_comp(model_libsbml, 
-                                                   gapfill_params['organismid'], 
-                                                   gapfill_params['gff_file']
-                                                   )
+        if organismid:
+            missing_kegg = rga_kegg.kegg_gene_comp(model_libsbml, organismid, gff_file)
             result = missing_kegg
         else:
-            print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid is obligatory.\n' +
-                  'If there is no organismid available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
+            print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
+                  'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
                   'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
             # use one of the options \'BioCyc\' or \'GFF\'
         
     elif db_to_compare == 'BioCyc':
-        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
-                                                     gapfill_params['biocyc_files']
-                                                     )
+        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, gapfill_params['biocyc_files'])
         result = missing_biocyc
         
         ''' Implement here call of function that can be used with lab strain/organism which is in no database contained
@@ -106,14 +104,10 @@ def gap_analysis(model_libsbml: libModel, gapfill_params: dict[str: str], filena
         '''
         
     elif db_to_compare == 'KEGG+BioCyc':
-        missing_kegg_reacs = rga_kegg.kegg_gene_comp(model_libsbml, 
-                                               gapfill_params['organismid'], 
-                                               gapfill_params['gff_file']
-                                               )
+        missing_kegg_reacs = rga_kegg.kegg_gene_comp(model_libsbml, organismid, gff_file)
         missing_kegg_reacs.drop(['name', 'locus_tag', 'EC'], axis=1, inplace=True)
-        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, 
-                                                     gapfill_params['biocyc_files']
-                                                     )
+        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, gapfill_params['biocyc_files'])
+        
         stats, missing_biocyc_genes, missing_biocyc_metabs, missing_biocyc_reacs = missing_biocyc 
         missing_combined_reacs = missing_biocyc_reacs.merge(missing_kegg_reacs[['bigg_id', 'KEGG']], how='left', on='bigg_id')
         result = (stats, missing_biocyc_genes, missing_biocyc_metabs, missing_combined_reacs, missing_kegg_reacs)
