@@ -11,10 +11,10 @@ import numpy as np
 # from refinegems.io import load_medium_from_db_for_growth # only needed for the old ones
 from refinegems.database import medium
 from refinegems import reports
-from cobra import Reaction
 from cobra import Model as cobraModel
 import cobra
 import re
+from typing import Literal
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -23,13 +23,13 @@ __author__ = "Famke Baeuerle and Carolin Brune"
 ############################################################################
 
 # @TEST
-def set_bounds_to_default(model: cobraModel, reac_bounds = None):
+def set_bounds_to_default(model: cobraModel, reac_bounds:None|str|tuple[float] = None):
     """Set the reactions bounds of a model to given default values.
     (Ir)reversibility is retained.
 
     Args:
         model (cobraModel): The model loaded with COBRApy.
-        reac_bounds ([NoneType, str, tuple[float]], optional): The setting for the new reaction bounds. 
+        reac_bounds (None|str|tuple[float], optional): The setting for the new reaction bounds. 
             Defaults to None. If None or "cobra", uses the COBRApy in-built default values (-1000.0, 1000.0).
             The user can set personal values by entering a tuple of two floats.
 
@@ -68,7 +68,7 @@ def set_bounds_to_default(model: cobraModel, reac_bounds = None):
 
 
 # @TEST
-def get_uptake(model: cobraModel, type: str, exchange_regex='^EX') -> list[str]:
+def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[str]:
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
     Args:
@@ -184,7 +184,7 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
 
 
 # @TEST
-def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine=False):
+def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False):
     """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
     which can be added to the new one to enable growths.
 
@@ -227,7 +227,7 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
 # @TEST
 # @RENAMED 
 # @RESTRUCTURED
-def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[medium.Medium], only_additives=True) -> dict:
+def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[medium.Medium], only_additives:bool=True) -> dict:
     """
     Returns metabolites necessary for growth and not in media
 
@@ -259,13 +259,13 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
 
 
 # @TEST
-def growth_sim_single(model: cobraModel, m: medium.Medium, supplement = None, anaerobic = False) -> reports.SingleGrowthSimulationReport:
+def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[None,'std','min'] = None, anaerobic:bool = False) -> reports.SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
     Args:
         model (cobraModel): The model.
         m (medium.Medium): The medium.
-        supplement (str, optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
+        supplement (Literal[None,'std','min'], optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
         anaerobic (bool, optional): Set medium to anaerobic/aerobic. Defaults to False (aerobic growth).
 
@@ -342,7 +342,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 
 
 # @TODO
-# main objective: read in models and media from input (command line, YAML etc.) 
+# main objective: read in models and media from input (command line, YAML etc.) dict?
 # -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like)
 # -> run simulation 
 # -> visulise also here?
@@ -352,6 +352,9 @@ def growth_analysis():
     models = None
     # create / collect all media into list
     media = None
+
+    # where to get options like anaerobic, supplements, fluxes etc.????
+
     # run simulation
     report = growth_sim_multi(models, media)
     # save / visualise report 

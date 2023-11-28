@@ -53,6 +53,11 @@ class GrowthSimulationReport(Report):
         self.reports = reports
 
     def add_sim_results(self, new_rep: SingleGrowthSimulationReport):
+        """Add a new single growth report to the reports list
+
+        Args:
+            new_rep (SingleGrowthSimulationReport): The new simulation report.
+        """
 
         self.reports.append(new_rep)
 
@@ -63,7 +68,8 @@ class GrowthSimulationReport(Report):
             l.append(report.to_dict())
         return pd.DataFrame(l)
 
-
+    # @REWRITE to make it work with the new standard
+    # --> only heatmap if n-m
     def plot_heatmap_dt(self):
         """Creates heatmap of simulated doubling times with additives
         
@@ -109,6 +115,7 @@ class GrowthSimulationReport(Report):
         plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
         return fig
+    
 
     def plot_heatmap_native(growth: pd.DataFrame):
         """Creates a plot were if growth without additives is possible is marked from yellow to green otherwise black

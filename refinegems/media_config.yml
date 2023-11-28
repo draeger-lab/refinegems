@@ -1,0 +1,13 @@
+# basic parameters for loading media
+params:
+  - aerobic: True
+  - supplement: min
+# load media from the in-build database
+database:
+  - LB:
+    - anaerobic
+  - LB:
+    - aerobic
+  - SNM3:
+# load media from extern
+extern:

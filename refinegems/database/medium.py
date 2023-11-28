@@ -118,7 +118,7 @@ class Medium:
             # remove dioxygen // O2 from the substance table
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
 
-
+    # @IDEA: provide dict with names and fluxes to set some of them separatly if user wishes to do so - or separate function?
     def set_default_flux(self,flux:float =10.0, replace:bool =False, double_o2:bool =True):
         """Set a default flux for the model.
 
@@ -127,13 +127,16 @@ class Medium:
             replace (bool, optional): 
             double_o2 (bool, optional): Tag to double the flux for oxygen only. Works only with replace=True. Defaults to True.
         """
-
+        # replace fluxes
         if replace:
             self.substance_table['flux'] = flux
             if self.is_aerobic() and double_o2:
                 self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = 2*flux
+        # keep already set fluxes
         else:
             self.substance_table['flux'] = self.substance_table['flux'].fillna(flux)
+            if self.is_aerobic() and double_o2 and self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'].isna():
+                self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = 2*flux
 
 
     def combine(self,other:'Medium') -> 'Medium':
