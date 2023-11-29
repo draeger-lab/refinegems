@@ -1,13 +1,44 @@
+# Configuration file for loading media for testing / simulating models
+
 # basic parameters for loading media
+#
+# setting these parameters will set a default for all media, if they are not overwritten by the setting in the next part
+# all options can be commented out, if having a default is not in the user's interest
+#
+# options:
+#   aerobic: True|False
+#            Sets if the media will be aerobic or not. Default does not change the current media definitions, without checking them.
+#   supplement: None|std|min
+#               sets whether or not the media will be supplement to enable growth. Default is None
 params:
-  - aerobic: True
-  - supplement: min
-# load media from the in-build database
-database:
-  - LB:
-    - anaerobic
-  - LB:
-    - aerobic
-  - SNM3:
-# load media from extern
-extern:
+  aerobic: True
+  supplement: None
+# default_flux: 10.0
+# o2_percent: 1.0
+
+# load media from the in-build database and/or external sources
+# more explaination
+
+#   base
+#   external_base
+#   add_external
+#   aerobic
+#   supplement
+#   default_flux
+#   o2_percent
+
+media:
+  LB:
+    aerobic: False
+  LB_o2:
+    base: LB
+  SNM3:
+    supplement: min
+  M9:
+    add: 
+      - aa
+      - SNM3
+  PERS:
+    external_base: link
+    add_external:
+      - link

@@ -137,6 +137,18 @@ class Medium:
             self.substance_table['flux'] = self.substance_table['flux'].fillna(flux)
             if self.is_aerobic() and double_o2 and self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'].isna():
                 self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = 2*flux
+        
+    def set_oxygen_percentage(self, perc:float=1.0):
+        """Set oxygen percentage of the medium.
+
+        Args:
+            perc (float, optional): Percentage of oxygen. Defaults to 1.0 (= 100%)
+        """
+
+        if self.is_aerobic():
+            self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] * perc
+        else:
+            warnings.warn(f'WARNING: no oxygen detected in medium {self.name}, cannot set oxygen percentage.')
 
 
     def combine(self,other:'Medium') -> 'Medium':
@@ -153,7 +165,7 @@ class Medium:
         combined.name = self.name + '+' + other.name
         combined.description = f'Combined medium contructed from {self.name} and {other.name}.'
         combined.substance_table = pd.concat([combined.substance_table, other.substance_table], ignore_index=True)
-        combined.doi = self.doi + ', ' + other.doi
+        combined.doi = str(self.doi) + ', ' + str(other.doi)
 
         # remove fluxes and sources, as they are no longer a fit
         combined.substance_table['flux'] = None
@@ -179,7 +191,7 @@ class Medium:
             type(str): The type of subset to be added. Choices are 'aa' and 'casamino'.
 
         Returns:
-            medium: A new medium that is the combination of the set subset and the old one.
+            Medium: A new medium that is the combination of the set subset and the old one.
         """
 
         # get substance names based on type
@@ -211,7 +223,7 @@ class Medium:
         aa_medium = Medium(name=type, substance_table=substances, description=type)
 
         # combine with current one 
-        return self.add(aa_medium)
+        return self + aa_medium 
 
 
     # functions for export table

@@ -10,11 +10,13 @@ import pandas as pd
 import numpy as np
 # from refinegems.io import load_medium_from_db_for_growth # only needed for the old ones
 from refinegems.database import medium
+from refinegems.io import load_multiple_models, load_model_cobra
 from refinegems import reports
 from cobra import Model as cobraModel
 import cobra
 import re
 from typing import Literal
+import yaml
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -313,12 +315,15 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[No
 
 
 # @TEST
-def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium]) -> reports.GrowthSimulationReport:
+def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium], supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> reports.GrowthSimulationReport:
     """Simulate the growth of (at least one) models on (at least one) media.
 
     Args:
         models (cobraModel | list[cobraModel]): A COBRApy model or a list of multiple.
         media (medium.Medium | list[medium.Medium]): A refinegems Medium object or a list of multiple.
+        supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional): Option to supplement the media to enable growth.
+            Default to None. Further options include a list with one entry for each medium or a string to set the same default for all.
+            The string can be 'min', 'std' or None.
 
     Returns:
         reports.GrowthSimulationReport: The compiled information of the simulation results.
@@ -329,34 +334,171 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
         models = [models]
     if type(media) != list:
         media = [media]
+    if type(supplement_modes) != list:
+        supplement_modes = [supplement_modes * len(media)]
 
     # simulate the growth of the models on the different media
     report = reports.GrowthSimulationReport()
     for mod in models:
-        for med in media:
+        for med,supp in zip(media, supplement_modes):
             o2_check = med.is_aerobic()
-            r = growth_sim_single(mod, med, anaerobic = not o2_check)
+            r = growth_sim_single(mod, med, anaerobic = not o2_check, supplement=supp)
             report.add_sim_results(r)
 
     return report     
 
+
+# @IDEA: more options for fluxes
+def read_media_config(yaml_path:str):
+
+    media_list = []
+    supplement_list = []
+
+    with open(yaml_path, 'r') as stream:
+
+        loaded = yaml.safe_load(stream)
+
+        # ........................
+        # @TODO / MAYBE
+        # check validity of input?
+        # ........................
+
+        params = loaded['params'] if 'params' in loaded.keys() else None
+        media = loaded['media'] if 'media' in loaded.keys() else None
+
+        # handle internal/in-build media compositions
+        if media:
+
+            for name,p in media.items():
+
+                # load base medium from either  
+                # base
+                if p and 'base' in p.keys():
+                    new_medium = medium.load_medium_from_db(p['base'])
+                    new_medium.name = name
+                # extern
+                elif p and 'external_base' in p.keys():
+                    new_medium = medium.read_external_medium(p['external_base'])
+                    new_medium.name = name
+                # default name
+                else:
+                    new_medium = medium.load_medium_from_db(name)
+                
+                # add additional media 
+                # from in-build database
+                if p and 'add' in p.keys():
+                    for a in p['add']:
+                        if a in medium.SUBSET_MEDIA_MAPPING.keys():
+                            new_medium = new_medium.add_subset(a)
+                        else:
+                            new_medium = new_medium + medium.load_medium_from_db(a)
+                # from external
+                if p and 'add_external' in p.keys():
+                    for a in p['add_external']:
+                        new_medium = new_medium + medium.read_external_medium(a)
+                
+                # check anaerobic / aerobic settings
+                if p and 'aerobic' in p.keys():
+                    if p['aerobic']:
+                        new_medium.make_aerobic()
+                    else:
+                        new_medium.make_anaerobic()
+                else:
+                    if params and 'aerobic' in params.keys():
+                        if params['aerobic']:
+                            new_medium.make_aerobic()
+                        else:
+                            new_medium.make_anaerobic()
+
+                # set default flux
+                if p and 'default_flux' in p.keys():
+                    new_medium.set_default_flux(p['default_flux'], replace=True)
+                elif params and 'default_flux' in params.keys():
+                    new_medium.set_default_flux(params['default_flux'], replace=True)
+
+                # set o2_percentage
+                if p and 'o2_percent' in p.keys():
+                    new_medium.set_oxygen_percentage(p['o2_percent'])
+                elif params and 'o2_percemt' in params.keys():
+                    new_medium.set_oxygen_percentage(params['o2_percent'])
+
+                # supplement settings
+                if p and 'supplement' in p.keys():
+                    supplement_list.append(p['supplement'])
+                elif params and 'supplement' in params:
+                    supplement_list.append(params['supplement'])
+                else:
+                    supplement_list.append(None)
+                    
+                # append medium to list
+                media_list.append(new_medium)
+
+    return (media_list,supplement_list)
 
 # @TODO
 # main objective: read in models and media from input (command line, YAML etc.) dict?
 # -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like)
 # -> run simulation 
 # -> visulise also here?
-def growth_analysis():
+def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
+                    media:medium.Medium|list[medium.Medium]|str):
 
-    # read-in / collect all models into list
-    models = None
-    # create / collect all media into list
-    media = None
-
-    # where to get options like anaerobic, supplements, fluxes etc.????
+    # read-in all models into list
+    # ----------------------------
+    mod_list = []
+    match models:
+        case list():
+            # list as input
+            if len(models) > 0:
+                # if list entries are paths
+                if all(isinstance(_, str) for _ in models):
+                    mod_list = load_multiple_models(models, package='COBRApy')
+                # if list entries are already cobra.Models
+                elif all(isinstance(_, cobra.Model) for _ in models):
+                    mod_list = models
+                # @TODO
+                # option for mixed list?
+                else:
+                    raise TypeError('Unknown or mixed types in model list.')
+            else:
+                raise KeyError('Empty list for models detected.')
+        # single model as input
+        case cobra.Model():
+            mod_list = [cobra.Model]
+        # single string as input
+        case str():
+            mod_list = [load_model_cobra(models)]
+        # unknown input
+        case _:
+            raise ValueError(F'Unknown input type for models: {type(models)}')
+        
+    # collect all media into list
+    # ---------------------------
+    media_list = []
+    match media:
+        # single medium
+        case medium.Medium():
+            media_list = [media]
+        # list of media
+        case list():
+            if all(isinstance(_,medium.Medium) for _ in media):
+                media_list = media
+            else:
+                raise TypeError('Unknown type found in media, should be list fo medium.Medium.')
+        # string - connection to YAML config file
+        case str():
+            # @TODO
+            media, supplements = read_media_config(media)
+        # unknown input
+        case _:
+            raise ValueError(f'Unknown input for media: {media}')
 
     # run simulation
+    # --------------
     report = growth_sim_multi(models, media)
+    
+    return report
+
     # save / visualise report 
     pass
 
