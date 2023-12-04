@@ -135,7 +135,7 @@ class Medium:
         # keep already set fluxes
         else:
             self.substance_table['flux'] = self.substance_table['flux'].fillna(flux)
-            if self.is_aerobic() and double_o2 and self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'].isna():
+            if self.is_aerobic() and double_o2 and self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'].any():
                 self.substance_table.loc[self.substance_table['name']=='Dioxygen [O2]','flux'] = 2*flux
         
     def set_oxygen_percentage(self, perc:float=1.0):

@@ -17,6 +17,7 @@ import cobra
 import re
 from typing import Literal
 import yaml
+import matplotlib.pyplot as plt
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -261,7 +262,7 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
 
 
 # @TEST
-def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[None,'std','min'] = None, anaerobic:bool = False) -> reports.SingleGrowthSimulationReport:
+def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[None,'std','min'] = None) -> reports.SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
     Args:
@@ -269,21 +270,20 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[No
         m (medium.Medium): The medium.
         supplement (Literal[None,'std','min'], optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
-        anaerobic (bool, optional): Set medium to anaerobic/aerobic. Defaults to False (aerobic growth).
 
     Returns:
         reports.SingleGrowthSimulationReport: Object with the simulation results
     """
 
     with model:
-        # check for (an)aerobic conditions
-        if anaerobic and m.is_aerobic():
-            m.make_anaerobic()
-        if not anaerobic and not m.is_aerobic():
-            m.make_aerobic(flux=10.0)
 
         # convert to a cobrapy medium
-        exported_m = medium.medium_to_model(medium=m, model=model, add=False)
+        exported_m = medium.medium_to_model(medium=m, model=model, 
+                                            namespace='BiGG', 
+                                            default_flux=10.0, 
+                                            replace=False, 
+                                            double_o2=False, 
+                                            add=False)
 
         # supplement, if tag is set
         match supplement:
@@ -314,7 +314,6 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[No
     return report
 
 
-# @TEST
 def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium], supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> reports.GrowthSimulationReport:
     """Simulate the growth of (at least one) models on (at least one) media.
 
@@ -341,14 +340,14 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
     report = reports.GrowthSimulationReport()
     for mod in models:
         for med,supp in zip(media, supplement_modes):
-            o2_check = med.is_aerobic()
-            r = growth_sim_single(mod, med, anaerobic = not o2_check, supplement=supp)
+            r = growth_sim_single(mod, med, supplement=supp)
             report.add_sim_results(r)
 
     return report     
 
 
 # @IDEA: more options for fluxes
+# @TODO/@IDEA: validity check nefore parsing
 def read_media_config(yaml_path:str):
 
     media_list = []
@@ -436,12 +435,15 @@ def read_media_config(yaml_path:str):
     return (media_list,supplement_list)
 
 # @TODO
+# @IDEA : choose different namespaces for the media
 # main objective: read in models and media from input (command line, YAML etc.) dict?
-# -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like)
-# -> run simulation 
+# -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like) : CHECK
+# -> run simulation : CHECK
 # -> visulise also here?
 def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
-                    media:medium.Medium|list[medium.Medium]|str):
+                    media:medium.Medium|list[medium.Medium]|str,
+                    supplements:None|list[Literal[None,'std','min']]=None,
+                    retrieve:Literal['report','plot','both']='plot') -> reports.GrowthSimulationReport|plt.Figure|tuple:
 
     # read-in all models into list
     # ----------------------------
@@ -452,7 +454,7 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
             if len(models) > 0:
                 # if list entries are paths
                 if all(isinstance(_, str) for _ in models):
-                    mod_list = load_multiple_models(models, package='COBRApy')
+                    mod_list = load_multiple_models(models, package='cobra')
                 # if list entries are already cobra.Models
                 elif all(isinstance(_, cobra.Model) for _ in models):
                     mod_list = models
@@ -487,7 +489,6 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                 raise TypeError('Unknown type found in media, should be list fo medium.Medium.')
         # string - connection to YAML config file
         case str():
-            # @TODO
             media, supplements = read_media_config(media)
         # unknown input
         case _:
@@ -495,12 +496,19 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
 
     # run simulation
     # --------------
-    report = growth_sim_multi(models, media)
-    
-    return report
+    report = growth_sim_multi(mod_list, media, supplements)
 
     # save / visualise report 
-    pass
+    # -----------------------
+    match retrieve:
+        case 'report':
+            return report
+        case 'plot':
+            return report.plot_growth()
+        case 'both':
+            return (report, report.plot_growth)
+        case _:
+            raise ValueError(f'Unknown input for retrieve: {retrieve}')
 
 
 # @RENAMED

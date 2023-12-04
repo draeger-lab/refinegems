@@ -32,13 +32,15 @@ media:
     aerobic: False
   LB_o2:
     base: LB
+    default_flux: 5.0
+    o2_percent: 2.0
   SNM3:
-    supplement: min
+#    supplement: min
   M9:
-    add: 
-      - aa
-      - SNM3
-  PERS:
-    external_base: link
-    add_external:
-      - link
+#    add: 
+#      - aa
+#      - SNM3
+#  PERS:
+#    external_base: link
+#    add_external:
+#      - link

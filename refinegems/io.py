@@ -23,7 +23,7 @@ from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
-from typing import Union
+from typing import Union, Literal
 
 __author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
@@ -56,12 +56,12 @@ def load_model_libsbml(modelpath: str) -> libModel:
     return mod
 
 
-def load_multiple_models(models: list[str], package: str) -> list:
+def load_multiple_models(models: list[str], package: Literal['cobra','libsbml']) -> list:
     """Loads multiple models into a list
 
     Args:
         - models (list): List of paths to models
-        - package (str): COBRApy|libSBML
+        - package (str): cobra|libsbml
 
     Returns:
         list: List of model objects loaded with COBRApy|libSBML
