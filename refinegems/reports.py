@@ -11,6 +11,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import seaborn as sns
 import warnings
 from typing import Literal
@@ -266,3 +267,47 @@ class GrowthSimulationReport(Report):
             raise IndexError('Can only plot growth if at least one model and one medium are present.')
 
         
+    # @TEST    
+    # @EXTEND : more options for saving the report e.g. html or pdf
+    def save(self, to:str, how:Literal['dir']='dir', check_overwrite:bool=True, color_palette:str='YlGn'):
+        """Save the report. Current options include:
+
+        - 'dir': save the report to a directory, including a txt and two graphics
+        - .... see future updates .....
+
+        Args:
+            to (str): Path to a directory to save the report to.
+            how (Literal['dir'], optional): How to save the report. 
+                For options see functions description. 
+                Defaults to 'dir'.
+            check_overwrite (bool, optional): Flag to choose to check for existing directory/files of same name 
+                or just to overwrite them. Defaults to True.
+            color_palette (str, optional): A colour gradient from the matplotlib library.
+                If the name does not exist, uses the default. 
+                Defaults to 'YlGn'.
+
+        Raises:
+            ValueError: If the parameter 'how' is given something unexpected.
+        """
+
+        match how:
+            # save to a new directory
+            case 'dir':
+                # make sure given directory path ends with '/'
+                    if not to.endswith('/'):
+                        to = to + '/'
+                    # create directory to save report to
+                    dir_path = to + 'GrowthSimReport/'
+                    Path(dir_path).mkdir(parents=True, exist_ok=check_overwrite)
+                    # save the report
+                    with open(dir_path + 'report.txt', 'w') as f:
+                        f.write(str(self))
+                    # save visualisation for doubling time
+                    fig_dt = self.plot_growth(color_palette=color_palette)
+                    fig_dt.savefig(dir_path + 'report_vis_dt.png', bbox_inches='tight')
+                    # save visualisation for growth rate 
+                    fig_dt = self.plot_growth(unit='h', color_palette=color_palette)
+                    fig_dt.savefig(dir_path + 'report_vis_h.png', bbox_inches='tight')
+
+            case _:
+                raise ValueError(f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.')
