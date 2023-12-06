@@ -26,7 +26,7 @@ class ValidationCodes(Enum):
    COMPLETE = 0,  # All tables are in data.db
    EMPTY = 1,  # data.db is either empty or incorrect
    BIGG = 2,  # Only BiGG tables are in data.db
-   SBO_MEDIA = 3,  # Only SBO & Media tables are in data.db (Can only occurr together) 
+   SBO_MEDIA = 3,  # Only SBO & Media tables are in data.db
    BIGG_SBO_MEDIA = 4,  # Only BiGG, SBO and media tables are in data.db 
    MODELSEED_COMPOUNDS = 5,  # Only ModelSEED compounds table is in data.db
    BIGG_MSEED_COMPPOUNDS = 6,  # Only Bigg and ModelSEED compounds tables are in data.db
@@ -56,7 +56,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    """Verifies if database has:
          - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
          - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 2 tables with names 'media' & 'media_composition'
+         - 4 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance'
          - 1 table with name 'modelseed_compounds'
    
    Args:
@@ -93,15 +93,18 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 
 def create_sbo_media_database(db_cursor: sqlite3.Cursor):
-   """Creates the SBO annotation database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo')
-      & the media database with 2 tables ('media', 'media_compositions') from file './data/database/sbo_media_db.sql'
+   """Creates the SBOannotator database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo') from file './data/database/sbo_mapping_db.sql'
+      & the media database with 4 tables ('medium', 'substance', 'substance2db', 'medium2substance') from file './data/database/media_db.sql'
 
    Args:
       - db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
    """
-   print('Adding SBO and media tables...')
-   
-   with open(Path(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
+   print('Adding SBO tables...')
+   with open(Path(PATH_TO_DB_DATA, 'sbo_mapping_db.sql')) as schema:
+      db_cursor.executescript(schema.read())
+      
+   print('Adding media tables...')
+   with open(Path(PATH_TO_DB_DATA, 'media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
 
 
@@ -109,7 +112,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
    """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
    Args:
-      - latest_version (str): String containing the latest version of the BiGG database
+      - latest_version (str): String containing the Path to a file with the latest version of the BiGG database
       - db_connection (sqlite3.Connection): Open connection to the database (data.db)
    """
    print('Adding BiGG tables...')
@@ -203,7 +206,7 @@ def initialise_database():
       After initialisation the database contains:
          - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
          - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 2 tables with names 'medium', 'substance', 'medium2substance' & 'substance2db'
+         - 4 tables with names 'medium', 'substance', 'medium2substance' & 'substance2db'
          - 1 table with name 'modelseed_compounds' 
    """
    # Initialise empty connection
