@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-""" Provides functions to simulate growth on any medium
-
-@REWRITE
-Tailored to work with the media denoted in the local db, should work with any medium as long as its defined in a csv with ; as delimiter and BiGG Ids for the compounds. Use refinegems.io.load_medium_custom and hand this to the growth_one_medium_from_default or growth_one_medium_from_minimum function.
+""" Provides functions to simulate growth on any medium and other functionalities replated to growth.
 """
 
 import logging
@@ -434,12 +431,8 @@ def read_media_config(yaml_path:str):
 
     return (media_list,supplement_list)
 
-# @TODO
+
 # @IDEA : choose different namespaces for the media
-# main objective: read in models and media from input (command line, YAML etc.) dict?
-# -> compile a complete list media (load, add information about anaerobic, additives, fluxes and the like) : CHECK
-# -> run simulation : CHECK
-# -> visulise also here?
 def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                     media:medium.Medium|list[medium.Medium]|str,
                     supplements:None|list[Literal[None,'std','min']]=None,

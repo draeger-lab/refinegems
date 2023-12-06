@@ -9,6 +9,8 @@ import sys
 import tabulate
 import warnings
 from typing import Literal, Union
+import random
+import string
 
 __author__ = "Carolin Brune"
 
@@ -525,7 +527,7 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
     """
 
     # read in the table
-    substance_table = pd.read_csv(path, sep='\t')
+    substance_table = pd.read_csv(path, sep='\t', comment='#')
 
     # validate the table
     substance_cols = substance_table.columns
@@ -545,15 +547,22 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 
     return substance_table
 
-
-def read_external_medium(how:str) -> Medium:
+# @TEST file flag for how
+def read_external_medium(how:str, **kwargs) -> Medium:
     """Read in an external medium. 
 
     Currently available options for how:
     - 'console': read in medium via the console
+    - 'file': read in medium from a file, requires a 'path=str' argument to be passed.
+
+    About the format (console, file):
+    The substances have to be saved in a TSV file table (format see :py:func:`read_substances_from_file`).
+    Further information for the 'file' option have to added as comments in the format: `# info_name: info`.
+    Information should but do not need to contain name, description and reference.
 
     Args:
         how (str): How (or from where) the medium should be read in.
+            Available options are given above.
 
     Raises:
         ValueError: Unknown description for how.
@@ -585,11 +594,45 @@ def read_external_medium(how:str) -> Medium:
 
             return new_medium
         
-        # .......................................................
-        # TODO
-        #    construct a case to read from a file or a list or so
-        #    to read in multiple media from a list
-        # .......................................................
+        # read from a file 
+        case 'file':
+
+            # get info from comments
+            infos = {}
+            with open(kwargs['path'], 'r') as f:
+                for line in f:
+                    # parse the comment lines from the file
+                    if line.startswith('#'):
+                        k,v = line.split(':')
+                        k = k[1:].strip()
+                        v = v.strip()
+                        infos[k] = v
+                    else:
+                        break
+            # retrieve important infos and supplement missing
+            if 'name' in infos.keys():
+                name = infos['name']
+            else:
+                warnings.warn('No name found for externally loaded medium. Setting random one.')
+                name = 'noname_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            
+            if 'description' in infos.keys():
+                description = infos['description']
+            else:
+                description = None
+            
+            if 'reference' in infos.keys():
+                reference = infos['reference']
+            else:
+                reference = None
+
+            # get substances
+            substances = read_substances_from_file(kwargs['path'])
+
+            # construct medium
+            new_medium = Medium(name=name, description=description, substance_table=substances, doi=reference)
+
+            return new_medium
 
         # unknown case, raise error
         case _:
