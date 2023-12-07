@@ -11,6 +11,7 @@ import warnings
 from typing import Literal, Union
 import random
 import string
+from sqlite_dump import iterdump
 
 __author__ = "Carolin Brune"
 
@@ -20,7 +21,7 @@ __author__ = "Carolin Brune"
 
 PATH_TO_DB = Path(Path(__file__).parent.resolve(), 'data.db')
 
-ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'ChEBI', 'KEGG']
+ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
 
 # subset addable to media
@@ -582,7 +583,7 @@ def read_external_medium(how:str, **kwargs) -> Medium:
             description = input('Enter a short description for the medium:\n')
 
             # promt for description 
-            reference = input('Enter the reference linke (DOI) for the medium:\n')
+            reference = input('Enter the reference link (DOI) for the medium:\n')
 
             # prompt for path to substance table
             substance_path = input('Enter a path to a table of substances (TSV):\n')
@@ -812,7 +813,7 @@ def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection
 
 def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
     """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
-    Enters a new entry in the substance2db table after checking is has yet to be added.
+    Enters a new entry in the substance2db table after checking if it has yet to be added.
 
     Args:
         row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
@@ -831,12 +832,13 @@ def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection,
             connection.commit()
 
 
-def enter_medium_into_db(database: str, medium: Medium):
+def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
     """Enter a new medium to an already existing database.
 
     Args:
         database (str): Path to the database.
         medium (Medium): A medium object to be added to the database.
+        update (bool): Specifies if an existing medium should be updated or a new medium is added 
     """
 
     # build connection to DB
@@ -849,7 +851,7 @@ def enter_medium_into_db(database: str, medium: Medium):
     sid_substance = get_last_idx_table('substance', connection, cursor)
     sid_substance2db = get_last_idx_table('substance2db', connection, cursor)
 
-    # try to add a new medium to the database
+    # try to add a new/updated medium to the database
     try:
 
         # name
@@ -857,14 +859,14 @@ def enter_medium_into_db(database: str, medium: Medium):
         #   enter into database, if no problem remains 
         name_check_res = cursor.execute("SELECT 1 FROM medium WHERE medium.name = ?", (medium.name,))
         name_check = name_check_res.fetchone()
-        if not name_check:
+        if not (name_check and update): # Medium name is unique & no update is requested
             # medium name is unique 
             # add medium to DB
             cursor.execute("INSERT INTO medium VALUES(?,?,?,?)",(None,medium.name,medium.description,medium.doi,))
-        else:
+        elif name_check and not update: # Medium name already exists & no update is requested
             # medium name already in DB 
-            check = input('The name {medium.name} is already in the database.\nDo you want to set a new name? (yes/no): ')
-            if check in ['y','yes']:
+            check_new = input('The name {medium.name} is already in the database.\nDo you want to set a new name? (yes/no): ')
+            if check_new in ['y','yes']:
                 # set a new name
                 while True:
                     new_name = input('Please enter a medium name:\n')
@@ -874,13 +876,26 @@ def enter_medium_into_db(database: str, medium: Medium):
                     else:
                         medium.name = new_name
                         break
-            elif check in ['n','no']:
+            elif check_new in ['n','no']:
                 # end program when no new name is set
                 print('No new name chosen. Ending the program.')
                 sys.exit()
             else:
                 # Abort program at unknown input
+                sys.exit('Unknown input. Aborting.')        
+        elif not name_check and update: # Medium name is unique, BUT update was requested
+            # Medium name not in DB 
+            check_update = input('The name {medium.name} is not in the database yet.\nDo you want to add a new medium instead? (yes/no): ')
+            if check_update in ['y','yes']:
+                enter_medium_into_db(database, medium)
+            elif check_update in ['n','no']:
+                # end program when user did not use the update flag incorrectly
+                print('No medium can be updated with the provided medium. Ending the program.')
+                sys.exit()
+            else:
+                # Abort program at unknown input
                 sys.exit('Unknown input. Aborting.')
+            
         
         connection.commit()
         res = cursor.execute("SELECT last_insert_rowid() FROM medium")
@@ -943,6 +958,30 @@ def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG', defa
 # possible entry points
 ############################################################################
 
+# Function to extract SQL schema with updated SBO/media tables
+def updated_db_to_schema():
+    """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
+    """
+    # Not needed to be included in Schema
+    NOT_TO_SCHEMA = [
+        'BEGIN TRANSACTION;', 'COMMIT;', 
+        'bigg_to_sbo', 'ec_to_sbo',
+        'bigg_metabolites', 'bigg_reactions', 
+        'modelseed_compounds'
+        ]
+    counter = 0 # To count rows in newly generated file
+    
+    conn = sqlite3.connect(PATH_TO_DB)
+    with open('./updated_sbo_media_db.sql', 'w') as file:
+        for line in iterdump(conn):
+            if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
+                if 'CREATE TABLE' in line and counter != 0:
+                    file.write(f'\n\n{line}\n')
+                else: file.write(f'{line}\n')
+                counter += 1
+    conn.close()
+
+
 # entry point for entering a medium using the command line
 # TODO since database is part of package, direct accessing possible
 def add_medium(database:str):
@@ -952,3 +991,6 @@ def add_medium(database:str):
 
     # add to database
     enter_medium_into_db(database, medium)
+    
+    # Generate updated SQl schema
+    updated_db_to_schema()
