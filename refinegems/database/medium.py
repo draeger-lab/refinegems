@@ -603,8 +603,10 @@ def read_external_medium(how:str, **kwargs) -> Medium:
                 for line in f:
                     # parse the comment lines from the file
                     if line.startswith('#'):
-                        k,v = line.split(':')
+                        l = line.split(':')
+                        k = l[0]
                         k = k[1:].strip()
+                        v = "".join(l[1:])
                         v = v.strip()
                         infos[k] = v
                     else:
