@@ -6,7 +6,6 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import sys
-import tabulate
 import warnings
 from typing import Literal, Union
 import random
@@ -53,12 +52,13 @@ class Medium:
         doi (str): Reference(s) to the original publication of the medium. Defaults to None.
     """
 
-    def __init__(self, name:str, substance_table:pd.DataFrame, description:str=None, doi:str=None):
+    def __init__(self, name:str, substance_table:pd.DataFrame=pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']), description:str=None, doi:str=None):
         """Initialise a Medium object.
 
         Args:
             name (str): The name or abbreviation of the medium.
-            substance_table (pd.DataFrame):  A table containing information about the medium in silico compounds. Long format.
+            substance_table (pd.DataFrame, optional):  A table containing information about the medium in silico compounds. Long format.
+                Defaults to an empty table with the columns ['name','formula','flux','source','db_id','db_type'].
             description (str, optional): Short description of the medium.. Defaults to None.
             doi (str, optional): Reference(s) to the original publication of the medium.. Defaults to None.
         """
@@ -182,7 +182,6 @@ class Medium:
     
     def __add__(self,other:'Medium') -> 'Medium':
         return self.combine(other)
-    
 
     def add_subset(self, type: Literal['aa', 'casamino']) -> 'Medium':
         """Add a subset of substances to the medium, returning a newly generated one.

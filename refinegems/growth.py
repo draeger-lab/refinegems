@@ -15,6 +15,7 @@ import re
 from typing import Literal
 import yaml
 import matplotlib.pyplot as plt
+import warnings
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -582,4 +583,88 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
 
     return adds
 
+
+# @TEST
+# from SPECIMEN
+# auxothrophy test 
+def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG']='BiGG') -> dict[dict[str,float]]:
+    """Test for amino acid auxothrophies for a model and a list of media.
+
+    Tests, if the model growths on the media and if and with what fluxes the
+    20 proteinogenic amino acids are produced by temporarily adding a
+    sink reaction for each of the amino acids to the model as the objective function.
+
+    Args:
+        model (cobraModel): The model to be tested. Loaded with COBRApy.
+        media_list (list[medium.Medium]): List of media to be tested.
+        namespace (Literal['BiGG'], optional): String for the namespace to be used for the model. 
+            Current options include 'BiGG'.
+            Defaults to 'BiGG'.
+
+    Raises:
+        ValueError: Unknown input for namespace parameter.
+
+    Returns:
+        dict[dict[str,float]]: The test results as a dictionary of the media names as keys with dictionaries of the amino acids names and growth flux rates of the sink reaction as values.
+    """
+
+    results = {}
+
+    # get amino acids from database
+    amino_acids = medium.Medium('aa').add_subset(type='aa')
+    aa_list = set(amino_acids.substance_table['name'])
+
+    # iterate over all media
+    for med in media_list:
+        auxotrophies = {}
+        # then iterate over all amino acids
+        for a in aa_list:
+
+            entry = med.substance_table[(med.substance_table['name'] == a) & (med.substance_table['db_type'] == namespace)]
+
+            with model as m:
+
+                # first set the medium
+                medium.medium_to_model(m, med, namespace=namespace, default_flux=10.0, replace=False, double_o2=False, add=True)
+                
+                # check namespace availability
+                if len(entry) == 0:
+                    warnings.warn('Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one.')
+                    auxotrophies[a] = m.optimize().objective_value
+                else:
+                    
+                    # create and check IDs for the chosen namespace
+                    match namespace:
+                        case 'BiGG':
+                            internal_meta = ""
+                            for np_id in entry['db_id']:
+                                if np_id + '_c' in [_.id for _ in m.metabolites]:
+                                    internal_meta = np_id + '_c'
+                                    break
+                            if internal_meta == "":
+                                warnings.warn(F'No identifier matched in cytosol for {a}.')
+
+                            exchange_reac = 'EX_' + internal_meta
+                            sink_reac = F'sink_{internal_meta}_tmp'
+                        case _:
+                            raise ValueError('Unknown namespace: {namespace}. Cannot create IDs.')
+                                
+                # create a pseudo reaction -> a sink reaction for the amino acid
+                # to use as the new objective
+                if internal_meta == "":
+                    pass
+                else:
+                    m.add_boundary(m.metabolites.get_by_id(internal_meta), type='sink', reaction_id=sink_reac)
+                    m.objective = sink_reac
+                    # if existent, close the exchange reaction
+                    if exchange_reac in [_.id for _ in m.exchanges]:
+                        m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
+                        m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
+                # and calculate the new objective
+                auxotrophies[a] = m.optimize().objective_value()
+
+            # add the current test results to the list of all results
+            results[med.name] = auxotrophies
+
+    return results
 
