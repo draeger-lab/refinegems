@@ -5,7 +5,6 @@
 import logging
 import pandas as pd
 import numpy as np
-# from refinegems.io import load_medium_from_db_for_growth # only needed for the old ones
 from refinegems.database import medium
 from refinegems.io import load_multiple_models, load_model_cobra
 from refinegems import reports
@@ -14,7 +13,9 @@ import cobra
 import re
 from typing import Literal
 import yaml
+import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
 import warnings
 
 __author__ = "Famke Baeuerle and Carolin Brune"
@@ -22,6 +23,9 @@ __author__ = "Famke Baeuerle and Carolin Brune"
 ############################################################################
 # functions
 ############################################################################
+
+# growth simulation and more
+# --------------------------
 
 # @TEST
 def set_bounds_to_default(model: cobraModel, reac_bounds:None|str|tuple[float] = None):
@@ -584,10 +588,14 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
     return adds
 
 
+
+# auxotrophy simulation
+# ---------------------
+
 # @TEST
 # from SPECIMEN
-# auxothrophy test 
-def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG']='BiGG') -> dict[dict[str,float]]:
+# auxotrophy test 
+def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG']='BiGG') -> pd.DataFrame:
     """Test for amino acid auxothrophies for a model and a list of media.
 
     Tests, if the model growths on the media and if and with what fluxes the
@@ -605,7 +613,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
         ValueError: Unknown input for namespace parameter.
 
     Returns:
-        dict[dict[str,float]]: The test results as a dictionary of the media names as keys with dictionaries of the amino acids names and growth flux rates of the sink reaction as values.
+        pd.DataFrame: The table of the amino acids and the media names containing the simualted flux values.
     """
 
     results = {}
@@ -666,5 +674,55 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
             # add the current test results to the list of all results
             results[med.name] = auxotrophies
 
-    return results
+    table = pd.DataFrame.from_dict(results)
 
+    return table
+
+
+# @TEST
+# auxotrophy sim visualisation
+def visualise_auxotrophies(res:pd.DataFrame, color_palette:str='YlGn', save:None|str=None) -> None|matplotlib.figure.Figure:
+    """Visualise and/or save the results of the :py:func:`test_auxotrophies` function.
+
+    Args:
+        res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
+        color_palette (str, optional): A name of a seaborn gradient color palette. 
+            In case name is unknown, takes the default. Defaults to 'YlGn'.
+        save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
+
+    Returns:
+        None|matplotlib.figure.Figure: Either saves the figure and a table of the results or returns the plotted figure.
+    """
+    
+    # create colour gradient
+    try:
+        cmap = matplotlib.cm.get_cmap(color_palette).copy()
+    except ValueError:
+        warnings.warn('Unknown color palette, setting it to "YlGn"')
+        cmap = matplotlib.cm.get_cmap('YlGn').copy()
+
+    # set up the figure
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+
+    # create heatmap
+    sns.heatmap(res, ax=ax, cmap=cmap, cbar_kws={'label': 'flux'}, annot = True, fmt='.2f')
+
+    # add labels
+    ax.set_ylabel('amino acid', labelpad=12)
+    ax.set_xlabel('medium', labelpad=12)
+    ax.set_title('Fluxes for auxotrophy tests')
+
+    # save or return
+    if save:
+        # make sure given directory path ends with '/'
+        if not save.endswith('/'):
+            save = save + '/'
+        # save the visualisation of the growth rates
+        fig.savefig(F'{save}auxotrophies_vis.png', bbox_inches='tight')
+
+        # save the growth rates as tabular information
+        res.to_csv(F'{save}auxotrophies_res.tsv', sep='\t', index=True)
+    
+    else:
+        return fig
