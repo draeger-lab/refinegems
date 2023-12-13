@@ -210,7 +210,6 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
 # analyse the pathways in a model
 # -------------------------------
 
-# @TEST
 def kegg_pathway_analysis(model:cobra.Model) -> KEGGPathwayAnalysisReport:
     """Analyse the pathways that are covered by the model.
 

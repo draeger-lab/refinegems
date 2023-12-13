@@ -353,21 +353,32 @@ class KEGGPathwayAnalysisReport(Report):
         self.kegg_paths = kegg_rest
 
 
-    def visualise_kegg_counts(self) -> plt.figure:
+    def visualise_kegg_counts(self, colors:list[str]=['lightgreen','darkgreen']) -> plt.figure:
         """Visualise the amounts of reaction with and without
         KEGG pathway annotation.
+
+        Args:
+            colors (list[str], optional): List of two colours used for the plotting.
+                If wrong number or non-matplotlib colours are given, sets its to the default.
+                Defaults to 'lightgreen' and 'darkgreen'.
 
         Returns:
             plt.figure: The resulting plot.
         """
 
+        # validate colors
+        if len(colors) != 2 or not matplotlib.colors.is_color_like(colors[0]) or not matplotlib.colors.is_color_like(colors[1]):
+            warnings.warn('Unknown colors or false amount of colors for pie chart. Resume using default values.')
+            colors = ['lightgreen','lightskyblue']
+        
+        # generate the plot
         explode = (0.0,0.1)
         fig, ax = plt.subplots()
         values = [self.kegg_count, self.total_reac-self.kegg_count]
         labels = ['yes','no']
         ax.pie(values,
                autopct=lambda pct: "{:.1f}%\n({:.0f})".format(pct, (pct/100)*sum(values)),
-               colors=['lightgreen','lightskyblue'],
+               colors=colors,
                explode=explode, shadow = True, startangle=90)
         ax.legend(labels, title='KEGG\npathway')
 
@@ -375,7 +386,8 @@ class KEGGPathwayAnalysisReport(Report):
 
 
     def visualise_kegg_pathway(self, plot_type:Literal['global','overview','high','existing']='global', 
-                               label:Literal['id','name']='id') -> plt.figure:
+                               label:Literal['id','name']='id',
+                               color_palette:str='YlGn') -> plt.figure:
         """Visualise the KEGG pathway identifiers present.
 
         Depending on the :plot_type:, different levels of pathway identifiers
@@ -390,6 +402,9 @@ class KEGGPathwayAnalysisReport(Report):
             plot_type (Literal["global","overview","high","existing"], optional): Type of plot, explaination see above. Defaults to 'global'.
             label (Literal["id","name"], optional): Type of the label. If 'id', uses the KEGG pathway IDs,
                 if 'name', uses the pathway names. Defaults to 'id'.
+            color_palette (str, optional): A colour gradient from the matplotlib library.
+                If the name does not exist, uses the default. 
+                Defaults to 'YlGn'.
 
         Returns:
             plt.figure: The plotted visualisation.
@@ -451,8 +466,13 @@ class KEGGPathwayAnalysisReport(Report):
         ldata = data.label.values
 
         # create the graph
-        # create a colour gradient
-        cmap = sns.cubehelix_palette(start=0.5, rot=-.75, gamma=0.75, dark=0.25, light=0.6, reverse=True, as_cmap=True)
+        # ----------------
+        # setting the colours 
+        try:
+            cmap = matplotlib.cm.get_cmap(color_palette).copy()
+        except ValueError:
+            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            cmap = matplotlib.cm.get_cmap('YlGn').copy()
         # set up the figure
         fig = plt.figure()
         if 'existing' == plot_type:
