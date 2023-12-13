@@ -10,6 +10,8 @@
 #            Sets if the media will be aerobic or not. Default does not change the current media definitions, without checking them.
 #   supplement: None|std|min
 #               sets whether or not the media will be supplement to enable growth. Default is None
+#   default_flux
+#   o2_percent
 params:
   aerobic: True
   supplement: None
@@ -21,11 +23,21 @@ params:
 
 #   base
 #   external_base
+#   add
 #   add_external
 #   aerobic
 #   supplement
 #   default_flux
 #   o2_percent
+
+#   base: None|str
+#            Medium to use as base for the composition. If none is given, tries to use the name to look it up in the database.
+#   external_base: None|str(path)
+#            If the base should be read from an external source, use this.
+#   add: None|str
+#            Add additional subset or media from the database to the base.
+#   add_external: None|str(path)
+#            Add additional external media/subsets to the base.
 
 media:
   LB:

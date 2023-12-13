@@ -71,5 +71,6 @@ documentation = 'https://refinegems.readthedocs.io/en/latest/'
 [tool.setuptools.packages.find]
 where = ['refinegems']
 
-[tools.setuptools.package-data]
+[tool.setuptools.package-data]
 database = ['*.txt', '*.sql', '*.db']
+"data.pathway" = ['*.csv']

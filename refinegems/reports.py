@@ -11,10 +11,33 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import seaborn as sns
 import warnings
+
+from importlib.resources import files
+from pathlib import Path
 from typing import Literal
+
+################################################################################
+# variables
+################################################################################
+
+KEGG_GLOBAL_PATHWAY = {'01100': 'Metabolic pathways',
+                       '01110': 'Biosynthesis of secondary metabolites',
+                       '01120': 'Microbial metabolism in diverse environments'}
+
+KEGG_OVERVIEW_PATHWAY = {'01200': 'Carbon metabolism',
+                         '01210': '2-Oxocarboxylic acid metabolism',
+                         '01212': 'Fatty acid metabolism',
+                         '01230': 'Biosynthesis of amino acids',
+                         '01232': 'Nucleotide metabolism',
+                         '01250': 'Biosynthesis of nucleotide sugars',
+                         '01240': 'Biosynthesis of cofactors',
+                         '01220': 'Degradation of aromatic compounds'}
+
+# @TODO # : Where to put this file // check connection (if it truly works)
+KEGG_METABOLISM_PATHWAY = files('data.pathway').joinpath('KEGG_pathway_metabolism.csv')
+KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"
 
 ################################################################################
 # classes
@@ -311,3 +334,202 @@ class GrowthSimulationReport(Report):
 
             case _:
                 raise ValueError(f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.')
+            
+
+class KEGGPathwayAnalysisReport(Report):
+    
+    def __init__(self, 
+                 total_reac=None, kegg_count=None,
+                 kegg_global=None, kegg_over=None, kegg_rest=None) -> None:
+        
+        # super().__init__()
+        # general counts
+        self.total_reac = total_reac
+        self.kegg_count = kegg_count
+
+        # kegg pathways
+        self.kegg_global = kegg_global
+        self.kegg_over = kegg_over
+        self.kegg_paths = kegg_rest
+
+
+    def visualise_kegg_counts(self) -> plt.figure:
+        """Visualise the amounts of reaction with and without
+        KEGG pathway annotation.
+
+        Returns:
+            plt.figure: The resulting plot.
+        """
+
+        explode = (0.0,0.1)
+        fig, ax = plt.subplots()
+        values = [self.kegg_count, self.total_reac-self.kegg_count]
+        labels = ['yes','no']
+        ax.pie(values,
+               autopct=lambda pct: "{:.1f}%\n({:.0f})".format(pct, (pct/100)*sum(values)),
+               colors=['lightgreen','lightskyblue'],
+               explode=explode, shadow = True, startangle=90)
+        ax.legend(labels, title='KEGG\npathway')
+
+        return fig
+
+
+    def visualise_kegg_pathway(self, plot_type:Literal['global','overview','high','existing']='global', 
+                               label:Literal['id','name']='id') -> plt.figure:
+        """Visualise the KEGG pathway identifiers present.
+
+        Depending on the :plot_type:, different levels of pathway identifiers
+        are plotted:
+
+        - global: check and plot only the global pathway identifiers
+        - overview: check and plot only the overview pathway identifiers
+        - high: check and plot all identifiers grouped by their high level pathway identifiers. This option uses label=name, independedly of the input
+        - all: check and plot all identifiers
+
+        Args:
+            plot_type (Literal["global","overview","high","existing"], optional): Type of plot, explaination see above. Defaults to 'global'.
+            label (Literal["id","name"], optional): Type of the label. If 'id', uses the KEGG pathway IDs,
+                if 'name', uses the pathway names. Defaults to 'id'.
+
+        Returns:
+            plt.figure: The plotted visualisation.
+        """
+
+        # get data and KEGG pathway label mapping
+        # for the given plot type
+        match plot_type:
+            case 'global':
+                data = self.kegg_global
+                label_map = KEGG_GLOBAL_PATHWAY
+                title_type = 'global identifiers'
+            case 'overview':
+                data = self.kegg_over
+                label_map = KEGG_OVERVIEW_PATHWAY
+                title_type = 'overview identifiers'
+            case 'high':
+                label = 'name'
+                data = self.kegg_paths
+                label_map = pd.read_csv(KEGG_METABOLISM_PATHWAY, dtype=str).set_index('id')[['group']].to_dict()['group']
+                title_type = 'grouped identifiers'
+            case 'existing':
+                data = self.kegg_paths
+                label_map = pd.read_csv(KEGG_METABOLISM_PATHWAY, dtype=str).set_index('id')[['specific']].to_dict()['specific']
+                title_type = 'identifiers in model'
+            case _:
+                warnings.warn(F'Unknown option for plot_type, choosing "global" istead: {plot_type}')
+                data = self.kegg_global
+                label_map = KEGG_GLOBAL_PATHWAY
+                title_type = 'global identifiers'
+
+        # create the label
+        match label:
+            case 'id':
+                for k in label_map:
+                    if k not in data and plot_type != 'existing':
+                        data[k] = 0
+            case 'name':
+                old_data = data
+                data = {}
+                for k in label_map:
+                    if k not in old_data:
+                        if plot_type != 'existing' and label_map[k] not in data:
+                            data[label_map[k]] = 0
+                    else:
+                        if label_map[k] not in data:
+                            data[label_map[k]] = old_data[k]
+                        else:
+                            data[label_map[k]] += old_data[k]
+
+            case _:
+                warnings.warn(F'Unknown input for label: {label}. Using "id" instead.')
+                for k in label_map:
+                    if k not in data:
+                        data[k] = 0
+
+        data = pd.DataFrame(data.items(), columns=['label', 'counts']).sort_values('counts')
+        cdata = data.counts.values
+        ldata = data.label.values
+
+        # create the graph
+        # create a colour gradient
+        cmap = sns.cubehelix_palette(start=0.5, rot=-.75, gamma=0.75, dark=0.25, light=0.6, reverse=True, as_cmap=True)
+        # set up the figure
+        fig = plt.figure()
+        if 'existing' == plot_type:
+            ax = fig.add_axes([0,0,5,6])
+            # construct the plot
+            cont = ax.barh(ldata, cdata, color=cmap([x/max(cdata) for x in cdata]),
+                   label=ldata)
+            ax.bar_label(cont, fmt='%d', color='black', padding=1.0)
+            ax.set_ylabel('KEGG pathway')
+            ax.set_xlabel('Number of reaction annotations')
+            xlims = ax.get_xlim()
+            ax.set_xlim(xlims[0],xlims[1]+(xlims[1]*0.03))
+            ax.set_title(F'Pathway analysis with KEGG: {title_type}')
+        else:
+
+            ax = fig.add_axes([0,0,1,1])
+            # construct the plot
+            cont = ax.barh(ldata, cdata, color=cmap([x/max(cdata) for x in cdata]),
+                   label=ldata)
+            ax.bar_label(cont, fmt='%d', color='black', padding=1.0)
+            ax.set_ylabel('KEGG pathway', labelpad=12)
+            ax.set_xlabel('Number of reaction annotations', labelpad=12)
+            xlims = ax.get_xlim()
+            ax.set_xlim(xlims[0],xlims[1]+(xlims[1]*0.03))
+            ax.set_title(F'Pathway analysis with KEGG: {title_type}')
+
+        return fig
+
+
+    def save(self, dir:str) -> None:
+        """Save the content of the report as plots.
+
+        Args:
+            dir (str): Path to a directory to save the output directory with all the plot in.
+        """
+
+        # make sure given directory path ends with '/'
+        if not dir.endswith('/'):
+            dir = dir + '/'
+
+        # collect all produced file in one directory
+        try:
+            Path(F"{dir}pathway-analysis/").mkdir(parents=True, exist_ok=False)
+            print(F'Creating new directory {F"{dir}pathway-analysis/"}')
+        except FileExistsError:
+            print('Given directory already has required structure.')
+
+        # create and save plots
+        # a) for the counts
+        if self.total_reac and self.kegg_count:
+            count_fig = self.visualise_kegg_counts()
+            count_fig.savefig(F'{dir}pathway-analysis/kegg_anno_counts.png', bbox_inches='tight')
+        # b) for the actual pathways
+        # 1.) global KEGG IDs
+        if self.kegg_global:
+            # with id
+            fig = self.visualise_kegg_pathway(plot_type='global', label='id')
+            fig.savefig(F'{dir}pathway-analysis/pathway_global_id.png', bbox_inches='tight')
+            # with name
+            fig = self.visualise_kegg_pathway(plot_type='global', label='name')
+            fig.savefig(F'{dir}pathway-analysis/pathway_global_name.png', bbox_inches='tight')
+        # 2.) Overview KEGG IDs
+        if self.kegg_over:
+            # with id
+            fig = self.visualise_kegg_pathway(plot_type='overview', label='id')
+            fig.savefig(F'{dir}pathway-analysis/pathway_overview_id.png', bbox_inches='tight')
+            # with name
+            fig = self.visualise_kegg_pathway(plot_type='overview', label='name')
+            fig.savefig(F'{dir}pathway-analysis/pathway_overview_name.png', bbox_inches='tight')
+        # 3.) rest
+        if self.kegg_paths:
+            # grouped by high-level terms
+            fig = self.visualise_kegg_pathway(plot_type='high', label='name')
+            fig.savefig(F'{dir}pathway-analysis/pathway_high.png', bbox_inches='tight')
+            # all with id
+            fig = self.visualise_kegg_pathway(plot_type='existing', label='id')
+            fig.savefig(F'{dir}pathway-analysis/pathway_existing_id.png', bbox_inches='tight')
+            # all with name
+            fig = self.visualise_kegg_pathway(plot_type='existing', label='name')
+            fig.savefig(F'{dir}pathway-analysis/pathway_existing_name.png', bbox_inches='tight')

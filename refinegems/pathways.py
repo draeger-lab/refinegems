@@ -1,17 +1,31 @@
 #!/usr/bin/env python
-""" Provides functions for adding KEGG reactions as Group Pathways
 
-If your organism occurs in the KEGG database, extract the KEGG reaction ID from the annotations of your reactions and identify, in which KEGG pathways this reaction occurs. Add all KEGG pathways for a reaction then as annotations with the biological qualifier ‘OCCURS_IN’ to the respective reaction.
-"""
+import cobra
+import re
 
 from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from libsbml import Model as libModel
 from bioservices import KEGG
 from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
+from refinegems.reports import KEGGPathwayAnalysisReport
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Carolin Brune"
 
+
+############################################################################
+# functions
+############################################################################
+
+# adding KEGG reactions as Group Pathways
+# ---------------------------------------
+""" 
+If your organism occurs in the KEGG database, 
+extract the KEGG reaction ID from the annotations of your reactions and identify, 
+in which KEGG pathways this reaction occurs. 
+Add all KEGG pathways for a reaction then as annotations 
+with the biological qualifier ‘OCCURS_IN’ to the respective reaction.
+"""
 
 def load_model_enable_groups(modelpath: str) -> libModel:
     """Loads model as document using libSBML and enables groups extension
@@ -191,3 +205,70 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
         model_pathways, pathway_groups)
     
     return model_pathway_groups, non_kegg_reactions
+
+
+# analyse the pathways in a model
+# -------------------------------
+
+# @TEST
+def kegg_pathway_analysis(model:cobra.Model) -> KEGGPathwayAnalysisReport:
+    """Analyse the pathways that are covered by the model.
+
+    The analysis is based on the KEGG pathway classification and the available
+    KEGG pathway identifiers present in the model.
+    Note: one reaction can have multiple pathway identifiers associated with it. 
+          This analysis focuses on the total number of IDs found within the model.
+
+    Args:
+        model (cobra.Model): A model loaded with COBRApy.
+
+    Returns:
+        KEGGPathwayAnalysisReport: The KEGG pathway analysis report.
+    """
+    # create report
+    report = KEGGPathwayAnalysisReport(total_reac=len(model.reactions))
+
+    pathways = dict()
+    counter = 0
+    # extract KEGG pathway IDs from all reactions
+    for r in model.reactions:
+        if 'kegg.pathway' in r.annotation.keys():
+            counter += 1
+            anno = r.annotation['kegg.pathway']
+            # case 1: only one annotation found
+            if isinstance(anno,str):
+                anno = re.sub(r'^[a-z]*','',anno)
+                if anno in pathways:
+                    pathways[anno] += 1
+                else:
+                    pathways[anno] = 1
+            # case 2: multiple annotations for one reaction found
+            else:
+                for x in anno:
+                    x = re.sub(r'^[a-z]*','',x)
+                    if x in pathways:
+                        pathways[x] += 1
+                    else:
+                        pathways[x] = 1
+    
+    # add counter to report
+    report.kegg_count = counter
+
+    # identify global and overview pathway identifier
+    global_map = {}
+    over_map = {}
+    rest = {}
+    for k,v in pathways.items():
+        if k.startswith('011'):
+            global_map[k] = v
+        elif k.startswith('012'):
+            over_map[k] = v
+        else:
+            rest[k] = v
+
+    # add IDs in corresponding class to report
+    report.kegg_global = global_map
+    report.kegg_over = over_map
+    report.kegg_paths = rest
+
+    return report

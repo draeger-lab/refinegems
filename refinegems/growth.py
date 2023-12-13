@@ -2,21 +2,23 @@
 """ Provides functions to simulate growth on any medium and other functionalities replated to growth.
 """
 
+import cobra
 import logging
-import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import re
+import seaborn as sns
+import warnings
+import yaml
+
+from cobra import Model as cobraModel
 from refinegems.database import medium
 from refinegems.io import load_multiple_models, load_model_cobra
 from refinegems import reports
-from cobra import Model as cobraModel
-import cobra
-import re
 from typing import Literal
-import yaml
-import matplotlib
-import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
+
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -350,6 +352,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 
 # @IDEA: more options for fluxes
 # @TODO/@IDEA: validity check nefore parsing
+# @ASK: maybe something for the io module or does it fit here?
 def read_media_config(yaml_path:str):
 
     media_list = []
