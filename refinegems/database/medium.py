@@ -77,9 +77,24 @@ class Medium:
     # add compound
     # has compound
     # remove compound
-    # get source of
     # set source of
     # ------------------------------------
+
+    def get_source(self, element:str) -> list[str]:
+        """Get the source of a given element for the medium.
+
+        Search for the given element (elemental symbol e.g. O), excluding pattern matches that are 
+        followed by other lower-case letters and returm them as a list of sources for the given element. 
+
+        Args:
+            element (str): The symbol of the element to search the sources of
+
+        Returns:
+            list[str]: The list of the names of the sources (no duplicates).
+        """
+
+        return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True)]['name']))
+
 
     def is_aerobic(self) -> bool:
         """Check if the medium contains O2 / dioxygen.
