@@ -602,7 +602,7 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
 # @TEST
 # from SPECIMEN
 # auxotrophy test 
-def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG']='BiGG') -> pd.DataFrame:
+def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG', 'Name']='BiGG') -> pd.DataFrame:
     """Test for amino acid auxothrophies for a model and a list of media.
 
     Tests, if the model growths on the media and if and with what fluxes the
@@ -612,8 +612,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
     Args:
         model (cobraModel): The model to be tested. Loaded with COBRApy.
         media_list (list[medium.Medium]): List of media to be tested.
-        namespace (Literal['BiGG'], optional): String for the namespace to be used for the model. 
-            Current options include 'BiGG'.
+        namespace (Literal['BiGG','Name'], optional): String for the namespace to be used for the model. 
+            Current options include 'BiGG', 'Name'.
             Defaults to 'BiGG'.
 
     Raises:

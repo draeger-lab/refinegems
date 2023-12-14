@@ -1,46 +1,66 @@
 # Configuration file for loading media for testing / simulating models
-
+# --------------------------------------------------------------------
 # basic parameters for loading media
-#
-# setting these parameters will set a default for all media, if they are not overwritten by the setting in the next part
-# all options can be commented out, if having a default is not in the user's interest
+# --------------------------------------------------------------------
+# setting these parameters will set a default for all media, 
+# if they are not overwritten by the setting in the next part
+# all options can be commented out
+# this will lead to the default being used
 #
 # options:
 #   aerobic: True|False
-#            Sets if the media will be aerobic or not. Default does not change the current media definitions, without checking them.
+#            Sets if the media will be aerobic or not. 
+#            Default does not change the current media definitions, without checking them.
 #   supplement: None|std|min
-#               sets whether or not the media will be supplement to enable growth. Default is None
-#   default_flux
-#   o2_percent
+#               Sets whether or not the media will be supplement to enable growth. 
+#               Default is None
+#   default_flux: float
+#            Sets a default flux value for all fluxes in the media.
+#            Note: this will replace existing values!
+#            Default to 10.0
+#   o2_percent: float
+#            Increase or decrease the amount of oxygen in relation to its normal flux
+#            by the given percentage. 
+#            Default is 1.0, equalling the current/normal amount of oxygen (= 100%)
+# --------------------------------------------------------------------
+
 params:
   aerobic: True
   supplement: None
 # default_flux: 10.0
 # o2_percent: 1.0
 
+# --------------------------------------------------------------------
 # load media from the in-build database and/or external sources
-# more explaination
-
-#   base
-#   external_base
-#   add
-#   add_external
-#   aerobic
-#   supplement
-#   default_flux
-#   o2_percent
-
+# 
+# format:
+#   name:
+#      option1: input1
+#      option2: input2
+#      ....
+#
+# options:
 #   base: None|str
-#            Medium to use as base for the composition. If none is given, tries to use the name to look it up in the database.
+#            Medium to use as base for the composition. 
+#            If none is given, tries to use the name to look it up in the database.
 #   external_base: None|str(path)
-#            If the base should be read from an external source, use this.
+#            If the base should be read from an external source, use this options 
+#            followed by a path to a media descripion.
 #   add: None|str
 #            Add additional subset or media from the database to the base.
 #   add_external: None|str(path)
 #            Add additional external media/subsets to the base.
+#
+# options to overwrite the default set in the previous section 
+# for specific media only:
+#   aerobic
+#   supplement
+#   default_flux
+#   o2_percent
+# --------------------------------------------------------------------
 
 media:
-  LB:
+  LB: 
     aerobic: False
   LB_o2:
     base: LB
