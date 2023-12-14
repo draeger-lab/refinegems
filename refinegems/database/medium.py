@@ -395,13 +395,25 @@ class Medium:
 
     # functions for conversion
     # ------------------------
-    # def convert_to_cobra
     # @TODO
-    def export_to_cobra(self, namespace='BiGG', default_flux=10.0, replace=False, double_o2=True):
+    #    extend namespace options
+    #        maybe a warning or something similar, if compounds do not have an ID corresponding to the namespace
+    # @TEST
+    #    name option for namespace
+    # @DEV : extent literals in all related functions after extension of namespace options
+    def export_to_cobra(self, namespace:Literal['Name', 'BiGG']='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True) -> dict[str,float]:
         
+        self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
+
         match namespace:
+            case 'Name':
+
+                names = self.substance_table[['name','flux']]
+                names['EX'] = biggs['db_id'] + ' exchange'
+                cobra_medium = pd.Series(names.flux.values,index=names.EX).to_dict()       
+
             case 'BiGG':
-                self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
+                
                 biggs = self.substance_table[self.substance_table['db_type']=='BiGG'][['name','db_id','flux']]
                 biggs['db_id_EX'] = 'EX_' + biggs['db_id'] + '_e'
                 cobra_medium = pd.Series(biggs.flux.values,index=biggs.db_id_EX).to_dict()       
@@ -409,12 +421,12 @@ class Medium:
                 # .....................................
                 # TODO
                 #    what about those without BiGG IDs?
-                # .....................................
-
-                return cobra_medium         
+                # .....................................       
 
             case _:
                 raise ValueError(f'Unknown namespace: {namespace}')
+        
+        return cobra_medium  
 
 ############################################################################
 # functions for loading from DB
@@ -953,7 +965,23 @@ def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
 ############################################################################
 
 # @Testing
-def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True, add:bool=True) -> Union[None, dict[str, float]]:
+def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG', 
+                    default_flux:float=10.0, replace:bool=False, double_o2:bool=True, 
+                    add:bool=True) -> Union[None, dict[str, float]]:
+    """Add a medium to a COBRApy model. 
+
+    Args:
+        model (cobra.Model): A model loaded with COBRApy.
+        medium (Medium): A refinegems Medium object.
+        namespace (str, optional): String to set the namespace to use for the model IDs. Defaults to 'BiGG'.
+        default_flux (float, optional): Set a default flux for NaN values or all. Defaults to 10.0.
+        replace (bool, optional): Option to replace existing flux values with the default if set to True. Defaults to False.
+        double_o2 (bool, optional): Double the oxygen amount in the medium. Defaults to True.
+        add (bool, optional): If True, adds the medium to the model, else the exported medium is returned. Defaults to True.
+
+    Returns:
+        Union[None, dict[str, float]]: Either none or the exported medium.
+    """
     
     # export medium to cobra
     exported_medium = medium.export_to_cobra(namespace=namespace, default_flux=default_flux, replace=replace, double_o2=double_o2)

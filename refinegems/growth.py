@@ -266,7 +266,7 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
 
 
 # @TEST
-def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[None,'std','min'] = None) -> reports.SingleGrowthSimulationReport:
+def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['BiGG', 'Name']='BiGG', supplement:Literal[None,'std','min'] = None) -> reports.SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
     Args:
@@ -313,12 +313,14 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, supplement:Literal[No
         report.growth_value = model.optimize().objective_value
         report.doubling_time = (np.log(2)/report.growth_value)*60 if report.growth_value != 0 else 0
         report.additives = [_ for _ in new_m if _ not in exported_m]
-        report.no_exchange = [_ for _ in m.export_to_cobra().keys() if _ not in exported_m]
+        report.no_exchange = [_ for _ in m.export_to_cobra(namespace=namespace).keys() if _ not in exported_m]
 
     return report
 
 
-def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium], supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> reports.GrowthSimulationReport:
+def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium], 
+                     namespace:Literal['BiGG','Name']='BiGG', 
+                     supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> reports.GrowthSimulationReport:
     """Simulate the growth of (at least one) models on (at least one) media.
 
     Args:
@@ -344,7 +346,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
     report = reports.GrowthSimulationReport()
     for mod in models:
         for med,supp in zip(media, supplement_modes):
-            r = growth_sim_single(mod, med, supplement=supp)
+            r = growth_sim_single(mod, med, namespace=namespace, supplement=supp)
             report.add_sim_results(r)
 
     return report     
@@ -441,8 +443,10 @@ def read_media_config(yaml_path:str):
 
 
 # @IDEA : choose different namespaces for the media
+# @TEST : namespace implementation. Are connections correct?
 def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                     media:medium.Medium|list[medium.Medium]|str,
+                    namespace:Literal["BiGG"]='BiGG',
                     supplements:None|list[Literal[None,'std','min']]=None,
                     retrieve:Literal['report','plot','both']='plot') -> reports.GrowthSimulationReport|plt.Figure|tuple:
 
@@ -497,7 +501,7 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
 
     # run simulation
     # --------------
-    report = growth_sim_multi(mod_list, media, supplements)
+    report = growth_sim_multi(mod_list, media, namespace, supplements)
 
     # save / visualise report 
     # -----------------------
