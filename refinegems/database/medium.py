@@ -1043,7 +1043,7 @@ def updated_db_to_schema():
     counter = 0 # To count rows in newly generated file
     
     conn = sqlite3.connect(PATH_TO_DB)
-    with open('./updated_sbo_media_db.sql', 'w') as file:
+    with open('./updated_media_db.sql', 'w') as file:
         for line in iterdump(conn):
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if 'CREATE TABLE' in line and counter != 0:
