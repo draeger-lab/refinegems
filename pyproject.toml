@@ -46,6 +46,7 @@ dependencies = [
     "markupsafe>=2.0.1", 
     "depinfo>=1.7.0",
     "sortedcontainers>=2.4.0",
+    "sqlite_dump",
     "libchebipy>=1.0.10",
     "ratelimit>=2.2.1",
     "sqlalchemy>=2.0.0",
