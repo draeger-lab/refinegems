@@ -102,7 +102,15 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    print('Adding SBO tables...')
    with open(Path(PATH_TO_DB_DATA, 'sbo_mapping_db.sql')) as schema:
       db_cursor.executescript(schema.read())
-      
+   
+   
+   db_cursor.executescript('''
+                           DROP TABLE IF EXISTS susbtance;
+                           DROP TABLE IF EXISTS substance2db;
+                           DROP TABLE IF EXISTS medium;
+                           DROP TABLE IF EXISTS medium2substance;
+                           ''')
+   
    print('Adding media tables...')
    with open(Path(PATH_TO_DB_DATA, 'media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
