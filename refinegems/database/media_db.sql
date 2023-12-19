@@ -1,52 +1,21 @@
-BEGIN;
-
----
---- Originally from Gwendolyn O. Döbel, Famke Baeuerle & Carolin Brune
----
-
-DROP TABLE IF EXISTS medium;
-DROP TABLE IF EXISTS substance;
-DROP TABLE IF EXISTS substance2db;
-DROP TABLE IF EXISTS medium2substance;
-
---
--- Name: medium; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE medium (
+CREATE TABLE IF NOT EXISTS medium (
 	id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL UNIQUE,
 	description NTEXT,
 	reference NTEXT
 );
+INSERT INTO "medium" VALUES(1,'Blood','Blood medium','https://doi.org/10.1371/journal.pcbi.1010903');
+INSERT INTO "medium" VALUES(2,'CasA','Casamino Acids','https://doi.org/10.1080/00275514.1971.12019223');
+INSERT INTO "medium" VALUES(3,'CGXII','Corynebacterium glutamicum optimized growth medium','https://doi.org/10.1002/bit.25103');
+INSERT INTO "medium" VALUES(4,'dGMM','Defined Gut Microbiota Medium','https://doi.org/10.1038/s41564-018-0123-9');
+INSERT INTO "medium" VALUES(5,'LB','Lysogeny broth','https://doi.org/10.1093/nar/gky537, https://doi.org/10.1074/jbc.M703759200');
+INSERT INTO "medium" VALUES(6,'M9','M9 minimal medium','https://www.sigmaaldrich.com/DE/de/product/sigma/m6030, https://doi.org/10.3389/fbinf.2023.1214074');
+INSERT INTO "medium" VALUES(7,'MP-AU','Multi-Purpose Artificial Urine','https://doi.org/10.1038/s41598-019-56693-4, https://doi.org/10.1016/j.bios.2022.114962');
+INSERT INTO "medium" VALUES(8,'RPMI','Roswell Park Memorial Institute 1640 Medium','https://www.thermofisher.com/de/de/home/technical-resources/media-formulation.114.html (visited on 2023-03-22)');
+INSERT INTO "medium" VALUES(9,'SNM3','Synthetic Nasal Medium Version 3','https://doi.org/10.1371/journal.ppat.1003862');
 
---
--- Name: substance; Type: TABLE; Schema: public; Owner: -
---
 
-CREATE TABLE substance (
-	id INTEGER PRIMARY KEY,
-	name NTEXT NOT NULL UNIQUE,
-	formula TEXT
-);
-
---
--- Name: substance2db; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE substance2db (
-	substance_id INTEGER,
-	db_id TEXT NOT NULL,
-	db_type TEXT NOT NULL,
-	FOREIGN KEY(substance_id) REFERENCES substance(id),
-	PRIMARY KEY(substance_id, db_id)
-);
-
---
--- Name: medium2substance; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE medium2substance (
+CREATE TABLE IF NOT EXISTS medium2substance (
 	medium_id INTEGER,
 	substance_id INTEGER,
 	flux NUMERIC DEFAULT 10,
@@ -55,1344 +24,1252 @@ CREATE TABLE medium2substance (
 	FOREIGN KEY(substance_id) REFERENCES substance(id),
 	PRIMARY KEY(medium_id, substance_id)
 );
+INSERT INTO "medium2substance" VALUES(5,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,164,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,169,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,175,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,178,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,182,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,186,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,189,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,192,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,195,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,166,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,162,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,138,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,180,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,183,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,188,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,190,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,194,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,196,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,270,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,246,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,25,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,26,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,66,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,211,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,87,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,88,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,285,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,240,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,249,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,289,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,62,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,72,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,207,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,198,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,155,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,153,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,117,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,274,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,279,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,282,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,115,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,55,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,84,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,37,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,71,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,85,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,173,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,89,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,90,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,156,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,157,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,39,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,144,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,152,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,36,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,204,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,269,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,56,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,214,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,238,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,30,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(5,44,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,56,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(6,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,164,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,166,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,173,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,175,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,138,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,178,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,182,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,183,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,105,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,187,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,188,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,189,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,190,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,192,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,194,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,196,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,16,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,4,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,202,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,242,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,256,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,281,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,13,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,289,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,204,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,89,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,90,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,214,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,269,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,87,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,88,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,285,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,28,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,66,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,240,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,25,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,27,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,270,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,NULL,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,246,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,156,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,157,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(9,76,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,217,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,138,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,166,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,168,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,169,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,162,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,175,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,176,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,178,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,180,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,182,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,186,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,188,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,189,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,190,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,192,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,194,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,195,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,196,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,183,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,66,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,83,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,213,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,28,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,246,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,270,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,210,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,25,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,211,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,26,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,87,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,88,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,285,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,197,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,78,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,303,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,76,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(8,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,183,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,178,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,166,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,169,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,192,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,175,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,138,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,196,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,186,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,180,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,182,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,195,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(2,188,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,56,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,281,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,156,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,157,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,204,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,214,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,90,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,289,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,66,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(3,19,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(1,1,0.007164,'Erucic acid');
+INSERT INTO "medium2substance" VALUES(1,2,0.0260005,'Nervonic acid');
+INSERT INTO "medium2substance" VALUES(1,3,2.91e-05,'20a-Dihydroprogesterone');
+INSERT INTO "medium2substance" VALUES(1,4,0.0015,'Fumaric acid');
+INSERT INTO "medium2substance" VALUES(1,5,0.00019,'D-Limonene');
+INSERT INTO "medium2substance" VALUES(1,6,0.105618962173913,'Docosahexaenoic acid');
+INSERT INTO "medium2substance" VALUES(1,7,0.00407275,'Adrenic acid');
+INSERT INTO "medium2substance" VALUES(1,8,0.0533333333333333,'(R)-3-Hydroxybutyric acid');
+INSERT INTO "medium2substance" VALUES(1,9,0.02035,'3-Methyl-2-Oxovaleric Acid');
+INSERT INTO "medium2substance" VALUES(1,11,84.57,'Methylimidazoleacetic acid');
+INSERT INTO "medium2substance" VALUES(1,10,0.00043,'1-Methylnicotinamide');
+INSERT INTO "medium2substance" VALUES(1,12,0.024225,'2-Hydroxybutyric acid');
+INSERT INTO "medium2substance" VALUES(1,14,5.5e-06,'Cyclic GMP');
+INSERT INTO "medium2substance" VALUES(1,15,7.95e-05,'2-Methylcitric acid');
+INSERT INTO "medium2substance" VALUES(1,16,0.1089,'Citric acid');
+INSERT INTO "medium2substance" VALUES(1,17,0.00795,'Oxoglutaric acid');
+INSERT INTO "medium2substance" VALUES(1,18,1.2475e-05,'25-Hydroxyvitamin D2');
+INSERT INTO "medium2substance" VALUES(1,20,6.0e-06,'3,4-Dihydroxyphenylglycol');
+INSERT INTO "medium2substance" VALUES(1,21,5.5e-06,'Cyclic GMP');
+INSERT INTO "medium2substance" VALUES(1,22,0.00037,'4-Hydroxyphenylpyruvic acid');
+INSERT INTO "medium2substance" VALUES(1,23,5.0e-06,'3-Hydroxyhexadecanoylcarnitine');
+INSERT INTO "medium2substance" VALUES(1,24,11,'alpha-Ketoisovaleric acid');
+INSERT INTO "medium2substance" VALUES(1,25,0.00269,'Pantothenic acid');
+INSERT INTO "medium2substance" VALUES(1,270,8.86666666666667e-05,'Thiamine');
+INSERT INTO "medium2substance" VALUES(1,26,2.5e-05,'Pyridoxine');
+INSERT INTO "medium2substance" VALUES(1,27,0.000164,'Pyridoxamine');
+INSERT INTO "medium2substance" VALUES(1,29,0.00011,'gamma-Aminobutyric acid');
+INSERT INTO "medium2substance" VALUES(1,30,0.000251,'Pyridoxal');
+INSERT INTO "medium2substance" VALUES(1,31,0.000217,'4-Hydroxydebrisoquine');
+INSERT INTO "medium2substance" VALUES(1,32,0.0098814444444444,'p-Hydroxyphenylacetic acid');
+INSERT INTO "medium2substance" VALUES(1,33,0.0265,'Ketoleucine');
+INSERT INTO "medium2substance" VALUES(1,34,20.95,'4-Pyridoxic acid');
+INSERT INTO "medium2substance" VALUES(1,35,2.5e-06,'Tetrahydrofolic acid');
+INSERT INTO "medium2substance" VALUES(1,36,7.7e-05,'(R)-lipoic acid');
+INSERT INTO "medium2substance" VALUES(1,37,0.019075,'Adenosine monophosphate');
+INSERT INTO "medium2substance" VALUES(1,38,2.5e-06,'Folinic acid');
+INSERT INTO "medium2substance" VALUES(1,39,9.7e-06,'Guanosine monophosphate');
+INSERT INTO "medium2substance" VALUES(1,40,1.8e-05,'5-Hydroxy-L-tryptophan');
+INSERT INTO "medium2substance" VALUES(1,41,0.0003,'5-Methyltetrahydrofolic acid');
+INSERT INTO "medium2substance" VALUES(1,42,0.0195,'Pyroglutamic acid');
+INSERT INTO "medium2substance" VALUES(1,43,0.0049,'Phosphoribosyl pyrophosphate');
+INSERT INTO "medium2substance" VALUES(1,44,184,'Uridine 5-monophosphate');
+INSERT INTO "medium2substance" VALUES(1,45,1.7175e-06,'Dihydrotestosterone');
+INSERT INTO "medium2substance" VALUES(1,46,5.0e-06,'Dihydrofolic acid');
+INSERT INTO "medium2substance" VALUES(1,47,0.0024199295081967,'Vitamin A');
+INSERT INTO "medium2substance" VALUES(1,48,0.16,'ADP');
+INSERT INTO "medium2substance" VALUES(1,49,2.03133333333333,'Adenosine triphosphate');
+INSERT INTO "medium2substance" VALUES(1,50,1,'Acetaldehyde');
+INSERT INTO "medium2substance" VALUES(1,51,0.04206,'Acetic acid');
+INSERT INTO "medium2substance" VALUES(1,52,0.0248375,'Acetoacetic acid');
+INSERT INTO "medium2substance" VALUES(1,53,0.0537833333333333,'Acetone');
+INSERT INTO "medium2substance" VALUES(1,54,0.00047,'Adenine');
+INSERT INTO "medium2substance" VALUES(1,55,0.0011670833333333,'Adenosine');
+INSERT INTO "medium2substance" VALUES(1,56,27,'Ammonia');
+INSERT INTO "medium2substance" VALUES(1,57,6.0325e-05,'Androsterone');
+INSERT INTO "medium2substance" VALUES(1,58,0.000437075,'Androsterone glucuronide');
+INSERT INTO "medium2substance" VALUES(1,59,1.55e-05,'2-Aminobenzoic acid');
+INSERT INTO "medium2substance" VALUES(1,60,0.0072778,'Arachidic acid');
+INSERT INTO "medium2substance" VALUES(1,61,0.171059889655172,'Arachidonic acid');
+INSERT INTO "medium2substance" VALUES(1,63,0.010951,'Behenic acid');
+INSERT INTO "medium2substance" VALUES(1,64,0.020784625,'Benzoic acid');
+INSERT INTO "medium2substance" VALUES(1,65,0.0078472857142857,'Bilirubin');
+INSERT INTO "medium2substance" VALUES(1,66,37.89,'Biotin');
+INSERT INTO "medium2substance" VALUES(1,67,1,'Butyric acid');
+INSERT INTO "medium2substance" VALUES(1,68,0.0001995,'Butyrylcarnitine');
+INSERT INTO "medium2substance" VALUES(1,69,8.5e-06,'Cyclic AMP');
+INSERT INTO "medium2substance" VALUES(1,70,36,'CDP');
+INSERT INTO "medium2substance" VALUES(1,73,6.75785714285714e-05,'Calcidiol');
+INSERT INTO "medium2substance" VALUES(1,74,4.10333333333333e-05,'Vitamin D3');
+INSERT INTO "medium2substance" VALUES(1,75,2.102375,'Calcium');
+INSERT INTO "medium2substance" VALUES(1,76,23.05,'Carbon dioxide');
+INSERT INTO "medium2substance" VALUES(1,77,72,'Carbon monoxide');
+INSERT INTO "medium2substance" VALUES(1,78,23.54,'Hydrogen carbonate');
+INSERT INTO "medium2substance" VALUES(1,80,0.001165,'Chenodeoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,81,100.85,'Chloride ion');
+INSERT INTO "medium2substance" VALUES(1,82,0.00072,'Cholic acid');
+INSERT INTO "medium2substance" VALUES(1,86,2.1793258125,'Cholesterol');
+INSERT INTO "medium2substance" VALUES(1,83,0.00932,'Choline');
+INSERT INTO "medium2substance" VALUES(1,91,2.7e-05,'Corticosterone');
+INSERT INTO "medium2substance" VALUES(1,92,0.0002554285714285,'Cortisol');
+INSERT INTO "medium2substance" VALUES(1,93,0.0464842857142857,'Creatine');
+INSERT INTO "medium2substance" VALUES(1,95,4.5e-05,'Cyanate');
+INSERT INTO "medium2substance" VALUES(1,96,0.0441666666666667,'Cysteinylglycine');
+INSERT INTO "medium2substance" VALUES(1,97,0.000175,'Cytidine');
+INSERT INTO "medium2substance" VALUES(1,98,0.0064,'Cytosine');
+INSERT INTO "medium2substance" VALUES(1,99,0.44675,'D-Alanine');
+INSERT INTO "medium2substance" VALUES(1,100,0.0395,'D-Fructose');
+INSERT INTO "medium2substance" VALUES(1,101,0.06365,'D-Galactose');
+INSERT INTO "medium2substance" VALUES(1,103,0.00913,'D-Lactic acid');
+INSERT INTO "medium2substance" VALUES(1,104,0.0515,'D-Mannose');
+INSERT INTO "medium2substance" VALUES(1,106,0.0023,'D-Ribose');
+INSERT INTO "medium2substance" VALUES(1,107,0.0025866666666666,'D-Serine');
+INSERT INTO "medium2substance" VALUES(1,108,0.007045,'Sorbitol');
+INSERT INTO "medium2substance" VALUES(1,109,2.4431,'D-Xylose');
+INSERT INTO "medium2substance" VALUES(1,110,0.000149,'Debrisoquine');
+INSERT INTO "medium2substance" VALUES(1,111,11,'Capric acid');
+INSERT INTO "medium2substance" VALUES(1,112,0.0002101666666666,'Decanoylcarnitine');
+INSERT INTO "medium2substance" VALUES(1,113,0.005772,'Dehydroascorbic acid');
+INSERT INTO "medium2substance" VALUES(1,114,0.0024675,'Dehydroepiandrosterone sulfate');
+INSERT INTO "medium2substance" VALUES(1,116,0.00045,'Deoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,117,0.0002,'Deoxycytidine');
+INSERT INTO "medium2substance" VALUES(1,118,0.000213,'Deoxyuridine');
+INSERT INTO "medium2substance" VALUES(1,119,0.0156,'Dihydroxyacetone phosphate');
+INSERT INTO "medium2substance" VALUES(1,120,6.36,'Oxygen');
+INSERT INTO "medium2substance" VALUES(1,121,0.0018,'Pyrophosphate');
+INSERT INTO "medium2substance" VALUES(1,122,0.00582225,'Dodecanoic acid');
+INSERT INTO "medium2substance" VALUES(1,123,2.65e-05,'Dopamine 3-O-sulfate');
+INSERT INTO "medium2substance" VALUES(1,124,2.75e-06,'Ergocalciferol');
+INSERT INTO "medium2substance" VALUES(1,125,2.32833333333333e-06,'Estrone sulfate');
+INSERT INTO "medium2substance" VALUES(1,126,0.0183333333333333,'Ethanol');
+INSERT INTO "medium2substance" VALUES(1,127,7.95e-06,'Flavin Mononucleotide');
+INSERT INTO "medium2substance" VALUES(1,128,6.8e-05,'FAD');
+INSERT INTO "medium2substance" VALUES(1,129,0.0133,'Formaldehyde');
+INSERT INTO "medium2substance" VALUES(1,130,0.0868733333333333,'Formic acid');
+INSERT INTO "medium2substance" VALUES(1,131,0.0165,'Guanosine diphosphate');
+INSERT INTO "medium2substance" VALUES(1,132,56,'Guanosine triphosphate');
+INSERT INTO "medium2substance" VALUES(1,133,0.0015,'Tetrahexosylceramide (d18:1/12:0)');
+INSERT INTO "medium2substance" VALUES(1,134,0.00029,'Glucosamine');
+INSERT INTO "medium2substance" VALUES(1,135,165,'D-Glucuronic acid');
+INSERT INTO "medium2substance" VALUES(1,136,0.147266666666667,'Glycerol');
+INSERT INTO "medium2substance" VALUES(1,137,0.03,'Glycerol 3-phosphate');
+INSERT INTO "medium2substance" VALUES(1,138,0.241736363636364,'Glycine');
+INSERT INTO "medium2substance" VALUES(1,139,0.04567,'Betaine');
+INSERT INTO "medium2substance" VALUES(1,140,6.0e-05,'Chenodeoxycholic acid glycine conjugate');
+INSERT INTO "medium2substance" VALUES(1,141,6.0e-05,'Glycocholic acid');
+INSERT INTO "medium2substance" VALUES(1,142,9.0e-06,'Lithocholic acid glycine conjugate');
+INSERT INTO "medium2substance" VALUES(1,143,0.00019,'Glycoursodeoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,144,0.0008,'Guanosine');
+INSERT INTO "medium2substance" VALUES(1,146,0.00047,'Hexacosanoic acid');
+INSERT INTO "medium2substance" VALUES(1,147,0.520931074074074,'Palmitic acid');
+INSERT INTO "medium2substance" VALUES(1,148,0.050230695,'Palmitoleic acid');
+INSERT INTO "medium2substance" VALUES(1,149,5.3e-05,'Hyaluronic acid');
+INSERT INTO "medium2substance" VALUES(1,150,3.98107170553497e-05,'Protons');
+INSERT INTO "medium2substance" VALUES(1,151,0.0105,'Hydrogen peroxide');
+INSERT INTO "medium2substance" VALUES(1,152,0.0376,'Hydrogen sulfide');
+INSERT INTO "medium2substance" VALUES(1,153,0.0059921428571428,'Hypoxanthine');
+INSERT INTO "medium2substance" VALUES(1,154,63,'Inosinic acid');
+INSERT INTO "medium2substance" VALUES(1,155,0.00129,'Inosine');
+INSERT INTO "medium2substance" VALUES(1,156,8922,'Fe2+');
+INSERT INTO "medium2substance" VALUES(1,160,0.000138,'Isovaleryl Carnitine');
+INSERT INTO "medium2substance" VALUES(1,161,2,'L-Arabitol');
+INSERT INTO "medium2substance" VALUES(1,162,0.10118,'L-Cystine');
+INSERT INTO "medium2substance" VALUES(1,163,0.00103,'(S)-b-aminoisobutyric acid');
+INSERT INTO "medium2substance" VALUES(1,164,0.3847625,'L-Alanine');
+INSERT INTO "medium2substance" VALUES(1,165,0.0025,'L-Arabinose');
+INSERT INTO "medium2substance" VALUES(1,166,0.09366625,'L-Arginine');
+INSERT INTO "medium2substance" VALUES(1,167,0.0361379,'Ascorbic acid');
+INSERT INTO "medium2substance" VALUES(1,168,0.0473777777777778,'L-Asparagine');
+INSERT INTO "medium2substance" VALUES(1,169,0.015232,'L-Aspartic acid');
+INSERT INTO "medium2substance" VALUES(1,170,0.0354711111111111,'L-Carnitine');
+INSERT INTO "medium2substance" VALUES(1,171,0.00327,'Carnosine');
+INSERT INTO "medium2substance" VALUES(1,172,0.0294222222222222,'Citrulline');
+INSERT INTO "medium2substance" VALUES(1,173,0.120988333333333,'L-Cysteine');
+INSERT INTO "medium2substance" VALUES(1,174,7.23e-06,'L-Dopa');
+INSERT INTO "medium2substance" VALUES(1,175,0.057029,'L-Glutamic acid');
+INSERT INTO "medium2substance" VALUES(1,176,0.564136363636364,'L-Glutamine');
+INSERT INTO "medium2substance" VALUES(1,177,2,'L-Glyceric acid');
+INSERT INTO "medium2substance" VALUES(1,178,0.124895882352941,'L-Histidine');
+INSERT INTO "medium2substance" VALUES(1,179,12,'L-Homoserine');
+INSERT INTO "medium2substance" VALUES(1,180,0.06335,'L-Isoleucine');
+INSERT INTO "medium2substance" VALUES(1,181,1.97934285714286,'L-Lactic acid');
+INSERT INTO "medium2substance" VALUES(1,182,0.13608,'L-Leucine');
+INSERT INTO "medium2substance" VALUES(1,183,0.191545454545455,'L-Lysine');
+INSERT INTO "medium2substance" VALUES(1,184,0.0076,'L-Malic acid');
+INSERT INTO "medium2substance" VALUES(1,185,1.6e-06,'Metanephrine');
+INSERT INTO "medium2substance" VALUES(1,186,0.486815384615385,'L-Methionine');
+INSERT INTO "medium2substance" VALUES(1,188,0.06845,'L-Phenylalanine');
+INSERT INTO "medium2substance" VALUES(1,189,0.177728571428571,'L-Proline');
+INSERT INTO "medium2substance" VALUES(1,190,0.124866666666667,'L-Serine');
+INSERT INTO "medium2substance" VALUES(1,191,0.007045,'Sorbitol');
+INSERT INTO "medium2substance" VALUES(1,192,0.140433333333333,'L-Threonine');
+INSERT INTO "medium2substance" VALUES(1,193,4.998375e-06,'Thyroxine');
+INSERT INTO "medium2substance" VALUES(1,194,0.05829,'L-Tryptophan');
+INSERT INTO "medium2substance" VALUES(1,195,0.0752272727272727,'L-Tyrosine');
+INSERT INTO "medium2substance" VALUES(1,196,0.216933333333333,'L-Valine');
+INSERT INTO "medium2substance" VALUES(1,197,0.17101476,'Glutathione');
+INSERT INTO "medium2substance" VALUES(1,199,0.637224432258065,'Linoleic acid');
+INSERT INTO "medium2substance" VALUES(1,200,0.00033,'Lithocholic acid');
+INSERT INTO "medium2substance" VALUES(1,205,0.266618,'Heptadecanoic acid');
+INSERT INTO "medium2substance" VALUES(1,208,0.163525,'Methanol');
+INSERT INTO "medium2substance" VALUES(1,209,0.055295,'Pyruvaldehyde');
+INSERT INTO "medium2substance" VALUES(1,210,0.023525,'myo-Inositol');
+INSERT INTO "medium2substance" VALUES(1,211,2.33333333333333e-05,'Folic acid');
+INSERT INTO "medium2substance" VALUES(1,212,0.00334,'Alpha-N-Phenylacetyl-L-glutamine');
+INSERT INTO "medium2substance" VALUES(1,213,0.000235,'Niacinamide');
+INSERT INTO "medium2substance" VALUES(1,215,0.0243,'NAD');
+INSERT INTO "medium2substance" VALUES(1,216,0.0196,'NADP');
+INSERT INTO "medium2substance" VALUES(1,218,0.0242925,'Nitrite');
+INSERT INTO "medium2substance" VALUES(1,220,2.8125e-06,'Norepinephrine');
+INSERT INTO "medium2substance" VALUES(1,221,8.0e-06,'Norepinephrine sulfate');
+INSERT INTO "medium2substance" VALUES(1,222,0.2860335535,'Stearic acid');
+INSERT INTO "medium2substance" VALUES(1,223,0.29180212,'Oleic acid');
+INSERT INTO "medium2substance" VALUES(1,224,0.00525,'Caprylic acid');
+INSERT INTO "medium2substance" VALUES(1,225,0.0001801666666666,'L-Octanoylcarnitine');
+INSERT INTO "medium2substance" VALUES(1,226,0.0002,'2-Octenoylcarnitine');
+INSERT INTO "medium2substance" VALUES(1,227,0.1,'Elaidic acid');
+INSERT INTO "medium2substance" VALUES(1,105,61,'Ornithine');
+INSERT INTO "medium2substance" VALUES(1,187,61,'Ornithine');
+INSERT INTO "medium2substance" VALUES(1,228,0.002945,'Orotic acid');
+INSERT INTO "medium2substance" VALUES(1,229,0.01029,'Oxalic acid');
+INSERT INTO "medium2substance" VALUES(1,230,0.010825,'Oxidized glutathione');
+INSERT INTO "medium2substance" VALUES(1,231,0.100780833333333,'Pentadecanoic acid');
+INSERT INTO "medium2substance" VALUES(1,232,0.73955,'Phosphate');
+INSERT INTO "medium2substance" VALUES(1,233,1.535,'Vitamin K1');
+INSERT INTO "medium2substance" VALUES(1,234,0.00301,'Phytanic acid');
+INSERT INTO "medium2substance" VALUES(1,235,3.65714285714286,'Potassium');
+INSERT INTO "medium2substance" VALUES(1,236,4.1172e-05,'Progesterone');
+INSERT INTO "medium2substance" VALUES(1,237,0.0009,'Propionic acid');
+INSERT INTO "medium2substance" VALUES(1,239,0.000108,'Putrescine');
+INSERT INTO "medium2substance" VALUES(1,240,0.05115,'Nicotinic acid');
+INSERT INTO "medium2substance" VALUES(1,241,2.86760888888889e-05,'Pyridoxal 5-phosphate');
+INSERT INTO "medium2substance" VALUES(1,242,0.0553125,'Pyruvic acid');
+INSERT INTO "medium2substance" VALUES(1,243,0.00010725,'All-trans-retinoic acid');
+INSERT INTO "medium2substance" VALUES(1,244,6.6e-06,'Retinoyl b-glucuronide');
+INSERT INTO "medium2substance" VALUES(1,245,0.00046,'Ribitol');
+INSERT INTO "medium2substance" VALUES(1,246,0.000215,'Riboflavin');
+INSERT INTO "medium2substance" VALUES(1,247,0.0004666666666666,'Sarcosine');
+INSERT INTO "medium2substance" VALUES(1,250,0.000654,'Serotonin');
+INSERT INTO "medium2substance" VALUES(1,251,137.533333333333,'Sodium');
+INSERT INTO "medium2substance" VALUES(1,252,0.0047425,'Spermidine');
+INSERT INTO "medium2substance" VALUES(1,253,0.0033833333333333,'Spermine');
+INSERT INTO "medium2substance" VALUES(1,254,5.5e-05,'Sphinganine 1-phosphate');
+INSERT INTO "medium2substance" VALUES(1,255,0.000278,'Sphingosine 1-phosphate');
+INSERT INTO "medium2substance" VALUES(1,256,0.0136,'Succinic acid');
+INSERT INTO "medium2substance" VALUES(1,257,0.0018,'Sucrose');
+INSERT INTO "medium2substance" VALUES(1,258,0.35275,'Sulfate');
+INSERT INTO "medium2substance" VALUES(1,259,0.00123,'Sulfite');
+INSERT INTO "medium2substance" VALUES(1,260,6.0e-05,'Sulfolithocholylglycine');
+INSERT INTO "medium2substance" VALUES(1,261,0.0870909090909091,'Taurine');
+INSERT INTO "medium2substance" VALUES(1,262,0.0003,'Taurochenodesoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,263,0.00038,'Taurocholic acid');
+INSERT INTO "medium2substance" VALUES(1,264,6.2e-05,'Taurodeoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,265,0.001212,'Lithocholyltaurine');
+INSERT INTO "medium2substance" VALUES(1,266,7.275,'Testosterone');
+INSERT INTO "medium2substance" VALUES(1,267,0.0059583333333333,'Tetracosanoic acid');
+INSERT INTO "medium2substance" VALUES(1,268,0.0226672857142857,'Myristic acid');
+INSERT INTO "medium2substance" VALUES(1,271,0.03183,'Thiocyanate');
+INSERT INTO "medium2substance" VALUES(1,272,0.05115,'Thiosulfate');
+INSERT INTO "medium2substance" VALUES(1,273,0.0001472121,'Thromboxane B2');
+INSERT INTO "medium2substance" VALUES(1,274,0.0001366666666666,'Thymidine');
+INSERT INTO "medium2substance" VALUES(1,276,41,'Uridine 5-diphosphate');
+INSERT INTO "medium2substance" VALUES(1,277,155,'Uridine diphosphate glucose');
+INSERT INTO "medium2substance" VALUES(1,278,3.12e-06,'Ubiquinone-10');
+INSERT INTO "medium2substance" VALUES(1,279,0.001135,'Uracil');
+INSERT INTO "medium2substance" VALUES(1,280,0.2632195625,'Uric acid');
+INSERT INTO "medium2substance" VALUES(1,281,4.72292,'Urea');
+INSERT INTO "medium2substance" VALUES(1,282,0.0091066666666666,'Uridine');
+INSERT INTO "medium2substance" VALUES(1,283,0.00016,'Ursodeoxycholic acid');
+INSERT INTO "medium2substance" VALUES(1,286,55000,'Water');
+INSERT INTO "medium2substance" VALUES(1,287,2.2e-05,'Xanthurenic acid');
+INSERT INTO "medium2substance" VALUES(1,288,0.000677,'D-Xylitol');
+INSERT INTO "medium2substance" VALUES(1,290,0.143446279130435,'Eicosapentaenoic acid');
+INSERT INTO "medium2substance" VALUES(1,291,7.0e-06,'Cis-8,11,14,17-Eicosatetraenoic acid');
+INSERT INTO "medium2substance" VALUES(1,292,0.0466641666666667,'8,11,14-Eicosatrienoic acid');
+INSERT INTO "medium2substance" VALUES(1,293,0.000212,'Stearidonic acid');
+INSERT INTO "medium2substance" VALUES(1,294,0.000155,'Retinal');
+INSERT INTO "medium2substance" VALUES(1,295,0.0024199295081967,'Vitamin A');
+INSERT INTO "medium2substance" VALUES(1,296,0.0286517555555556,'Alpha-Linolenic acid');
+INSERT INTO "medium2substance" VALUES(1,297,0.0338456388235294,'Alpha-Tocopherol');
+INSERT INTO "medium2substance" VALUES(1,298,0.00423,'Alpha-Tocotrienol');
+INSERT INTO "medium2substance" VALUES(1,299,0.002635,'beta-Alanine');
+INSERT INTO "medium2substance" VALUES(1,300,0.0382245952380952,'B-Carotene');
+INSERT INTO "medium2substance" VALUES(1,301,0.0002,'Beta-tocopherol');
+INSERT INTO "medium2substance" VALUES(1,302,0.01213,'Gamma-Linolenic acid');
+INSERT INTO "medium2substance" VALUES(1,304,0.0986,'Vaccenic acid');
+INSERT INTO "medium2substance" VALUES(7,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,280,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,16,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,94,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,281,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,56,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,229,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(7,120,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,102,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,100,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,79,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,203,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,145,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,178,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,173,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,156,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,157,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,258,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,286,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,289,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,89,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,217,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,235,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,251,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,81,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,248,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,275,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,214,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,75,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,90,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,204,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,201,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,78,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,269,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,66,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,270,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,246,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,240,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,26,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,25,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,211,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,28,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,36,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,285,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,87,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,88,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,206,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,51,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,284,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,159,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,237,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,67,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,158,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,150,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,232,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,76,NULL,NULL);
+INSERT INTO "medium2substance" VALUES(4,219,NULL,NULL);
 
 
---
--- Data for Name: medium; Type: TABLE DATA; Schema: public; Owner: -
---
+CREATE TABLE IF NOT EXISTS substance (
+	id INTEGER PRIMARY KEY,
+	name NTEXT NOT NULL UNIQUE,
+	formula TEXT
+);
+INSERT INTO "substance" VALUES(1,'(13Z)-13-Docosenoic acid [Erucic acid]','C22H42O2');
+INSERT INTO "substance" VALUES(2,'(15Z)-Tetracosenoate [Nervonate]','C24H45O2');
+INSERT INTO "substance" VALUES(3,'(20S)-20-Hydroxypregn-4-en-3-one [20alpha-Hydroxyprogesterone]','C21H32O2');
+INSERT INTO "substance" VALUES(4,'(2E)-But-2-enedioate [Fumarate]','C4H2O4');
+INSERT INTO "substance" VALUES(5,'(4R)-1-Methyl-4-(prop-1-en-2-yl)cyclohex-1-ene [D-Limonene]','C10H16');
+INSERT INTO "substance" VALUES(6,'(4Z,7Z,10Z,13Z,16Z,19Z)-Docosahexaenoate [Cervonic acid]','C22H31O2');
+INSERT INTO "substance" VALUES(7,'(7Z,10Z,13Z,16Z)-Docosatetraenoate [Adrenic acid]','C22H35O2');
+INSERT INTO "substance" VALUES(8,'(R)-3-Hydroxybutanoate [(R)-3-Hydroxybutyric acid]','C4H7O3');
+INSERT INTO "substance" VALUES(9,'(S)-3-Methyl-2-oxopentanoate [3-Methyl-2-Oxovaleric acid]','C6H9O3');
+INSERT INTO "substance" VALUES(10,'1-Methylnicotinamide','C7H9N2O');
+INSERT INTO "substance" VALUES(11,'1-Methyl-4-imidazoleacetic acid','C6H8N2O2');
+INSERT INTO "substance" VALUES(12,'2 Hydroxybutyrate [2-Hydroxybutyric acid]','C4H8O3');
+INSERT INTO "substance" VALUES(13,'2,2-Bipyridine','C10H8N2');
+INSERT INTO "substance" VALUES(14,'2,3-Cyclic GMP [Cyclic GMP]','C10H12N5O7P');
+INSERT INTO "substance" VALUES(15,'2-Methylcitrate [2-Methylcitric acid]','C7H7O7');
+INSERT INTO "substance" VALUES(16,'2-Oxidopropane-1,2,3-tricarboxylate [Citrate]','C6H4O7');
+INSERT INTO "substance" VALUES(17,'2-Oxoglutarate [Oxoglutaric acid]','C5H4O5');
+INSERT INTO "substance" VALUES(18,'25-Hydroxyvitamin D2','C28H44O2');
+INSERT INTO "substance" VALUES(19,'3,4-Dihydroxybenzoate','C7H5O4');
+INSERT INTO "substance" VALUES(20,'3,4-Dihydroxyphenylethyleneglycol [3,4-Dihydroxyphenylglycol]','C8H10O4');
+INSERT INTO "substance" VALUES(21,'3,5-Cyclic GMP [Cyclic GMP]','C10H12N5O7P');
+INSERT INTO "substance" VALUES(22,'3-(4-Hydroxyphenyl)pyruvate [4-Hydroxyphenylpyruvic acid]','C9H7O4');
+INSERT INTO "substance" VALUES(23,'3-Hydroxyhexadecanoylcarnithine','C23H45NO5');
+INSERT INTO "substance" VALUES(24,'3-Methyl-2-oxobutanoate [alpha-Ketoisovaleric acid]','C5H7O3');
+INSERT INTO "substance" VALUES(25,'3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]','C9H16NO5');
+INSERT INTO "substance" VALUES(26,'4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]','C8H11NO3');
+INSERT INTO "substance" VALUES(27,'4-(Azaniumylmethyl)-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxamine]','C8H14N2O2');
+INSERT INTO "substance" VALUES(28,'4-Aminobenzoic acid','C7H7NO2');
+INSERT INTO "substance" VALUES(29,'4-Aminobutanoate [gamma-Aminobutyric acid]','C4H8NO2');
+INSERT INTO "substance" VALUES(30,'4-Formyl-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxal]','C8H10NO3');
+INSERT INTO "substance" VALUES(31,'4-Hydroxydebrisoquin','C10H13N3O');
+INSERT INTO "substance" VALUES(32,'4-Hydroxyphenylacetate [p-Hydroxyphenylacetic acid]','C8H8O3');
+INSERT INTO "substance" VALUES(33,'4-Methyl-2-oxopentanoate [Ketoleucine]','C6H9O3');
+INSERT INTO "substance" VALUES(34,'4-Pyridoxate','C8H8NO4');
+INSERT INTO "substance" VALUES(35,'5,6,7,8-Tetrahydrofolate [Tetrahydrofolic acid]','C19H23N7O6');
+INSERT INTO "substance" VALUES(36,'5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]','C8H13O2S2');
+INSERT INTO "substance" VALUES(37,'5-Adenylic acid [AMP]','C10H14N5O7P');
+INSERT INTO "substance" VALUES(38,'5-Formyltetrahydrofolate','C20H21N7O7');
+INSERT INTO "substance" VALUES(39,'5-Guanylic acid [GMP]','C10H14N5O8P');
+INSERT INTO "substance" VALUES(40,'5-Hydroxy-L-tryptophan','C11H12N2O3');
+INSERT INTO "substance" VALUES(41,'5-Methyltetrahydrofolate [5-Methyltetrahydrofolic acid]','C20H25N7O6');
+INSERT INTO "substance" VALUES(42,'5-Oxoproline [Pyroglutamic acid]','C5H7NO3');
+INSERT INTO "substance" VALUES(43,'5-Phospho-alpha-D-ribose 1-diphosphate [Phosphoribosyl pyrophosphate]','C5H13O14P3');
+INSERT INTO "substance" VALUES(44,'5-Uridylic acid [UMP]','C9H13N2O9P');
+INSERT INTO "substance" VALUES(45,'5-beta-Dihydrotestosterone','C19H28O2');
+INSERT INTO "substance" VALUES(46,'7,8-Dihydrofolate [Dihydrofolic acid]','C19H21N7O6');
+INSERT INTO "substance" VALUES(47,'9-cis-Retinol','C20H30O');
+INSERT INTO "substance" VALUES(48,'ADP','C10H15N5O10P2');
+INSERT INTO "substance" VALUES(49,'ATP [Adenosine triphosphate]','C10H16N5O13P3');
+INSERT INTO "substance" VALUES(50,'Acetaldehyde','C2H4O');
+INSERT INTO "substance" VALUES(51,'Acetate [Acetic acid]','C2H3O2');
+INSERT INTO "substance" VALUES(52,'Acetoacetate [Acetoacetic acid]','C4H6O3');
+INSERT INTO "substance" VALUES(53,'Acetone','C3H6O');
+INSERT INTO "substance" VALUES(54,'Adenine','C5H5N5');
+INSERT INTO "substance" VALUES(55,'Adenosine','C10H13N5O4');
+INSERT INTO "substance" VALUES(56,'Ammonia','H3N');
+INSERT INTO "substance" VALUES(57,'Androsterone','C19H30O2');
+INSERT INTO "substance" VALUES(58,'Androsterone 3-glucosiduronic acid','C25H38O8');
+INSERT INTO "substance" VALUES(59,'Anthranilate [2-Aminobenzoic acid]','C7H6NO2');
+INSERT INTO "substance" VALUES(60,'Arachidic acid','C20H40O2');
+INSERT INTO "substance" VALUES(61,'Arachidonate','C20H31O2');
+INSERT INTO "substance" VALUES(62,'Arsenite','AsO3');
+INSERT INTO "substance" VALUES(63,'Behenate [Docosanoate]','C22H43O2');
+INSERT INTO "substance" VALUES(64,'Benzoate [Benzoic acid]','C7H5O2');
+INSERT INTO "substance" VALUES(65,'Billirubin','C33H36N4O6');
+INSERT INTO "substance" VALUES(66,'Biotin','C10H15N2O3S');
+INSERT INTO "substance" VALUES(67,'Butyrate','C4H7O2');
+INSERT INTO "substance" VALUES(68,'Butyryl carnitine','C11H21NO4');
+INSERT INTO "substance" VALUES(69,'CAMP [Cyclic AMP]','C10H12N5O6P');
+INSERT INTO "substance" VALUES(70,'CDP','C9H15N3O11P2');
+INSERT INTO "substance" VALUES(71,'CMP','C9H14N3O8P');
+INSERT INTO "substance" VALUES(72,'Cadmium(II) cation [Cd2+]','Cd');
+INSERT INTO "substance" VALUES(73,'Calcidiol [25-Hydroxyvitamin D3]','C27H44O2');
+INSERT INTO "substance" VALUES(74,'Calciol [Vitamin D3]','C27H44O');
+INSERT INTO "substance" VALUES(75,'Calcium(II) cation [Ca(2+)]','Ca');
+INSERT INTO "substance" VALUES(76,'Carbon dioxide [CO2]','CO2');
+INSERT INTO "substance" VALUES(77,'Carbon monoxide','CO');
+INSERT INTO "substance" VALUES(78,'Carbonic acid','CH2O3');
+INSERT INTO "substance" VALUES(79,'Cellobiose','C12H22O11');
+INSERT INTO "substance" VALUES(80,'Chenodeoxycholate [Chenodeoxycholic acid]','C24H39O4');
+INSERT INTO "substance" VALUES(81,'Chloride [Cl(-)]','Cl');
+INSERT INTO "substance" VALUES(82,'Cholate [Cholic acid]','C24H39O5');
+INSERT INTO "substance" VALUES(83,'Choline','C5H14NO');
+INSERT INTO "substance" VALUES(84,'Chorismate','C10H8O6');
+INSERT INTO "substance" VALUES(85,'Chromate','CrO4');
+INSERT INTO "substance" VALUES(86,'Cholesterol','C27H46O');
+INSERT INTO "substance" VALUES(87,'Cob(I)alamin','C62H89CoN13O14P');
+INSERT INTO "substance" VALUES(88,'Cob(II)alamin','C62H88CoN13O14P');
+INSERT INTO "substance" VALUES(89,'Cobalt(II) cation [Co(2+)]','Co');
+INSERT INTO "substance" VALUES(90,'Copper(II) cation [Cu(2+)]','Cu');
+INSERT INTO "substance" VALUES(91,'Corticosterone','C21H30O4');
+INSERT INTO "substance" VALUES(92,'Cortisol','C21H30O5');
+INSERT INTO "substance" VALUES(93,'Creatine','C4H9N3O2');
+INSERT INTO "substance" VALUES(94,'Creatinine','C4H7N3O');
+INSERT INTO "substance" VALUES(95,'Cyanate','CNO');
+INSERT INTO "substance" VALUES(96,'Cys Gly [Cysteinylglycine]','C5H10N2O3S');
+INSERT INTO "substance" VALUES(97,'Cytidine','C9H13N3O5');
+INSERT INTO "substance" VALUES(98,'Cytosine','C4H5N3O');
+INSERT INTO "substance" VALUES(99,'D-Alanine','C3H7NO2');
+INSERT INTO "substance" VALUES(100,'D-Fructose','C6H12O6');
+INSERT INTO "substance" VALUES(101,'D-Galactose','C6H12O6');
+INSERT INTO "substance" VALUES(102,'D-Glucose','C6H12O6');
+INSERT INTO "substance" VALUES(103,'D-Lactate [D-Lactic acid]','C3H5O3');
+INSERT INTO "substance" VALUES(104,'D-Mannose','C6H12O6');
+INSERT INTO "substance" VALUES(105,'D-Ornithine','C5H12N2O2');
+INSERT INTO "substance" VALUES(106,'D-Ribose','C5H10O5');
+INSERT INTO "substance" VALUES(107,'D-Serine','C3H7NO3');
+INSERT INTO "substance" VALUES(108,'D-Sorbitol [Sorbitol]','C6H14O6');
+INSERT INTO "substance" VALUES(109,'D-Xylose','C5H10O5');
+INSERT INTO "substance" VALUES(110,'Debrisoquine','C10H13N3');
+INSERT INTO "substance" VALUES(111,'Decanoate','C10H19O2');
+INSERT INTO "substance" VALUES(112,'Decanoyl carnitine','C17H33NO4');
+INSERT INTO "substance" VALUES(113,'Dehydroascorbate [Dehydroascorbic acid]','C6H6O6');
+INSERT INTO "substance" VALUES(114,'Dehydroepiandrosterone sulfate','C19H28O5S');
+INSERT INTO "substance" VALUES(115,'Deoxyadenosine','C10H13N5O3');
+INSERT INTO "substance" VALUES(116,'Deoxycholate [Deoxycholic acid]','C24H40O4');
+INSERT INTO "substance" VALUES(117,'Deoxycytidine','C9H13N3O4');
+INSERT INTO "substance" VALUES(118,'Deoxyuridine','C9H12N2O5');
+INSERT INTO "substance" VALUES(119,'Dihydroxyacetone phosphate','C3H7O6P');
+INSERT INTO "substance" VALUES(120,'Dioxygen [O2]','O2');
+INSERT INTO "substance" VALUES(121,'Diphosphate [Pyrophosphate]','O7P2');
+INSERT INTO "substance" VALUES(122,'Dodecanoate','C12H23O2');
+INSERT INTO "substance" VALUES(123,'Dopamine 3-O-sulfate','C8H11NO5S');
+INSERT INTO "substance" VALUES(124,'Ergocalciferol [Vitamin D2]','C28H44O');
+INSERT INTO "substance" VALUES(125,'Estrone 3-sulfate','C18H21O5S');
+INSERT INTO "substance" VALUES(126,'Ethanol','C2H6O');
+INSERT INTO "substance" VALUES(127,'FMN [Flavin Mononucleotide]','C17H21N4O9P');
+INSERT INTO "substance" VALUES(128,'Flavin adenine dinucleotide oxidized [FAD]','C27H33N9O15P2');
+INSERT INTO "substance" VALUES(129,'Formaldehyde','CH2O');
+INSERT INTO "substance" VALUES(130,'Formate [Formic acid]','CHO2');
+INSERT INTO "substance" VALUES(131,'GDP [Guanosine diphosphate]','C10H15N5O11P2');
+INSERT INTO "substance" VALUES(132,'GTP [Guanosine triphosphate]','C10H16N5O14P3');
+INSERT INTO "substance" VALUES(133,'Globoside',NULL);
+INSERT INTO "substance" VALUES(134,'Glucosamine','C6H13NO5');
+INSERT INTO "substance" VALUES(135,'Glucuronate [D-Glucuronic acid]','C6H9O7');
+INSERT INTO "substance" VALUES(136,'Glycerol','C3H8O3');
+INSERT INTO "substance" VALUES(137,'Glycerol 3-phosphate','C3H9O6P');
+INSERT INTO "substance" VALUES(138,'Glycine','C2H5NO2');
+INSERT INTO "substance" VALUES(139,'Glycine betaine [Betaine]','C5H12NO2');
+INSERT INTO "substance" VALUES(140,'Glycochenodeoxycholate','C26H42NO5');
+INSERT INTO "substance" VALUES(141,'Glycocholate','C26H42NO6');
+INSERT INTO "substance" VALUES(142,'Glycolithocolate [Lithocholic acid glycine conjugate]','C26H43NO4');
+INSERT INTO "substance" VALUES(143,'Glycoursodeoxycholate [Glycoursodeoxycholic acid]','C26H42NO5');
+INSERT INTO "substance" VALUES(144,'Guanosine','C10H13N5O5');
+INSERT INTO "substance" VALUES(145,'HemeD','C34H32FeN4O6');
+INSERT INTO "substance" VALUES(146,'Hexacosanoate','C26H51O2');
+INSERT INTO "substance" VALUES(147,'Hexadecanoate [Palmitic acid]','C16H32O2');
+INSERT INTO "substance" VALUES(148,'Hexadecenoate','C16H29O2');
+INSERT INTO "substance" VALUES(149,'Hyaluronate beta1','C28H40N2O22');
+INSERT INTO "substance" VALUES(150,'Hydrogen [H(+)]','H');
+INSERT INTO "substance" VALUES(151,'Hydrogen peroxide','H2O2');
+INSERT INTO "substance" VALUES(152,'Hydrogen sulfide','H2S');
+INSERT INTO "substance" VALUES(153,'Hypoxanthine','C5H4N4O');
+INSERT INTO "substance" VALUES(154,'IMP [Inosinic acid]','C10H13N4O8P');
+INSERT INTO "substance" VALUES(155,'Inosine','C10H12N4O5');
+INSERT INTO "substance" VALUES(156,'Iron(II) cation [Fe(2+)]','Fe');
+INSERT INTO "substance" VALUES(157,'Iron(III) cation [Fe(3+)]','Fe');
+INSERT INTO "substance" VALUES(158,'Isobutyrate','C4H7O2');
+INSERT INTO "substance" VALUES(159,'Isovalerate','C5H9O2');
+INSERT INTO "substance" VALUES(160,'Isovaleryl carnitine','C12H23NO4');
+INSERT INTO "substance" VALUES(161,'L Arabinitol [L-Arabitol]','C5H12O5');
+INSERT INTO "substance" VALUES(162,'L-Cystine','C6H12N2O4S2');
+INSERT INTO "substance" VALUES(163,'L-3-Amino-isobutanoate [(S)-b-Aminoisobutyric acid]','C4H9NO2');
+INSERT INTO "substance" VALUES(164,'L-Alanine','C3H7NO2');
+INSERT INTO "substance" VALUES(165,'L-Arabinose','C5H10O5');
+INSERT INTO "substance" VALUES(166,'L-Arginine','C6H14N4O2');
+INSERT INTO "substance" VALUES(167,'L-Ascorbate [Ascorbic acid]','C6H7O6');
+INSERT INTO "substance" VALUES(168,'L-Asparagine','C4H8N2O3');
+INSERT INTO "substance" VALUES(169,'L-Aspartate','C4H6NO4');
+INSERT INTO "substance" VALUES(170,'L-Carnitine','C7H15NO3');
+INSERT INTO "substance" VALUES(171,'L-Carnosine','C9H14N4O3');
+INSERT INTO "substance" VALUES(172,'L-Citrulline [Citrulline]','C6H13N3O3');
+INSERT INTO "substance" VALUES(173,'L-Cysteine','C3H7NO2S');
+INSERT INTO "substance" VALUES(174,'L-Dopa [3,4-Dihydroxy-L-phenylalanine]','C9H11NO4');
+INSERT INTO "substance" VALUES(175,'L-Glutamate','C5H8NO4');
+INSERT INTO "substance" VALUES(176,'L-Glutamine','C5H10N2O3');
+INSERT INTO "substance" VALUES(177,'L-Glycerate','C3H5O4');
+INSERT INTO "substance" VALUES(178,'L-Histidine','C6H9N3O2');
+INSERT INTO "substance" VALUES(179,'L-Homoserine','C4H9NO3');
+INSERT INTO "substance" VALUES(180,'L-Isoleucine','C6H13NO2');
+INSERT INTO "substance" VALUES(181,'L-Lactate [L-Lactic acid]','C3H5O3');
+INSERT INTO "substance" VALUES(182,'L-Leucine','C6H13NO2');
+INSERT INTO "substance" VALUES(183,'L-Lysine','C6H14N2O2');
+INSERT INTO "substance" VALUES(184,'L-Malate [L-Malic acid]','C4H4O5');
+INSERT INTO "substance" VALUES(185,'L-Metanephrine','C10H15NO3');
+INSERT INTO "substance" VALUES(186,'L-Methionine','C5H11NO2S');
+INSERT INTO "substance" VALUES(187,'L-Ornithine','C5H12N2O2');
+INSERT INTO "substance" VALUES(188,'L-Phenylalanine','C9H11NO2');
+INSERT INTO "substance" VALUES(189,'L-Proline','C5H9NO2');
+INSERT INTO "substance" VALUES(190,'L-Serine','C3H7NO3');
+INSERT INTO "substance" VALUES(191,'L-Sorbitol [Sorbitol]','C6H14O6');
+INSERT INTO "substance" VALUES(192,'L-Threonine','C4H9NO3');
+INSERT INTO "substance" VALUES(193,'L-Thyroxine','C15H11I4NO4');
+INSERT INTO "substance" VALUES(194,'L-Tryptophan','C11H12N2O2');
+INSERT INTO "substance" VALUES(195,'L-Tyrosine','C9H11NO3');
+INSERT INTO "substance" VALUES(196,'L-Valine','C5H11NO2');
+INSERT INTO "substance" VALUES(197,'L-gamma-Glutamyl-L-cysteinylglycine [Glutathione]','C10H17N3O6S');
+INSERT INTO "substance" VALUES(198,'Lead(II) cation [Pb(2+)]','Pb');
+INSERT INTO "substance" VALUES(199,'Linoleic acid','C18H31O2');
+INSERT INTO "substance" VALUES(200,'Lithocholate [Lithocholic acid]','C24H39O3');
+INSERT INTO "substance" VALUES(201,'Magnesium(II) cation [Mg(2+)]','Mg');
+INSERT INTO "substance" VALUES(202,'Maleate','C4H3O4');
+INSERT INTO "substance" VALUES(203,'Maltose','C12H22O11');
+INSERT INTO "substance" VALUES(204,'Manganese(II) cation [Mn(2+)]','Mn');
+INSERT INTO "substance" VALUES(205,'Margarate [Heptadecanoate]','C17H33O2');
+INSERT INTO "substance" VALUES(206,'Menadione [Vitamin K]','C11H8O2');
+INSERT INTO "substance" VALUES(207,'Mercury(II) cation [Hg(2+)]','Hg');
+INSERT INTO "substance" VALUES(208,'Methanol','CH4O');
+INSERT INTO "substance" VALUES(209,'Methylglyoxal [Pyruvaldehyde]','C3H4O2');
+INSERT INTO "substance" VALUES(210,'Myo-inositol','C6H12O6');
+INSERT INTO "substance" VALUES(211,'N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]','C19H19N7O6');
+INSERT INTO "substance" VALUES(212,'N2-phenylacetyl-L-glutaminate','C13H15N2O4');
+INSERT INTO "substance" VALUES(213,'Niacinamide','C6H6N2O');
+INSERT INTO "substance" VALUES(214,'Nickel(II) cation [Ni(2+)]','Ni');
+INSERT INTO "substance" VALUES(215,'Nicotinamide adenine dinucleotide [NAD]','C21H27N7O14P2');
+INSERT INTO "substance" VALUES(216,'Nicotinamide adenine dinucleotide phosphate [NADP]','C21H28N7O17P3');
+INSERT INTO "substance" VALUES(217,'Nitrate [NO3(-)]','NO3');
+INSERT INTO "substance" VALUES(218,'Nitrite','NO2');
+INSERT INTO "substance" VALUES(219,'Nitrogen','N2');
+INSERT INTO "substance" VALUES(220,'Norepinephrine','C8H11NO3');
+INSERT INTO "substance" VALUES(221,'Norepinephrine sulfate','C8H11NO6S');
+INSERT INTO "substance" VALUES(222,'Octadecanoate [Stearic acid]','C18H35O2');
+INSERT INTO "substance" VALUES(223,'Octadecenoate [Oleic acid]','C18H34O2');
+INSERT INTO "substance" VALUES(224,'Octanoate [Caprylic acid]','C8H15O2');
+INSERT INTO "substance" VALUES(225,'Octanoyl carnitine [L-Octanoylcarnitine]','C15H29NO4');
+INSERT INTO "substance" VALUES(226,'Octenoyl carnitine','C15H27NO4');
+INSERT INTO "substance" VALUES(227,'Oleate','C18H33O2');
+INSERT INTO "substance" VALUES(228,'Orotate [Orotic acid]','C5H3N2O4');
+INSERT INTO "substance" VALUES(229,'Oxalate','C2HO4');
+INSERT INTO "substance" VALUES(230,'Oxidized glutathione','C20H32N6O12S2');
+INSERT INTO "substance" VALUES(231,'Pentadecanoate','C15H29O2');
+INSERT INTO "substance" VALUES(232,'Phosphate [PO4(3-)]','O4P');
+INSERT INTO "substance" VALUES(233,'Phylloquinone [Vitamin K1]','C31H46O2');
+INSERT INTO "substance" VALUES(234,'Phytanate','C20H39O2');
+INSERT INTO "substance" VALUES(235,'Potassium(I) cation [K(+)]','K');
+INSERT INTO "substance" VALUES(236,'Progesterone','C21H30O2');
+INSERT INTO "substance" VALUES(237,'Propionate','C3H5O2');
+INSERT INTO "substance" VALUES(238,'Protoheme','C34H32FeN4O4');
+INSERT INTO "substance" VALUES(239,'Putrescine','C4H12N2');
+INSERT INTO "substance" VALUES(240,'Pyridine-3-carboxylate [Niacin]','C6H4NO2');
+INSERT INTO "substance" VALUES(241,'Pyridoxal 5-phosphate','C8H10NO6P');
+INSERT INTO "substance" VALUES(242,'Pyruvate [Pyruvic acid]','C3H3O3');
+INSERT INTO "substance" VALUES(243,'Retinoate [all-trans-Retinoic acid]','C20H27O2');
+INSERT INTO "substance" VALUES(244,'Retinoyl glucuronide','C26H35O8');
+INSERT INTO "substance" VALUES(245,'Ribitol','C5H12O5');
+INSERT INTO "substance" VALUES(246,'Riboflavin','C17H20N4O6');
+INSERT INTO "substance" VALUES(247,'Sarcosine','C3H7NO2');
+INSERT INTO "substance" VALUES(248,'Selenite','O3Se');
+INSERT INTO "substance" VALUES(249,'Selenium(II) cation [Se(2+)]','Se');
+INSERT INTO "substance" VALUES(250,'Serotonin','C10H12N2O');
+INSERT INTO "substance" VALUES(251,'Sodium(I) cation [Na(+)]','Na');
+INSERT INTO "substance" VALUES(252,'Spermidine','C7H19N3');
+INSERT INTO "substance" VALUES(253,'Spermine','C10H26N4');
+INSERT INTO "substance" VALUES(254,'Sphinganine 1-phosphate','C18H39NO5P');
+INSERT INTO "substance" VALUES(255,'Sphingosine 1-phosphate','C18H37NO5P');
+INSERT INTO "substance" VALUES(256,'Succinate [Succinic acid]','C4H2D4O4');
+INSERT INTO "substance" VALUES(257,'Sucrose','C12H22O11');
+INSERT INTO "substance" VALUES(258,'Sulfate [SO4(2-)]','O4S');
+INSERT INTO "substance" VALUES(259,'Sulfite','HO3S');
+INSERT INTO "substance" VALUES(260,'Sulfoglycolithocholate','C26H41NO7S');
+INSERT INTO "substance" VALUES(261,'Taurine','C2H7NO3S');
+INSERT INTO "substance" VALUES(262,'Taurochenodeoxycholate [Taurochenodesoxycholic acid]','C26H45NO6S');
+INSERT INTO "substance" VALUES(263,'Taurocholic acid','C26H45NO7S');
+INSERT INTO "substance" VALUES(264,'Taurodeoxycholate [Taurodeoxycholic acid]','C26H44NO6S');
+INSERT INTO "substance" VALUES(265,'Taurolithocholate [Lithocholyltaurine]','C26H44NO5S');
+INSERT INTO "substance" VALUES(266,'Testosterone','C19H28O2');
+INSERT INTO "substance" VALUES(267,'Tetracosanoate [Lignocerate]','C24H47O2');
+INSERT INTO "substance" VALUES(268,'Tetradecanoate','C14H27O2');
+INSERT INTO "substance" VALUES(269,'Tetraoxidomolybdate(VI) [Molybdate]','MoO4');
+INSERT INTO "substance" VALUES(270,'Thiamine','C12H17N4OS');
+INSERT INTO "substance" VALUES(271,'Thiocyanate','CNS');
+INSERT INTO "substance" VALUES(272,'Thiosulfate','O3S2');
+INSERT INTO "substance" VALUES(273,'Thromboxane-b2 [Thromboxane B2]','C20H34O6');
+INSERT INTO "substance" VALUES(274,'Thymidine','C10H14N2O5');
+INSERT INTO "substance" VALUES(275,'Tungstate','O4W');
+INSERT INTO "substance" VALUES(276,'UDP [Uridine 5-diphosphate]','C9H14N2O12P2');
+INSERT INTO "substance" VALUES(277,'UDPglucose [Uridine diphosphate glucose]','C15H24N2O17P2');
+INSERT INTO "substance" VALUES(278,'Ubiquinone-10','C59H90O4');
+INSERT INTO "substance" VALUES(279,'Uracil','C4H4N2O2');
+INSERT INTO "substance" VALUES(280,'Urate','C5H3N4O3');
+INSERT INTO "substance" VALUES(281,'Urea','CH4N2O');
+INSERT INTO "substance" VALUES(282,'Uridine','C9H12N2O6');
+INSERT INTO "substance" VALUES(283,'Ursodeoxycholate [Ursodeoxycholic acid]','C24H39O4');
+INSERT INTO "substance" VALUES(284,'Valeric acid','C5H10O2');
+INSERT INTO "substance" VALUES(285,'Vitamin B12',NULL);
+INSERT INTO "substance" VALUES(286,'Water [H2O]','H2O');
+INSERT INTO "substance" VALUES(287,'Xanthurenic acid','C10H7NO4');
+INSERT INTO "substance" VALUES(288,'Xylitol [D-Xylitol]','C5H12O5');
+INSERT INTO "substance" VALUES(289,'Zinc(II) cation [Zn(2+)]','Zn');
+INSERT INTO "substance" VALUES(290,'all-cis-5,8,11,14,17-Icosapentaenoate','C20H29O2');
+INSERT INTO "substance" VALUES(291,'all-cis-8,11,14,17-Icosatetraenoic acid [ETA]','C20H32O2');
+INSERT INTO "substance" VALUES(292,'all-cis-Icosa-8,11,14-trienoic acid [Dihomo-gamma-linolenic acid]','C20H34O2');
+INSERT INTO "substance" VALUES(293,'all-cis-Octadeca-6,9,12,15-tetraenoic acid [Stearidonic acid]','C18H33O2');
+INSERT INTO "substance" VALUES(294,'all-trans-Retinal [Retinal]','C20H28O');
+INSERT INTO "substance" VALUES(295,'all-trans-Retinol [Vitamin A]','C20H30O');
+INSERT INTO "substance" VALUES(296,'alpha-Linolenate','C18H29O2');
+INSERT INTO "substance" VALUES(297,'alpha-Tocopherol','C29H50O2');
+INSERT INTO "substance" VALUES(298,'alpha-Tocotrienol','C29H44O2');
+INSERT INTO "substance" VALUES(299,'beta-Alanine','C3H7NO2');
+INSERT INTO "substance" VALUES(300,'beta-Carotene [b-Carotene]','C40H56');
+INSERT INTO "substance" VALUES(301,'beta-Tocopherol','C28H48O2');
+INSERT INTO "substance" VALUES(302,'gamma-Linolenate','C18H29O2');
+INSERT INTO "substance" VALUES(303,'trans-4-Hydroxy-L-proline','C5H9NO3');
+INSERT INTO "substance" VALUES(304,'trans-Vaccenic acid','C18H34O2');
 
-INSERT INTO medium(name, description, reference) VALUES
-	('Blood', 'Blood medium', 'https://doi.org/10.1371/journal.pcbi.1010903'),
-	('CasA', 'Casamino Acids', 'https://doi.org/10.1080/00275514.1971.12019223'),
-	('CGXII', 'Corynebacterium glutamicum optimized growth medium', 'https://doi.org/10.1002/bit.25103'),
-	('dGMM', 'Defined Gut Microbiota Medium', 'https://doi.org/10.1038/s41564-018-0123-9'),
-	('LB', 'Lysogeny broth', 'https://doi.org/10.1093/nar/gky537, https://doi.org/10.1074/jbc.M703759200'),
-	('M9', 'M9 minimal medium', 'https://www.sigmaaldrich.com/DE/de/product/sigma/m6030, https://doi.org/10.3389/fbinf.2023.1214074'),
-	('MP-AU', 'Multi-Purpose Artificial Urine', 'https://doi.org/10.1038/s41598-019-56693-4, https://doi.org/10.1016/j.bios.2022.114962'),
-	('RPMI', 'Roswell Park Memorial Institute 1640 Medium', 'https://www.thermofisher.com/de/de/home/technical-resources/media-formulation.114.html (visited on 2023-03-22)'),
-	('SNM3', 'Synthetic Nasal Medium Version 3', 'https://doi.org/10.1371/journal.ppat.1003862');
 
---
--- Data for Name: substance; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO substance(name, formula) VALUES
--- Substance names starting with '('
-	('(13Z)-13-Docosenoic acid [Erucic acid]', 'C22H42O2'),
-	('(15Z)-Tetracosenoate [Nervonate]', 'C24H45O2'),
-	('(20S)-20-Hydroxypregn-4-en-3-one [20alpha-Hydroxyprogesterone]', 'C21H32O2'),
-	('(2E)-But-2-enedioate [Fumarate]', 'C4H2O4'),
-	('(4R)-1-Methyl-4-(prop-1-en-2-yl)cyclohex-1-ene [D-Limonene]', 'C10H16'),
-	('(4Z,7Z,10Z,13Z,16Z,19Z)-Docosahexaenoate [Cervonic acid]', 'C22H31O2'),
-	('(7Z,10Z,13Z,16Z)-Docosatetraenoate [Adrenic acid]', 'C22H35O2'),
-	('(R)-3-Hydroxybutanoate [(R)-3-Hydroxybutyric acid]', 'C4H7O3'),
-	('(S)-3-Methyl-2-oxopentanoate [3-Methyl-2-Oxovaleric acid]', 'C6H9O3'),
--- Substance names starting with [0-9]*
-	('1-Methylnicotinamide', 'C7H9N2O'),
-	('1-Methyl-4-imidazoleacetic acid', 'C6H8N2O2'),
-	('2 Hydroxybutyrate [2-Hydroxybutyric acid]', 'C4H8O3'),
-	('2,2-Bipyridine', 'C10H8N2'),
-	('2,3-Cyclic GMP [Cyclic GMP]', 'C10H12N5O7P'),
-	('2-Methylcitrate [2-Methylcitric acid]', 'C7H7O7'),
-	('2-Oxidopropane-1,2,3-tricarboxylate [Citrate]', 'C6H4O7'),
-	('2-Oxoglutarate [Oxoglutaric acid]', 'C5H4O5'),
-	('25-Hydroxyvitamin D2', 'C28H44O2'),
-	('3,4-Dihydroxybenzoate', 'C7H5O4'),
-	('3,4-Dihydroxyphenylethyleneglycol [3,4-Dihydroxyphenylglycol]', 'C8H10O4'),
-	('3,5-Cyclic GMP [Cyclic GMP]', 'C10H12N5O7P'),
-	('3-(4-Hydroxyphenyl)pyruvate [4-Hydroxyphenylpyruvic acid]', 'C9H7O4'),
-	('3-Hydroxyhexadecanoylcarnithine', 'C23H45NO5'),
-	('3-Methyl-2-oxobutanoate [alpha-Ketoisovaleric acid]', 'C5H7O3'),
-	('3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]', 'C9H16NO5'),
-	('4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]', 'C8H11NO3'),
-	('4-(Azaniumylmethyl)-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxamine]', 'C8H14N2O2'),
-	('4-Aminobenzoic acid', 'C7H7NO2'),
-	('4-Aminobutanoate [gamma-Aminobutyric acid]', 'C4H8NO2'),
-	('4-Formyl-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxal]', 'C8H10NO3'),
-	('4-Hydroxydebrisoquin', 'C10H13N3O'),
-	('4-Hydroxyphenylacetate [p-Hydroxyphenylacetic acid]', 'C8H8O3'),
-	('4-Methyl-2-oxopentanoate [Ketoleucine]', 'C6H9O3'),
-	('4-Pyridoxate', 'C8H8NO4'),
-	('5,6,7,8-Tetrahydrofolate [Tetrahydrofolic acid]', 'C19H23N7O6'),
-	('5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]', 'C8H13O2S2'),
-	('5-Adenylic acid [AMP]', 'C10H14N5O7P'),
-	('5-Formyltetrahydrofolate', 'C20H21N7O7'),
-	('5-Guanylic acid [GMP]', 'C10H14N5O8P'),
-	('5-Hydroxy-L-tryptophan', 'C11H12N2O3'),
-	('5-Methyltetrahydrofolate [5-Methyltetrahydrofolic acid]', 'C20H25N7O6'),
-	('5-Oxoproline [Pyroglutamic acid]', 'C5H7NO3'),
-	('5-Phospho-alpha-D-ribose 1-diphosphate [Phosphoribosyl pyrophosphate]', 'C5H13O14P3'),
-	('5-Uridylic acid [UMP]', 'C9H13N2O9P'),
-	('5-beta-Dihydrotestosterone', 'C19H28O2'),
-	('7,8-Dihydrofolate [Dihydrofolic acid]', 'C19H21N7O6'),
-	('9-cis-Retinol', 'C20H30O'),
--- Substance names starting with 'A'
-	('ADP', 'C10H15N5O10P2'),
-	('ATP [Adenosine triphosphate]', 'C10H16N5O13P3'),
-	('Acetaldehyde', 'C2H4O'),
-	('Acetate [Acetic acid]', 'C2H3O2'),
-	('Acetoacetate [Acetoacetic acid]', 'C4H6O3'),
-	('Acetone', 'C3H6O'),
-	('Adenine', 'C5H5N5'),
-	('Adenosine', 'C10H13N5O4'),
-	('Ammonia', 'H3N'),
-	('Androsterone', 'C19H30O2'),
-	('Androsterone 3-glucosiduronic acid', 'C25H38O8'),
-	('Anthranilate [2-Aminobenzoic acid]', 'C7H6NO2'),
-	('Arachidic acid', 'C20H40O2'),
-	('Arachidonate', 'C20H31O2'),
-	('Arsenite', 'AsO3'),
--- Substance names starting with 'B'
-	('Behenate [Docosanoate]', 'C22H43O2'),
-	('Benzoate [Benzoic acid]', 'C7H5O2'),
-	('Billirubin', 'C33H36N4O6'),
-	('Biotin', 'C10H15N2O3S'),
-	('Butyrate', 'C4H7O2'),
-	('Butyryl carnitine', 'C11H21NO4'),
--- Substance names starting with 'C'
-	('CAMP [Cyclic AMP]', 'C10H12N5O6P'),
-	('CDP', 'C9H15N3O11P2'),
-	('CMP', 'C9H14N3O8P'),
-	('Cadmium(II) cation [Cd2+]', 'Cd'),
-	('Calcidiol [25-Hydroxyvitamin D3]', 'C27H44O2'),
-	('Calciol [Vitamin D3]', 'C27H44O'),
-	('Calcium(II) cation [Ca(2+)]', 'Ca'),
-	('Carbon dioxide [CO2]', 'CO2'),
-	('Carbon monoxide', 'CO'),
-	('Carbonic acid', 'CH2O3'),
-	('Cellobiose', 'C12H22O11'),
-	('Chenodeoxycholate [Chenodeoxycholic acid]', 'C24H39O4'),
-	('Chloride [Cl(-)]', 'Cl'),
-	('Cholate [Cholic acid]', 'C24H39O5'),
-	('Choline', 'C5H14NO'),
-	('Chorismate', 'C10H8O6'),
-	('Chromate', 'CrO4'),
-	('Cholesterol', 'C27H46O'),
-	('Cob(I)alamin', 'C62H89CoN13O14P'),
-	('Cob(II)alamin', 'C62H88CoN13O14P'),
-	('Cobalt(II) cation [Co(2+)]', 'Co'),
-	('Copper(II) cation [Cu(2+)]', 'Cu'),
-	('Corticosterone', 'C21H30O4'),
-	('Cortisol', 'C21H30O5'),
-	('Creatine', 'C4H9N3O2'),
-	('Creatinine', 'C4H7N3O'),
-	('Cyanate', 'CNO'),
-	('Cys Gly [Cysteinylglycine]', 'C5H10N2O3S'),
-	('Cytidine', 'C9H13N3O5'),
-	('Cytosine', 'C4H5N3O'),
--- Substance names starting with 'D'
-	('D-Alanine', 'C3H7NO2'),
-	('D-Fructose', 'C6H12O6'),
-	('D-Galactose', 'C6H12O6'),
-	('D-Glucose', 'C6H12O6'),
-	('D-Lactate [D-Lactic acid]', 'C3H5O3'),
-	('D-Mannose', 'C6H12O6'),
-	('D-Ornithine', 'C5H12N2O2'),
-	('D-Ribose', 'C5H10O5'),
-	('D-Serine', 'C3H7NO3'),
-	('D-Sorbitol [Sorbitol]', 'C6H14O6'),
-	('D-Xylose', 'C5H10O5'),
-	('Debrisoquine', 'C10H13N3'),
-	('Decanoate', 'C10H19O2'),
-	('Decanoyl carnitine', 'C17H33NO4'),
-	('Dehydroascorbate [Dehydroascorbic acid]', 'C6H6O6'),
-	('Dehydroepiandrosterone sulfate', 'C19H28O5S'),
-	('Deoxyadenosine', 'C10H13N5O3'),
-	('Deoxycholate [Deoxycholic acid]', 'C24H40O4'),
-	('Deoxycytidine', 'C9H13N3O4'),
-	('Deoxyuridine', 'C9H12N2O5'),
-	('Dihydroxyacetone phosphate', 'C3H7O6P'),
-	('Dioxygen [O2]', 'O2'),
-	('Diphosphate [Pyrophosphate]', 'O7P2'),
-	('Dodecanoate', 'C12H23O2'),
-	('Dopamine 3-O-sulfate', 'C8H11NO5S'),
--- Substance names starting with 'E'
-	('Ergocalciferol [Vitamin D2]', 'C28H44O'),
-	('Estrone 3-sulfate', 'C18H21O5S'),
-	('Ethanol', 'C2H6O'),
--- Substance names starting with 'F'
-	('FMN [Flavin Mononucleotide]', 'C17H21N4O9P'),
-	('Flavin adenine dinucleotide oxidized [FAD]', 'C27H33N9O15P2'),
-	('Formaldehyde', 'CH2O'),
-	('Formate [Formic acid]', 'CHO2'),
--- Substance names starting with 'G'
-	('GDP [Guanosine diphosphate]', 'C10H15N5O11P2'),
-	('GTP [Guanosine triphosphate]', 'C10H16N5O14P3'),
-	('Globoside', NULL),
-	('Glucosamine', 'C6H13NO5'),
-	('Glucuronate [D-Glucuronic acid]', 'C6H9O7'),
-	('Glycerol', 'C3H8O3'),
-	('Glycerol 3-phosphate', 'C3H9O6P'),
-	('Glycine', 'C2H5NO2'),
-	('Glycine betaine [Betaine]', 'C5H12NO2'),
-	('Glycochenodeoxycholate', 'C26H42NO5'),
-	('Glycocholate', 'C26H42NO6'),
-	('Glycolithocolate [Lithocholic acid glycine conjugate]', 'C26H43NO4'),
-	('Glycoursodeoxycholate [Glycoursodeoxycholic acid]', 'C26H42NO5'),
-	('Guanosine', 'C10H13N5O5'),
--- Substance names starting with 'H'
-	('HemeD', 'C34H32FeN4O6'),
-	('Hexacosanoate', 'C26H51O2'),
-	('Hexadecanoate [Palmitic acid]', 'C16H32O2'),
-	('Hexadecenoate', 'C16H29O2'),
-	('Hyaluronate beta1', 'C28H40N2O22'),
-	('Hydrogen [H(+)]', 'H'),
-	('Hydrogen peroxide', 'H2O2'),
-	('Hydrogen sulfide', 'H2S'),
-	('Hypoxanthine', 'C5H4N4O'),
--- Substance names starting with 'I'
-	('IMP [Inosinic acid]', 'C10H13N4O8P'),
-	('Inosine', 'C10H12N4O5'),
-	('Iron(II) cation [Fe(2+)]', 'Fe'),
-	('Iron(III) cation [Fe(3+)]', 'Fe'),
-	('Isobutyrate', 'C4H7O2'),
-	('Isovalerate', 'C5H9O2'),
-	('Isovaleryl carnitine', 'C12H23NO4'),
--- Substance names starting with 'L'
-	('L Arabinitol [L-Arabitol]', 'C5H12O5'),
-	('L-Cystine', 'C6H12N2O4S2'),
-	('L-3-Amino-isobutanoate [(S)-b-Aminoisobutyric acid]', 'C4H9NO2'),
-	('L-Alanine', 'C3H7NO2'),
-	('L-Arabinose', 'C5H10O5'),
-	('L-Arginine', 'C6H14N4O2'),
-	('L-Ascorbate [Ascorbic acid]', 'C6H7O6'),
-	('L-Asparagine', 'C4H8N2O3'),
-	('L-Aspartate', 'C4H6NO4'),
-	('L-Carnitine', 'C7H15NO3'),
-	('L-Carnosine', 'C9H14N4O3'),
-	('L-Citrulline [Citrulline]', 'C6H13N3O3'),
-	('L-Cysteine', 'C3H7NO2S'),
-	('L-Dopa [3,4-Dihydroxy-L-phenylalanine]', 'C9H11NO4'),
-	('L-Glutamate', 'C5H8NO4'),
-	('L-Glutamine', 'C5H10N2O3'),
-	('L-Glycerate', 'C3H5O4'),
-	('L-Histidine', 'C6H9N3O2'),
-	('L-Homoserine', 'C4H9NO3'),
-	('L-Isoleucine', 'C6H13NO2'),
-	('L-Lactate [L-Lactic acid]', 'C3H5O3'),
-	('L-Leucine', 'C6H13NO2'),
-	('L-Lysine', 'C6H14N2O2'),
-	('L-Malate [L-Malic acid]', 'C4H4O5'),
-	('L-Metanephrine', 'C10H15NO3'),
-	('L-Methionine', 'C5H11NO2S'),
-	('L-Ornithine', 'C5H12N2O2'),
-	('L-Phenylalanine', 'C9H11NO2'),
-	('L-Proline', 'C5H9NO2'),
-	('L-Serine', 'C3H7NO3'),
-	('L-Sorbitol [Sorbitol]', 'C6H14O6'),
-	('L-Threonine', 'C4H9NO3'),
-	('L-Thyroxine', 'C15H11I4NO4'),
-	('L-Tryptophan', 'C11H12N2O2'),
-	('L-Tyrosine', 'C9H11NO3'),
-	('L-Valine', 'C5H11NO2'),
-	('L-gamma-Glutamyl-L-cysteinylglycine [Glutathione]', 'C10H17N3O6S'),
-	('Lead(II) cation [Pb(2+)]', 'Pb'),
-	('Linoleic acid', 'C18H31O2'),
-	('Lithocholate [Lithocholic acid]', 'C24H39O3'),
--- Substance names starting with 'M'
-	('Magnesium(II) cation [Mg(2+)]', 'Mg'),
-	('Maleate', 'C4H3O4'),
-	('Maltose', 'C12H22O11'),
-	('Manganese(II) cation [Mn(2+)]', 'Mn'),
-	('Margarate [Heptadecanoate]', 'C17H33O2'),
-	('Menadione [Vitamin K]', 'C11H8O2'),
-	('Mercury(II) cation [Hg(2+)]', 'Hg'),
-	('Methanol', 'CH4O'),
-	('Methylglyoxal [Pyruvaldehyde]', 'C3H4O2'),
-	('Myo-inositol', 'C6H12O6'),
--- Substance names starting with 'N'
-	('N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]', 'C19H19N7O6'),
-	('N2-phenylacetyl-L-glutaminate', 'C13H15N2O4'),
-	('Niacinamide', 'C6H6N2O'),
-	('Nickel(II) cation [Ni(2+)]', 'Ni'),
-	('Nicotinamide adenine dinucleotide [NAD]', 'C21H27N7O14P2'),
-	('Nicotinamide adenine dinucleotide phosphate [NADP]', 'C21H28N7O17P3'),
-	('Nitrate [NO3(-)]', 'NO3'),
-	('Nitrite', 'NO2'),
-	('Nitrogen', 'N2'),
-	('Norepinephrine', 'C8H11NO3'),
-	('Norepinephrine sulfate', 'C8H11NO6S'),
--- Substance names starting with 'O'
-	('Octadecanoate [Stearic acid]', 'C18H35O2'),
-	('Octadecenoate [Oleic acid]', 'C18H34O2'),
-	('Octanoate [Caprylic acid]', 'C8H15O2'),
-	('Octanoyl carnitine [L-Octanoylcarnitine]', 'C15H29NO4'),
-	('Octenoyl carnitine', 'C15H27NO4'),
-	('Oleate', 'C18H33O2'),
-	('Orotate [Orotic acid]', 'C5H3N2O4'),
-	('Oxalate', 'C2HO4'),
-	('Oxidized glutathione', 'C20H32N6O12S2'),
--- Substance names starting with 'P'
-	('Pentadecanoate', 'C15H29O2'),
-	('Phosphate [PO4(3-)]', 'O4P'),
-	('Phylloquinone [Vitamin K1]', 'C31H46O2'),
-	('Phytanate', 'C20H39O2'),
-	('Potassium(I) cation [K(+)]', 'K'),
-	('Progesterone', 'C21H30O2'),
-	('Propionate', 'C3H5O2'),
-	('Protoheme', 'C34H32FeN4O4'),
-	('Putrescine', 'C4H12N2'),
-	('Pyridine-3-carboxylate [Niacin]', 'C6H4NO2'),
-	('Pyridoxal 5-phosphate', 'C8H10NO6P'),
-	('Pyruvate [Pyruvic acid]', 'C3H3O3'),
--- Substance names starting with 'R'
-	('Retinoate [all-trans-Retinoic acid]', 'C20H27O2'),
-	('Retinoyl glucuronide', 'C26H35O8'),
-	('Ribitol', 'C5H12O5'),
-	('Riboflavin', 'C17H20N4O6'),
--- Substance names starting with 'S'
-	('Sarcosine', 'C3H7NO2'),
-	('Selenite', 'O3Se'),
-	('Selenium(II) cation [Se(2+)]', 'Se'),
-	('Serotonin', 'C10H12N2O'),
-	('Sodium(I) cation [Na(+)]', 'Na'),
-	('Spermidine', 'C7H19N3'),
-	('Spermine', 'C10H26N4'),
-	('Sphinganine 1-phosphate', 'C18H39NO5P'),
-	('Sphingosine 1-phosphate', 'C18H37NO5P'),
-	('Succinate [Succinic acid]', 'C4H2D4O4'),
-	('Sucrose', 'C12H22O11'),
-	('Sulfate [SO4(2-)]', 'O4S'),
-	('Sulfite', 'HO3S'),
-	('Sulfoglycolithocholate', 'C26H41NO7S'),
--- Substance names starting with 'T'
-	('Taurine', 'C2H7NO3S'),
-	('Taurochenodeoxycholate [Taurochenodesoxycholic acid]', 'C26H45NO6S'),
-	('Taurocholic acid', 'C26H45NO7S'),
-	('Taurodeoxycholate [Taurodeoxycholic acid]', 'C26H44NO6S'),
-	('Taurolithocholate [Lithocholyltaurine]', 'C26H44NO5S'),
-	('Testosterone', 'C19H28O2'),
-	('Tetracosanoate [Lignocerate]', 'C24H47O2'),
-	('Tetradecanoate', 'C14H27O2'),
-	('Tetraoxidomolybdate(VI) [Molybdate]', 'MoO4'),
-	('Thiamine', 'C12H17N4OS'),
-	('Thiocyanate', 'CNS'),
-	('Thiosulfate', 'O3S2'),
-	('Thromboxane-b2 [Thromboxane B2]', 'C20H34O6'),
-	('Thymidine', 'C10H14N2O5'),
-	('Tungstate', 'O4W'),
--- Substance names starting with 'U'
-	('UDP [Uridine 5-diphosphate]', 'C9H14N2O12P2'),
-	('UDPglucose [Uridine diphosphate glucose]', 'C15H24N2O17P2'),
-	('Ubiquinone-10', 'C59H90O4'),
-	('Uracil', 'C4H4N2O2'),
-	('Urate', 'C5H3N4O3'),
-	('Urea', 'CH4N2O'),
-	('Uridine', 'C9H12N2O6'),
-	('Ursodeoxycholate [Ursodeoxycholic acid]', 'C24H39O4'),
--- Substance names starting with 'V'
-	('Valeric acid', 'C5H10O2'),
-	('Vitamin B12', NULL),
--- Substance names starting with 'W'
-	('Water [H2O]', 'H2O'),
--- Substance names starting with 'X'
-	('Xanthurenic acid', 'C10H7NO4'),
-	('Xylitol [D-Xylitol]', 'C5H12O5'),
--- Substance names starting with 'Z'
-	('Zinc(II) cation [Zn(2+)]', 'Zn'),
--- Substance names starting with 'a'
-	('all-cis-5,8,11,14,17-Icosapentaenoate', 'C20H29O2'),
-	('all-cis-8,11,14,17-Icosatetraenoic acid [ETA]', 'C20H32O2'),
-	('all-cis-Icosa-8,11,14-trienoic acid [Dihomo-gamma-linolenic acid]', 'C20H34O2'),
-	('all-cis-Octadeca-6,9,12,15-tetraenoic acid [Stearidonic acid]', 'C18H33O2'),
-	('all-trans-Retinal [Retinal]', 'C20H28O'),
-	('all-trans-Retinol [Vitamin A]', 'C20H30O'),
-	('alpha-Linolenate', 'C18H29O2'),
-	('alpha-Tocopherol', 'C29H50O2'),
-	('alpha-Tocotrienol', 'C29H44O2'),
--- Substance names starting with 'b'
-	('beta-Alanine', 'C3H7NO2'),
-	('beta-Carotene [b-Carotene]', 'C40H56'),
-	('beta-Tocopherol', 'C28H48O2'),
--- Substance names starting with 'g'
-	('gamma-Linolenate', 'C18H29O2'),
--- Substance names starting with 't'
-	('trans-4-Hydroxy-L-proline', 'C5H9NO3'),
-	('trans-Vaccenic acid', 'C18H34O2');
-
---
--- Data for Name: substance2db; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO substance2db(substance_id, db_id, db_type) VALUES
--- Substance names starting with '('
-	((SELECT id FROM substance WHERE name='(13Z)-13-Docosenoic acid [Erucic acid]'), 'doco13ac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(15Z)-Tetracosenoate [Nervonate]'), 'nrvnc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(15Z)-Tetracosenoate [Nervonate]'), 'MNXM91251', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='(20S)-20-Hydroxypregn-4-en-3-one [20alpha-Hydroxyprogesterone]'), 'aprgstrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(20S)-20-Hydroxypregn-4-en-3-one [20alpha-Hydroxyprogesterone]'), 'MNXM163756', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='(2E)-But-2-enedioate [Fumarate]'), 'fum', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(4R)-1-Methyl-4-(prop-1-en-2-yl)cyclohex-1-ene [D-Limonene]'), 'limnen', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(4Z,7Z,10Z,13Z,16Z,19Z)-Docosahexaenoate [Cervonic acid]'), 'crvnc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(4Z,7Z,10Z,13Z,16Z,19Z)-Docosahexaenoate [Cervonic acid]'), 'MNXM7161', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='(7Z,10Z,13Z,16Z)-Docosatetraenoate [Adrenic acid]'), 'adrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(7Z,10Z,13Z,16Z)-Docosatetraenoate [Adrenic acid]'), 'MNXM40344', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='(R)-3-Hydroxybutanoate [(R)-3-Hydroxybutyric acid]'), 'bhb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='(S)-3-Methyl-2-oxopentanoate [3-Methyl-2-Oxovaleric acid]'), '3mop', 'BiGG'),
--- Substance names starting with [0-9]*
-	((SELECT id FROM substance WHERE name='1-Methylnicotinamide'), '1mncam', 'BiGG'),
-	((SELECT id FROM substance WHERE name='1-Methyl-4-imidazoleacetic acid'), '3mlda', 'BiGG'),
-	((SELECT id FROM substance WHERE name='1-Methyl-4-imidazoleacetic acid'), 'MNXM91418', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='2 Hydroxybutyrate [2-Hydroxybutyric acid]'), '2hb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='2,3-Cyclic GMP [Cyclic GMP]'), '23cgmp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='2,2-Bipyridine'), 'cpd25442', 'SEED'),
-	((SELECT id FROM substance WHERE name='2,2-Bipyridine'), 'MNXM34308', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='2-Methylcitrate [2-Methylcitric acid]'), '2mcit', 'BiGG'),
-	((SELECT id FROM substance WHERE name='2-Oxidopropane-1,2,3-tricarboxylate [Citrate]'), 'cit', 'BiGG'),
-	((SELECT id FROM substance WHERE name='2-Oxoglutarate [Oxoglutaric acid]'), 'akg', 'BiGG'),
-	((SELECT id FROM substance WHERE name='25-Hydroxyvitamin D2'), '25hvitd2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='25-Hydroxyvitamin D2'), 'MNXM4976', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='3,4-Dihydroxybenzoate'), '34dhbz', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3,4-Dihydroxyphenylethyleneglycol [3,4-Dihydroxyphenylglycol]'), '34dhoxpeg', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3,5-Cyclic GMP [Cyclic GMP]'), '35cgmp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3-(4-Hydroxyphenyl)pyruvate [4-Hydroxyphenylpyruvic acid]'), '34hpp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3-Hydroxyhexadecanoylcarnithine'), '3hexdcrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3-Methyl-2-oxobutanoate [alpha-Ketoisovaleric acid]'), '3mob', 'BiGG'),
-	((SELECT id FROM substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), 'pnto__R', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thiamine'), 'thm', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]'), 'pydxn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-(Azaniumylmethyl)-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxamine]'), 'pydam', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Aminobenzoic acid'), '4abz', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Aminobutanoate [gamma-Aminobutyric acid]'), '4abut', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Formyl-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxal]'), 'pydx', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Hydroxydebrisoquin'), '4hdebrisoquine', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Hydroxydebrisoquin'), 'MNXM10135', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='4-Hydroxyphenylacetate [p-Hydroxyphenylacetic acid]'), '4hphac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Methyl-2-oxopentanoate [Ketoleucine]'), '4mop', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Pyridoxate'), '4pyrdx', 'BiGG'),
-	((SELECT id FROM substance WHERE name='4-Pyridoxate'), 'MNXM163205', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='5,6,7,8-Tetrahydrofolate [Tetrahydrofolic acid]'), 'thf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]'), 'lipoate', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]'), 'lipt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Adenylic acid [AMP]'), 'amp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Formyltetrahydrofolate'), '5fothf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Formyltetrahydrofolate'), '5fthf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Guanylic acid [GMP]'), 'gmp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Hydroxy-L-tryptophan'), '5htrp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Hydroxy-L-tryptophan'), 'MNXM162909', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='5-Methyltetrahydrofolate [5-Methyltetrahydrofolic acid]'), '5mthf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Oxoproline [Pyroglutamic acid]'), '5oxpro', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Phospho-alpha-D-ribose 1-diphosphate [Phosphoribosyl pyrophosphate]'), 'prpp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-Uridylic acid [UMP]'), 'ump', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-beta-Dihydrotestosterone'), '5adtststerone', 'BiGG'),
-	((SELECT id FROM substance WHERE name='5-beta-Dihydrotestosterone'), 'MNXM162520', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='7,8-Dihydrofolate [Dihydrofolic acid]'), 'dhf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='9-cis-Retinol'), 'retinol_9_cis', 'BiGG'),
-	((SELECT id FROM substance WHERE name='9-cis-Retinol'), 'MNXM162711', 'MetaNetX'),
--- Substance names starting with 'A'
-	((SELECT id FROM substance WHERE name='ADP'), 'adp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='ATP [Adenosine triphosphate]'), 'atp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Acetaldehyde'), 'acald', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Acetate [Acetic acid]'), 'ac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Acetoacetate [Acetoacetic acid]'), 'acac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Acetone'), 'acetone', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Adenine'), 'ade', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Adenosine'), 'adn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Ammonia'), 'nh3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Ammonia'), 'nh4', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Androsterone'), 'andrstrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Androsterone'), 'MNXM162746', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Androsterone 3-glucosiduronic acid'), 'andrstrnglc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Androsterone 3-glucosiduronic acid'), 'MNXM7068', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Anthranilate [2-Aminobenzoic acid]'), 'anth', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Arachidic acid'), 'arach', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Arachidonate'), 'arachd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Arachidonate'), 'MNXM162250', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Arsenite'), 'aso3', 'BiGG'),
--- Substance names starting with 'B'
-	((SELECT id FROM substance WHERE name='Behenate [Docosanoate]'), 'docosac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Behenate [Docosanoate]'), 'MNXM162817', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Benzoate [Benzoic acid]'), 'bz', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Billirubin'), 'bilirub', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Biotin'), 'btn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Butyrate'), 'but', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Butyrate'), 'MNXM162281', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Butyryl carnitine'), 'c4crn', 'BiGG'),
--- Substance names starting with 'C'
-	((SELECT id FROM substance WHERE name='CAMP [Cyclic AMP]'), 'camp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='CDP'), 'cdp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='CMP'), 'cmp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cadmium(II) cation [Cd2+]'), 'cd2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Calcidiol [25-Hydroxyvitamin D3]'), '25hvitd3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Calcidiol [25-Hydroxyvitamin D3]'), 'MNXM162388', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Calciol [Vitamin D3]'), 'vitd3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Calciol [Vitamin D3]'), 'MNXM162562', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Calcium(II) cation [Ca(2+)]'), 'ca2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Carbon dioxide [CO2]'), 'co2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Carbon monoxide'), 'co', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Carbonic acid'), 'hco3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cellobiose'), 'cellb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Chenodeoxycholate [Chenodeoxycholic acid]'), 'C02528', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Chloride [Cl(-)]'), 'cl', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cholate [Cholic acid]'), 'cholate', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Choline'), 'chol', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Chorismate'), 'chor', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Chromate'), 'cro4', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cholesterol'), 'chsterol', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cob(I)alamin'), 'cbl1', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cob(II)alamin'), 'cbl2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cobalt(II) cation [Co(2+)]'), 'cobalt2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Copper(II) cation [Cu(2+)]'), 'cu2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Corticosterone'), 'crtstrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Corticosterone'), 'MNXM162953', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Cortisol'), 'crtsl', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cortisol'), 'MNXM162531', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Creatine'), 'creat', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Creatinine'), 'crtn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Creatinine'), 'MNXM163786', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Cyanate'), 'cynt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cys Gly [Cysteinylglycine]'), 'cgly', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cytidine'), 'cytd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Cytosine'), 'csn', 'BiGG'),
--- Substance names starting with 'D'
-	((SELECT id FROM substance WHERE name='D-Alanine'), 'ala__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Fructose'), 'fru', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Galactose'), 'gal', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Glucose'), 'glc__bD', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Glucose'), 'glc__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Lactate [D-Lactic acid]'), 'lac__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Mannose'), 'man', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Ornithine'), 'orn__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Ribose'), 'rib__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Serine'), 'ser__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Sorbitol [Sorbitol]'), 'sbt__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='D-Xylose'), 'xyl__D', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Debrisoquine'), 'debrisoquine', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Decanoate'), 'dca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Decanoate'), 'MNXM162295', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Decanoyl carnitine'), 'c10crn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dehydroascorbate [Dehydroascorbic acid]'), 'dhdascb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dehydroepiandrosterone sulfate'), 'dheas', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Deoxyadenosine'), 'dad_2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Deoxycholate [Deoxycholic acid]'), 'dchac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Deoxycytidine'), 'dcyt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Deoxyuridine'), 'duri', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dihydroxyacetone phosphate'), 'dhap', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dioxygen [O2]'), 'o2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Diphosphate [Pyrophosphate]'), 'ppi', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dodecanoate'), 'ddca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dodecanoate'), 'MNXM162258', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Dopamine 3-O-sulfate'), 'dopasf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Dopamine 3-O-sulfate'), 'MNXM163796', 'MetaNetX'),
--- Substance names starting with 'E'
-	((SELECT id FROM substance WHERE name='Ergocalciferol [Vitamin D2]'), 'vitd2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Ergocalciferol [Vitamin D2]'), 'MNXM163604', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Estrone 3-sulfate'), 'estrones', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Estrone 3-sulfate'), 'MNXM162533', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Ethanol'), 'etoh', 'BiGG'),
--- Substance names starting with 'F'
-	((SELECT id FROM substance WHERE name='FMN [Flavin Mononucleotide]'), 'fmn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Flavin adenine dinucleotide oxidized [FAD]'), 'fad', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Formaldehyde'), 'fald', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Formate [Formic acid]'), 'for', 'BiGG'),
--- Substance names starting with 'G'
-	((SELECT id FROM substance WHERE name='GDP [Guanosine diphosphate]'), 'gdp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='GTP [Guanosine triphosphate]'), 'gtp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Globoside'), 'gbside_hs', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Globoside'), 'MNXM4598', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Glucosamine'), 'gam', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glucuronate [D-Glucuronic acid]'), 'glcur', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycerol'), 'glyc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycerol 3-phosphate'), 'glyc3p', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycine'), 'gly', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycine betaine [Betaine]'), 'glyb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycochenodeoxycholate'), 'dgchol', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycochenodeoxycholate'), 'MNXM8391', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Glycocholate'), 'gchola', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycocholate'), 'MNXM162346', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Glycolithocolate [Lithocholic acid glycine conjugate]'), 'HC02193', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Glycoursodeoxycholate [Glycoursodeoxycholic acid]'), 'HC02196', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Guanosine'), 'gsn', 'BiGG'),
--- Substance names starting with 'H'
-	((SELECT id FROM substance WHERE name='HemeD'), 'hemeD', 'BiGG'),
-	((SELECT id FROM substance WHERE name='HemeD'), 'MNXM167899', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Hexacosanoate'), 'hexc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hexacosanoate'), 'MNXM1833', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Hexadecanoate [Palmitic acid]'), 'hdca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hexadecenoate'), 'hdcea', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hexadecenoate'), 'MNXM950', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Hyaluronate beta1'), 'ha', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hyaluronate beta1'), 'C00518', 'KEGG'),
-	((SELECT id FROM substance WHERE name='Hyaluronate beta1'), 'MNXM18575', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Hyaluronate beta1'), 'cpd23482', 'SEED'),
-	((SELECT id FROM substance WHERE name='Hydrogen [H(+)]'), 'h', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hydrogen peroxide'), 'h2o2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hydrogen sulfide'), 'h2s', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Hypoxanthine'), 'hxan', 'BiGG'),
--- Substance names starting with 'I'
-	((SELECT id FROM substance WHERE name='IMP [Inosinic acid]'), 'imp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Inosine'), 'ins', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Iron(II) cation [Fe(2+)]'), 'fe2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Iron(III) cation [Fe(3+)]'), 'fe3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Isobutyrate'), 'ibt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Isobutyrate'), 'isobuta', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Isovalerate'), 'ival', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Isovaleryl carnitine'), 'ivcrn', 'BiGG'),
--- Substance names starting with 'L'
-	((SELECT id FROM substance WHERE name='L Arabinitol [L-Arabitol]'), 'abt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L Arabinitol [L-Arabitol]'), 'abt__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Cystine'), 'cysi__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-3-Amino-isobutanoate [(S)-b-Aminoisobutyric acid]'), '3aib', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Alanine'), 'ala__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Arabinose'), 'arab__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Arginine'), 'arg__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Ascorbate [Ascorbic acid]'), 'ascb__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Asparagine'), 'asn__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Aspartate'), 'asp__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Carnitine'), 'crn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Carnosine'), 'carn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Carnosine'), 'MNXM114412', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='L-Carnosine'), 'cpd15836', 'SEED'),
-	((SELECT id FROM substance WHERE name='L-Citrulline [Citrulline]'), 'citr__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Cysteine'), 'cys__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Dopa [3,4-Dihydroxy-L-phenylalanine]'), '34dhphe', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Dopa [3,4-Dihydroxy-L-phenylalanine]'), 'MNXM162631', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='L-Glutamate'), 'glu__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Glutamine'), 'gln__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Glycerate'), 'glyc__S', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Glycerate'), 'MNXM147340', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='L-Histidine'), 'his__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Homoserine'), 'hom__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Isoleucine'), 'ile__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Lactate [L-Lactic acid]'), 'lac__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Leucine'), 'leu__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Lysine'), 'lys__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Malate [L-Malic acid]'), 'mal__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Metanephrine'), 'mepi', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Metanephrine'), 'MNXM91238', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='L-Methionine'), 'met__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Ornithine'), 'orn__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Phenylalanine'), 'phe__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Proline'), 'pro__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Serine'), 'ser__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Sorbitol [Sorbitol]'), 'sbt__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Threonine'), 'thr__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Thyroxine'), 'thyox__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Thyroxine'), 'MNXM162591', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='L-Tryptophan'), 'trp__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Tyrosine'), 'tyr__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-Valine'), 'val__L', 'BiGG'),
-	((SELECT id FROM substance WHERE name='L-gamma-Glutamyl-L-cysteinylglycine [Glutathione]'), 'gthrd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Lead(II) cation [Pb(2+)]'), 'pb2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Lead(II) cation [Pb(2+)]'), 'pb', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Linoleic acid'), 'lnlc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Lithocholate [Lithocholic acid]'), 'HC02191', 'BiGG'),
--- Substance names starting with 'M'
-	((SELECT id FROM substance WHERE name='Magnesium(II) cation [Mg(2+)]'), 'mg2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Maleate'), 'male', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Maltose'), 'malt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Manganese(II) cation [Mn(2+)]'), 'mn2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Margarate [Heptadecanoate]'), 'hpdca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Margarate [Heptadecanoate]'), 'MNXM11802', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Menadione [Vitamin K]'), 'mndn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Mercury(II) cation [Hg(2+)]'), 'hg2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Methanol'), 'meoh', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Methylglyoxal [Pyruvaldehyde]'), 'mthgxl', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Myo-inositol'), 'inost', 'BiGG'),
--- Substance names starting with 'N'
-	((SELECT id FROM substance WHERE name='N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]'), 'fol', 'BiGG'),
-	((SELECT id FROM substance WHERE name='N2-phenylacetyl-L-glutaminate'), 'pheacgln', 'BiGG'),
-	((SELECT id FROM substance WHERE name='N2-phenylacetyl-L-glutaminate'), 'MNXM163884', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Niacinamide'), 'ncam', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nickel(II) cation [Ni(2+)]'), 'ni2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nicotinamide adenine dinucleotide [NAD]'), 'nad', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nicotinamide adenine dinucleotide phosphate [NADP]'), 'nadp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nitrate [NO3(-)]'), 'no3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nitrite'), 'no2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Nitrogen'), 'n2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Norepinephrine'), 'nrpphr', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Norepinephrine sulfate'), 'nrpphrsf', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Norepinephrine sulfate'), 'MNXM12967', 'MetaNetX'),
--- Substance names starting with 'O'
-	((SELECT id FROM substance WHERE name='Octadecanoate [Stearic acid]'), 'ocdca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Octadecenoate [Oleic acid]'), 'ocdcea', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Octanoate [Caprylic acid]'), 'octa', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Octanoyl carnitine [L-Octanoylcarnitine]'), 'c8crn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Octenoyl carnitine'), 'c81crn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Oleate'), 'elaid', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Oleate'), 'MNXM92305', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Orotate [Orotic acid]'), 'orot', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Oxalate'), 'oxa', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Oxidized glutathione'), 'gthox', 'BiGG'),
--- Substance names starting with 'P'
-	((SELECT id FROM substance WHERE name='Pentadecanoate'), 'ptdca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Pentadecanoate'), 'MNXM163568', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Phosphate [PO4(3-)]'), 'pi', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Phylloquinone [Vitamin K1]'), 'phllqne', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Phylloquinone [Vitamin K1]'), 'phyQ', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Phytanate'), 'phyt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Phytanate'), 'MNXM91275', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Potassium(I) cation [K(+)]'), 'k', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Progesterone'), 'prgstrn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Progesterone'), 'MNXM162773', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Propionate'), 'ppa', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Propionate'), 'MNXM162260', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Protoheme'), 'pheme', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Putrescine'), 'ptrc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Pyridine-3-carboxylate [Niacin]'), 'nac', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Pyridine-3-carboxylate [Niacin]'), 'nicnt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Pyridoxal 5-phosphate'), 'pydx5p', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Pyruvate [Pyruvic acid]'), 'pyr', 'BiGG'),
--- Substance names starting with 'R'
-	((SELECT id FROM substance WHERE name='Retinoate [all-trans-Retinoic acid]'), 'retn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Retinoyl glucuronide'), 'retnglc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Retinoyl glucuronide'), 'MNXM91293', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Ribitol'), 'rbt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Riboflavin'), 'ribflv', 'BiGG'),
--- Substance names starting with 'S'
-	((SELECT id FROM substance WHERE name='Sarcosine'), 'sarcs', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Selenite'), 'slnt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Selenium(II) cation [Se(2+)]'), 'sel', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Selenium(II) cation [Se(2+)]'), 'seln', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Serotonin'), 'srtn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sodium(I) cation [Na(+)]'), 'na1', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Spermidine'), 'spmd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Spermine'), 'sprm', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sphinganine 1-phosphate'), 'sph1p', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sphingosine 1-phosphate'), 'sphs1p', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sphingosine 1-phosphate'), 'MNXM162589', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Succinate [Succinic acid]'), 'succ', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sucrose'), 'sucr', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sulfate [SO4(2-)]'), 'so4', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sulfite'), 'so3', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Sulfoglycolithocholate'), 'HC02197', 'BiGG'),
--- Substance names starting with 'T'
-	((SELECT id FROM substance WHERE name='Taurine'), 'taur', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Taurochenodeoxycholate [Taurochenodesoxycholic acid]'), 'tdchola', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Taurocholic acid'), 'tchola', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Taurodeoxycholate [Taurodeoxycholic acid]'), 'tdechola', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Taurolithocholate [Lithocholyltaurine]'), 'HC02192', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Testosterone'), 'tststerone', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Testosterone'), 'MNXM162488', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Tetracosanoate [Lignocerate]'), 'lgnc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Tetracosanoate [Lignocerate]'), 'MNXM8841', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Tetracosanoate [Lignocerate]'), 'lgn', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Tetradecanoate'), 'ttdca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Tetradecanoate'), 'MNXM162239', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='Tetraoxidomolybdate(VI) [Molybdate]'), 'mobd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thiocyanate'), 'tcynt', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thiocyanate'), 'thioc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thiosulfate'), 'tsul', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thromboxane-b2 [Thromboxane B2]'), 'HC02180', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Thymidine'), 'thymd', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Tungstate'), 'tungs', 'BiGG'),
--- Substance names starting with 'U'
-	((SELECT id FROM substance WHERE name='UDP [Uridine 5-diphosphate]'), 'udp', 'BiGG'),
-	((SELECT id FROM substance WHERE name='UDPglucose [Uridine diphosphate glucose]'), 'udpg', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Ubiquinone-10'), 'q10', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Uracil'), 'ura', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Urate'), 'urate', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Urea'), 'urea', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Uridine'), 'uri', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Ursodeoxycholate [Ursodeoxycholic acid]'), 'HC02194', 'BiGG'),
--- Substance names starting with 'V'
-	((SELECT id FROM substance WHERE name='Valeric acid'), 'M03134', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Vitamin B12'), 'b12', 'BiGG'),
--- Substance names starting with 'W'
-	((SELECT id FROM substance WHERE name='Water [H2O]'), 'h2o', 'BiGG'),
--- Substance names starting with 'X'
-	((SELECT id FROM substance WHERE name='Xanthurenic acid'), 'C02470', 'BiGG'),
-	((SELECT id FROM substance WHERE name='Xylitol [D-Xylitol]'), 'xylt', 'BiGG'),
--- Substance names starting with 'Z'
-	((SELECT id FROM substance WHERE name='Zinc(II) cation [Zn(2+)]'), 'zn2', 'BiGG'),
--- Substance names starting with 'a'
-	((SELECT id FROM substance WHERE name='all-cis-5,8,11,14,17-Icosapentaenoate'), 'tmndnc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='all-cis-5,8,11,14,17-Icosapentaenoate'), 'MNXM13045', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='all-cis-8,11,14,17-Icosatetraenoic acid [ETA]'), 'eicostet', 'BiGG'),
-	((SELECT id FROM substance WHERE name='all-cis-8,11,14,17-Icosatetraenoic acid [ETA]'), 'MNXM11474', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='all-cis-Icosa-8,11,14-trienoic acid [Dihomo-gamma-linolenic acid]'), 'dlnlcg', 'BiGG'),
-	((SELECT id FROM substance WHERE name='all-cis-Icosa-8,11,14-trienoic acid [Dihomo-gamma-linolenic acid]'), 'MNXM147467', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='all-cis-Octadeca-6,9,12,15-tetraenoic acid [Stearidonic acid]'), 'strdnc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='all-cis-Octadeca-6,9,12,15-tetraenoic acid [Stearidonic acid]'), 'MNXM12955', 'MetaNetX'),
-	((SELECT id FROM substance WHERE name='all-trans-Retinal [Retinal]'), 'retinal', 'BiGG'),
-	((SELECT id FROM substance WHERE name='all-trans-Retinol [Vitamin A]'), 'retinol', 'BiGG'),
-	((SELECT id FROM substance WHERE name='alpha-Linolenate'), 'lnlnca', 'BiGG'),
-	((SELECT id FROM substance WHERE name='alpha-Linolenate'), 'alpla', 'BiGG'),
-	((SELECT id FROM substance WHERE name='alpha-Tocopherol'), 'avite1', 'BiGG'),
-	((SELECT id FROM substance WHERE name='alpha-Tocotrienol'), 'avite2', 'BiGG'),
-	((SELECT id FROM substance WHERE name='alpha-Tocotrienol'), 'MNXM162932', 'MetaNetX'),
--- Substance names starting with 'b'
-	((SELECT id FROM substance WHERE name='beta-Alanine'), 'ala_B', 'BiGG'),
-	((SELECT id FROM substance WHERE name='beta-Carotene [b-Carotene]'), 'caro', 'BiGG'),
-	((SELECT id FROM substance WHERE name='beta-Tocopherol'), 'bvite', 'BiGG'),
--- Substance names starting with 'g'
-	((SELECT id FROM substance WHERE name='gamma-Linolenate'), 'lnlncg', 'BiGG'),
-	((SELECT id FROM substance WHERE name='gamma-Linolenate'), 'MNXM162504', 'MetaNetX'),
--- Substance names starting with 't'
-	((SELECT id FROM substance WHERE name='trans-4-Hydroxy-L-proline'), '4hpro_LT', 'BiGG'),
-	((SELECT id FROM substance WHERE name='trans-Vaccenic acid'), 'vacc', 'BiGG'),
-	((SELECT id FROM substance WHERE name='trans-Vaccenic acid'), 'MNXM92713', 'MetaNetX');
-
---
--- Data for Name: medium2substance; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO medium2substance(medium_id, substance_id, flux, source) VALUES
--- LB medium
-	-- LB: Carbohydrates
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	-- LB: Amino acids
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Alanine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Aspartate'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Glutamate'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Histidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Leucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Methionine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Proline'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Threonine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Tyrosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Arginine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Cystine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Glycine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Isoleucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Lysine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Phenylalanine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Serine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Tryptophan'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Valine'), NULL, NULL),
-	-- LB: Vitamins
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Thiamine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Riboflavin'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Biotin'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Cob(I)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Cob(II)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Vitamin B12'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Pyridine-3-carboxylate [Niacin]'), NULL, NULL),
-	-- LB: Other chemicals
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Selenium(II) cation [Se(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Zinc(II) cation [Zn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Arsenite'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Cadmium(II) cation [Cd2+]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Mercury(II) cation [Hg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Lead(II) cation [Pb(2+)]'), NULL, NULL),
-	-- LB: Nucleotides/nucleosides
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Inosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Hypoxanthine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Deoxycytidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Thymidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Uracil'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Uridine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Deoxyadenosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Adenosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Chorismate'), NULL, NULL),
-	-- LB: Standard metabolites
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	-- LB: From CarveMe definition
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='5-Adenylic acid [AMP]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='CMP'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Chromate'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='L-Cysteine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Cobalt(II) cation [Co(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Copper(II) cation [Cu(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Iron(II) cation [Fe(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Iron(III) cation [Fe(3+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='5-Guanylic acid [GMP]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Guanosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Hydrogen sulfide'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Manganese(II) cation [Mn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Tetraoxidomolybdate(VI) [Molybdate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Ammonia'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Nickel(II) cation [Ni(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='Protoheme'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='4-Formyl-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxal]'), NULL, NULL),
-	((SELECT id from medium WHERE name='LB'), (SELECT id from substance WHERE name='5-Uridylic acid [UMP]'), NULL, NULL),
--- M9
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Ammonia'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='M9'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
--- SNM3
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Alanine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Arginine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Cysteine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Glutamate'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Glycine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Histidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Leucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Lysine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='D-Ornithine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Ornithine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Phenylalanine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Proline'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Serine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Threonine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Tryptophan'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='L-Valine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='2-Oxidopropane-1,2,3-tricarboxylate [Citrate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='(2E)-But-2-enedioate [Fumarate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Maleate'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Pyruvate [Pyruvic acid]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Succinate [Succinic acid]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Urea'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='2,2-Bipyridine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Zinc(II) cation [Zn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Manganese(II) cation [Mn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Cobalt(II) cation [Co(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Copper(II) cation [Cu(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Nickel(II) cation [Ni(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Tetraoxidomolybdate(VI) [Molybdate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Cob(I)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Cob(II)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Vitamin B12'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='4-Aminobenzoic acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Biotin'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Pyridine-3-carboxylate [Niacin]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='4-(Azaniumylmethyl)-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxamine]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Thiamine'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Hydrogen [H+]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Riboflavin'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Iron(II) cation [Fe(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Iron(III) cation [Fe(3+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='SNM3'), (SELECT id from substance WHERE name='Carbon dioxide [CO2]'), NULL, NULL),
--- RPMI
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Nitrate [NO3(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Glycine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Arginine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Asparagine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Aspartate'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Cystine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Glutamate'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Glutamine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Histidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Isoleucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Leucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Methionine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Phenylalanine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Proline'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Serine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Threonine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Tryptophan'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Tyrosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Valine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-Lysine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Biotin'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Choline'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Niacinamide'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='4-Aminobenzoic acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Riboflavin'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Thiamine'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Myo-inositol'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Cob(I)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Cob(II)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Vitamin B12'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='L-gamma-Glutamyl-L-cysteinylglycine [Glutathione]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Carbonic acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='trans-4-Hydroxy-L-proline'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Carbon dioxide [CO2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='RPMI'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
--- Casamino acids
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Lysine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Histidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Arginine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Aspartate'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Threonine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Glutamate'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='Glycine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Valine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Methionine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Isoleucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Leucine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Tyrosine'), NULL, NULL),
-	((SELECT id from medium WHERE name='CasA'), (SELECT id from substance WHERE name='L-Phenylalanine'), NULL, NULL),
--- CGXII
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Ammonia'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Urea'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Iron(II) cation [Fe(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Iron(III) cation [Fe(3+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Manganese(II) cation [Mn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Nickel(II) cation [Ni(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Copper(II) cation [Cu(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Zinc(II) cation [Zn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Biotin'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='CGXII'), (SELECT id from substance WHERE name='3,4-Dihydroxybenzoate'), NULL, NULL),
--- Blood
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(13Z)-13-Docosenoic acid [Erucic acid]'), 0.007164, 'Erucic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(15Z)-Tetracosenoate [Nervonate]'), 0.0260005, 'Nervonic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(20S)-20-Hydroxypregn-4-en-3-one [20alpha-Hydroxyprogesterone]'), 2.91e-05, '20a-Dihydroprogesterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(2E)-But-2-enedioate [Fumarate]'), 0.0015, 'Fumaric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(4R)-1-Methyl-4-(prop-1-en-2-yl)cyclohex-1-ene [D-Limonene]'), 0.00019, 'D-Limonene'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(4Z,7Z,10Z,13Z,16Z,19Z)-Docosahexaenoate [Cervonic acid]'), 0.105618962173913, 'Docosahexaenoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(7Z,10Z,13Z,16Z)-Docosatetraenoate [Adrenic acid]'), 0.00407275, 'Adrenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(R)-3-Hydroxybutanoate [(R)-3-Hydroxybutyric acid]'), 0.0533333333333333, '(R)-3-Hydroxybutyric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='(S)-3-Methyl-2-oxopentanoate [3-Methyl-2-Oxovaleric acid]'), 0.02035, '3-Methyl-2-Oxovaleric Acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='1-Methyl-4-imidazoleacetic acid'), 84.57, 'Methylimidazoleacetic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='1-Methylnicotinamide'), 0.00043, '1-Methylnicotinamide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='2 Hydroxybutyrate [2-Hydroxybutyric acid]'), 0.024225, '2-Hydroxybutyric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='2,3-Cyclic GMP [Cyclic GMP]'), 5.5e-06, 'Cyclic GMP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='2-Methylcitrate [2-Methylcitric acid]'), 7.95e-05, '2-Methylcitric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='2-Oxidopropane-1,2,3-tricarboxylate [Citrate]'), 0.1089, 'Citric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='2-Oxoglutarate [Oxoglutaric acid]'), 0.00795, 'Oxoglutaric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='25-Hydroxyvitamin D2'), 1.2475e-05, '25-Hydroxyvitamin D2'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3,4-Dihydroxyphenylethyleneglycol [3,4-Dihydroxyphenylglycol]'), 6e-06, '3,4-Dihydroxyphenylglycol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3,5-Cyclic GMP [Cyclic GMP]'), 5.5e-06, 'Cyclic GMP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3-(4-Hydroxyphenyl)pyruvate [4-Hydroxyphenylpyruvic acid]'), 0.00037, '4-Hydroxyphenylpyruvic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3-Hydroxyhexadecanoylcarnithine'), 5e-06, '3-Hydroxyhexadecanoylcarnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3-Methyl-2-oxobutanoate [alpha-Ketoisovaleric acid]'), 11.0, 'alpha-Ketoisovaleric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), 0.00269, 'Pantothenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Thiamine'), 8.86666666666667e-05, 'Thiamine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]'), 2.5e-05, 'Pyridoxine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-(Azaniumylmethyl)-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxamine]'), 0.000164, 'Pyridoxamine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Aminobutanoate [gamma-Aminobutyric acid]'), 0.00011, 'gamma-Aminobutyric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Formyl-3-hydroxy-5-(hydroxymethyl)-2-methylpyridin-1-ium [Pyridoxal]'), 0.000251, 'Pyridoxal'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Hydroxydebrisoquin'), 0.000217, '4-Hydroxydebrisoquine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Hydroxyphenylacetate [p-Hydroxyphenylacetic acid]'), 0.0098814444444444, 'p-Hydroxyphenylacetic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Methyl-2-oxopentanoate [Ketoleucine]'), 0.0265, 'Ketoleucine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='4-Pyridoxate'), 20.95, '4-Pyridoxic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5,6,7,8-Tetrahydrofolate [Tetrahydrofolic acid]'), 2.5e-06, 'Tetrahydrofolic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]'), 7.7e-05, '(R)-lipoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Adenylic acid [AMP]'), 0.019075, 'Adenosine monophosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Formyltetrahydrofolate'), 2.5e-06, 'Folinic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Guanylic acid [GMP]'), 9.7e-06, 'Guanosine monophosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Hydroxy-L-tryptophan'), 1.8e-05, '5-Hydroxy-L-tryptophan'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Methyltetrahydrofolate [5-Methyltetrahydrofolic acid]'), 0.0003, '5-Methyltetrahydrofolic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Oxoproline [Pyroglutamic acid]'), 0.0195, 'Pyroglutamic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Phospho-alpha-D-ribose 1-diphosphate [Phosphoribosyl pyrophosphate]'), 0.0049, 'Phosphoribosyl pyrophosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-Uridylic acid [UMP]'), 184.0, 'Uridine 5-monophosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='5-beta-Dihydrotestosterone'), 1.7175e-06, 'Dihydrotestosterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='7,8-Dihydrofolate [Dihydrofolic acid]'), 5e-06, 'Dihydrofolic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='9-cis-Retinol'), 0.0024199295081967, 'Vitamin A'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='ADP'), 0.16, 'ADP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='ATP [Adenosine triphosphate]'), 2.03133333333333, 'Adenosine triphosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Acetaldehyde'), 1.0, 'Acetaldehyde'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Acetate [Acetic acid]'), 0.04206, 'Acetic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Acetoacetate [Acetoacetic acid]'), 0.0248375, 'Acetoacetic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Acetone'), 0.0537833333333333, 'Acetone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Adenine'), 0.00047, 'Adenine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Adenosine'), 0.0011670833333333, 'Adenosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ammonia'), 27.0, 'Ammonia'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Androsterone'), 6.0325e-05, 'Androsterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Androsterone 3-glucosiduronic acid'), 0.000437075, 'Androsterone glucuronide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Anthranilate [2-Aminobenzoic acid]'), 1.55e-05, '2-Aminobenzoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Arachidic acid'), 0.0072778, 'Arachidic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Arachidonate'), 0.171059889655172, 'Arachidonic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Behenate [Docosanoate]'), 0.010951, 'Behenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Benzoate [Benzoic acid]'), 0.020784625, 'Benzoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Billirubin'), 0.0078472857142857, 'Bilirubin'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Biotin'), 37.89, 'Biotin'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Butyrate'), 1.0, 'Butyric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Butyryl carnitine'), 0.0001995, 'Butyrylcarnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='CAMP [Cyclic AMP]'), 8.5e-06, 'Cyclic AMP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='CDP'), 36.0, 'CDP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Calcidiol [25-Hydroxyvitamin D3]'), 6.75785714285714e-05, 'Calcidiol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Calciol [Vitamin D3]'), 4.10333333333333e-05, 'Vitamin D3'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Calcium(II) cation [Ca(2+)]'), 2.102375, 'Calcium'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Carbon dioxide [CO2]'), 23.05, 'Carbon dioxide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Carbon monoxide'), 72.0, 'Carbon monoxide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Carbonic acid'), 23.54, 'Hydrogen carbonate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Chenodeoxycholate [Chenodeoxycholic acid]'), 0.001165, 'Chenodeoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Chloride [Cl(-)]'), 100.85, 'Chloride ion'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cholate [Cholic acid]'), 0.00072, 'Cholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cholesterol'), 2.1793258125, 'Cholesterol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Choline'), 0.00932, 'Choline'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Corticosterone'), 2.7e-05, 'Corticosterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cortisol'), 0.0002554285714285, 'Cortisol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Creatine'), 0.0464842857142857, 'Creatine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cyanate'), 4.5e-05, 'Cyanate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cys Gly [Cysteinylglycine]'), 0.0441666666666667, 'Cysteinylglycine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cytidine'), 0.000175, 'Cytidine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Cytosine'), 0.0064, 'Cytosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Alanine'), 0.44675, 'D-Alanine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Fructose'), 0.0395, 'D-Fructose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Galactose'), 0.06365, 'D-Galactose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Lactate [D-Lactic acid]'), 0.00913, 'D-Lactic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Mannose'), 0.0515, 'D-Mannose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Ribose'), 0.0023, 'D-Ribose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Serine'), 0.0025866666666666, 'D-Serine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Sorbitol [Sorbitol]'), 0.007045, 'Sorbitol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Xylose'), 2.4431, 'D-Xylose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Debrisoquine'), 0.000149, 'Debrisoquine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Decanoate'), 11.0, 'Capric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Decanoyl carnitine'), 0.0002101666666666, 'Decanoylcarnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dehydroascorbate [Dehydroascorbic acid]'), 0.005772, 'Dehydroascorbic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dehydroepiandrosterone sulfate'), 0.0024675, 'Dehydroepiandrosterone sulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Deoxycholate [Deoxycholic acid]'), 0.00045, 'Deoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Deoxycytidine'), 0.0002, 'Deoxycytidine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Deoxyuridine'), 0.000213, 'Deoxyuridine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dihydroxyacetone phosphate'), 0.0156, 'Dihydroxyacetone phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dioxygen [O2]'), 6.36, 'Oxygen'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Diphosphate [Pyrophosphate]'), 0.0018, 'Pyrophosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dodecanoate'), 0.00582225, 'Dodecanoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Dopamine 3-O-sulfate'), 2.65e-05, 'Dopamine 3-O-sulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ergocalciferol [Vitamin D2]'), 2.75e-06, 'Ergocalciferol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Estrone 3-sulfate'), 2.32833333333333e-06, 'Estrone sulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ethanol'), 0.0183333333333333, 'Ethanol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='FMN [Flavin Mononucleotide]'), 7.95e-06, 'Flavin Mononucleotide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Flavin adenine dinucleotide oxidized [FAD]'), 6.8e-05, 'FAD'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Formaldehyde'), 0.0133, 'Formaldehyde'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Formate [Formic acid]'), 0.0868733333333333, 'Formic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='GDP [Guanosine diphosphate]'), 0.0165, 'Guanosine diphosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='GTP [Guanosine triphosphate]'), 56.0, 'Guanosine triphosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Globoside'), 0.0015, 'Tetrahexosylceramide (d18:1/12:0)'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glucosamine'), 0.00029, 'Glucosamine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glucuronate [D-Glucuronic acid]'), 165.0, 'D-Glucuronic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycerol'), 0.147266666666667, 'Glycerol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycerol 3-phosphate'), 0.03, 'Glycerol 3-phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycine'), 0.241736363636364, 'Glycine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycine betaine [Betaine]'), 0.04567, 'Betaine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycochenodeoxycholate'), 6e-05, 'Chenodeoxycholic acid glycine conjugate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycocholate'), 6e-05, 'Glycocholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycolithocolate [Lithocholic acid glycine conjugate]'), 9e-06, 'Lithocholic acid glycine conjugate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Glycoursodeoxycholate [Glycoursodeoxycholic acid]'), 0.00019, 'Glycoursodeoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Guanosine'), 0.0008, 'Guanosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hexacosanoate'), 0.00047, 'Hexacosanoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hexadecanoate [Palmitic acid]'), 0.520931074074074, 'Palmitic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hexadecenoate'), 0.050230695, 'Palmitoleic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hyaluronate beta1'), 5.3e-05, 'Hyaluronic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hydrogen [H(+)]'), 3.98107170553497e-05, 'Protons'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hydrogen peroxide'), 0.0105, 'Hydrogen peroxide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hydrogen sulfide'), 0.0376, 'Hydrogen sulfide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Hypoxanthine'), 0.0059921428571428, 'Hypoxanthine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='IMP [Inosinic acid]'), 63.0, 'Inosinic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Inosine'), 0.00129, 'Inosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Iron(II) cation [Fe(2+)]'), 8922.0, 'Fe2+'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Isovaleryl carnitine'), 0.000138, 'Isovaleryl Carnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L Arabinitol [L-Arabitol]'), 2.0, 'L-Arabitol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Cystine'), 0.10118, 'L-Cystine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-3-Amino-isobutanoate [(S)-b-Aminoisobutyric acid]'), 0.00103, '(S)-b-aminoisobutyric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Alanine'), 0.3847625, 'L-Alanine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Arabinose'), 0.0025, 'L-Arabinose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Arginine'), 0.09366625, 'L-Arginine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Ascorbate [Ascorbic acid]'), 0.0361379, 'Ascorbic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Asparagine'), 0.0473777777777778, 'L-Asparagine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Aspartate'), 0.015232, 'L-Aspartic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Carnitine'), 0.0354711111111111, 'L-Carnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Carnosine'), 0.00327, 'Carnosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Citrulline [Citrulline]'), 0.0294222222222222, 'Citrulline'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Cysteine'), 0.120988333333333, 'L-Cysteine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Dopa [3,4-Dihydroxy-L-phenylalanine]'), 7.23e-06, 'L-Dopa'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Glutamate'), 0.057029, 'L-Glutamic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Glutamine'), 0.564136363636364, 'L-Glutamine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Glycerate'), 2.0, 'L-Glyceric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Histidine'), 0.124895882352941, 'L-Histidine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Homoserine'), 12.0, 'L-Homoserine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Isoleucine'), 0.06335, 'L-Isoleucine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Lactate [L-Lactic acid]'), 1.97934285714286, 'L-Lactic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Leucine'), 0.13608, 'L-Leucine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Lysine'), 0.191545454545455, 'L-Lysine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Malate [L-Malic acid]'), 0.0076, 'L-Malic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Metanephrine'), 1.6e-06, 'Metanephrine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Methionine'), 0.486815384615385, 'L-Methionine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Phenylalanine'), 0.06845, 'L-Phenylalanine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Proline'), 0.177728571428571, 'L-Proline'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Serine'), 0.124866666666667, 'L-Serine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Sorbitol [Sorbitol]'), 0.007045, 'Sorbitol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Threonine'), 0.140433333333333, 'L-Threonine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Thyroxine'), 4.998375e-06, 'Thyroxine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Tryptophan'), 0.05829, 'L-Tryptophan'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Tyrosine'), 0.0752272727272727, 'L-Tyrosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Valine'), 0.216933333333333, 'L-Valine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-gamma-Glutamyl-L-cysteinylglycine [Glutathione]'), 0.17101476, 'Glutathione'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Linoleic acid'), 0.637224432258065, 'Linoleic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Lithocholate [Lithocholic acid]'), 0.00033, 'Lithocholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Margarate [Heptadecanoate]'), 0.266618, 'Heptadecanoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Methanol'), 0.163525, 'Methanol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Methylglyoxal [Pyruvaldehyde]'), 0.055295, 'Pyruvaldehyde'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Myo-inositol'), 0.023525, 'myo-Inositol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]'), 2.33333333333333e-05, 'Folic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='N2-phenylacetyl-L-glutaminate'), 0.00334, 'Alpha-N-Phenylacetyl-L-glutamine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Niacinamide'), 0.000235, 'Niacinamide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Nicotinamide adenine dinucleotide [NAD]'), 0.0243, 'NAD'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Nicotinamide adenine dinucleotide phosphate [NADP]'), 0.0196, 'NADP'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Nitrite'), 0.0242925, 'Nitrite'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Norepinephrine'), 2.8125e-06, 'Norepinephrine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Norepinephrine sulfate'), 8e-06, 'Norepinephrine sulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Octadecanoate [Stearic acid]'), 0.2860335535, 'Stearic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Octadecenoate [Oleic acid]'), 0.29180212, 'Oleic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Octanoate [Caprylic acid]'), 0.00525, 'Caprylic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Octanoyl carnitine [L-Octanoylcarnitine]'), 0.0001801666666666, 'L-Octanoylcarnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Octenoyl carnitine'), 0.0002, '2-Octenoylcarnitine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Oleate'), 0.1, 'Elaidic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='D-Ornithine'), 61.0, 'Ornithine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='L-Ornithine'), 61.0, 'Ornithine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Orotate [Orotic acid]'), 0.002945, 'Orotic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Oxalate'), 0.01029, 'Oxalic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Oxidized glutathione'), 0.010825, 'Oxidized glutathione'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Pentadecanoate'), 0.100780833333333, 'Pentadecanoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Phosphate [PO4(3-)]'), 0.73955, 'Phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Phylloquinone [Vitamin K1]'), 1.535, 'Vitamin K1'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Phytanate'), 0.00301, 'Phytanic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Potassium(I) cation [K(+)]'), 3.65714285714286, 'Potassium'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Progesterone'), 4.1172e-05, 'Progesterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Propionate'), 0.0009, 'Propionic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Putrescine'), 0.000108, 'Putrescine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Pyridine-3-carboxylate [Niacin]'), 0.05115, 'Nicotinic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Pyridoxal 5-phosphate'), 2.86760888888889e-05, 'Pyridoxal 5-phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Pyruvate [Pyruvic acid]'), 0.0553125, 'Pyruvic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Retinoate [all-trans-Retinoic acid]'), 0.00010725, 'All-trans-retinoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Retinoyl glucuronide'), 6.6e-06, 'Retinoyl b-glucuronide'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ribitol'), 0.00046, 'Ribitol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Riboflavin'), 0.000215, 'Riboflavin'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sarcosine'), 0.0004666666666666, 'Sarcosine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Serotonin'), 0.000654, 'Serotonin'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sodium(I) cation [Na(+)]'), 137.533333333333, 'Sodium'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Spermidine'), 0.0047425, 'Spermidine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Spermine'), 0.0033833333333333, 'Spermine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sphinganine 1-phosphate'), 5.5e-05, 'Sphinganine 1-phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sphingosine 1-phosphate'), 0.000278, 'Sphingosine 1-phosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Succinate [Succinic acid]'), 0.0136, 'Succinic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sucrose'), 0.0018, 'Sucrose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sulfate [SO4(2-)]'), 0.35275, 'Sulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sulfite'), 0.00123, 'Sulfite'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Sulfoglycolithocholate'), 6e-05, 'Sulfolithocholylglycine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Taurine'), 0.0870909090909091, 'Taurine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Taurochenodeoxycholate [Taurochenodesoxycholic acid]'), 0.0003, 'Taurochenodesoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Taurocholic acid'), 0.00038, 'Taurocholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Taurodeoxycholate [Taurodeoxycholic acid]'), 6.2e-05, 'Taurodeoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Taurolithocholate [Lithocholyltaurine]'), 0.001212, 'Lithocholyltaurine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Testosterone'), 7.275, 'Testosterone'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Tetracosanoate [Lignocerate]'), 0.0059583333333333, 'Tetracosanoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Tetradecanoate'), 0.0226672857142857, 'Myristic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Thiocyanate'), 0.03183, 'Thiocyanate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Thiosulfate'), 0.05115, 'Thiosulfate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Thromboxane-b2 [Thromboxane B2]'), 0.0001472121, 'Thromboxane B2'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Thymidine'), 0.0001366666666666, 'Thymidine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='UDP [Uridine 5-diphosphate]'), 41.0, 'Uridine 5-diphosphate'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='UDPglucose [Uridine diphosphate glucose]'), 155.0, 'Uridine diphosphate glucose'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ubiquinone-10'), 3.12e-06, 'Ubiquinone-10'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Uracil'), 0.001135, 'Uracil'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Urate'), 0.2632195625, 'Uric acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Urea'), 4.72292, 'Urea'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Uridine'), 0.0091066666666666, 'Uridine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Ursodeoxycholate [Ursodeoxycholic acid]'), 0.00016, 'Ursodeoxycholic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Water [H2O]'), 55000.0, 'Water'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Xanthurenic acid'), 2.2e-05, 'Xanthurenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='Xylitol [D-Xylitol]'), 0.000677, 'D-Xylitol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-cis-5,8,11,14,17-Icosapentaenoate'), 0.143446279130435, 'Eicosapentaenoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-cis-8,11,14,17-Icosatetraenoic acid [ETA]'), 7e-06, 'Cis-8,11,14,17-Eicosatetraenoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-cis-Icosa-8,11,14-trienoic acid [Dihomo-gamma-linolenic acid]'), 0.0466641666666667, '8,11,14-Eicosatrienoic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-cis-Octadeca-6,9,12,15-tetraenoic acid [Stearidonic acid]'), 0.000212, 'Stearidonic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-trans-Retinal [Retinal]'), 0.000155, 'Retinal'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='all-trans-Retinol [Vitamin A]'), 0.0024199295081967, 'Vitamin A'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='alpha-Linolenate'), 0.0286517555555556, 'Alpha-Linolenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='alpha-Tocopherol'), 0.0338456388235294, 'Alpha-Tocopherol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='alpha-Tocotrienol'), 0.00423, 'Alpha-Tocotrienol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='beta-Alanine'), 0.002635, 'beta-Alanine'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='beta-Carotene [b-Carotene]'), 0.0382245952380952, 'B-Carotene'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='beta-Tocopherol'), 0.0002, 'Beta-tocopherol'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='gamma-Linolenate'), 0.01213, 'Gamma-Linolenic acid'),
-	((SELECT id FROM medium WHERE name='Blood'), (SELECT id FROM substance WHERE name='trans-Vaccenic acid'), 0.0986, 'Vaccenic acid'),
--- MP-AU
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Urate'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='2-Oxidopropane-1,2,3-tricarboxylate [Citrate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Creatinine'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Urea'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Ammonia'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Oxalate'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='MP-AU'), (SELECT id from substance WHERE name='Dioxygen [O2]'), NULL, NULL),
---dGMM
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='D-Glucose'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='D-Fructose'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Cellobiose'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Maltose'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='HemeD'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='L-Histidine'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='L-Cysteine'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Iron(II) cation [Fe(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Iron(III) cation [Fe(3+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Sulfate [SO4(2-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Water [H2O]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Zinc(II) cation [Zn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Cobalt(II) cation [Co(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Nitrate [NO3(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Potassium(I) cation [K(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Sodium(I) cation [Na(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Chloride [Cl(-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Selenite'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Tungstate'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Nickel(II) cation [Ni(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Calcium(II) cation [Ca(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Copper(II) cation [Cu(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Manganese(II) cation [Mn(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Magnesium(II) cation [Mg(2+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Carbonic acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Tetraoxidomolybdate(VI) [Molybdate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Biotin'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Thiamine'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Riboflavin'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Pyridine-3-carboxylate [Niacin]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='4,5-Bis(hydroxymethyl)-2-methylpyridin-3-ol [Pyridoxine]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='3-[(2R)-2,4-Dihydroxy-3,3-dimethylbutanamido]propanoate [Pantothenate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='N-(4-{[(2-amino-4-oxo-3,4-dihydropteridin-6-yl)methyl]amino}benzoyl)-L-glutamic acid [Folate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='4-Aminobenzoic acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='5-(1,2-Dithiolan-3-yl)pentanoate [Lipoate]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Vitamin B12'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Cob(I)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Cob(II)alamin'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Menadione [Vitamin K]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Acetate [Acetic acid]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Valeric acid'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Isovalerate'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Propionate'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Butyrate'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Isobutyrate'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Hydrogen [H(+)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Phosphate [PO4(3-)]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Carbon dioxide [CO2]'), NULL, NULL),
-	((SELECT id from medium WHERE name='dGMM'), (SELECT id from substance WHERE name='Nitrogen'), NULL, NULL);
-
-END;
+CREATE TABLE IF NOT EXISTS substance2db (
+	substance_id INTEGER,
+	db_id TEXT NOT NULL,
+	db_type TEXT NOT NULL,
+	FOREIGN KEY(substance_id) REFERENCES substance(id),
+	PRIMARY KEY(substance_id, db_id)
+);
+INSERT INTO "substance2db" VALUES(1,'doco13ac','BiGG');
+INSERT INTO "substance2db" VALUES(2,'nrvnc','BiGG');
+INSERT INTO "substance2db" VALUES(2,'MNXM91251','MetaNetX');
+INSERT INTO "substance2db" VALUES(3,'aprgstrn','BiGG');
+INSERT INTO "substance2db" VALUES(3,'MNXM163756','MetaNetX');
+INSERT INTO "substance2db" VALUES(4,'fum','BiGG');
+INSERT INTO "substance2db" VALUES(5,'limnen','BiGG');
+INSERT INTO "substance2db" VALUES(6,'crvnc','BiGG');
+INSERT INTO "substance2db" VALUES(6,'MNXM7161','MetaNetX');
+INSERT INTO "substance2db" VALUES(7,'adrn','BiGG');
+INSERT INTO "substance2db" VALUES(7,'MNXM40344','MetaNetX');
+INSERT INTO "substance2db" VALUES(8,'bhb','BiGG');
+INSERT INTO "substance2db" VALUES(9,'3mop','BiGG');
+INSERT INTO "substance2db" VALUES(10,'1mncam','BiGG');
+INSERT INTO "substance2db" VALUES(11,'3mlda','BiGG');
+INSERT INTO "substance2db" VALUES(11,'MNXM91418','MetaNetX');
+INSERT INTO "substance2db" VALUES(12,'2hb','BiGG');
+INSERT INTO "substance2db" VALUES(14,'23cgmp','BiGG');
+INSERT INTO "substance2db" VALUES(13,'cpd25442','SEED');
+INSERT INTO "substance2db" VALUES(13,'MNXM34308','MetaNetX');
+INSERT INTO "substance2db" VALUES(15,'2mcit','BiGG');
+INSERT INTO "substance2db" VALUES(16,'cit','BiGG');
+INSERT INTO "substance2db" VALUES(17,'akg','BiGG');
+INSERT INTO "substance2db" VALUES(18,'25hvitd2','BiGG');
+INSERT INTO "substance2db" VALUES(18,'MNXM4976','MetaNetX');
+INSERT INTO "substance2db" VALUES(19,'34dhbz','BiGG');
+INSERT INTO "substance2db" VALUES(20,'34dhoxpeg','BiGG');
+INSERT INTO "substance2db" VALUES(21,'35cgmp','BiGG');
+INSERT INTO "substance2db" VALUES(22,'34hpp','BiGG');
+INSERT INTO "substance2db" VALUES(23,'3hexdcrn','BiGG');
+INSERT INTO "substance2db" VALUES(24,'3mob','BiGG');
+INSERT INTO "substance2db" VALUES(25,'pnto__R','BiGG');
+INSERT INTO "substance2db" VALUES(270,'thm','BiGG');
+INSERT INTO "substance2db" VALUES(26,'pydxn','BiGG');
+INSERT INTO "substance2db" VALUES(27,'pydam','BiGG');
+INSERT INTO "substance2db" VALUES(28,'4abz','BiGG');
+INSERT INTO "substance2db" VALUES(29,'4abut','BiGG');
+INSERT INTO "substance2db" VALUES(30,'pydx','BiGG');
+INSERT INTO "substance2db" VALUES(31,'4hdebrisoquine','BiGG');
+INSERT INTO "substance2db" VALUES(31,'MNXM10135','MetaNetX');
+INSERT INTO "substance2db" VALUES(32,'4hphac','BiGG');
+INSERT INTO "substance2db" VALUES(33,'4mop','BiGG');
+INSERT INTO "substance2db" VALUES(34,'4pyrdx','BiGG');
+INSERT INTO "substance2db" VALUES(34,'MNXM163205','MetaNetX');
+INSERT INTO "substance2db" VALUES(35,'thf','BiGG');
+INSERT INTO "substance2db" VALUES(36,'lipoate','BiGG');
+INSERT INTO "substance2db" VALUES(36,'lipt','BiGG');
+INSERT INTO "substance2db" VALUES(37,'amp','BiGG');
+INSERT INTO "substance2db" VALUES(38,'5fothf','BiGG');
+INSERT INTO "substance2db" VALUES(38,'5fthf','BiGG');
+INSERT INTO "substance2db" VALUES(39,'gmp','BiGG');
+INSERT INTO "substance2db" VALUES(40,'5htrp','BiGG');
+INSERT INTO "substance2db" VALUES(40,'MNXM162909','MetaNetX');
+INSERT INTO "substance2db" VALUES(41,'5mthf','BiGG');
+INSERT INTO "substance2db" VALUES(42,'5oxpro','BiGG');
+INSERT INTO "substance2db" VALUES(43,'prpp','BiGG');
+INSERT INTO "substance2db" VALUES(44,'ump','BiGG');
+INSERT INTO "substance2db" VALUES(45,'5adtststerone','BiGG');
+INSERT INTO "substance2db" VALUES(45,'MNXM162520','MetaNetX');
+INSERT INTO "substance2db" VALUES(46,'dhf','BiGG');
+INSERT INTO "substance2db" VALUES(47,'retinol_9_cis','BiGG');
+INSERT INTO "substance2db" VALUES(47,'MNXM162711','MetaNetX');
+INSERT INTO "substance2db" VALUES(48,'adp','BiGG');
+INSERT INTO "substance2db" VALUES(49,'atp','BiGG');
+INSERT INTO "substance2db" VALUES(50,'acald','BiGG');
+INSERT INTO "substance2db" VALUES(51,'ac','BiGG');
+INSERT INTO "substance2db" VALUES(52,'acac','BiGG');
+INSERT INTO "substance2db" VALUES(53,'acetone','BiGG');
+INSERT INTO "substance2db" VALUES(54,'ade','BiGG');
+INSERT INTO "substance2db" VALUES(55,'adn','BiGG');
+INSERT INTO "substance2db" VALUES(56,'nh3','BiGG');
+INSERT INTO "substance2db" VALUES(56,'nh4','BiGG');
+INSERT INTO "substance2db" VALUES(57,'andrstrn','BiGG');
+INSERT INTO "substance2db" VALUES(57,'MNXM162746','MetaNetX');
+INSERT INTO "substance2db" VALUES(58,'andrstrnglc','BiGG');
+INSERT INTO "substance2db" VALUES(58,'MNXM7068','MetaNetX');
+INSERT INTO "substance2db" VALUES(59,'anth','BiGG');
+INSERT INTO "substance2db" VALUES(60,'arach','BiGG');
+INSERT INTO "substance2db" VALUES(61,'arachd','BiGG');
+INSERT INTO "substance2db" VALUES(61,'MNXM162250','MetaNetX');
+INSERT INTO "substance2db" VALUES(62,'aso3','BiGG');
+INSERT INTO "substance2db" VALUES(63,'docosac','BiGG');
+INSERT INTO "substance2db" VALUES(63,'MNXM162817','MetaNetX');
+INSERT INTO "substance2db" VALUES(64,'bz','BiGG');
+INSERT INTO "substance2db" VALUES(65,'bilirub','BiGG');
+INSERT INTO "substance2db" VALUES(66,'btn','BiGG');
+INSERT INTO "substance2db" VALUES(67,'but','BiGG');
+INSERT INTO "substance2db" VALUES(67,'MNXM162281','MetaNetX');
+INSERT INTO "substance2db" VALUES(68,'c4crn','BiGG');
+INSERT INTO "substance2db" VALUES(69,'camp','BiGG');
+INSERT INTO "substance2db" VALUES(70,'cdp','BiGG');
+INSERT INTO "substance2db" VALUES(71,'cmp','BiGG');
+INSERT INTO "substance2db" VALUES(72,'cd2','BiGG');
+INSERT INTO "substance2db" VALUES(73,'25hvitd3','BiGG');
+INSERT INTO "substance2db" VALUES(73,'MNXM162388','MetaNetX');
+INSERT INTO "substance2db" VALUES(74,'vitd3','BiGG');
+INSERT INTO "substance2db" VALUES(74,'MNXM162562','MetaNetX');
+INSERT INTO "substance2db" VALUES(75,'ca2','BiGG');
+INSERT INTO "substance2db" VALUES(76,'co2','BiGG');
+INSERT INTO "substance2db" VALUES(77,'co','BiGG');
+INSERT INTO "substance2db" VALUES(78,'hco3','BiGG');
+INSERT INTO "substance2db" VALUES(79,'cellb','BiGG');
+INSERT INTO "substance2db" VALUES(80,'C02528','BiGG');
+INSERT INTO "substance2db" VALUES(81,'cl','BiGG');
+INSERT INTO "substance2db" VALUES(82,'cholate','BiGG');
+INSERT INTO "substance2db" VALUES(83,'chol','BiGG');
+INSERT INTO "substance2db" VALUES(84,'chor','BiGG');
+INSERT INTO "substance2db" VALUES(85,'cro4','BiGG');
+INSERT INTO "substance2db" VALUES(86,'chsterol','BiGG');
+INSERT INTO "substance2db" VALUES(87,'cbl1','BiGG');
+INSERT INTO "substance2db" VALUES(88,'cbl2','BiGG');
+INSERT INTO "substance2db" VALUES(89,'cobalt2','BiGG');
+INSERT INTO "substance2db" VALUES(90,'cu2','BiGG');
+INSERT INTO "substance2db" VALUES(91,'crtstrn','BiGG');
+INSERT INTO "substance2db" VALUES(91,'MNXM162953','MetaNetX');
+INSERT INTO "substance2db" VALUES(92,'crtsl','BiGG');
+INSERT INTO "substance2db" VALUES(92,'MNXM162531','MetaNetX');
+INSERT INTO "substance2db" VALUES(93,'creat','BiGG');
+INSERT INTO "substance2db" VALUES(94,'crtn','BiGG');
+INSERT INTO "substance2db" VALUES(94,'MNXM163786','MetaNetX');
+INSERT INTO "substance2db" VALUES(95,'cynt','BiGG');
+INSERT INTO "substance2db" VALUES(96,'cgly','BiGG');
+INSERT INTO "substance2db" VALUES(97,'cytd','BiGG');
+INSERT INTO "substance2db" VALUES(98,'csn','BiGG');
+INSERT INTO "substance2db" VALUES(99,'ala__D','BiGG');
+INSERT INTO "substance2db" VALUES(100,'fru','BiGG');
+INSERT INTO "substance2db" VALUES(101,'gal','BiGG');
+INSERT INTO "substance2db" VALUES(102,'glc__bD','BiGG');
+INSERT INTO "substance2db" VALUES(102,'glc__D','BiGG');
+INSERT INTO "substance2db" VALUES(103,'lac__D','BiGG');
+INSERT INTO "substance2db" VALUES(104,'man','BiGG');
+INSERT INTO "substance2db" VALUES(105,'orn__D','BiGG');
+INSERT INTO "substance2db" VALUES(106,'rib__D','BiGG');
+INSERT INTO "substance2db" VALUES(107,'ser__D','BiGG');
+INSERT INTO "substance2db" VALUES(108,'sbt__D','BiGG');
+INSERT INTO "substance2db" VALUES(109,'xyl__D','BiGG');
+INSERT INTO "substance2db" VALUES(110,'debrisoquine','BiGG');
+INSERT INTO "substance2db" VALUES(111,'dca','BiGG');
+INSERT INTO "substance2db" VALUES(111,'MNXM162295','MetaNetX');
+INSERT INTO "substance2db" VALUES(112,'c10crn','BiGG');
+INSERT INTO "substance2db" VALUES(113,'dhdascb','BiGG');
+INSERT INTO "substance2db" VALUES(114,'dheas','BiGG');
+INSERT INTO "substance2db" VALUES(115,'dad_2','BiGG');
+INSERT INTO "substance2db" VALUES(116,'dchac','BiGG');
+INSERT INTO "substance2db" VALUES(117,'dcyt','BiGG');
+INSERT INTO "substance2db" VALUES(118,'duri','BiGG');
+INSERT INTO "substance2db" VALUES(119,'dhap','BiGG');
+INSERT INTO "substance2db" VALUES(120,'o2','BiGG');
+INSERT INTO "substance2db" VALUES(121,'ppi','BiGG');
+INSERT INTO "substance2db" VALUES(122,'ddca','BiGG');
+INSERT INTO "substance2db" VALUES(122,'MNXM162258','MetaNetX');
+INSERT INTO "substance2db" VALUES(123,'dopasf','BiGG');
+INSERT INTO "substance2db" VALUES(123,'MNXM163796','MetaNetX');
+INSERT INTO "substance2db" VALUES(124,'vitd2','BiGG');
+INSERT INTO "substance2db" VALUES(124,'MNXM163604','MetaNetX');
+INSERT INTO "substance2db" VALUES(125,'estrones','BiGG');
+INSERT INTO "substance2db" VALUES(125,'MNXM162533','MetaNetX');
+INSERT INTO "substance2db" VALUES(126,'etoh','BiGG');
+INSERT INTO "substance2db" VALUES(127,'fmn','BiGG');
+INSERT INTO "substance2db" VALUES(128,'fad','BiGG');
+INSERT INTO "substance2db" VALUES(129,'fald','BiGG');
+INSERT INTO "substance2db" VALUES(130,'for','BiGG');
+INSERT INTO "substance2db" VALUES(131,'gdp','BiGG');
+INSERT INTO "substance2db" VALUES(132,'gtp','BiGG');
+INSERT INTO "substance2db" VALUES(133,'gbside_hs','BiGG');
+INSERT INTO "substance2db" VALUES(133,'MNXM4598','MetaNetX');
+INSERT INTO "substance2db" VALUES(134,'gam','BiGG');
+INSERT INTO "substance2db" VALUES(135,'glcur','BiGG');
+INSERT INTO "substance2db" VALUES(136,'glyc','BiGG');
+INSERT INTO "substance2db" VALUES(137,'glyc3p','BiGG');
+INSERT INTO "substance2db" VALUES(138,'gly','BiGG');
+INSERT INTO "substance2db" VALUES(139,'glyb','BiGG');
+INSERT INTO "substance2db" VALUES(140,'dgchol','BiGG');
+INSERT INTO "substance2db" VALUES(140,'MNXM8391','MetaNetX');
+INSERT INTO "substance2db" VALUES(141,'gchola','BiGG');
+INSERT INTO "substance2db" VALUES(141,'MNXM162346','MetaNetX');
+INSERT INTO "substance2db" VALUES(142,'HC02193','BiGG');
+INSERT INTO "substance2db" VALUES(143,'HC02196','BiGG');
+INSERT INTO "substance2db" VALUES(144,'gsn','BiGG');
+INSERT INTO "substance2db" VALUES(145,'hemeD','BiGG');
+INSERT INTO "substance2db" VALUES(145,'MNXM167899','MetaNetX');
+INSERT INTO "substance2db" VALUES(146,'hexc','BiGG');
+INSERT INTO "substance2db" VALUES(146,'MNXM1833','MetaNetX');
+INSERT INTO "substance2db" VALUES(147,'hdca','BiGG');
+INSERT INTO "substance2db" VALUES(148,'hdcea','BiGG');
+INSERT INTO "substance2db" VALUES(148,'MNXM950','MetaNetX');
+INSERT INTO "substance2db" VALUES(149,'ha','BiGG');
+INSERT INTO "substance2db" VALUES(149,'C00518','KEGG');
+INSERT INTO "substance2db" VALUES(149,'MNXM18575','MetaNetX');
+INSERT INTO "substance2db" VALUES(149,'cpd23482','SEED');
+INSERT INTO "substance2db" VALUES(150,'h','BiGG');
+INSERT INTO "substance2db" VALUES(151,'h2o2','BiGG');
+INSERT INTO "substance2db" VALUES(152,'h2s','BiGG');
+INSERT INTO "substance2db" VALUES(153,'hxan','BiGG');
+INSERT INTO "substance2db" VALUES(154,'imp','BiGG');
+INSERT INTO "substance2db" VALUES(155,'ins','BiGG');
+INSERT INTO "substance2db" VALUES(156,'fe2','BiGG');
+INSERT INTO "substance2db" VALUES(157,'fe3','BiGG');
+INSERT INTO "substance2db" VALUES(158,'ibt','BiGG');
+INSERT INTO "substance2db" VALUES(158,'isobuta','BiGG');
+INSERT INTO "substance2db" VALUES(159,'ival','BiGG');
+INSERT INTO "substance2db" VALUES(160,'ivcrn','BiGG');
+INSERT INTO "substance2db" VALUES(161,'abt','BiGG');
+INSERT INTO "substance2db" VALUES(161,'abt__L','BiGG');
+INSERT INTO "substance2db" VALUES(162,'cysi__L','BiGG');
+INSERT INTO "substance2db" VALUES(163,'3aib','BiGG');
+INSERT INTO "substance2db" VALUES(164,'ala__L','BiGG');
+INSERT INTO "substance2db" VALUES(165,'arab__L','BiGG');
+INSERT INTO "substance2db" VALUES(166,'arg__L','BiGG');
+INSERT INTO "substance2db" VALUES(167,'ascb__L','BiGG');
+INSERT INTO "substance2db" VALUES(168,'asn__L','BiGG');
+INSERT INTO "substance2db" VALUES(169,'asp__L','BiGG');
+INSERT INTO "substance2db" VALUES(170,'crn','BiGG');
+INSERT INTO "substance2db" VALUES(171,'carn','BiGG');
+INSERT INTO "substance2db" VALUES(171,'MNXM114412','MetaNetX');
+INSERT INTO "substance2db" VALUES(171,'cpd15836','SEED');
+INSERT INTO "substance2db" VALUES(172,'citr__L','BiGG');
+INSERT INTO "substance2db" VALUES(173,'cys__L','BiGG');
+INSERT INTO "substance2db" VALUES(174,'34dhphe','BiGG');
+INSERT INTO "substance2db" VALUES(174,'MNXM162631','MetaNetX');
+INSERT INTO "substance2db" VALUES(175,'glu__L','BiGG');
+INSERT INTO "substance2db" VALUES(176,'gln__L','BiGG');
+INSERT INTO "substance2db" VALUES(177,'glyc__S','BiGG');
+INSERT INTO "substance2db" VALUES(177,'MNXM147340','MetaNetX');
+INSERT INTO "substance2db" VALUES(178,'his__L','BiGG');
+INSERT INTO "substance2db" VALUES(179,'hom__L','BiGG');
+INSERT INTO "substance2db" VALUES(180,'ile__L','BiGG');
+INSERT INTO "substance2db" VALUES(181,'lac__L','BiGG');
+INSERT INTO "substance2db" VALUES(182,'leu__L','BiGG');
+INSERT INTO "substance2db" VALUES(183,'lys__L','BiGG');
+INSERT INTO "substance2db" VALUES(184,'mal__L','BiGG');
+INSERT INTO "substance2db" VALUES(185,'mepi','BiGG');
+INSERT INTO "substance2db" VALUES(185,'MNXM91238','MetaNetX');
+INSERT INTO "substance2db" VALUES(186,'met__L','BiGG');
+INSERT INTO "substance2db" VALUES(187,'orn__L','BiGG');
+INSERT INTO "substance2db" VALUES(188,'phe__L','BiGG');
+INSERT INTO "substance2db" VALUES(189,'pro__L','BiGG');
+INSERT INTO "substance2db" VALUES(190,'ser__L','BiGG');
+INSERT INTO "substance2db" VALUES(191,'sbt__L','BiGG');
+INSERT INTO "substance2db" VALUES(192,'thr__L','BiGG');
+INSERT INTO "substance2db" VALUES(193,'thyox__L','BiGG');
+INSERT INTO "substance2db" VALUES(193,'MNXM162591','MetaNetX');
+INSERT INTO "substance2db" VALUES(194,'trp__L','BiGG');
+INSERT INTO "substance2db" VALUES(195,'tyr__L','BiGG');
+INSERT INTO "substance2db" VALUES(196,'val__L','BiGG');
+INSERT INTO "substance2db" VALUES(197,'gthrd','BiGG');
+INSERT INTO "substance2db" VALUES(198,'pb2','BiGG');
+INSERT INTO "substance2db" VALUES(198,'pb','BiGG');
+INSERT INTO "substance2db" VALUES(199,'lnlc','BiGG');
+INSERT INTO "substance2db" VALUES(200,'HC02191','BiGG');
+INSERT INTO "substance2db" VALUES(201,'mg2','BiGG');
+INSERT INTO "substance2db" VALUES(202,'male','BiGG');
+INSERT INTO "substance2db" VALUES(203,'malt','BiGG');
+INSERT INTO "substance2db" VALUES(204,'mn2','BiGG');
+INSERT INTO "substance2db" VALUES(205,'hpdca','BiGG');
+INSERT INTO "substance2db" VALUES(205,'MNXM11802','MetaNetX');
+INSERT INTO "substance2db" VALUES(206,'mndn','BiGG');
+INSERT INTO "substance2db" VALUES(207,'hg2','BiGG');
+INSERT INTO "substance2db" VALUES(208,'meoh','BiGG');
+INSERT INTO "substance2db" VALUES(209,'mthgxl','BiGG');
+INSERT INTO "substance2db" VALUES(210,'inost','BiGG');
+INSERT INTO "substance2db" VALUES(211,'fol','BiGG');
+INSERT INTO "substance2db" VALUES(212,'pheacgln','BiGG');
+INSERT INTO "substance2db" VALUES(212,'MNXM163884','MetaNetX');
+INSERT INTO "substance2db" VALUES(213,'ncam','BiGG');
+INSERT INTO "substance2db" VALUES(214,'ni2','BiGG');
+INSERT INTO "substance2db" VALUES(215,'nad','BiGG');
+INSERT INTO "substance2db" VALUES(216,'nadp','BiGG');
+INSERT INTO "substance2db" VALUES(217,'no3','BiGG');
+INSERT INTO "substance2db" VALUES(218,'no2','BiGG');
+INSERT INTO "substance2db" VALUES(219,'n2','BiGG');
+INSERT INTO "substance2db" VALUES(220,'nrpphr','BiGG');
+INSERT INTO "substance2db" VALUES(221,'nrpphrsf','BiGG');
+INSERT INTO "substance2db" VALUES(221,'MNXM12967','MetaNetX');
+INSERT INTO "substance2db" VALUES(222,'ocdca','BiGG');
+INSERT INTO "substance2db" VALUES(223,'ocdcea','BiGG');
+INSERT INTO "substance2db" VALUES(224,'octa','BiGG');
+INSERT INTO "substance2db" VALUES(225,'c8crn','BiGG');
+INSERT INTO "substance2db" VALUES(226,'c81crn','BiGG');
+INSERT INTO "substance2db" VALUES(227,'elaid','BiGG');
+INSERT INTO "substance2db" VALUES(227,'MNXM92305','MetaNetX');
+INSERT INTO "substance2db" VALUES(228,'orot','BiGG');
+INSERT INTO "substance2db" VALUES(229,'oxa','BiGG');
+INSERT INTO "substance2db" VALUES(230,'gthox','BiGG');
+INSERT INTO "substance2db" VALUES(231,'ptdca','BiGG');
+INSERT INTO "substance2db" VALUES(231,'MNXM163568','MetaNetX');
+INSERT INTO "substance2db" VALUES(232,'pi','BiGG');
+INSERT INTO "substance2db" VALUES(233,'phllqne','BiGG');
+INSERT INTO "substance2db" VALUES(233,'phyQ','BiGG');
+INSERT INTO "substance2db" VALUES(234,'phyt','BiGG');
+INSERT INTO "substance2db" VALUES(234,'MNXM91275','MetaNetX');
+INSERT INTO "substance2db" VALUES(235,'k','BiGG');
+INSERT INTO "substance2db" VALUES(236,'prgstrn','BiGG');
+INSERT INTO "substance2db" VALUES(236,'MNXM162773','MetaNetX');
+INSERT INTO "substance2db" VALUES(237,'ppa','BiGG');
+INSERT INTO "substance2db" VALUES(237,'MNXM162260','MetaNetX');
+INSERT INTO "substance2db" VALUES(238,'pheme','BiGG');
+INSERT INTO "substance2db" VALUES(239,'ptrc','BiGG');
+INSERT INTO "substance2db" VALUES(240,'nac','BiGG');
+INSERT INTO "substance2db" VALUES(240,'nicnt','BiGG');
+INSERT INTO "substance2db" VALUES(241,'pydx5p','BiGG');
+INSERT INTO "substance2db" VALUES(242,'pyr','BiGG');
+INSERT INTO "substance2db" VALUES(243,'retn','BiGG');
+INSERT INTO "substance2db" VALUES(244,'retnglc','BiGG');
+INSERT INTO "substance2db" VALUES(244,'MNXM91293','MetaNetX');
+INSERT INTO "substance2db" VALUES(245,'rbt','BiGG');
+INSERT INTO "substance2db" VALUES(246,'ribflv','BiGG');
+INSERT INTO "substance2db" VALUES(247,'sarcs','BiGG');
+INSERT INTO "substance2db" VALUES(248,'slnt','BiGG');
+INSERT INTO "substance2db" VALUES(249,'sel','BiGG');
+INSERT INTO "substance2db" VALUES(249,'seln','BiGG');
+INSERT INTO "substance2db" VALUES(250,'srtn','BiGG');
+INSERT INTO "substance2db" VALUES(251,'na1','BiGG');
+INSERT INTO "substance2db" VALUES(252,'spmd','BiGG');
+INSERT INTO "substance2db" VALUES(253,'sprm','BiGG');
+INSERT INTO "substance2db" VALUES(254,'sph1p','BiGG');
+INSERT INTO "substance2db" VALUES(255,'sphs1p','BiGG');
+INSERT INTO "substance2db" VALUES(255,'MNXM162589','MetaNetX');
+INSERT INTO "substance2db" VALUES(256,'succ','BiGG');
+INSERT INTO "substance2db" VALUES(257,'sucr','BiGG');
+INSERT INTO "substance2db" VALUES(258,'so4','BiGG');
+INSERT INTO "substance2db" VALUES(259,'so3','BiGG');
+INSERT INTO "substance2db" VALUES(260,'HC02197','BiGG');
+INSERT INTO "substance2db" VALUES(261,'taur','BiGG');
+INSERT INTO "substance2db" VALUES(262,'tdchola','BiGG');
+INSERT INTO "substance2db" VALUES(263,'tchola','BiGG');
+INSERT INTO "substance2db" VALUES(264,'tdechola','BiGG');
+INSERT INTO "substance2db" VALUES(265,'HC02192','BiGG');
+INSERT INTO "substance2db" VALUES(266,'tststerone','BiGG');
+INSERT INTO "substance2db" VALUES(266,'MNXM162488','MetaNetX');
+INSERT INTO "substance2db" VALUES(267,'lgnc','BiGG');
+INSERT INTO "substance2db" VALUES(267,'MNXM8841','MetaNetX');
+INSERT INTO "substance2db" VALUES(267,'lgn','BiGG');
+INSERT INTO "substance2db" VALUES(268,'ttdca','BiGG');
+INSERT INTO "substance2db" VALUES(268,'MNXM162239','MetaNetX');
+INSERT INTO "substance2db" VALUES(269,'mobd','BiGG');
+INSERT INTO "substance2db" VALUES(271,'tcynt','BiGG');
+INSERT INTO "substance2db" VALUES(271,'thioc','BiGG');
+INSERT INTO "substance2db" VALUES(272,'tsul','BiGG');
+INSERT INTO "substance2db" VALUES(273,'HC02180','BiGG');
+INSERT INTO "substance2db" VALUES(274,'thymd','BiGG');
+INSERT INTO "substance2db" VALUES(275,'tungs','BiGG');
+INSERT INTO "substance2db" VALUES(276,'udp','BiGG');
+INSERT INTO "substance2db" VALUES(277,'udpg','BiGG');
+INSERT INTO "substance2db" VALUES(278,'q10','BiGG');
+INSERT INTO "substance2db" VALUES(279,'ura','BiGG');
+INSERT INTO "substance2db" VALUES(280,'urate','BiGG');
+INSERT INTO "substance2db" VALUES(281,'urea','BiGG');
+INSERT INTO "substance2db" VALUES(282,'uri','BiGG');
+INSERT INTO "substance2db" VALUES(283,'HC02194','BiGG');
+INSERT INTO "substance2db" VALUES(284,'M03134','BiGG');
+INSERT INTO "substance2db" VALUES(285,'b12','BiGG');
+INSERT INTO "substance2db" VALUES(286,'h2o','BiGG');
+INSERT INTO "substance2db" VALUES(287,'C02470','BiGG');
+INSERT INTO "substance2db" VALUES(288,'xylt','BiGG');
+INSERT INTO "substance2db" VALUES(289,'zn2','BiGG');
+INSERT INTO "substance2db" VALUES(290,'tmndnc','BiGG');
+INSERT INTO "substance2db" VALUES(290,'MNXM13045','MetaNetX');
+INSERT INTO "substance2db" VALUES(291,'eicostet','BiGG');
+INSERT INTO "substance2db" VALUES(291,'MNXM11474','MetaNetX');
+INSERT INTO "substance2db" VALUES(292,'dlnlcg','BiGG');
+INSERT INTO "substance2db" VALUES(292,'MNXM147467','MetaNetX');
+INSERT INTO "substance2db" VALUES(293,'strdnc','BiGG');
+INSERT INTO "substance2db" VALUES(293,'MNXM12955','MetaNetX');
+INSERT INTO "substance2db" VALUES(294,'retinal','BiGG');
+INSERT INTO "substance2db" VALUES(295,'retinol','BiGG');
+INSERT INTO "substance2db" VALUES(296,'lnlnca','BiGG');
+INSERT INTO "substance2db" VALUES(296,'alpla','BiGG');
+INSERT INTO "substance2db" VALUES(297,'avite1','BiGG');
+INSERT INTO "substance2db" VALUES(298,'avite2','BiGG');
+INSERT INTO "substance2db" VALUES(298,'MNXM162932','MetaNetX');
+INSERT INTO "substance2db" VALUES(299,'ala_B','BiGG');
+INSERT INTO "substance2db" VALUES(300,'caro','BiGG');
+INSERT INTO "substance2db" VALUES(301,'bvite','BiGG');
+INSERT INTO "substance2db" VALUES(302,'lnlncg','BiGG');
+INSERT INTO "substance2db" VALUES(302,'MNXM162504','MetaNetX');
+INSERT INTO "substance2db" VALUES(303,'4hpro_LT','BiGG');
+INSERT INTO "substance2db" VALUES(304,'vacc','BiGG');
+INSERT INTO "substance2db" VALUES(304,'MNXM92713','MetaNetX');
