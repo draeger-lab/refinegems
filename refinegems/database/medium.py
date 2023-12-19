@@ -74,11 +74,38 @@ class Medium:
 
     # possible @TODO
     # ..............
-    # add compound
     # has compound
     # remove compound
     # set source of
     # ------------------------------------
+
+    def add_substance_from_db(self, name:str, flux:float=10.0):
+        """Add a substance from the database to the medium.
+
+        Args:
+            name (str): Name of the substance. Should be part of the database substance.name column.
+            flux (float, optional): Sets the flux value of the new substance. Defaults to 10.0.
+        """
+        # build connection to DB
+        connection = sqlite3.connect(PATH_TO_DB)
+        cursor = connection.cursor()
+        # fetch substance
+        result = cursor.execute(""" SELECT substance.name, substance.formula, substance2db.db_id, substance2db.db_type 
+                                    FROM substance, substance2db 
+                                    WHERE substance.name = ? AND substance.id = substance2db.substance_id""", (name,))
+        substance = result.fetchall()
+
+        # check if fetch was successful
+        if len(substance) == 0:
+            warnings.warn(f'Could not fetch substance {name} from DB.')
+            return
+        
+        # add substance to table
+        substance_table = pd.DataFrame(substance, columns=['name','formula','db_id','db_type'])
+        substance_table.insert(2,'flux',flux)
+        substance_table.insert(3,'source',None)
+        self.substance_table = pd.concat([self.substance_table, substance_table], ignore_index=True)
+
 
     def get_source(self, element:str) -> list[str]:
         """Get the source of a given element for the medium.

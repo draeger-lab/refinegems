@@ -355,7 +355,15 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 # @IDEA: more options for fluxes
 # @TODO/@IDEA: validity check nefore parsing
 # @ASK: maybe something for the io module or does it fit here?
-def read_media_config(yaml_path:str):
+def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]]:
+    """Read the information from a media configuration file.
+
+    Args:
+        yaml_path (str): The path to a media configuration file in YAML-format.
+
+    Returns:
+        tuple[list[medium.Medium],list[str,None]]: Tuple of A) list of the loaded media and B) list of supplement modes.
+    """
 
     media_list = []
     supplement_list = []
@@ -427,6 +435,36 @@ def read_media_config(yaml_path:str):
                     new_medium.set_oxygen_percentage(p['o2_percent'])
                 elif params and 'o2_percemt' in params.keys():
                     new_medium.set_oxygen_percentage(params['o2_percent'])
+
+                # add additional substances from DB
+                if p and 'add_substance' in p.keys():
+                    for s,f in p['add_substance'].items():
+                        # read in flux 
+                        if not f:
+                            if p and 'default_flux' in p.keys():
+                                f = p['default_flux']
+                            elif params and 'default_flux' in params.keys():
+                                f = params['default_flux']
+                        elif isinstance(f,str):
+                            if '%' in f:
+                                f = float(f[:f.index('%')])/100
+                                if p and 'default_flux' in p.keys():
+                                    f = f * p['default_flux']
+                                elif params and 'default_flux' in params.keys():
+                                    f = f * params['default_flux']
+                                else:
+                                    f = f * 10.0
+                            else:
+                                warn_string = f'Could not read in flux for {s}: {f}. \nWill be using default 10.0 instead.'
+                                warnings.warn(warn_string)
+                                f = 10.0
+                        # change medium
+                        if s in new_medium.substance_table['name'].tolist():
+                            # change fluxes only
+                            new_medium.substance_table.loc[new_medium.substance_table['name']==s,'flux'] = f
+                        else:
+                            # add substance to medium 
+                            new_medium.add_substance_from_db(s,f)
 
                 # supplement settings
                 if p and 'supplement' in p.keys():
