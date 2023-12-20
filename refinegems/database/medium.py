@@ -811,7 +811,7 @@ def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:s
         candidates = cursor.execute("SELECT * FROM substance WHERE substance.formula = ? OR substance.name LIKE ? ",(row['formula'],row['name']))
         candidate_list = candidates.fetchall()
 
-        # if candidates were found, let user chose if one of those should be used
+        # if candidates were found, let user choose if one of those should be used
         
         substance_id = None
         if len(candidate_list) > 0:
@@ -830,7 +830,7 @@ def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:s
                     break
                 # unknown input, try again
                 else:
-                    res = input('Unknow input. Please try again:\n')
+                    res = input('Unknown input. Please try again:\n')
 
         # if no matching entry has been found, insert new entry into DB
         if not substance_id:
@@ -887,13 +887,12 @@ def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection,
             connection.commit()
 
 
-def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
+def enter_medium_into_db(database: str, medium: Medium):
     """Enter a new medium to an already existing database.
 
     Args:
         database (str): Path to the database.
         medium (Medium): A medium object to be added to the database.
-        update (bool): Specifies if an existing medium should be updated or a new medium is added 
     """
 
     # build connection to DB
@@ -906,7 +905,7 @@ def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
     sid_substance = get_last_idx_table('substance', connection, cursor)
     sid_substance2db = get_last_idx_table('substance2db', connection, cursor)
 
-    # try to add a new/updated medium to the database
+    # try to add a new medium to the database
     try:
 
         # name
@@ -914,14 +913,14 @@ def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
         #   enter into database, if no problem remains 
         name_check_res = cursor.execute("SELECT 1 FROM medium WHERE medium.name = ?", (medium.name,))
         name_check = name_check_res.fetchone()
-        if not (name_check and update): # Medium name is unique & no update is requested
+        if not name_check:
             # medium name is unique 
             # add medium to DB
             cursor.execute("INSERT INTO medium VALUES(?,?,?,?)",(None,medium.name,medium.description,medium.doi,))
-        elif name_check and not update: # Medium name already exists & no update is requested
+        else:
             # medium name already in DB 
-            check_new = input('The name {medium.name} is already in the database.\nDo you want to set a new name? (yes/no): ')
-            if check_new in ['y','yes']:
+            check = input('The name {medium.name} is already in the database.\nDo you want to set a new name? (yes/no): ')
+            if check in ['y','yes']:
                 # set a new name
                 while True:
                     new_name = input('Please enter a medium name:\n')
@@ -931,26 +930,13 @@ def enter_medium_into_db(database: str, medium: Medium, update:bool=False):
                     else:
                         medium.name = new_name
                         break
-            elif check_new in ['n','no']:
+            elif check in ['n','no']:
                 # end program when no new name is set
                 print('No new name chosen. Ending the program.')
                 sys.exit()
             else:
                 # Abort program at unknown input
-                sys.exit('Unknown input. Aborting.')        
-        elif not name_check and update: # Medium name is unique, BUT update was requested
-            # Medium name not in DB 
-            check_update = input('The name {medium.name} is not in the database yet.\nDo you want to add a new medium instead? (yes/no): ')
-            if check_update in ['y','yes']:
-                enter_medium_into_db(database, medium)
-            elif check_update in ['n','no']:
-                # end program when user did not use the update flag incorrectly
-                print('No medium can be updated with the provided medium. Ending the program.')
-                sys.exit()
-            else:
-                # Abort program at unknown input
                 sys.exit('Unknown input. Aborting.')
-            
         
         connection.commit()
         res = cursor.execute("SELECT last_insert_rowid() FROM medium")
