@@ -355,6 +355,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 # @IDEA: more options for fluxes
 # @TODO/@IDEA: validity check nefore parsing
 # @ASK: maybe something for the io module or does it fit here?
+# @TEST: extensive testing that everythin works fine
 def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]]:
     """Read the information from a media configuration file.
 

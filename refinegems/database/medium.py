@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 import warnings
-from typing import Literal, Union
+from typing import Literal, Union, Any
 import random
 import string
 from sqlite_dump import iterdump
@@ -752,8 +752,11 @@ def read_from_cobra_model(model: cobra.Model) -> Medium:
 # functions for adding entries to DB
 ############################################################################
 
+# utility
+# -------
+
 def get_last_idx_table(tablename: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> int:
-    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    """Helper function.
     Retrieves the last row id of a specified table of the database.
 
     Args:
@@ -782,6 +785,9 @@ def get_last_idx_table(tablename: str, connection: sqlite3.Connection, cursor: s
 
     return last_rowid
 
+
+# add a new medium
+# ----------------
 
 def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:sqlite3.Cursor) -> int:
     """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
@@ -887,11 +893,11 @@ def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection,
             connection.commit()
 
 
-def enter_medium_into_db(database: str, medium: Medium):
+def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
     """Enter a new medium to an already existing database.
 
     Args:
-        database (str): Path to the database.
+        database (str, optional): Path to the database. Defaults to the in-build databse.
         medium (Medium): A medium object to be added to the database.
     """
 
@@ -971,6 +977,97 @@ def enter_medium_into_db(database: str, medium: Medium):
     # in any case close connection to database
     finally:
         connection.close()
+
+
+# further database curation
+# -------------------------
+# @CURRENTLY COMPLETELY UNTESTED, just ideas, but feel free to use 'em
+
+# @TEST
+def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict, database:str = PATH_TO_DB):
+
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # condition -> sql
+    condition_str =  ' AND '.join([f'{x} = {y}' for x,y in conditions.items()])
+
+    # update the entry
+    cursor.execute('UPDATE ? SET ? = ? WHERE ?',(table,column,new_value,condition_str,))
+
+    # save and close
+    connection.commit()
+    connection.close()
+
+
+# @TEST
+def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
+
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # iterate over the input table
+    for idx,row in data.iterrows():
+
+        # row :  table | column | new_value | condition
+        # condition (str) : a=x,b=y,.... 
+
+        condition_str =  ' AND '.join(row['condition'].split(','))
+
+        # update the entry
+        cursor.execute('UPDATE ? SET ? WHERE ?',(row['table'],row['column'],row['new_value'],condition_str,))
+
+    # save and close
+    connection.commit()
+    connection.close()
+
+
+# @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
+# @TEST
+def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
+    
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # add new entry to a specific table
+    columns_str = '(' + ', '.join(columns) + ')'
+    values_str = '(' + ', '.join(values) + ')'
+    cursor.execute('INSERT INTO ? ? VALUES ?',(table,columns_str,values_str,))
+
+    # save and close
+    connection.commit()
+    connection.close()
+
+
+# @TEST
+def enter_db_mutiple_entry(data:pd.DataFrame, database:str = PATH_TO_DB):
+    
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # add new entry to a specific table
+    for idx,row in data.iterrows():
+        # row : table | columns | values
+        # valus/columns : a, b, c, ....
+        columns_str = '(' + row['columns'] + ')'
+        values_str = '(' + row['values'] + ')'
+        cursor.execute('INSERT INTO ? ? VALUES ?',(row['table'],columns_str,values_str,))
+
+    # save and close
+    connection.commit()
+    connection.close()
+
+# ---------------------------------------------------------
+# @IDEA
+# @TODO
+# - do the above from a csv/tsv input
+# - maybe combine update and add?
+# - validity checks for add so that no duplicates are made?
+# ---------------------------------------------------------
 
 
 ############################################################################
