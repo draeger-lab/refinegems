@@ -37,8 +37,23 @@ def load_model_cobra(modelpath: str) -> cobraModel:
     Returns:
         cobraModel: Loaded model by COBRApy
     """
-    mod = cobra.io.read_sbml_model(modelpath)
-    return mod
+    #mod = cobra.io.read_sbml_model(modelpath)
+    #return mod
+    extension = os.path.splitext(modelpath)[1].replace('.','')
+
+    match extension:
+        case 'xml':
+            data = cobra.io.read_sbml_model(modelpath)
+        case 'json':
+            data = cobra.io.load_json_model(modelpath)
+        case 'yml':
+            data = cobra.io.load_yaml_model(modelpath)
+        case 'mat':
+            data = cobra.io.load_matlab_model(modelpath)
+        case _:
+            raise ValueError('Unknown file extension for model: ', extension)
+            sys.exit(1)
+    return data
 
 
 def load_model_libsbml(modelpath: str) -> libModel:
