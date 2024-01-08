@@ -15,6 +15,7 @@ import gffutils
 import sqlalchemy
 import logging
 import pandas as pd
+from pathlib import Path
 from cobra import Model as cobraModel
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
@@ -22,6 +23,7 @@ from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
+from typing import Union
 
 __author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
@@ -102,23 +104,121 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def load_medium_custom(mediumpath: str) -> pd.DataFrame:
-    """Helper function to read medium csv
+def write_media_to_file(media_file_name: str, media: Union[list[str], str]='all', tsv: bool=True):
+    """ Extracts all user-specified media from the database data.db 
+        & Writes them to a CSV/TSV file
+        Defaults to all media written to a TSV file.
 
     Args:
-        - mediumpath (str): path to csv file with medium
-
-    Returns:
-        pd.DataFrame: Table of csv
+        - media_file_name (str): File name without file extension/Path to file with 
+            file name without file extension
+        - media (Union[list[str], str], optional): String of medium name/
+            List of media names. Defaults to 'all'.
+        - tsv (bool, optional): Specifies if a CSV/TSV file should be returned. 
+            Defaults to True.
     """
-    medium = pd.read_csv(mediumpath, sep=';')
-    medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
-    medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
-    return medium
+    # Generate list of pandas dataframes
+    media_dfs = []
+    
+    # Find out if default should be used
+    media = load_a_table_from_database('media')['medium'].to_list() if media == 'all' else media
+    # Turn string input into a list/Sort list of media
+    if isinstance(media, str): media = [media]
+    else: media.sort()
+    # Semi-colon is used for CSV file as ',' can be in substance name
+    file_sep = '\t' if tsv else ';'
+    file_extension = '.tsv' if tsv else '.csv'
+    
+    # Iterate over list to get all media pandas dataframes
+    for medium in media:
+        medium_df = load_medium_from_db(medium)
+        media_dfs.append(medium_df)
+        
+    requested_media = media_dfs[0] if len(media_dfs) == 1 else pd.concat(media_dfs)
+    
+    requested_media.to_csv(f'{media_file_name}{file_extension}', sep=file_sep, 
+                           index=False)
+
+
+def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
+    """ Helper function to read a medium/media definition(s) from a CSV/TSV file 
+        into the database 'data.db' 
+
+    Args:
+        - mediapath (str): Path to a .csv/.tsv file containing one or more media 
+            definitions
+    """
+    # Get file type from file extension
+    mediapath_filetype = Path(mediapath).suffix
+    
+    # Check if file has valid extension/type & get according separator
+    if mediapath_filetype.lower() == '.csv': seperator = ';'
+    elif mediapath_filetype.lower() == '.tsv': seperator = '\t'
+    else: 
+        logging.error(
+            'Either no valid file type was provided or the extension of the ' 
+            'file is not one of \'.tsv\' or \'.csv\'.'
+            )
+        return
+    
+    custom_media = pd.read_csv(mediapath, sep=seperator)
+    
+    # Get table format for media table in database
+    # Get first column per medium
+    media_info = custom_media.drop_duplicates(subset=['medium'], keep='first')
+    # Get fields required for media table
+    media_info = media_info[['medium', 'medium_description']]
+    
+    # Remove for media_compositions table unnecessary column
+    media_comp = custom_media.drop('medium_description', axis=1)
+    
+    # Connect to database
+    sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
+    engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
+    open_con = engine.connect()
+    
+    # Collect existing media to avoid duplicates
+    existing_media = load_a_table_from_database('media')
+    
+    # Remove duplicated media from the DataFrames:
+    ## 1. Set indeces of the 'media' table from database (existing_media) 
+    ##      & the two dataframes to 'medium'
+    media_info.set_index('medium', inplace=True)
+    existing_media.set_index('medium', inplace=True)
+    media_comp.set_index('medium', inplace=True)
+    ## 2. Keep all entries in media_info where there is not match in the medium 
+    ##      name compared to the existing_media table
+    # Get new media for database
+    media_info = media_info[~media_info.index.isin(existing_media.index)]
+    ## 3. Keep all entries in media_comp that belong to the new media
+    media_comp = media_comp[media_comp.index.isin(media_info.index)].reset_index()
+    # Reset index as only columns are inserted into database
+    media_info.reset_index(inplace=True)
+    
+    # Add new entry/entries for media table first
+    media_info.to_sql('media', con=open_con, if_exists='append', index=False)
+    
+    # Turn medium column into medium_id column
+    media_comp['medium_query'] = media_comp['medium'].apply(
+        lambda x: f'SELECT id from media WHERE medium=\'{x}\''
+        ) # Generate SQL query to retrieve link to medium
+    media_comp['medium_id'] = media_comp['medium_query'].apply(
+        lambda x: open_con.execute(x).scalar()
+        ) # Extract medium_id from media table
+    # Remove for media_compositions table unnecessary columns
+    media_comp.drop(['medium', 'medium_query'], axis=1, inplace=True)
+    
+    # Add new entries for media_compositions table
+    media_comp.to_sql('media_compositions', con=open_con, if_exists='append', 
+                      index=False)
+    
+    # Close connection after insertion
+    open_con.close()
 
 
 def load_medium_from_db(mediumname: str) -> pd.DataFrame:
-    """Wrapper function to extract subtable for the requested medium from the database 'data.db'
+    """ Helper function to extract subtable for the requested medium from the 
+        database 'data.db'
 
     Args:
         - mediumname (str): Name of medium to test growth on
@@ -126,9 +226,27 @@ def load_medium_from_db(mediumname: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
     """
-    medium_query = f"SELECT * FROM media m JOIN media_compositions mc ON m.id = mc.medium_id WHERE m.medium = '{mediumname}'"
+    medium_query = (
+        "SELECT * FROM media m JOIN media_compositions mc ON m.id = " 
+        f"mc.medium_id WHERE m.medium = '{mediumname}'"
+    )
     medium = load_a_table_from_database(medium_query)
     medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
+    return medium
+
+
+def load_medium_from_db_for_growth(mediumname: str) -> pd.DataFrame:
+    """ Wrapper function to extract subtable for the requested medium from the 
+        database 'data.db' & Add the columns 'BiGG_R' and 'BiGG_EX'
+
+    Args:
+        - mediumname (str): Name of medium to test growth on
+
+    Returns:
+        pd.DataFrame: Table containing composition for one medium with metabs 
+            added as BiGG_EX exchange reactions
+    """
+    medium = load_medium_from_db(mediumname)
     medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
     medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
     return medium
@@ -357,6 +475,39 @@ def search_ncbi_for_gpr(locus: str) -> str:
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
+                
+def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame():
+    """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
+
+    Args:
+        gff_file (str): RefSeq GFF file of the input organism
+
+    Returns:
+        pd.DataFrame: Table mapping locus tags to their respective RefSeq identifiers
+    """
+
+    locus_tag2id = {}
+    locus_tag2id['LocusTag'] = []
+    locus_tag2id['ProteinID'] = []
+      
+    gff_db = gffutils.create_db(gff_file, ':memory:', merge_strategy='create_unique')
+
+    for feature in gff_db.all_features():
+        
+        if (feature.featuretype == 'gene') and ('old_locus_tag' in feature.attributes):  # Get locus_tag & old_locus_tag
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['old_locus_tag'][0])
+        elif (feature.featuretype == 'gene') and ('locus_tag' in feature.attributes):
+            current_locus_tag = feature.attributes['locus_tag']
+            locus_tag2id['LocusTag'].append(feature.attributes['locus_tag'][0])
+            
+        if (feature.featuretype == 'CDS') and ('protein_id' in feature.attributes): # Check if CDS has protein_id
+            if feature.attributes['locus_tag'] == current_locus_tag:# Get protein_id if locus_tag the same
+                locus_tag2id['ProteinID'].append(feature.attributes['protein_id'][0])
+
+    locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
+
+    return pd.DataFrame(locus_tag2id)
 
 
 def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
@@ -508,8 +659,8 @@ def save_user_input(configpath: str) -> dict[str: str]:
                 db_to_compare = click.prompt('One of the choices KEGG|BioCyc|KEGG+BioCyc') #|GFF
                 gap_analysis_params['db_to_compare'] = db_to_compare
                 if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-                    gap_analysis_params['organismid'] = click.prompt('Enter the KEGG Organism ID')
-                    gap_analysis_params['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
+                    user_input['organismid'] = click.prompt('Enter the KEGG Organism code')
+                    user_input['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file')
                 if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
                     Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'')
                     Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information')
@@ -559,10 +710,14 @@ def save_user_input(configpath: str) -> dict[str: str]:
                     user_input['entrez_email'] = entrez_email
                     id_db = click.prompt('What database is your model based on? BIGG|VMH')
                     user_input['id_db'] = id_db
+                    gff_file = click.prompt('If possible, provide the path to the RefSeq GFF file of your organism')
+                    user_input['gff_file'] = gff_file if gff_file != 'None' else None
+                    protein_fasta = click.prompt('If possible, provide the path to the Protein FASTA file used for CarveMe')
+                    user_input['protein_fasta'] = protein_fasta if protein_fasta != 'None' else None
                     lab_strain = not click.confirm('Does your modeled organism have a database entry?', default=True)
                     user_input['lab_strain'] = lab_strain
-                    protein_fasta = click.prompt('If possible, provide the path to your Protein FASTA file used for CarveMe')
-                    user_input['protein_fasta'] = protein_fasta
+                    organismid = click.prompt('If possible, provide the KEGG organism code of your organism')
+                    user_input['organismid'] = organismid if (organismid != 'None') else None
                     
                 biomass = click.confirm('Do you want to check & normalise the biomass function(s)?')
                 user_input['biomass'] = biomass

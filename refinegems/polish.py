@@ -6,14 +6,17 @@ The newer version of CarveMe leads to some irritations in the model, these scrip
 
 import re, logging
 from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
+import pandas as pd
+from bioservices.kegg import KEGG
 from libsbml import Model as libModel
+from libsbml import GeneProduct
 from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from Bio import Entrez
 from tqdm.auto import tqdm
 from functools import reduce
 from sortedcontainers import SortedDict, SortedSet
 from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import search_ncbi_for_gpr, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
+from refinegems.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
@@ -462,17 +465,20 @@ def set_initial_amount(model: libModel):
          
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
-def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False):
+def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
     Args:
         - gene_list (list): libSBML ListOfGenes
         - email (str): User Email to access the Entrez database
+        - locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
         - protein_fasta (str): The path to the CarveMe protein.fasta input file
         - lab_strain (bool): Needs to be set to True if strain was self-annotated
                            and/or the locus tags in the CarveMe input file should be kept   
     """
     Entrez.email = email
+    if locus2id is not None:
+        locus2id = locus2id.set_index('ProteinID')
                     
     id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
     if protein_fasta:
@@ -494,6 +500,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = search_ncbi_for_gpr(entry)
             gene.setName(name)
+            if (locus2id is not None) and (entry in locus2id.index):
+                locus = locus2id.loc[entry, 'LocusTag']
             gene.setLabel(locus)
         
         elif (gene.getId() != 'G_spontaneous') and (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
@@ -520,6 +528,8 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
                 add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
+                if (locus2id is not None) and (entry in locus2id.index):
+                    locus = locus2id.loc[entry, 'LocusTag']
 
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
@@ -549,6 +559,51 @@ def cv_ncbiprotein(gene_list, email, protein_fasta: str, lab_strain: bool=False)
         gene.unsetNotes()
     if genes_missing_annotation:    
         logging.warning(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
+
+#----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
+def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
+    """Adds URIs to GeneProducts based on locus tag to indentifier mapping
+
+    Args:
+        locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
+        gene_list (list[GeneProduct]): libSBML ListOfGenes
+    """
+    locus2id.set_index('LocusTag')
+
+    for gp in tqdm(gene_list):
+        locus = gp.getLabel()
+
+        if locus in locus2id.index:
+            add_cv_term_genes(locus2id.loc[locus, 'ProteinID'].split('.')[0], 'REFSEQ', gp)
+
+          
+def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
+    """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
+
+    Args:
+        gene_list (list[GeneProduct]): libSBML ListOfGenes
+        kegg_organism_id (str): Organism identifier in the KEGG database
+    """
+    k = KEGG()
+    mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
+    no_valid_kegg = []
+
+    for gp in tqdm(gene_list):
+    
+        if gp.getId() != 'G_spontaneous':
+            kegg_gene_id = f'{kegg_organism_id}:{gp.getLabel()}'
+            
+            try:
+                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+
+                add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
+                add_cv_term_genes(uniprot_id.split('up:')[1], 'UNIPROT', gp)
+                
+            except KeyError:
+                no_valid_kegg.append(gp.getLabel())
+    
+    if no_valid_kegg:      
+        logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
 
 
 #------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------#
@@ -1129,7 +1184,8 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_strain: bool, path: str) -> libModel: 
+def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
+           protein_fasta: str, lab_strain: bool, kegg_organism_id: str, path: str) -> libModel: 
     """| Completes all steps to polish a model
        | (Tested for models having either BiGG or VMH identifiers.)
 
@@ -1137,8 +1193,10 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
         - model (libModel): model loaded with libSBML
         - email (str): E-mail for Entrez
         - id_db (str): Main database where identifiers in model come from
+        - refseq_gff (str): Path to RefSeq GFF file of organism
         - protein_fasta (str): File used as input for CarveMe
         - lab_strain (bool): True if the strain was sequenced in a local lab
+        - kegg_organism_id (str): KEGG organism identifier
         - path (str): Output path for incorrect annotations file(s)
     
     Returns:
@@ -1160,6 +1218,7 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+    locus2id = parse_gff_for_refseq_info(refseq_gff) if refseq_gff else None
 
     ### unit definition ###
     add_fba_units(model)
@@ -1173,7 +1232,11 @@ def polish(model: libModel, email: str, id_db: str, protein_fasta: str, lab_stra
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, protein_fasta, lab_strain)
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, lab_strain)
+
+    ### add additional URIs to GeneProducts ###
+    if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
+    if kegg_organism_id: add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
     
     ### set boundaries and constant ###
     polish_entities(metab_list, metabolite=True)
