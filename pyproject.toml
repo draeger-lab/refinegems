@@ -74,4 +74,5 @@ where = ['refinegems']
 
 [tool.setuptools.package-data]
 database = ['*.txt', '*.sql', '*.db']
+"data.config" = ['*.yaml']
 "data.pathway" = ['*.csv']

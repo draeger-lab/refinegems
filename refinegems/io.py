@@ -25,7 +25,7 @@ from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
 from typing import Union, Literal
 
-__author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
+__author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 
 
 def load_model_cobra(modelpath: str) -> cobraModel:

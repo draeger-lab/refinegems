@@ -50,6 +50,11 @@ params:
 #            Add additional subset or media from the database to the base.
 #   add_external: None|str(path)
 #            Add additional external media/subsets to the base.
+#   add_substance: Null|float|str in format 'X.X%' with X being [0-9]*
+#            Add further substances to the medium and/or add specific fluxes to 
+#            to substances. Flux settings here overwrite all previously set fluxes.
+#            Null uses the most specific set default flux.
+#            When a percentage is set uses this percentage of the most specific set default flux.
 #
 # options to overwrite the default set in the previous section 
 # for specific media only:
@@ -57,11 +62,6 @@ params:
 #   supplement
 #   default_flux
 #   o2_percent
-#   add_substance: Null|float|str in format 'X.X%' with X being [0-9]*
-#            Add further substances to the medium and/or add specific fluxes to 
-#            to substances. Flux settings here overwrite all previously set fluxes.
-#            Null uses the most specific set default flux.
-#            When a percentage is set uses this percentage of the most specific set default flux.
 # --------------------------------------------------------------------
 
 media:
