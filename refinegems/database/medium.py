@@ -1037,7 +1037,7 @@ def generate_update_query(row: pd.Series) -> str:
     match table:
         
         case 'medium2substance':
-            if ['medium', 'substance'] in conditions_dict.keys():
+            if all(_ in conditions_dict.keys() for _ in ['medium', 'substance']):
                 update_query += f'''medium_id = (SELECT medium.id FROM medium WHERE medium.name = {str(conditions_dict.get("medium"))}) 
                 AND substance_id = (SELECT substance.id FROM substance WHERE substance.name = {str(conditions_dict.get("substance"))})
                 '''
@@ -1084,7 +1084,10 @@ def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
 
     Notes:
     - multiple columns and values are listes with a "," and no whitespaces
-    - conditions are listed like: a=x,b=y,...
+    - conditions are listed like: a=x;b=y;...
+        - conditions separated by comma
+        - column and value separated by =
+        - no whitespaces
 
     Args:
         - data (pd.DataFrame): DataFrame containing the columns table | column | new_value | conditions
