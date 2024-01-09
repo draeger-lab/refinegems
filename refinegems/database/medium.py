@@ -1000,6 +1000,25 @@ def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict
     connection.commit()
     connection.close()
     
+
+# @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
+# @TEST
+def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
+    
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # add new entry to a specific table
+    columns_str = '(' + ', '.join(columns) + ')'
+    values_str = '(' + ', '.join(values) + ')'
+    cursor.execute('INSERT INTO ? ? VALUES ?',(table,columns_str,values_str,))
+
+    # save and close
+    connection.commit()
+    connection.close()
+
+    
 def generate_update_query(row: pd.Series) -> str:
     """Generates an update SQL query for the provided table
 
@@ -1038,9 +1057,34 @@ def generate_update_query(row: pd.Series) -> str:
     return update_query
 
 
+def generate_insert_query(row: pd.Series) -> str:
+    """Helper function for :py:func:`update_db_multi`. Generate the SQL string
+    for inserting a new line into the database based on a row of the table.
+
+    Args:
+        row (pd.Series): One row of the table of the parent function.
+
+    Returns:
+        str: The constructed SQL string.
+    """
+    
+    columns_str = '(' + row['column'] + ')'
+    values_str = '(' + row['value'] + ')'
+    query = f'INSERT INTO {row['table']} {columns_str} VALUES {values_str}' 
+
+    return query
+
+
 # @TEST
 def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
-    """Updates multiple entries in a table from the specified database
+    """Updates/Inserts multiple entries in a table from the specified database.
+    Given table should have the format:
+    
+      row :  table | column | new_value | conditions
+
+    Notes:
+    - multiple columns and values are listes with a "," and no whitespaces
+    - conditions are listed like: a=x,b=y,...
 
     Args:
         - data (pd.DataFrame): DataFrame containing the columns table | column | new_value | conditions
@@ -1056,7 +1100,12 @@ def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
 
         # row :  table | column | new_value | conditions
 
-        update_query = generate_update_query(row)
+        # if conditions given, update
+        if row['conditions'] and row['conditions'] not in ["","-"]: 
+            update_query = generate_update_query(row)
+        # else, insert new values
+        else:
+            update_query = generate_insert_query(row)
 
         # update the entry
         cursor.execute(update_query)
@@ -1064,52 +1113,6 @@ def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
     # save and close
     connection.commit()
     connection.close()
-
-
-# @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
-# @TEST
-def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
-    
-    # build connection to DB
-    connection = sqlite3.connect(database)
-    cursor = connection.cursor()
-
-    # add new entry to a specific table
-    columns_str = '(' + ', '.join(columns) + ')'
-    values_str = '(' + ', '.join(values) + ')'
-    cursor.execute('INSERT INTO ? ? VALUES ?',(table,columns_str,values_str,))
-
-    # save and close
-    connection.commit()
-    connection.close()
-
-
-# @TEST
-def enter_db_mutiple_entry(data:pd.DataFrame, database:str = PATH_TO_DB):
-    
-    # build connection to DB
-    connection = sqlite3.connect(database)
-    cursor = connection.cursor()
-
-    # add new entry to a specific table
-    for idx,row in data.iterrows():
-        # row : table | columns | values
-        # valus/columns : a, b, c, ....
-        columns_str = '(' + row['columns'] + ')'
-        values_str = '(' + row['values'] + ')'
-        cursor.execute('INSERT INTO ? ? VALUES ?',(row['table'],columns_str,values_str,))
-
-    # save and close
-    connection.commit()
-    connection.close()
-
-# ---------------------------------------------------------
-# @IDEA
-# @TODO
-# - do the above from a csv/tsv input
-# - maybe combine update and add?
-# - validity checks for add so that no duplicates are made?
-# ---------------------------------------------------------
 
 
 ############################################################################
