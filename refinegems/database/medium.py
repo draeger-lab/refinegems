@@ -999,7 +999,7 @@ def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict
     # save and close
     connection.commit()
     connection.close()
-    
+
 
 # @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
 # @TEST
@@ -1030,7 +1030,7 @@ def generate_update_query(row: pd.Series) -> str:
         str: SQL query to be used to update a table in a database with the provided data
     """ 
     table = row['table']
-    conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(',')]} # condition (str) : a=x,b=y,....
+    conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(';')]} # condition (str) : a=x,b=y,....
     
     update_query = f'UPDATE {table} SET {row['column']} = {row['new_value']} WHERE'
     
@@ -1051,7 +1051,7 @@ def generate_update_query(row: pd.Series) -> str:
                 raise ValueError(f'No substance key specified. Chosen table {table} cannot be updated!')
             
         case _:
-            conditions_str = ' AND '.join(row['conditions'].split(','))
+            conditions_str = ' AND '.join(row['conditions'].split(';'))
             update_query += f'{conditions_str}'
     
     return update_query
