@@ -1031,22 +1031,23 @@ def generate_update_query(row: pd.Series) -> str:
     """ 
     table = row['table']
     conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(';')]} # condition (str) : a=x,b=y,....
+    new_value = f'\'{row["new_value"]}\'' if type(row['new_value']) == str else row['new_value']
     
-    update_query = f'UPDATE {table} SET {row["column"]} = {row["new_value"]} WHERE'
+    update_query = f'UPDATE {table} SET {row["column"]} = {new_value} WHERE '
     
     match table:
         
         case 'medium2substance':
             if all(_ in conditions_dict.keys() for _ in ['medium', 'substance']):
-                update_query += f'''medium_id = (SELECT medium.id FROM medium WHERE medium.name = {str(conditions_dict.get("medium"))}) 
-                AND substance_id = (SELECT substance.id FROM substance WHERE substance.name = {str(conditions_dict.get("substance"))})
+                update_query += f'''medium_id = (SELECT medium.id FROM medium WHERE medium.name = \'{conditions_dict.get("medium")}\') 
+                AND substance_id = (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\')
                 '''
             else: 
                 raise ValueError(f'No medium and/or substance keys specified. Chosen table {table} cannot be updated!')
         
         case 'substance2db':
             if 'substance' in conditions_dict.keys():
-                update_query += f'substance_id = (SELECT substance.id FROM substance WHERE substance.name = {str(conditions_dict.get("substance"))})'
+                update_query += f'substance_id = (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\')'
             else: 
                 raise ValueError(f'No substance key specified. Chosen table {table} cannot be updated!')
             
