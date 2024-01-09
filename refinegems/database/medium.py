@@ -1032,7 +1032,7 @@ def generate_update_query(row: pd.Series) -> str:
     table = row['table']
     conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(';')]} # condition (str) : a=x,b=y,....
     
-    update_query = f'UPDATE {table} SET {row['column']} = {row['new_value']} WHERE'
+    update_query = f'UPDATE {table} SET {row["column"]} = {row["new_value"]} WHERE'
     
     match table:
         
@@ -1070,7 +1070,7 @@ def generate_insert_query(row: pd.Series) -> str:
     
     columns_str = '(' + row['column'] + ')'
     values_str = '(' + row['value'] + ')'
-    query = f'INSERT INTO {row['table']} {columns_str} VALUES {values_str}' 
+    query = f'INSERT INTO {row["table"]} {columns_str} VALUES {values_str}' 
 
     return query
 
