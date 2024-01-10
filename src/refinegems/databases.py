@@ -8,13 +8,12 @@ import pandas as pd
 from enum import Enum
 from sqlite3 import Error
 from pathlib import Path
+from importlib.resources import files
 
 __author__ = 'Gwendolyn O. Döbel'
 
-
-PATH_TO_DB_DATA = Path(Path(__file__).parent.resolve(), 'database')
-PATH_TO_DB = Path(PATH_TO_DB_DATA, 'data.db')
-VERSION_FILE = Path(PATH_TO_DB_DATA, 'current_bigg_db_version.txt')
+PATH_TO_DB = files('refinegems.data.database').joinpath('data.db')
+VERSION_FILE = files('refinegems.data.database').joinpath('current_bigg_db_version.txt') 
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
 
 class ValidationCodes(Enum):
@@ -101,7 +100,7 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """
    print('Adding SBO and media tables...')
    
-   with open(Path(PATH_TO_DB_DATA, 'sbo_media_db.sql')) as schema:
+   with open(files('refinegems.data.database').joinpath('sbo_media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
 
 
