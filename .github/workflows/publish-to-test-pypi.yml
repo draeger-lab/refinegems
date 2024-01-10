@@ -1,4 +1,4 @@
-name: Publish new refineGEMs release to PyPI and TestPyPI
+name: Publish new refineGEMs release to TestPyPI
 
 on: workflow_dispatch
 
