@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "1.4.2-alpha"
+version = "1.4.2-beta"
 requires-python = ">=3.9, <3.11"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
@@ -68,10 +68,10 @@ documentation = 'https://refinegems.readthedocs.io/en/latest/'
 # version = {attr = "refinegems.VERSION"}
 
 [tool.setuptools.packages.find]
-where = ['src', 'data','example']
+where = ['src']
 
 [tool.setuptools.package-data]
-example_inputs = ['*.xlsx','*.csv']
-database = ['*.txt', '*.sql', '*.db', '*.csv']
+"refinegems.example.example_inputs" = ['*.xlsx','*.csv']
+"refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
 
 
