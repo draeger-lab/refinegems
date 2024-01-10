@@ -14,8 +14,8 @@ import warnings
 import yaml
 
 from cobra import Model as cobraModel
-from refinegems.database import medium
 from refinegems.io import load_multiple_models, load_model_cobra
+from refinegems import medium
 from refinegems import reports
 from typing import Literal
 

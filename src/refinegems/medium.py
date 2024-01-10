@@ -11,14 +11,13 @@ from typing import Literal, Union, Any
 import random
 import string
 from sqlite_dump import iterdump
+from .databases import PATH_TO_DB
 
 __author__ = "Carolin Brune"
 
 ############################################################################
 # variables
 ############################################################################
-
-PATH_TO_DB = Path(Path(__file__).parent.resolve(), 'data.db')
 
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
