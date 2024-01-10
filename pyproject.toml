@@ -5,14 +5,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "1.4.1"
+version = "1.4.2"
 requires-python = ">=3.9, <3.11"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel"},
 ]
 maintainers = [
-    {name = "Tobias Fehrenbach"}
+    {name = "Tobias Fehrenbach"},
+    {name = "Carolin Brune"}
 ]
 
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'
@@ -32,18 +33,18 @@ classifiers = [
 
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
-    "cobra>=0.26.0, <0.28.0", 
+    "cobra>=0.26.0, <0.28.0",
     # COBRApy > 0.28.0 -> depinfo >=2.0.0
     "biopython>=1.79",
     "bioregistry",
     "bioservices",
     "importlib-resources<=5.13.0",
     # MEMOTE > 0.14.0 -> depinfo >=2.0.0
-    "memote>=0.13.0, <2.0.0", 
+    "memote>=0.13.0, <2.0.0",
     "pandas>=1.2.4",
     "numpy>=1.20.3",
     "gffutils>=0.10.1",
-    "markupsafe>=2.0.1", 
+    "markupsafe>=2.0.1",
     "depinfo>=1.7.0",
     "sortedcontainers>=2.4.0",
     "sqlite_dump",
@@ -70,9 +71,10 @@ documentation = 'https://refinegems.readthedocs.io/en/latest/'
 # version = {attr = "refinegems.VERSION"}
 
 [tool.setuptools.packages.find]
-where = ['refinegems']
+where = ['src']
 
 [tool.setuptools.package-data]
-database = ['*.txt', '*.sql', '*.db']
-"data.config" = ['*.yaml']
-"data.pathway" = ['*.csv']
+"refinegems.example.example_inputs" = ['*.xlsx','*.csv']
+"refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
+"refinegems.data.config" = ['*.yaml']
+"refinegems.data.pathway" = ['*.csv']
