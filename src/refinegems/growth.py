@@ -641,7 +641,7 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
 # @TEST
 # from SPECIMEN
 # auxotrophy test 
-def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespace:Literal['BiGG', 'Name']='BiGG') -> pd.DataFrame:
+def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], supplement_list:list[Literal[None,'min','std']], namespace:Literal['BiGG', 'Name']='BiGG') -> reports.AuxotrophySimulationReport:
     """Test for amino acid auxothrophies for a model and a list of media.
 
     Tests, if the model growths on the media and if and with what fluxes the
@@ -651,6 +651,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
     Args:
         model (cobraModel): The model to be tested. Loaded with COBRApy.
         media_list (list[medium.Medium]): List of media to be tested.
+        supplement_list (list[Literal[None,'min','std']]): List of supplement modes for the media.
         namespace (Literal['BiGG','Name'], optional): String for the namespace to be used for the model. 
             Current options include 'BiGG', 'Name'.
             Defaults to 'BiGG'.
@@ -659,7 +660,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
         ValueError: Unknown input for namespace parameter.
 
     Returns:
-        pd.DataFrame: The table of the amino acids and the media names containing the simualted flux values.
+        reports.AuxotrophySimulationReport: The report for the test containing 
+            a table of the amino acids and the media names containing the simualted flux values.
     """
 
     results = {}
@@ -669,7 +671,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
     aa_list = set(amino_acids.substance_table['name'])
 
     # iterate over all media
-    for med in media_list:
+    for med,supp in zip(media_list,supplement_list):
         auxotrophies = {}
         # then iterate over all amino acids
         for a in aa_list:
@@ -678,8 +680,20 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
 
             with model as m:
 
-                # first set the medium
-                medium.medium_to_model(m, med, namespace=namespace, default_flux=10.0, replace=False, double_o2=False, add=True)
+                # export the medium
+                exported_m = medium.medium_to_model(m, med, namespace=namespace, default_flux=10.0, replace=False, double_o2=False, add=False)
+                # supplement, if tag is set
+                match supp:
+                    case 'std':
+                        uptake = get_uptake(model,'std')
+                        new_m = find_additives_to_enable_growth(model, exported_m, uptake, combine=True)
+                    case 'min':
+                        uptake = get_uptake(model,'min')
+                        new_m = find_additives_to_enable_growth(model, exported_m, uptake, combine=True)
+                    case _:
+                        new_m = exported_m
+                # add medium to model
+                m.medium = new_m
                 
                 # check namespace availability
                 if len(entry) == 0:
@@ -720,55 +734,6 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], namespac
             # add the current test results to the list of all results
             results[med.name] = auxotrophies
 
-    table = pd.DataFrame.from_dict(results)
+    report = reports.AuxotrophySimulationReport(pd.DataFrame.from_dict(results))
 
-    return table
-
-
-# @TEST
-# auxotrophy sim visualisation
-def visualise_auxotrophies(res:pd.DataFrame, color_palette:str='YlGn', save:None|str=None) -> None|matplotlib.figure.Figure:
-    """Visualise and/or save the results of the :py:func:`test_auxotrophies` function.
-
-    Args:
-        res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
-        color_palette (str, optional): A name of a seaborn gradient color palette. 
-            In case name is unknown, takes the default. Defaults to 'YlGn'.
-        save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
-
-    Returns:
-        None|matplotlib.figure.Figure: Either saves the figure and a table of the results or returns the plotted figure.
-    """
-    
-    # create colour gradient
-    try:
-        cmap = matplotlib.cm.get_cmap(color_palette).copy()
-    except ValueError:
-        warnings.warn('Unknown color palette, setting it to "YlGn"')
-        cmap = matplotlib.cm.get_cmap('YlGn').copy()
-
-    # set up the figure
-    fig = plt.figure()
-    ax = fig.add_axes([0,0,1,1])
-
-    # create heatmap
-    sns.heatmap(res, ax=ax, cmap=cmap, cbar_kws={'label': 'flux'}, annot = True, fmt='.2f')
-
-    # add labels
-    ax.set_ylabel('amino acid', labelpad=12)
-    ax.set_xlabel('medium', labelpad=12)
-    ax.set_title('Fluxes for auxotrophy tests')
-
-    # save or return
-    if save:
-        # make sure given directory path ends with '/'
-        if not save.endswith('/'):
-            save = save + '/'
-        # save the visualisation of the growth rates
-        fig.savefig(F'{save}auxotrophies_vis.png', bbox_inches='tight')
-
-        # save the growth rates as tabular information
-        res.to_csv(F'{save}auxotrophies_res.tsv', sep='\t', index=True)
-    
-    else:
-        return fig
+    return report

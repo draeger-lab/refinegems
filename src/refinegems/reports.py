@@ -36,7 +36,7 @@ KEGG_OVERVIEW_PATHWAY = {'01200': 'Carbon metabolism',
                          '01220': 'Degradation of aromatic compounds'}
 
 # @TODO # : Where to put this file // check connection (if it truly works)
-KEGG_METABOLISM_PATHWAY = files('data.pathway').joinpath('KEGG_pathway_metabolism.csv')
+KEGG_METABOLISM_PATHWAY = files('refinegems.data.pathway').joinpath('KEGG_pathway_metabolism.csv')
 KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"
 
 ################################################################################
@@ -553,3 +553,75 @@ class KEGGPathwayAnalysisReport(Report):
             # all with name
             fig = self.visualise_kegg_pathway(plot_type='existing', label='name')
             fig.savefig(F'{dir}pathway-analysis/pathway_existing_name.png', bbox_inches='tight')
+
+
+class AuxotrophySimulationReport(Report):
+    
+    def __init__(self, results) -> None:
+        # super().__init__()
+        self.simulation_results = results
+
+    
+    # @TEST
+    # auxotrophy sim visualisation
+    def visualise_auxotrophies(self, color_palette:str='YlGn', save:None|str=None) -> None|matplotlib.figure.Figure:
+        """Visualise and/or save the results of the :py:func:`test_auxotrophies` function.
+
+        Args:
+            res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
+            color_palette (str, optional): A name of a seaborn gradient color palette. 
+                In case name is unknown, takes the default. Defaults to 'YlGn'.
+            save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
+
+        Returns:
+            None|matplotlib.figure.Figure: Either saves the figure and a table of the results or returns the plotted figure.
+        """
+        
+        # create colour gradient
+        try:
+            cmap = matplotlib.cm.get_cmap(color_palette).copy()
+        except ValueError:
+            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            cmap = matplotlib.cm.get_cmap('YlGn').copy()
+
+        # set up the figure
+        fig = plt.figure()
+        ax = fig.add_axes([0,0,1,1])
+
+        # create heatmap
+        sns.heatmap(self.simulation_results, ax=ax, cmap=cmap, cbar_kws={'label': 'flux'}, annot = True, fmt='.2f')
+
+        # add labels
+        ax.set_ylabel('amino acid', labelpad=12)
+        ax.set_xlabel('medium', labelpad=12)
+        ax.set_title('Fluxes for auxotrophy tests')
+
+        # save or return
+        if save:
+            # make sure given directory path ends with '/'
+            if not save.endswith('/'):
+                save = save + '/'
+            # save the visualisation of the growth rates
+            fig.savefig(F'{save}auxotrophies_vis.png', bbox_inches='tight')
+        
+        else:
+            return fig 
+        
+        
+    def save(self, dir:str, color_palette:str='YnGr'):
+        """Save the report to a given dictionary.
+
+        Args:
+            dir (str): Path to a dictionary.
+            color_palette (str, optional): Name of a matplotlib colour palette. Defaults to 'YnGr'.
+        """
+
+        # make sure given directory path ends with '/'
+        if not dir.endswith('/'):
+            dir = dir + '/'
+        
+        # save the visualisation of the growth rates
+        self.visualise_auxotrophies(color_palette, save=dir)
+
+        # save the growth rates as tabular information
+        self.simulation_results.to_csv(F'{dir}auxotrophies_table.tsv', sep='\t', index=True)
