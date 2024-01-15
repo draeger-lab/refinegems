@@ -47,6 +47,9 @@ class Report():
     pass
 
 
+
+
+
 class SingleGrowthSimulationReport(Report):
     
     def __init__(self, model_name = None,
@@ -337,6 +340,15 @@ class GrowthSimulationReport(Report):
             
 
 class KEGGPathwayAnalysisReport(Report):
+    """Report for the KEGG pathway analysis.
+
+    Attributes:
+        total_reac: An integer for the total number of reactions in the model.
+        kegg_count: An integer as a counter for the KEGG pathway annotations.
+        kegg_global: Dictionary of global KEGG IDs and their counts.
+        kegg_over: Dictionary of overvire KEGG IDs and their counts.
+        kegg_rest: Dictionary of the remaining KEGG IDs and their counts.
+    """
     
     def __init__(self, 
                  total_reac=None, kegg_count=None,
@@ -625,3 +637,155 @@ class AuxotrophySimulationReport(Report):
 
         # save the growth rates as tabular information
         self.simulation_results.to_csv(F'{dir}auxotrophies_table.tsv', sep='\t', index=True)
+
+
+class CorePanAnalysisReport(Report):
+
+    def __init__(self, model,
+                 core_reac=None, pan_reac=None, novel_reac=None):
+
+        # super().__init__()
+        # general attributes
+        self.model = model
+        # reaction attributes
+        self.core_reac = core_reac
+        self.pan_reac = pan_reac
+        self.novel_reac = novel_reac
+        # ...
+
+    def get_reac_counts(self):
+        """Return a dictionary of the counts of the reactions types (core, pan, novel).
+        """
+
+        counts = {}
+        if self.core_reac:
+            counts['core'] = len(self.core_reac)
+        else:
+            counts['core'] = 0
+        if self.pan_reac:
+            counts['pan'] = len(self.pan_reac)
+        else:
+            counts['pan'] = 0
+        if self.novel_reac:
+            counts['novel'] = len(self.novel_reac)
+        else:
+            counts['novel'] = 0
+
+        return counts
+
+
+    #@TODO
+    def isValid(self,check='reaction-count'):
+        """Check if a certaing part of the analysis is valid.
+
+        Currently possible checks:
+            reaction-count : check if the number of reactions in the model
+                             equal the sum of the novel, pan and core reactions
+
+        @TODO
+            implements more checks
+
+        :param check: Part of the report to check if it is valid.
+            Default is 'reaction-count'. Options are in the function description.
+        :type check: string
+
+        :raises: :class:`ValueError`: 'Unknown string for parameter check: '
+
+        :returns: True, if test was successful.
+        :rtype: bool
+        """
+
+        match check:
+            case 'reaction-count':
+                pc_total = sum(self.get_reac_counts().values())
+                diff = len(self.model.reactions) - pc_total
+                if diff != 0:
+                    return False
+                else:
+                    return True
+            case _:
+                raise ValueError('Unknown string for parameter check: ', check)
+
+
+    def visualise_reactions(self):
+        """Visualise the results of the pan-core analysis for the reactions as a donut chart.
+
+        :returns: The generated visualisation object (donut chart).
+        :rtype: matplotlib.figure.Figure
+        """
+
+        # check the counts
+        # ----------------
+        counts = self.get_reac_counts()
+
+        if self.isValid('reaction-count'):
+            vis_data = list(counts.values())
+            vis_label = list(counts.keys())
+            vis_color = ['lightgreen','lightskyblue','lightcoral']
+
+        else:
+            warnings.warn('Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected.')
+            vis_data = list(counts.values()).append(len(self.model.reactions) - sum(counts.values))
+            vis_label = list(counts.keys()).append('discrepancies')
+            vis_color = ['lightgreen','lightskyblue','lightcoral', 'gold']
+
+        # plot a donut chart
+        # ------------------
+        fig, ax = plt.subplots()
+        wedges, texts, autotexts = ax.pie(vis_data,
+                                          autopct=lambda pct: "{:.1f}%\n({:.0f})".format(pct, (pct/100)*sum(vis_data)),
+                                          pctdistance=.8, labeldistance=1.25,
+                                          colors=vis_color,
+                                          radius = 1, wedgeprops=dict(width=0.4, edgecolor='w'))
+
+        ax.legend(wedges, vis_label,
+                  title="Classification",
+                  loc="center left",
+                  bbox_to_anchor=(1, 0, 0.5, 1))
+
+        ax.set_title(F"Results of core-pan analysis\nof the reactions of model {self.model.id}")
+
+        return fig
+
+
+    #@TODO
+    def save(self, dir):
+        """Save the results inside a PanCoreAnalysisReport object.
+
+        The function creates a new folder 'pan-core-analysis'
+        inside the given directory and creates the following documents:
+
+        - table_reactions.tsv : reactions ID mapped to their labels
+        - visualise_reactions : donut chart of the values above
+
+        :param dir: Path to a directory to save the output to.
+        :type dir: string
+        """
+        # ..........................................................
+        #@TODO
+        #    - an easily human readable overview file?
+        #    - smth about metabolites?
+        # ..........................................................
+
+        # make sure given directory path ends with '/'
+        if not dir.endswith('/'):
+            dir = dir + '/'
+
+        # collect all produced file in one directory
+        try:
+            Path(F"{dir}pan-core-analysis/").mkdir(parents=True, exist_ok=False)
+            print(F'Creating new directory {F"{dir}pan-core-analysis/"}')
+        except FileExistsError:
+            print('Given directory already has required structure.')
+
+        # save the reactions visualisation
+        reac_vis = self.visualise_reactions()
+        reac_vis.savefig(F'{dir}pan-core-analysis/visualise_reactions.png', dpi=reac_vis.dpi)
+
+        # save table of reactions mapped to characterisation
+        if not self.isValid(check='reaction-count'):
+            warnings.warn('Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected. Only labbeld reactions will be written to table.')
+        reac_tab = pd.DataFrame({'reaction_id': [_.id for _ in self.core_reac] + [_.id for _ in self.pan_reac] + [_.id for _ in self.novel_reac],
+                                'pan-core': (['core']*len(self.core_reac)) + (['pan']*len(self.pan_reac)) + (['core']*len(self.novel_reac))})
+        reac_tab.to_csv(F'{dir}pan-core-analysis/table_reactions.tsv', sep='\t', index=False)
+
