@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import cobra 
 import re
 import pandas as pd
 from Bio import Entrez
@@ -8,8 +9,77 @@ from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_c
 from refinegems.io import search_ncbi_for_gpr
 from typing import Union
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 
+################################################################################
+# variables
+################################################################################
+
+# compartments
+# ------------
+# ....................
+# @TODO
+#     extension needed
+# ....................
+VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'}
+COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
+                'C_c': 'c', 'C_e': 'e', 'C_p': 'p',
+                '':'y'}
+
+################################################################################
+# functions
+################################################################################
+
+# handling compartments - cobra
+# -----------------------------
+
+def are_compartment_names_valid(model:cobra.Model) -> bool:
+    """Check if compartment names of model are considered valid based on VALID_COMPARTMENTS.
+
+    Args:
+        model (cobra.Model): The model, loaded with COBRApy.
+
+    Returns:
+        bool: True, if valid, else false.
+    """
+
+    for c in model.compartments.keys():
+        if c not in VALID_COMPARTMENTS.keys():
+            return False
+
+    return True
+
+
+def resolve_compartment_names(model:cobra.Model):
+    """Resolves compartment naming problems.
+
+    Args:
+        model (cobra.Model): A COBRApy model object.
+
+    Raises:
+        KeyError: Unknown compartment raises an error to add it to the mapping.
+            Important for developers.
+    """
+
+    # check if compartment names are valid
+    if not are_compartment_names_valid(model):
+
+        # check if mapping is possible
+        if set(model.compartments.keys()).issubset(set(COMP_MAPPING.keys())):
+            # for each metabolite rename the compartment
+            for metabolite in model.metabolites:
+                metabolite.compartment = COMP_MAPPING[metabolite.compartment]
+            # add whole descriptions of the compartments to the model
+            # note:
+            #    only compartments IN the model will be added
+            model.compartments = VALID_COMPARTMENTS
+
+        else:
+            raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Cannot resolve problem.')
+
+
+# extracting reactions & Co via libsbml
+# -------------------------------------
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:

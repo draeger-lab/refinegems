@@ -97,7 +97,7 @@ def find_pan_reactions(all_reactions: dict[str:list[str]], core: list[str]) -> l
 
 def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str], 
                              based_on:Literal['id']='id', 
-                             notes:tuple(str)=('core-pan','core')) -> list[cobra.Reaction]:
+                             notes:tuple[str]=('core-pan','core')) -> list[cobra.Reaction]:
     """Based on a model and a list of reactions IDs, collects the corresponding reactions.
 
     Args:
@@ -130,6 +130,7 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
             raise ValueError(f'Unknown input for parameter based_on: {based_on}')
 
 
+# @TODO : compartment naming issue solving - should it be used from specimen
 def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id', 
                             name:str='core_pan_model', remove_genes:bool=True) -> cobra.Model:
     """Generate a core-pan model from a set of models.
@@ -150,6 +151,11 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
 
     # load all models
     all_models = load_multiple_models(model_list, 'cobra')
+
+    # @TODO
+    # resolve compartment issue
+    # for model in all_models:
+    #    resolve_compartment_names(model)
 
     # extract reactions
     all_reactions = {model.id: extract_reactions_ids(model, based_on) for model in all_models}
