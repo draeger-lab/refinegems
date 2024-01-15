@@ -11,6 +11,7 @@ import cobra
 
 from .io import load_multiple_models
 from .reports import CorePanAnalysisReport
+from .entities import resolve_compartment_names
 from typing import Literal
 
 ################################################################################
@@ -130,9 +131,9 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
             raise ValueError(f'Unknown input for parameter based_on: {based_on}')
 
 
-# @TODO : compartment naming issue solving - should it be used from specimen
 def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id', 
-                            name:str='core_pan_model', remove_genes:bool=True) -> cobra.Model:
+                            name:str='core_pan_model', remove_genes:bool=True, 
+                            resolve_compartments:bool=True) -> cobra.Model:
     """Generate a core-pan model from a set of models.
 
     Generation id based on:
@@ -142,8 +143,12 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
         model_list (list[str]): List of paths to models.
         based_on (Literal['id'], optional): How to decide which reactions are considered the same. 
             Defaults to 'id'.
-        name (str, optional): Name of the new model. Defaults to 'core_pan_model'.
-        remove_genes (bool, optional): Flag to remove all genes from the model. Defaults to True.
+        name (str, optional): Name of the new model. 
+            Defaults to 'core_pan_model'.
+        remove_genes (bool, optional): Flag to remove all genes from the model. 
+            Defaults to True.
+        resolve_compartments (bool, optional): Remaps compartment names to the single letter "c,p,e"-scheme,
+            if set. Default to True. 
 
     Returns:
         cobra.Model: The generated core-pan model.
@@ -152,10 +157,9 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
     # load all models
     all_models = load_multiple_models(model_list, 'cobra')
 
-    # @TODO
     # resolve compartment issue
-    # for model in all_models:
-    #    resolve_compartment_names(model)
+    for model in all_models:
+       resolve_compartment_names(model)
 
     # extract reactions
     all_reactions = {model.id: extract_reactions_ids(model, based_on) for model in all_models}
