@@ -230,3 +230,4 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
         case _:
             raise ValueError(f'Unknown input for parameter based_on: {based_on}')
 
+    return results
