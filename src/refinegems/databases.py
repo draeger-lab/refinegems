@@ -12,8 +12,9 @@ from importlib.resources import files
 
 __author__ = 'Gwendolyn O. Döbel'
 
-PATH_TO_DB = files('refinegems.data.database').joinpath('data.db')
-VERSION_FILE = files('refinegems.data.database').joinpath('current_bigg_db_version.txt') 
+PATH_TO_DB_FOLDER = files('refinegems.data.database')
+PATH_TO_DB = PATH_TO_DB_FOLDER.joinpath('data.db')
+VERSION_FILE = PATH_TO_DB_FOLDER.joinpath('current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
 
 class ValidationCodes(Enum):
