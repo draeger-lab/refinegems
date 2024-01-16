@@ -265,7 +265,7 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
     return ess
 
 
-# @TEST
+
 def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['BiGG', 'Name']='BiGG', supplement:Literal[None,'std','min'] = None) -> reports.SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
@@ -640,9 +640,6 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
 # auxotrophy simulation
 # ---------------------
 
-# @TEST
-# from SPECIMEN
-# auxotrophy test 
 def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], supplement_list:list[Literal[None,'min','std']], namespace:Literal['BiGG', 'Name']='BiGG') -> reports.AuxotrophySimulationReport:
     """Test for amino acid auxothrophies for a model and a list of media.
 

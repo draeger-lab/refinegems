@@ -7,6 +7,7 @@ __author__ = 'Carolin Brune, Famke Baeuerle, Gwendolyn O. Döbel'
 # requirements
 ################################################################################
 
+import cobra
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,10 +48,19 @@ class Report():
     pass
 
 
-
-
-
 class SingleGrowthSimulationReport(Report):
+    """Report for a single growth simulation, one media against one model.
+
+    Attributes:
+        model_name: Name of the model.
+        medium_name: Name of the medium.
+        growth_value: Simulated growth value.
+        doubling_time: Simulated doubling time.
+        additives: List of substances, that were added.
+        no_exchange: List of substances that normally would be found in the media
+            but have been removed, as they are not part of the exchange reactions
+            of the model.
+    """
     
     def __init__(self, model_name = None,
                  medium_name = None,
@@ -87,14 +97,21 @@ class SingleGrowthSimulationReport(Report):
 
 
 class GrowthSimulationReport(Report):
+    """Report for the growth simulation analysis.
 
-    def __init__(self, reports = []):
+    Attributes:
+        reports: List of the report for the single growth analysis.
+        model: List of the model names.
+        media: List of the media names.
+    """
+
+    def __init__(self, reports:list[SingleGrowthSimulationReport] = []):
 
         self.reports = reports
         self.models = set([_.model_name for _ in reports])
         self.media = set([_.medium_name for _ in reports])
 
-    def __str__(self):
+    def __str__(self) -> str:
         
         return "\n\n".join(str(_) for _ in self.reports)
 
@@ -568,6 +585,11 @@ class KEGGPathwayAnalysisReport(Report):
 
 
 class AuxotrophySimulationReport(Report):
+    """Report for the auxotrophy simulation.
+
+    Attributes:
+        simulation_results: The data of the simulation.
+    """
     
     def __init__(self, results) -> None:
         # super().__init__()
@@ -640,9 +662,20 @@ class AuxotrophySimulationReport(Report):
 
 
 class CorePanAnalysisReport(Report):
+    """Report for the core-pan analysis. 
 
-    def __init__(self, model,
-                 core_reac=None, pan_reac=None, novel_reac=None):
+    Summarises the information and provides functions 
+    for visualisation.
+
+    Attributes:
+        model: The model the report is based on.
+        core_reac: List of reactions considered "core".
+        pan_reac: List of reactions considered "pan".
+        novel_reac: List of reactions considered "novel".
+    """
+
+    def __init__(self, model: cobra.Model,
+                 core_reac:list[str]=None, pan_reac:list[str]=None, novel_reac:list[str]=None):
 
         # super().__init__()
         # general attributes
@@ -675,8 +708,8 @@ class CorePanAnalysisReport(Report):
 
 
     #@TODO
-    def isValid(self,check='reaction-count'):
-        """Check if a certaing part of the analysis is valid.
+    def isValid(self,check='reaction-count') -> bool:
+        """Check if a certain part of the analysis is valid.
 
         Currently possible checks:
             reaction-count : check if the number of reactions in the model
@@ -685,14 +718,15 @@ class CorePanAnalysisReport(Report):
         @TODO
             implements more checks
 
-        :param check: Part of the report to check if it is valid.
-            Default is 'reaction-count'. Options are in the function description.
-        :type check: string
+        Args:
+            check (str, optional): Describes which part to check. Options are listed above.
+                Defaults to 'reaction-count'.
 
-        :raises: :class:`ValueError`: 'Unknown string for parameter check: '
+        Raises:
+            ValueError: Unknown string for parameter check. 
 
-        :returns: True, if test was successful.
-        :rtype: bool
+        Returns:
+            bool: Result of the check.
         """
 
         match check:
@@ -707,12 +741,13 @@ class CorePanAnalysisReport(Report):
                 raise ValueError('Unknown string for parameter check: ', check)
 
 
-    def visualise_reactions(self):
+    def visualise_reactions(self) -> matplotlib.figure:
         """Visualise the results of the pan-core analysis for the reactions as a donut chart.
 
-        :returns: The generated visualisation object (donut chart).
-        :rtype: matplotlib.figure.Figure
+        Returns:
+            matplotlib.figure: The plot.
         """
+        
 
         # check the counts
         # ----------------
@@ -749,7 +784,7 @@ class CorePanAnalysisReport(Report):
 
 
     #@TODO
-    def save(self, dir):
+    def save(self, dir:str):
         """Save the results inside a PanCoreAnalysisReport object.
 
         The function creates a new folder 'pan-core-analysis'
@@ -758,9 +793,10 @@ class CorePanAnalysisReport(Report):
         - table_reactions.tsv : reactions ID mapped to their labels
         - visualise_reactions : donut chart of the values above
 
-        :param dir: Path to a directory to save the output to.
-        :type dir: string
+        Args:
+            dir (str): Path to a directory to save the output to.
         """
+        
         # ..........................................................
         #@TODO
         #    - an easily human readable overview file?

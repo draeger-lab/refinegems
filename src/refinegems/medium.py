@@ -228,49 +228,60 @@ class Medium:
     def __add__(self,other:'Medium') -> 'Medium':
         return self.combine(other)
 
-    def add_subset(self, type: Literal['aa', 'casamino']) -> 'Medium':
+    def add_subset(self, subset_name:str, default_flux:float=10.0) -> 'Medium':
         """Add a subset of substances to the medium, returning a newly generated one.
-        Available subset are the following:
-        - aa: the 20n proteinogenic amino acids
-        - casamino: casamino acid, based on USBiological Life Sciences
 
         Args:
-            type(str): The type of subset to be added. Choices are 'aa' and 'casamino'.
+            subset_name (str): The type of subset to be added. Choices are 'aa' and 'casamino'.
+            default_flux (float, optional): Default flux value to calculate fluxes from
+                based  on the percentages saved in the database. 
+                Defaults to 10.0. 
 
         Returns:
             Medium: A new medium that is the combination of the set subset and the old one.
+                In the case that the given subset name is not found in the database, 
+                the original medium is returned.
         """
-
-        # get substance names based on type
-        subset_names = SUBSET_MEDIA_MAPPING[type]
 
         # open connection to database
         connection = sqlite3.connect(PATH_TO_DB)
         cursor = connection.cursor()
 
-        # extract amino acids from DB
-        substances = []
-        for name in subset_names:
-            result = cursor.execute("""SELECT 1 FROM substance WHERE substance.name = ?""",(name,))
-            check = result.fetchone()
-            if check:
-                result = cursor.execute("""SELECT substance.name, substance.formula, substance2db.db_id, substance2db.db_type
-                                        FROM substance, substance2db
-                                        WHERE substance.name = ? AND substance.id = substance2db.substance_id""",(name,))
-                subs = result.fetchone()
-                substances.append(subs)
-            else:
-                warnings.warn(f'Could not find substance in DB: {name}')
+        # check if subset name is valid
+        result = cursor.execute("""SELECT 1 FROM subset WHERE subset.name = ?""",(subset_name,))
+        check = result.fetchone()
+        if check:
 
-        # reformat into Medium object
-        substances = pd.DataFrame(substances, columns=['name','formula','db_id','db_type'])
-        substances.insert(2,'flux',None)
-        substances.insert(3,'source',None)
+            # retrieve subset from database
+            db_res = cursor.execute("""SELECT substance.name, substance.formula, subset2substance.percent, substance2db.db_id, substance2db.db_type
+                                    FROM substance, subset, subset2substance, substance2db
+                                    WHERE subset.name = ? AND subset.id = subset2substance.subset_id AND subset2substance.substance_id = substance.id AND substance.id = substance2db.substance_id
+                                    """,(subset_name,))
+            subs = db_res.fetchall()
 
-        aa_medium = Medium(name=type, substance_table=substances, description=type)
+            # reformat
+            # --------
+            # rename
+            subs = pd.DataFrame(subs,columns = ['name', 'formula', 'percent', 'db_id', 'db_type'])
+            # percent -> flux
+            subs['flux'] = subs['percent'].apply(lambda x: default_flux*x)
+            subs.drop('percent', axis=1)
+            # add source column
+            subs['source'] = None
+            # sort
+            colorder = ['name', 'formula', 'flux', 'source', 'db_id', 'db_type']
+            subs = subs.reindex(columns=colorder)
+    
+            # create subset
+            sub_medium = Medium(subset_name, subs, description=f'subset {subset_name}')
 
-        # combine with current one 
-        return self + aa_medium 
+            # combine with current
+            return self + sub_medium
+
+        else:
+            warnings.warn(f'Could not find subset in DB, nothing added to medium: {subset_name}')
+            # just return the original medium
+            return self
 
 
     # functions for export table
