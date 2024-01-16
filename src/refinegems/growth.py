@@ -510,13 +510,15 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                 raise KeyError('Empty list for models detected.')
         # single model as input
         case cobra.Model():
-            mod_list = [cobra.Model]
+            mod_list = [models]
         # single string as input
         case str():
-            mod_list = [load_model_cobra(models)]
+            mod = load_model_cobra(models)
+            mod_list = [mod]
         # unknown input
         case _:
             raise ValueError(F'Unknown input type for models: {type(models)}')
+    
         
     # collect all media into list
     # ---------------------------
@@ -675,8 +677,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
         auxotrophies = {}
         # then iterate over all amino acids
         for a in aa_list:
-
-            entry = med.substance_table[(med.substance_table['name'] == a) & (med.substance_table['db_type'] == namespace)]
+            
+            entry = amino_acids.substance_table.loc[(amino_acids.substance_table['name'] == a) & (amino_acids.substance_table['db_type'] == namespace)]
 
             with model as m:
 
@@ -697,7 +699,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
                 
                 # check namespace availability
                 if len(entry) == 0:
-                    warnings.warn('Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one.')
+                    warn_str = f'Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one.'
+                    warnings.warn(warn_str)
                     auxotrophies[a] = m.optimize().objective_value
                 else:
                     
@@ -729,7 +732,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
                         m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
                         m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
                 # and calculate the new objective
-                auxotrophies[a] = m.optimize().objective_value()
+                auxotrophies[a] = m.optimize().objective_value
 
             # add the current test results to the list of all results
             results[med.name] = auxotrophies

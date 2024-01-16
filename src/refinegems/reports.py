@@ -620,7 +620,7 @@ class AuxotrophySimulationReport(Report):
             return fig 
         
         
-    def save(self, dir:str, color_palette:str='YnGr'):
+    def save(self, dir:str, color_palette:str='YlGn'):
         """Save the report to a given dictionary.
 
         Args:
@@ -785,7 +785,7 @@ class CorePanAnalysisReport(Report):
         # save table of reactions mapped to characterisation
         if not self.isValid(check='reaction-count'):
             warnings.warn('Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected. Only labbeld reactions will be written to table.')
-        reac_tab = pd.DataFrame({'reaction_id': [_.id for _ in self.core_reac] + [_.id for _ in self.pan_reac] + [_.id for _ in self.novel_reac],
+        reac_tab = pd.DataFrame({'reaction_id': self.core_reac + self.pan_reac + self.novel_reac,
                                 'pan-core': (['core']*len(self.core_reac)) + (['pan']*len(self.pan_reac)) + (['core']*len(self.novel_reac))})
         reac_tab.to_csv(F'{dir}pan-core-analysis/table_reactions.tsv', sep='\t', index=False)
 
