@@ -1,9 +1,9 @@
 import io
+import re
 import cobra
 import copy
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import sqlite3
 import sys
 import warnings
@@ -11,7 +11,9 @@ from typing import Literal, Union, Any
 import random
 import string
 from sqlite_dump import iterdump
-from .databases import PATH_TO_DB
+from .databases import PATH_TO_DB, PATH_TO_DB_FOLDER
+from colorama import init as colorama_init
+from colorama import Fore
 
 __author__ = "Carolin Brune"
 
@@ -21,6 +23,8 @@ __author__ = "Carolin Brune"
 
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG']
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
+INTEGER_REGEX = re.compile('^[-+]?([1-9]\d*|0)$')
+FLOAT_REGEX = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?')
 
 # subset addable to media
 # -----------------------
@@ -1019,7 +1023,8 @@ def enter_db_single_entry(table:str, columns:list[str], values:list[Any], databa
 
     
 def generate_update_query(row: pd.Series) -> str:
-    """Generates an update SQL query for the provided table
+    """Helper function for :py:func:`update_db_multi`. 
+    Generates an update SQL query for the provided table
 
     Args:
         - row (pd.Series): Series containing the row of a DataFrame to be used to update a table in a database
@@ -1027,7 +1032,8 @@ def generate_update_query(row: pd.Series) -> str:
 
     Returns:
         str: SQL query to be used to update a table in a database with the provided data
-    """ 
+    """
+    colorama_init(autoreset=True)
     table = row['table']
     conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(';')]} # condition (str) : a=x,b=y,....
     new_value = f'\'{row["new_value"]}\'' if type(row['new_value']) == str else row['new_value']
@@ -1038,17 +1044,17 @@ def generate_update_query(row: pd.Series) -> str:
         
         case 'medium2substance':
             if all(_ in conditions_dict.keys() for _ in ['medium', 'substance']):
-                update_query += f'''medium_id = (SELECT medium.id FROM medium WHERE medium.name = \'{conditions_dict.get("medium")}\') 
-                AND substance_id = (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\')
+                update_query += f'''medium_id = (SELECT medium.id FROM medium WHERE medium.name = \'{conditions_dict.get("medium")}\') \
+                AND substance_id = (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\')\
                 '''
             else: 
-                raise ValueError(f'No medium and/or substance keys specified. Chosen table {table} cannot be updated!')
+                raise ValueError(f'{Fore.MAGENTA}No medium and/or substance keys specified. Chosen table {table} cannot be updated!')
         
         case 'substance2db':
             if 'substance' in conditions_dict.keys():
                 update_query += f'substance_id = (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\')'
             else: 
-                raise ValueError(f'No substance key specified. Chosen table {table} cannot be updated!')
+                raise ValueError(f'{Fore.MAGENTA}No substance key specified. Chosen table {table} cannot be updated!')
             
         case _:
             conditions_str = ' AND '.join(row['conditions'].split(';'))
@@ -1067,32 +1073,74 @@ def generate_insert_query(row: pd.Series) -> str:
     Returns:
         str: The constructed SQL string.
     """
+    colorama_init(autoreset=True)
+    table = row['table']
     
-    columns_str = '(' + row['column'] + ')'
-    values_str = '(' + row['value'] + ')'
-    query = f'INSERT INTO {row["table"]} {columns_str} VALUES {values_str}' 
+    # condition (str) : a=x,b=y,....
+    if row['conditions'] and row['conditions'] not in ["","-"]:
+        conditions_dict = {k:v for k,v in [_.split('=') for _ in row["conditions"].split(';')]}
+    else: conditions_dict = None
+    
+    # Gather column & new_value inputs in SQL-readable format
+    columns_str = f'({row["column"]})'
+    value_str = ', '.join(['\'' + _.strip() + '\'' if not FLOAT_REGEX.match(_) else _ for _ in row['new_value'].split(',')]) # condition (str) : a=x,b=y,....
+    
+    insert_query = f'INSERT INTO {row["table"]} {columns_str} VALUES '
+    
+    match table:
+        
+        case 'medium2substance':
+            if not conditions_dict: 
+                raise UnboundLocalError(f'{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated.')
+            if all(_ in conditions_dict.keys() for _ in ['medium', 'substance']):
+                insert_query += f'''(\
+                    (SELECT medium.id FROM medium WHERE medium.name = \'{conditions_dict.get("medium")}\'), \
+                    (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
+                    {value_str}\
+                    )\
+                '''
+            else: 
+                raise ValueError(f'{Fore.MAGENTA}No medium and/or substance keys specified. Chosen table {table} cannot be updated!')
+        
+        case 'substance2db':
+            if not conditions_dict: 
+                raise UnboundLocalError(f'{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated.')
+            if 'substance' in conditions_dict.keys():
+                insert_query += f'''(\
+                    (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
+                    {value_str}\
+                    )\
+                '''
 
-    return query
+            else: 
+                raise ValueError(f'{Fore.MAGENTA}No substance key specified. Chosen table {table} cannot be updated!')
+            
+        case _:
+            insert_query += f'({value_str})'
+
+    return insert_query
 
 
 # @TEST
-def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
+def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH_TO_DB):
     """Updates/Inserts multiple entries in a table from the specified database.
     Given table should have the format:
     
       row :  table | column | new_value | conditions
 
     Notes:
-    - multiple columns and values are listes with a "," and no whitespaces
+    - multiple columns and values are lists with a "," and no whitespaces
     - conditions are listed like: a=x;b=y;...
-        - conditions separated by comma
-        - column and value separated by =
+        - conditions separated by ';'
+        - column and value separated by '='
         - no whitespaces
 
     Args:
         - data (pd.DataFrame): DataFrame containing the columns table | column | new_value | conditions
-        - database (str, optional): Path to a database. Defaults to PATH_TO_DB.
+        - update_entries (bool): Boolean to determine whether entries should be inserted or updated
+        - database (str, optional): Path to a database. Defaults to PATH_TO_DB. 
     """
+    colorama_init(autoreset=True)
 
     # build connection to DB
     connection = sqlite3.connect(database)
@@ -1104,14 +1152,20 @@ def update_db_multi(data:pd.DataFrame, database:str = PATH_TO_DB):
         # row :  table | column | new_value | conditions
 
         # if conditions given, update
-        if row['conditions'] and row['conditions'] not in ["","-"]: 
-            update_query = generate_update_query(row)
+        if row['conditions'] and row['conditions'] not in ["","-"] and update_entries: 
+            query = generate_update_query(row)
         # else, insert new values
         else:
-            update_query = generate_insert_query(row)
+            query = generate_insert_query(row)
+                
 
         # update the entry
-        cursor.execute(update_query)
+        try:
+            cursor.execute(query)
+        except sqlite3.IntegrityError as ie:
+            print(f'{Fore.MAGENTA}{ie}')
+            print(f'Ocurred with: column={row["column"]}, new_value={row["new_value"]}, condition={row["conditions"]}')
+            continue
 
     # save and close
     connection.commit()
@@ -1174,7 +1228,7 @@ def updated_db_to_schema():
     counter = 0 # To count rows in newly generated file
     
     conn = sqlite3.connect(PATH_TO_DB)
-    with open('./updated_media_db.sql', 'w') as file:
+    with open(PATH_TO_DB_FOLDER.joinpath('updated_media_db.sql'), 'w') as file:
         for line in iterdump(conn):
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if 'CREATE TABLE' in line and counter != 0:
