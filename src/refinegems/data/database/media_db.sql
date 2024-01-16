@@ -582,6 +582,63 @@ INSERT INTO "medium2substance" VALUES(4,307,NULL,'Hydrogen (From gas mix)');
 INSERT INTO "medium2substance" VALUES(4,308,NULL,'AlK(SO4)2 (anhydrous)');
 
 
+CREATE TABLE IF NOT EXISTS "subset" (
+	id INTEGER PRIMARY KEY,
+	name TEXT NOT NULL UNIQUE,
+	description NTEXT NOT NULL
+);
+INSERT INTO "subset" VALUES(1,'CasA','Casamino acids (based on: https://www.usbio.net/media/C2080/casamino-acids#:~:text=Casamino%2520Acids%2520is%2520a%2520hydrochloric,destroyed%2520by%2520the%2520acid%2520treatment)');
+INSERT INTO "subset" VALUES(2,'AA','Proteinogenic amino acids');
+
+
+CREATE TABLE IF NOT EXISTS "subset2subtance" (
+	subset_id INTEGER,
+	substance_id INTEGER,
+	percent NUMERIC DEFAULT 1.0,
+	FOREIGN KEY(subset_id) REFERENCES subset(id),
+	FOREIGN KEY(substance_id) REFERENCES substance(id),
+	PRIMARY KEY(subset_id, substance_id)
+);
+INSERT INTO "subset2subtance" VALUES(1,164,0.028);
+INSERT INTO "subset2subtance" VALUES(1,166,0.036);
+INSERT INTO "subset2subtance" VALUES(1,169,0.063);
+INSERT INTO "subset2subtance" VALUES(1,162,0.003);
+INSERT INTO "subset2subtance" VALUES(1,175,0.211);
+INSERT INTO "subset2subtance" VALUES(1,138,0.022);
+INSERT INTO "subset2subtance" VALUES(1,178,0.027);
+INSERT INTO "subset2subtance" VALUES(1,180,0.056);
+INSERT INTO "subset2subtance" VALUES(1,182,0.084);
+INSERT INTO "subset2subtance" VALUES(1,183,0.075);
+INSERT INTO "subset2subtance" VALUES(1,186,0.027);
+INSERT INTO "subset2subtance" VALUES(1,188,0.046);
+INSERT INTO "subset2subtance" VALUES(1,189,0.099);
+INSERT INTO "subset2subtance" VALUES(1,190,0.056);
+INSERT INTO "subset2subtance" VALUES(1,192,0.042);
+INSERT INTO "subset2subtance" VALUES(1,194,0.011);
+INSERT INTO "subset2subtance" VALUES(1,195,0.061);
+INSERT INTO "subset2subtance" VALUES(1,196,0.05);
+INSERT INTO "subset2subtance" VALUES(2,164,1);
+INSERT INTO "subset2subtance" VALUES(2,166,1);
+INSERT INTO "subset2subtance" VALUES(2,168,1);
+INSERT INTO "subset2subtance" VALUES(2,169,1);
+INSERT INTO "subset2subtance" VALUES(2,173,1);
+INSERT INTO "subset2subtance" VALUES(2,175,1);
+INSERT INTO "subset2subtance" VALUES(2,176,1);
+INSERT INTO "subset2subtance" VALUES(2,138,1);
+INSERT INTO "subset2subtance" VALUES(2,178,1);
+INSERT INTO "subset2subtance" VALUES(2,180,1);
+INSERT INTO "subset2subtance" VALUES(2,182,1);
+INSERT INTO "subset2subtance" VALUES(2,183,1);
+INSERT INTO "subset2subtance" VALUES(2,186,1);
+INSERT INTO "subset2subtance" VALUES(2,188,1);
+INSERT INTO "subset2subtance" VALUES(2,189,1);
+INSERT INTO "subset2subtance" VALUES(2,190,1);
+INSERT INTO "subset2subtance" VALUES(2,192,1);
+INSERT INTO "subset2subtance" VALUES(2,194,1);
+INSERT INTO "subset2subtance" VALUES(2,195,1);
+INSERT INTO "subset2subtance" VALUES(2,196,1);
+
+
 CREATE TABLE IF NOT EXISTS substance (
 	id INTEGER PRIMARY KEY,
 	name NTEXT NOT NULL UNIQUE,
