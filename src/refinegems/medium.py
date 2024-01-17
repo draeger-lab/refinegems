@@ -199,28 +199,97 @@ class Medium:
             warnings.warn(f'WARNING: no oxygen detected in medium {self.name}, cannot set oxygen percentage.')
 
 
-    def combine(self,other:'Medium') -> 'Medium':
+    def combine(self,other:'Medium', how:Union[Literal['+'],None,float,tuple[float]]='+', default_flux:float=10.0) -> 'Medium':
         """Combine two media into a new one.
 
+        Modes to combine media (input for param how):
+        - None: combine media, remove all flux values (= set them to None).
+                Sets sources to None as well.
+        - '+': Add fluxes of the same substance together.
+        - float: Calculate flux * percentage (float) for first medium and flux * 1.0-percentage (float)
+            for second medium and add fluxes of same substance together.
+        - tuple(float,float): Same as above, except both percentages are given.
+
         Args:
-            other (Medium): A second medium the first one is to be combined with.
+            other (Medium): The medium to combine with.
+            how (Union[Literal['+'],None,float,tuple[float]], optional): How to combine the two media. 
+                Options listed in header. Defaults to '+'.
+            default_flux (float, optional): Flux to use in combine-modes (except how=None) for NaN/None values. 
+                Defaults to 10.0.
 
         Returns:
-            Medium: The combined medium, without fluxes and sources.
+            Medium: The combined medium.
         """
 
+        def combine_media_with_fluxes(combined:'Medium', second_medium:'Medium') -> 'Medium':
+            """Helper function for :py:func:`combine`. Add a substance table to a medium by
+            combining fluxes of substances of the same name.
+
+            Args:
+                combined (Medium): The medium that will be the combined one.
+                second_medium (Medium): The substance table to integrate into the medium.
+
+            Returns:
+                Medium: The combined medium.
+            """
+            # get dict of name + flux of second medium
+            possible_dups = second_medium[['name','flux']].groupby('name').first().reset_index()
+            possible_dups = dict(zip(possible_dups.name, possible_dups.flux))
+            # search for overlapping substances and add fluxes together
+            added = []
+            for subs, flux in possible_dups.items():
+                if subs in combined.substance_table['name'].values:
+                    combined.substance_table.loc[combined.substance_table['name'] == subs,'flux'] += flux
+                    added.append(subs)
+            # add remaining substances to medium from the second one
+            second_medium = second_medium[~second_medium['name'].isin(added)]
+            combined.substance_table = pd.concat([combined.substance_table, second_medium], ignore_index=True)
+
+            return combined
+
+        # combine description and Co
         combined = copy.deepcopy(self)
         combined.name = self.name + '+' + other.name
         combined.description = f'Combined medium contructed from {self.name} and {other.name}.'
-        combined.substance_table = pd.concat([combined.substance_table, other.substance_table], ignore_index=True)
         combined.doi = str(self.doi) + ', ' + str(other.doi)
 
-        # remove fluxes and sources, as they are no longer a fit
-        combined.substance_table['flux'] = None
-        combined.substance_table['source'] = None
+        # combine substance table
+        match how:
 
-        # remove duplicate rows
-        combined.substance_table.drop_duplicates(inplace=True,ignore_index=True)
+            # add fluxes together
+            case '+':
+                # replace None values
+                combined.substance_table['flux'] = combined.substance_table['flux'].fillna(default_flux)
+                to_add = copy.deepcopy(other.substance_table)
+                to_add['flux'] = to_add['flux'].fillna(default_flux)
+                # add together
+                combined = combine_media_with_fluxes(combined, to_add)
+
+            # add fluxes based on percentages
+            case float() | tuple():
+                if type(how) == float:
+                    how = (how, 1.0-how)
+                # replace None values
+                combined.substance_table['flux'] = combined.substance_table['flux'].fillna(default_flux)
+                second_medium = copy.deepcopy(other.substance_table)
+                second_medium['flux'] = second_medium['flux'].fillna(default_flux)
+                # calculate new fluxes based on percentages
+                combined.substance_table['flux'] = combined.substance_table.flux.apply(lambda x: x*how[0])
+                second_medium['flux'] = second_medium.flux.apply(lambda x: x*how[1])
+                # add together
+                combined = combine_media_with_fluxes(combined, second_medium)
+
+            # combine and set all fluxes to 0
+            case None:
+                combined.substance_table = pd.concat([combined.substance_table, other.substance_table], ignore_index=True)
+                # remove fluxes and sources, as they are no longer a fit
+                combined.substance_table['flux'] = None
+                combined.substance_table['source'] = None
+                # remove duplicate rows
+                combined.substance_table.drop_duplicates(inplace=True,ignore_index=True)
+
+            case _:
+                raise ValueError(f'Unknown input for parameter how: {how}')
 
         return combined
     
