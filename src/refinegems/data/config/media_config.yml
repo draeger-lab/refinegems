@@ -43,13 +43,21 @@ params:
 #   base: None|str
 #            Medium to use as base for the composition. 
 #            If none is given, tries to use the name to look it up in the database.
+#            If a whitespace is detected, expects the first part to be a float set as the
+#            percentage to use and the second the name, e.g. '0.5 LB'
 #   external_base: None|str(path)
 #            If the base should be read from an external source, use this options 
 #            followed by a path to a media descripion.
-#   add: None|str
-#            Add additional subset or media from the database to the base.
-#   add_external: None|str(path)
-#            Add additional external media/subsets to the base.
+#            Parallel to base, a float separated by a whitespcae can be written in front.
+#   add_subset: 
+#            subset_name (str): default_flux (float, e.g. 0.5)
+#            Add additional subsets from the database to the base.
+#   add_medium:
+#            medium_name (str): percentage (float, e.g. 0.1)
+#            Add additional media based on a given percentage to the base.
+#   add_external:
+#            'link' (str): percentage (float)
+#            Add additional external media to the base.
 #   add_substance: Null|float|str in format 'X.X%' with X being [0-9]*
 #            Add further substances to the medium and/or add specific fluxes to 
 #            to substances. Flux settings here overwrite all previously set fluxes.
@@ -74,9 +82,10 @@ media:
   SNM3:
 #    supplement: min
   M9:
-#    add: 
-#      - aa
-#      - SNM3
+#    add_medium: 
+#      SNM3: 1.0
+#    add_subset:
+#      AA: 5.0
     add_substance:
       Glycine: Null
       Glycerol: 0.87
@@ -84,4 +93,4 @@ media:
 #  PERS:
 #    external_base: link
 #    add_external:
-#      - link
+#      'link': 0.5

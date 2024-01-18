@@ -389,28 +389,42 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                 # load base medium from either  
                 # base
                 if p and 'base' in p.keys():
-                    new_medium = medium.load_medium_from_db(p['base'])
+                    m_name = p['base'].split(' ')
+                    if len(m_name) > 1:
+                        new_medium = medium.load_medium_from_db(m_name[1])
+                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
+                    else:
+                        new_medium = medium.load_medium_from_db(p['base'])
                     new_medium.name = name
                 # extern
                 elif p and 'external_base' in p.keys():
-                    new_medium = medium.read_external_medium(p['external_base'])
+                    m_name = p['external_base'].split(' ')
+                    if len(m_name) > 1:
+                        new_medium = medium.read_external_medium(m_name[1])
+                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
+                    else:
+                        new_medium = medium.read_external_medium(p['external_base'])
                     new_medium.name = name
                 # default name
                 else:
                     new_medium = medium.load_medium_from_db(name)
                 
-                # add additional media 
-                # from in-build database
-                if p and 'add' in p.keys():
-                    for a in p['add']:
-                        if a in medium.SUBSET_MEDIA_MAPPING.keys():
-                            new_medium = new_medium.add_subset(a)
-                        else:
-                            new_medium = new_medium + medium.load_medium_from_db(a)
+                # add subsets from DB
+                if p and 'add_subset' in p.keys():
+                    # interate over all subsets to add
+                    for subset,dflux in p['add_subset'].items():
+                        new_medium = new_medium.add_subset(subset, default_flux=dflux)
+
+                # add media from DB
+                if p and 'add_medium' in p.keys():
+                    # interate over all media to add
+                    for medium,perc in p['add_medium'].items():
+                        new_medium = new_medium.combine(medium.load_medium_from_db(medium), how=perc)
+
                 # from external
                 if p and 'add_external' in p.keys():
-                    for a in p['add_external']:
-                        new_medium = new_medium + medium.read_external_medium(a)
+                    for a,perc in p['add_external'].items():
+                        new_medium = new_medium.combine(medium.read_external_medium(a), how=perc)
                 
                 # check anaerobic / aerobic settings
                 if p and 'aerobic' in p.keys():

@@ -26,20 +26,6 @@ REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
 INTEGER_REGEX = re.compile('^[-+]?([1-9]\d*|0)$')
 FLOAT_REGEX = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?')
 
-# subset addable to media
-# -----------------------
-
-CAS_DB_NAMES = ['L-Alanine', 'L-Arginine', 'L-Aspartate', 'L-Glutamate', 'Glycine', 'L-Histidine', 'L-Isoleucine', 'L-Leucine', 
-                'L-Lysine', 'L-Methionine', 
-                'L-Phenylalanine', 'L-Proline', 'L-Serine','L-Threonine','L-Tryptophan', 'L-Tyrosine', 'L-Valine', 'L-Cystine']
-PROTEINOGENIC_AA_DB_NAMES = ['L-Alanine', 'L-Arginine', 'L-Asparagine', 'L-Aspartate', 'L-Cysteine', 
-                             'L-Glutamine', 'L-Glutamate', 'Glycine', 'L-Histidine', 'L-Isoleucine', 
-                             'L-Leucine', 'L-Lysine', 'L-Methionine', 'L-Phenylalanine', 'L-Proline', 
-                             'L-Serine', 'L-Threonine', 'L-Tryptophan', 'L-Tyrosine', 'L-Valine']
-SUBSET_MEDIA_MAPPING = {'casamino':CAS_DB_NAMES, 
-                        'aa':PROTEINOGENIC_AA_DB_NAMES}
-
-
 ############################################################################
 # classes
 ############################################################################
@@ -79,7 +65,7 @@ class Medium:
     # ..............
     # has compound
     # remove compound
-    # set source of
+    # set source of -> source test
     # ------------------------------------
 
     def add_substance_from_db(self, name:str, flux:float=10.0):
