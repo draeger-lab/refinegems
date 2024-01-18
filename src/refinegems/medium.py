@@ -966,8 +966,8 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
     """Enter a new medium to an already existing database.
 
     Args:
-        database (str, optional): Path to the database. Defaults to the in-build databse.
-        medium (Medium): A medium object to be added to the database.
+        - medium (Medium): A medium object to be added to the database.
+        - database (str, optional): Path to the database. Defaults to the in-build databse.
     """
 
     # build connection to DB
@@ -1330,7 +1330,7 @@ def add_medium(database:str):
     medium = read_external_medium('console')
 
     # add to database
-    enter_medium_into_db(database, medium)
+    enter_medium_into_db(medium, database)
     
     # Generate updated SQl schema
     updated_db_to_schema()
