@@ -966,8 +966,8 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
     """Enter a new medium to an already existing database.
 
     Args:
-        database (str, optional): Path to the database. Defaults to the in-build databse.
-        medium (Medium): A medium object to be added to the database.
+        - medium (Medium): A medium object to be added to the database.
+        - database (str, optional): Path to the database. Defaults to the in-build databse.
     """
 
     # build connection to DB
@@ -1149,7 +1149,12 @@ def generate_insert_query(row: pd.Series) -> str:
     
     # Gather column & new_value inputs in SQL-readable format
     columns_str = f'({row["column"]})'
-    value_str = ', '.join(['\'' + _.strip() + '\'' if not FLOAT_REGEX.match(_) else _ for _ in row['new_value'].split(',')]) # condition (str) : a=x,b=y,....
+    value_str = row["new_value"] # Assign new_value to a variable
+    if type(value_str) == str: # Check if new_value is a string
+        if ',' in value_str: # Check if new_value ist actually a list
+            # Get all string values as string
+            value_str = ', '.join(['\'' + _.strip() + '\'' if not FLOAT_REGEX.match(_) else _ for _ in row['new_value'].split(',')])
+        else: value_str = f'\'{ value_str.strip()}\'' # new_value is a string
     
     insert_query = f'INSERT INTO {row["table"]} {columns_str} VALUES '
     
@@ -1161,6 +1166,19 @@ def generate_insert_query(row: pd.Series) -> str:
             if all(_ in conditions_dict.keys() for _ in ['medium', 'substance']):
                 insert_query += f'''(\
                     (SELECT medium.id FROM medium WHERE medium.name = \'{conditions_dict.get("medium")}\'), \
+                    (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
+                    {value_str}\
+                    )\
+                '''
+            else: 
+                raise ValueError(f'{Fore.MAGENTA}No medium and/or substance keys specified. Chosen table {table} cannot be updated!')
+            
+        case 'subset2substance':
+            if not conditions_dict: 
+                raise UnboundLocalError(f'{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated.')
+            if all(_ in conditions_dict.keys() for _ in ['subset', 'substance']):
+                insert_query += f'''(\
+                    (SELECT subset.id FROM subset WHERE subset.name = \'{conditions_dict.get("subset")}\'), \
                     (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
                     {value_str}\
                     )\
@@ -1312,7 +1330,7 @@ def add_medium(database:str):
     medium = read_external_medium('console')
 
     # add to database
-    enter_medium_into_db(database, medium)
+    enter_medium_into_db(medium, database)
     
     # Generate updated SQl schema
     updated_db_to_schema()
