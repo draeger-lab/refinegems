@@ -63,9 +63,7 @@ class Medium:
 
     # possible @TODO
     # ..............
-    # has compound
-    # remove compound
-    # set source of -> source test
+    # see refinegems medium.py
     # ------------------------------------
 
     def add_substance_from_db(self, name:str, flux:float=10.0):
@@ -95,6 +93,17 @@ class Medium:
         substance_table.insert(3,'source',None)
         self.substance_table = pd.concat([self.substance_table, substance_table], ignore_index=True)
 
+    # @TEST
+    # @IDEA : more options, e.g. allow different conditions for removal (flux, formula, db_id or multi)
+    def remove_substance(self, name: str):
+        """Remove a substance from the medium based on its name
+
+        Args:
+            name (str): Name of the substance to remove.
+        """
+        
+        self.substance_table = self.substance_table[self.substance_table['name'] != name]
+    
 
     def get_source(self, element:str) -> list[str]:
         """Get the source of a given element for the medium.
@@ -110,6 +119,27 @@ class Medium:
         """
 
         return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True)]['name']))
+
+
+    # @TEST
+    # @ASK : is deleting ALL other sources to rigid?
+    def set_source(self, element:str, new_source:str):
+        """Set the source for a given element to a specific substance by deleting all
+        other sources of said element before adding the new source.
+
+        Args:
+            element (str): The element to set the source for, e.g. 'O' for oxygen.
+            new_source (str): The new source. Should be the name of a substance in the 
+                database, otherwise no new source will be set.
+        """
+
+        # get sources for element
+        current_sources = self.get_source(element)
+        # remove current sources from medium
+        for s in current_sources:
+            self.remove_substance(s)
+        # add new source to medium
+        self.add_substance_from_db(new_source)
 
 
     def is_aerobic(self) -> bool:
