@@ -116,51 +116,103 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
       db_cursor.executescript(schema.read())
 
 
-def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
-   """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
+# @TEST
+def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> dict:
+    """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
-   Args:
-      - latest_version (str): String containing the Path to a file with the latest version of the BiGG database
-      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
-   """
-   print('Adding BiGG tables...')
-   
-   # Store currently used version
-   with open(VERSION_FILE, 'w') as file:
-      file.write(latest_version)
-   
-   # Create BiGG metabolites table
-   BIGG_MODELS_METABS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
-   bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
-   bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
-   bigg_models_metabs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
-   bigg_id_duplicates = bigg_models_metabs_df.duplicated(subset=['id'], keep=False)
-   bigg_id_duplicates_df = bigg_models_metabs_df[bigg_id_duplicates]
-   bigg_id_duplicates_set = set(bigg_id_duplicates_df['id'].tolist())
-   bigg_models_metabs_df[~bigg_id_duplicates].to_sql(
-      'bigg_metabolites', db_connection, 
-      if_exists='replace', index=False, 
-      dtype={'id':'TEXT PRIMARY KEY'}
-      )
-   
-   if bigg_id_duplicates_set:
-      logging.warning(
-         'The BiGG metabolite table contains the following '
-         f'{len(bigg_id_duplicates_set)} duplicate(s):\n'
-         f'{bigg_id_duplicates_set}\n'
-         'Duplicate(s) are completely removed from the table.'
-         )
+    Args:
+        - latest_version (str): String containing the Path to a file with the latest version of the BiGG database
+        - db_connection (sqlite3.Connection): Open connection to the database (data.db)
+    """
 
-   # Create BiGG reactions table
-   BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
-   bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
-   bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
-   bigg_models_reacs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
-   bigg_models_reacs_df.to_sql(
-      'bigg_reactions', db_connection, 
-      if_exists='replace', index=False, 
-      dtype={'id':'TEXT PRIMARY KEY'}
-      )
+    def get_database_links_info_per_row(row:pd.Series):
+        """For a single row of the dataframe, extract the database identifier from the collection of database links.
+
+        Args:
+            row (pd.Series): The database links for a single row of the dataframe.
+
+        Returns:
+            dict: A dictionary with the databses as keys and the IDs as values.
+        """
+
+        database_ids = {}
+        if isinstance(row, str):
+            links = row.split(';')
+            for link in links:
+                key, value = link.split(':',1)
+                key = key.strip()
+                value = value.rsplit('/',1)[1].strip()
+                if key in database_ids.keys():
+                    database_ids[key].append(value)
+                else:
+                    database_ids[key] = [value]
+
+        for k in database_ids.keys():
+            database_ids[k] = ', '.join(database_ids[k])
+
+        return database_ids
+
+    def get_database_links(data:pd.DataFrame) -> pd.DataFrame:
+        """For the dataframe, extract the database IDs from the database_links column
+        into separate column containing the IDs and not the links.
+
+        Args:
+            data (pd.DataFrame): The input dataframe.
+
+        Returns:
+            pd.DataFrame: The edited dataframe
+        """
+    
+        data = data.join(pd.DataFrame([get_database_links_info_per_row(row) for row in data['database_links']]))
+        data.drop(columns=['database_links', 'model_list'], axis=1, inplace=True)
+
+        return data
+
+    print('Adding BiGG tables...')
+    
+    # Store currently used version
+    with open(VERSION_FILE, 'w') as file:
+        file.write(latest_version)
+    
+    # Create BiGG metabolites table
+    BIGG_MODELS_METABS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
+    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
+    bigg_models_metabs_df = pd.read_csv(io.StringIO(bigg_models_metabs), dtype=str, sep='\t')
+    bigg_models_metabs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
+    
+    bigg_models_metabs_df = get_database_links(bigg_models_metabs_df)
+    
+    bigg_id_duplicates = bigg_models_metabs_df.duplicated(subset=['id'], keep=False)
+    bigg_id_duplicates_df = bigg_models_metabs_df[bigg_id_duplicates]
+    bigg_id_duplicates_set = set(bigg_id_duplicates_df['id'].tolist())
+   
+    bigg_models_metabs_df[~bigg_id_duplicates].to_sql(
+        'bigg_metabolites', db_connection, 
+        if_exists='replace', index=False, 
+        dtype={'id':'TEXT PRIMARY KEY'}
+        )
+    
+    if bigg_id_duplicates_set:
+        logging.warning(
+            'The BiGG metabolite table contains the following '
+            f'{len(bigg_id_duplicates_set)} duplicate(s):\n'
+            f'{bigg_id_duplicates_set}\n'
+            'Duplicate(s) are completely removed from the table.'
+            )
+
+    # Create BiGG reactions table
+    BIGG_MODELS_REACS_URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt'
+    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
+    bigg_models_reacs_df = pd.read_csv(io.StringIO(bigg_models_reacs), dtype=str, sep='\t')
+    bigg_models_reacs_df.rename(columns={'bigg_id': 'id'}, inplace=True)
+
+    bigg_models_reacs_df = get_database_links(bigg_models_reacs_df)
+
+    bigg_models_reacs_df.to_sql(
+        'bigg_reactions', db_connection, 
+        if_exists='replace', index=False, 
+        dtype={'id':'TEXT PRIMARY KEY'}
+        )
    
 
 def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: bool=True):
