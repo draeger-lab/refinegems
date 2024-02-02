@@ -27,6 +27,7 @@ PATH_MEDIA_CONFIG = files('data.config').joinpath('media_config.yaml')
 # handling config files
 # ---------------------
 
+# @TODO
 def download_config(filename:str='./my_config.yaml', type=Literal['media','refinegems']):
     """Load a configuration file from the package and save a copy of it for the user to edit.
 

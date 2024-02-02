@@ -751,3 +751,79 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
     report = reports.AuxotrophySimulationReport(pd.DataFrame.from_dict(results))
 
     return report
+
+
+# minimal medium
+# --------------
+
+# ......
+#@ TODO:
+#    see function body
+# ......
+def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> medium.Medium:
+    """Get the minimal medium based on different objectives:
+    - 'flux':      find the minimal fluxes based in current medium.
+    - 'medium':    find the minimal number of compounds for the current medium.
+    - 'exchanges': find the minimal number of compounds in a medium based on all avaiblae exchange reactions in the model.
+    Note: there may be multiple solution for the minimisation, but only 1 will be returned
+
+    Args:
+        model (cobraModel): Model with a medium, that should be minimised.
+        objective (Literal[flux,medium,exchanges], optional): Objective for the minimisation task. 
+            Options listed above. Defaults to 'flux'.
+        growth_rate (float, optional): Minimum growth rate the model has to archieve. 
+            Defaults to 0.5. Only needed for objectives medium and exchanges.
+        open_exchanges (bool, optional): If set to True assigns large upper bound to all import reactions. 
+            @TODO: running this on True can lead to infeasible runtimes, re-check usage in cobra.
+            Defaults to False.
+
+    Raises:
+        ValueError: unknown objective.
+
+    Returns:
+        medium.Medium: The medium that is a solution for the minimisation task.
+    """
+
+
+    # ...............................
+    # @TODO:
+    #    make running multiple iterations possible
+    # set iterations to True if no concrete number is given
+    # PROBLEM: will leads to a different output
+    #if not iterations:
+    #    iterations = True
+    # minimize_components = iteration
+    # ...............................
+
+    # minimise the fluxes od the current medium
+    if objective == 'flux':
+        max_growth = model.slim_optimize()
+        min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
+
+    # minimise components of current medium
+    elif objective == 'medium':
+        warnings.warn('Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time.')
+        min_medium = dict(cobra.medium.minimal_medium(model, growth_rate, minimize_components=True, open_exchanges=open_exchanges))
+
+    # get minimal number of medium components
+    # based on exchange reaction possible in the model
+    # note 1: can be time consuming
+    # note 2: can lead to different results if run only once each time
+    elif objective == 'exchanges':
+        # create cobra medium from all available exchange reactions
+        ex_medium = {_.id:1000.0 for _ in model.exchanges}
+        # perform minimisation
+        model.medium = ex_medium
+        warnings.warn('Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time.')
+        min_medium = dict(cobra.medium.minimal_medium(model, growth_rate, minimize_components=True, open_exchanges=open_exchanges))
+
+    else:
+        raise ValueError('Unknown objective for minimisation.')
+
+    # create a Medium object from the minimal medium
+    with model as tmp_model:
+        tmp_model.medium = min_medium
+        medium = medium.read_from_cobra_model(tmp_model)
+
+    return medium
+

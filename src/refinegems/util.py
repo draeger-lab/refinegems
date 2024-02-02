@@ -24,6 +24,9 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
 # functions
 ################################################################################
 
+# ChEBI
+# -----
+
 def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=True, iupac=True) -> pd.DataFrame:
    """Adds information from CHEBI/BiGG to the provided dataframe.
    The following informations can be added:
@@ -122,6 +125,9 @@ def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=
    
    return missing_metabs
 
+
+# SBO
+# ---
 
 def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
    """Reannotate the SBO annotations (e.g. from SBOannotator) of a model 
