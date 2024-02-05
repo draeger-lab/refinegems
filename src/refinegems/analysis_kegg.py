@@ -17,7 +17,7 @@ import re
 from libsbml import Model as libModel
 from refinegems.io import parse_gff_for_gp_info
 from refinegems.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
-from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model
+from refinegems.analysis_db import get_bigg_db_mapping, compare_bigg_model
 
 __author__ = "Famke Baeuerle"
 
@@ -177,7 +177,7 @@ def kegg_gene_comp(model: libModel, organismid: str, gff_file: str) -> pd.DataFr
     model_genes = get_model_genes(model, True)
     model_reactions = get_model_reacs_or_metabs(model)
     kegg_genes = get_kegg_genes(organismid)
-    bigg_kegg = get_bigg2other_db('KEGG')
+    bigg_kegg = get_bigg_db_mapping('KEGG',False)
     genes_kegg_notmodel = compare_gene_lists(model_genes, kegg_genes)
     locus_gpr = parse_gff_for_gp_info(gff_file)
     locus_ec = get_locus_ec(genes_kegg_notmodel)

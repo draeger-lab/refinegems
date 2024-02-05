@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+################################################################################
+# requirements
+################################################################################
+
 import io
 import re
 import sqlite3
@@ -10,12 +15,20 @@ from sqlite3 import Error
 from pathlib import Path
 from importlib.resources import files
 
-__author__ = 'Gwendolyn O. Döbel'
+__author__ = 'Gwendolyn O. Döbel und Carolin Brune'
+
+################################################################################
+# variables
+################################################################################
 
 PATH_TO_DB_FOLDER = files('refinegems.data.database')
 PATH_TO_DB = PATH_TO_DB_FOLDER.joinpath('data.db')
 VERSION_FILE = PATH_TO_DB_FOLDER.joinpath('current_bigg_db_version.txt')
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
+
+################################################################################
+# functions
+################################################################################
 
 class ValidationCodes(Enum):
    """Validation codes for the database
@@ -116,7 +129,6 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
       db_cursor.executescript(schema.read())
 
 
-# @TEST
 def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> dict:
     """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 

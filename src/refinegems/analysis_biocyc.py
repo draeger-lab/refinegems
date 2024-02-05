@@ -25,7 +25,7 @@ import pandas as pd
 import libchebipy
 import requests
 from refinegems.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
-from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
+from refinegems.analysis_db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
 from refinegems.io import parse_fasta_headers
 import os
 
@@ -191,7 +191,7 @@ def get_missing_reactions(
    statistics_df.loc['Reaction', 'Total'] = len(missing_reactions['Reaction'].unique().tolist())
    
    # Get BiGG BioCyc
-   bigg2biocyc_reacs = get_bigg2other_db('BioCyc')
+   bigg2biocyc_reacs = get_bigg_db_mapping('BioCyc',False)
    
    # Subset missing_reactions with BiGG BioCyc
    missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
@@ -260,7 +260,7 @@ def get_missing_metabolites(
    statistics_df.loc['Metabolite', 'Total'] = len(biocyc_metabs_from_reacs['Compound'].unique().tolist())
    
    # Get BiGG BioCyc
-   bigg2biocyc_metabs = get_bigg2other_db('BioCyc', True)
+   bigg2biocyc_metabs = get_bigg_db_mapping('BioCyc', True)
    
    # Subset biocyc_metabs with BiGG BioCyc -> To get only metabolites with BiGG IDs
    missing_metabolites = bigg2biocyc_metabs.merge(biocyc_metabs, on='BioCyc') # missing_metabolites

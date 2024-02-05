@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+
+__author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehrenbach"
+
+################################################################################
+# requirements
+################################################################################
+
 import re
 import requests
 import sqlite3
@@ -13,36 +20,24 @@ from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
 from multiprocessing import Pool
 
-__author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Tobias Fehrenbach"
-
+################################################################################
+# variables
+################################################################################
 
 ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y')
 ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm')
 BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
 BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
 
+# .............................................
+# @TODO : merge with compartment in entities.py
+# .............................................
 COMPARTMENTS = ('c', 'e', 'p')
 
-
-def get_search_regex(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: bool) -> str:
-    """Retrieves the search regex for BioCyc/KEGG/SEED to be used in the BiGG mapping
-
-    Args:
-        - other_db (Literal): Specifies if the search regex should be for BioCyc/KEGG/SEED
-        - metabolites (bool): Is required if one wants to search for KEGG/SEED Compound IDs in the bigg_models_metabolites.txt
-            
-    Returns:
-        str: Search regex
-    """
-    if other_db == 'BioCyc':
-        return 'BioCyc: http://identifiers.org/biocyc/META:(.*?);'
-    elif other_db == 'KEGG' or other_db == 'SEED':
-        if metabolites:
-            return f'{other_db} Compound: http://identifiers.org/{other_db.lower()}.compound/(.*?);'
-        else:
-            return f'{other_db} Reaction: http://identifiers.org/{other_db.lower()}.reaction/(.*?);'
-        
-        
+################################################################################
+# functions
+################################################################################
+      
 def compare_ids(id1: str, id2: str) -> bool:
     """Compares two strings/IDs & Returns True if one string matches most of the other
 
@@ -119,20 +114,19 @@ def get_reaction_compartment(bigg_id: str) -> str:
         else:  # Not so important but do not remove reaction as reaction in correct compartments
             return 'exchange'  # Probably exchange reaction
 
-
+# @TEST
+# @NOTE : A lot of warnings
 def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments
         & returns table containing only reactions which happen in one of the provided compartments
         
     Args:
-        - complete_df (pd.DataFrame): Table containing at least the columns 'bigg_id' & 'KEGG'/'BioCyc'
+        - complete_df (pd.DataFrame): Table containing at least the column 'bigg_id'.
         
     Returns:
         pd.DataFrame: Table containing reactions & their compartments
     """
     tqdm.pandas()
-    db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'
-    complete_df = complete_df[['bigg_id', db]]  # Remove all unnecessary columns
     
     # (1) Find all occurrencs of a BiGG reaction ID in bigg_reactions table in database
     def get_all_similar_bigg_ids(bigg_id_in: str) -> list[str]:
@@ -142,7 +136,7 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
         elif bigg_id_in.endswith(ALL_BIGG_COMPARTMENTS_TWO_LETTER): bigg_id = bigg_id_in[:-2]
         else: bigg_id = bigg_id_in
         
-        query = f"SELECT bigg_id, INSTR(bigg_id, '{bigg_id}') bi FROM bigg_reactions WHERE bi > 0"
+        query = f"SELECT id, INSTR(id, '{bigg_id}') bi FROM bigg_reactions WHERE bi > 0"
         result = con.execute(query).fetchall()
         result = [result_tuple[0] for result_tuple in result] if result else [bigg_id_in]
         result = [res for res in result if compare_ids(bigg_id, res)]
@@ -167,6 +161,8 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
 
         return results
 
+    print(complete_df.columns)
+    
     # Connect to database & get similar IDs (1)
     print('Getting all similar IDs...')
     con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
@@ -193,47 +189,62 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
     return complete_df
 
 
-# Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_bigg2other_db(other_db: Literal['KEGG', 'BioCyc', 'SEED'], metabolites: bool=False) -> pd.DataFrame:
-    """Uses list of BiGG reactions/metabolites to get a mapping from BiGG to KEGG/BioCyc Id
+# @TEST
+def get_bigg_db_mapping(map_to:str='BioCyc', metabolites:bool=True) -> pd.DataFrame:
+    """Download a mapping of BiGG IDs to a specified database.
 
     Args:
-        - other_db (Literal): Set to 'KEGG'/'BioCyc'/'SEED' to map KEGG/BioCyc/SEED IDs to BiGG IDs
-        - metabolites (bool): Set to True to map other_db IDs to BiGG IDs for metabolites
+        map_to (str, optional): Name of the database to map to. 
+            Ideally a column of the table in the database, 
+            but SEED, KEGG and BioCyc are valid as well. 
+            Defaults to 'BioCyc'.
+        metabolites (bool, optional): Flag to map reaction (False) or metabolite (True) IDs. 
+            Defaults to True.
+
+    Raises:
+        KeyError: Given database name not found in database. Cannot perform mapping.
 
     Returns:
-        pd.DataFrame: Table containing BiGG Ids with corresponding KEGG/BioCyc/SEED Ids
+        pd.DataFrame: The mapping as a table.
     """
-    
-    # Get only rows with BioCyc/KEGG entries
-    db_table_name = 'bigg_metabolites' if metabolites else 'bigg_reactions'
-    reaction_or_compound = 'Compound' if metabolites else 'Reaction'
-    other_db_query = other_db if other_db == 'BioCyc' else ' '.join([other_db, reaction_or_compound])
-    bigg_db_query = f"SELECT *, INSTR(database_links, '{other_db_query}:') o_db FROM {db_table_name} WHERE o_db > 0"
-    bigg_db_df = load_a_table_from_database(bigg_db_query)
-    
-    db_search_regex = get_search_regex(other_db, metabolites)
-    
-    def find_other_db(database_links: str):
-        m = re.findall(
-            db_search_regex,
-            str(database_links))
-        if m:
-            return m
-        else:
-            return None
-    
-    bigg_db_df[other_db] = bigg_db_df.apply(
-        lambda row: find_other_db(row['database_links']), axis=1)
-    bigg_db_df = bigg_db_df.explode(other_db, ignore_index=True)
-    
-    if not metabolites:
-        bigg_db_df = keep_only_reactions_in_certain_compartments(bigg_db_df)
-        
-    bigg_df = bigg_db_df[['bigg_id', other_db]] if metabolites else bigg_db_df[['bigg_id', other_db, 'compartment', 'id_group']]
 
-    return bigg_df
- 
+    # adjust name to map to if necessary
+    reac_or_comp = 'Compound' if metabolites else 'Reaction'
+    table_name = 'bigg_metabolites' if metabolites else 'bigg_reactions'
+    if map_to in ['SEED','KEGG','Reactome']:
+        map_to =  ' '.join([map_to, reac_or_comp])
+    
+    # download BiGG tables from database
+    # ----------------------------------
+    # build connection to DB
+    connection = sqlite3.connect(PATH_TO_DB)
+    cursor = connection.cursor()
+
+    # retrieve only mappings to a specific database
+    result = cursor.execute('SELECT 1 FROM PRAGMA_TABLE_INFO(?) WHERE name = ?',(table_name,map_to))
+    possible_db = result.fetchone()
+    if possible_db:
+        query = f'SELECT * FROM {table_name} WHERE {map_to} IS NOT NULL'
+    else:
+        raise KeyError('Given database name not found in database. Cannot perform mapping.')
+
+    # actually load data
+    data = load_a_table_from_database(query)
+    data = data.explode(map_to, ignore_index=True)
+
+    # reduce columns to mapping only
+    data = data[['id',map_to]]
+    data.rename(columns={'id':'bigg_id'}, inplace=True)
+
+    # filter for compartment in case of reactions
+    if not metabolites:
+        data = keep_only_reactions_in_certain_compartments(data)
+
+    # close connection to database
+    connection.close()
+    
+    return data
+
  
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, metabolites: bool=False) -> pd.DataFrame:
