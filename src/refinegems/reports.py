@@ -180,10 +180,10 @@ class GrowthSimulationReport(Report):
             
             # create colour gradient
             try:
-                cmap = matplotlib.cm.get_cmap(color_palette).copy()
+                cmap = matplotlib.colormaps[color_palette]
             except ValueError:
                 warnings.warn('Unknown color palette, setting it to "YlGn"')
-                cmap = matplotlib.cm.get_cmap('YlGn').copy()
+                cmap = matplotlib.colormaps['YlGn']
 
             # set up the figure
             fig = plt.figure()
@@ -242,10 +242,10 @@ class GrowthSimulationReport(Report):
 
             # setting the colours 
             try:
-                cmap = matplotlib.cm.get_cmap(color_palette).copy()
+                cmap = matplotlib.colormaps[color_palette]
             except ValueError:
                 warnings.warn('Unknown color palette, setting it to "YlGn"')
-                cmap = matplotlib.cm.get_cmap('YlGn').copy()
+                cmap = matplotlib.colormaps['YlGn']
             cmap.set_under('black') # too low / no growth
             cmap.set_over('white') # no data
 
@@ -504,10 +504,10 @@ class KEGGPathwayAnalysisReport(Report):
         # ----------------
         # setting the colours 
         try:
-            cmap = matplotlib.cm.get_cmap(color_palette).copy()
+            cmap = matplotlib.colormaps[color_palette]
         except ValueError:
             warnings.warn('Unknown color palette, setting it to "YlGn"')
-            cmap = matplotlib.cm.get_cmap('YlGn').copy()
+            cmap = matplotlib.colormaps['YlGn']
         # set up the figure
         fig = plt.figure()
         if 'existing' == plot_type:
@@ -619,10 +619,10 @@ class AuxotrophySimulationReport(Report):
         
         # create colour gradient
         try:
-            cmap = matplotlib.cm.get_cmap(color_palette).copy()
+            cmap = matplotlib.colormaps[color_palette]
         except ValueError:
             warnings.warn('Unknown color palette, setting it to "YlGn"')
-            cmap = matplotlib.cm.get_cmap('YlGn').copy()
+            cmap = matplotlib.colormaps['YlGn']
 
         # set up the figure
         fig = plt.figure()
