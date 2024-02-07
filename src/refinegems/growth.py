@@ -757,9 +757,35 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
 # source test
 # -----------
 
-# @TODO : set a default for substances - ideally a subset or so
+# @TODO : set new default for substances - ideally a subset or so
 # @TODO : more namespace options, currently only BiGG available
-def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str], medium:None|str|rg.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.reports.SourceTestReport:
+# @TODO
+def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|rg.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.reports.SourceTestReport:
+    """Test the growth of a model when switching out the source of a given chemical element for
+    a set medium.
+
+    Args:
+        model (cobra.Model): The model loaded with COBRApy.
+        element (str): The chemical symbol e.g., N for nitrogen, to change the sources for.
+        substances (None | str | list[str], optional): Substances to switch out in the medium. 
+            Can be a list of substance names present in the database, a subset name to be
+            loaded from the database or None, which results in all substances in the database,
+            that contain the element being tested as a source. Option None can potentially run
+            a while.
+            Defaults to None.
+        medium (None | str | rg.medium.Medium, optional): The medium to start with. 
+            The chosen medium ideally should have all other necessary elements needed for the model
+            to grow.
+            Defaults to None.
+        namespace (Literal[&#39;BiGG&#39;], optional): The namespace to work on. 
+            Defaults to 'BiGG'.
+
+    Raises:
+        KeyError: No growth function in model. Please add one beforehand.
+
+    Returns:
+        rg.reports.SourceTestReport: A report object with the results.
+    """
     
     # validate input
     # model is required to have a growth function

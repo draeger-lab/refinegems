@@ -668,6 +668,13 @@ class AuxotrophySimulationReport(Report):
 
 
 class SourceTestReport(Report):
+    """Report for the source test (:py:func:rg.growth.test_growth_with_source).
+
+    Attributes:
+        results: A pd.DataFrame with the results (substances and growth values).
+        element: The element the test was performed for.
+        model_name: The name of the model, that was tested.
+    """
     
     def __init__(self, results:pd.DataFrame=None, element:str=None, model_name:str=None):
         # super().__init__()
@@ -676,7 +683,19 @@ class SourceTestReport(Report):
         self.model_name = model_name
 
     # @TEST
-    def visualise(self, width:int=12, color_palette:str='YlGn'):
+    def visualise(self, width:int=12, color_palette:str='YlGn') -> tuple(matplotlib.Figure, pd.DataFrame):
+        """Visuale the results of the source test as a heatmap
+
+        Args:
+            width (int, optional): number of columns to display for the heatmap. 
+                Number of row is calculated accordingly to fit all values.
+                Defaults to 12.
+            color_palette (str, optional): Color palette (gradient) for the plot. 
+                Defaults to 'YlGn'.
+
+        Returns:
+            tuple(matplotlib.Figure, pd.DataFrame): The heatmap and the legend explaining the heatmap.
+        """
         
         # create colour gradient
         try:
@@ -732,8 +751,16 @@ class SourceTestReport(Report):
         return (ax.get_figure(), legend)
 
 
-    # @TEST
     def save(self, dir:str, width:int=12, color_palette:str='YlGn') -> None:
+        """Save the results of the source test.
+
+        Args:
+            dir (str): Path to a directory to save the results to.
+            width (int, optional): Number of columns for the heatmap. 
+                Defaults to 12.
+            color_palette (str, optional):Color palette (gradient) for the plot. 
+                Defaults to 'YlGn'.
+        """
 
         # make sure given directory path ends with '/'
         if not dir.endswith('/'):
