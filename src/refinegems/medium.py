@@ -57,15 +57,6 @@ class Medium:
         self.substance_table = substance_table
         self.doi = doi
 
-    # -----------------------------------
-    # TODO:
-    # add functionalities from SPECIMEN ?
-
-    # possible @TODO
-    # ..............
-    # see refinegems medium.py
-    # ------------------------------------
-
     def add_substance_from_db(self, name:str, flux:float=10.0):
         """Add a substance from the database to the medium.
 
@@ -118,7 +109,7 @@ class Medium:
             list[str]: The list of the names of the sources (no duplicates).
         """
 
-        return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True)]['name']))
+        return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True).fillna(False)]['name']))
 
 
     # @TEST
@@ -808,13 +799,14 @@ def extract_medium_info_from_model_bigg(row, model:cobra.Model) -> pd.Series:
 
     db_id = row['db_id_EX'].replace('EX_','').replace('_e','')
     meta = model.metabolites.get_by_id(db_id+'_e')
-    name = meta.name
-    formula = meta.formula
+    row['name'] = meta.name
+    row['formula'] = meta.formula
+    row['db_id'] = db_id
 
-    return pd.Series([name,formula,db_id])
+    return row
 
 
-def read_from_cobra_model(model: cobra.Model) -> Medium:
+def read_from_cobra_model(model: cobra.Model, namespace:Literal['BiGG']='BiGG') -> Medium:
     """Read and import a medium from a cobra model into a Medium object.
 
     Args:
@@ -827,12 +819,22 @@ def read_from_cobra_model(model: cobra.Model) -> Medium:
     # retrieve the medium from the model
     cobra_medium = model.medium.copy()
     substances = pd.DataFrame(cobra_medium.items(),columns=['db_id_EX','flux'])
-    substances['db_type'] = 'BiGG'
+    substances['db_type'] = namespace
 
     # retrieve additional information
     substances['source'] = model.id
     substances['name'] = None
-    substances.apply(extract_medium_info_from_model_bigg, model=model, axis=1)
+    substances['formula'] = None
+
+    # transform exchange reacs into the metabolite 
+    match namespace:
+        case 'BiGG':    
+            substances = substances.apply(extract_medium_info_from_model_bigg, model=model, axis=1)
+            #substances['db_id_meta'] = substances.db_id_EX.apply(lambda x: x.removeprefix('EX_'))
+            #substances['db_id'] = substances.db_id_meta.apply(lambda x: x.rsplit('_',maxsplit=1)[0])
+        case _:
+            raise ValueError(f'Unknown input for namespace: {namespace}')
+        
 
     # reformat table 
     substances.drop(columns=['db_id_EX'],inplace=True)
@@ -845,7 +847,6 @@ def read_from_cobra_model(model: cobra.Model) -> Medium:
     imported_medium = Medium(name, substances, description)
 
     return imported_medium
-
 
 ############################################################################
 # functions for adding entries to DB

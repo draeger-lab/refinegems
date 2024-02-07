@@ -45,6 +45,9 @@ KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"
 ################################################################################
 
 class Report():
+    # @IDEA 
+    # colour palette for visulisation
+    # date/time of creation?
     pass
 
 
@@ -660,6 +663,22 @@ class AuxotrophySimulationReport(Report):
         # save the growth rates as tabular information
         self.simulation_results.to_csv(F'{dir}auxotrophies_table.tsv', sep='\t', index=True)
 
+
+class SourceTestReport(Report):
+    
+    def __init__(self, results:pd.DataFrame=None, element:str=None, model_name:str=None):
+        # super().__init__()
+        self.results = results
+        self.element = element
+        self.model_name = model_name
+
+    # @TODO
+    def visualise(self):
+        pass
+
+    # @TODO
+    def save(self, dir:str):
+        pass
 
 class CorePanAnalysisReport(Report):
     """Report for the core-pan analysis. 
