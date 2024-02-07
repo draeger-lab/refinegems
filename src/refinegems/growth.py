@@ -13,6 +13,8 @@ import seaborn as sns
 import warnings
 import yaml
 
+import refinegems as rg
+
 from cobra import Model as cobraModel
 from refinegems.io import load_multiple_models, load_model_cobra
 from refinegems import medium
@@ -752,6 +754,83 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
 
     return report
 
+# source test
+# -----------
+
+# @TODO : set a default for substances - ideally a subset or so
+# @TODO : more namespace options, currently only BiGG available
+def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str], medium:None|str|rg.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.reports.SourceTestReport:
+    
+    # validate input
+    # model is required to have a growth function
+    growth_funcs = rg.biomass.test_biomass_presence(model)
+    if growth_funcs:
+        if any(_ in str(model.objective.expression) for _ in growth_funcs):
+            pass
+        else:
+            warnings.warn(f'No growth functions set as objective, but growth function(s) detected. Setting objective to {growth_funcs[0]}')
+            model.objective = growth_funcs[0]
+    else:
+        raise KeyError('No growth function in model. Please add one beforehand.')
+    
+    # get the starting medium
+    match medium:
+        case str():
+            current_medium = rg.medium.load_medium_from_db(medium)
+        case rg.medium.Medium():
+            current_medium = medium
+        case _:
+            current_medium = rg.medium.read_from_cobra_model(model)
+
+    # save old medium settings
+    origin_medium = model.medium
+
+    # get the sources
+    match substances:
+
+        # case 1: 
+        # take a given subset from the database
+        case str():
+            temp_medium = rg.medium.Medium('temp', pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']))
+            temp_medium.add_subset(substances)
+            source_list = temp_medium.substance_table['name'].to_list()
+
+        # case 2: 
+        # use the user given list - account for errors
+        case list():
+            # @TODO validate, if all are part of the database or is this over the top?
+            source_list = substances
+
+        # case 3:
+        # download all possible options - may take some time
+        case _:
+            # get complete table
+            substances = rg.io.load_a_table_from_database('substance', query=False)
+            # regex to find substances with element - element letter code NOT followed by ANY small letter
+            element_regex = element + r'(?![a-z])' 
+            substances_mask = substances['formula'].str.contains(element_regex)
+            substances_mask.fillna(value=False, inplace=True)
+            substances = substances[substances_mask]
+            source_list = substances.name.to_list()
+
+    # perform the test
+    results = []  
+    for s in source_list:
+        # set new source
+        current_medium.set_source(element,s)
+        # add medium to model
+        rg.medium.medium_to_model(model, current_medium, namespace=namespace, add=True)
+        # simulate growth
+        growth_value = model.optimize().objective_value
+        results.append({'substance':s, 'growth value':growth_value})
+
+    results = rg.reports.SourceTestReport(pd.DataFrame(results), element, model.id)
+
+    # set original medium for model
+    model.medium = origin_medium
+
+    return results
+        
 
 # minimal medium
 # --------------

@@ -531,13 +531,13 @@ class Medium:
 
             case 'BiGG':
                 
-                biggs = self.substance_table[self.substance_table['db_type']=='BiGG'][['name','db_id','flux']]
+                biggs = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')][['name','db_id','flux']]
                 biggs['db_id_EX'] = 'EX_' + biggs['db_id'] + '_e'
                 cobra_medium = pd.Series(biggs.flux.values,index=biggs.db_id_EX).to_dict()       
 
                 # .....................................
                 # TODO
-                #    what about those without BiGG IDs?
+                #    more options
                 # .....................................       
 
             case _:

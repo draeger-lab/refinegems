@@ -8,6 +8,8 @@ __author__ = 'Carolin Brune, Famke Baeuerle, Gwendolyn O. Döbel'
 ################################################################################
 
 import cobra
+import copy
+import math
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +18,7 @@ import seaborn as sns
 import warnings
 
 from importlib.resources import files
+from itertools import chain
 from pathlib import Path
 from typing import Literal
 
@@ -672,13 +675,78 @@ class SourceTestReport(Report):
         self.element = element
         self.model_name = model_name
 
-    # @TODO
-    def visualise(self):
-        pass
+    # @TEST
+    def visualise(self, width:int=12, color_palette:str='YlGn'):
+        
+        # create colour gradient
+        try:
+            cmap = matplotlib.colormaps[color_palette]
+        except ValueError:
+            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            cmap = matplotlib.colormaps['YlGn']
 
-    # @TODO
-    def save(self, dir:str):
-        pass
+        cmap.set_under('black') # too low / no growth
+        cmap.set_over('white') # no data
+
+        # get size of heatmap
+        height = math.ceil(len(self.results)/width)
+        total_cells = width * height
+
+        # create table for plotting
+        data_to_plot = copy.deepcopy(self.results)
+        if len(self.results) < total_cells:
+            temp = pd.DataFrame.from_records([['empty',None]]*(total_cells-len(self.results)),columns=['substance','growth value'])
+            data_to_plot = pd.concat([data_to_plot, temp], ignore_index=True)
+        data_to_plot['row'] = list(range(1,height+1))*width
+        data_to_plot['column'] = list(chain.from_iterable([[x]*height for x in range(1,width+1)]))
+
+        # remove unplottable entries 
+        data_to_plot['growth value'].replace([np.inf, -np.inf], 0, inplace=True)
+        over_growth = data_to_plot['growth value'].max() + 0.1 * data_to_plot['growth value'].max()
+        data_to_plot['growth value'].replace(np.nan, over_growth, inplace=True)
+        vmin= 1e-5 #Use same threshhold as in find_missing_essential in growth
+        vmax=over_growth - 0.05 * data_to_plot['growth value'].max()
+
+        # set annotations
+        annot = data_to_plot.copy()
+        annot['growth value'] = annot['growth value'].round(2)
+        annot['growth value'] = annot['growth value'].apply(lambda x: '' if x < 1e-5 else (x if x < vmax else 'X'))
+
+        detected_growth = len(annot[(annot['growth value'] != '') & (annot['growth value'] != 'X')])
+
+        annot = annot.pivot(index='row',columns='column', values='growth value')
+        legend = data_to_plot.pivot(index='row',columns='column', values='substance')
+
+        # plot
+        ax = sns.heatmap(data_to_plot.pivot(index='row',columns='column', values='growth value'),
+                        linewidth=.5, cmap=cmap,
+                        vmin=vmin, vmax=vmax,
+                        annot=annot, fmt='',
+                        cbar_kws={'label': r'growth rate $[\frac{mmol}{gDWh}]$'}
+                        )
+
+        ax.set(xlabel='column', ylabel='row')
+        ax.set_title(f'Growth detected with {detected_growth} sources', fontsize=10)
+        plt.suptitle(f'{self.element}-source growth simulation on model {self.model_name}')
+
+        return (ax.get_figure(), legend)
+
+
+    # @TEST
+    def save(self, dir:str, width:int=12, color_palette:str='YlGn') -> None:
+
+        # make sure given directory path ends with '/'
+        if not dir.endswith('/'):
+            dir = dir + '/'
+        
+        # save the list 
+        self.results.to_csv(dir+'source_test_results.csv', sep=';', header=True, index=False)
+
+        # save the visualisation
+        fig,leg = self.visualise(width=width, color_palette=color_palette)
+        fig.savefig(dir+'source_test_hm.png', bbox_inches='tight', dpi=400)
+        leg.to_csv(dir+'source_test_hm_legend.csv', sep=';', header=True, index=True)
+
 
 class CorePanAnalysisReport(Report):
     """Report for the core-pan analysis. 
