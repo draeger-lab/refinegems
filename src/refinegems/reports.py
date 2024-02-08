@@ -682,8 +682,8 @@ class SourceTestReport(Report):
         self.element = element
         self.model_name = model_name
 
-    # @TEST
-    def visualise(self, width:int=12, color_palette:str='YlGn') -> tuple(matplotlib.Figure, pd.DataFrame):
+
+    def visualise(self, width:int=12, color_palette:str='YlGn') -> tuple[matplotlib.figure.Figure, pd.DataFrame]:
         """Visuale the results of the source test as a heatmap
 
         Args:

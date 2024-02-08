@@ -19,5 +19,6 @@ import refinegems.comparison
 import refinegems.investigate
 import refinegems.io
 import refinegems.core_pan
+import refinegems.util
 
 __author__ = "Famke Baeuerle"

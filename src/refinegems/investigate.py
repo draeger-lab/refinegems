@@ -4,6 +4,12 @@
 These functions enable simple testing of any model using MEMOTE and access to its number of reactions, metabolites and genes.
 """
 
+__author__ = "Famke Baeuerle and Alina Renz"
+
+################################################################################
+# requirements
+################################################################################
+
 import os
 import memote
 import json
@@ -17,7 +23,9 @@ from memote.support import consistency
 from memote.support import consistency_helpers as con_helpers
 from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
 
-__author__ = "Famke Baeuerle and Alina Renz"
+################################################################################
+# variables
+################################################################################
 
 DISSIPATION_RXNS = {
     'ATP':'atp_c + h2o_c --> adp_c + h_c + pi_c',
@@ -37,6 +45,14 @@ DISSIPATION_RXNS = {
     'PROTON':'h_p --> h_c'
     }
 
+################################################################################
+# functions
+################################################################################
+
+# investigate with memote
+# -----------------------
+# @IDEA
+#    see CB_under_construction in dev
 
 def run_memote_sys(model: cobraModel):
     """Run MEMOTE on the local linux machine
@@ -75,6 +91,11 @@ def get_memote_score(memote_report: dict) -> float:
     """
     return memote_report['score']['total_score']
 
+
+# get basic model info
+# --------------------
+# @IDEA
+#    see CB_under_construction in dev
 
 def initial_analysis(model: libModel) -> tuple[str, int, int, int]:
     """Extracts most important numbers of GEM
@@ -198,6 +219,9 @@ def get_model_info(modelpath: str) -> pd.DataFrame:
 
     return model_info
 
+
+# other
+# -----
 
 def parse_reaction(eq: str, model: cobraModel) -> dict:
     """Parses a reaction equation string to dictionary 

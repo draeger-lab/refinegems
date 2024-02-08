@@ -6,6 +6,12 @@ The media definitions are denoted in a csv within the data folder of this reposi
 The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
 """
 
+__author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
+
+################################################################################
+# requirements
+################################################################################
+
 from Bio.KEGG import REST
 import cobra
 import click
@@ -26,8 +32,12 @@ from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
 from typing import Union, Literal
 
-__author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
+################################################################################
+# functions
+################################################################################
 
+# models
+# ------
 
 def load_model_cobra(modelpath: str) -> cobraModel:
     """Loads model using COBRApy
@@ -53,7 +63,6 @@ def load_model_cobra(modelpath: str) -> cobraModel:
             data = cobra.io.load_matlab_model(modelpath)
         case _:
             raise ValueError('Unknown file extension for model: ', extension)
-            sys.exit(1)
     return data
 
 
@@ -104,6 +113,24 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     return read
 
+
+def write_to_file(model: libModel, new_filename: str):
+    """Writes modified model to new file
+
+    Args:
+        - model (libModel): Model loaded with libSBML
+        - new_filename (str): Filename|Path for modified model
+    """
+    try:
+        new_document = model.getSBMLDocument()
+        writeSBMLToFile(new_document, new_filename)
+        logging.info("Modified model written to " + new_filename)
+    except (OSError) as e:
+        print("Could not write to file. Wrong path?")
+
+
+# media
+# -----
 
 def write_media_to_file(media_file_name: str, media: Union[list[str], str]='all', tsv: bool=True):
     """ Extracts all user-specified media from the database data.db 
@@ -274,6 +301,10 @@ def load_all_media_from_db(mediumpath: str) -> pd.DataFrame:
     return media_dfs
 
 
+# other
+# -----
+# @TODO: sort more
+
 def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_name: str='metab') -> pd.DataFrame:
     """Loads metabolite sheet from manual curation table
 
@@ -347,21 +378,6 @@ def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
     df = df.drop('level_0', axis=1)
     
     return df
-
-
-def write_to_file(model: libModel, new_filename: str):
-    """Writes modified model to new file
-
-    Args:
-        - model (libModel): Model loaded with libSBML
-        - new_filename (str): Filename|Path for modified model
-    """
-    try:
-        new_document = model.getSBMLDocument()
-        writeSBMLToFile(new_document, new_filename)
-        logging.info("Modified model written to " + new_filename)
-    except (OSError) as e:
-        print("Could not write to file. Wrong path?")
 
 
 def write_report(dataframe: pd.DataFrame, filepath: str):
@@ -476,7 +492,8 @@ def search_ncbi_for_gpr(locus: str) -> str:
             for feature in record.features:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
-                
+
+
 def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame():
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
 
