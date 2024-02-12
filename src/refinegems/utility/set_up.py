@@ -15,7 +15,7 @@ from typing import Literal
 # variables
 ################################################################################
 
-PATH_MEDIA_CONFIG = files('data.config').joinpath('media_config.yaml')
+PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml')
 # @TODO
 # PATH_REFINEGEMS_CONFIG = files('data.config').joinpath('config.yaml')
 
