@@ -9,9 +9,9 @@ __author__ = 'Carolin Brune'
 
 import cobra
 
-from .io import load_multiple_models
-from .reports import CorePanAnalysisReport
-from .entities import resolve_compartment_names
+from ..utility.io import load_model
+from ..classes.reports import CorePanAnalysisReport
+from ..utility.entities import resolve_compartment_names
 from typing import Literal
 
 ################################################################################
@@ -155,7 +155,7 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
     """
 
     # load all models
-    all_models = load_multiple_models(model_list, 'cobra')
+    all_models = load_model(model_list, 'cobra')
 
     # resolve compartment issue
     for model in all_models:

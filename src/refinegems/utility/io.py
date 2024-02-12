@@ -22,15 +22,14 @@ import gffutils
 import sqlalchemy
 import logging
 import pandas as pd
-from pathlib import Path
-from cobra import Model as cobraModel
+
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
-from refinegems.databases import PATH_TO_DB, initialise_database
+from refinegems.utility.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
-from typing import Union, Literal
+from typing import Literal
 
 ################################################################################
 # functions
@@ -39,65 +38,82 @@ from typing import Union, Literal
 # models
 # ------
 
-def load_model_cobra(modelpath: str) -> cobraModel:
-    """Loads model using COBRApy
+def load_model(modelpath: str|list[str], package:Literal['cobra','libsbml']) -> cobra.Model|list[cobra.Model]|libModel|list[libModel]:
+    """Load a model. 
 
     Args:
-        - modelpath (str): Path to GEM
+        modelpath (str | list[str]): Path to the model or list of paths to models (string format).
+        package (Literal['cobra','libsbml']): Package to use to load the model.
 
     Returns:
-        cobraModel: Loaded model by COBRApy
+        cobra.Model|list[cobra.Model]|libModel|list[libModel]: The loaded model(s).
     """
-    #mod = cobra.io.read_sbml_model(modelpath)
-    #return mod
-    extension = os.path.splitext(modelpath)[1].replace('.','')
 
-    match extension:
-        case 'xml':
-            data = cobra.io.read_sbml_model(modelpath)
-        case 'json':
-            data = cobra.io.load_json_model(modelpath)
-        case 'yml':
-            data = cobra.io.load_yaml_model(modelpath)
-        case 'mat':
-            data = cobra.io.load_matlab_model(modelpath)
-        case _:
-            raise ValueError('Unknown file extension for model: ', extension)
-    return data
+    def load_cobra_model(modelpath:str) -> cobra.Model:
+        """Load a model using COBRApy.
 
+        Args:
+            modelpath (str): Path to the model.
+                Can be a xml, json, yml or mat file.
 
-def load_model_libsbml(modelpath: str) -> libModel:
-    """Loads model using libSBML
+        Raises:
+            ValueError: Unknown file extension
 
-    Args:
-        - modelpath (str): Path to GEM
+        Returns:
+            cobra.Model: The loaded model object.
+        """
+        extension = os.path.splitext(modelpath)[1].replace('.','')
 
-    Returns:
-        libModel: loaded model by libSBML
-    """
-    reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath)  # read from file
-    mod = read.getModel()
-    return mod
+        match extension:
+            case 'xml':
+                data = cobra.io.read_sbml_model(modelpath)
+            case 'json':
+                data = cobra.io.load_json_model(modelpath)
+            case 'yml':
+                data = cobra.io.load_yaml_model(modelpath)
+            case 'mat':
+                data = cobra.io.load_matlab_model(modelpath)
+            case _:
+                raise ValueError('Unknown file extension for model: ', extension)
 
+        return data
+    
+    def load_libsbml_model(modelpath:str) -> libModel:
+        """Load a model with libsbml.
 
-def load_multiple_models(models: list[str], package: Literal['cobra','libsbml']) -> list:
-    """Loads multiple models into a list
+        Args:
+            modelpath (str): Path to the model. Should be xml.
 
-    Args:
-        - models (list): List of paths to models
-        - package (str): cobra|libsbml
+        Returns:
+            libModel: The loaded model object
+        """
 
-    Returns:
-        list: List of model objects loaded with COBRApy|libSBML
-    """
-    loaded_models = []
-    for modelpath in models:
-        if package == 'cobra':
-            loaded_models.append(load_model_cobra(modelpath))
-        elif package == 'libsbml':
-            loaded_models.append(load_model_libsbml(modelpath))
-    return loaded_models
+        reader = SBMLReader()
+        read = reader.readSBMLFromFile(modelpath)  # read from file
+        mod = read.getModel()
+
+        return mod
+
+    match modelpath:
+        # read in multiple models
+        case list():
+
+            loaded_models = []
+            for modelpath in modelpath:
+                if package == 'cobra':
+                    loaded_models.append(load_cobra_model(modelpath))
+                elif package == 'libsbml':
+                    loaded_models.append(load_libsbml_model(modelpath))
+            return loaded_models
+        
+        # read in a single model
+        case str():
+
+                if package == 'cobra':
+                    return load_cobra_model(modelpath)
+                elif package == 'libsbml':
+                    return load_libsbml_model(modelpath)
+
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
@@ -114,196 +130,57 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def write_to_file(model: libModel, new_filename: str):
-    """Writes modified model to new file
+def write_model_to_file(model:libModel|cobra.Model, filename:str):
+    """Save a model into a file.
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - new_filename (str): Filename|Path for modified model
-    """
-    try:
-        new_document = model.getSBMLDocument()
-        writeSBMLToFile(new_document, new_filename)
-        logging.info("Modified model written to " + new_filename)
-    except (OSError) as e:
-        print("Could not write to file. Wrong path?")
+        model (libModel|cobra.Model): The model to be saved
+        filename (str): The filename to save the model to.
 
+    Raises:
+        ValueError: Unknown file extension for model
+        TypeError: Unknown model type
+    """
+
+    # save cobra model
+    if isinstance(model, cobra.core.model.Model):
+        try:
+            extension = os.path.splitext(filename)[1].replace('.','')
+            match extension:
+                case 'xml':
+                    cobra.io.write_sbml_model(model, filename)
+                case 'json':
+                    cobra.io.save_json_model(model, filename)
+                case 'yml':
+                    cobra.io.save_yaml_model(model, filename)
+                case 'mat':
+                    cobra.io.save_matlab_model(model, filename)
+                case _:
+                    raise ValueError('Unknown file extension for model: ', extension)
+            logging.info("Modified model written to " + filename)
+        except (OSError) as e:
+            print("Could not write to file. Wrong path?")
+
+    # save libsbml model
+    elif isinstance(model, libModel):
+        try:
+            new_document = model.getSBMLDocument()
+            writeSBMLToFile(new_document, filename)
+            logging.info("Modified model written to " + filename)
+        except (OSError) as e:
+            print("Could not write to file. Wrong path?")
+    # unknown model type or no model        
+    else:
+        message = f'Unknown model type {type(model)}. Cannot save.'
+        raise TypeError(message)
+    
 
 # media
 # -----
 
-def write_media_to_file(media_file_name: str, media: Union[list[str], str]='all', tsv: bool=True):
-    """ Extracts all user-specified media from the database data.db 
-        & Writes them to a CSV/TSV file
-        Defaults to all media written to a TSV file.
-
-    Args:
-        - media_file_name (str): File name without file extension/Path to file with 
-            file name without file extension
-        - media (Union[list[str], str], optional): String of medium name/
-            List of media names. Defaults to 'all'.
-        - tsv (bool, optional): Specifies if a CSV/TSV file should be returned. 
-            Defaults to True.
-    """
-    # Generate list of pandas dataframes
-    media_dfs = []
-    
-    # Find out if default should be used
-    media = load_a_table_from_database('media')['medium'].to_list() if media == 'all' else media
-    # Turn string input into a list/Sort list of media
-    if isinstance(media, str): media = [media]
-    else: media.sort()
-    # Semi-colon is used for CSV file as ',' can be in substance name
-    file_sep = '\t' if tsv else ';'
-    file_extension = '.tsv' if tsv else '.csv'
-    
-    # Iterate over list to get all media pandas dataframes
-    for medium in media:
-        medium_df = load_medium_from_db(medium)
-        media_dfs.append(medium_df)
-        
-    requested_media = media_dfs[0] if len(media_dfs) == 1 else pd.concat(media_dfs)
-    
-    requested_media.to_csv(f'{media_file_name}{file_extension}', sep=file_sep, 
-                           index=False)
-
-
-def load_custom_media_into_db(mediapath: str) -> pd.DataFrame:
-    """ Helper function to read a medium/media definition(s) from a CSV/TSV file 
-        into the database 'data.db' 
-
-    Args:
-        - mediapath (str): Path to a .csv/.tsv file containing one or more media 
-            definitions
-    """
-    # Get file type from file extension
-    mediapath_filetype = Path(mediapath).suffix
-    
-    # Check if file has valid extension/type & get according separator
-    if mediapath_filetype.lower() == '.csv': seperator = ';'
-    elif mediapath_filetype.lower() == '.tsv': seperator = '\t'
-    else: 
-        logging.error(
-            'Either no valid file type was provided or the extension of the ' 
-            'file is not one of \'.tsv\' or \'.csv\'.'
-            )
-        return
-    
-    custom_media = pd.read_csv(mediapath, sep=seperator)
-    
-    # Get table format for media table in database
-    # Get first column per medium
-    media_info = custom_media.drop_duplicates(subset=['medium'], keep='first')
-    # Get fields required for media table
-    media_info = media_info[['medium', 'medium_description']]
-    
-    # Remove for media_compositions table unnecessary column
-    media_comp = custom_media.drop('medium_description', axis=1)
-    
-    # Connect to database
-    sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
-    engine = sqlalchemy.create_engine(sqlalchemy_engine_input)
-    open_con = engine.connect()
-    
-    # Collect existing media to avoid duplicates
-    existing_media = load_a_table_from_database('media')
-    
-    # Remove duplicated media from the DataFrames:
-    ## 1. Set indeces of the 'media' table from database (existing_media) 
-    ##      & the two dataframes to 'medium'
-    media_info.set_index('medium', inplace=True)
-    existing_media.set_index('medium', inplace=True)
-    media_comp.set_index('medium', inplace=True)
-    ## 2. Keep all entries in media_info where there is not match in the medium 
-    ##      name compared to the existing_media table
-    # Get new media for database
-    media_info = media_info[~media_info.index.isin(existing_media.index)]
-    ## 3. Keep all entries in media_comp that belong to the new media
-    media_comp = media_comp[media_comp.index.isin(media_info.index)].reset_index()
-    # Reset index as only columns are inserted into database
-    media_info.reset_index(inplace=True)
-    
-    # Add new entry/entries for media table first
-    media_info.to_sql('media', con=open_con, if_exists='append', index=False)
-    
-    # Turn medium column into medium_id column
-    media_comp['medium_query'] = media_comp['medium'].apply(
-        lambda x: f'SELECT id from media WHERE medium=\'{x}\''
-        ) # Generate SQL query to retrieve link to medium
-    media_comp['medium_id'] = media_comp['medium_query'].apply(
-        lambda x: open_con.execute(x).scalar()
-        ) # Extract medium_id from media table
-    # Remove for media_compositions table unnecessary columns
-    media_comp.drop(['medium', 'medium_query'], axis=1, inplace=True)
-    
-    # Add new entries for media_compositions table
-    media_comp.to_sql('media_compositions', con=open_con, if_exists='append', 
-                      index=False)
-    
-    # Close connection after insertion
-    open_con.close()
-
-
-def load_medium_from_db(mediumname: str) -> pd.DataFrame:
-    """ Helper function to extract subtable for the requested medium from the 
-        database 'data.db'
-
-    Args:
-        - mediumname (str): Name of medium to test growth on
-
-    Returns:
-        pd.DataFrame: Table containing composition for one medium with metabs added as BiGG_EX exchange reactions
-    """
-    medium_query = (
-        "SELECT * FROM media m JOIN media_compositions mc ON m.id = " 
-        f"mc.medium_id WHERE m.medium = '{mediumname}'"
-    )
-    medium = load_a_table_from_database(medium_query)
-    medium = medium[['medium', 'medium_description', 'BiGG', 'substance']]
-    return medium
-
-
-def load_medium_from_db_for_growth(mediumname: str) -> pd.DataFrame:
-    """ Wrapper function to extract subtable for the requested medium from the 
-        database 'data.db' & Add the columns 'BiGG_R' and 'BiGG_EX'
-
-    Args:
-        - mediumname (str): Name of medium to test growth on
-
-    Returns:
-        pd.DataFrame: Table containing composition for one medium with metabs 
-            added as BiGG_EX exchange reactions
-    """
-    medium = load_medium_from_db(mediumname)
-    medium['BiGG_R'] = 'R_EX_' + medium['BiGG'] + '_e'
-    medium['BiGG_EX'] = 'EX_' + medium['BiGG'] + '_e'
-    return medium
-
-
-def load_all_media_from_db(mediumpath: str) -> pd.DataFrame: 
-    """Helper function to extract media definitions from media_db.csv
-
-    Args:
-        - mediumpath (str): Path to csv file with medium database
-
-    Returns:
-        pd.DataFrame: Table from csv with metabs added as BiGG_EX exchange reactions
-    """
-    media = pd.read_csv(mediumpath, sep=';')
-    media['BiGG_R'] = 'R_EX_' + media['BiGG'] + '_e'
-    media['BiGG_EX'] = 'EX_' + media['BiGG'] + '_e'
-
-    media['group'] = media['medium'].ne(media['medium'].shift()).cumsum()
-    grouped = media.groupby('group')
-    media_dfs = []
-    for name, data in grouped:
-        media_dfs.append(data.reset_index(drop=True))
-    return media_dfs
-
-
 # other
 # -----
-# @TODO: sort more
+# @TODO: sort more, make it more readable
 
 def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_name: str='metab') -> pd.DataFrame:
     """Loads metabolite sheet from manual curation table
@@ -380,7 +257,7 @@ def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
     return df
 
 
-def write_report(dataframe: pd.DataFrame, filepath: str):
+def write_df_to_xlsx(dataframe: pd.DataFrame, filepath: str):
     """Writes reports stored in dataframes to xlsx file
 
     Args:

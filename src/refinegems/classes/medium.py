@@ -11,7 +11,7 @@ from typing import Literal, Union, Any
 import random
 import string
 from sqlite_dump import iterdump
-from .databases import PATH_TO_DB, PATH_TO_DB_FOLDER
+from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
 from colorama import init as colorama_init
 from colorama import Fore
 

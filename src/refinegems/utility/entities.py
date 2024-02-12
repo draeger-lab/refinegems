@@ -5,8 +5,8 @@ import pandas as pd
 from Bio import Entrez
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, Reaction
-from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
-from refinegems.io import search_ncbi_for_gpr
+from refinegems.utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
+from .io import search_ncbi_for_gpr
 from typing import Union
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
@@ -76,6 +76,42 @@ def resolve_compartment_names(model:cobra.Model):
 
         else:
             raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Cannot resolve problem.')
+
+
+# handling cobra entities
+# -----------------------
+        
+def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
+    """Parses a reaction equation string to dictionary 
+
+    Args:
+        - eq (str): Equation of a reaction
+        - model (cobra.Model): Model loaded with COBRApy
+        
+    Returns:
+       dict: Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
+    """
+    # from Alina Renz
+    eq = eq.split(' ')
+    eq_matrix={}
+    are_products = False
+    coeff = 1
+    for i,part in enumerate(eq):
+        if part == '-->':
+            are_products = True
+            continue          
+        if part == '+':
+            continue
+        if part == '2':
+            coeff = 2
+            continue
+        if are_products:
+            eq_matrix[model.metabolites.get_by_id(part)] = 1*coeff
+            coeff = 1
+        else:
+            eq_matrix[model.metabolites.get_by_id(part)] = -1*coeff
+            coeff = 1
+    return eq_matrix
 
 
 # extracting reactions & Co via libsbml

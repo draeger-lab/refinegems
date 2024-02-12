@@ -22,6 +22,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Literal
 
+from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_num_reac_with_gpr
+
 ################################################################################
 # variables
 ################################################################################
@@ -938,4 +940,84 @@ class CorePanAnalysisReport(Report):
         reac_tab = pd.DataFrame({'reaction_id': self.core_reac + self.pan_reac + self.novel_reac,
                                 'pan-core': (['core']*len(self.core_reac)) + (['pan']*len(self.pan_reac)) + (['core']*len(self.novel_reac))})
         reac_tab.to_csv(F'{dir}pan-core-analysis/table_reactions.tsv', sep='\t', index=False)
+
+
+# @TODO
+class ModelInfoReport(Report):
+    
+    def __init__(self, model) -> None:
+        
+        # cobra version
+        # basics
+        self.name = model.id
+        self.reac = len(model.reactions)
+        self.meta = len(model.metabolites)
+        self.gene = len(model.genes)
+        # ends
+        meta_ordedi = get_orphans_deadends_disconnected(model)
+        self.orphans = meta_ordedi[0]
+        self.deadends = meta_ordedi[1]
+        self.disconnects = meta_ordedi[2]
+        # balance
+        mass_charge = get_mass_charge_unbalanced(model)
+        self.mass_unbalanced = mass_charge[0]
+        self.charge_unbalanced = mass_charge[1]
+        # gpr
+        self.with_gpr = get_num_reac_with_gpr(model)
+
+    def format_table(self, all_counts=True) -> pd.DataFrame:
+
+        data = {'model': [self.name],
+                '#reactions': [self.reac],
+                '#metabolites': [self.meta],
+                '#genes': [self.gene],
+                'orphans': [', '.join(self.orphans)] if not all_counts else [len(self.orphans)],
+                'dead-ends': [', '.join(self.deadends)] if not all_counts else [len(self.deadends)],
+                'disconnects': [', '.join(self.disconnects)] if not all_counts else [len(self.disconnects)],
+                'mass unbalanced': [', '.join(self.mass_unbalanced)] if not all_counts else [len(self.mass_unbalanced)],
+                'charge unbalanced': [', '.join(self.charge_unbalanced)] if not all_counts else [len(self.charge_unbalanced)],
+                '#reactions with gpr': [self.with_gpr]
+                } 
+        return pd.DataFrame(data)
+
+    # @TODO
+    def make_html():
+        pass
+
+    # @TODO
+    def save(self, dir:str) -> None:
+
+        # make sure given directory path ends with '/'
+        if not dir.endswith('/'):
+            dir = dir + '/'
+
+        # save the statistics report
+        # ..........................
+        # @TODO: save as what?
+        # ..........................
+
+
+# @TODO
+class MultiModelInfoReport(Report):
+
+    def __init__(self) -> None:
+        # super().__init__()
+        self.table = pd.DataFrame('model','#reactions','#metabolites',
+                '#genes','orphans','dead-ends','disconnects','mass unbalanced',
+                'charge unbalanced','#reactions with gpr')
+        
+
+    def add_single_report(self, report:ModelInfoReport) -> None:
+        self.table = pd.concat([self.table,report], ignore_index=True)
+
+    def __add__(self,other):
+        self.table = pd.concat(self.table, other.table)
+
+    # @TODO
+    def visualise(self):
+        pass
+
+    # @TODO
+    def save(self):
+        pass
 

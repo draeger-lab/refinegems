@@ -9,7 +9,7 @@ import cobra
 import logging
 from cobra import Reaction
 from cobra import Model as cobraModel
-from refinegems.io import load_model_libsbml
+from refinegems.utility.io import load_model
 from six import iteritems
 import memote.support.helpers as helpers
 from memote.utils import truncate
@@ -186,7 +186,7 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
                     logging.info(f'For reaction \'{bm_rxn}\' the coefficients changed.')
                 
         cobra.io.write_sbml_model(model, f'../{model.id}_tmp.xml')
-        model = load_model_libsbml(f'../{model.id}_tmp.xml')
+        model = load_model(f'../{model.id}_tmp.xml','libsbml')
         os.remove(f'../{model.id}_tmp.xml')
             
         return model

@@ -9,13 +9,12 @@
         * 'KEGG+BioCyc': ~ 3 - 4h  
 """
 import ast
-import math
 from libsbml import Model as libModel
-import refinegems.analysis_kegg as rga_kegg
-import refinegems.analysis_biocyc as rga_biocyc
-from refinegems.curate import update_annotations_from_others
-from refinegems.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
-from refinegems.entities import create_gp, create_species, create_reaction
+import refinegems.curation.db_access.kegg as rga_kegg
+import refinegems.curation.db_access.biocyc as rga_biocyc
+from .curate import update_annotations_from_others
+from ..utility.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
+from ..utility.entities import create_gp, create_species, create_reaction
 import pandas as pd
 import numpy as np
 from typing import Union

@@ -2,27 +2,27 @@
 """ Provides functions to simulate growth on any medium and other functionalities replated to growth.
 """
 
+__author__ = "Famke Baeuerle and Carolin Brune"
+
+############################################################################
+# requirements
+############################################################################
+
 import cobra
 import logging
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import re
-import seaborn as sns
 import warnings
 import yaml
 
 import refinegems as rg
 
 from cobra import Model as cobraModel
-from refinegems.io import load_multiple_models, load_model_cobra
-from refinegems import medium
-from refinegems import reports
+from ..utility.io import load_model
+from ..classes import medium, reports
 from typing import Literal
-
-
-__author__ = "Famke Baeuerle and Carolin Brune"
 
 ############################################################################
 # functions
@@ -514,7 +514,7 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
             if len(models) > 0:
                 # if list entries are paths
                 if all(isinstance(_, str) for _ in models):
-                    mod_list = load_multiple_models(models, package='cobra')
+                    mod_list = load_model(models, package='cobra')
                 # if list entries are already cobra.Models
                 elif all(isinstance(_, cobra.Model) for _ in models):
                     mod_list = models
@@ -529,7 +529,7 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
             mod_list = [models]
         # single string as input
         case str():
-            mod = load_model_cobra(models)
+            mod = load_model(models,'cobra')
             mod_list = [mod]
         # unknown input
         case _:
@@ -760,7 +760,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
 # @TODO : set new default for substances - ideally a subset or so
 # @TODO : more namespace options, currently only BiGG available
 # @TODO
-def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|rg.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.reports.SourceTestReport:
+def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|rg.classes.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.classes.reports.SourceTestReport:
     """Test the growth of a model when switching out the source of a given chemical element for
     a set medium.
 
@@ -777,19 +777,19 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
             The chosen medium ideally should have all other necessary elements needed for the model
             to grow.
             Defaults to None.
-        namespace (Literal[&#39;BiGG&#39;], optional): The namespace to work on. 
+        namespace (Literal['BiGG'], optional): The namespace to work on. 
             Defaults to 'BiGG'.
 
     Raises:
         KeyError: No growth function in model. Please add one beforehand.
 
     Returns:
-        rg.reports.SourceTestReport: A report object with the results.
+        rg.classes.reports.SourceTestReport: A report object with the results.
     """
     
     # validate input
     # model is required to have a growth function
-    growth_funcs = rg.biomass.test_biomass_presence(model)
+    growth_funcs = rg.curation.biomass.test_biomass_presence(model)
     if growth_funcs:
         if any(_ in str(model.objective.expression) for _ in growth_funcs):
             pass
@@ -802,11 +802,11 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
     # get the starting medium
     match medium:
         case str():
-            current_medium = rg.medium.load_medium_from_db(medium)
-        case rg.medium.Medium():
+            current_medium = rg.classes.medium.load_medium_from_db(medium)
+        case rg.classes.medium.Medium():
             current_medium = medium
         case _:
-            current_medium = rg.medium.read_from_cobra_model(model)
+            current_medium = rg.classes.medium.read_from_cobra_model(model)
 
     # save old medium settings
     origin_medium = model.medium
@@ -817,7 +817,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # case 1: 
         # take a given subset from the database
         case str():
-            temp_medium = rg.medium.Medium('temp', pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']))
+            temp_medium = rg.classes.medium.Medium('temp', pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']))
             temp_medium.add_subset(substances)
             source_list = temp_medium.substance_table['name'].to_list()
 
@@ -831,7 +831,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # download all possible options - may take some time
         case _:
             # get complete table
-            substances = rg.io.load_a_table_from_database('substance', query=False)
+            substances = rg.utility.io.load_a_table_from_database('substance', query=False)
             # regex to find substances with element - element letter code NOT followed by ANY small letter
             element_regex = element + r'(?![a-z])' 
             substances_mask = substances['formula'].str.contains(element_regex)
@@ -845,12 +845,12 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # set new source
         current_medium.set_source(element,s)
         # add medium to model
-        rg.medium.medium_to_model(model, current_medium, namespace=namespace, add=True)
+        rg.classes.medium.medium_to_model(model, current_medium, namespace=namespace, add=True)
         # simulate growth
         growth_value = model.optimize().objective_value
         results.append({'substance':s, 'growth value':growth_value})
 
-    results = rg.reports.SourceTestReport(pd.DataFrame(results), element, model.id)
+    results = rg.classes.reports.SourceTestReport(pd.DataFrame(results), element, model.id)
 
     # set original medium for model
     model.medium = origin_medium

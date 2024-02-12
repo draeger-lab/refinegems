@@ -9,13 +9,11 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 import re
 import requests
 import sqlite3
-import sqlalchemy
 import pandas as pd
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 import numpy as np
-from refinegems.io import load_a_table_from_database
-from refinegems.databases import PATH_TO_DB
-from typing import Literal
+from refinegems.utility.io import load_a_table_from_database
+from refinegems.utility.databases import PATH_TO_DB
 from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
 from multiprocessing import Pool

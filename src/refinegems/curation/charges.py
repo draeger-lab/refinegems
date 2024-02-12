@@ -8,7 +8,7 @@ It is possible to use the correct_charges_from_db function with other databases.
 
 import pandas as pd
 from libsbml import Model as libModel
-from refinegems.modelseed import get_modelseed_compounds
+from .db_access.modelseed import get_modelseed_compounds
 
 __author__ = "Famke Baeuerle"
 

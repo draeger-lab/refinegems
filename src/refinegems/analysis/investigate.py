@@ -4,24 +4,30 @@
 These functions enable simple testing of any model using MEMOTE and access to its number of reactions, metabolites and genes.
 """
 
-__author__ = "Famke Baeuerle and Alina Renz"
+__author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 
 ################################################################################
 # requirements
 ################################################################################
 
-import os
 import memote
 import json
 import pandas as pd
 import numpy as np
+import cobra
+import time
+
 from cobra import Reaction
 from libsbml import Model as libModel
 from cobra import Model as cobraModel
+from typing import Literal
+
 from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
-from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
+
+from ..utility.io import search_sbo_label
+from ..utility.entities import reaction_equation_to_dict
 
 ################################################################################
 # variables
@@ -51,34 +57,66 @@ DISSIPATION_RXNS = {
 
 # investigate with memote
 # -----------------------
-# @IDEA
-#    see CB_under_construction in dev
 
-def run_memote_sys(model: cobraModel):
-    """Run MEMOTE on the local linux machine
-
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-    """
-    cmd = 'memote report snapshot ' + str(model)
-    os.system(cmd)
-
-
-def run_memote(model: cobraModel) -> dict:
-    """Runs MEMOTE to obtain report as dict
+def run_memote(model: cobra.Model, type:Literal['json','html']='html', 
+               return_res:bool=False, save_res:str|None=None, verbose:bool=False) -> dict|str|None:
+    """Run the memote snapshot function on a given model loaded with COBRApy.
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
+        model (cobra.Model): The model loaded with COBRApy.
+        type (Literal['json','html'], optional): Type of report to produce. 
+            Can be 'html' or 'json'. 
+            Defaults to 'html'.
+        return_res (bool, optional): Option to return the result. 
+            Defaults to False.
+        save_res (str | None, optional): If given a path string, saves the report
+            under the given path. Defaults to None.
+        verbose (bool, optional): Produce a more verbose ouput. 
+            Defaults to False.
+
+    Raises:
+        ValueError: Unknown input for parameter type
 
     Returns:
-        dict: MEMOTE report as json in dict format
+        dict|str|None: The json dictionary, the html string or none.
     """
+
+    # verbose output I
+    if verbose:
+        print('\n# -------------------\n# Analyse with MEMOTE\n# -------------------')
+        start = time.time()
+
+    # run memote
     ret, res = memote.suite.api.test_model(model, sbml_version=None, results=True,
                                            pytest_args=None, exclusive=None, skip=None, 
                                            experimental=None, solver_timeout=10)
-    snap = memote.suite.api.snapshot_report(res, html=False)
-    result = json.loads(snap)
-    return result
+    
+    # load depending on type 
+    match type:
+        case 'html':
+            snap = memote.suite.api.snapshot_report(res, html=True)
+            result = snap
+        case 'json':
+            snap = memote.suite.api.snapshot_report(res, html=False)
+            result = json.loads(snap)
+        case _:
+            message = f'Unknown input for parameter type: {type} '
+            raise ValueError(message)
+        
+    # option to save report
+    if save_res:
+        with open(save_res, 'w') as f:
+            f.write(result)
+
+    # verbose output II
+    if verbose:
+        end = time.time()
+        print(F'\ttotal time: {end - start}s')
+
+    # option to return report
+    if return_res:
+        return result
+    
 
 def get_memote_score(memote_report: dict) -> float:
     """Extracts MEMOTE score from report
@@ -94,27 +132,25 @@ def get_memote_score(memote_report: dict) -> float:
 
 # get basic model info
 # --------------------
-# @IDEA
-#    see CB_under_construction in dev
 
-def initial_analysis(model: libModel) -> tuple[str, int, int, int]:
-    """Extracts most important numbers of GEM
+def get_num_reac_with_gpr(model:cobra.Model) -> int:
+    """Extract the number of reactions that have a gene production rule
+    from a given model.
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        model (cobra.Model): The model loaded with COBRApy.
 
     Returns:
-        tuple: Model name (1) & corresponding amounts of entities (2) - (4)
-            (1) str: Name of model
-            (2) int: Number of reactions 
-            (3) int: Number of metabolites
-            (4) int: Number of genes
+        int: The number of reactions with a GPR.
     """
-    name = model.getId()
-    reactions = model.getNumReactions()
-    metabolites = model.getNumSpecies()
-    genes = len(model.getPlugin(0).getListOfGeneProducts())
-    return name, reactions, metabolites, genes
+
+    reac_with_gpr = 0
+    for reac in model.reactions:
+        # check for GPR
+        if len(reac.genes) > 0:
+            reac_with_gpr += 1
+
+    return reac_with_gpr
 
 
 def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], list[str], list[str]]:
@@ -151,6 +187,7 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
     return orphan_list, deadend_list, disconnected_list
 
 
+# @TODO: what about exchange reactions not starting with an EX - as usually the case within the BiGG namespace? 
 def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]:
     """Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition
 
@@ -183,78 +220,8 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
     return mass_list, charge_list
 
 
-def get_model_info(modelpath: str) -> pd.DataFrame:
-    """Reports core information of given model
-
-    Args:
-        - modelpath (str): Path to model file
-
-    Returns:
-        pd.DataFrame: Overview on model parameters
-    """
-    model_libsbml = load_model_libsbml(modelpath)
-    model_cobra = load_model_cobra(modelpath)
-    name, reac, metab, genes = initial_analysis(model_libsbml)
-    orphans, deadends, disconnected = get_orphans_deadends_disconnected(
-        model_cobra)
-    mass_unbal, charge_unbal = get_mass_charge_unbalanced(model_cobra)
-    model_info = pd.DataFrame([name,
-                               reac,
-                               metab,
-                               genes,
-                               orphans,
-                               deadends,
-                               disconnected,
-                               mass_unbal,
-                               charge_unbal],
-                              ['model',
-                               '#reactions',
-                               '#metabolites',
-                               '#genes',
-                               'orphans',
-                               'deadends',
-                               'disconnected',
-                               'mass unbalanced',
-                               'charge unbalanced']).T
-
-    return model_info
-
-
 # other
 # -----
-
-def parse_reaction(eq: str, model: cobraModel) -> dict:
-    """Parses a reaction equation string to dictionary 
-
-    Args:
-        - eq (str): Equation of a reaction
-        - model (cobraModel): Model loaded with COBRApy
-        
-    Returns:
-       dict: Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
-    """
-    # from Alina Renz
-    eq = eq.split(' ')
-    eq_matrix={}
-    are_products = False
-    coeff = 1
-    for i,part in enumerate(eq):
-        if part == '-->':
-            are_products = True
-            continue          
-        if part == '+':
-            continue
-        if part == '2':
-            coeff = 2
-            continue
-        if are_products:
-            eq_matrix[model.metabolites.get_by_id(part)] = 1*coeff
-            coeff = 1
-        else:
-            eq_matrix[model.metabolites.get_by_id(part)] = -1*coeff
-            coeff = 1
-    return eq_matrix
-
 
 def get_egc(model: cobraModel) -> pd.DataFrame:
     """Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)
@@ -271,7 +238,7 @@ def get_egc(model: cobraModel) -> pd.DataFrame:
     # add dissipation reactions
         for i, row in dissipation_rxns.iterrows():
             try:
-                met_atp = parse_reaction(row['equation'], model)
+                met_atp = reaction_equation_to_dict(row['equation'], model)
                 rxn = Reaction(row['type'])
                 rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
                 rxn.add_metabolites(met_atp)

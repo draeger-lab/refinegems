@@ -7,8 +7,8 @@ from tqdm.auto import tqdm
 from libsbml import SBMLReader, GroupsExtension
 from libsbml import Model as libModel
 from bioservices import KEGG
-from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
-from refinegems.reports import KEGGPathwayAnalysisReport
+from refinegems.utility.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
+from refinegems.classes.reports import KEGGPathwayAnalysisReport
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 

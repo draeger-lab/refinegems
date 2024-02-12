@@ -4,6 +4,13 @@
 Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.
 """
 
+
+__author__ = "Famke Baeuerle"
+
+################################################################################
+# requirements
+################################################################################
+
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
@@ -13,33 +20,13 @@ from tqdm import tqdm
 from venn import venn
 from libsbml import Model as libModel
 from cobra import Model as cobraModel
-from refinegems.io import search_sbo_label
-from refinegems.investigate import initial_analysis, get_reactions_per_sbo
 
-__author__ = "Famke Baeuerle"
+from ..utility.io import search_sbo_label
+from ..analysis.investigate import get_reactions_per_sbo
 
-def plot_initial_analysis(models: list[libModel]):
-    """Creates bar plot of number of entities per Model
-
-    Args:
-        - models (list[libModel]): Models loaded with libSBML
-
-    Returns:
-        plot: Pandas Barchart
-    """
-    numbers = pd.DataFrame([initial_analysis(model) for model in models], columns=['model', 'metabolites', 'reactions', 'genes'])
-    ax = numbers.set_index('model').plot.bar(y=['metabolites', 'reactions', 'genes'], figsize=(8, 5), cmap='Paired', rot=0)
-    # commented is possibility to integrate memote scores
-    #numbers.set_index('model').plot(y='Memote score', ax=ax, use_index=False, linestyle=':', secondary_y='Memote score', color='k', marker='D', legend=True)
-    #ax.right_ax.set_ylabel('Memote score [%]')
-    #ax.right_ax.legend(loc='upper right', bbox_to_anchor=[0.98, 0.9])
-    #ax.right_ax.set_ylim([75, 95])
-    ax.legend(title=False, loc='upper left', ncol=3, frameon=False)
-    ylim = numbers.drop('model', axis=1).max().max() + 200
-    ax.set_ylim([0,ylim])
-    ax.set_xlabel('')
-    ax.tick_params(axis='x',which='both', bottom=False,top=False)
-    return ax
+################################################################################
+# functions
+################################################################################
 
 def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
     """Determines number of reactions per SBO Term and adds label of SBO Terms

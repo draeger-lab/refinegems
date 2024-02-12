@@ -15,8 +15,8 @@ from Bio import Entrez
 from tqdm.auto import tqdm
 from functools import reduce
 from sortedcontainers import SortedDict, SortedSet
-from refinegems.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from refinegems.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
+from refinegems.utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
+from refinegems.utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
