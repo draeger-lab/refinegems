@@ -147,6 +147,8 @@ class GrowthSimulationReport(Report):
         return pd.DataFrame(l)
     
 
+    # @TODO
+    # @NOTE: clean up for unrealistically high and minicules values to 0 - anyone a better idea?  
     def plot_growth(self, unit:Literal['h','dt']='dt', color_palette:str='YlGn') -> matplotlib.figure.Figure:
         """Visualise the contents of the report.
 
@@ -191,10 +193,15 @@ class GrowthSimulationReport(Report):
             fig = plt.figure()
             ax = fig.add_axes([0,0,1,1])
 
+            # clean-up data
+            # @TODO / @NOTE
+            ydata = [_ if _ > 0.0 else 0.0 for _ in ydata]
+            ydata = [_ if _ < 1000.0 else 0.0 for _ in ydata]
+
             # construct the plot
             max_ydata = max(ydata)
             if max_ydata <= 0:
-                warnings.warn('Model is not able to grow on every medium. Returning empty figure.')
+                warnings.warn('Model is not able to grow sensible on any medium. Returning empty figure.')
                 return fig
             cont = ax.bar(list(xdata), ydata, color=cmap([_/max_ydata for _ in ydata]))
 
@@ -302,6 +309,19 @@ class GrowthSimulationReport(Report):
             ydata = [_.growth_value if unit=='h' else _.doubling_time for _ in self.reports]
             ylab = unit_text
             title = f'Growth simulation for {next(iter(self.models))} on different media'
+
+            # plot
+            return plot_growth_bar(xdata,xlab,ydata,ylab,title, color_palette)
+        
+        # one medium, one model case - just to make it usable for all inputs
+        elif len(self.models) == 1 and len(self.media) == 1:
+
+            # collect data
+            xdata = [_.medium_name for _ in self.reports]
+            xlab = 'medium'
+            ydata = [_.growth_value if unit=='h' else _.doubling_time for _ in self.reports]
+            ylab = unit_text
+            title = f'Growth simulation for {next(iter(self.models))} on medium {xdata[0]}'
 
             # plot
             return plot_growth_bar(xdata,xlab,ydata,ylab,title, color_palette)

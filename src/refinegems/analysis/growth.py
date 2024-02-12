@@ -342,7 +342,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
     if type(media) != list:
         media = [media]
     if type(supplement_modes) != list:
-        supplement_modes = [supplement_modes * len(media)]
+        supplement_modes = [supplement_modes] * len(media)
 
     # simulate the growth of the models on the different media
     report = reports.GrowthSimulationReport()
