@@ -12,6 +12,7 @@ import copy
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gspec
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -964,6 +965,22 @@ class CorePanAnalysisReport(Report):
 
 # @TODO
 class ModelInfoReport(Report):
+    """Report about the basic information of a given model.
+
+    Note: currently requires the input model to be a COBRApy model object.
+
+    Attributes:
+        name: A string for the name of the model.
+        reac: An int that describes the number of reactions in the model.
+        meta: An int that describes the number of metabolites in the model.
+        gene: An int that describes the numver of genes in the model.
+        orphans: List of metabolite IDs that are considered orphans.
+        deadends: List of metabolite IDs that are considered dead-ends.
+        disconnects: List of metabolites that are disconnected in the model.
+        mass_unbalanced: List of reaction IDs that are unbalanced regarding their mass.
+        charge_unbalanced: List of reactions IDs that are unbalanced regarding their charges.
+        with_gpr: Integer describing the number of reactions that have a gene production rule.
+    """
     
     def __init__(self, model) -> None:
         
@@ -986,6 +1003,16 @@ class ModelInfoReport(Report):
         self.with_gpr = get_num_reac_with_gpr(model)
 
     def format_table(self, all_counts=True) -> pd.DataFrame:
+        """Put the information of the report into a pandas DataFrame table.
+
+        Args:
+            all_counts (bool, optional): Option to save the list of e.g. reactions
+                as such or to convert them into counts when set to True. 
+                Defaults to True.
+
+        Returns:
+            pd.DataFrame: The data in table format
+        """
 
         data = {'model': [self.name],
                 '#reactions': [self.reac],
@@ -1004,17 +1031,125 @@ class ModelInfoReport(Report):
     def make_html():
         pass
 
-    # @TODO
-    def save(self, dir:str) -> None:
+    def visualise(self, color_palette:str='YlGn') -> matplotlib.figure.Figure:
+        """Visualise the basic information of the report.
+
+        NOTE: currently, the unbalance (mass/charge) reactions have no visualisation.
+              If anyone has ideas for that, feel free to share them.
+
+        Args:
+            color_palette (str, optional): Colour palette to use for the plots. 
+                Defaults to 'YlGn'.
+
+        Returns:
+            matplotlib.figure.Figure: The visualisation as a single figure.
+        """
+
+        # basic settings
+        # --------------
+
+        # create colour gradient
+        try:
+            cmap = matplotlib.colormaps[color_palette]
+        except ValueError:
+            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            cmap = matplotlib.colormaps['YlGn']
+
+        # set up the figure
+        fig = plt.figure()
+        fig.suptitle(f'Basic information for model {self.name}', fontsize=16)
+        grid = gspec.GridSpec(2,2, height_ratios=[2,1], hspace=0.4)
+
+        # 1: plot reacs, metabs and gene counts
+        # -------------------------------------
+
+        ax1 = fig.add_subplot(grid[0,0])
+        p = ax1.bar(['reactions','metabolites','genes'],
+            [self.reac,self.meta,self.gene],
+            color=[cmap(0.25),cmap(0.5),cmap(0.8)]
+            # edgecolor='black',
+            )
+        ax1.bar_label(p, [self.reac,self.meta,self.gene])
+        ax1.set_ylabel('count')
+        ax1.tick_params(axis='both', which='major', labelsize=9)
+        ax1.set_title('A) Overview')
+        ax1.set_ylim(top=ax1.get_ylim()[1] + ax1.get_ylim()[1]*0.05)
+        # ax1.set_xlabel('model entity')
+
+        # 2: plot reacs with gpr
+        # ----------------------
+
+        ax3 = fig.add_subplot(grid[1,:])
+        stacked_bars = {'with gpr': np.array([self.with_gpr]),
+                        'no gpr': ([self.reac - self.with_gpr])}
+        bottom = np.zeros(1)
+
+        c = 0.3
+
+        for label,count in stacked_bars.items():
+            p = ax3.barh(['reactions'],count,
+                        label=label, left=0.0,
+                        color=[cmap(c)])
+            ax3.bar_label(p, count, rotation=270)
+            bottom += count
+            c += 0.5
+
+        ax3.set_xlabel('count')
+        ax3.set_ylabel('reactions')
+        ax3.set_title('C) Reactions')
+        ax3.tick_params(left = False,labelleft = False ,
+                                labelbottom = False, bottom = False)
+        ax3.legend(bbox_to_anchor=(0.75, 0, 0.5, 1), loc="upper right")
+
+        # 3: plot deadends, orhphans etc. for metabs
+        # ------------------------------------------
+        ax2 = fig.add_subplot(grid[0,1])
+        pie_data = [len(self.deadends), len(self.orphans), len(self.disconnects)]
+        pie_data.append(self.meta - sum(pie_data))
+
+        pie_label = ['dead-ends','orphans','disconnects','rest']
+
+        def func(pct, allvals):
+            absolute = int(np.round(pct/100.*np.sum(allvals)))
+            return f"{pct:.1f}% ({absolute:d})"
+
+        wedges, texts, autotexts  = ax2.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
+            explode = [0.1, 0.1, 0.1, 0], wedgeprops=dict(width=0.4), 
+            colors=[cmap(0.2),cmap(0.6), cmap(0.8), cmap(0.4)])
+
+        ax2.legend(wedges, pie_label,
+                title="Metabolites",
+                loc="upper left",
+                bbox_to_anchor=(1, 0, 0.5, 1)
+                )
+
+        ax2.set_title('B) Metabolites')
+
+        plt.setp(autotexts, size=8)
+
+        return fig
+
+
+    # @TODO: match case for different output?
+    #        -> only needed when html options available
+    def save(self, dir:str, color_palette:str='YlGn') -> None:
+        """Save the report.
+
+        Args:
+            dir (str): Directory to save the report to.
+            color_palette (str, optional): Colour palette of matplotlib to plot
+                figures in. Defaults to 'YlGn'.
+        """
 
         # make sure given directory path ends with '/'
         if not dir.endswith('/'):
             dir = dir + '/'
 
         # save the statistics report
-        # ..........................
-        # @TODO: save as what?
-        # ..........................
+        self.format_table().to_csv(f'{dir}{self.name}_report.csv',sep=';')
+        # save the visualisation
+        fig = self.visualise(color_palette)
+        fig.savefig(dir+'source_test_hm.png', bbox_inches='tight', dpi=400)
 
 
 # @TODO
