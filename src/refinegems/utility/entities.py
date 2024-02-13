@@ -5,7 +5,7 @@ import pandas as pd
 from Bio import Entrez
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, Reaction
-from refinegems.utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
+from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from .io import search_ncbi_for_gpr
 from typing import Union
 

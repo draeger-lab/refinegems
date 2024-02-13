@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 import libchebipy
 import requests
-from refinegems.utility.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
+from ...utility.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
 from .db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
-from refinegems.utility.io import parse_fasta_headers
+from ...utility.io import parse_fasta_headers
 import os
 
 __author__ = "Gwendolyn O. Döbel and Dr. Reihaneh Mostolizadeh"

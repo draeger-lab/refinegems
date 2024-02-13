@@ -9,7 +9,7 @@ import cobra
 import logging
 from cobra import Reaction
 from cobra import Model as cobraModel
-from refinegems.utility.io import load_model
+from ..utility.io import load_model
 from six import iteritems
 import memote.support.helpers as helpers
 from memote.utils import truncate

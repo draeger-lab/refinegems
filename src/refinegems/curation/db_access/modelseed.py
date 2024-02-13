@@ -6,7 +6,7 @@ Extracts ModelSEED data from a given tsv file, extracts all metabolites from a g
 import pandas as pd
 import re
 import numpy as np
-from refinegems.utility.io import load_a_table_from_database
+from ...utility.io import load_a_table_from_database
 from cobra import Model as cobraModel
 
 __author__ = "Famke Baeuerle and Jan-Philipp Leusch"

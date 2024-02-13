@@ -15,8 +15,8 @@ from bioservices.kegg import KEGG
 import io
 import re
 from libsbml import Model as libModel
-from refinegems.utility.io import parse_gff_for_gp_info
-from refinegems.utility.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
+from ...utility.io import parse_gff_for_gp_info
+from ...utility.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
 from .db import get_bigg_db_mapping, compare_bigg_model
 
 __author__ = "Famke Baeuerle"

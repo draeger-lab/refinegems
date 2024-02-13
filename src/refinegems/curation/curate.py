@@ -6,8 +6,8 @@ While working on GEMs the user might come across ill-annotated or missing metabo
 import pandas as pd
 from tqdm.auto import tqdm
 from libsbml import Model as libModel
-from refinegems.utility.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
-from refinegems.utility.entities import create_gpr_from_locus_tag, create_reaction
+from ..utility.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
+from ..utility.entities import create_gpr_from_locus_tag, create_reaction
 
 __author__ = "Famke Baeuerle"
     

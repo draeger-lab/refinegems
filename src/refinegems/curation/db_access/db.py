@@ -12,8 +12,8 @@ import sqlite3
 import pandas as pd
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 import numpy as np
-from refinegems.utility.io import load_a_table_from_database
-from refinegems.utility.databases import PATH_TO_DB
+from ...utility.io import load_a_table_from_database
+from ...utility.databases import PATH_TO_DB
 from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
 from multiprocessing import Pool
