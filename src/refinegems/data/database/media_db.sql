@@ -55,14 +55,13 @@ INSERT INTO "medium2substance" VALUES(5,87,NULL,'Cyanocobalamin (Vitamin B12)');
 INSERT INTO "medium2substance" VALUES(5,88,NULL,'Cyanocobalamin (Vitamin B12)');
 INSERT INTO "medium2substance" VALUES(5,285,NULL,'Cyanocobalamin (Vitamin B12)');
 INSERT INTO "medium2substance" VALUES(5,240,NULL,'Niacin (Vitamin PP)');
-INSERT INTO "medium2substance" VALUES(5,251,NULL,'Sodium');
+INSERT INTO "medium2substance" VALUES(5,251,NULL,'Sodium, Selenium');
 INSERT INTO "medium2substance" VALUES(5,81,NULL,'Chloride');
 INSERT INTO "medium2substance" VALUES(5,258,NULL,'Sulfate');
 INSERT INTO "medium2substance" VALUES(5,235,NULL,'Potassium');
 INSERT INTO "medium2substance" VALUES(5,232,NULL,'Phosphorus (phosphate)');
 INSERT INTO "medium2substance" VALUES(5,75,NULL,'Calcium pantothenate (Vitamin B5), Calcium');
 INSERT INTO "medium2substance" VALUES(5,201,NULL,'Magnesium');
-INSERT INTO "medium2substance" VALUES(5,249,NULL,'Selenium');
 INSERT INTO "medium2substance" VALUES(5,289,NULL,'Zinc');
 INSERT INTO "medium2substance" VALUES(5,62,NULL,'Arsenic');
 INSERT INTO "medium2substance" VALUES(5,72,NULL,'Cadmium');
@@ -632,6 +631,10 @@ INSERT INTO "medium2substance" VALUES(11,270,NULL,'Thiamine HCl');
 INSERT INTO "medium2substance" VALUES(11,66,NULL,'Biotin');
 INSERT INTO "medium2substance" VALUES(11,240,NULL,'Nicotinic acid');
 INSERT INTO "medium2substance" VALUES(11,25,NULL,'Calcium pantothenate');
+INSERT INTO "medium2substance" VALUES(5,314,NULL,'Selenium');
+INSERT INTO "medium2substance" VALUES(5,315,NULL,'Selenium');
+INSERT INTO "medium2substance" VALUES(5,316,NULL,'Selenium');
+INSERT INTO "medium2substance" VALUES(5,248,NULL,'Selenium');
 
 
 CREATE TABLE IF NOT EXISTS "subset" (
@@ -976,8 +979,7 @@ INSERT INTO "substance" VALUES(244,'Retinoyl glucuronide','C26H35O8');
 INSERT INTO "substance" VALUES(245,'Ribitol','C5H12O5');
 INSERT INTO "substance" VALUES(246,'Riboflavin','C17H20N4O6');
 INSERT INTO "substance" VALUES(247,'Sarcosine','C3H7NO2');
-INSERT INTO "substance" VALUES(248,'Selenite','O3Se');
-INSERT INTO "substance" VALUES(249,'Selenium(II) cation [Se(2+)]','Se');
+INSERT INTO "substance" VALUES(248,'Selenite [SeO3 (2-)]','O3Se');
 INSERT INTO "substance" VALUES(250,'Serotonin','C10H12N2O');
 INSERT INTO "substance" VALUES(251,'Sodium(I) cation [Na(+)]','Na');
 INSERT INTO "substance" VALUES(252,'Spermidine','C7H19N3');
@@ -1041,6 +1043,9 @@ INSERT INTO "substance" VALUES(309,'Squalene','C30H50');
 INSERT INTO "substance" VALUES(310,'Cholesteryl oleate','C45H78O2');
 INSERT INTO "substance" VALUES(311,'Hexadecyl palmitate','C32H64O2');
 INSERT INTO "substance" VALUES(312,'(11Z)-icos-11-enoate [Gondoate]','C20H37O2');
+INSERT INTO "substance" VALUES(314,'L-Selenomethionine','C5H11NO2Se');
+INSERT INTO "substance" VALUES(315,'gamma-Glutamyl-Se-methylselenocysteine','C9H16N2O5Se');
+INSERT INTO "substance" VALUES(316,'L-Adenosylselenohomocysteine','C14H20N6O5Se');
 
 
 CREATE TABLE IF NOT EXISTS substance2db (
@@ -1359,8 +1364,6 @@ INSERT INTO "substance2db" VALUES(245,'rbt','BiGG');
 INSERT INTO "substance2db" VALUES(246,'ribflv','BiGG');
 INSERT INTO "substance2db" VALUES(247,'sarcs','BiGG');
 INSERT INTO "substance2db" VALUES(248,'slnt','BiGG');
-INSERT INTO "substance2db" VALUES(249,'sel','BiGG');
-INSERT INTO "substance2db" VALUES(249,'seln','BiGG');
 INSERT INTO "substance2db" VALUES(250,'srtn','BiGG');
 INSERT INTO "substance2db" VALUES(251,'na1','BiGG+VMH');
 INSERT INTO "substance2db" VALUES(252,'spmd','BiGG');
@@ -1660,3 +1663,6 @@ INSERT INTO "substance2db" VALUES(270,'C00378','KEGG');
 INSERT INTO "substance2db" VALUES(66,'C00120','KEGG');
 INSERT INTO "substance2db" VALUES(240,'C00253','KEGG');
 INSERT INTO "substance2db" VALUES(25,'C00864','KEGG');
+INSERT INTO "substance2db" VALUES(314,'selmeth','BiGG');
+INSERT INTO "substance2db" VALUES(315,'gglusem','BiGG');
+INSERT INTO "substance2db" VALUES(316,'seahcys','BiGG');
