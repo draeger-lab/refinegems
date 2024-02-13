@@ -1034,9 +1034,6 @@ class ModelInfoReport(Report):
     def visualise(self, color_palette:str='YlGn') -> matplotlib.figure.Figure:
         """Visualise the basic information of the report.
 
-        NOTE: currently, the unbalance (mass/charge) reactions have no visualisation.
-              If anyone has ideas for that, feel free to share them.
-
         Args:
             color_palette (str, optional): Colour palette to use for the plots. 
                 Defaults to 'YlGn'.

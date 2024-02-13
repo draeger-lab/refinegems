@@ -115,7 +115,6 @@ def load_model(modelpath: str|list[str], package:Literal['cobra','libsbml']) -> 
                     return load_libsbml_model(modelpath)
 
 
-
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
     """Loads model document using libSBML
 
