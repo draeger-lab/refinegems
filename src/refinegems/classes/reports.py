@@ -1079,7 +1079,14 @@ class ModelInfoReport(Report):
         # 2: plot reacs with gpr
         # ----------------------
 
-        ax3 = fig.add_subplot(grid[1,:])
+        local_grid = gspec.GridSpecFromSubplotSpec(2,1, subplot_spec=grid[1,:])
+        ax3 = plt.Subplot(fig, local_grid[0,0])
+        fig.add_subplot(ax3)
+        ax4 = plt.Subplot(fig, local_grid[1,0])
+        fig.add_subplot(ax4)
+        # ax3 = fig.add_subplot(grid[1,:])
+
+        # plot reacs with gpr
         stacked_bars = {'with gpr': np.array([self.with_gpr]),
                         'no gpr': ([self.reac - self.with_gpr])}
         bottom = np.zeros(1)
@@ -1094,12 +1101,41 @@ class ModelInfoReport(Report):
             bottom += count
             c += 0.5
 
-        ax3.set_xlabel('count')
-        ax3.set_ylabel('reactions')
         ax3.set_title('C) Reactions')
+        ax3.set_ylabel('gpr')
         ax3.tick_params(left = False,labelleft = False ,
                                 labelbottom = False, bottom = False)
-        ax3.legend(bbox_to_anchor=(0.75, 0, 0.5, 1), loc="upper right")
+        ax3.legend(bbox_to_anchor=(0.75, 0, 0.5, 1.05), loc="center right")
+
+        # plot reacs which are unbalanced
+        mass_and_charge = [_ for _ in self.mass_unbalanced if _ in self.charge_unbalanced]
+        only_mass = [_ for _ in self.mass_unbalanced if not _ in mass_and_charge]
+        only_charge = [_ for _ in self.charge_unbalanced if not _ in mass_and_charge]
+
+        stacked_bars = {'mass and charge': np.array([len(mass_and_charge)]),
+                        'mass only': np.array([len(only_mass)]),
+                        'charge only': np.array([len(only_charge)])}
+        bottom = np.zeros(1)
+
+        c = 0.3
+
+        for label,count in stacked_bars.items():
+            if count > 0:
+                p = ax4.barh(['reactions'],count,
+                            label=label, left=0.0,
+                            color=[cmap(c)])
+                ax4.bar_label(p, count, rotation=270)
+                bottom += count
+                c += 0.3
+
+        ax4.set_xlabel('count')
+        ax4.set_ylabel('unbal.')
+        ax4.tick_params(left = False,labelleft = False ,
+                                labelbottom = False, bottom = False)
+        ax4.legend(title='unbalanced', 
+                bbox_to_anchor=(0.875, 0,0.5, 0.25), loc="center right")
+
+
 
         # 3: plot deadends, orhphans etc. for metabs
         # ------------------------------------------
