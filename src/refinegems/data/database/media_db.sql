@@ -1046,6 +1046,7 @@ INSERT INTO "substance" VALUES(312,'(11Z)-icos-11-enoate [Gondoate]','C20H37O2')
 INSERT INTO "substance" VALUES(314,'L-Selenomethionine','C5H11NO2Se');
 INSERT INTO "substance" VALUES(315,'gamma-Glutamyl-Se-methylselenocysteine','C9H16N2O5Se');
 INSERT INTO "substance" VALUES(316,'L-Adenosylselenohomocysteine','C14H20N6O5Se');
+INSERT INTO "substance" VALUES(317,'Superoxide [O2(-)]','O2');
 
 
 CREATE TABLE IF NOT EXISTS substance2db (
@@ -1666,3 +1667,10 @@ INSERT INTO "substance2db" VALUES(25,'C00864','KEGG');
 INSERT INTO "substance2db" VALUES(314,'selmeth','BiGG');
 INSERT INTO "substance2db" VALUES(315,'gglusem','BiGG');
 INSERT INTO "substance2db" VALUES(316,'seahcys','BiGG');
+INSERT INTO "substance2db" VALUES(317,'o2s','BiGG+VMH');
+INSERT INTO "substance2db" VALUES(317,'C00704','KEGG');
+INSERT INTO "substance2db" VALUES(317,'sox','BiGG');
+INSERT INTO "substance2db" VALUES(317,'MNXM1094127','MetaNetX');
+INSERT INTO "substance2db" VALUES(317,'MNXM1107906','MetaNetX');
+INSERT INTO "substance2db" VALUES(317,'MNXM1107908','MetaNetX');
+INSERT INTO "substance2db" VALUES(317,'cpd00532','SEED');
