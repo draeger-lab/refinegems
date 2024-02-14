@@ -22,6 +22,7 @@ import refinegems as rg
 from cobra import Model as cobraModel
 from ..utility.io import load_model
 from ..classes import medium, reports
+from ..classes.medium import load_medium_from_db, read_external_medium
 from typing import Literal
 
 ############################################################################
@@ -390,16 +391,16 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                 if p and 'base' in p.keys():
                     m_name = p['base'].split(' ')
                     if len(m_name) > 1:
-                        new_medium = medium.load_medium_from_db(m_name[1])
+                        new_medium = load_medium_from_db(m_name[1])
                         new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
                     else:
-                        new_medium = medium.load_medium_from_db(p['base'])
+                        new_medium = load_medium_from_db(p['base'])
                     new_medium.name = name
                 # extern
                 elif p and 'external_base' in p.keys():
                     m_name = p['external_base'].split(' ')
                     if len(m_name) > 1:
-                        new_medium = medium.read_external_medium(m_name[1])
+                        new_medium = read_external_medium(m_name[1])
                         new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
                     else:
                         new_medium = medium.read_external_medium(p['external_base'])
