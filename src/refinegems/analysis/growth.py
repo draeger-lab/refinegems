@@ -97,7 +97,7 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[s
         case 'minimal' | 'min':
             with model:
                 minimal = cobra.medium.minimal_medium(model)
-                print(minimal)
+                # print(minimal)
                 return list(minimal.index)
         # return standart, non-zero flux compounds
         case 'standard' | 'std':
@@ -166,7 +166,7 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
         list[str]: The list of exchanges essential for growth.
     """
     with model:
-        if not standard_uptake:
+        if standard_uptake:
             # combine standard and second medium, set all fluxes to 10.0 for standard
             standard_medium = {i: 10.0 for i in standard_uptake}
             new_medium = {**growth_medium, **standard_medium}
@@ -212,15 +212,12 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
     Returns:
         list[str] or dict: List of the exchange reaction IDs of the additives or the supplemented medium, if combine is set to True.
     """
-    
+
     # find essential exchange reactions
     essential = find_growth_essential_exchanges(model, growth_medium, standard_uptake)
 
     # find the essential compounds not in the growth medium
-    additives = []
-    for metab in essential:
-        if metab not in growth_medium.keys():
-            additives.append(metab)
+    additives = [_ for _ in essential if _ not in growth_medium.keys()]
 
     # return ... 
     if combine:
@@ -285,7 +282,7 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['Bi
 
         # convert to a cobrapy medium
         exported_m = medium.medium_to_model(medium=m, model=model, 
-                                            namespace='BiGG', 
+                                            namespace=namespace, 
                                             default_flux=10.0, 
                                             replace=False, 
                                             double_o2=False, 
@@ -502,7 +499,7 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
 def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                     media:medium.Medium|list[medium.Medium]|str,
                     namespace:Literal["BiGG"]='BiGG',
-                    supplements:None|list[Literal[None,'std','min']]=None,
+                    supplements:None|list[Literal[None,'std','min']]|Literal[None,'std','min']=None,
                     retrieve:Literal['report','plot','both']='plot') -> reports.GrowthSimulationReport|plt.Figure|tuple:
 
     # read-in all models into list
