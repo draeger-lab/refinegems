@@ -407,7 +407,7 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                     new_medium.name = name
                 # default name
                 else:
-                    new_medium = medium.load_medium_from_db(name)
+                    new_medium = load_medium_from_db(name)
                 
                 # add subsets from DB
                 if p and 'add_subset' in p.keys():
