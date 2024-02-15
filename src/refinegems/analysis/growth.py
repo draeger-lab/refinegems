@@ -77,7 +77,6 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:None|str|tuple[float] =
             reaction.bounds = reac_bounds
 
 
-# @TEST
 def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[str]:
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
@@ -152,7 +151,6 @@ def get_production(model: cobraModel) -> list[str]:
     return production
 
 
-# @TEST 
 # @WARNING 
 def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, standard_uptake: list[str]|None) -> list[str]:
     """Find exchanges in a medium (with or without supplements) essential for the growth.
@@ -193,7 +191,6 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
     return essential
 
 
-# @TEST
 def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False):
     """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
     which can be added to the new one to enable growths.

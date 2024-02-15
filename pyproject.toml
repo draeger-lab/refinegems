@@ -6,14 +6,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "refineGEMs"
 version = "1.4.2"
-requires-python = ">=3.9, <3.11"
+requires-python = ">=3.10, <3.12"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel"},
+    {name = "Carolin Brune"}
 ]
 maintainers = [
     {name = "Tobias Fehrenbach"},
-    {name = "Carolin Brune"}
 ]
 
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'

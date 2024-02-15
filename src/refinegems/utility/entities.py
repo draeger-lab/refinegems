@@ -1,15 +1,27 @@
 #!/usr/bin/env python
+"""Collection of functions to access, handle and manipulate different entities of
+COBRApy and libsbml models.
+"""
+
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
+
+################################################################################
+# requirements
+################################################################################
+
 import cobra 
-import re
 import pandas as pd
+from random import choice 
+import re
+from string import ascii_uppercase, digits
+
 from Bio import Entrez
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, Reaction
+from typing import Union, Literal
+
 from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from .io import search_ncbi_for_gpr
-from typing import Union
-
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 
 ################################################################################
 # variables
@@ -113,6 +125,140 @@ def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
             coeff = 1
     return eq_matrix
 
+
+def get_reaction_annotation_dict(model:cobra.Model, db:Literal['KEGG','BiGG']) -> dict:
+    """Create a dictionary of a model's reaction IDs and a choosen database ID as
+    saved in the annotations of the model.
+    The database ID can be choosen based on the strings for the namespace options
+    in other functions.
+
+    Args:
+        model (cobra.Model): A model loaded with COBRApy.
+        db (Literal['KEGG','BiGG']): The string denoting the database to map to.
+
+    Raises:
+        ValueError: Unknown database string for paramezer db
+
+    Returns:
+        dict: The mapping of the reaction IDs to the database IDs found in the annotations
+    """
+
+    react_dict = {}
+
+    match db:
+        case 'KEGG':
+            db_string = 'kegg.reaction'
+        case 'BiGG':
+            db_string = 'bigg.reaction'
+        case _:
+            mes = f'Unknown database string for parameter db: {db}'
+            raise ValueError(mes)
+
+    for r in model.reactions:
+        if db_string in r.annotation.keys():
+            react_dict[r.id] = r.annotation[db_string]
+        else:
+            react_dict[r.id] = '-'
+
+    return react_dict
+
+
+def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac', prefix:str='') -> str:
+    """Generate a unique, random ID for a model entity for a model.
+
+    Args:
+        model (cobra.Model): A model loaded with COBRApy.
+        entity_type (Literal['reac','meta'], optional): Type of model entity.  
+            Can be 'reac' for Reaction or 'meta' for Metabolite.
+            Defaults to 'reac'.
+        prefix (str, optional): prefix to set for the randomised part.
+            Useful to identify the random IDs later on. 
+            Defaults to ''.
+
+    Raises:
+        ValueError: Unknown entity_type
+
+    Returns:
+        str: The generate new and unique ID.
+    """
+
+    match entity_type:
+        case 'reac':
+            all_ids = [_.id for _ in model.reactions]
+        case 'meta':
+            all_ids = [_.id for _ in model.metabolites]
+        case _:
+            mes = f'Unkown entity_type: {entity_type}'
+            raise ValueError(mes)
+
+    prefix = f'{prefix}{entity_type}'
+    var = ''.join(choice(ascii_uppercase + digits) for i in range(6))
+    label = prefix + var
+    j = 6
+    
+    while True:
+        
+        for i in range(36**6): # make sure it does not run endlessly
+            if label in all_ids:
+                label = prefix + ''.join(choice(ascii_uppercase + digits) for x in range(j))
+            else:
+                return label
+            
+        j = j + 1
+
+
+# @TODO: 
+#     more namespace options
+def match_id_to_namespace(model_entity:[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
+    """Based on a given namespace, change the ID of a given model entity to it the set namespace.
+
+    Currently working namespaces:
+        - BiGG 
+
+    Args:
+        model_entity (cobra.Reaction, cobra.Metabolite]): The model entity. 
+            Can be either a cobra.Reaction or cobra.Metabolite object.
+        namespace (Literal['BiGG']): The chosen namespace.
+
+    Raises:
+        ValueError: Unknown input for namespace
+        TypeError: Unknown type for model_entity
+    """
+
+    match model_entity:
+
+        # Reaction
+        # --------
+        case cobra.Reaction():
+            match namespace:
+
+                case 'BiGG':
+                    if 'bigg.reaction' in model_entity.annotation.keys():
+                        # @TODO : currently takes first entry is annotation is list
+                        model_entity.id = model_entity.annotation['bigg.reaction'] if isinstance(model_entity.annotation['bigg.reaction'],str) else model_entity.annotation['bigg.reaction'][0]
+
+                case _:
+                    mes = f'Unknown input for namespace: {namespace}'
+                    raise ValueError(mes)
+                
+        # Metabolite
+        # ----------
+        case cobra.Metabolite():
+            match namespace:
+
+                case 'BiGG':
+                    if 'bigg.metabolite' in model_entity.annotation.keys():
+                        model_entity.id = model_entity.annotation['bigg.metabolite'] + '_' + model_entity.compartment if isinstance(model_entity.annotation['bigg.metabolite'],str) else model_entity.annotation['bigg.metabolite'][0]
+
+                case _:
+                    mes = f'Unknown input for namespace: {namespace}'
+                    raise ValueError(mes)
+        # Error
+        # -----
+        case _:
+            mes = f'Unknown type for model_entity: {type(model_entity)}'
+            raise TypeError(mes)
+        
 
 # extracting reactions & Co via libsbml
 # -------------------------------------
