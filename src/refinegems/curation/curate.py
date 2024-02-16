@@ -11,7 +11,9 @@ from ..utility.entities import create_gpr_from_locus_tag, create_reaction
 
 __author__ = "Famke Baeuerle"
     
-            
+# add information from manual curation
+# ------------------------------------
+         
 def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
 
@@ -79,6 +81,9 @@ def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libMo
     return model
 
 
+# sychronise annotations
+# ----------------------
+
 def update_annotations_from_others(model: libModel) -> libModel:
     """Synchronizes metabolite annotations for core, periplasm and extracelullar
 
@@ -101,3 +106,12 @@ def update_annotations_from_others(model: libModel) -> libModel:
                         if entry is not None:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model               
+
+# @TODO
+# maybe add the function from SPECIMEN for BioCyc/MetaCyc annotation completion
+
+# duplicates
+# ----------
+
+# @TODO function for duplicate checking and/or removal
+#       e.g. from SPECIMEN
