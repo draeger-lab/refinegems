@@ -128,8 +128,93 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model               
 
-# @TODO
-# maybe add the function from SPECIMEN for BioCyc/MetaCyc annotation completion
+
+def complete_BioMetaCyc(model:cobra.Model) -> cobra.Model:
+    """Check for existing MetaCyc and BioCyc annotations for metabolites and
+    reactions and generate them from the other if one of the two is missing.
+
+    Args:
+        model (cobra.Model): A genome-scale model to be checked 
+            for complete BioCyc/MetaCyc annotations.
+
+    Returns:
+        cobra.Model: The updated model.
+    """
+
+
+    # reactions
+    # ---------
+    for reac in model.reactions:
+        # case 1: MetaCyc but not BioCyc
+        if 'metacyc.reaction' in reac.annotation and not 'biocyc' in reac.annotation:
+            # add database (META) information to get BioCyc ID
+            if isinstance(reac.annotation['metacyc.reaction'], list):
+                reac.annotation['biocyc'] = ['META:' + _ for _ in reac.annotation['metacyc.reaction']]
+            else:
+                reac.annotation['biocyc'] = 'META:' + reac.annotation['metacyc.reaction']
+        # case 2: BioCyc, but no MetaCyc
+        elif 'biocyc' in reac.annotation and not 'metacyc.reaction' in reac.annotation:
+            # if there are multiple metacyc.reaction annotation
+            if isinstance(reac.annotation['biocyc'], list):
+                add_anno = []
+                for biocyc_anno in reac.annotation['biocyc']:
+                    if ':' in biocyc_anno:
+                        # exclude organism identifier from ID to get MetaCyc ID
+                        add_anno.append(biocyc_anno.split(':')[1])
+                    else:
+                        # high possibility that information is faulty - do not use it
+                        print(F'\n\nWarning: Unexpected BioCyc annotation {biocyc_anno} for reaction {reac.id}')
+                reac.annotation['metacyc.reaction'] = add_anno
+            # if there is only one
+            else:
+                if ':' in reac.annotation['biocyc']:
+                    # exclude organism identifier from ID to get MetaCyc ID
+                    reac.annotation['metacyc.reaction'] = reac.annotation['biocyc'].split(':')[1]
+                else:
+                    # high possibility that information is faulty - do not use it
+                    print(F'\n\nWarning: Unexpected BioCyc annotation {reac.annotation["biocyc"]} for reaction {reac.id}')
+        # case 3: both or no = skip
+        else:
+            continue
+
+    # metabolites
+    # -----------
+    for meta in model.metabolites:
+        # case 1: MetaCyc but not BioCyc
+        if 'metacyc.compound' in meta.annotation and not 'biocyc' in meta.annotation:
+            # add database (META) information to get BioCyc ID
+            if isinstance(meta.annotation['metacyc.compound'],list):
+                meta.annotation['biocyc'] = ['META:' + _ for _ in meta.annotation['metacyc.compound']]
+            else:
+                meta.annotation['biocyc'] = 'META:' + meta.annotation['metacyc.compound']
+        # case 2: BioCyc, but no MetaCyc
+        elif 'biocyc' in meta.annotation and not 'metacyc.compound' in meta.annotation:
+            # if there are multiple metacyc.compound annotations
+            if isinstance(meta.annotation['biocyc'], list):
+                add_anno = []
+                for biocyc_anno in meta.annotation['biocyc']:
+                    if ':' in biocyc_anno:
+                        # exclude organism identifier from ID to get MetaCyc ID
+                        add_anno.append(biocyc_anno.split(':')[1])
+                    else:
+                        # high possibility that information is faulty - do not use it
+                        print(F'\n\nWarning: Unexpected BioCyc annotation {biocyc_anno} for metabolite {meta.id}')
+                meta.annotation['metacyc.compound'] = add_anno
+            # if there is only one
+            else:
+                if ':' in meta.annotation['biocyc']:
+                    # exclude organism identifier from ID to get MetaCyc ID
+                    meta.annotation['metacyc.compound'] = meta.annotation['biocyc'].split(':')[1]
+                else:
+                    # high possibility that information is faulty - do not use it
+                    print(F'\n\nWarning: Unexpected BioCyc annotation {meta.annotation["biocyc"]} for metabolite {meta.id}')
+        # case 3: both or no = skip
+        else:
+            continue
+
+    return model
+
+
 
 # duplicates
 # ----------
@@ -438,4 +523,5 @@ def resolve_duplicates(model:cobra.Model, check_reac:bool=True,
         model = resolve_duplicate_reactions(model, based_on='reaction', remove_reac =remove_dupl_reac)
 
     return model
+
 
