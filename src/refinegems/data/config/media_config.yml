@@ -1,0 +1,96 @@
+# Configuration file for loading media for testing / simulating models
+# --------------------------------------------------------------------
+# basic parameters for loading media
+# --------------------------------------------------------------------
+# setting these parameters will set a default for all media, 
+# if they are not overwritten by the setting in the next part
+# all options can be commented out
+# this will lead to the default being used
+#
+# options:
+#   aerobic: True|False
+#            Sets if the media will be aerobic or not. 
+#            Default does not change the current media definitions, without checking them.
+#   supplement: None|std|min
+#               Sets whether or not the media will be supplement to enable growth. 
+#               Default is None
+#   default_flux: float
+#            Sets a default flux value for all fluxes in the media.
+#            Note: this will replace existing values!
+#            Default to 10.0
+#   o2_percent: float
+#            Increase or decrease the amount of oxygen in relation to its normal flux
+#            by the given percentage. 
+#            Default is 1.0, equalling the current/normal amount of oxygen (= 100%)
+# --------------------------------------------------------------------
+
+params:
+  aerobic: True
+  supplement: None
+# default_flux: 10.0
+# o2_percent: 1.0
+
+# --------------------------------------------------------------------
+# load media from the in-build database and/or external sources
+# 
+# format:
+#   name:
+#      option1: input1
+#      option2: input2
+#      ....
+#
+# options:
+#   base: None|str
+#            Medium to use as base for the composition. 
+#            If none is given, tries to use the name to look it up in the database.
+#            If a whitespace is detected, expects the first part to be a float set as the
+#            percentage to use and the second the name, e.g. '0.5 LB'
+#   external_base: None|str(path)
+#            If the base should be read from an external source, use this options 
+#            followed by a path to a media descripion.
+#            Parallel to base, a float separated by a whitespcae can be written in front.
+#   add_subset: 
+#            subset_name (str): default_flux (float, e.g. 0.5)
+#            Add additional subsets from the database to the base.
+#   add_medium:
+#            medium_name (str): percentage (float, e.g. 0.1)
+#            Add additional media based on a given percentage to the base.
+#   add_external:
+#            'link' (str): percentage (float)
+#            Add additional external media to the base.
+#   add_substance: Null|float|str in format 'X.X%' with X being [0-9]*
+#            Add further substances to the medium and/or add specific fluxes to 
+#            to substances. Flux settings here overwrite all previously set fluxes.
+#            Null uses the most specific set default flux.
+#            When a percentage is set uses this percentage of the most specific set default flux.
+#
+# options to overwrite the default set in the previous section 
+# for specific media only:
+#   aerobic
+#   supplement
+#   default_flux
+#   o2_percent
+# --------------------------------------------------------------------
+
+media:
+  LB: 
+    aerobic: False
+  LB_o2:
+    base: LB
+    default_flux: 5.0
+    o2_percent: 2.0
+  SNM3:
+#    supplement: min
+  M9:
+#    add_medium: 
+#      SNM3: 1.0
+#    add_subset:
+#      AA: 5.0
+    add_substance:
+      Glycine: Null
+      Glycerol: 0.87
+      Guanosine: '20%'
+#  PERS:
+#    external_base: link
+#    add_external:
+#      'link': 0.5

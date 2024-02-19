@@ -6,14 +6,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "refineGEMs"
 version = "1.4.2"
-requires-python = ">=3.9, <3.11"
+requires-python = ">=3.10, <3.12"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel"},
+    {name = "Carolin Brune"}
 ]
 maintainers = [
     {name = "Tobias Fehrenbach"},
-    {name = "Carolin Brune"}
 ]
 
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'
@@ -28,7 +28,6 @@ classifiers = [
     "Programming Language :: SQL",
     "License :: OSI Approved :: MIT License",
 ]
-
 
 # dynamic = ['version']
 
@@ -48,6 +47,7 @@ dependencies = [
     "markupsafe>=2.0.1",
     "depinfo>=1.7.0",
     "sortedcontainers>=2.4.0",
+    "sqlite_dump",
     "libchebipy>=1.0.10",
     "ratelimit>=2.2.1",
     "sqlalchemy>=2.0.0",
@@ -61,8 +61,11 @@ dependencies = [
 homepage = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
 
-# [tool.setuptools]
-# zip_safe = False
+# [project.scripts]
+# data = 'refinegems.databases:main'
+# curate = 'refinegems.curate:main'
+# investigate = 'refinegems.investigate:main'
+# refine = 'refinegems.refine:main'
 
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
@@ -73,5 +76,5 @@ where = ['src']
 [tool.setuptools.package-data]
 "refinegems.example.example_inputs" = ['*.xlsx','*.csv']
 "refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
-
-
+"refinegems.data.config" = ['*.yaml']
+"refinegems.data.pathway" = ['*.csv']

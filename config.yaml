@@ -96,7 +96,7 @@ gap_analysis_params:
     - 'Path2'  # Path to TXT file containing a SmartTable with all metabolite relevant information (+)
     - 'Path3'  # Path to protein FASTA file used as input for CarveMe (Needed to get the protein IDs from the locus tags)
 # (-) If the organism is not in BioCyc retrieve a table mapping all reactions in BioCyc to the corresponding sequence
-# (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
+# (*) 'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'KEGG Reaction' 'MetaNetX' 'Reaction-Direction' 'Spontaneous?'
 # (+) 'Compound' 'Object ID' 'Chemical Formula' 'InChI-Key' 'ChEBI'
 gapfill_model: FALSE
 gap_analysis_file: 'Path to Excel file with which gaps in model should be filled'
