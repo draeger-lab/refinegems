@@ -549,12 +549,12 @@ class Medium:
 # functions for loading from DB
 ############################################################################
 
-def load_substance_table_from_db(mediumname: str, database:str, type='standard') -> pd.DataFrame:
+def load_substance_table_from_db(mediumname: str, database:str, 
+                                 type:Literal['testing','standard']='standard') -> pd.DataFrame:
     """Load a substance table from a database.
 
     Currently available types:
     - 'testing': for debugging
-    - 'documentation': for downloading a table for the docs
     - 'standard': The standard format containing all information in long format.
 
     Note: 'documentation' currently object to change
@@ -562,7 +562,7 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
     Args:
         name (str): The name (or identifier) of the medium.
         database (str): Path to the database.
-        type (str, optional): How to load the table. Defaults to 'standard'.
+        type (Literal['testing','standard'], optional): How to load the table. Defaults to 'standard'.
 
     Raises:
         ValueError: Unknown type for loading the substance table.
@@ -584,15 +584,6 @@ def load_substance_table_from_db(mediumname: str, database:str, type='standard')
                                     """, (mediumname,)) 
             substance_table = result.fetchall()
             substance_table = pd.DataFrame(substance_table, columns=['id','name','formula','flux'])
-
-        # create table for documentation
-        case 'documentation':
-            result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
-                                    FROM medium, medium2substance, substance, substance2db
-                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
-                                    """, (mediumname,)) 
-            substance_table = result.fetchall()
-            substance_table = pd.DataFrame(substance_table, columns=['name','formula','flux','source','db_id','db_type'])
 
         # create table with all information, standard for generating the Medium table
         case 'standard':
