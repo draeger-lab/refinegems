@@ -449,6 +449,7 @@ class Medium:
 
             # slim table to columns of interest for documentation
             m_subs = self.substance_table[['name','flux','source']]
+            m_subs.drop_duplicates(keep='first', inplace=True)
 
             if all(m_subs['flux'].values == None):
                 m_subs = m_subs.drop('flux', axis=1)
