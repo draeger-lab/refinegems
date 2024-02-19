@@ -4,7 +4,14 @@
 The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.
 """
 
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
+
+################################################################################
+# requirements
+################################################################################
+
 import re, logging
+import cobra
 from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
 import pandas as pd
 from bioservices.kegg import KEGG
@@ -21,12 +28,20 @@ from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
-
+################################################################################
+# variables
+################################################################################
 
 #------------------------------------------------ Constant variables --------------------------------------------------#
 BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN']
     
+################################################################################
+# functions
+################################################################################
+
+# ------------------
+# Polish - Main part
+# ------------------
  
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
 def add_metab(entity_list: list[Species], id_db: str):
@@ -1251,3 +1266,104 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
     change_all_qualifiers(model, lab_strain)
     
     return model
+
+
+
+# ----------------------
+# Directionality Control
+# ----------------------
+
+# @TODO
+# @NOTE add a control to check if chaning the reaction direction leads to EGC or so
+#   or is this unnessesary here
+def check_direction(model:cobra.Model,data:pd.DataFrame|str) -> cobra.Model:
+    """Check the direction of reactions by searching for matching MetaCyc,
+    KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
+    database table or dataFrame (need to contain at least the following columns:
+    Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
+
+    Args:
+        model (cobra.Model): The model loaded with COBRApy.
+        data (pd.DataFrame | str): Either a pandas DataFrame or a path to a CSV file
+            containing the BioCyc smart table.
+
+    Raises:
+        TypeError: Unknown data type for parameter data
+
+    Returns:
+        cobra.Model: The edited model.
+    """
+    
+    match data:
+        # aleady a DataFrame
+        case pd.DataFrame():
+            pass
+        case str():
+            # load from a table
+            data = pd.read_csv(data, sep='\t')
+            # rewrite the columns into a better comparable/searchable format
+            data['KEGG reaction'] = data['KEGG reaction'].str.extract('.*>(R\d*)<.*')
+            data['METANETX']      = data['METANETX'].str.extract('.*>(MNXR\d*)<.*')
+            data['EC-Number']     = data['EC-Number'].str.extract('EC-(.*)')
+        case _:
+            mes = f'Unknown data type for parameter data: {type(data)}'
+            raise TypeError(mes)
+
+    # check direction
+    # --------------------
+    for r in model.reactions:
+
+        direction = None
+        # easy case: metacyc is already (corretly) annotated
+        if 'metacyc.reaction' in r.annotation and len(data[data['Reactions'] == r.annotation['metacyc.reaction']]) != 0:
+            direction = data[data['Reactions'] == r.annotation['metacyc.reaction']]['Reaction-Direction'].iloc[0]
+            r.notes['BioCyc direction check'] = F'found {direction}'
+        # complicated case: no metacyc annotation
+        else:
+            annotations = []
+
+            # collect matches
+            if 'kegg.reaction' in r.annotation and r.annotation['kegg.reaction'] in data['KEGG reaction'].tolist():
+                annotations.append(data[data['KEGG reaction'] == r.annotation['kegg.reaction']]['Reactions'].tolist())
+            if 'metanetx.reaction' in r.annotation and r.annotation['metanetx.reaction'] in data['METANETX'].tolist():
+                annotations.append(data[data['METANETX'] == r.annotation['metanetx.reaction']]['Reactions'].tolist())
+            if 'ec-code' in r.annotation and r.annotation['ec-code'] in data['EC-Number'].tolist():
+                annotations.append(data[data['EC-Number'] == r.annotation['ec-code']]['Reactions'].tolist())
+
+            # check results
+            # no matches
+            if len(annotations) == 0:
+                r.notes['BioCyc direction check'] = 'not found'
+
+            # matches found
+            else:
+                # built intersection
+                intersec = set(annotations[0]).intersection(*annotations)
+                # case 1: exactly one match remains
+                if len(intersec) == 1:
+                    entry = intersec.pop()
+                    direction = data[data['Reactions'] == entry]['Reaction-Direction'].iloc[0]
+                    r.annotation['metacyc.reaction'] = entry
+                    r.notes['BioCyc direction check'] = F'found {direction}'
+
+                # case 2: multiple matches found -> inconclusive
+                else:
+                    r.notes['BioCyc direction check'] = F'found, but inconclusive'
+
+        # update direction if possible and needed
+        if not pd.isnull(direction):
+            if 'REVERSIBLE' in direction:
+                # set reaction as reversible by setting default values for upper and lower bounds
+                r.lower_bound = -1000.
+            elif 'RIGHT-TO-LEFT' in direction:
+                # invert the default values for the boundaries
+                r.lower_bound = -1000.
+                r.upper_bound = 0.
+            else:
+                # left to right case is the standart for adding reactions
+                # = nothing left to do
+                continue
+
+    return model
+
+
