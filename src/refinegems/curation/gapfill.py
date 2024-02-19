@@ -36,6 +36,8 @@ def gff_gene_comp():
     pass
 '''
 
+# @TODO Add handling of columns: 'KEGG Reaction' 'MetaNetX'!!!
+
 
 def gap_analysis(model_libsbml: libModel, gff_file: str, organismid:str, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """| Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
