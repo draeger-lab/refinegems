@@ -1,56 +1,114 @@
 M9 minimal medium (M9)
 ^^^^^^^^^^^^^^^^^^^^^^
-The M9 minimal medium (M9) *in silico* definition consists of all compounds described by `Sigma-Aldrich <https://www.sigmaaldrich.com/DE/de/product/sigma/m6030>`__.
-M9 is a minimal medium commonly used in microbiology and was developed in 1988\ :footcite:p:`becardEarlyEventsVesicular1988`. 
-Since then, M9 has been adapted with different kinds of additives and used to gather insight into carbon or nitrogen sources\ :footcite:p:`hawkeyCuratedCollectionKlebsiella2022`. 
-The medium definition used in this study is based on the provider reference\ :footcite:p:`M9Minimalsalze5XPowder` and was further supplemented with MgSO\ :sub:`4`\ \* 7H\ :sub:`2`\ O, CaCl\ :sub:`2`\ \* 2H\ :sub:`2`\ O and Glucose\ :footcite:p:`Baeuerle2023_M9_repo,Baeuerle2023_M9`.
 
 .. list-table:: M9 composition
-   :align: center
-   :widths: 25 25
-   :header-rows: 1
+  :name: m9_comp
+  :align: center
+  :widths: 54 26
+  :header-rows: 1
+  :class: no-scrollbar-table
 
-   * - BiGG ID
-     - Compound name
-   * - ca2
-     - Ca2+
-   * - cl
-     - Cl-
-   * - cobalt2
-     - Co2+
-   * - cu2
-     - Cu2+
-   * - fe2
-     - Fe2+
-   * - fe3
-     - Fe3+
-   * - glc__D
-     - D-Glucose
-   * - h2o
-     - H2O
-   * - h
-     - H+
-   * - k
-     - K+
-   * - mg2
-     - Mg
-   * - mn2
-     - Mn2+
-   * - mobd
-     - Molybdate
-   * - na1
-     - Na+
-   * - nh4
-     - Ammonium
-   * - ni2
-     - Ni2+
-   * - o2
-     - O2
-   * - pi
-     - Phosphate
-   * - so4
-     - Sulfate
-   * - zn2
-     - Zn2+
-     
-.. footbibliography::
+  * - name
+    - source
+  * - Ammonia
+    - NH4Cl
+  * - Ammonia
+    - NH4Cl
+  * - Ammonia
+    - NH4Cl
+  * - Ammonia
+    - NH4Cl
+  * - Ammonia
+    - NH4Cl
+  * - Calcium(II) cation [Ca(2+)]
+    - CaCl2*2H2O
+  * - Calcium(II) cation [Ca(2+)]
+    - CaCl2*2H2O
+  * - Calcium(II) cation [Ca(2+)]
+    - CaCl2*2H2O
+  * - Calcium(II) cation [Ca(2+)]
+    - CaCl2*2H2O
+  * - Chloride [Cl(-)]
+    - NaCl, NH4Cl, CaCl2*2H2O
+  * - Chloride [Cl(-)]
+    - NaCl, NH4Cl, CaCl2*2H2O
+  * - Chloride [Cl(-)]
+    - NaCl, NH4Cl, CaCl2*2H2O
+  * - Chloride [Cl(-)]
+    - NaCl, NH4Cl, CaCl2*2H2O
+  * - D-Glucose
+    - Glucose
+  * - D-Glucose
+    - Glucose
+  * - D-Glucose
+    - Glucose
+  * - D-Glucose
+    - Glucose
+  * - D-Glucose
+    - Glucose
+  * - D-Glucose
+    - Glucose
+  * - Dioxygen [O2]
+    - Oxygen
+  * - Dioxygen [O2]
+    - Oxygen
+  * - Dioxygen [O2]
+    - Oxygen
+  * - Dioxygen [O2]
+    - Oxygen
+  * - Hydrogen [H(+)]
+    - KH2PO4, Na2HPO4
+  * - Hydrogen [H(+)]
+    - KH2PO4, Na2HPO4
+  * - Hydrogen [H(+)]
+    - KH2PO4, Na2HPO4
+  * - Hydrogen [H(+)]
+    - KH2PO4, Na2HPO4
+  * - Magnesium(II) cation [Mg(2+)]
+    - MgSO4*7H2O
+  * - Magnesium(II) cation [Mg(2+)]
+    - MgSO4*7H2O
+  * - Magnesium(II) cation [Mg(2+)]
+    - MgSO4*7H2O
+  * - Magnesium(II) cation [Mg(2+)]
+    - MgSO4*7H2O
+  * - Phosphate [PO4(3-)]
+    - KH2PO4, Na2HPO4
+  * - Phosphate [PO4(3-)]
+    - KH2PO4, Na2HPO4
+  * - Phosphate [PO4(3-)]
+    - KH2PO4, Na2HPO4
+  * - Phosphate [PO4(3-)]
+    - KH2PO4, Na2HPO4
+  * - Potassium(I) cation [K(+)]
+    - KH2PO4
+  * - Potassium(I) cation [K(+)]
+    - KH2PO4
+  * - Potassium(I) cation [K(+)]
+    - KH2PO4
+  * - Potassium(I) cation [K(+)]
+    - KH2PO4
+  * - Sodium(I) cation [Na(+)]
+    - NaCl, Na2HPO4
+  * - Sodium(I) cation [Na(+)]
+    - NaCl, Na2HPO4
+  * - Sodium(I) cation [Na(+)]
+    - NaCl, Na2HPO4
+  * - Sodium(I) cation [Na(+)]
+    - NaCl, Na2HPO4
+  * - Sulfate [SO4(2-)]
+    - MgSO4*7H2O
+  * - Sulfate [SO4(2-)]
+    - MgSO4*7H2O
+  * - Sulfate [SO4(2-)]
+    - MgSO4*7H2O
+  * - Sulfate [SO4(2-)]
+    - MgSO4*7H2O
+  * - Water [H2O]
+    - MgSO4*7H2O, CaCl2*2H2O
+  * - Water [H2O]
+    - MgSO4*7H2O, CaCl2*2H2O
+  * - Water [H2O]
+    - MgSO4*7H2O, CaCl2*2H2O
+  * - Water [H2O]
+    - MgSO4*7H2O, CaCl2*2H2O
