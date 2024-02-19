@@ -516,7 +516,7 @@ def save_user_input(configpath: str) -> dict[str: str]:
             print('The following models will be compared:')
             print(list_of_models)
             user_input['multiple_paths'] = list_of_models
-        possible_media = load_a_table_from_database('media', False)['medium'].to_list()
+        possible_media = load_a_table_from_database('medium', False)['name'].to_list()
         possible_media_str = '|'.join(possible_media)
         list_of_media = []
         while True:
