@@ -257,7 +257,7 @@ class Medium:
         # combine description and Co
         combined = copy.deepcopy(self)
         combined.name = self.name + '+' + other.name
-        combined.description = f'Combined medium contructed from {self.name} and {other.name}.'
+        combined.description = f'Combined medium constructed from {self.name} and {other.name}.'
         combined.doi = str(self.doi) + ', ' + str(other.doi)
 
         # combine substance table
@@ -341,7 +341,7 @@ class Medium:
             subs = pd.DataFrame(subs,columns = ['name', 'formula', 'percent', 'db_id', 'db_type'])
             # percent -> flux
             subs['flux'] = subs['percent'].apply(lambda x: default_flux*x)
-            subs.drop('percent', axis=1)
+            subs.drop('percent', axis=1, inplace=True)
             # add source column
             subs['source'] = None
             # sort
