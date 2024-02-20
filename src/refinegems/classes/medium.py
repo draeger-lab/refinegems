@@ -1406,7 +1406,7 @@ def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH
 # working with models
 ############################################################################
 
-# @TEST
+
 def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG', 
                     default_flux:float=10.0, replace:bool=False, double_o2:bool=True, 
                     add:bool=True) -> Union[None, dict[str, float]]:
