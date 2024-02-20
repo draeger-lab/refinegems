@@ -1148,6 +1148,9 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
         connection.close()
 
 
+
+
+
 # further database curation
 # -------------------------
 # @CURRENTLY COMPLETELY UNTESTED, just ideas, but feel free to use 'em
