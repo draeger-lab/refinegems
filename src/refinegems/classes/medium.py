@@ -1445,9 +1445,13 @@ def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG',
 ############################################################################
 
 # Function to extract SQL schema with updated SBO/media tables
-def updated_db_to_schema():
+def updated_db_to_schema(directory: str = './src/refinegems/data/database/'):
     """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
     """
+    # make sure given directory path ends with '/'
+    if not directory.endswith('/'):
+        directory = directory + '/'
+    
     # Not needed to be included in Schema
     NOT_TO_SCHEMA = [
         'BEGIN TRANSACTION;', 'COMMIT;', 
@@ -1458,7 +1462,7 @@ def updated_db_to_schema():
     counter = 0 # To count rows in newly generated file
     
     conn = sqlite3.connect(PATH_TO_DB)
-    with open(PATH_TO_DB_FOLDER.joinpath('updated_media_db.sql'), 'w') as file:
+    with open((f'{directory}updated_media_db.sql'), 'w') as file:
         for line in iterdump(conn):
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if 'CREATE TABLE' in line and counter != 0:
