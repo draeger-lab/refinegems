@@ -1149,6 +1149,48 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
         connection.close()
 
 
+# add a new subset
+# ----------------
+        
+def add_subset_to_db(name, desc, subs_dict, database: str= PATH_TO_DB, default_perc:float=1.0):
+
+    
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    # add new subset to subset table
+    res = cursor.execute('SELECT 1 FROM subset WHERE name = ?',(name,))
+    if not res.fetchone():
+        cursor.execute("INSERT INTO subset VALUES(?,?,?)",(None,name,desc,))
+        connection.commit()
+        res = cursor.execute("SELECT last_insert_rowid() FROM subset")
+        subset_id = res.fetchone()[0]
+
+        # add the substance connections to subset2substance
+        for s,p in subs_dict.items():
+
+            # set default per if none given
+            if not p:
+                p = default_perc
+            # get substance ID
+            res = cursor.execute('SELECT id FROM substance WHERE name = ?',(s,))
+            subs_id = res.fetchone()
+            if subs_id:
+                subs_id = subs_id[0]
+                # enter the entry into subset2substance
+                cursor.execute('INSERT INTO subset2substance VALUES(?,?,?)',(subset_id,subs_id,p,))
+                connection.commit()
+            else:
+                mes = f'Substance {s} not in database. Not added. Please check your input.'
+                warnings.warn(mes)
+
+    else:
+        mes = f'Subset name {name} already in database. Cannot add.\nPlease choose a different name or delete the old one.'
+        warnings.warn(mes,category=UserWarning)
+
+    # close connection to database
+    connection.close()
 
 
 
