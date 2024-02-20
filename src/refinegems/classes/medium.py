@@ -1152,7 +1152,21 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
 # add a new subset
 # ----------------
         
-def add_subset_to_db(name, desc, subs_dict, database: str= PATH_TO_DB, default_perc:float=1.0):
+def add_subset_to_db(name:str, desc:str, subs_dict:dict, 
+                     database: str= PATH_TO_DB, default_perc:float=1.0) -> None:
+    """Add a new subset to the database.
+
+    Args:
+        name (str): Name (Abbreviation) of the new subset. Needs to be unique for the databse.
+        desc (str): Description of the new subset.
+        subs_dict (dict): Dictionary of the names and percentages for the substances to be included
+            in the new subsets. The names should be part of the substance table.
+        database (str, optional): Which database to connect to. 
+            Defaults to PATH_TO_DB.
+        default_perc (float, optional): Default percentage to set if None is given
+            in the dictionary. 
+            Defaults to 1.0.
+    """
 
     
     # build connection to DB
@@ -1191,7 +1205,6 @@ def add_subset_to_db(name, desc, subs_dict, database: str= PATH_TO_DB, default_p
 
     # close connection to database
     connection.close()
-
 
 
 # further database curation
