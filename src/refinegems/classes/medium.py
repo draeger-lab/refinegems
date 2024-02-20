@@ -355,7 +355,7 @@ class Medium:
             sub_medium = Medium(subset_name, subs, description=f'subset {subset_name}')
 
             # combine with current
-            return self.add(sub_medium, inplace=inplace)
+            return self.combine(sub_medium, inplace=inplace)
 
         else:
             warnings.warn(f'Could not find subset in DB, nothing added to medium: {subset_name}')
