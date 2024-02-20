@@ -552,8 +552,18 @@ class Medium:
         return cobra_medium  
 
 ############################################################################
-# functions for loading from DB
+# functions for loading and writing from DB
 ############################################################################
+
+# @TGODO also used in MEdium class, but pput in there as a subfunction
+    # - solution?
+def produce_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
+
+        list = row.to_list()
+        file.write(f"  * - {list[0]}\n")
+        for l in list[1:]:
+            file.write(f"    - {l}\n")
+
 
 def load_substance_table_from_db(mediumname: str, database:str, 
                                  type:Literal['testing','standard']='standard') -> pd.DataFrame:
@@ -650,6 +660,68 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
     return Medium(name=name, substance_table=substance, description=description, doi=doi)
 
 
+def load_subset_from_db(subset_name:str):
+
+    # open connection to database
+    connection = sqlite3.connect(PATH_TO_DB)
+    cursor = connection.cursor()
+
+    # check if subset name is valid
+    result = cursor.execute("""SELECT * FROM subset WHERE subset.name = ?""",(subset_name,))
+    check = result.fetchone()
+    if check:
+        # set name 
+        name = subset_name
+        # set description
+        description = check[2]
+        # retrieve subset from database
+        db_res = cursor.execute("""SELECT substance.name, subset2substance.percent
+                                FROM substance, subset, subset2substance
+                                WHERE subset.name = ? AND subset.id = subset2substance.subset_id AND subset2substance.substance_id = substance.id
+                                """,(subset_name,))
+        substance_table = pd.DataFrame(db_res.fetchall(), columns=['name','percent'])
+
+    return (name, description, substance_table)
+
+
+def generate_docs_for_subset(subset_name:str, folder:str, max_width:int=40, perc_width:int=10):
+
+    # make sure given directory path ends with '/'
+    if not folder.endswith('/'):
+        folder = folder + '/'
+    
+    name, description, subs = load_subset_from_db(subset_name)
+
+    with open(folder + f'{name}.rst', 'w') as f:
+
+        width = f'{max_width-perc_width} {perc_width}'
+        header = subs.columns
+
+        # Produce header/title of HTML page
+        f.write(
+            f"{name}\n"
+            f"{'^' * len(name)}\n"
+        )
+
+        f.write(description + '\n\n')
+
+        # produce descriptor
+        f.write(f".. list-table:: {name} composition\n"
+                f"  :name: {name.lower()}_comp\n"
+                "  :align: center\n"
+                f"  :widths: {width}\n"
+                "  :header-rows: 1\n"
+                "  :class: no-scrollbar-table\n\n")
+        
+        # produce header
+        f.write(f"  * - {header[0]}\n")
+        for l in header[1:]:
+            f.write(f"    - {l}\n")
+
+        # produce table body
+        subs.apply(produce_docs_table_row, file=f, axis=1)
+
+    
 ############################################################################
 # functions for reading media from extern
 ############################################################################
