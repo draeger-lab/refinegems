@@ -404,7 +404,7 @@ class Medium:
         return formatted_table
     
 
-    def produce_medium_docs_table(self, folder: str = './', max_width: int = 80) -> str:
+    def produce_medium_docs_table(self, folder: str = './', max_width: int = 80, is_subset:bool=False) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
         Args:
@@ -451,7 +451,10 @@ class Medium:
             print(type(f))
 
             # slim table to columns of interest for documentation
-            m_subs = self.substance_table[['name','flux','source']]
+            if is_subset:
+                m_subs = self.substance_table[['name']]
+            else:
+                m_subs = self.substance_table[['name','flux','source']]
             m_subs.drop_duplicates(keep='first', inplace=True)
 
             if all(m_subs['flux'].values == None):
@@ -488,7 +491,7 @@ class Medium:
             f.close()
 
 
-    def export_to_file(self, type:str='tsv',dir:str='./', max_widths: int = 80):
+    def export_to_file(self, type:str='tsv',dir:str='./', max_widths: int = 80, is_subset:bool=False):
         """Export medium, especially substance table.
 
         Args:
@@ -509,7 +512,7 @@ class Medium:
             case 'csv':
                 self.substance_table.to_csv(path_no_ext + '.csv', sep=';', index=False)
             case 'docs' | 'rst':
-                self.produce_medium_docs_table(folder = dir, max_width = max_widths)
+                self.produce_medium_docs_table(folder = dir, max_width = max_widths,is_subset=is_subset)
             case _:
                 raise ValueError('Unknown export type: {type}')
             
