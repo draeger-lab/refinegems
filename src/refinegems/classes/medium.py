@@ -684,7 +684,7 @@ def load_subset_from_db(subset_name:str):
     return (name, description, substance_table)
 
 
-def generate_docs_for_subset(subset_name:str, folder:str, max_width:int=40, perc_width:int=10):
+def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80):
 
     # make sure given directory path ends with '/'
     if not folder.endswith('/'):
@@ -693,8 +693,9 @@ def generate_docs_for_subset(subset_name:str, folder:str, max_width:int=40, perc
     name, description, subs = load_subset_from_db(subset_name)
 
     with open(folder + f'{name}.rst', 'w') as f:
-
-        width = f'{max_width-perc_width} {perc_width}'
+        
+        partition = max_width // 3
+        width = f"{str(max_width-partition)} {partition}"
         header = subs.columns
 
         # Produce header/title of HTML page
