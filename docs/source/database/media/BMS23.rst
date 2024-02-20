@@ -1,7 +1,8 @@
 Basal Medium as described in Swaney et al. 2023 (BMS23)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This Basal Medium (BMS23) defintion contains all components as described in 'Sweat and Sebum Preferences of the Human 
-Skin Microbiota'\ :footcite:p:`Swaney2023`.
+Skin Microbiota'\ :footcite:p:`Swaney2023` (Material & Methods). The M9 components where derived from `Sigma-Aldrich 
+<https://www.sigmaaldrich.com/DE/de/product/sigma/m6030>`__.
 
 .. list-table:: BMS23 composition
   :name: bms23_comp

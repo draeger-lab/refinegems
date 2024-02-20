@@ -1,7 +1,7 @@
 Artificial Sweat (artSw)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 The Artificial Sweat (artSw) definition contains all components as described in 'Sweat and Sebum Preferences of the 
-Human Skin Microbiota'\ :footcite:p:`Swaney2023`.
+Human Skin Microbiota'\ :footcite:p:`Swaney2023` (Table 1).
 
 .. list-table:: artSw composition
   :name: artsw_comp
