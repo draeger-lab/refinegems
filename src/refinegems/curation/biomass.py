@@ -4,12 +4,9 @@
 This module provides functions to be used to assess the biomass weight as well as normalise it.
 """
 
-import os
-import cobra
 import logging
 from cobra import Reaction
 from cobra import Model as cobraModel
-from ..utility.io import load_model
 from six import iteritems
 import memote.support.helpers as helpers
 from memote.utils import truncate
@@ -138,6 +135,7 @@ def test_biomass_consistency(model: cobraModel, reaction_id: str) -> Union[float
     return biomass_weight
 
 
+# @DELETE - of the function nelow works?
 def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     """Normalises the coefficients according to current biomass weight to one g[CDW]
 
@@ -157,7 +155,7 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     
     return biomass
 
-def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
+def check_normalise_biomass(model: cobraModel, cycles:int=10) -> Union[cobraModel, None]:
     """
        1. Checks if at least one biomass reaction is present
        2. For each found biomass reaction checks if it sums up to 1g[CDW]
@@ -167,6 +165,8 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
 
     Args:
         - model (cobraModel): Model loaded with COBRApy
+        - cycles (int, optional): Mayimal number of optiomisation cycles that will be run.
+            Used to avoid endless optiomisation cycles.
 
     Returns:
         cobraModel: COBRApy model with adjusted biomass functions
@@ -179,15 +179,13 @@ def check_normalise_biomass(model: cobraModel) -> Union[cobraModel, None]:
             bm_weight = test_biomass_consistency(model, bm_rxn)
             if type(bm_weight) == str: logging.error(f'Reaction {bm_rxn}: {bm_weight}')
             else:
-                while not ((1 - 1e-03) < bm_weight < (1 + 1e-06)):
+                c = 0 # counter to ensure it does not run endlessly
+                while not ((1 - 1e-03) < bm_weight < (1 + 1e-06)) and c <= cycles:
                     #normalise_biomass(model.reactions.get_by_id(bm_rxn), bm_weight)
                     model.reactions.get_by_id(bm_rxn).__imul__(1/bm_weight) # -> Maybe add like this?
                     bm_weight = test_biomass_consistency(model, bm_rxn)
                     logging.info(f'For reaction \'{bm_rxn}\' the coefficients changed.')
-                
-        cobra.io.write_sbml_model(model, f'../{model.id}_tmp.xml')
-        model = load_model(f'../{model.id}_tmp.xml','libsbml')
-        os.remove(f'../{model.id}_tmp.xml')
+                    c += 1
             
         return model
     

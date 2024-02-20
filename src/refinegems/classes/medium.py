@@ -206,7 +206,7 @@ class Medium:
             warnings.warn(f'WARNING: no oxygen detected in medium {self.name}, cannot set oxygen percentage.')
 
 
-    def combine(self,other:'Medium', how:Union[Literal['+'],None,float,tuple[float]]='+', default_flux:float=10.0) -> 'Medium':
+    def combine(self,other:'Medium', how:Union[Literal['+'],None,float,tuple[float]]='+', default_flux:float=10.0, inplace:bool=False) -> 'Medium':
         """Combine two media into a new one.
 
         Modes to combine media (input for param how):
@@ -255,7 +255,10 @@ class Medium:
             return combined
 
         # combine description and Co
-        combined = copy.deepcopy(self)
+        if inplace:
+            combined = self 
+        else:
+            combined = copy.deepcopy(self)
         combined.name = self.name + '+' + other.name
         combined.description = f'Combined medium constructed from {self.name} and {other.name}.'
         combined.doi = str(self.doi) + ', ' + str(other.doi)
@@ -304,7 +307,7 @@ class Medium:
     def __add__(self,other:'Medium') -> 'Medium':
         return self.combine(other)
 
-    def add_subset(self, subset_name:str, default_flux:float=10.0) -> 'Medium':
+    def add_subset(self, subset_name:str, default_flux:float=10.0, inplace:bool=True) -> 'Medium':
         """Add a subset of substances to the medium, returning a newly generated one.
 
         Args:
@@ -352,7 +355,7 @@ class Medium:
             sub_medium = Medium(subset_name, subs, description=f'subset {subset_name}')
 
             # combine with current
-            return self + sub_medium
+            return self.add(sub_medium, inplace=inplace)
 
         else:
             warnings.warn(f'Could not find subset in DB, nothing added to medium: {subset_name}')
