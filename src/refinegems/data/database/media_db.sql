@@ -645,6 +645,7 @@ CREATE TABLE IF NOT EXISTS "subset" (
 INSERT INTO "subset" VALUES(1,'CasA','Casamino acids (based on: https://www.usbio.net/media/C2080/casamino-acids#:~:text=Casamino%2520Acids%2520is%2520a%2520hydrochloric,destroyed%2520by%2520the%2520acid%2520treatment)');
 INSERT INTO "subset" VALUES(2,'protAA','Proteinogenic amino acids');
 INSERT INTO "subset" VALUES(3,'artSe','Artificial Sebum (based on: https://journals.asm.org/doi/10.1128/spectrum.04180-22, Table 2)');
+INSERT INTO "subset" VALUES(4,'DiReM','Dissociation reaction metabolites');
 
 
 CREATE TABLE IF NOT EXISTS "subset2substance" (
@@ -725,6 +726,39 @@ INSERT INTO "subset2substance" VALUES(3,231,3.078e-05);
 INSERT INTO "subset2substance" VALUES(3,289,1.0e-07);
 INSERT INTO "subset2substance" VALUES(3,296,3.758e-05);
 INSERT INTO "subset2substance" VALUES(3,61,0.00049758);
+INSERT INTO "subset2substance" VALUES(4,286,1);
+INSERT INTO "subset2substance" VALUES(4,49,1);
+INSERT INTO "subset2substance" VALUES(4,150,1);
+INSERT INTO "subset2substance" VALUES(4,232,1);
+INSERT INTO "subset2substance" VALUES(4,70,1);
+INSERT INTO "subset2substance" VALUES(4,318,1);
+INSERT INTO "subset2substance" VALUES(4,132,1);
+INSERT INTO "subset2substance" VALUES(4,131,1);
+INSERT INTO "subset2substance" VALUES(4,319,1);
+INSERT INTO "subset2substance" VALUES(4,276,1);
+INSERT INTO "subset2substance" VALUES(4,320,1);
+INSERT INTO "subset2substance" VALUES(4,321,1);
+INSERT INTO "subset2substance" VALUES(4,215,1);
+INSERT INTO "subset2substance" VALUES(4,322,1);
+INSERT INTO "subset2substance" VALUES(4,216,1);
+INSERT INTO "subset2substance" VALUES(4,323,1);
+INSERT INTO "subset2substance" VALUES(4,128,1);
+INSERT INTO "subset2substance" VALUES(4,324,1);
+INSERT INTO "subset2substance" VALUES(4,127,1);
+INSERT INTO "subset2substance" VALUES(4,325,1);
+INSERT INTO "subset2substance" VALUES(4,326,1);
+INSERT INTO "subset2substance" VALUES(4,327,1);
+INSERT INTO "subset2substance" VALUES(4,329,1);
+INSERT INTO "subset2substance" VALUES(4,328,1);
+INSERT INTO "subset2substance" VALUES(4,331,1);
+INSERT INTO "subset2substance" VALUES(4,330,1);
+INSERT INTO "subset2substance" VALUES(4,332,1);
+INSERT INTO "subset2substance" VALUES(4,333,1);
+INSERT INTO "subset2substance" VALUES(4,334,1);
+INSERT INTO "subset2substance" VALUES(4,102,1);
+INSERT INTO "subset2substance" VALUES(4,17,1);
+INSERT INTO "subset2substance" VALUES(4,56,1);
+INSERT INTO "subset2substance" VALUES(4,48,1);
 
 
 CREATE TABLE IF NOT EXISTS substance (
@@ -779,7 +813,7 @@ INSERT INTO "substance" VALUES(44,'5-Uridylic acid [UMP]','C9H13N2O9P');
 INSERT INTO "substance" VALUES(45,'5-beta-Dihydrotestosterone','C19H28O2');
 INSERT INTO "substance" VALUES(46,'7,8-Dihydrofolate [Dihydrofolic acid]','C19H21N7O6');
 INSERT INTO "substance" VALUES(47,'9-cis-Retinol','C20H30O');
-INSERT INTO "substance" VALUES(48,'ADP','C10H15N5O10P2');
+INSERT INTO "substance" VALUES(48,'ADP [Adenosine diphosphate]','C10H15N5O10P2');
 INSERT INTO "substance" VALUES(49,'ATP [Adenosine triphosphate]','C10H16N5O13P3');
 INSERT INTO "substance" VALUES(50,'Acetaldehyde','C2H4O');
 INSERT INTO "substance" VALUES(51,'Acetate [Acetic acid]','C2H3O2');
@@ -1057,8 +1091,7 @@ INSERT INTO "substance" VALUES(324,'FADH2 [reduced Flavin adenine dinucleotide]'
 INSERT INTO "substance" VALUES(325,'FMNH2 [reduced Flavin mononucleotide]','C17H23N4O9P');
 INSERT INTO "substance" VALUES(326,'Ubiquinone-8','C49H74O4');
 INSERT INTO "substance" VALUES(327,'Ubiquinol-8','C49H76O4');
-INSERT INTO "substance" VALUES(328,'m
-Menaquinone-8','C51H72O2');
+INSERT INTO "substance" VALUES(328,'Menaquinone-8','C51H72O2');
 INSERT INTO "substance" VALUES(329,'Menaquinol-8','C51H74O2');
 INSERT INTO "substance" VALUES(330,'2-Demethylmenaquinol-8','C50H72O2');
 INSERT INTO "substance" VALUES(331,'2-Demethylmenaquinone-8','C50H70O2');
