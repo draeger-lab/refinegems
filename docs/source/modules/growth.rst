@@ -41,6 +41,6 @@ Both are calculated by the ``get_uptake`` function of the module.
 Usable Media
 ------------
 The media to be used with the ``growth`` module via a ``config.yaml`` file.
-More information about which media are provided by the database and how to generate *in silico* media can be found in Section :ref:`Media`.
+More information about which media are provided by the database and how to generate *in silico* media can be found in Section :ref:`Media & Subsets`.
 
 

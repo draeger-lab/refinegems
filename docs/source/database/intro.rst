@@ -1,5 +1,5 @@
-Media 
-=====
+Media & Subsets
+===============
 
 .. warning::
     Introduction to this part still missing.
@@ -7,6 +7,7 @@ Media
 .. toctree:: 
 
     available_media
+    available_subsets
     access
     db_architecture
     in_silico_media_generation

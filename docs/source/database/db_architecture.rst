@@ -1,5 +1,5 @@
-*In silico* media database
-==========================
+*In silico* media & subsets database
+====================================
 
 This section describes the architecture of the database, as well as information on what and how the data is stored.
 
@@ -24,15 +24,32 @@ Medium
 
 The medium table contains an entry for each medium in the database, giving it an unique ID and storing its name, description and reference.
 The name should be a short abbreviation that is generally used to refer to the medium, e.g. LB.
-The description should be a short sentence explaining its abbreviation, e.g. for LB the description "lysogengy broth" explains the abbreviation used for the name.
+The description should be a short description explaining its abbreviation, e.g. for LB the description "lysogengy broth" explains the abbreviation used for the name.
 The reference is the DOI or link to the original *in vitro* definition of the medium or an already existing *in silico* definition.
 
 Medium_includes_substance \(m2s\)
 ---------------------------------
 
 This table links the medium ID to the substances contained in a medium. Additionally, the flux for the possible exchange reaction is stored. 
-In case the original publication of the medium did not provide information on the flux, the attribite is left empty \(``NULL``\).
+In case the original publication of the medium did not provide information on the flux, the attribute is left empty \(``NULL``\).
 Furthermore, since the chemical substance in the medium might differ from the compund used to create the medium, the column source provides the information about how and in which form the substance was originally added to the medium.
+
+Subset
+------
+
+The subset table contains an entry for each subset in the database, giving it an unique ID and storing its name and 
+description. The name should be a short abbreviation of the subset's full name, e.g. artSe for 'Artificial Sebum'. The 
+description should be a short description explaining its abbreviation and if possible containing a link or doi 
+referencing the original composition, e.g. for artSe the description "Artificial Sebum (based on: 
+https://journals.asm.org/doi/10.1128/spectrum.04180-22, Table 2)" explains the abbreviation used for the name and 
+provides a reference.
+
+Subset_includes_substance \(s2s\)
+---------------------------------
+
+This table links the subset ID to the substances contained in a subset. Additionally, the percentage for the possible 
+exchange reaction is stored. In case the original publication of the subset did not provide information on the flux, 
+the attribute is set to 1.0 for 100%.
 
 Substance 
 ---------
