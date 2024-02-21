@@ -1312,7 +1312,7 @@ def generate_insert_query(row: pd.Series) -> str:
     if type(value_str) == str: # Check if new_value is a string
         if ',' in value_str: # Check if new_value ist actually a list
             # Get all string values as string
-            value_str = ', '.join(['\'' + _.strip() + '\'' if not FLOAT_REGEX.match(_) else _ for _ in row['new_value'].split(',')])
+            value_str = ', '.join(['\'' + _.strip() + '\'' if not FLOAT_REGEX.fullmatch(_) else _ for _ in row['new_value'].split(',')])
         else: value_str = f'\'{ value_str.strip()}\'' # new_value is a string
     
     insert_query = f'INSERT INTO {row["table"]} {columns_str} VALUES '
@@ -1380,7 +1380,7 @@ def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH
 
     Args:
         - data (pd.DataFrame): DataFrame containing the columns table | column | new_value | conditions
-        - update_entries (bool): Boolean to determine whether entries should be inserted or updated
+        - update_entries (bool): Boolean to determine whether entries should be inserted or updated. False means insert.
         - database (str, optional): Path to a database. Defaults to PATH_TO_DB. 
     """
     colorama_init(autoreset=True)
