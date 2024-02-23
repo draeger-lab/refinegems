@@ -370,7 +370,7 @@ def search_ncbi_for_gpr(locus: str) -> str:
                     return record.description, feature.qualifiers["locus_tag"][0]
 
 
-def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame():
+def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
 
     Args:

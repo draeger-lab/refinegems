@@ -26,6 +26,12 @@ from ..classes.medium import load_medium_from_db, read_external_medium
 from typing import Literal
 
 ############################################################################
+# variables
+############################################################################
+
+MIN_GROWTH_THRESHOLD = 1.0e-5
+
+############################################################################
 # functions
 ############################################################################
 
@@ -583,7 +589,7 @@ def get_essential_reactions_via_single_knockout(model: cobraModel) -> list[str]:
         with model as model:
             reaction.knock_out()
             model.optimize()
-            if model.objective.value <= 11:
+            if model.objective_value <= 11:
                 print('%s blocked (bounds: %s), new growth rate %f $' %
                       (reaction.id, str(reaction.bounds), model.objective.value))
                 ess.append(reaction.id)
@@ -624,7 +630,6 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
         pd.DataFrame: Exchanges sorted from highest to lowest growth rate improvement
     """
     with model:
-        medium = model.medium
         model.medium = base_medium
         sol = model.optimize()
     base_growth = sol.objective_value
@@ -633,7 +638,6 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
     enhancement = {}
     for ex in list(model.exchanges):
         with model:
-            medium = model.medium
             base_medium[ex.id] = 10.0
             model.medium = base_medium
             sol = model.optimize()
