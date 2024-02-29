@@ -1,7 +1,7 @@
 """Identify, report and solve energy generating cycles (EGCs).
 """
 
-__author__ = 'Carolin Brune'
+__author__ = 'Carolin Brune and Tobias Fehrenbach'
 
 ################################################################################
 # requirements
@@ -264,12 +264,12 @@ class EGCSolver():
                         fluxes = solution.fluxes
                         objval = solution.objective_value
 
-                        if objval > 0.0:  # optimization > 0 --> EGC detected
+                        if objval > MIN_GROWTH_THRESHOLD:  # optimization > 0 --> EGC detected
                             obj_vals[name] = objval
                             egc_reactions[name] = {}
 
                             for rea, flux in fluxes.items():
-                                # cutoff for flux 1.0e-10 (=no growth) 
+                                # cutoff for flux 
                                 if  (flux > MIN_GROWTH_THRESHOLD or flux < -1.0 * MIN_GROWTH_THRESHOLD) and not rea.startswith("DISSI"):
                                     egc_reactions[name][rea] = flux
 
