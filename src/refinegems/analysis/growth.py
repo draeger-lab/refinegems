@@ -451,7 +451,7 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                 # set o2_percentage
                 if p and 'o2_percent' in p.keys():
                     new_medium.set_oxygen_percentage(p['o2_percent'])
-                elif params and 'o2_percemt' in params.keys():
+                elif params and 'o2_percent' in params.keys():
                     new_medium.set_oxygen_percentage(params['o2_percent'])
 
                 # add additional substances from DB

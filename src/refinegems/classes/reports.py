@@ -237,7 +237,7 @@ class GrowthSimulationReport(Report):
             growth.index.names = (None,None)
             growth.index.name=None
             growth.index = growth.index.get_level_values(1)
-            growth[growth > 500] = 0
+            growth[growth > 1000] = 0
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
             over_growth = growth.max().max() + 6
