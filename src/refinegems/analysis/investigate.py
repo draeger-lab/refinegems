@@ -223,57 +223,6 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
 # other
 # -----
 
-def get_egc(model: cobraModel) -> pd.DataFrame:
-    """Energy-generating cycles represent thermodynamically infeasible states. Charging of energy metabolites without any energy source causes such cycles. Detection method is based on (Fritzemeier et al., 2017)
-
-    Args:
-        - model (cobraModel): Model loaded with COBRApy
-
-    Returns:
-        pd.DataFrame: Table with possible EGCs
-    """
-    dissipation_rxns = pd.DataFrame(DISSIPATION_RXNS.items(), columns=['type','equation'])
-    
-    with model: 
-    # add dissipation reactions
-        for i, row in dissipation_rxns.iterrows():
-            try:
-                met_atp = reaction_equation_to_dict(row['equation'], model)
-                rxn = Reaction(row['type'])
-                rxn.name = 'Test ' + row['type'] + ' dissipation reaction'
-                rxn.add_metabolites(met_atp)
-                model.add_reactions([rxn])
-            except(KeyError):
-                dissipation_rxns.drop(dissipation_rxns[dissipation_rxns['type'] == row['type']].index, inplace=True)
-            
-        for rxn in model.reactions:
-            if 'EX_' in rxn.id:
-                rxn.bounds = (0.0, 0.0)
-                #print('Set exchange rxn to 0', rxn.name)
-            # set reversible reactions fluxes to [-1,1]    
-            elif rxn.reversibility: 
-                rxn.bounds = (-1.0,1.0)
-                #print('Reversible rxn', rxn.name)
-            # irreversible reactions have fluxes [0.1]    
-            else:
-                rxn.bounds = (0.0, 1.0)
-                #print('Irreversible rxn', rxn.name)
-                
-        df_fluxes = pd.DataFrame()
-        objval = dict()
-        # optimize by choosing one of dissipation reactions as an objective
-        for i, row in dissipation_rxns.iterrows():
-            model.objective = row['type']
-            #print('Set objective to', row['type'], ':', model.optimize().objective_value)
-            objval[row['type']] = model.optimize().objective_value
-            if model.optimize().objective_value > 0.0:
-                df = pd.DataFrame.from_dict([model.optimize().fluxes]).T.replace(0, np.nan).dropna(axis=0).rename({'fluxes':row['type']}, axis=1)
-                df_fluxes = pd.concat([df_fluxes, df], axis=1)
-            else:
-                df_fluxes[row['type']] = np.nan
-        df_fluxes = pd.concat([df_fluxes,pd.DataFrame.from_dict([objval])])
-    return df_fluxes.T.reset_index().rename({'index':'BOF', 0:'objective value'}, axis=1).fillna('')
-
 def get_metabs_with_one_cvterm(model: libModel) -> list[str]:
     """Reports metabolites which have only one annotation, can be used as basis for further annotation research
 
