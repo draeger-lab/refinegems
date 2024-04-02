@@ -365,21 +365,18 @@ class GrowthSimulationReport(Report):
         match how:
             # save to a new directory
             case 'dir':
-                # make sure given directory path ends with '/'
-                    if not to.endswith('/'):
-                        to = to + '/'
-                    # create directory to save report to
-                    dir_path = to + 'GrowthSimReport/'
-                    Path(dir_path).mkdir(parents=True, exist_ok=check_overwrite)
-                    # save the report
-                    with open(dir_path + 'report.txt', 'w') as f:
-                        f.write(str(self))
-                    # save visualisation for doubling time
-                    fig_dt = self.plot_growth(color_palette=color_palette)
-                    fig_dt.savefig(dir_path + 'report_vis_dt.png', bbox_inches='tight')
-                    # save visualisation for growth rate 
-                    fig_dt = self.plot_growth(unit='h', color_palette=color_palette)
-                    fig_dt.savefig(dir_path + 'report_vis_h.png', bbox_inches='tight')
+                # create directory to save report to
+                dir_path = Path(to, 'GrowthSimReport')
+                dir_path.mkdir(parents=True, exist_ok=check_overwrite)
+                # save the report
+                with open(Path(dir_path,'report.txt'), 'w') as f:
+                    f.write(str(self))
+                # save visualisation for doubling time
+                fig_dt = self.plot_growth(color_palette=color_palette)
+                fig_dt.savefig(Path(dir_path,'report_vis_dt.png'), bbox_inches='tight')
+                # save visualisation for growth rate 
+                fig_dt = self.plot_growth(unit='h', color_palette=color_palette)
+                fig_dt.savefig(Path(dir_path,'report_vis_h.png'), bbox_inches='tight')
 
             case _:
                 raise ValueError(f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.')
@@ -567,14 +564,10 @@ class KEGGPathwayAnalysisReport(Report):
             dir (str): Path to a directory to save the output directory with all the plot in.
         """
 
-        # make sure given directory path ends with '/'
-        if not dir.endswith('/'):
-            dir = dir + '/'
-
         # collect all produced file in one directory
         try:
-            Path(F"{dir}pathway-analysis/").mkdir(parents=True, exist_ok=False)
-            print(F'Creating new directory {F"{dir}pathway-analysis/"}')
+            Path(dir,"pathway-analysis").mkdir(parents=True, exist_ok=False)
+            print(F'Creating new directory {str(Path(dir,"pathway-analysis"))}')
         except FileExistsError:
             print('Given directory already has required structure.')
 
@@ -582,35 +575,35 @@ class KEGGPathwayAnalysisReport(Report):
         # a) for the counts
         if self.total_reac and self.kegg_count:
             count_fig = self.visualise_kegg_counts()
-            count_fig.savefig(F'{dir}pathway-analysis/kegg_anno_counts.png', bbox_inches='tight')
+            count_fig.savefig(Path(dir, 'pathway-analysis', 'kegg_anno_counts.png'), bbox_inches='tight')
         # b) for the actual pathways
         # 1.) global KEGG IDs
         if self.kegg_global:
             # with id
             fig = self.visualise_kegg_pathway(plot_type='global', label='id')
-            fig.savefig(F'{dir}pathway-analysis/pathway_global_id.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_global_id.png'), bbox_inches='tight')
             # with name
             fig = self.visualise_kegg_pathway(plot_type='global', label='name')
-            fig.savefig(F'{dir}pathway-analysis/pathway_global_name.png', bbox_inches='tight')
+            fig.savefig(Path(dir, 'pathway-analysis','pathway_global_name.png'), bbox_inches='tight')
         # 2.) Overview KEGG IDs
         if self.kegg_over:
             # with id
             fig = self.visualise_kegg_pathway(plot_type='overview', label='id')
-            fig.savefig(F'{dir}pathway-analysis/pathway_overview_id.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_overview_id.png'), bbox_inches='tight')
             # with name
             fig = self.visualise_kegg_pathway(plot_type='overview', label='name')
-            fig.savefig(F'{dir}pathway-analysis/pathway_overview_name.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_overview_name.png'), bbox_inches='tight')
         # 3.) rest
         if self.kegg_paths:
             # grouped by high-level terms
             fig = self.visualise_kegg_pathway(plot_type='high', label='name')
-            fig.savefig(F'{dir}pathway-analysis/pathway_high.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_high.png'), bbox_inches='tight')
             # all with id
             fig = self.visualise_kegg_pathway(plot_type='existing', label='id')
-            fig.savefig(F'{dir}pathway-analysis/pathway_existing_id.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_existing_id.png'), bbox_inches='tight')
             # all with name
             fig = self.visualise_kegg_pathway(plot_type='existing', label='name')
-            fig.savefig(F'{dir}pathway-analysis/pathway_existing_name.png', bbox_inches='tight')
+            fig.savefig(Path(dir,'pathway-analysis','pathway_existing_name.png'), bbox_inches='tight')
 
 
 class AuxotrophySimulationReport(Report):
@@ -661,12 +654,8 @@ class AuxotrophySimulationReport(Report):
 
         # save or return
         if save:
-            # make sure given directory path ends with '/'
-            if not save.endswith('/'):
-                save = save + '/'
             # save the visualisation of the growth rates
-            fig.savefig(F'{save}auxotrophies_vis.png', bbox_inches='tight')
-        
+            fig.savefig(Path(save,'auxotrophies_vis.png'), bbox_inches='tight')
         else:
             return fig 
         
@@ -678,16 +667,12 @@ class AuxotrophySimulationReport(Report):
             dir (str): Path to a dictionary.
             color_palette (str, optional): Name of a matplotlib colour palette. Defaults to 'YnGr'.
         """
-
-        # make sure given directory path ends with '/'
-        if not dir.endswith('/'):
-            dir = dir + '/'
         
         # save the visualisation of the growth rates
         self.visualise_auxotrophies(color_palette, save=dir)
 
         # save the growth rates as tabular information
-        self.simulation_results.to_csv(F'{dir}auxotrophies_table.tsv', sep='\t', index=True)
+        self.simulation_results.to_csv(Path(dir,'auxotrophies_table.tsv'), sep='\t', index=True)
 
 
 class SourceTestReport(Report):
@@ -784,18 +769,14 @@ class SourceTestReport(Report):
             color_palette (str, optional):Color palette (gradient) for the plot. 
                 Defaults to 'YlGn'.
         """
-
-        # make sure given directory path ends with '/'
-        if not dir.endswith('/'):
-            dir = dir + '/'
         
         # save the list 
-        self.results.to_csv(dir+'source_test_results.csv', sep=';', header=True, index=False)
+        self.results.to_csv(Path(dir,'source_test_results.csv'), sep=';', header=True, index=False)
 
         # save the visualisation
         fig,leg = self.visualise(width=width, color_palette=color_palette)
-        fig.savefig(dir+'source_test_hm.png', bbox_inches='tight', dpi=400)
-        leg.to_csv(dir+'source_test_hm_legend.csv', sep=';', header=True, index=True)
+        fig.savefig(Path(dir,'source_test_hm.png'), bbox_inches='tight', dpi=400)
+        leg.to_csv(Path(dir,'source_test_hm_legend.csv'), sep=';', header=True, index=True)
 
 
 class CorePanAnalysisReport(Report):
@@ -940,27 +921,23 @@ class CorePanAnalysisReport(Report):
         #    - smth about metabolites?
         # ..........................................................
 
-        # make sure given directory path ends with '/'
-        if not dir.endswith('/'):
-            dir = dir + '/'
-
         # collect all produced file in one directory
         try:
-            Path(F"{dir}pan-core-analysis/").mkdir(parents=True, exist_ok=False)
-            print(F'Creating new directory {F"{dir}pan-core-analysis/"}')
+            Path(dir,'pan-core-analysis/').mkdir(parents=True, exist_ok=False)
+            print(F'Creating new directory {str(Path(dir,"pan-core-analysis/"))}')
         except FileExistsError:
             print('Given directory already has required structure.')
 
         # save the reactions visualisation
         reac_vis = self.visualise_reactions()
-        reac_vis.savefig(F'{dir}pan-core-analysis/visualise_reactions.png', dpi=reac_vis.dpi)
+        reac_vis.savefig(Path(dir,'pan-core-analysis/visualise_reactions.png'), dpi=reac_vis.dpi)
 
         # save table of reactions mapped to characterisation
         if not self.isValid(check='reaction-count'):
             warnings.warn('Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected. Only labbeld reactions will be written to table.')
         reac_tab = pd.DataFrame({'reaction_id': self.core_reac + self.pan_reac + self.novel_reac,
                                 'pan-core': (['core']*len(self.core_reac)) + (['pan']*len(self.pan_reac)) + (['core']*len(self.novel_reac))})
-        reac_tab.to_csv(F'{dir}pan-core-analysis/table_reactions.tsv', sep='\t', index=False)
+        reac_tab.to_csv(Path(dir,'pan-core-analysis/table_reactions.tsv'), sep='\t', index=False)
 
 
 # @TODO
@@ -1174,15 +1151,11 @@ class ModelInfoReport(Report):
                 figures in. Defaults to 'YlGn'.
         """
 
-        # make sure given directory path ends with '/'
-        if not dir.endswith('/'):
-            dir = dir + '/'
-
         # save the statistics report
-        self.format_table().to_csv(f'{dir}{self.name}_report.csv',sep=';')
+        self.format_table().to_csv(Path(dir,f'{self.name}_report.csv'),sep=';')
         # save the visualisation
         fig = self.visualise(color_palette)
-        fig.savefig(dir+'source_test_hm.png', bbox_inches='tight', dpi=400)
+        fig.savefig(Path(dir,'source_test_hm.png'), bbox_inches='tight', dpi=400)
 
 
 # @TODO
