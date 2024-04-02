@@ -681,7 +681,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
     results = {}
 
     # get amino acids from database
-    amino_acids = medium.Medium('aa').add_subset(type='aa')
+    amino_acids = medium.Medium('aa').add_subset(subset_name='protAA')
     aa_list = set(amino_acids.substance_table['name'])
 
     # iterate over all media
