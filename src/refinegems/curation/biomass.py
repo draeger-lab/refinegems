@@ -4,16 +4,28 @@
 This module provides functions to be used to assess the biomass weight as well as normalise it.
 """
 
-import logging
-from cobra import Reaction
-from cobra import Model as cobraModel
-from six import iteritems
-import memote.support.helpers as helpers
-from memote.utils import truncate
-from typing import Union
-
 __author__ = "MEMOTE and Gwendolyn O. Döbel"
 
+############################################################################
+# requirements
+############################################################################
+
+import logging
+import memote.support.helpers as helpers
+
+from cobra import Model as cobraModel
+from cobra import Reaction
+from memote.utils import truncate
+from six import iteritems
+from typing import Union
+
+############################################################################
+# variables
+############################################################################
+
+############################################################################
+# functions
+############################################################################
 
 def test_biomass_presence(model: cobraModel) -> Union[list[str], None]:
     """

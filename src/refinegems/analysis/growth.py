@@ -44,8 +44,8 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:None|str|tuple[float] =
     (Ir)reversibility is retained.
 
     Args:
-        model (cobraModel): The model loaded with COBRApy.
-        reac_bounds (None|str|tuple[float], optional): The setting for the new reaction bounds. 
+        - model (cobraModel): The model loaded with COBRApy.
+        - reac_bounds (None|str|tuple[float], optional): The setting for the new reaction bounds. 
             Defaults to None. If None or "cobra", uses the COBRApy in-built default values (-1000.0, 1000.0).
             The user can set personal values by entering a tuple of two floats.
 
@@ -87,9 +87,9 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[s
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
     Args:
-        model (cobraModel): A cobra Model to be tested.
-        type (str): Type of uptake, can be 'minimal'/'min' or 'standard'/'std'.
-        exchange_regex (str, optional): Regex-compatible string to determine exchange reactions. Defaults to '^EX'.
+        - model (cobraModel): A cobra Model to be tested.
+        - type (str): Type of uptake, can be 'minimal'/'min' or 'standard'/'std'.
+        - exchange_regex (str, optional): Regex-compatible string to determine exchange reactions. Defaults to '^EX'.
 
     Raises:
         ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
@@ -125,7 +125,7 @@ def get_secretion(model: cobraModel) -> list[str]:
     """Returns the list of exchange reactions for compounds that are secreted in the current version of the model.
 
     Args:
-        model (cobraModel): The cobra model to be tested.
+        - model (cobraModel): The cobra model to be tested.
 
     Returns:
         list[str]: The list of IDs of secretion reactions
@@ -163,9 +163,9 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
     @WARNING only tests single deletions currently
 
     Args:
-        model (cobraModel): The model to be tested.
-        growth_medium (dict): The medium in dictionary form, ready to be added to the model.
-        standard_uptake (list[str]|None): Option to add a second medium list as supplements.
+        - model (cobraModel): The model to be tested.
+        - growth_medium (dict): The medium in dictionary form, ready to be added to the model.
+        - standard_uptake (list[str]|None): Option to add a second medium list as supplements.
 
     Returns:
         list[str]: The list of exchanges essential for growth.
@@ -197,7 +197,7 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
     return essential
 
 
-def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False):
+def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False) -> list[str]|dict:
     """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
     which can be added to the new one to enable growths.
 
@@ -205,16 +205,19 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
     complecated cases, e.g. missing carbon source but multiple ones in the standard medium.
 
     Args:
-        model (cobraModel): The model to add the medium to.
-        growth_medium (dict): A medium definition, ready to be added to a COBRApy model.
+        - model (cobraModel): The model to add the medium to.
+        - growth_medium (dict): A medium definition, ready to be added to a COBRApy model.
             This is for the new medium for growth testing.
-        standard_uptake (list[str]): A list of exchange reactions, e.g. Output of get_uptake.
+        - standard_uptake (list[str]): A list of exchange reactions, e.g. Output of get_uptake.
             This is for the old medium where the model can grow on.
-        combine (bool, optional): Flag to directly combine the additives with the new medium or just return the additive's IDs.
+        - combine (bool, optional): Flag to directly combine the additives with the new medium or just return the additive's IDs.
             Defaults to False (returns reaction IDs).
 
     Returns:
-        list[str] or dict: List of the exchange reaction IDs of the additives or the supplemented medium, if combine is set to True.
+        - Case: combine = False
+            List of the exchange reaction IDs of the additives.
+        - Case: combine = False
+            Supplemented medium as a dictionary.
     """
 
     # find essential exchange reactions
@@ -273,9 +276,9 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['Bi
     """Simulate the growth of a model on a given medium.
 
     Args:
-        model (cobraModel): The model.
-        m (medium.Medium): The medium.
-        supplement (Literal[None,'std','min'], optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
+        - model (cobraModel): The model.
+        - m (medium.Medium): The medium.
+        - supplement (Literal[None,'std','min'], optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
 
     Returns:
@@ -327,9 +330,9 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
     """Simulate the growth of (at least one) models on (at least one) media.
 
     Args:
-        models (cobraModel | list[cobraModel]): A COBRApy model or a list of multiple.
-        media (medium.Medium | list[medium.Medium]): A refinegems Medium object or a list of multiple.
-        supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional): Option to supplement the media to enable growth.
+        - models (cobraModel | list[cobraModel]): A COBRApy model or a list of multiple.
+        - media (medium.Medium | list[medium.Medium]): A refinegems Medium object or a list of multiple.
+        - supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional): Option to supplement the media to enable growth.
             Default to None. Further options include a list with one entry for each medium or a string to set the same default for all.
             The string can be 'min', 'std' or None.
 
@@ -363,7 +366,7 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
     """Read the information from a media configuration file.
 
     Args:
-        yaml_path (str): The path to a media configuration file in YAML-format.
+        - yaml_path (str): The path to a media configuration file in YAML-format.
 
     Returns:
         tuple[list[medium.Medium],list[str,None]]: Tuple of A) list of the loaded media and B) list of supplement modes.
@@ -505,6 +508,40 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
                     namespace:Literal["BiGG"]='BiGG',
                     supplements:None|list[Literal[None,'std','min']]|Literal[None,'std','min']=None,
                     retrieve:Literal['report','plot','both']='plot') -> reports.GrowthSimulationReport|plt.Figure|tuple:
+    """Perform a growth analysis
+
+    Args:
+        - models (cobra.Model | str | list[str] | list[cobra.Model]): Model(s) to be tested.
+            Can be a COBRA model, a path to one, or a list of either type.
+        - media (medium.Medium | list[medium.Medium] | str): Medium or media to be tested.
+            Can be single or a list of medium objects or a path to a medium config file.
+        - namespace (Literal['BiGG'], optional): Namespace of the model. 
+            Defaults to 'BiGG'.
+        - supplements (None | list[Literal[None,'std','min']] | Literal[None,'std','min'], optional): 
+            Option to supplement media to enable growth. Can be None, std or min. If a single
+            string is given, uses it for all media. Alternatively, a list with one entry per medium
+            can be given to choose different options for different media. 
+            Defaults to None.
+        - retrieve (Literal['report','plot','both'], optional): Determine, what to return.
+            Options are the report object, the plotted graph or both (As a tuple). 
+            Defaults to 'plot'.
+
+    Raises:
+        TypeError: Unknown or mixed types in model list.
+        KeyError: Empty list for models detected.
+        ValueError: Unknown input type for models.
+        TypeError: Unknown type found in media, should be list fo medium.Medium.
+        ValueError: Unknown input for media.
+        ValueError: Unknown input for retrieve
+        
+    Returns:
+        - Case: retrieve = report 
+            reports.GrowthSimulationReport: the report
+        - Case: retrieve = plot 
+            plt.Figure: the plot
+        - Case: retrieve = both 
+            tuple: the report and the list
+    """
 
     # read-in all models into list
     # ----------------------------
@@ -663,10 +700,10 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
     sink reaction for each of the amino acids to the model as the objective function.
 
     Args:
-        model (cobraModel): The model to be tested. Loaded with COBRApy.
-        media_list (list[medium.Medium]): List of media to be tested.
-        supplement_list (list[Literal[None,'min','std']]): List of supplement modes for the media.
-        namespace (Literal['BiGG','Name'], optional): String for the namespace to be used for the model. 
+        - model (cobraModel): The model to be tested. Loaded with COBRApy.
+        - media_list (list[medium.Medium]): List of media to be tested.
+        - supplement_list (list[Literal[None,'min','std']]): List of supplement modes for the media.
+        - namespace (Literal['BiGG','Name'], optional): String for the namespace to be used for the model. 
             Current options include 'BiGG', 'Name'.
             Defaults to 'BiGG'.
 
@@ -764,19 +801,19 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
     a set medium.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
-        element (str): The chemical symbol e.g., N for nitrogen, to change the sources for.
-        substances (None | str | list[str], optional): Substances to switch out in the medium. 
+        - model (cobra.Model): The model loaded with COBRApy.
+        - element (str): The chemical symbol e.g., N for nitrogen, to change the sources for.
+        - substances (None | str | list[str], optional): Substances to switch out in the medium. 
             Can be a list of substance names present in the database, a subset name to be
             loaded from the database or None, which results in all substances in the database,
             that contain the element being tested as a source. Option None can potentially run
             a while.
             Defaults to None.
-        medium (None | str | rg.medium.Medium, optional): The medium to start with. 
+        - medium (None | str | rg.medium.Medium, optional): The medium to start with. 
             The chosen medium ideally should have all other necessary elements needed for the model
             to grow.
             Defaults to None.
-        namespace (Literal['BiGG'], optional): The namespace to work on. 
+        - namespace (Literal['BiGG'], optional): The namespace to work on. 
             Defaults to 'BiGG'.
 
     Raises:
@@ -872,12 +909,12 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
     Note: there may be multiple solution for the minimisation, but only 1 will be returned
 
     Args:
-        model (cobraModel): Model with a medium, that should be minimised.
-        objective (Literal[flux,medium,exchanges], optional): Objective for the minimisation task. 
+        - model (cobraModel): Model with a medium, that should be minimised.
+        - objective (Literal[flux,medium,exchanges], optional): Objective for the minimisation task. 
             Options listed above. Defaults to 'flux'.
-        growth_rate (float, optional): Minimum growth rate the model has to archieve. 
+        - growth_rate (float, optional): Minimum growth rate the model has to archieve. 
             Defaults to 0.5. Only needed for objectives medium and exchanges.
-        open_exchanges (bool, optional): If set to True assigns large upper bound to all import reactions. 
+        - open_exchanges (bool, optional): If set to True assigns large upper bound to all import reactions. 
             @TODO: running this on True can lead to infeasible runtimes, re-check usage in cobra.
             Defaults to False.
 
