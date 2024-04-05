@@ -43,7 +43,6 @@ KEGG_OVERVIEW_PATHWAY = {'01200': 'Carbon metabolism',
                          '01240': 'Biosynthesis of cofactors',
                          '01220': 'Degradation of aromatic compounds'}
 
-# @TODO # : Where to put this file // check connection (if it truly works)
 KEGG_METABOLISM_PATHWAY = files('refinegems.data.pathway').joinpath('KEGG_pathway_metabolism.csv')
 KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"
 
@@ -129,7 +128,7 @@ class GrowthSimulationReport(Report):
         """Add a new single growth report to the reports list
 
         Args:
-            new_rep (SingleGrowthSimulationReport): The new simulation report.
+            - new_rep (SingleGrowthSimulationReport): The new simulation report.
         """
 
         self.reports.append(new_rep)
@@ -155,10 +154,10 @@ class GrowthSimulationReport(Report):
         """Visualise the contents of the report.
 
         Args:
-            unit (Literal['h','dt'], optional): Set the unit to plot. 
+            - unit (Literal['h','dt'], optional): Set the unit to plot. 
                 Can be doubling time in minutes ('dt') or growth rates in mmol/gDWh ('h'). 
                 Defaults to 'dt'.
-            color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional): A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
@@ -171,12 +170,12 @@ class GrowthSimulationReport(Report):
             """Helper function to plot the bar plot for the growth visualisation.
 
             Args:
-                xdata (list[str]): List of the x-axis data (medium or model names).
-                xlab (str): The x-axis label.
-                ydata (list[float]): List of thr y-axis data (the values).
-                ylab (str): The y-axis label.
-                title (str): The title of the plot.
-                color_palette (str, optional): A colour gradient from the matplotlib library.
+                - xdata (list[str]): List of the x-axis data (medium or model names).
+                - xlab (str): The x-axis label.
+                - ydata (list[float]): List of thr y-axis data (the values).
+                - ylab (str): The y-axis label.
+                - title (str): The title of the plot.
+                - color_palette (str, optional): A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default. 
                     Defaults to 'YlGn'.
 
@@ -222,9 +221,9 @@ class GrowthSimulationReport(Report):
             """Helper function to plot the heatmap for the growth visualisation.
 
             Args:
-                data (pd.DataFrame): The table containing the data to be plotted.
+                - data (pd.DataFrame): The table containing the data to be plotted.
                     Needs to have the columns 'medium', 'model' and one for the growth values.
-                color_palette (str, optional): A colour gradient from the matplotlib library.
+                - color_palette (str, optional): A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default. 
                     Defaults to 'YlGn'.
 
@@ -373,19 +372,20 @@ class GrowthSimulationReport(Report):
     # @TEST    
     # @EXTEND : more options for saving the report e.g. html or pdf
     def save(self, to:str, how:Literal['dir']='dir', check_overwrite:bool=True, color_palette:str='YlGn'):
-        """Save the report. Current options include:
-
+        """Save the report. 
+        
+        Current options include:
         - 'dir': save the report to a directory, including a txt and two graphics
         - .... see future updates .....
 
         Args:
-            to (str): Path to a directory to save the report to.
-            how (Literal['dir'], optional): How to save the report. 
+            - to (str): Path to a directory to save the report to.
+            - how (Literal['dir'], optional): How to save the report. 
                 For options see functions description. 
                 Defaults to 'dir'.
-            check_overwrite (bool, optional): Flag to choose to check for existing directory/files of same name 
+            - check_overwrite (bool, optional): Flag to choose to check for existing directory/files of same name 
                 or just to overwrite them. Defaults to True.
-            color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional): A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
@@ -444,7 +444,7 @@ class KEGGPathwayAnalysisReport(Report):
         KEGG pathway annotation.
 
         Args:
-            colors (list[str], optional): List of two colours used for the plotting.
+            - colors (list[str], optional): List of two colours used for the plotting.
                 If wrong number or non-matplotlib colours are given, sets its to the default.
                 Defaults to 'lightgreen' and 'darkgreen'.
 
@@ -485,10 +485,10 @@ class KEGGPathwayAnalysisReport(Report):
         - all: check and plot all identifiers
 
         Args:
-            plot_type (Literal["global","overview","high","existing"], optional): Type of plot, explaination see above. Defaults to 'global'.
-            label (Literal["id","name"], optional): Type of the label. If 'id', uses the KEGG pathway IDs,
+            - plot_type (Literal["global","overview","high","existing"], optional): Type of plot, explaination see above. Defaults to 'global'.
+            - label (Literal["id","name"], optional): Type of the label. If 'id', uses the KEGG pathway IDs,
                 if 'name', uses the pathway names. Defaults to 'id'.
-            color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional): A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
@@ -592,7 +592,7 @@ class KEGGPathwayAnalysisReport(Report):
         """Save the content of the report as plots.
 
         Args:
-            dir (str): Path to a directory to save the output directory with all the plot in.
+            - dir (str): Path to a directory to save the output directory with all the plot in.
         """
 
         # collect all produced file in one directory
@@ -649,19 +649,21 @@ class AuxotrophySimulationReport(Report):
         self.simulation_results = results
 
     
-    # @TEST
     # auxotrophy sim visualisation
     def visualise_auxotrophies(self, color_palette:str='YlGn', save:None|str=None) -> None|matplotlib.figure.Figure:
         """Visualise and/or save the results of the :py:func:`test_auxotrophies` function.
 
         Args:
-            res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
-            color_palette (str, optional): A name of a seaborn gradient color palette. 
+            - res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
+            - color_palette (str, optional): A name of a seaborn gradient color palette. 
                 In case name is unknown, takes the default. Defaults to 'YlGn'.
-            save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
+            - save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
 
         Returns:
-            None|matplotlib.figure.Figure: Either saves the figure and a table of the results or returns the plotted figure.
+            - Case: save = str
+                None: No return, as the visulaisation is directly saved.
+            - Case: save = None
+                matplotlib.figure.Figure: The plotted figure.
         """
         
         # create colour gradient
@@ -695,8 +697,8 @@ class AuxotrophySimulationReport(Report):
         """Save the report to a given dictionary.
 
         Args:
-            dir (str): Path to a dictionary.
-            color_palette (str, optional): Name of a matplotlib colour palette. Defaults to 'YnGr'.
+            - dir (str): Path to a dictionary.
+            - color_palette (str, optional): Name of a matplotlib colour palette. Defaults to 'YnGr'.
         """
         
         # save the visualisation of the growth rates
@@ -726,10 +728,10 @@ class SourceTestReport(Report):
         """Visuale the results of the source test as a heatmap
 
         Args:
-            width (int, optional): number of columns to display for the heatmap. 
+            - width (int, optional): number of columns to display for the heatmap. 
                 Number of row is calculated accordingly to fit all values.
                 Defaults to 12.
-            color_palette (str, optional): Color palette (gradient) for the plot. 
+            - color_palette (str, optional): Color palette (gradient) for the plot. 
                 Defaults to 'YlGn'.
 
         Returns:
@@ -794,10 +796,10 @@ class SourceTestReport(Report):
         """Save the results of the source test.
 
         Args:
-            dir (str): Path to a directory to save the results to.
-            width (int, optional): Number of columns for the heatmap. 
+            - dir (str): Path to a directory to save the results to.
+            - width (int, optional): Number of columns for the heatmap. 
                 Defaults to 12.
-            color_palette (str, optional):Color palette (gradient) for the plot. 
+            - color_palette (str, optional):Color palette (gradient) for the plot. 
                 Defaults to 'YlGn'.
         """
         
@@ -868,7 +870,7 @@ class CorePanAnalysisReport(Report):
             implements more checks
 
         Args:
-            check (str, optional): Describes which part to check. Options are listed above.
+            - check (str, optional): Describes which part to check. Options are listed above.
                 Defaults to 'reaction-count'.
 
         Raises:
@@ -943,7 +945,7 @@ class CorePanAnalysisReport(Report):
         - visualise_reactions : donut chart of the values above
 
         Args:
-            dir (str): Path to a directory to save the output to.
+            - dir (str): Path to a directory to save the output to.
         """
         
         # ..........................................................
@@ -1014,7 +1016,7 @@ class ModelInfoReport(Report):
         """Put the information of the report into a pandas DataFrame table.
 
         Args:
-            all_counts (bool, optional): Option to save the list of e.g. reactions
+            - all_counts (bool, optional): Option to save the list of e.g. reactions
                 as such or to convert them into counts when set to True. 
                 Defaults to True.
 
@@ -1043,7 +1045,7 @@ class ModelInfoReport(Report):
         """Visualise the basic information of the report.
 
         Args:
-            color_palette (str, optional): Colour palette to use for the plots. 
+            - color_palette (str, optional): Colour palette to use for the plots. 
                 Defaults to 'YlGn'.
 
         Returns:
@@ -1177,8 +1179,8 @@ class ModelInfoReport(Report):
         """Save the report.
 
         Args:
-            dir (str): Directory to save the report to.
-            color_palette (str, optional): Colour palette of matplotlib to plot
+            - dir (str): Directory to save the report to.
+            - color_palette (str, optional): Colour palette of matplotlib to plot
                 figures in. Defaults to 'YlGn'.
         """
 
@@ -1186,7 +1188,7 @@ class ModelInfoReport(Report):
         self.format_table().to_csv(Path(dir,f'{self.name}_report.csv'),sep=';')
         # save the visualisation
         fig = self.visualise(color_palette)
-        fig.savefig(Path(dir,'source_test_hm.png'), bbox_inches='tight', dpi=400)
+        fig.savefig(Path(dir,'info_report_vis.png'), bbox_inches='tight', dpi=400)
 
 
 # @TODO
