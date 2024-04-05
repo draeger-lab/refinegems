@@ -279,14 +279,18 @@ class GrowthSimulationReport(Report):
                               vmax=vmax,
                               cmap=cmap, 
                               linewidth=.5, 
-                              cbar_kws = {'orientation':'vertical', 'label':'doubling time [min]', 
+                              cbar_kws = {'orientation':'vertical', 'label':'Doubling time [min]', 
                                           'extend': 'min', 'extendrect':True},
                               ax=ax,
                               fmt=''
                               )
+            
+            # labels
             rotation = 40 if len(growth.index) > 3 else 0
             plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
             ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
+            ax.set_ylabel('Media', fontsize=15)
+            ax.set_xlabel('Models', fontsize=15)
 
             # hatches for no-data-values
             plt.pcolor(x, y, zm, hatch='x', alpha=0.)
@@ -297,7 +301,7 @@ class GrowthSimulationReport(Report):
                 spine.set_linewidth(1) 
                 spine.set_edgecolor('grey')
 
-
+            # extra legend
             handles = []
             handles.append(mpatches.Rectangle((0, 0), 0, 0, color='white', ec='grey', label = 'No growth'))
             handles.append(mpatches.Rectangle((0, 0), 0, 0, color='white', ec='grey', hatch='xxx', label = 'No data'))
