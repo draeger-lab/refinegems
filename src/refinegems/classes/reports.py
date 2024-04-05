@@ -11,6 +11,7 @@ import cobra
 import copy
 import math
 import matplotlib
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
 import numpy as np
@@ -237,7 +238,10 @@ class GrowthSimulationReport(Report):
             growth.index.names = (None,None)
             growth.index.name=None
             growth.index = growth.index.get_level_values(1)
-            growth[growth > 1000] = 0
+
+            # over / under (meaningful) values
+            # @TODO: are these values meaningful???
+            growth[growth > 1000] = 0   
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
             over_growth = growth.max().max() + 6
@@ -245,10 +249,12 @@ class GrowthSimulationReport(Report):
             under_growth = growth.min().min() - 5
             vmin= under_growth if under_growth > 1e-5 else 1e-5 #Use same threshhold as in find_missing_essential in growth
             vmax=over_growth - 1
+
+            # annotations
             annot = growth.copy()
             annot = annot.round().astype(int)
             annot[annot < 1e-5] = ''
-            annot.replace(over_growth.round().astype(int), 'No data', inplace=True)
+            annot.replace(over_growth.round().astype(int), '', inplace=True)
 
             # setting the colours 
             try:
@@ -256,25 +262,46 @@ class GrowthSimulationReport(Report):
             except ValueError:
                 warnings.warn('Unknown color palette, setting it to "YlGn"')
                 cmap = matplotlib.colormaps['YlGn']
-            cmap.set_under('black') # too low / no growth
+            cmap.set_under('white') # too low / no growth
             cmap.set_over('white') # no data
 
             # plot the heatmap
             fig, ax = plt.subplots(figsize=(10,8))
-            sns.heatmap(growth.T, 
-                        annot=annot.T, 
-                        annot_kws={"fontsize":15},
-                        vmin=vmin, 
-                        vmax=vmax,
-                        cmap=cmap, 
-                        linewidth=.5, 
-                        cbar_kws = {'orientation':'vertical', 'label':'doubling time [min]', 'extend': 'min', 'extendrect':True},
-                        ax=ax,
-                        fmt=''
-                        )
+
+            zm = np.ma.masked_where(growth.T != over_growth,growth.T)
+            x= np.arange(len(growth.T.columns)+1)
+            y= np.arange(len(growth.T.index)+1)
+
+            res = sns.heatmap(growth.T, 
+                              annot=annot.T, 
+                              annot_kws={"fontsize":15},
+                              vmin=vmin, 
+                              vmax=vmax,
+                              cmap=cmap, 
+                              linewidth=.5, 
+                              cbar_kws = {'orientation':'vertical', 'label':'doubling time [min]', 
+                                          'extend': 'min', 'extendrect':True},
+                              ax=ax,
+                              fmt=''
+                              )
             rotation = 40 if len(growth.index) > 3 else 0
             plt.tick_params(rotation=0, bottom=False, top=False, left=False, right=False)
             ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
+
+            # hatches for no-data-values
+            plt.pcolor(x, y, zm, hatch='x', alpha=0.)
+
+            # drawing a frame
+            for _, spine in res.spines.items(): 
+                spine.set_visible(True) 
+                spine.set_linewidth(1) 
+                spine.set_edgecolor('grey')
+
+
+            handles = []
+            handles.append(mpatches.Rectangle((0, 0), 0, 0, color='white', ec='grey', label = 'No growth'))
+            handles.append(mpatches.Rectangle((0, 0), 0, 0, color='white', ec='grey', hatch='xxx', label = 'No data'))
+            fig.legend(handles=handles, loc='lower right', bbox_to_anchor=(0.9,0.05))
 
             return fig
         
