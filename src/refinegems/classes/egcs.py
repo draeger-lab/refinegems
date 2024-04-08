@@ -212,15 +212,15 @@ class EGCSolver():
         """Find the EGCs in a model - if exsistend.
 
         Args:
-            model (cobra.Model): The model loaded with COBRApy.
-            with_reacs (bool, optional): Option to either only return the names
+            - model (cobra.Model): The model loaded with COBRApy.
+            - with_reacs (bool, optional): Option to either only return the names
                 of the found EGC or additionally also the reactions, which 
                 show fluxes during testing. 
                 Defaults to False.
-            namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
@@ -505,58 +505,63 @@ class GreedyEGCSolver(EGCSolver):
         """
 
         output_list = []
-
-        print("_____________________________________")
-        print(f"Try to resolve the following EGCs: {[egc for egc in present_egcs]} \nThis might take a while...")
-
-        # try to find BOF
-        pos_bofs = test_biomass_presence(model)
-        if pos_bofs:
-            bof = pos_bofs[0]
-        else:
-            mes = 'No growth or biomass objectuve function in model. Cannot solve EGCs.'
-            raise KeyError(mes)
         
-        with model as m:
-            set_bounds_to_default(m)
-            m.objective = bof
+        if len(present_egcs) == 0:
+            print('No EGCs present, nothing to solve.') 
 
-            # might limit processes with Pool(process=limit) -> otherwise it consumes all cores
-            # limit to half of machine cores -> at least for me no speed increment with more cores
+        else:
+            print("_____________________________________")
+            print(f"Try to resolve the following EGCs: {[egc for egc in present_egcs]} \nThis might take a while...")
+
+            # try to find BOF
+            pos_bofs = test_biomass_presence(model)
+            if pos_bofs:
+                bof = pos_bofs[0]
+            else:
+                mes = 'No growth or biomass objectuve function in model. Cannot solve EGCs.'
+                raise KeyError(mes)
             
-            pool = Pool(processes=self.limit) 
+            with model as m:
+                set_bounds_to_default(m)
+                m.objective = bof
+
+                # might limit processes with Pool(process=limit) -> otherwise it consumes all cores
+                # limit to half of machine cores -> at least for me no speed increment with more cores
+                
+                pool = Pool(processes=self.limit) 
+                            
+                # partial -> creates function with fixed variables to call with each iteration
+                # needed since pool.imap cannot do that
+                part_test_mods = partial(self.test_modifications,
+                                        model=m,
+                                        present_egc=present_egcs,
+                                        namespace=namespace,
+                                        compartment=compartment)
+                # increment in chunksize will reduce computation time -> but progressbar update also...
+                for res in list(tqdm(pool.imap_unordered(func=part_test_mods, iterable=m.reactions, 
+                                                        chunksize=self.chunksize),
+                                total=len(m.reactions),
+                                desc="Resolve EGCs")):
+                    if res:
+                        output_list.append(res)
+
+                # @TODO : make sure this is run, even if program is discarded
+                pool.close()
+                pool.join()
+                
+            # merge output_list to the final results
+            results = {}
+            for output_dict in output_list:
+                for egc, modifications in output_dict.items():
+                    for mod, reactions in modifications.items():
+                        if not egc in results.keys():
+                            results[egc] = {}
+                        if mod in results[egc].keys():
+                            results[egc][mod] = list(set(results[egc][mod] + reactions))
+                        else:
+                            results[egc][mod] = list(set(reactions))
                         
-            # partial -> creates function with fixed variables to call with each iteration
-            # needed since pool.imap cannot do that
-            part_test_mods = partial(self.test_modifications,
-                                    model=m,
-                                    present_egc=present_egcs,
-                                    namespace=namespace,
-                                    compartment=compartment)
-            # increment in chunksize will reduce computation time -> but progressbar update also...
-            for res in list(tqdm(pool.imap_unordered(func=part_test_mods, iterable=m.reactions, 
-                                                    chunksize=self.chunksize),
-                            total=len(m.reactions),
-                            desc="Resolve EGCs")):
-                if res:
-                    output_list.append(res)
-
-            pool.close()
-            pool.join()
-            
-        # merge output_list to the final results
-        results = {}
-        for output_dict in output_list:
-            for egc, modifications in output_dict.items():
-                for mod, reactions in modifications.items():
-                    if not egc in results.keys():
-                        results[egc] = {}
-                    if mod in results[egc].keys():
-                        results[egc][mod] = list(set(results[egc][mod] + reactions))
-                    else:
-                        results[egc][mod] = list(set(reactions))
-                    
-        return results
+            return results
 
 
     # find a solution to solve all EGCs that 
@@ -653,7 +658,7 @@ class GreedyEGCSolver(EGCSolver):
     # run the complete solving process
     # --------------------------------
     def solve_egcs(self, model:cobra.Model, namespace:Literal['BiGG']='BiGG',
-                   compartment:list=['c','p']) -> dict:
+                   compartment:list=['c','p']) -> dict|None:
         """Run the complete greedy EGC solving process.
 
         Args:
@@ -681,8 +686,9 @@ class GreedyEGCSolver(EGCSolver):
                                                      present_egcs=egc_reactions,
                                                      namespace=namespace,
                                                      compartment=compartment)
-        solution,score = self.find_solution_greedy(results,egc_reactions)
-        self.apply_modifications(model,solution)
-        still_egc = self.find_egcs(model,namespace=namespace,compartment=compartment)
+        if results:
+            solution,score = self.find_solution_greedy(results,egc_reactions)
+            self.apply_modifications(model,solution)
+            still_egc = self.find_egcs(model,namespace=namespace,compartment=compartment)
 
-        return {'solution':solution, 'score':score, 'remaining egcs':still_egc}
+            return {'solution':solution, 'score':score, 'remaining egcs':still_egc}
