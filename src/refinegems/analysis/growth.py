@@ -17,12 +17,11 @@ import re
 import warnings
 import yaml
 
-import refinegems as rg
-
 from cobra import Model as cobraModel
-from ..utility.io import load_model
-from ..classes import medium, reports
-from ..classes.medium import load_medium_from_db, read_external_medium
+from ..curation.biomass import test_biomass_presence
+from ..utility.io import load_model, load_a_table_from_database
+from ..classes.reports import SingleGrowthSimulationReport, GrowthSimulationReport, AuxotrophySimulationReport, SourceTestReport
+from ..classes.medium import Medium, medium_to_model, read_from_cobra_model, load_medium_from_db, read_external_medium
 from typing import Literal
 
 ############################################################################
@@ -240,13 +239,13 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
 # @TEST
 # @RENAMED 
 # @RESTRUCTURED
-def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[medium.Medium], only_additives:bool=True) -> dict:
+def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[Medium], only_additives:bool=True) -> dict:
     """
     Returns metabolites necessary for growth and not in media
 
     Args:
         - model (cobraModel): Model loaded with COBRApy
-        - media (list[medium.Medium]): Containing all media for which the growth essential metabolites not contained in the media should be returned
+        - media (list[Medium]): Containing all media for which the growth essential metabolites not contained in the media should be returned
         - only_additives(bool, optional): Flag to only return the supplemented exchanges (True) or all essential ones (False).
             Defaults to True.
 
@@ -259,7 +258,7 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
     for medium in media:
         
         # convert to a cobrapy medium
-        exported_m = medium.medium_to_model(medium=medium, model=model, add=False)
+        exported_m = medium_to_model(medium=medium, model=model, add=False)
         # get essentials
         essential =  find_growth_essential_exchanges(model, exported_m, default_uptake)
         # check for only_additives flag
@@ -272,23 +271,23 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[mediu
 
 
 
-def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['BiGG', 'Name']='BiGG', supplement:Literal[None,'std','min'] = None) -> reports.SingleGrowthSimulationReport:
+def growth_sim_single(model: cobraModel, m: Medium, namespace:Literal['BiGG', 'Name']='BiGG', supplement:Literal[None,'std','min'] = None) -> SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
 
     Args:
         - model (cobraModel): The model.
-        - m (medium.Medium): The medium.
+        - m (Medium): The medium.
         - supplement (Literal[None,'std','min'], optional): Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
 
     Returns:
-        reports.SingleGrowthSimulationReport: Object with the simulation results
+        SingleGrowthSimulationReport: Object with the simulation results
     """
 
     with model:
 
         # convert to a cobrapy medium
-        exported_m = medium.medium_to_model(medium=m, model=model, 
+        exported_m = medium_to_model(medium=m, model=model, 
                                             namespace=namespace, 
                                             default_flux=10.0, 
                                             replace=False, 
@@ -315,7 +314,7 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['Bi
             model.medium = new_m
 
         # simulate growth
-        report = reports.SingleGrowthSimulationReport(model_name = model.id, medium_name = m.name)
+        report = SingleGrowthSimulationReport(model_name = model.id, medium_name = m.name)
         report.growth_value = model.optimize().objective_value
         report.doubling_time = (np.log(2)/report.growth_value)*60 if report.growth_value != 0 else 0
         report.additives = [_ for _ in new_m if _ not in exported_m]
@@ -324,20 +323,20 @@ def growth_sim_single(model: cobraModel, m: medium.Medium, namespace:Literal['Bi
     return report
 
 
-def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|list[medium.Medium], 
+def growth_sim_multi(models: cobraModel|list[cobraModel], media: Medium|list[Medium], 
                      namespace:Literal['BiGG','Name']='BiGG', 
-                     supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> reports.GrowthSimulationReport:
+                     supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> GrowthSimulationReport:
     """Simulate the growth of (at least one) models on (at least one) media.
 
     Args:
         - models (cobraModel | list[cobraModel]): A COBRApy model or a list of multiple.
-        - media (medium.Medium | list[medium.Medium]): A refinegems Medium object or a list of multiple.
+        - media (Medium | list[Medium]): A refinegems Medium object or a list of multiple.
         - supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional): Option to supplement the media to enable growth.
             Default to None. Further options include a list with one entry for each medium or a string to set the same default for all.
             The string can be 'min', 'std' or None.
 
     Returns:
-        reports.GrowthSimulationReport: The compiled information of the simulation results.
+        GrowthSimulationReport: The compiled information of the simulation results.
     """
 
     # check input 
@@ -349,7 +348,7 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
         supplement_modes = [supplement_modes] * len(media)
 
     # simulate the growth of the models on the different media
-    report = reports.GrowthSimulationReport()
+    report = GrowthSimulationReport()
     for mod in models:
         for med,supp in zip(media, supplement_modes):
             r = growth_sim_single(mod, med, namespace=namespace, supplement=supp)
@@ -362,14 +361,14 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: medium.Medium|l
 # @TODO/@IDEA: validity check nefore parsing
 # @ASK: maybe something for the io module or does it fit here?
 # @TEST: extensive testing that everythin works fine
-def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]]:
+def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
     """Read the information from a media configuration file.
 
     Args:
         - yaml_path (str): The path to a media configuration file in YAML-format.
 
     Returns:
-        tuple[list[medium.Medium],list[str,None]]: Tuple of A) list of the loaded media and B) list of supplement modes.
+        tuple[list[Medium],list[str,None]]: Tuple of A) list of the loaded media and B) list of supplement modes.
     """
 
     media_list = []
@@ -409,7 +408,7 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                         new_medium = read_external_medium(m_name[1])
                         new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
                     else:
-                        new_medium = medium.read_external_medium(p['external_base'])
+                        new_medium = read_external_medium(p['external_base'])
                     new_medium.name = name
                 # default name
                 else:
@@ -425,12 +424,12 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
                 if p and 'add_medium' in p.keys():
                     # interate over all media to add
                     for medium,perc in p['add_medium'].items():
-                        new_medium = new_medium.combine(medium.load_medium_from_db(medium), how=perc)
+                        new_medium = new_medium.combine(load_medium_from_db(medium), how=perc)
 
                 # from external
                 if p and 'add_external' in p.keys():
                     for a,perc in p['add_external'].items():
-                        new_medium = new_medium.combine(medium.read_external_medium(a), how=perc)
+                        new_medium = new_medium.combine(read_external_medium(a), how=perc)
                 
                 # check anaerobic / aerobic settings
                 if p and 'aerobic' in p.keys():
@@ -504,16 +503,16 @@ def read_media_config(yaml_path:str) -> tuple[list[medium.Medium],list[str,None]
 # @IDEA : choose different namespaces for the media
 # @TEST : namespace implementation. Are connections correct?
 def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
-                    media:medium.Medium|list[medium.Medium]|str,
+                    media:Medium|list[Medium]|str,
                     namespace:Literal["BiGG"]='BiGG',
                     supplements:None|list[Literal[None,'std','min']]|Literal[None,'std','min']=None,
-                    retrieve:Literal['report','plot','both']='plot') -> reports.GrowthSimulationReport|plt.Figure|tuple:
+                    retrieve:Literal['report','plot','both']='plot') -> GrowthSimulationReport|plt.Figure|tuple:
     """Perform a growth analysis
 
     Args:
         - models (cobra.Model | str | list[str] | list[cobra.Model]): Model(s) to be tested.
             Can be a COBRA model, a path to one, or a list of either type.
-        - media (medium.Medium | list[medium.Medium] | str): Medium or media to be tested.
+        - media (Medium | list[Medium] | str): Medium or media to be tested.
             Can be single or a list of medium objects or a path to a medium config file.
         - namespace (Literal['BiGG'], optional): Namespace of the model. 
             Defaults to 'BiGG'.
@@ -530,13 +529,13 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
         TypeError: Unknown or mixed types in model list.
         KeyError: Empty list for models detected.
         ValueError: Unknown input type for models.
-        TypeError: Unknown type found in media, should be list fo medium.Medium.
+        TypeError: Unknown type found in media, should be list fo Medium.
         ValueError: Unknown input for media.
         ValueError: Unknown input for retrieve
         
     Returns:
         - Case: retrieve = report 
-            reports.GrowthSimulationReport: the report
+            GrowthSimulationReport: the report
         - Case: retrieve = plot 
             plt.Figure: the plot
         - Case: retrieve = both 
@@ -579,14 +578,14 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
     media_list = []
     match media:
         # single medium
-        case medium.Medium():
+        case Medium():
             media_list = [media]
         # list of media
         case list():
-            if all(isinstance(_,medium.Medium) for _ in media):
+            if all(isinstance(_,Medium) for _ in media):
                 media_list = media
             else:
-                raise TypeError('Unknown type found in media, should be list fo medium.Medium.')
+                raise TypeError('Unknown type found in media, should be list fo Medium.')
         # string - connection to YAML config file
         case str():
             media, supplements = read_media_config(media)
@@ -692,7 +691,7 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
 # auxotrophy simulation
 # ---------------------
 
-def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], supplement_list:list[Literal[None,'min','std']], namespace:Literal['BiGG', 'Name']='BiGG') -> reports.AuxotrophySimulationReport:
+def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list:list[Literal[None,'min','std']], namespace:Literal['BiGG', 'Name']='BiGG') -> AuxotrophySimulationReport:
     """Test for amino acid auxothrophies for a model and a list of media.
 
     Tests, if the model growths on the media and if and with what fluxes the
@@ -701,7 +700,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
 
     Args:
         - model (cobraModel): The model to be tested. Loaded with COBRApy.
-        - media_list (list[medium.Medium]): List of media to be tested.
+        - media_list (list[Medium]): List of media to be tested.
         - supplement_list (list[Literal[None,'min','std']]): List of supplement modes for the media.
         - namespace (Literal['BiGG','Name'], optional): String for the namespace to be used for the model. 
             Current options include 'BiGG', 'Name'.
@@ -711,14 +710,14 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
         ValueError: Unknown input for namespace parameter.
 
     Returns:
-        reports.AuxotrophySimulationReport: The report for the test containing 
+        AuxotrophySimulationReport: The report for the test containing 
             a table of the amino acids and the media names containing the simualted flux values.
     """
 
     results = {}
 
     # get amino acids from database
-    amino_acids = medium.Medium('aa').add_subset(subset_name='protAA')
+    amino_acids = Medium('aa').add_subset(subset_name='protAA')
     aa_list = set(amino_acids.substance_table['name'])
 
     # iterate over all media
@@ -732,7 +731,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
             with model as m:
 
                 # export the medium
-                exported_m = medium.medium_to_model(m, med, namespace=namespace, default_flux=10.0, replace=False, double_o2=False, add=False)
+                exported_m = medium_to_model(m, med, namespace=namespace, default_flux=10.0, replace=False, double_o2=False, add=False)
                 # supplement, if tag is set
                 match supp:
                     case 'std':
@@ -786,7 +785,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
             # add the current test results to the list of all results
             results[med.name] = auxotrophies
 
-    report = reports.AuxotrophySimulationReport(pd.DataFrame.from_dict(results))
+    report = AuxotrophySimulationReport(pd.DataFrame.from_dict(results))
 
     return report
 
@@ -796,7 +795,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[medium.Medium], suppleme
 # @TODO : set new default for substances - ideally a subset or so
 # @TODO : more namespace options, currently only BiGG available
 # @TODO
-def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|rg.classes.medium.Medium=None, namespace:Literal['BiGG']='BiGG') -> rg.classes.reports.SourceTestReport:
+def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|Medium=None, namespace:Literal['BiGG']='BiGG') -> SourceTestReport:
     """Test the growth of a model when switching out the source of a given chemical element for
     a set medium.
 
@@ -809,7 +808,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
             that contain the element being tested as a source. Option None can potentially run
             a while.
             Defaults to None.
-        - medium (None | str | rg.medium.Medium, optional): The medium to start with. 
+        - medium (None | str | Medium, optional): The medium to start with. 
             The chosen medium ideally should have all other necessary elements needed for the model
             to grow.
             Defaults to None.
@@ -820,12 +819,12 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         KeyError: No growth function in model. Please add one beforehand.
 
     Returns:
-        rg.classes.reports.SourceTestReport: A report object with the results.
+        SourceTestReport: A report object with the results.
     """
     
     # validate input
     # model is required to have a growth function
-    growth_funcs = rg.curation.biomass.test_biomass_presence(model)
+    growth_funcs = test_biomass_presence(model)
     if growth_funcs:
         if any(_ in str(model.objective.expression) for _ in growth_funcs):
             pass
@@ -838,11 +837,11 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
     # get the starting medium
     match medium:
         case str():
-            current_medium = rg.classes.medium.load_medium_from_db(medium)
-        case rg.classes.medium.Medium():
+            current_medium = load_medium_from_db(medium)
+        case Medium():
             current_medium = medium
         case _:
-            current_medium = rg.classes.medium.read_from_cobra_model(model)
+            current_medium = read_from_cobra_model(model)
 
     # save old medium settings
     origin_medium = model.medium
@@ -853,7 +852,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # case 1: 
         # take a given subset from the database
         case str():
-            temp_medium = rg.classes.medium.Medium('temp', pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']))
+            temp_medium = Medium('temp', pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']))
             temp_medium.add_subset(substances)
             source_list = temp_medium.substance_table['name'].to_list()
 
@@ -867,7 +866,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # download all possible options - may take some time
         case _:
             # get complete table
-            substances = rg.utility.io.load_a_table_from_database('substance', query=False)
+            substances = load_a_table_from_database('substance', query=False)
             # regex to find substances with element - element letter code NOT followed by ANY small letter
             element_regex = element + r'(?![a-z])' 
             substances_mask = substances['formula'].str.contains(element_regex)
@@ -881,12 +880,12 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         # set new source
         current_medium.set_source(element,s)
         # add medium to model
-        rg.classes.medium.medium_to_model(model, current_medium, namespace=namespace, add=True)
+        medium_to_model(model, current_medium, namespace=namespace, add=True)
         # simulate growth
         growth_value = model.optimize().objective_value
         results.append({'substance':s, 'growth value':growth_value})
 
-    results = rg.classes.reports.SourceTestReport(pd.DataFrame(results), element, model.id)
+    results = SourceTestReport(pd.DataFrame(results), element, model.id)
 
     # set original medium for model
     model.medium = origin_medium
@@ -901,7 +900,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
 #@ TODO:
 #    see function body
 # ......
-def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> medium.Medium:
+def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> Medium:
     """Get the minimal medium based on different objectives:
     - 'flux':      find the minimal fluxes based in current medium.
     - 'medium':    find the minimal number of compounds for the current medium.
@@ -922,7 +921,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
         ValueError: unknown objective.
 
     Returns:
-        medium.Medium: The medium that is a solution for the minimisation task.
+        Medium: The medium that is a solution for the minimisation task.
     """
 
 
@@ -964,7 +963,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
     # create a Medium object from the minimal medium
     with model as tmp_model:
         tmp_model.medium = min_medium
-        medium = medium.read_from_cobra_model(tmp_model)
+        medium = read_from_cobra_model(tmp_model)
 
     return medium
 
