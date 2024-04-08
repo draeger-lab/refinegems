@@ -209,7 +209,7 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
 
 # @TODO: 
 #     more namespace options
-def match_id_to_namespace(model_entity:[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
+def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
     """Based on a given namespace, change the ID of a given model entity to it the set namespace.
 
     Currently working namespaces:

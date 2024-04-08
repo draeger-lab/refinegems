@@ -22,7 +22,7 @@ from libsbml import Model as libModel
 from cobra import Model as cobraModel
 
 from ..utility.io import search_sbo_label
-from ..analysis.investigate import get_reactions_per_sbo
+from .investigate import get_reactions_per_sbo
 
 ################################################################################
 # functions

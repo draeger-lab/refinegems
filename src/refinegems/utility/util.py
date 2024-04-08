@@ -4,7 +4,8 @@ import cobra
 import libchebipy
 import pandas as pd
 import requests
-from refinegems.curation.db_access.db import BIGG_METABOLITES_URL
+
+from  ..curation.db_access.db import BIGG_METABOLITES_URL
 
 __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
