@@ -6,7 +6,7 @@ Additional packages required for development
 
 .. attention::
     The following packages need to be installed to be able to add content to the refineGEMs documentation.
-
+    
     * `accessible-pygments`
     * `ipython`
     * `nbsphinx`
@@ -15,6 +15,7 @@ Additional packages required for development
     * `sphinx_copybutton`
     * `sphinx_rtd_theme`
     * `sphinxcontrib-bibtex`
+    
 
     In addition, `pip-compile` should be installed to update the `requirements.txt` for the next release.
 
@@ -25,7 +26,7 @@ You can install the packages via pip to your local environment:
 .. code:: bash
     :class: copyable
 
-    pip install accessible-pygments ipython nbsphinx pandoc sphinx sphinx_copybutton sphinx_rtd_theme sphinxcontrib-bibtex
+    pip install accessible-pygments sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
 
 .. code:: bash
     :class: copyable

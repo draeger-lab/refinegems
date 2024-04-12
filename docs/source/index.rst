@@ -46,7 +46,7 @@ When using refineGEMs, please cite the latest publication:
    installation
    usage
    main-modules
-   in_silico_media_generation
+   database/intro
    API access <api>
    pipeline
    Notes for developers <development>

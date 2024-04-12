@@ -12,29 +12,35 @@ Outputs a table with the column headers:
 Implementation
 --------------
 
-Growth rates and, thus, doubling times can be determined with Flux Balance Analysis (FBA). RefineGEMs uses a COBRApy based implementation that adds metabolites one-by-one to custom media definitions until growth is obtained. The pseudocode is shown below.
+Growth rates and, thus, doubling times can be determined with Flux Balance Analysis (FBA). 
+RefineGEMs uses a COBRApy based implementation that is able to add metabolites to media definitions until growth is obtained. 
+The pseudocode is shown below.
 
-.. image:: ../images/growth_algorithm.png
-  :align: center
-  :width: 400
-  :alt: Pseudocode representation of the algorithm implemented for growth simulation.
+.. sourcecode:: python
+  :linenos:
+  :caption: Pseudocode representation of the algorithm implemented for growth simulation.
 
-There is a flag called basis which can be set to either ``default_uptake`` or ``minimal_uptake``. You can decide from which uptake you want to fill your medium of interest when looking for missing metabolites. Either the ``default_uptake`` which is the uptake that the model has when no specific medium is set or the ``minimal_uptake`` which is the uptake resulting from COBRApy's minimal_medium optimization.
+  model  # a model loaded with COBRApy
+  medium # a Medium object, loaded from ex- or intern 
 
-Available media
----------------
-The following media are directly available to be used with the ``growth`` module via a ``config.yaml`` file. 
-In the section for the respective medium the description along with the definition is provided. The rules used to get 
-the media definitions are described in the Section :ref:`From laboratory to *in silico* medium`.
+  ex_medium = medium.medium_to_model() # export to model
 
-.. toctree:: 
+  if supplementation == True:
+    new_medium = ex_medium.find_additives_to_enable_growth(params)
+  else:
+    new_medium = ex_medium
 
-    media/blood
-    media/casa
-    media/cgxii
-    media/dgmm
-    media/lb
-    media/m9
-    media/mp-au
-    media/rpmi
-    media/snm3
+  model.medium = new_medium
+  report = growth_simulation(model)
+
+  return report
+
+Options for supplementation currently include ``std`` for using the standard medium uptake or ``min`` for using the minimum medium uptake for supplementation.
+Both are calculated by the ``get_uptake`` function of the module.
+
+Usable Media
+------------
+The media to be used with the ``growth`` module via a ``config.yaml`` file.
+More information about which media are provided by the database and how to generate *in silico* media can be found in Section :ref:`Media & Subsets`.
+
+
