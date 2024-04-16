@@ -61,11 +61,8 @@ dependencies = [
 homepage = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
 
-# [project.scripts]
-# data = 'refinegems.databases:main'
-# curate = 'refinegems.curate:main'
-# investigate = 'refinegems.investigate:main'
-# refine = 'refinegems.refine:main'
+[project.scripts]
+refinegems = "refinegems.cmd_access:cli"
 
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
