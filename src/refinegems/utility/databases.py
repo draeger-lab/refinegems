@@ -42,7 +42,7 @@ class ValidationCodes(Enum):
    SBO_MEDIA = 3,  # Only SBO & Media tables are in data.db
    BIGG_SBO_MEDIA = 4,  # Only BiGG, SBO and media tables are in data.db 
    MODELSEED_COMPOUNDS = 5,  # Only ModelSEED compounds table is in data.db
-   BIGG_MSEED_COMPPOUNDS = 6,  # Only Bigg and ModelSEED compounds tables are in data.db
+   BIGG_MSEED_COMPOUNDS = 6,  # Only Bigg and ModelSEED compounds tables are in data.db
    SBO_MEDIA_MSEED_COMPOUNDS = 7  # Only SBO, media and ModelSEED compounds tables are in data.db
    
 validation_messages = {
@@ -58,7 +58,7 @@ validation_messages = {
       'Data only contains the BiGG, SBO and media tables. Please check the ModelSEED table.',
    ValidationCodes.MODELSEED_COMPOUNDS: 
       'Data only contains the ModelSEED table. Please check the BiGG, SBO and media tables.',
-   ValidationCodes.BIGG_MSEED_COMPPOUNDS: 
+   ValidationCodes.BIGG_MSEED_COMPOUNDS: 
       'Data only contains the BiGG and ModelSEED tables. Please check the SBO and media tables.',
    ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: 
       'Data only contains the SBO, media and ModelSEED tables. Please check the BiGG tables.'
@@ -312,7 +312,7 @@ def initialise_database():
          print('Only BiGG, SBO and media tables contained in database.')
          get_modelseed_compounds_database(con)
          
-      elif validity_code == ValidationCodes.BIGG_MSEED_COMPPOUNDS:
+      elif validity_code == ValidationCodes.BIGG_MSEED_COMPOUNDS:
          print('Only BiGG and ModelSEED compounds tables contained in database.')
          create_sbo_media_database(cursor)
          
