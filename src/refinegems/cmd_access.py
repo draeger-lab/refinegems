@@ -113,7 +113,7 @@ def gaps():
 
 # Find gaps via genes
 # -------------------
-@gapfill.command()
+@gaps.command()
 @click.argument('model', type=str)
 def find(model,gff_file,organismid,gapfill_params,filename):
 	"""Find gaps in a model based on the genes/gene products of the underlying organism
@@ -122,7 +122,7 @@ def find(model,gff_file,organismid,gapfill_params,filename):
 
 # Fill gaps via file
 # ------------------
-@gapfill.command()
+@gaps.command()
 @click.argument('model', type=str)
 def fill(model,gap_analysis_result):
 	"""Fill gaps in a model based on a user-provided input file
@@ -131,7 +131,7 @@ def fill(model,gap_analysis_result):
 
 # Find and fill gaps via genes
 # ----------------------------
-@gapfill.command()
+@gaps.command()
 @click.argument('model', type=str)
 def complete(model,gapfill_params,filename):
 	"""Find and fill gaps based on the genes/gene products automatically
