@@ -51,9 +51,9 @@ def gap_analysis(model_libsbml: libModel, gff_file: str, organismid:str, gapfill
         - filename (str): Path to output file for gapfill analysis result
         
     Returns:
-        - Case 'KEGG'
+        - Case 'KEGG':
             pd.DataFrame: Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
-        - Case 'BioCyc'
+        - Case 'BioCyc':
             tuple: Five tables (1) - (4)
                 (1) pd.DataFrame: Gap fill statistics with the columns 
                                     'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'

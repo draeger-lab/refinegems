@@ -42,7 +42,7 @@ def download_config(filename:str='./my_config.yaml', type=Literal['media','refin
 
     def copy_config_yaml(infile:str, outfile:str):
         """Helper function for :py:func:`download_config`. 
-        Performa the actual download of a yaml file into a copy for the user to edit.
+        Performs the actual download of a yaml file into a copy for the user to edit.
 
         Args:
             infile (str): Path to the file to copy.

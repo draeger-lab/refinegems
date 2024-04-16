@@ -1274,7 +1274,7 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
 # ----------------------
 
 # @TODO
-# @NOTE add a control to check if chaning the reaction direction leads to EGC or so
+# @NOTE add a control to check if changing the reaction direction leads to EGC or so
 #   or is this unnessesary here
 def check_direction(model:cobra.Model,data:pd.DataFrame|str) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
