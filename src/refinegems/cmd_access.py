@@ -8,6 +8,7 @@ __author__ = 'Tobias Fehrenbach, Carolin Brune, Gwendolyn O. DÃ¶bel and Famke BÃ
 ################################################################################
 
 from traitlets import default
+from typing import Union
 import refinegems as rg
 import click
 
@@ -94,7 +95,7 @@ def polish():
 @click.option('-k', '--kegg_organism_id', default=None, type=str, help='KEGG organism identifier')
 def polish(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism_id):
    """Completes all steps to polish a model
-   
+
    (Tested for models having either BiGG or VMH identifiers.)
    """
    rg.curation.polish.polish(model, email, id_db, refseq_gff, protein_fasta, lab_strain, kegg_organism_id, path)
@@ -105,38 +106,48 @@ def polish(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organ
 # ----------------------------------------------------------------------------------
 @cli.group()
 def gaps():
-	"""If requested finds gaps in a model based on the gene products in the model and either files from biocyc or via the
- 	KEGG API.
-	If requested fills gaps either via the automatically obtained missing entities or via a manually created file 
- 	provided by the user.
-	"""
+   """If requested finds gaps in a model based on the gene products in the model and either files from biocyc or via the
+   KEGG API.
+   If requested fills gaps either via the automatically obtained missing entities or via a manually created file 
+   provided by the user.
+   """
 
 # Find gaps via genes
 # -------------------
 @gaps.command()
-@click.argument('model', type=str)
-def find(model,gff_file,organismid,gapfill_params,filename):
-	"""Find gaps in a model based on the genes/gene products of the underlying organism
-	"""
-	rg.curation.gapfill.gap_analysis(model, gff_file, organismid, gapfill_params, filename)
+@click.argument('modelpath', type=str)
+@click.argument('gff_file', type=str)
+@click.argument('organismid', type=str)
+@click.argument('gapfill_params', type=dict)
+@click.argument('filename', type=str)
+def find(modelpath,gff_file,organismid,gapfill_params,filename):
+   """Find gaps in a model based on the genes/gene products of the underlying organism
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.curation.gapfill.gap_analysis(model, gff_file, organismid, gapfill_params, filename)
 
 # Fill gaps via file
 # ------------------
 @gaps.command()
 @click.argument('model', type=str)
-def fill(model,gap_analysis_result):
-	"""Fill gaps in a model based on a user-provided input file
-	"""
-	rg.curation.gapfill.gapfill_model(model, gap_analysis_result)
+@click.argument('gap_analysis_results', type=Union[str, tuple])
+def fill(modelpath,gap_analysis_result):
+   """Fill gaps in a model based on a user-provided input file
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.curation.gapfill.gapfill_model(model, gap_analysis_result)
 
 # Find and fill gaps via genes
 # ----------------------------
 @gaps.command()
-@click.argument('model', type=str)
-def complete(model,gapfill_params,filename):
-	"""Find and fill gaps based on the genes/gene products automatically
-	"""
-	rg.curation.gapfill.gapfill(model, gapfill_params, filename)
+@click.argument('modelpath', type=str)
+@click.argument('gapfill_params', type=dict)
+@click.argument('filename', type=str)
+def autofill(modelpath,gapfill_params,filename):
+   """Automatically find and fill gaps based on the genes/gene products
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.curation.gapfill.gapfill(model, gapfill_params, filename)
 
 
 # --------------
@@ -147,6 +158,45 @@ def refine():
    """Refine a model. Includes steps like biomass, charges, SBO annotation, reaction direction correction and addition 
    of Pathways and further gene product annotations.
    """
+   
+@refine.command()
+@click.argument('modelpath', type=str)
+@click.option('-c', '--cycles', default=10, type=int, help='Maximal number of optiomisation cycles that will be run.')
+def biomass(modelpath,cycles):
+   """Changes th biomass reaction to be consistent
+   """
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   rg.curation.biomass.check_normalise_biomass(model, cycles)
+   
+@refine.command()
+@click.argument('modelpath', type=str)
+def charges(modelpath):
+   """Changes the charges in a model by comparison to the ModelSEED database
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.curation.charges.correct_charges_modelseed(model)
+   
+@refine.command()
+@click.argument('modelpath', type=str)
+def direction(modelpath,data):
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   rg.curation.polish.check_direction(model, data)
+
+@refine.command()
+@click.argument('modelpath', type=str)
+def pathways(modelpath):
+   """Add KEGG pathways to a model
+   """
+   rg.curation.pathways.kegg_pathways(modelpath)
+   
+@refine.command()
+@click.argument('modelpath', type=str)
+def sboterms(modelpath):
+   """Calls SBOannotator to enhance the SBO terms in a model
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.sboann.sbo_annotation(model)
+
 
 # Annotation-related clean-up & Additional annotations
 # ---------------------------
@@ -166,9 +216,11 @@ def analyse():
 	"""Analyse a model by testing for auxotrophies and growth on different media along with finding EGCs and looking at 
  	overall model statistics. 
 	"""
-
-
-# data = 'refinegems.databases:main'
-# curate = 'refinegems.curate:main'
-# analysis = 'refinegems.analysis:main'
-# refine = 'refinegems.refine:main'
+ 
+@analyse.command()
+@click.argument('modelpath', type=str)
+def pathways(modelpath):
+   """Analysis of pathways contained in a model
+   """
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   rg.curation.pathways.kegg_pathway_analysis(model)
