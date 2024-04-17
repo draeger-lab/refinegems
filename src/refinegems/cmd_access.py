@@ -179,6 +179,8 @@ def charges(modelpath):
 @refine.command()
 @click.argument('modelpath', type=str)
 def direction(modelpath,data):
+   """Checks & if necessary, corrects the direction for each reaction in a model
+   """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.polish.check_direction(model, data)
 
@@ -188,15 +190,6 @@ def pathways(modelpath):
    """Add KEGG pathways to a model
    """
    rg.curation.pathways.kegg_pathways(modelpath)
-   
-@refine.command()
-@click.argument('modelpath', type=str)
-def sboterms(modelpath):
-   """Calls SBOannotator to enhance the SBO terms in a model
-   """
-   model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.sboann.sbo_annotation(model)
-
 
 # Annotation-related clean-up & Additional annotations
 # ---------------------------
@@ -206,6 +199,14 @@ def annot():
  	specific SBO annotations and synchronising all annotations to BioCyc. Additionally, adds gene product annotations 
   	either from the GFF file of the organism or via KEGG.
 	"""
+ 
+@annot.command()
+@click.argument('modelpath', type=str)
+def sboterms(modelpath):
+   """Calls SBOannotator to enhance the SBO terms in a model
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.sboann.sbo_annotation(model)
 
 
 # -----------------------------------------------
@@ -216,6 +217,16 @@ def analyse():
 	"""Analyse a model by testing for auxotrophies and growth on different media along with finding EGCs and looking at 
  	overall model statistics. 
 	"""
+
+@analyse.command()
+@click.argument('modelpath', type=str)
+@click.option('-s', '--score-only', default=False, type=bool, help='Specifies if memote is only run to return the score')
+def memote(modelpath,score_only):
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   if score_only:
+      rg.analysis.investigate.get_memote_score(rg.analysis.investigate.run_memote(model))
+   else:
+      rg.analysis.investigate.run_memote(model)
  
 @analyse.command()
 @click.argument('modelpath', type=str)
