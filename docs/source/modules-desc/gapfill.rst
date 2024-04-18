@@ -6,8 +6,8 @@ There are two possibilities to use refineGEMs to fill gaps.
 Manual gap filling
 ------------------
 
-.. autofunction:: refinegems.curate.add_reactions_from_table
-    :noindex:
+See :py:func:`refinegems.curation.gapfill.add_reactions_from_table`
+
 
 Automated gap filling
 ---------------------

@@ -59,6 +59,9 @@ If `which pip` does not show pip in the conda environment you can also create a 
 
    <EnvName>/bin/pip install .
 
+If you want to be able to savely import the package from anywhere while also retaining the possibility to edit the code, 
+it is recommended to change the last line from the previous code block to :code:`pip install -e . --config-settings editable_mode=strict` (useful for developer).
+
 **Pipenv**
 
 You can use
@@ -84,13 +87,9 @@ following steps:
 The ``pipenv`` package can also be installed via Anaconda (recommended
 if you are a Windows user).
 
-
 Troubleshooting
 ---------------
 
--  If you get ``ImportError: DLL load failed while importing _sqlite3``
-   when running main.py. Locate the ``sqlite3.dll`` file on you machine
-   and add it to PATH.
 - If you run into a problem with ``pipenv`` not locking after f.ex. moving the repository try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 - If you use VSCode terminals and have trouble accessing the python from within your conda environment, deactivate base and reactivate again:
 

@@ -13,7 +13,7 @@
 import os
 import sys
 # import sphinx_rtd_theme
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../src/'))
 
 
 # -- Project information -----------------------------------------------------
@@ -94,31 +94,31 @@ master_doc = 'index'
 # -- Autodoc -----------------------------------------------------------------
 
 # we need those to display the code comments otherwise the functions cannot be imported
-autodoc_mock_imports = ["psycopg2", 
-                        "gffutils",
-                        "cplex.exceptions",
-                        "cplex",
-                        "cobra",
-                        "pandas",
-                        "libsbml",
-                        "numpy",
-                        "bioservices",
-                        "bioregistry",
-                        "bs4",
-                        "memote",
-                        "tqdm",
-                        "psycopg2",
-                        "Bio",
-                        "sqlalchemy",
-                        "ratelimit",
-                        "libchebipy",
-                        "ols_client",
-                        "charges",
-                        "click",
-                        "yaml",
-                        "sortedcontainers",
-                        "colorama",
-                        "matplotlib",
-                        "seaborn",
-                        "venn"
-                        ]
+# autodoc_mock_imports = ["psycopg2", 
+#                         "gffutils",
+#                         "cplex.exceptions",
+#                         "cplex",
+#                         "cobra",
+#                         "pandas",
+#                         "libsbml",
+#                         "numpy",
+#                         "bioservices",
+#                         "bioregistry",
+#                         "bs4",
+#                         "memote",
+#                         "tqdm",
+#                         "psycopg2",
+#                         "Bio",
+#                         "sqlalchemy",
+#                         "ratelimit",
+#                         "libchebipy",
+#                         "ols_client",
+#                         "charges",
+#                         "click",
+#                         "yaml",
+#                         "sortedcontainers",
+#                         "colorama",
+#                         "matplotlib",
+#                         "seaborn",
+#                         "venn"
+#                         ]

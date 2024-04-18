@@ -77,7 +77,10 @@ Debugging switches
 Guidelines for code documentation
 ---------------------------------
 
-We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
+We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. 
+To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
+
+If you use VSCode, a mustache file for the documentation style that can be integrated into VSCode can be found in the ``dev``` directory.
 
 .. code:: python
     :linenos:

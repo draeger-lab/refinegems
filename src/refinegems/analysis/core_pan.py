@@ -58,7 +58,7 @@ def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
     from different models. Core reactions are reactions that occur in ALL the models.
 
     Args:
-        all_reactions (dict[str:list[str]]): List of reactions IDs for all model to be part of the core-pan model.
+        - all_reactions (dict[str:list[str]]): List of reactions IDs for all model to be part of the core-pan model.
 
     Returns:
         list[str]: List of the IDs of reactions that are defined as core.
@@ -137,7 +137,8 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
     """Generate a core-pan model from a set of models.
 
     Generation id based on:
-    - id: uses the IDs to compare reactions
+
+        - id: uses the IDs to compare reactions
 
     Args:
         model_list (list[str]): List of paths to models.
@@ -197,7 +198,8 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
     """Compare a model to a pan-core model.
 
     Comparison can be done based on:
-    - id: uses the reaction IDs for a simple and direct comparison. 
+
+        - id: uses the reaction IDs for a simple and direct comparison. 
 
     Args:
         model (cobra.Model): The input model.

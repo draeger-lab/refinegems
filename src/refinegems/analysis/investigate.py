@@ -45,15 +45,20 @@ def run_memote(model: cobra.Model, type:Literal['json','html']='html',
     """Run the memote snapshot function on a given model loaded with COBRApy.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
-        type (Literal['json','html'], optional): Type of report to produce. 
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - type (Literal['json','html'], optional): 
+            Type of report to produce. 
             Can be 'html' or 'json'. 
             Defaults to 'html'.
-        return_res (bool, optional): Option to return the result. 
+        - return_res (bool, optional): 
+            Option to return the result. 
             Defaults to False.
-        save_res (str | None, optional): If given a path string, saves the report
+        - save_res (str | None, optional): 
+            If given a path string, saves the report
             under the given path. Defaults to None.
-        verbose (bool, optional): Produce a more verbose ouput. 
+        - verbose (bool, optional): 
+            Produce a more verbose ouput. 
             Defaults to False.
 
     Raises:
