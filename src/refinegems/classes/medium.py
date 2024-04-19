@@ -14,6 +14,7 @@ from sqlite_dump import iterdump
 from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
 from colorama import init as colorama_init
 from colorama import Fore
+from pathlib import Path
 
 __author__ = "Carolin Brune"
 
@@ -503,13 +504,11 @@ class Medium:
             ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
         """
 
-        path_no_ext = dir + self.name + '_substances'
-
         match type:
             case 'tsv':
-                self.substance_table.to_csv(path_no_ext + '.tsv', sep='\t', index=False)
+                self.substance_table.to_csv(Path(dir,self.name + '_min_medium.' + '.tsv'), sep='\t', index=False)
             case 'csv':
-                self.substance_table.to_csv(path_no_ext + '.csv', sep=';', index=False)
+                self.substance_table.to_csv(Path(dir,self.name + '_min_medium.' + '.csv'), sep=';', index=False)
             case 'docs' | 'rst':
                 self.produce_medium_docs_table(folder = dir, max_width = max_widths)
             case _:

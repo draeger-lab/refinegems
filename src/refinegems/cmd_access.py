@@ -1,7 +1,7 @@
 """Entry points to the code from the command line.
 """
 
-__author__ = 'Tobias Fehrenbach, Carolin Brune, Gwendolyn O. Döbel and Famke Bäuerle'
+__author__ = 'Carolin Brune, Gwendolyn O. Döbel'
 
 ################################################################################
 # Requirements
@@ -20,7 +20,7 @@ import click
 @click.help_option("--help", "-h")
 @click.version_option()
 def cli():
-   """refineGEMs - A toolbox for faster curation and analysis of constraint-based metabolic models
+   """refineGEMs - A toolbox for fast curation and analysis of constraint-based metabolic models
    
    This tool provides scripts and functions to curate and analyse a strain-specific GEM with information from multiple 
    databases. In addition, it offers functions for analysis of multiple GEMs at the same time as well as comparison 
@@ -40,7 +40,7 @@ def setup():
 @setup.command()
 @click.option('--filename', '-f', default='config.yaml', type=str, 
               show_default=True, help='Name (path) to save the config file under.')
-@click.option('--type', '-t', default='basic', type=click.Choice(['media', 'refinegems']), 
+@click.option('--type', '-t', default='media', type=click.Choice(['media', 'refinegems']), 
               help='Type of config file to download. Either a file for media configuration or a file to run a refinement pipeline.')
 def config(filename,type):
     """Download a configuration file (.yaml).
@@ -163,7 +163,7 @@ def refine():
 @click.argument('modelpath', type=str)
 @click.option('-c', '--cycles', default=10, type=int, help='Maximal number of optiomisation cycles that will be run.')
 def biomass(modelpath,cycles):
-   """Changes th biomass reaction to be consistent
+   """Changes the biomass reaction to be consistent
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.biomass.check_normalise_biomass(model, cycles)
@@ -175,7 +175,8 @@ def charges(modelpath):
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
    rg.curation.charges.correct_charges_modelseed(model)
-   
+
+# @TODO
 @refine.command()
 @click.argument('modelpath', type=str)
 def direction(modelpath,data):
@@ -220,13 +221,14 @@ def analyse():
 
 @analyse.command()
 @click.argument('modelpath', type=str)
-@click.option('-s', '--score-only', default=False, type=bool, help='Specifies if memote is only run to return the score')
-def memote(modelpath,score_only):
+@click.option('-s', '--score-only', is_flag=True, default=False, help='Specifies if memote is only run to return the score')
+@click.option('-f','--file', required=False, type=str, default='memote.html', help='Name or path to save the output to. Only relevent if -s it not set.')
+def memote(modelpath,score_only,file):
    model = rg.utility.io.load_model(modelpath, 'cobra')
    if score_only:
-      rg.analysis.investigate.get_memote_score(rg.analysis.investigate.run_memote(model))
+      rg.analysis.investigate.get_memote_score(rg.analysis.investigate.run_memote(model,type='json',return_res=True))
    else:
-      rg.analysis.investigate.run_memote(model)
+      rg.analysis.investigate.run_memote(model,save_res=file)
  
 @analyse.command()
 @click.argument('modelpath', type=str)
@@ -235,3 +237,73 @@ def pathways(modelpath):
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.pathways.kegg_pathway_analysis(model)
+
+@analyse.command()
+def stats():
+   pass
+
+# analyse growth
+# --------------
+@analyse.group()
+def growth():
+   """Analyse the growth under different conditions."""
+
+# @TEST
+# -> does it need to run without a media config as well?
+@growth.command()
+@click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
+@click.option('-m','--media',required=True,type=click.Path(exists=True), help='Path to a media config file.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+def simulate(modelpaths,media,namespace,dir,colors):
+   """Simulate the growth of the given model vs. media.
+   """
+   report = rg.analysis.growth.growth_analysis(modelpaths, media, namespace,retrieve='report')
+   report.save(to=dir, color_palette=colors)
+
+# @TEST
+@growth.command()
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-m','--media',required=True,type=click.Path(exists=True), help='Path to a media config file.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+def auxotrophies(modelpath,media,namespace,dir,colors):
+   """Test for auxotrophies for the 20 proteinogenic amino acids.
+   """
+   medialist, supps = rg.analysis.growth.read_media_config(media)
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
+   report.save(dir,colors)
+
+@growth.command()
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-e','--element', type=str, required=True, help='Element to perform the source test with. Needs to be a valid chemical, elemental Symbol.')
+@click.option('-s','--substances', type=str, required=False, default=None, multiple=True, help='Add substances from the database to test against. If none are given, resrs against the while database.')
+@click.option('-m', '--medium', required=False, type=str, default=None, help='Name of a medium from the database to use for the testing. If not given, uses the one from the model.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+def sources(modelpath, element, substances, medium, namespace, dir, colors):
+   """Test growth on different sources for an element.
+   """ 
+   model = rg.utility.io.load_model(modelpath,'cobra')
+   report = rg.analysis.growth.test_growth_with_source(model,element,substances,medium,namespace)
+   report.save(dir,color_palette=colors)
+
+
+@growth.command()
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-o','--objective', required=False, type=click.Choice(['flux','medium','exchanges']), default='flux',help='Set the type of minimal medium to be calculated: minimal fluxes, minimal compounds or based on the model exchange reactions.')
+@click.option('-r', '--growth-rate', required=False, type=float, default=0.5, help='Minimal rate to be reached by the minimal medium. The smaller the rate the more expensive the calculation.')
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+def minimal_medium(modelpath,objective, growth_rate, dir):
+   """Calculate the minimal medium of a model.
+
+   Either set the fluxes minimal, the number of compounds based on current medium or the number of exchange reactions.
+   """
+    
+   model = rg.utility.io.load_model(modelpath,'cobra')
+   medium = rg.analysis.growth.model_minimal_medium(model, objective, growth_rate)
+   medium.export_to_file(dir=dir)
