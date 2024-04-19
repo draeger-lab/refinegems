@@ -1,6 +1,10 @@
 SBOannotator with refineGEMs
 ============================
 
+.. warning:: 
+
+    This part is under heavy reconstruction, please wait for future updates.
+
 RefineGEMs offers access to the functionalities of `SBOannotator <https://github.com/draeger-lab/SBOannotator>`__\ :footcite:p:`Leonidou2023_sboann`. 
 
 The ``sboann`` module is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the function ``sbo_annotation``: 

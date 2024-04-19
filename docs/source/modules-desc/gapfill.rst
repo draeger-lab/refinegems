@@ -6,13 +6,14 @@ There are two possibilities to use refineGEMs to fill gaps.
 Manual gap filling
 ------------------
 
-See :py:func:`refinegems.curation.gapfill.add_reactions_from_table`
+See :py:func:`~refinegems.curation.curate.add_reactions_from_table`
+
 
 
 Automated gap filling
 ---------------------
 
-The ``gapfill`` module was created to enable an automatic way of filling gaps in a model via genes.
+The :py:mod:`~refinegems.curation.gapfill` module was created to enable an automatic way of filling gaps in a model via genes.
 
 .. warning:: 
     Current restrictions:
@@ -24,26 +25,15 @@ Run times:
     * 'BioCyc': ~ 10mins
     * 'KEGG+BioCyc': ~ 1h 20mins
 
-The module ``gapfill`` can be used to:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-a. perform gap analysis
-"""""""""""""""""""""""
-.. autofunction:: refinegems.gapfill.gap_analysis
-   :noindex:
+The module :py:mod:`~refinegems.curation.gapfill` can be used to:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+a. perform gap analysis: :py:func:`~refinegems.curation.gapfill.gap_analysis`
+b. add genes, metabolites and reactions from an Excel table to a model: :py:func:`~refinegems.curation.gapfill.gapfill_model`
+c. perform gap analysis and add the result directly to a model: :py:func:`refinegems.curation.gapfill.gapfill`
 
-b. add genes, metabolites and reactions from an Excel table to a model
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.. autofunction:: refinegems.gapfill.gapfill_model
-   :noindex:
-
-c. or perform gap analysis and add the result directly to a model.
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .. warning:: 
     To use the gap analysis and directly add the result to a model, currently, one of the options 'BioCyc' or 'KEGG+BioCyc' has to be selected.
     For all other options the usage of gap_analysis combined with gapfill_model will result in an error.
-
-.. autofunction:: refinegems.gapfill.gapfill
-   :noindex:
 
 Relevant parameters
 ^^^^^^^^^^^^^^^^^^^

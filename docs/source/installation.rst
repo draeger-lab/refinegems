@@ -99,3 +99,7 @@ Troubleshooting
    conda deactivate
    conda activate base
    conda activate <your conda env>
+
+.. hint::
+
+   For more help and information about known bugs, refer to :ref:`Help and FAQ`

@@ -25,6 +25,12 @@ Alternatively, refineGEMs can be directly imported into Python or a python scrip
 
   import refinegems as rg
 
+Or, e.g.:
+
+.. code-block:: python
+
+  from refinegems.analysis.growth import growth_analysis
+  
 
 How to use specific functionalities
 -----------------------------------
@@ -46,7 +52,7 @@ Some additional remarks
           the pipeline described in :ref:`Pipeline: From genome sequence to draft model` before draft model creation.  
       2. Input of a FASTA file containing header lines similar to:
           >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-          Of the description part in the header line only locus_tag, protein and protein_id are important for ``polish``.
+          Of the description part in the header line only locus_tag, protein and protein_id are important for :py:mod:`~refinegems.curation.polish`.
     
 
 

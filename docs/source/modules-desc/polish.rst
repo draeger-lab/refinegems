@@ -1,7 +1,9 @@
 Polishing a CarveMe model
 =========================
 
-CarveMe version 1.5.1 leads to some irritations in the model, the scripts in ``polish`` enable for example the addition of BiGG IDs to the annotations as well as a correct formatting of the annotations.
+CarveMe version 1.5.1 leads to some irritations in the model, the scripts in 
+:py:mod:`~refinegems.curation.polish` enable for example the addition of BiGG IDs 
+to the annotations as well as a correct formatting of the annotations.
 
 .. warning:: 
     Using ``lab_strain=True`` has the following two requirements:

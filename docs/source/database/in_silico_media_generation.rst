@@ -1,8 +1,13 @@
 From laboratory to *in silico* medium
 ==========================================
 
+.. warning::
+
+   This section is under heavy constructio. Please wait for future updates.
+
 .. hint:: 
-   If you want to use the medium with ``refineGEMs.growth`` add the definition to the database schema ``sbo_media_db.sql`` 
+   If you want to use the medium with the :py:mod:`~refinegems.analysis.growth` module 
+   add the definition to the database schema ``sbo_media_db.sql`` 
    in the folder *refinegems/database* in the downloaded repository. To update the database with the newly added table just 
    delete the file ``data.db`` in the same folder and run refineGEMs.
 
