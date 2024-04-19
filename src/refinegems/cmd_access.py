@@ -224,23 +224,50 @@ def analyse():
 @click.option('-s', '--score-only', is_flag=True, default=False, help='Specifies if memote is only run to return the score')
 @click.option('-f','--file', required=False, type=str, default='memote.html', help='Name or path to save the output to. Only relevent if -s it not set.')
 def memote(modelpath,score_only,file):
+   """Perform a memote analysis.
+   """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    if score_only:
       rg.analysis.investigate.get_memote_score(rg.analysis.investigate.run_memote(model,type='json',return_res=True))
    else:
       rg.analysis.investigate.run_memote(model,save_res=file)
  
+ # @TODO add colour option
 @analyse.command()
 @click.argument('modelpath', type=str)
-def pathways(modelpath):
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+def pathways(modelpath,dir):
    """Analysis of pathways contained in a model
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
-   rg.curation.pathways.kegg_pathway_analysis(model)
+   report = rg.curation.pathways.kegg_pathway_analysis(model)
+   report.save(dir)
 
+# @TODO: accept multiple models
 @analyse.command()
-def stats():
-   pass
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+def stats(modelpath,dir,colors):
+   """Generate a report on the statistics of a model.
+   """
+   model = rg.utility.io.load_model(modelpath,'cobra')
+   report = rg.classes.reports.ModelInfoReport(model)
+   report.save(dir,colors)
+
+# @TEST
+@analyse.command()
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.argument('pcpath', type=click.Path(exists=True))
+@click.option('-b','--based-on', type=click.Choice(['id']),required=False, default='id',help='Option on how to compare the models.')
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+def pancore(modelpath, pcpath, based_on,dir):
+   """Compare a model to a pan-core model.
+   """
+   model = rg.utility.io.load_model(modelpath,'cobra')
+   pcmodel = rg.utility.io.load_model(pcpath,'cobra')
+   report = rg.analysis.core_pan.compare_to_core_pan(model,pcmodel,based_on)
+   report.save(dir)
 
 # analyse growth
 # --------------
