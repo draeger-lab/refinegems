@@ -11,6 +11,7 @@ from traitlets import default
 from typing import Union
 import refinegems as rg
 import click
+from pathlib import Path
 
 ################################################################################
 # Entry points
@@ -72,6 +73,21 @@ def medium(list): #,copy
         specimen.classes.medium.save_db(db,click.format_filename(copy))
 '''
 
+# build a pan-core model
+# ----------------------
+# @TEST
+@setup.command()
+@click.argument('models',nargs=-1,type=click.Path())
+@click.option('-o','--based-on', required=False, type=click.Choice(['id']), default='id',help='Option on how to combine the models.')
+@click.option('-n','--name', required=False, type=str, default='pan-core-model',help='Name of the new pan-core model.')
+@click.option('-g','--keep-genes',is_flag=True, default=False)
+@click.option('--rcomp', '--resolve-compartments',is_flag=True)
+@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
+   """Build a pan-core model.
+   """
+   pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
+   rg.utility.io.write_model_to_file(pancore_mod,Path(dir,name +'.xml'))
 
 # --------------
 # Polish a model
@@ -185,6 +201,7 @@ def direction(modelpath,data):
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.polish.check_direction(model, data)
 
+# @IDEA maybe more fitting in annot group?
 @refine.command()
 @click.argument('modelpath', type=str)
 def pathways(modelpath):
