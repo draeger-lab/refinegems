@@ -12,6 +12,7 @@ from typing import Union
 import refinegems as rg
 import click
 from pathlib import Path
+import pandas as pd
 
 ################################################################################
 # Entry points
@@ -50,28 +51,7 @@ def config(filename,type):
     workflow or provide the media configuration.
     """
     rg.utility.set_up.download_config(filename, type)
-
-# @TODO: Download a file with all media for a specific database?
-# Handle medium / media database
-# ------------------------------
-@setup.command()
-@click.option('--list', is_flag=True, default=False, help='List the names of the media in the database.')
-#@click.option('--copy', is_flag=False, flag_value='./media.csv', default=None, type=click.Path(exists=False), 
-# help='Produce and save a copy of the media database.')
-def medium(list): #,copy
-    """Access the in-build media database.
-
-    Can be used to either check the available media or to make a copy for further use.
-    """
-    if list:
-        possible_media = rg.utility.io.load_a_table_from_database('medium', False)['name'].to_list()
-        media = '|'.join(possible_media)
-        print(media)
-'''
-    if copy:
-        db = specimen.classes.medium.load_media_db()
-        specimen.classes.medium.save_db(db,click.format_filename(copy))
-'''
+   
 
 # build a pan-core model
 # ----------------------
@@ -88,6 +68,48 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    """
    pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
    rg.utility.io.write_model_to_file(pancore_mod,Path(dir,name +'.xml'))
+
+# ----------------------
+# all about the media DB
+# ----------------------
+# @TODO more functionalities???
+
+@cli.group()
+def media():
+   """Access the media database.
+   """
+
+# @TODO: Download a file with all media for a specific database?
+# Handle medium / media database
+# ------------------------------
+@media.command()
+@click.option('--list', is_flag=True, default=False, help='List the names of the media in the database.')
+#@click.option('--copy', is_flag=False, flag_value='./media.csv', default=None, type=click.Path(exists=False), 
+# help='Produce and save a copy of the media database.')
+def info(list): #,copy
+    """Access information about the in-build media database.
+
+    Can be used to either check 
+    - the available media 
+    -  TODO to make a copy for further use.
+    """
+    if list:
+        possible_media = rg.utility.io.load_a_table_from_database('medium', False)['name'].to_list()
+        media = '|'.join(possible_media)
+        print(media)
+'''
+    if copy:
+        db = specimen.classes.medium.load_media_db()
+        specimen.classes.medium.save_db(db,click.format_filename(copy))
+'''
+
+@media.command()
+def initialise():
+   """Initialise or update the database.
+   """
+   rg.utility.databases.initialise_database()
+
+
 
 # --------------
 # Polish a model
@@ -174,23 +196,33 @@ def refine():
    """Refine a model. Includes steps like biomass, charges, SBO annotation, reaction direction correction and addition 
    of Pathways and further gene product annotations.
    """
-   
+
 @refine.command()
 @click.argument('modelpath', type=str)
-@click.option('-c', '--cycles', default=10, type=int, help='Maximal number of optiomisation cycles that will be run.')
-def biomass(modelpath,cycles):
+@click.option('-c', '--cycles', default=10, type=int, help='Maximal number of optimisation cycles that will be run.')
+@click.option('--outfile','-o',required=False, type=click.Path(), default='biomass_corrected.xml', help='Path to save the corrected model under.')
+def biomass(modelpath,cycles,outfile):
    """Changes the biomass reaction to be consistent
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
-   rg.curation.biomass.check_normalise_biomass(model, cycles)
+   corrected = rg.curation.biomass.check_normalise_biomass(model, cycles)
+   if corrected:
+      rg.utility.io.write_model_to_file(model,outfile)
    
+
+# @TEST
 @refine.command()
 @click.argument('modelpath', type=str)
-def charges(modelpath):
+@click.option('--dir','-d',required=False, type=click.Path(), default='', help='Directory to save the output to.')
+def charges(modelpath,dir):
    """Changes the charges in a model by comparison to the ModelSEED database
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.charges.correct_charges_modelseed(model)
+   corr,charg = rg.curation.charges.correct_charges_modelseed(model)
+   rg.utility.io.write_model_to_file(corr,Path(dir,'corrected_model.xml'))
+   charg_tab = pd.DataFrame(charg)
+   charg_tab.to_csv(Path(dir,'multiple_charges.csv',sep=';'))
+       
 
 # @TODO
 @refine.command()
@@ -201,13 +233,31 @@ def direction(modelpath,data):
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.polish.check_direction(model, data)
 
-# @IDEA maybe more fitting in annot group?
+# egcs
 @refine.command()
-@click.argument('modelpath', type=str)
-def pathways(modelpath):
-   """Add KEGG pathways to a model
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('--solver', '-s',required=False,type=click.Choice(['greedy']), default=None, multiple=False, help='Type of solver for the EGCs.')
+@click.option('--namespace','-n',required=False, type=click.Choice(['BiGG']),default='BiGG',multiple=False, help='Namespace of the model.')
+@click.option('--compartment','-c', required=False, type=str, default='c,p', help='Compartments to check, seprated by comma only.')
+@click.option('--outfile','-o', required=False, type=click.Path(), default='fixed_egcs.xml',help='Path to save edited model to, if solver has been set.')
+def egcs(modelpath, solver, namespace, compartment, outfile):
+   """Identify and optionally solve EGCs.
    """
-   rg.curation.pathways.kegg_pathways(modelpath)
+   model = rg.utility.io.load_model(modelpath, 'cobra')
+   match solver:
+      case 'greedy':
+            solver = rg.classes.egcs.GreedyEGCSolver()
+            solution = solver.solve_egcs(model,namespace,compartment)
+            for k,v in solution.items():
+               print(k + ': ' + v)
+            rg.utility.io.write_model_to_file(model,outfile)
+      case _:
+           solver = rg.classes.egcs.EGCSolver()
+           egcs,vals = solver.find_egcs(model,True,namespace,compartment)
+           print(f'EGCs: \n{str(egcs)}')
+           print(f'Objective values: \n{str(vals)}')
+
+
 
 # Annotation-related clean-up & Additional annotations
 # ---------------------------
@@ -225,6 +275,14 @@ def sboterms(modelpath):
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
    rg.sboann.sbo_annotation(model)
+
+
+@annot.command()
+@click.argument('modelpath', type=str)
+def pathways(modelpath):
+   """Add KEGG pathways as groups to a model
+   """
+   rg.curation.pathways.kegg_pathways(modelpath) # @TODO what exactly gets returned?
 
 
 # -----------------------------------------------
@@ -249,6 +307,7 @@ def memote(modelpath,score_only,file):
    else:
       rg.analysis.investigate.run_memote(model,save_res=file)
  
+
  # @TODO add colour option
 @analyse.command()
 @click.argument('modelpath', type=str)
@@ -259,6 +318,7 @@ def pathways(modelpath,dir):
    model = rg.utility.io.load_model(modelpath, 'cobra')
    report = rg.curation.pathways.kegg_pathway_analysis(model)
    report.save(dir)
+
 
 # @TODO: accept multiple models
 @analyse.command()
@@ -271,6 +331,7 @@ def stats(modelpath,dir,colors):
    model = rg.utility.io.load_model(modelpath,'cobra')
    report = rg.classes.reports.ModelInfoReport(model)
    report.save(dir,colors)
+
 
 # @TEST
 @analyse.command()
@@ -285,6 +346,7 @@ def pancore(modelpath, pcpath, based_on,dir):
    pcmodel = rg.utility.io.load_model(pcpath,'cobra')
    report = rg.analysis.core_pan.compare_to_core_pan(model,pcmodel,based_on)
    report.save(dir)
+
 
 # analyse growth
 # --------------
@@ -306,6 +368,7 @@ def simulate(modelpaths,media,namespace,dir,colors):
    report = rg.analysis.growth.growth_analysis(modelpaths, media, namespace,retrieve='report')
    report.save(to=dir, color_palette=colors)
 
+
 # @TEST
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
@@ -320,6 +383,7 @@ def auxotrophies(modelpath,media,namespace,dir,colors):
    model = rg.utility.io.load_model(modelpath, 'cobra')
    report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
    report.save(dir,colors)
+
 
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))

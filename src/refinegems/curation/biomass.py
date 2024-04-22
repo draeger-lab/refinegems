@@ -152,8 +152,10 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     """Normalises the coefficients according to current biomass weight to one g[CDW]
 
     Args:
-        - biomass (Reaction): Biomass function/reaction
-        - current_sum (float): Biomass weight calculated with sum_biomass_weight in g/mmol
+        - biomass (Reaction): 
+            Biomass function/reaction
+        - current_sum (float): 
+            Biomass weight calculated with sum_biomass_weight in g/mmol
 
     Returns:
         Reaction: Biomass function/reaction with updated coefficients

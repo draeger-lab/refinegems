@@ -133,12 +133,14 @@ def write_model_to_file(model:libModel|cobra.Model, filename:str):
     """Save a model into a file.
 
     Args:
-        model (libModel|cobra.Model): The model to be saved
-        filename (str): The filename to save the model to.
+        - model (libModel|cobra.Model): 
+            The model to be saved
+        - filename (str): 
+            The filename to save the model to.
 
     Raises:
-        ValueError: Unknown file extension for model
-        TypeError: Unknown model type
+        - ValueError: Unknown file extension for model
+        - TypeError: Unknown model type
     """
 
     # save cobra model
