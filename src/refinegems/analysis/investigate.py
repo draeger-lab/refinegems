@@ -13,11 +13,9 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 import memote
 import json
 import pandas as pd
-import numpy as np
 import cobra
 import time
 
-from cobra import Reaction
 from libsbml import Model as libModel
 from cobra import Model as cobraModel
 from typing import Literal
@@ -65,7 +63,17 @@ def run_memote(model: cobra.Model, type:Literal['json','html']='html',
         ValueError: Unknown input for parameter type
 
     Returns:
-        dict|str|None: The json dictionary, the html string or none.
+        (1) Case return_res = True and type = json 
+
+            dict: The json dictionary.
+
+        (2) Case return_res = True and type = html 
+
+            str: The html string.
+
+        (3) Case return_res = False
+        
+            None: no return
     """
 
     # verbose output I
@@ -109,7 +117,8 @@ def get_memote_score(memote_report: dict) -> float:
     """Extracts MEMOTE score from report
 
     Args:
-        - memote_report (dict): Output from run_memote.
+        - memote_report (dict): 
+            Output from run_memote.
 
     Returns:
         float: MEMOTE score
@@ -125,7 +134,8 @@ def get_num_reac_with_gpr(model:cobra.Model) -> int:
     from a given model.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
 
     Returns:
         int: The number of reactions with a GPR.
@@ -144,7 +154,8 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
     """Uses MEMOTE functions to extract orphans, deadends and disconnected metabolites
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
+        - model (cobraModel): 
+            Model loaded with COBRApy
 
     Returns:
         tuple: Lists of metabolites that might cause errors (1) - (3) 
@@ -179,12 +190,13 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
     """Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
+        - model (cobraModel): 
+            Model loaded with COBRApy
 
     Returns:
         tuple: Lists of reactions that might cause errors (1) & (2)
-        (1) list: List of mass unbalanced reactions
-        (2) list: List of charge unbalanced reactions
+            (1) list: List of mass unbalanced reactions
+            (2) list: List of charge unbalanced reactions
     """
 
     mass_unbalanced = consistency.find_mass_unbalanced_reactions(
@@ -214,7 +226,8 @@ def get_metabs_with_one_cvterm(model: libModel) -> list[str]:
     """Reports metabolites which have only one annotation, can be used as basis for further annotation research
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
 
     Returns:
         list: Metabolite Ids with only one annotation
@@ -234,7 +247,8 @@ def get_reactions_per_sbo(model: libModel) -> dict:
     """Counts number of reactions of all SBO Terms present
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
 
     Returns:
         dict: SBO Term as keys and number of reactions as values
@@ -252,7 +266,8 @@ def plot_rea_sbo_single(model: libModel):
     """Plots reactions per SBO Term in horizontal bar chart
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
 
     Returns:
         plot: Pandas Barchart

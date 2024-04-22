@@ -61,12 +61,18 @@ class SingleGrowthSimulationReport(Report):
     """Report for a single growth simulation, one media against one model.
 
     Attributes:
-        model_name: Name of the model.
-        medium_name: Name of the medium.
-        growth_value: Simulated growth value.
-        doubling_time: Simulated doubling time.
-        additives: List of substances, that were added.
-        no_exchange: List of substances that normally would be found in the media
+        - model_name: 
+            Name of the model.
+        - medium_name: 
+            Name of the medium.
+        - growth_value: 
+            Simulated growth value.
+        - doubling_time: 
+            Simulated doubling time.
+        - additives: 
+            List of substances, that were added.
+        - no_exchange: 
+            List of substances that normally would be found in the media
             but have been removed, as they are not part of the exchange reactions
             of the model.
     """
@@ -96,6 +102,12 @@ class SingleGrowthSimulationReport(Report):
     
 
     def to_dict(self) -> dict:
+        """Transform the information into a dictionary.
+
+        Returns:
+            dict: 
+                The information of the report as a dictionary.
+        """
 
         return {'model_name': self.model_name,
                  'medium_name': self.medium_name,
@@ -109,9 +121,12 @@ class GrowthSimulationReport(Report):
     """Report for the growth simulation analysis.
 
     Attributes:
-        reports: List of the report for the single growth analysis.
-        model: List of the model names.
-        media: List of the media names.
+        - reports: 
+            List of the report for the single growth analysis.
+        - model: 
+            List of the model names.
+        - media: 
+            List of the media names.
     """
 
     def __init__(self, reports:list[SingleGrowthSimulationReport] = []):
@@ -128,7 +143,8 @@ class GrowthSimulationReport(Report):
         """Add a new single growth report to the reports list
 
         Args:
-            - new_rep (SingleGrowthSimulationReport): The new simulation report.
+            - new_rep (SingleGrowthSimulationReport): 
+                The new simulation report.
         """
 
         self.reports.append(new_rep)
@@ -139,7 +155,8 @@ class GrowthSimulationReport(Report):
         """Return a table of the contents of the report.
 
         Returns:
-            pd.DataFrame: The table containing the information in the report.
+            pd.DataFrame: 
+                The table containing the information in the report.
         """
 
         l = []
@@ -154,15 +171,18 @@ class GrowthSimulationReport(Report):
         """Visualise the contents of the report.
 
         Args:
-            - unit (Literal['h','dt'], optional): Set the unit to plot. 
+            - unit (Literal['h','dt'], optional): 
+                Set the unit to plot. 
                 Can be doubling time in minutes ('dt') or growth rates in mmol/gDWh ('h'). 
                 Defaults to 'dt'.
-            - color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional):
+                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
         Returns:
-            matplotlib.figure.Figure: The plotted figure.
+            matplotlib.figure.Figure: 
+                The plotted figure.
         """
 
         def plot_growth_bar(xdata:list[str], xlab:str, ydata:list[float], 
@@ -170,17 +190,24 @@ class GrowthSimulationReport(Report):
             """Helper function to plot the bar plot for the growth visualisation.
 
             Args:
-                - xdata (list[str]): List of the x-axis data (medium or model names).
-                - xlab (str): The x-axis label.
-                - ydata (list[float]): List of thr y-axis data (the values).
-                - ylab (str): The y-axis label.
-                - title (str): The title of the plot.
-                - color_palette (str, optional): A colour gradient from the matplotlib library.
+                - xdata (list[str]): 
+                    List of the x-axis data (medium or model names).
+                - xlab (str): 
+                    The x-axis label.
+                - ydata (list[float]): 
+                    List of thr y-axis data (the values).
+                - ylab (str): 
+                    The y-axis label.
+                - title (str): 
+                    The title of the plot.
+                - color_palette (str, optional): 
+                    A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default. 
                     Defaults to 'YlGn'.
 
             Returns:
-                matplotlib.figure.Figure: The plotted figure.
+                matplotlib.figure.Figure: 
+                    The plotted figure.
             """
             
             # create colour gradient
@@ -221,14 +248,17 @@ class GrowthSimulationReport(Report):
             """Helper function to plot the heatmap for the growth visualisation.
 
             Args:
-                - data (pd.DataFrame): The table containing the data to be plotted.
+                - data (pd.DataFrame): 
+                    The table containing the data to be plotted.
                     Needs to have the columns 'medium', 'model' and one for the growth values.
-                - color_palette (str, optional): A colour gradient from the matplotlib library.
+                - color_palette (str, optional): 
+                    A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default. 
                     Defaults to 'YlGn'.
 
             Returns:
-                matplotlib.figure.Figure: The plotted figure.
+                matplotlib.figure.Figure: 
+                    The plotted figure.
             """
 
             # clean up + transform data
@@ -375,17 +405,22 @@ class GrowthSimulationReport(Report):
         """Save the report. 
         
         Current options include:
+        
         - 'dir': save the report to a directory, including a txt and two graphics
         - .... see future updates .....
 
         Args:
-            - to (str): Path to a directory to save the report to.
-            - how (Literal['dir'], optional): How to save the report. 
+            - to (str): 
+                Path to a directory to save the report to.
+            - how (Literal['dir'], optional): 
+                How to save the report. 
                 For options see functions description. 
                 Defaults to 'dir'.
-            - check_overwrite (bool, optional): Flag to choose to check for existing directory/files of same name 
+            - check_overwrite (bool, optional): 
+                Flag to choose to check for existing directory/files of same name 
                 or just to overwrite them. Defaults to True.
-            - color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional): 
+                A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
@@ -417,11 +452,16 @@ class KEGGPathwayAnalysisReport(Report):
     """Report for the KEGG pathway analysis.
 
     Attributes:
-        total_reac: An integer for the total number of reactions in the model.
-        kegg_count: An integer as a counter for the KEGG pathway annotations.
-        kegg_global: Dictionary of global KEGG IDs and their counts.
-        kegg_over: Dictionary of overvire KEGG IDs and their counts.
-        kegg_rest: Dictionary of the remaining KEGG IDs and their counts.
+        - total_reac: 
+            An integer for the total number of reactions in the model.
+        - kegg_count: 
+            An integer as a counter for the KEGG pathway annotations.
+        - kegg_global: 
+            Dictionary of global KEGG IDs and their counts.
+        - kegg_over: 
+            Dictionary of overvire KEGG IDs and their counts.
+        - kegg_rest: 
+            Dictionary of the remaining KEGG IDs and their counts.
     """
     
     def __init__(self, 
@@ -444,12 +484,14 @@ class KEGGPathwayAnalysisReport(Report):
         KEGG pathway annotation.
 
         Args:
-            - colors (list[str], optional): List of two colours used for the plotting.
+            - colors (list[str], optional): 
+                List of two colours used for the plotting.
                 If wrong number or non-matplotlib colours are given, sets its to the default.
                 Defaults to 'lightgreen' and 'darkgreen'.
 
         Returns:
-            plt.figure: The resulting plot.
+            plt.figure: 
+                The resulting plot.
         """
 
         # validate colors
@@ -485,15 +527,19 @@ class KEGGPathwayAnalysisReport(Report):
         - all: check and plot all identifiers
 
         Args:
-            - plot_type (Literal["global","overview","high","existing"], optional): Type of plot, explaination see above. Defaults to 'global'.
-            - label (Literal["id","name"], optional): Type of the label. If 'id', uses the KEGG pathway IDs,
+            - plot_type (Literal["global","overview","high","existing"], optional): 
+                Type of plot, explaination see above. Defaults to 'global'.
+            - label (Literal["id","name"], optional): 
+                Type of the label. If 'id', uses the KEGG pathway IDs,
                 if 'name', uses the pathway names. Defaults to 'id'.
-            - color_palette (str, optional): A colour gradient from the matplotlib library.
+            - color_palette (str, optional): 
+                A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
         Returns:
-            plt.figure: The plotted visualisation.
+            plt.figure: 
+                The plotted visualisation.
         """
 
         # get data and KEGG pathway label mapping
@@ -592,7 +638,8 @@ class KEGGPathwayAnalysisReport(Report):
         """Save the content of the report as plots.
 
         Args:
-            - dir (str): Path to a directory to save the output directory with all the plot in.
+            - dir (str): 
+                Path to a directory to save the output directory with all the plot in.
         """
 
         # collect all produced file in one directory
@@ -641,7 +688,8 @@ class AuxotrophySimulationReport(Report):
     """Report for the auxotrophy simulation.
 
     Attributes:
-        simulation_results: The data of the simulation.
+        - simulation_results: 
+            The data of the simulation.
     """
     
     def __init__(self, results) -> None:
@@ -654,15 +702,21 @@ class AuxotrophySimulationReport(Report):
         """Visualise and/or save the results of the :py:func:`test_auxotrophies` function.
 
         Args:
-            - res (pd.DataFrame): The output of  :py:func:`test_auxotrophies`.
-            - color_palette (str, optional): A name of a seaborn gradient color palette. 
+            - res (pd.DataFrame): 
+                The output of  :py:func:`test_auxotrophies`.
+            - color_palette (str, optional): 
+                A name of a seaborn gradient color palette. 
                 In case name is unknown, takes the default. Defaults to 'YlGn'.
-            - save (None | str, optional): Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
+            - save (None | str, optional): 
+                Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
 
         Returns:
-            - Case: save = str
+            (1) Case: save = str
+
                 None: No return, as the visulaisation is directly saved.
-            - Case: save = None
+            
+            (2) Case: save = None
+            
                 matplotlib.figure.Figure: The plotted figure.
         """
         
@@ -697,8 +751,10 @@ class AuxotrophySimulationReport(Report):
         """Save the report to a given dictionary.
 
         Args:
-            - dir (str): Path to a dictionary.
-            - color_palette (str, optional): Name of a matplotlib colour palette. Defaults to 'YnGr'.
+            - dir (str): 
+                Path to a dictionary.
+            - color_palette (str, optional): 
+                Name of a matplotlib colour palette. Defaults to 'YnGr'.
         """
         
         # save the visualisation of the growth rates
@@ -712,9 +768,12 @@ class SourceTestReport(Report):
     """Report for the source test (:py:func:rg.growth.test_growth_with_source).
 
     Attributes:
-        results: A pd.DataFrame with the results (substances and growth values).
-        element: The element the test was performed for.
-        model_name: The name of the model, that was tested.
+        - results: 
+            A pd.DataFrame with the results (substances and growth values).
+        - element: 
+            The element the test was performed for.
+        - model_name: 
+            The name of the model, that was tested.
     """
     
     def __init__(self, results:pd.DataFrame=None, element:str=None, model_name:str=None):
@@ -728,14 +787,17 @@ class SourceTestReport(Report):
         """Visuale the results of the source test as a heatmap
 
         Args:
-            - width (int, optional): number of columns to display for the heatmap. 
+            - width (int, optional): 
+                Number of columns to display for the heatmap. 
                 Number of row is calculated accordingly to fit all values.
                 Defaults to 12.
-            - color_palette (str, optional): Color palette (gradient) for the plot. 
+            - color_palette (str, optional): 
+                Color palette (gradient) for the plot. 
                 Defaults to 'YlGn'.
 
         Returns:
-            tuple(matplotlib.Figure, pd.DataFrame): The heatmap and the legend explaining the heatmap.
+            tuple(matplotlib.Figure, pd.DataFrame): 
+                The heatmap and the legend explaining the heatmap.
         """
         
         # create colour gradient
@@ -796,10 +858,13 @@ class SourceTestReport(Report):
         """Save the results of the source test.
 
         Args:
-            - dir (str): Path to a directory to save the results to.
-            - width (int, optional): Number of columns for the heatmap. 
+            - dir (str): 
+                Path to a directory to save the results to.
+            - width (int, optional): 
+                Number of columns for the heatmap. 
                 Defaults to 12.
-            - color_palette (str, optional):Color palette (gradient) for the plot. 
+            - color_palette (str, optional):
+                Color palette (gradient) for the plot. 
                 Defaults to 'YlGn'.
         """
         
@@ -819,10 +884,14 @@ class CorePanAnalysisReport(Report):
     for visualisation.
 
     Attributes:
-        model: The model the report is based on.
-        core_reac: List of reactions considered "core".
-        pan_reac: List of reactions considered "pan".
-        novel_reac: List of reactions considered "novel".
+        - model: 
+            The model the report is based on.
+        - core_reac: 
+            List of reactions considered "core".
+        - pan_reac: 
+            List of reactions considered "pan".
+        - novel_reac: 
+            List of reactions considered "novel".
     """
 
     def __init__(self, model: cobra.Model,
@@ -863,21 +932,26 @@ class CorePanAnalysisReport(Report):
         """Check if a certain part of the analysis is valid.
 
         Currently possible checks:
-            reaction-count : check if the number of reactions in the model
-                             equal the sum of the novel, pan and core reactions
+        
+        - reaction-count : 
+            check if the number of reactions in the model
+            equal the sum of the novel, pan and core reactions
 
         @TODO
-            implements more checks
+        
+        - implements more checks
 
         Args:
-            - check (str, optional): Describes which part to check. Options are listed above.
+            - check (str, optional): 
+            Describes which part to check. Options are listed above.
                 Defaults to 'reaction-count'.
 
         Raises:
             ValueError: Unknown string for parameter check. 
 
         Returns:
-            bool: Result of the check.
+            bool: 
+                Result of the check.
         """
 
         match check:
@@ -896,7 +970,8 @@ class CorePanAnalysisReport(Report):
         """Visualise the results of the pan-core analysis for the reactions as a donut chart.
 
         Returns:
-            matplotlib.figure: The plot.
+            matplotlib.figure: 
+                The plot.
         """
         
 
@@ -945,7 +1020,8 @@ class CorePanAnalysisReport(Report):
         - visualise_reactions : donut chart of the values above
 
         Args:
-            - dir (str): Path to a directory to save the output to.
+            - dir (str): 
+                Path to a directory to save the output to.
         """
         
         # ..........................................................
@@ -980,16 +1056,26 @@ class ModelInfoReport(Report):
     Note: currently requires the input model to be a COBRApy model object.
 
     Attributes:
-        name: A string for the name of the model.
-        reac: An int that describes the number of reactions in the model.
-        meta: An int that describes the number of metabolites in the model.
-        gene: An int that describes the numver of genes in the model.
-        orphans: List of metabolite IDs that are considered orphans.
-        deadends: List of metabolite IDs that are considered dead-ends.
-        disconnects: List of metabolites that are disconnected in the model.
-        mass_unbalanced: List of reaction IDs that are unbalanced regarding their mass.
-        charge_unbalanced: List of reactions IDs that are unbalanced regarding their charges.
-        with_gpr: Integer describing the number of reactions that have a gene production rule.
+        - name: 
+            A string for the name of the model.
+        - reac: 
+            An int that describes the number of reactions in the model.
+        - meta: 
+            An int that describes the number of metabolites in the model.
+        - gene: 
+            An int that describes the numver of genes in the model.
+        - orphans: 
+            List of metabolite IDs that are considered orphans.
+        - deadends: 
+            List of metabolite IDs that are considered dead-ends.
+        - disconnects: 
+            List of metabolites that are disconnected in the model.
+        - mass_unbalanced: 
+            List of reaction IDs that are unbalanced regarding their mass.
+        - charge_unbalanced: 
+            List of reactions IDs that are unbalanced regarding their charges.
+        - with_gpr: 
+            Integer describing the number of reactions that have a gene production rule.
     """
     
     def __init__(self, model) -> None:
@@ -1016,12 +1102,14 @@ class ModelInfoReport(Report):
         """Put the information of the report into a pandas DataFrame table.
 
         Args:
-            - all_counts (bool, optional): Option to save the list of e.g. reactions
+            - all_counts (bool, optional): 
+                Option to save the list of e.g. reactions
                 as such or to convert them into counts when set to True. 
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: The data in table format
+            pd.DataFrame: 
+                The data in table format
         """
 
         data = {'model': [self.name],
@@ -1045,11 +1133,13 @@ class ModelInfoReport(Report):
         """Visualise the basic information of the report.
 
         Args:
-            - color_palette (str, optional): Colour palette to use for the plots. 
+            - color_palette (str, optional): 
+                Colour palette to use for the plots. 
                 Defaults to 'YlGn'.
 
         Returns:
-            matplotlib.figure.Figure: The visualisation as a single figure.
+            matplotlib.figure.Figure: 
+                The visualisation as a single figure.
         """
 
         # basic settings
@@ -1179,8 +1269,10 @@ class ModelInfoReport(Report):
         """Save the report.
 
         Args:
-            - dir (str): Directory to save the report to.
-            - color_palette (str, optional): Colour palette of matplotlib to plot
+            - dir (str): 
+                Directory to save the report to.
+            - color_palette (str, optional): 
+                Colour palette of matplotlib to plot
                 figures in. Defaults to 'YlGn'.
         """
 

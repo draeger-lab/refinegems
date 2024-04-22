@@ -9,10 +9,11 @@ __author__ = 'Carolin Brune'
 
 import cobra
 
+from typing import Literal
+
 from ..utility.io import load_model
 from ..classes.reports import CorePanAnalysisReport
 from ..utility.entities import resolve_compartment_names
-from typing import Literal
 
 ################################################################################
 # functions
@@ -36,8 +37,11 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
     - @TODO
 
     Args:
-        model (cobra.Model): The model to extract the IDs from. Loaded with COBRApy.
-        based_on (Literal['id'], optional): How and which IDs to extract. Defaults to 'id'.
+        - model (cobra.Model): 
+            The model to extract the IDs from. 
+            Loaded with COBRApy.
+        - based_on (Literal['id'], optional): 
+            How and which IDs to extract. Defaults to 'id'.
 
     Raises:
         ValueError: Unknown input for parameter based_on if not in given options.
@@ -54,11 +58,13 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
         
 
 def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
-    """Helper function for :py:func:`generate_core_pan_model`. Identify the core reactions from a set of reactions
-    from different models. Core reactions are reactions that occur in ALL the models.
+    """Helper function for :py:func:`~rg.analysis.core_pan.generate_core_pan_model`. 
+    Identify the core reactions from a set of reactions from different models. 
+    Core reactions are reactions that occur in ALL the models.
 
     Args:
-        - all_reactions (dict[str:list[str]]): List of reactions IDs for all model to be part of the core-pan model.
+        - all_reactions (dict[str:list[str]]): 
+            List of reactions IDs for all model to be part of the core-pan model.
 
     Returns:
         list[str]: List of the IDs of reactions that are defined as core.
@@ -77,13 +83,15 @@ def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
 
 
 def find_pan_reactions(all_reactions: dict[str:list[str]], core: list[str]) -> list[str]:
-    """Helper function for :py:func:`generate_core_pan_model`. Identify the pan reactions
+    """Helper function for :py:func:`~rg.analysis.core_pan.generate_core_pan_model`. Identify the pan reactions
     for a set of reactions of different model. Pan reactions are reactions, that are found
     in AT LEAST one model but NOT in all.
 
     Args:
-        all_reactions (dict[str:list[str]): List of reactions IDs for all model to be part of the core-pan model.
-        core (list[str]): List of core reaction IDs, output of :py:func:`find_core_reaction_ids`.
+        - all_reactions (dict[str:list[str]): 
+            List of reactions IDs for all model to be part of the core-pan model.
+        - core (list[str]): 
+            List of core reaction IDs, output of :py:func:`~rg.analysis.core_pan.find_core_reaction_ids`.
 
     Returns:
         list[str]: List of pan reaction IDs.
@@ -102,10 +110,15 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
     """Based on a model and a list of reactions IDs, collects the corresponding reactions.
 
     Args:
-        model (cobra.Model): The model.
-        reac_id_list (list[str]): List of reactions IDs. are treated as actual cobra ID or not depending on 'based_on'.
-        based_on (Literal['id'], optional): Defines, if the IDs are to be treated literal ('id') or not. Defaults to 'id'.
-        notes (tuple, optional): What kind of reactions have been collected. Expects a tuple of two strings. 
+        - model (cobra.Model): 
+            The model.
+        - reac_id_list (list[str]): 
+            List of reactions IDs. are treated as actual cobra ID or not depending on 'based_on'.
+        - based_on (Literal['id'], optional): 
+            Defines, if the IDs are to be treated literal ('id') or not. 
+            Defaults to 'id'.
+        - notes (tuple, optional): 
+            What kind of reactions have been collected. Expects a tuple of two strings. 
             Uses the tuple to create a notes entry in the reaction object.
             Defaults to ('core-pan','core').
 
@@ -141,14 +154,19 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
         - id: uses the IDs to compare reactions
 
     Args:
-        model_list (list[str]): List of paths to models.
-        based_on (Literal['id'], optional): How to decide which reactions are considered the same. 
+        - model_list (list[str]): 
+            List of paths to models.
+        - based_on (Literal['id'], optional): 
+            How to decide which reactions are considered the same. 
             Defaults to 'id'.
-        name (str, optional): Name of the new model. 
+        - name (str, optional): 
+            Name of the new model. 
             Defaults to 'core_pan_model'.
-        remove_genes (bool, optional): Flag to remove all genes from the model. 
+        - remove_genes (bool, optional): 
+            Flag to remove all genes from the model. 
             Defaults to True.
-        resolve_compartments (bool, optional): Remaps compartment names to the single letter "c,p,e"-scheme,
+        - resolve_compartments (bool, optional): 
+            Remaps compartment names to the single letter "c,p,e"-scheme,
             if set. Default to True. 
 
     Returns:
@@ -202,9 +220,12 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
         - id: uses the reaction IDs for a simple and direct comparison. 
 
     Args:
-        model (cobra.Model): The input model.
-        cp_model (cobra.Model): The core-pan model
-        based_on (Literal['id'], optional): How to perform the comparison. 
+        - model (cobra.Model): 
+            The input model.
+        - cp_model (cobra.Model): 
+            The core-pan model
+        - based_on (Literal['id'], optional): 
+            How to perform the comparison. 
             Defaults to 'id'.
 
     Raises:

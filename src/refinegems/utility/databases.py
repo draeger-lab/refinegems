@@ -34,7 +34,8 @@ class ValidationCodes(Enum):
    """Validation codes for the database
 
       Args:
-         - Enum (Enum): Provided as input to get a number mapping for the codes
+         - Enum (Enum): 
+            Provided as input to get a number mapping for the codes
    """
    COMPLETE = 0,  # All tables are in data.db
    EMPTY = 1,  # data.db is either empty or incorrect
@@ -65,18 +66,22 @@ validation_messages = {
 }
 
 
+# @TODO: adjust to new DB format (2tables in meida missing)
 def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    """Verifies if database has:
-         - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-         - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 4 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance'
-         - 1 table with name 'modelseed_compounds'
-   
+
+      - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
+      - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
+      - 4 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance'
+      - 1 table with name 'modelseed_compounds'
+
    Args:
-      - db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
+      - db_cursor (sqlite3.Cursor): 
+         Cursor from open connection to the database (data.db)
 
    Returns:
-      int: Corresponding to one of the ValidationCodes
+      int: 
+         Corresponding to one of the ValidationCodes
    """
    print('Verifying database...')
    
@@ -107,10 +112,11 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    """Creates the SBOannotator database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo') from file './data/database/sbo_mapping_db.sql'
-      & the media database with 4 tables ('medium', 'substance', 'substance2db', 'medium2substance') from file './data/database/media_db.sql'
+   and the media database with 4 tables ('medium', 'substance', 'substance2db', 'medium2substance') from file './data/database/media_db.sql'
 
    Args:
-      - db_cursor (sqlite3.Cursor): Cursor from open connection to the database (data.db)
+      - db_cursor (sqlite3.Cursor): 
+         Cursor from open connection to the database (data.db)
    """
    print('Adding SBO tables...')
    with open(files('refinegems.data.database').joinpath('sbo_mapping_db.sql')) as schema:
@@ -133,18 +139,22 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
     """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
     Args:
-        - latest_version (str): String containing the Path to a file with the latest version of the BiGG database
-        - db_connection (sqlite3.Connection): Open connection to the database (data.db)
+      - latest_version (str): 
+         String containing the Path to a file with the latest version of the BiGG database
+      - db_connection (sqlite3.Connection): 
+         Open connection to the database (data.db)
     """
 
     def get_database_links_info_per_row(row:pd.Series):
         """For a single row of the dataframe, extract the database identifier from the collection of database links.
 
         Args:
-            row (pd.Series): The database links for a single row of the dataframe.
+            - ow (pd.Series): 
+               The database links for a single row of the dataframe.
 
         Returns:
-            dict: A dictionary with the databses as keys and the IDs as values.
+            dict: 
+               A dictionary with the databses as keys and the IDs as values.
         """
 
         database_ids = {}
@@ -169,10 +179,12 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
         into separate column containing the IDs and not the links.
 
         Args:
-            data (pd.DataFrame): The input dataframe.
+            - data (pd.DataFrame): 
+               The input dataframe.
 
         Returns:
-            pd.DataFrame: The edited dataframe
+            pd.DataFrame: 
+               The edited dataframe
         """
     
         data = data.join(pd.DataFrame([get_database_links_info_per_row(row) for row in data['database_links']]))
@@ -229,13 +241,16 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
 
 def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: bool=True):
    """Gets the latest BiGG tables for metabolites & reactions if:
-         - No version file is locally available
-         - The version in the local version file is NOT the latest
-         - No BiGG tables currently exist in the database
+
+      - No version file is locally available
+      - The version in the local version file is NOT the latest
+      - No BiGG tables currently exist in the database
 
    Args:
-      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
-      - is_missing (bool, optional): True if no BiGG tables are in the database. Defaults to True.
+      - db_connection (sqlite3.Connection): 
+         Open connection to the database (data.db)
+      - is_missing (bool, optional): 
+         True if no BiGG tables are in the database. Defaults to True.
    """
    # Check if BiGG database had an update
    LATEST_VERSION = requests.get(VERSION_URL).json()['bigg_models_version']
@@ -255,7 +270,8 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    """Retrieves the compounds table from ModelSEED from the respective GitHub repository
 
    Args:
-      - db_connection (sqlite3.Connection): Open connection to the database (data.db)
+      - db_connection (sqlite3.Connection): 
+         Open connection to the database (data.db)
    """
    print('Adding the ModelSEED compounds table...')
    MODELSEED_COMPOUNDS_URL = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv'
@@ -276,10 +292,11 @@ def initialise_database():
    """Initialises/updates the database (data.db)
 
       After initialisation the database contains:
-         - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-         - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-         - 4 tables with names 'medium', 'substance', 'medium2substance' & 'substance2db'
-         - 1 table with name 'modelseed_compounds' 
+
+      - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
+      - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
+      - 6 tables with names 'medium', 'substance', 'medium2substance', 'substance2db', 'subset' & 'subset2substance'
+      - 1 table with name 'modelseed_compounds' 
    """
    # Initialise empty connection
    con = None

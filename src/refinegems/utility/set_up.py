@@ -32,9 +32,11 @@ def download_config(filename:str='./my_config.yaml', type=Literal['media','refin
     """Load a configuration file from the package and save a copy of it for the user to edit.
 
     Args:
-        filename (str, optional): Filename to write the config to/save it under as. 
+        - filename (str, optional): 
+            Filename to write the config to/save it under as. 
             Defaults to './my_config.yaml'.
-        type (Literal['media','refinegems'], optional): Type of configuration file to load.
+        - type (Literal['media','refinegems'], optional): 
+            Type of configuration file to load.
             Can be 'media' for the media config file or 
             'refinegems' for the refinegmes pipeline configuration file. 
             Defaults to Literal['media','refinegems'].
@@ -45,8 +47,10 @@ def download_config(filename:str='./my_config.yaml', type=Literal['media','refin
         Performs the actual download of a yaml file into a copy for the user to edit.
 
         Args:
-            infile (str): Path to the file to copy.
-            outfile (str): Path to write the copy to.
+            - infile (str): 
+                Path to the file to copy.
+            - outfile (str): 
+                Path to write the copy to.
         """
         with open(infile, "r") as cfg_file, open(outfile, 'w') as cfg_out:
                 for line in cfg_file:

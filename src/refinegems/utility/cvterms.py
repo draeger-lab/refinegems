@@ -3,10 +3,19 @@
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
+
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+
+################################################################################
+# requirements
+################################################################################
+
 import logging
 from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+################################################################################
+# variables
+################################################################################
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
@@ -65,14 +74,21 @@ pathway_db_dict = {'KEGG': 'kegg.pathway:'}
 MIRIAM = 'https://identifiers.org/'
 OLD_MIRIAM = 'http://identifiers.org/'
 
+################################################################################
+# functions
+################################################################################
+
 
 def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
     """Adds CVTerm to a unit
 
     Args:
-        - unit_id (str): ID to add as URI to annotation
-        - unit (Unit): Unit to add CVTerm to
-        - relation (int): Provides model qualifier to be added
+        - unit_id (str): 
+            ID to add as URI to annotation
+        - unit (Unit): 
+            Unit to add CVTerm to
+        - relation (int): 
+            Provides model qualifier to be added
     """
     cv = CVTerm()
     cv.setQualifierType(MODEL_QUALIFIER)
@@ -89,9 +105,12 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
     """Adds CVTerm to a metabolite
 
     Args:
-        - entry (str): Id to add as annotation
-        - db_id (str): Database to which entry belongs. Must be in metabol_db_dict.keys().
-        - metab (Species): Metabolite to add CVTerm to
+        - entry (str): 
+            Id to add as annotation
+        - db_id (str): 
+            Database to which entry belongs. Must be in metabol_db_dict.keys().
+        - metab (Species): 
+            Metabolite to add CVTerm to
     """
     if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
         if entry[:4] == 'HMDB':
@@ -108,9 +127,12 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
     """Adds CVTerm to a reaction
 
     Args:
-        - entry (str): Id to add as annotation
-        - db_id (str): Database to which entry belongs. Must be in reaction_db_dict.keys().
-        - reac (Reaction): Reaction to add CVTerm to
+        - entry (str): 
+            Id to add as annotation
+        - db_id (str): 
+            Database to which entry belongs. Must be in reaction_db_dict.keys().
+        - reac (Reaction): 
+            Reaction to add CVTerm to
     """
     if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
         if entry[:4] == 'HMDB':
@@ -129,10 +151,14 @@ def add_cv_term_genes(entry: str, db_id: str, gene: GeneProduct, lab_strain: boo
     """Adds CVTerm to a gene
 
     Args:
-        - entry (str): Id to add as annotation
-        - db_id (str): Database to which entry belongs. Must be in gene_db_dict.keys().
-        - gene (GeneProduct): Gene to add CVTerm to
-        - lab_strain (bool, optional): For locally sequenced strains the qualifiers are always HOMOLOG_TO. Defaults to False.
+        - entry (str): 
+            Id to add as annotation.
+        - db_id (str): 
+            Database to which entry belongs. Must be in gene_db_dict.keys().
+        - gene (GeneProduct): 
+            Gene to add CVTerm to.
+        - lab_strain (bool, optional): 
+            For locally sequenced strains the qualifiers are always HOMOLOG_TO. Defaults to False.
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
@@ -148,9 +174,12 @@ def add_cv_term_pathways(entry: str, db_id: str, path: Group):
     """Add CVTerm to a groups pathway
 
     Args:
-        - entry (str): Id to add as annotation
-        - db_id (str): Database to which entry belongs. Must be in pathway_db_dict.keys().
-        - path (Group): Pathway to add CVTerm to
+        - entry (str): 
+            Id to add as annotation
+        - db_id (str): 
+            Database to which entry belongs. Must be in pathway_db_dict.keys().
+        - path (Group): 
+            Pathway to add CVTerm to
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
@@ -163,9 +192,12 @@ def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
     """Add CVTerm to a reaction as OCCURS IN pathway
 
     Args:
-        - entry (str): Id to add as annotation
-        - db_id (str): Database to which entry belongss
-        - reac (Reaction): Reaction to add CVTerm to
+        - entry (str): 
+            Id to add as annotation
+        - db_id (str): 
+            Database to which entry belongss
+        - reac (Reaction): 
+            Reaction to add CVTerm to
     """
     cv = CVTerm()
     cv.setQualifierType(BIOLOGICAL_QUALIFIER)
@@ -178,11 +210,14 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     """Extract Id for a specific database from CVTerm
 
     Args:
-        - entity (SBase): Species, Reaction, Gene, Pathway
-        - db_id (str): Database of interest
+        - entity (SBase): 
+            Species, Reaction, Gene, Pathway
+        - db_id (str): 
+            Database of interest
 
     Returns:
-        list[str]: Ids of entity belonging to db_id
+        list[str]: 
+            Ids of entity belonging to db_id
     """
     num_cvs = entity.getNumCVTerms()
     all_ids = []
@@ -201,11 +236,14 @@ def generate_cvterm(qt, b_m_qt) -> CVTerm:
     """Generates a CVTerm with the provided qualifier & biological or model qualifier types
 
     Args:
-        - qt (libSBML qualifier type): BIOLOGICAL_QUALIFIER or MODEL_QUALIFIER
-        - b_m_qt (libSBML qualifier): BQM_IS, BQM_IS_HOMOLOG_TO, etc.
+        - qt (libSBML qualifier type): 
+            BIOLOGICAL_QUALIFIER or MODEL_QUALIFIER
+        - b_m_qt (libSBML qualifier): 
+            BQM_IS, BQM_IS_HOMOLOG_TO, etc.
 
     Returns:
-        CVTerm: With provided qualifier & biological or model qualifier types 
+        CVTerm: 
+            With provided qualifier & biological or model qualifier types 
     """
     cvterm = CVTerm()
     cvterm.setQualifierType(qt)
@@ -222,7 +260,8 @@ def print_cvterm(cvterm: CVTerm):
     """Debug function: Prints the URIs contained in the provided CVTerm along with the provided qualifier & biological/model qualifier types
 
     Args:
-        cvterm (CVTerm): A libSBML CVTerm
+        cvterm (CVTerm): 
+            A libSBML CVTerm
     """
     if cvterm == None:
         logging.info('CVTerm currently empty!')

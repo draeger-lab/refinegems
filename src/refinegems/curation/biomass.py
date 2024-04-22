@@ -80,11 +80,12 @@ def sum_biomass_weight(reaction: Reaction) -> float:
     formula information assigned.
 
     Args:
-        - reaction (Reaction): The biomass reaction of the model under investigation.
+        - reaction (Reaction): 
+            The biomass reaction of the model under investigation.
 
     Returns:
-        float: The molecular weight of the biomass reaction in units of g/mmol.
-
+        float: 
+            The molecular weight of the biomass reaction in units of g/mmol.
     """
     return (
         sum(
@@ -114,6 +115,20 @@ def test_biomass_consistency(model: cobraModel, reaction_id: str) -> Union[float
     its molecular weight calculated from the formula, then divides the overall
     sum of all the products by 1000.
 
+    Args: 
+        - model(cobraModel):
+            The model loaded with COBRApy.
+        - reaction_id(str):
+            Reaction ID of a BOF.
+
+    Returns:
+        (1) Case: problematic input
+
+            str: an error message.
+        
+        (2) Case: successful testing
+
+            float: biomass weight
     """
     reaction = model.reactions.get_by_id(reaction_id)
     try:
@@ -158,7 +173,8 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
             Biomass weight calculated with sum_biomass_weight in g/mmol
 
     Returns:
-        Reaction: Biomass function/reaction with updated coefficients
+        Reaction: 
+            Biomass function/reaction with updated coefficients
     """
     metabs = biomass.metabolites # Get all metabolites
     
@@ -178,12 +194,15 @@ def check_normalise_biomass(model: cobraModel, cycles:int=10) -> Union[cobraMode
        
 
     Args:
-        - model (cobraModel): Model loaded with COBRApy
-        - cycles (int, optional): Mayimal number of optiomisation cycles that will be run.
+        - model (cobraModel): 
+            Model loaded with COBRApy
+        - cycles (int, optional): 
+            Maximal number of optiomisation cycles that will be run.
             Used to avoid endless optiomisation cycles.
 
     Returns:
-        cobraModel: COBRApy model with adjusted biomass functions
+        cobraModel: 
+            COBRApy model with adjusted biomass functions
     """
     
     biomass_rxn = test_biomass_presence(model)

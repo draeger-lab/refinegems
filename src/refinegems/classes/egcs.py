@@ -54,12 +54,12 @@ class EGCSolver():
     attributes. Can only be used to find, not solve ECGs directly.
 
     Attributes:
-        theshold: Float describing the cutoff, under which the model
+        - theshold: Float describing the cutoff, under which the model
             will no longer considered to be growing.
             Defaults to the MIN_GROWTH_THRESHOLD set in the growth module.
-        limit: Sets the maximal number of cores to be used.
+        - limit: Sets the maximal number of cores to be used.
             Defaults to 8.
-        chunksize: Chunksize to use for multiprocessing.
+        - chunksize: Chunksize to use for multiprocessing.
             Defaults to 12.
     """
 
@@ -83,19 +83,30 @@ class EGCSolver():
             If no, return None
 
             Args:
-                metabolites (dict[str: int]): Metabolites mapped to factors.
-                model (cobra.Model): The model loaded with COBRApy.
-                metab_info (Medium): Information about the metabolites from the database,
+                - metabolites (dict[str: int]): 
+                    Metabolites mapped to factors.
+                - model (cobra.Model): 
+                    The model loaded with COBRApy.
+                - metab_info (Medium): 
+                    Information about the metabolites from the database,
                     in for of a Medium object.
-                namespace (Literal['BiGG'], optional): String for the namespace used in the model. 
+                - namespace (Literal['BiGG'], optional): 
+                    String for the namespace used in the model. 
                     Current options include 'BiGG'.
                     Defaults to 'BiGG'.
-                compartment (list, optional): List of length 2 with the names of the 
+                - compartment (list, optional): 
+                    List of length 2 with the names of the 
                     compartments for the dissipations reactions. 
                     Defaults to ['c','p'].
 
             Returns:
-                None|dict: None or the mapping of IDs of the metabolites to the factors.
+                (1) Case: no found
+                    
+                    None: nothing to return
+                
+                (2) Case: found  
+                
+                    dict: the mapping of IDs of the metabolites to the factors.
             """
 
             found_ids = {}
@@ -147,10 +158,12 @@ class EGCSolver():
         """Add the dissipation reactions a model.
 
         Args:
-            model (cobra.Model): A model loaded with COBRApy.
-            namespace (Literal['BiGG'], optional): _description_. Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the compartments 
-                for the dissipations reactions. 
+            - model (cobra.Model): 
+                A model loaded with COBRApy.
+            - namespace (Literal['BiGG'], optional): Namespace of the model. 
+                Defaults to 'BiGG'.
+            - compartment (list, optional): 
+                List of length 2 with the names of the compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
@@ -177,14 +190,15 @@ class EGCSolver():
 
     def limit_bounds(self, model: cobra.Model):
         """Limits upper and lower bounds of
-        exchange reactions to (0, 0)
-        reversible reactions to (-1, 1)
-        irreversible reactions to (0, 1)
 
-        excludes dissipation reactions
+        - exchange reactions to (0, 0)
+        - reversible reactions to (-1, 1)
+        - irreversible reactions to (0, 1)
+
+        Excludes dissipation reactions.
 
         Args:
-            model (cobra.Model): cobrapy model
+            - model (cobra.Model): COBRApy model
         """
         external_comp = cobra.medium.find_external_compartment(model)
         # set fluxes for each reaction within model
@@ -212,22 +226,33 @@ class EGCSolver():
         """Find the EGCs in a model - if exsistend.
 
         Args:
-            - model (cobra.Model): The model loaded with COBRApy.
-            - with_reacs (bool, optional): Option to either only return the names
+            - model (cobra.Model): 
+                The model loaded with COBRApy.
+            - with_reacs (bool, optional): 
+                Option to either only return the names
                 of the found EGC or additionally also the reactions, which 
                 show fluxes during testing. 
                 Defaults to False.
-            - namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            - compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): 
+                List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
-            list|tuple: List of found EGC names or tuple of dictionary of the 
-            EGCs and their reactions that showed fluxes and the objective values
-            of the test.
+            (1) Case with_reacs=False  
+            
+                list: List of found EGC names.
+
+            (2) Case with_reacs=True  
+                
+                tuple: tuple of (1) dictionary & (2) list
+
+                    (1) dict: dictionary of the EGCs 
+                    (2) list: their reactions that showed fluxes and the objective values of the test.
         """
         # add 15 energy dissipation reactions
         with model as mod_model:  
@@ -285,14 +310,17 @@ class EGCSolver():
         EGCs in the model.
 
         Args:
-            model (cobra.Model): The model loaded with COBRApy after
+            - model (cobra.Model): 
+                The model loaded with COBRApy after
                 a try of solving the EGCs.
-            starting_egcs (dict): List of EGCs before trying to solve them.
-            namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - starting_egcs (dict): 
+                List of EGCs before trying to solve them.
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the 
-                compartments for the dissipations reactions. 
+            compartment (list, optional): 
+                List of length 2 with the names of the compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
@@ -318,20 +346,25 @@ class GreedyEGCSolver(EGCSolver):
     to single reactions.
 
     Workflow:
+
     - identify existing EGCs
     - test, if EGCs can be solved using single modifications of reactions
+
         - possible modifications:
+
             - deletion (RM)
             - set reversible (MR)
             - remove backward (forward only) (RB)
             - remove forward (backward only) (RF)
+
     - find a good - not optimal - combination of reactions, that solve
       the maximum number of EGCs that can be solved this way
     - apply solution to the model
     - report remaining EGCs, score and reactions used for solution
 
     Attributes:
-        scoring_matrix: Dictionary of the changes (RM, MR, RF, RB) against
+        - scoring_matrix: 
+            Dictionary of the changes (RM, MR, RF, RB) against
             Integers describing the penalty scores.
     """
 
@@ -351,20 +384,30 @@ class GreedyEGCSolver(EGCSolver):
         of a single reaction.
 
         Args:
-            reac (cobra.Reaction): The reaction to change
-            model (cobra.Model): The model (COBRApy) to manipulate.
-            bounds (tuple): The new reactions bounds.
-            starting_egcs (dict): Dict of the original EGCs found in the model.
-            namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - reac (cobra.Reaction): 
+                The reaction to change
+            - model (cobra.Model): 
+                The model (COBRApy) to manipulate.
+            - bounds (tuple): 
+                The new reactions bounds.
+            - starting_egcs (dict): 
+                Dict of the original EGCs found in the model.
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
-            list|None: List of EGCs that can be removed with the change or
-                None, if no EGC can be solved with the change.
+            (1) Case if EGCs removed  
+            
+                list: List of EGCs that can be removed with the change 
+            
+            (2) Case no removal possible  
+            
+                None: no return
         """
 
         # set new reaction bounds
@@ -381,31 +424,42 @@ class GreedyEGCSolver(EGCSolver):
     def test_modifications(self,reaction: cobra.Reaction, model: cobra.Model, 
                         present_egc: dict, namespace:Literal['BiGG']='BiGG',
                         compartment:list=['c','p']) -> dict:
-        """Tries four cases for a Reaction:
+        """Tries four cases for a Reaction
+
         1. if reaction is not reversible -> make reaction reversible (MR)
         2. limit backward reaction (RB)
         3. limit forward reaction (RF)
         4. "delete" reaction by setting fluxes to 0 (RM)
+    
         -> for each case the EGCs which are present in the model are checked if they are removed
+        
         -> if EGCs are removed we check if the model still grows on optimal medium
+        
         => When both limitations are True reaction is saved to corresponding dictionary
 
+        
         Args:
-            reaction (cobra.Reaction): Reaction from a cobra.Model
-            model (cobra.Model): The corresponding GEM loaded with cobrapy
-            present_egc (dict): Dictionary of present EGCs {"egc": {}} -> EGCs are keys
-            namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - reaction (cobra.Reaction): 
+                Reaction from a cobra.Model
+            - model (cobra.Model): 
+                The corresponding GEM loaded with cobrapy
+            - present_egc (dict): 
+                Dictionary of present EGCs {"egc": {}} -> EGCs are keys
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): 
+                List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
-            dict: {"egc": {"MR":[potential_solutions],
-                        "RB":[potential_solutions],
-                        "RF":[potential_solutions],
-                        "RM":[potential_solutions]}}
+            dict: 
+                {"egc": {"MR":[potential_solutions],
+                "RB":[potential_solutions],
+                "RF":[potential_solutions],
+                "RM":[potential_solutions]}}
         """
         results = {
                 "ATP": {"MR": [], "RB": [], "RF": [], "RM": []},
@@ -485,23 +539,26 @@ class GreedyEGCSolver(EGCSolver):
         """Find the (single) modifications to reactions in a cobra.Model and returns these in a dictionary.
         Splits the modification check in multiple processes.
         
-
         Args:
-            model (cobra.Model): The model loaded with COBRApy.
-            present_egcs (dict): Dict of the original EGCs found in the model.
-            namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - model (cobra.Model): 
+                The model loaded with COBRApy.
+            - present_egcs (dict): 
+                Dict of the original EGCs found in the model.
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): 
+                List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
             dict: Dictionary of potential modifications to resolve EGCs
                 {"egc": {"MR":[potential_solutions],
-                        "RB":[potential_solutions],
-                        "RF":[potential_solutions],
-                        "RM":[potential_solutions]}}
+                "RB":[potential_solutions],
+                "RF":[potential_solutions],
+                "RM":[potential_solutions]}}
         """
 
         output_list = []
@@ -573,17 +630,20 @@ class GreedyEGCSolver(EGCSolver):
         solves all EGCs that can be solved with the results.
 
         Args:
-            results (dict): Output of :py:func:`find_mods_resolve_egcs_greedy`.
-            egc_reactions (dict): Output of :py:func:`find_egcs` with 'with_reac=True'.
+            - results (dict): 
+                Output of :py:func:`find_mods_resolve_egcs_greedy`.
+            - egc_reactions (dict): 
+                Output of :py:func:`find_egcs` with 'with_reac=True'.
                 Should be the EGCs before calculating any solutions and applying them.
-            scoring_matrix (dict, optional): Dictionary of the modifications types 
+            - scoring_matrix (dict, optional): 
+                Dictionary of the modifications types 
                 (RM, MR, RF, RB) and their penality score.
-                Defaults to the in-biuld scoring matrix.
+                Defaults to the in-build scoring matrix.
 
         Returns:
-            tuple: Tuple of length two, summarising the solution for the EGCs:
-                0: dictionary of reaction IDs and their mode of change
-                1: score of the solution
+            tuple: Tuple of (1) dict & (2) int:
+                (1) dictionary of reaction IDs and their mode of change
+                (2) score of the solution
         """
     
         solved_egcs = set()
@@ -629,15 +689,17 @@ class GreedyEGCSolver(EGCSolver):
         """Apply the modifications to reactions in solution to the model.
 
         4 modifications are possible:
-        "RM" -> removes the reaction
-        "RB" -> removes the backwards reaction
-        "RF" -> removes the forward reaction
-        "MR" -> makes reaction reversible
+
+        - "RM" -> removes the reaction
+        - "RB" -> removes the backwards reaction
+        - "RF" -> removes the forward reaction
+        - "MR" -> makes reaction reversible
 
         Args:
-            model (cobra.Model): Input model
-            solution (dict): Best solution from calculation 
-                in `py:func:find_solution_greedy`.
+            - model (cobra.Model): 
+                Input model
+            - solution (dict): 
+                Best solution from calculation in `py:func:find_solution_greedy`.
         """
         for reac, mode in solution.items():
                 reaction = model.reactions.get_by_id(reac)
@@ -662,19 +724,23 @@ class GreedyEGCSolver(EGCSolver):
         """Run the complete greedy EGC solving process.
 
         Args:
-            - model (cobra.Model): The model loaded with COBRApy.
-            - namespace (Literal['BiGG'], optional): STring for the namespace used in the model. 
+            - model (cobra.Model): 
+                The model loaded with COBRApy.
+            - namespace (Literal['BiGG'], optional): 
+                String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            - compartment (list, optional): List of length 2 with the names of the 
+            - compartment (list, optional): 
+                List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 
         Returns:
             dict: Dictionary with the following entries.
-                'solution': List of reactions for the solution.
-                'score': Score of the solution.
-                'remaining egcs': List of EGCs that could not be solved.
+
+                - 'solution': List of reactions for the solution.
+                - 'score': Score of the solution.
+                - 'remaining egcs': List of EGCs that could not be solved.
 
                 Note: additionally, the input model gets changed,
                 if EGCs can be solved.

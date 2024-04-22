@@ -36,21 +36,29 @@ class Medium:
     """Class describing a medium.
 
     Attributes:
-        name (str): The name or abbreviation of the medium.
-        substance_table (pd.DataFrame): A table containing information about the medium in silico compounds. Long format.
-        description (str, optional): Short description of the medium. Defaults to None.
-        doi (str): Reference(s) to the original publication of the medium. Defaults to None.
+        - name (str): 
+            The name or abbreviation of the medium.
+        - substance_table (pd.DataFrame): 
+            A table containing information about the medium in silico compounds. Long format.
+        - description (str, optional): 
+            Short description of the medium. Defaults to None.
+        - doi (str): 
+            Reference(s) to the original publication of the medium. Defaults to None.
     """
 
     def __init__(self, name:str, substance_table:pd.DataFrame=pd.DataFrame(columns=['name','formula','flux','source','db_id','db_type']), description:str=None, doi:str=None):
         """Initialise a Medium object.
 
         Args:
-            name (str): The name or abbreviation of the medium.
-            substance_table (pd.DataFrame, optional):  A table containing information about the medium in silico compounds. Long format.
+            - name (str): 
+                The name or abbreviation of the medium.
+            - substance_table (pd.DataFrame, optional):  
+                A table containing information about the medium in silico compounds. Long format.
                 Defaults to an empty table with the columns ['name','formula','flux','source','db_id','db_type'].
-            description (str, optional): Short description of the medium.. Defaults to None.
-            doi (str, optional): Reference(s) to the original publication of the medium.. Defaults to None.
+            - description (str, optional): 
+                Short description of the medium. Defaults to None.
+            - doi (str, optional): 
+                Reference(s) to the original publication of the medium.. Defaults to None.
         """
         
         self.name = name
@@ -62,8 +70,10 @@ class Medium:
         """Add a substance from the database to the medium.
 
         Args:
-            name (str): Name of the substance. Should be part of the database substance.name column.
-            flux (float, optional): Sets the flux value of the new substance. Defaults to 10.0.
+            - name (str): 
+                Name of the substance. Should be part of the database substance.name column.
+            - flux (float, optional): 
+                Sets the flux value of the new substance. Defaults to 10.0.
         """
         # build connection to DB
         connection = sqlite3.connect(PATH_TO_DB)
@@ -91,7 +101,8 @@ class Medium:
         """Remove a substance from the medium based on its name
 
         Args:
-            name (str): Name of the substance to remove.
+            - name (str): 
+                Name of the substance to remove.
         """
         
         self.substance_table = self.substance_table[self.substance_table['name'] != name]
@@ -104,10 +115,12 @@ class Medium:
         followed by other lower-case letters and returm them as a list of sources for the given element. 
 
         Args:
-            element (str): The symbol of the element to search the sources of
+            - element (str): 
+                The symbol of the element to search the sources of
 
         Returns:
-            list[str]: The list of the names of the sources (no duplicates).
+            list[str]: 
+                The list of the names of the sources (no duplicates).
         """
 
         return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True).fillna(False)]['name']))
@@ -120,9 +133,10 @@ class Medium:
         other sources of said element before adding the new source.
 
         Args:
-            element (str): The element to set the source for, e.g. 'O' for oxygen.
-            new_source (str): The new source. Should be the name of a substance in the 
-                database, otherwise no new source will be set.
+            - element (str): 
+                The element to set the source for, e.g. 'O' for oxygen.
+            - new_source (str): 
+                The new source. Should be the name of a substance in the database, otherwise no new source will be set.
         """
 
         # get sources for element
@@ -138,7 +152,8 @@ class Medium:
         """Check if the medium contains O2 / dioxygen.
 
         Returns:
-            bool: Results of the test, True if pure oxygen is in the medium.
+            bool: 
+                Results of the test, True if pure oxygen is in the medium.
         """
 
         test = self.substance_table[['name','formula']].loc[(self.substance_table['name'] == 'Dioxygen [O2]') & (self.substance_table['formula'] == 'O2')].any().all()
@@ -149,7 +164,8 @@ class Medium:
         """If the medium is curretly anaerobic, add oxygen to the medium to make it aerobic.
         
         Args:
-            flux(float,optional): The flux value for the oxygen to be added. Defaults to None.
+            - flux(float,optional): 
+                The flux value for the oxygen to be added. Defaults to None.
         """
         if not self.is_aerobic():
             # build connection to DB
@@ -179,9 +195,13 @@ class Medium:
         """Set a default flux for the model.
 
         Args:
-            flux (float, optional): Default flux for the medium. Defaults to 10.0.
-            replace (bool, optional): 
-            double_o2 (bool, optional): Tag to double the flux for oxygen only. Works only with replace=True. Defaults to True.
+            - flux (float, optional): 
+                Default flux for the medium. Defaults to 10.0.
+            - replace (bool, optional): 
+                Replace al fluxes with the default.
+                Defaults to False.
+            - double_o2 (bool, optional): 
+                Tag to double the flux for oxygen only. Works only with replace=True. Defaults to True.
         """
         # replace fluxes
         if replace:
@@ -198,7 +218,8 @@ class Medium:
         """Set oxygen percentage of the medium.
 
         Args:
-            perc (float, optional): Percentage of oxygen. Defaults to 1.0 (= 100%)
+            - perc (float, optional): 
+                Percentage of oxygen. Defaults to 1.0 (= 100%)
         """
 
         if self.is_aerobic():
@@ -211,22 +232,25 @@ class Medium:
         """Combine two media into a new one.
 
         Modes to combine media (input for param how):
-        - None: combine media, remove all flux values (= set them to None).
-                Sets sources to None as well.
-        - '+': Add fluxes of the same substance together.
-        - float: Calculate flux * percentage (float) for first medium and flux * 1.0-percentage (float)
-            for second medium and add fluxes of same substance together.
-        - tuple(float,float): Same as above, except both percentages are given.
+
+        - None -> combine media, remove all flux values (= set them to None). Sets sources to None as well.
+        - '+' -> Add fluxes of the same substance together.
+        - float -> Calculate flux * percentage (float) for first medium and flux * 1.0-percentage (float) for second medium and add fluxes of same substance together.
+        - tuple(float,float) -> Same as above, except both percentages are given.
 
         Args:
-            other (Medium): The medium to combine with.
-            how (Union[Literal['+'],None,float,tuple[float]], optional): How to combine the two media. 
+            - other (Medium): 
+                The medium to combine with.
+            - how (Union[Literal['+'],None,float,tuple[float]], optional): 
+                How to combine the two media. 
                 Options listed in header. Defaults to '+'.
-            default_flux (float, optional): Flux to use in combine-modes (except how=None) for NaN/None values. 
+            - default_flux (float, optional): 
+                Flux to use in combine-modes (except how=None) for NaN/None values. 
                 Defaults to 10.0.
 
         Returns:
-            Medium: The combined medium.
+            Medium: 
+                The combined medium.
         """
 
         def combine_media_with_fluxes(combined:'Medium', second_medium:'Medium') -> 'Medium':
@@ -234,11 +258,14 @@ class Medium:
             combining fluxes of substances of the same name.
 
             Args:
-                combined (Medium): The medium that will be the combined one.
-                second_medium (Medium): The substance table to integrate into the medium.
+                - combined (Medium): 
+                    The medium that will be the combined one.
+                - second_medium (Medium): 
+                    The substance table to integrate into the medium.
 
             Returns:
-                Medium: The combined medium.
+                Medium: 
+                    The combined medium.
             """
             # get dict of name + flux of second medium
             possible_dups = second_medium[['name','flux']].groupby('name').first().reset_index()
@@ -312,13 +339,15 @@ class Medium:
         """Add a subset of substances to the medium, returning a newly generated one.
 
         Args:
-            subset_name (str): The type of subset to be added. Choices are 'aa' and 'casamino'.
-            default_flux (float, optional): Default flux value to calculate fluxes from
-                based  on the percentages saved in the database. 
+            - subset_name (str): 
+                The type of subset to be added. Name should be in database-substset-id.
+            default_flux (float, optional): 
+                Default flux value to calculate fluxes from based  on the percentages saved in the database. 
                 Defaults to 10.0. 
 
         Returns:
-            Medium: A new medium that is the combination of the set subset and the old one.
+            Medium: 
+                A new medium that is the combination of the set subset and the old one.
                 In the case that the given subset name is not found in the database, 
                 the original medium is returned.
         """
@@ -372,16 +401,19 @@ class Medium:
         """Produce a reformatted version of the substance table for different purposes.
 
         Possible formats
+
         - 'growth_old': for working with the old version of the growth module.
 
         Args:
-            format (str): Specifies the output format type.
+            - format (str): 
+                Specifies the output format type.
 
         Raises:
             ValueError: Unknown format type for table.
 
         Returns:
-            pd.DataFrame: The reformatted substance table (copy).
+            pd.DataFrame: 
+                The reformatted substance table (copy).
         """
 
         match format:
@@ -409,8 +441,10 @@ class Medium:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
         Args:
-            folder (str, optional): Path to folder/directory to save the rst-file to. Defaults to './'.
-            max_width (int, optional): Maximal table width of the rst-table. Defaults to 80.
+            - folder (str, optional): 
+                Path to folder/directory to save the rst-file to. Defaults to './'.
+            - max_width (int, optional): 
+                Maximal table width of the rst-table. Defaults to 80.
         """
 
         def calculate_column_widths_docs(header: list, max_width: int, flux_width = 8) -> str:
@@ -418,9 +452,12 @@ class Medium:
             Calculates the columns widths based on the header lengths and maximal widths.
 
             Args:
-                header (list): List of column names of the table.
-                max_width (int): Maximal widths of the output table.
-                flux_width (int, optional): Widths of the flux column, if 'flux' is part of 'header'. Defaults to 8.
+                - header (list): 
+                    List of column names of the table.
+                - max_width (int): 
+                    Maximal widths of the output table.
+                - flux_width (int, optional): 
+                    Widths of the flux column, if 'flux' is part of 'header'. Defaults to 8.
  
             Returns:
                 str: The columns widths as a string, separated by a whitespace.
@@ -438,8 +475,10 @@ class Medium:
             Tranforms each row of the substance table into a row of the rst-file.
 
             Args:
-                row (pd.Series): The row of the Medium.substance_table.
-                file (io.TextIOWrapper): The connection to the file to write the rows into.
+                - row (pd.Series): 
+                    The row of the Medium.substance_table.
+                - file (io.TextIOWrapper): 
+                    The connection to the file to write the rows into.
             """
 
             list = row.to_list()
@@ -495,9 +534,12 @@ class Medium:
         """Export medium, especially substance table.
 
         Args:
-            type (str, optional): Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
-            dir (str, optional): Path to the directory to write the file to. Defaults to './'.
-            max_widths (int, optional): Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'.
+            - type (str, optional): 
+                Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
+            - dir (str, optional): 
+                Path to the directory to write the file to. Defaults to './'.
+            - max_widths (int, optional): 
+                Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'.
                 Defaults to 80.
 
         Raises:
@@ -524,6 +566,25 @@ class Medium:
     #    name option for namespace
     # @DEV : extent literals in all related functions after extension of namespace options
     def export_to_cobra(self, namespace:Literal['Name', 'BiGG']='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True) -> dict[str,float]:
+        """Export a medium to the COBRApy format for a medium.
+
+        Args:
+            - namespace (Literal['Name', 'BiGG'], optional): 
+                Namespace to use. Defaults to 'BiGG'.
+            - default_flux (float, optional): 
+                Default flux to substitute missing values. Defaults to 10.0.
+            - replace (bool, optional): 
+                Replace all values with the default flux. Defaults to False.
+            - double_o2 (bool, optional): 
+                Double the flux of oxygen. Defaults to True.
+
+        Raises:
+            ValueError: Unknown namespace.
+
+        Returns:
+            dict[str,float]: 
+                The exported medium.
+        """
         
         self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
 
@@ -554,7 +615,7 @@ class Medium:
 # functions for loading and writing from DB
 ############################################################################
 
-# @TGODO also used in MEdium class, but pput in there as a subfunction
+# @TODO also used in Medium class, but put in there as a subfunction
     # - solution?
 def produce_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
 
@@ -569,21 +630,26 @@ def load_substance_table_from_db(mediumname: str, database:str,
     """Load a substance table from a database.
 
     Currently available types:
+
     - 'testing': for debugging
     - 'standard': The standard format containing all information in long format.
 
     Note: 'documentation' currently object to change
 
     Args:
-        name (str): The name (or identifier) of the medium.
-        database (str): Path to the database.
-        type (Literal['testing','standard'], optional): How to load the table. Defaults to 'standard'.
+        - name (str): 
+            The name (or identifier) of the medium.
+        - database (str): 
+            Path to the database.
+        - type (Literal['testing','standard'], optional):
+            How to load the table. Defaults to 'standard'.
 
     Raises:
         ValueError: Unknown type for loading the substance table.
 
     Returns:
-        pd.DataFrame: The substance table in the specified type retrieved from the database.
+        pd.DataFrame: 
+            The substance table in the specified type retrieved from the database.
     """
     
     # build connection to DB
@@ -624,15 +690,19 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
     """Load a medium from a database.
 
     Args:
-        name (str): The name (or identifier) of the medium.
-        database (str, optional): Path to the database. Defaults to the in-built database.
-        type (str, optional): How to load the medium. Defaults to 'standard'.
+        - name (str): 
+            The name (or identifier) of the medium.
+        - database (str, optional): 
+            Path to the database. Defaults to the in-built database.
+        - type (str, optional): 
+            How to load the medium. Defaults to 'standard'.
 
     Raises:
         ValueError: Unknown medium name.
 
     Returns:
-        Medium: The medium retrieved from the database.
+        Medium: 
+            The medium retrieved from the database.
     """
     
     # build connection to DB
@@ -659,8 +729,20 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
     return Medium(name=name, substance_table=substance, description=description, doi=doi)
 
 
-def load_subset_from_db(subset_name:str):
-
+def load_subset_from_db(subset_name:str) -> tuple[str,str,pd.DataFrame]:
+    """Load a subset from the database.
+    
+    Args:
+        - subset_name(str): 
+            Name of the subset to be loaded.
+    
+    Returns:
+        tuple of (1) str, (2) str and (3) pd.DataFrame
+            (1) name of the subset
+            (2) description of the subset
+            (3) substance table for the subset
+    """
+    
     # open connection to database
     connection = sqlite3.connect(PATH_TO_DB)
     cursor = connection.cursor()
@@ -684,6 +766,16 @@ def load_subset_from_db(subset_name:str):
 
 
 def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80):
+    """Generate documentation for a subset.
+
+    Args:
+        - subset_name (str): 
+            Name of the subset.
+        - folder (str, optional): 
+            Folder to save the output to. Defaults to './'.
+        - max_width (int, optional): 
+            Maximal table width for the documentation page. Defaults to 80.
+    """
 
     # make sure given directory path ends with '/'
     if not folder.endswith('/'):
@@ -735,8 +827,13 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
     X: placeholder for database names (columns filled with corresponding IDs of the substances)
     X = see ALLOWED_DATABASE_LINKS
 
+    Args:
+        - path(str): 
+            The path to the input file.
+
     Returns:
-        pd.DataFrame: The table of substance information read from the file
+        pd.DataFrame: 
+            The table of substance information read from the file
     """
 
     # read in the table
@@ -764,24 +861,28 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 def read_external_medium(how:str, **kwargs) -> Medium:
     """Read in an external medium. 
 
-    Currently available options for how:
+    Currently available options for how
+
     - 'console': read in medium via the console
     - 'file': read in medium from a file, requires a 'path=str' argument to be passed.
 
     About the format (console, file):
+
     The substances have to be saved in a TSV file table (format see :py:func:`read_substances_from_file`).
     Further information for the 'file' option have to added as comments in the format: `# info_name: info`.
     Information should but do not need to contain name, description and reference.
 
     Args:
-        how (str): How (or from where) the medium should be read in.
+        - how (str): 
+            How (or from where) the medium should be read in.
             Available options are given above.
 
     Raises:
         ValueError: Unknown description for how.
 
     Returns:
-        Medium: The read-in medium.
+        Medium: 
+            The read-in medium.
     """
 
     match how:
@@ -859,11 +960,14 @@ def extract_medium_info_from_model_bigg(row, model:cobra.Model) -> pd.Series:
     Extracts more information about the medium.
 
     Args:
-        row (pd.Series): A row of the datatable of :py:func:`read_from_cobra_model`.
-        model (cobra.Model): The cobra Model
+        - row (pd.Series): 
+            A row of the datatable of :py:func:`read_from_cobra_model`.
+        - model (cobra.Model): 
+            The cobra Model
 
     Returns:
-        pd.Series: _description_
+        pd.Series: 
+            One row for the substance table.
     """
 
     db_id = row['db_id_EX'].replace('EX_','').replace('_e','')
@@ -879,10 +983,12 @@ def read_from_cobra_model(model: cobra.Model, namespace:Literal['BiGG']='BiGG') 
     """Read and import a medium from a cobra model into a Medium object.
 
     Args:
-        model (cobra.Model): An open cobra Model.
+        - model (cobra.Model): 
+            An open cobra Model.
 
     Returns:
-        Medium: The imported medium.
+        Medium: 
+            The imported medium.
     """
 
     # retrieve the medium from the model
@@ -929,12 +1035,16 @@ def get_last_idx_table(tablename: str, connection: sqlite3.Connection, cursor: s
     Retrieves the last row id of a specified table of the database.
 
     Args:
-        tablename (str): The name of the table to retrieve the last row id from
-        connection (sqlite3.Connection): Connection to the database.
-        cursor (sqlite3.Cursor): Cursor for the database.
+        - tablename (str): 
+            The name of the table to retrieve the last row id from
+        - connection (sqlite3.Connection): 
+            Connection to the database.
+        - cursor (sqlite3.Cursor): 
+            Cursor for the database.
 
     Returns:
-        int: The last row ID of the specified table.
+        int: 
+            The last row ID of the specified table.
     """
 
     match tablename:
@@ -959,16 +1069,20 @@ def get_last_idx_table(tablename: str, connection: sqlite3.Connection, cursor: s
 # ----------------
 
 def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:sqlite3.Cursor) -> int:
-    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    """Helper function for :py:func:`~refinegems.classes.medium.enter_medium_into_db`.
     Enters a new entry in the medium2substance table.
 
     Args:
-        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
-        connection (sqlite3.Connection): Connection to the database.
-        cursor (sqlite3.Cursor): Cursor for the database.
+        - row (pd.Series): 
+            A row of the pd.DataFrame of the :py:func:`~refinegems.classes.medium.enter_medium_into_db` function.
+        - connection (sqlite3.Connection): 
+            Connection to the database.
+        - cursor (sqlite3.Cursor): 
+            Cursor for the database.
 
     Returns:
-        int: The substance ID in the database of the substance.
+        int: 
+            The substance ID in the database of the substance.
     """
 
     # check if a perfect match exists in database
@@ -1019,14 +1133,18 @@ def enter_substance_row(row: pd.Series, connection: sqlite3.Connection, cursor:s
 
 
 def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
-    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    """Helper function for :py:func:`refinegems.classes.medium.enter_medium_into_db`.
     Enters a new entry in the medium2substance table.
 
     Args:
-        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
-        medium_id (int): The row id of the medium.
-        connection (sqlite3.Connection): Connection to the database.
-        cursor (sqlite3.Cursor): Cursor for the database.
+        - row (pd.Series): 
+            A row of the pd.DataFrame of the :py:func:`~refinegems.classes.medium.enter_medium_into_db` function.
+        - medium_id (int): 
+            The row id of the medium.
+        - connection (sqlite3.Connection): 
+            Connection to the database.
+        - cursor (sqlite3.Cursor): 
+            Cursor for the database.
     """
 
     # check if entry already exists in database
@@ -1042,14 +1160,18 @@ def enter_m2s_row(row: pd.Series, medium_id: int, connection: sqlite3.Connection
     
 
 def enter_s2db_row(row: pd.Series, db_type: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
-    """Helper function for :py:func:`refinegems.database.enter_medium_into_db`.
+    """Helper function for :py:func:`~refinegems.classes.medium.enter_medium_into_db`.
     Enters a new entry in the substance2db table after checking if it has yet to be added.
 
     Args:
-        row (pd.Series): A row of the pd.DataFrame of the :py:func:`refinegems.database.enter_medium_into_db` function.
-        db_type (str): Type of database identifier to be added.
-        connection (sqlite3.Connection): Connection to the database.
-        cursor (sqlite3.Cursor): Cursor for the database.
+        - row (pd.Series): 
+            A row of the pd.DataFrame of the :py:func:`~refinegems.classes.medium.enter_medium_into_db` function.
+        - db_type (str): 
+            Type of database identifier to be added.
+        - connection (sqlite3.Connection): 
+            Connection to the database.
+        - cursor (sqlite3.Cursor): 
+            Cursor for the database.
     """
 
     # only need to enter if ID exists
@@ -1066,8 +1188,10 @@ def enter_medium_into_db(medium: Medium, database: str= PATH_TO_DB):
     """Enter a new medium to an already existing database.
 
     Args:
-        - medium (Medium): A medium object to be added to the database.
-        - database (str, optional): Path to the database. Defaults to the in-build databse.
+        - medium (Medium): 
+            A medium object to be added to the database.
+        - database (str, optional): 
+            Path to the database. Defaults to the in-build databse.
     """
 
     # build connection to DB
@@ -1156,14 +1280,18 @@ def add_subset_to_db(name:str, desc:str, subs_dict:dict,
     """Add a new subset to the database.
 
     Args:
-        name (str): Name (Abbreviation) of the new subset. Needs to be unique for the databse.
-        desc (str): Description of the new subset.
-        subs_dict (dict): Dictionary of the names and percentages for the substances to be included
+        - name (str): 
+            Name (Abbreviation) of the new subset. Needs to be unique for the databse.
+        - desc (str): 
+            Description of the new subset.
+        - subs_dict (dict): 
+            Dictionary of the names and percentages for the substances to be included
             in the new subsets. The names should be part of the substance table.
-        database (str, optional): Which database to connect to. 
+        - database (str, optional): 
+            Which database to connect to. 
             Defaults to PATH_TO_DB.
-        default_perc (float, optional): Default percentage to set if None is given
-            in the dictionary. 
+        - default_perc (float, optional): 
+            Default percentage to set if None is given in the dictionary. 
             Defaults to 1.0.
     """
 
@@ -1212,6 +1340,20 @@ def add_subset_to_db(name:str, desc:str, subs_dict:dict,
 
 # @TEST
 def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict, database:str = PATH_TO_DB):
+    """Update a single database entry.
+
+    Args:
+        - table (str): 
+            Name of the table to update.
+        - column (str): 
+            Name of the Attribute to change.
+        - new_value (Any): 
+            New value to be set.
+        - conditions (dict): 
+            Further conditions.
+        - database (str, optional): 
+            Which database to change. Defaults to PATH_TO_DB.
+    """
 
     # build connection to DB
     connection = sqlite3.connect(database)
@@ -1231,7 +1373,18 @@ def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict
 # @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
 # @TEST
 def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
-    
+    """Enter a single entry into a database.
+
+    Args:
+        - table (str): 
+            Which table to enter information to.
+        - columns (list[str]): 
+            Name of the columns to add information to.
+        - values (list[Any]): 
+            List of new values for the columns.
+        - database (str, optional): 
+            Database to add a row to. Defaults to PATH_TO_DB.
+    """
     # build connection to DB
     connection = sqlite3.connect(database)
     cursor = connection.cursor()
@@ -1247,15 +1400,17 @@ def enter_db_single_entry(table:str, columns:list[str], values:list[Any], databa
 
     
 def generate_update_query(row: pd.Series) -> str:
-    """Helper function for :py:func:`update_db_multi`. 
+    """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. 
     Generates an update SQL query for the provided table
 
     Args:
-        - row (pd.Series): Series containing the row of a DataFrame to be used to update a table in a database
-                            with columns table | column | new_value | conditions
+        - row (pd.Series): 
+            Series containing the row of a DataFrame to be used to update a table in a database
+            with columns table | column | new_value | conditions
 
     Returns:
-        str: SQL query to be used to update a table in a database with the provided data
+        str: 
+            SQL query to be used to update a table in a database with the provided data
     """
     colorama_init(autoreset=True)
     table = row['table']
@@ -1288,14 +1443,16 @@ def generate_update_query(row: pd.Series) -> str:
 
 
 def generate_insert_query(row: pd.Series) -> str:
-    """Helper function for :py:func:`update_db_multi`. Generate the SQL string
+    """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
 
     Args:
-        row (pd.Series): One row of the table of the parent function.
+        - row (pd.Series): 
+            One row of the table of the parent function.
 
     Returns:
-        str: The constructed SQL string.
+        str: 
+            The constructed SQL string.
     """
     colorama_init(autoreset=True)
     table = row['table']
@@ -1371,16 +1528,21 @@ def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH
       row :  table | column | new_value | conditions
 
     Notes:
+
     - multiple columns and values are lists with a "," and no whitespaces
     - conditions are listed like: a=x;b=y;...
+
         - conditions separated by ';'
         - column and value separated by '='
         - no whitespaces
 
     Args:
-        - data (pd.DataFrame): DataFrame containing the columns table | column | new_value | conditions
-        - update_entries (bool): Boolean to determine whether entries should be inserted or updated. False means insert.
-        - database (str, optional): Path to a database. Defaults to PATH_TO_DB. 
+        - data (pd.DataFrame): 
+            DataFrame containing the columns table | column | new_value | conditions
+        - update_entries (bool): 
+            Boolean to determine whether entries should be inserted or updated. False means insert.
+        - database (str, optional): 
+            Path to a database. Defaults to PATH_TO_DB. 
     """
     colorama_init(autoreset=True)
 
@@ -1425,16 +1587,24 @@ def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG',
     """Add a medium to a COBRApy model. 
 
     Args:
-        model (cobra.Model): A model loaded with COBRApy.
-        medium (Medium): A refinegems Medium object.
-        namespace (str, optional): String to set the namespace to use for the model IDs. Defaults to 'BiGG'.
-        default_flux (float, optional): Set a default flux for NaN values or all. Defaults to 10.0.
-        replace (bool, optional): Option to replace existing flux values with the default if set to True. Defaults to False.
-        double_o2 (bool, optional): Double the oxygen amount in the medium. Defaults to True.
-        add (bool, optional): If True, adds the medium to the model, else the exported medium is returned. Defaults to True.
+        - model (cobra.Model): 
+            A model loaded with COBRApy.
+        - medium (Medium): 
+            A refinegems Medium object.
+        - namespace (str, optional): 
+            String to set the namespace to use for the model IDs. Defaults to 'BiGG'.
+        - default_flux (float, optional): 
+            Set a default flux for NaN values or all. Defaults to 10.0.
+        - replace (bool, optional): 
+            Option to replace existing flux values with the default if set to True. Defaults to False.
+        - double_o2 (bool, optional): 
+            Double the oxygen amount in the medium. Defaults to True.
+        - add (bool, optional): 
+            If True, adds the medium to the model, else the exported medium is returned. Defaults to True.
 
     Returns:
-        Union[None, dict[str, float]]: Either none or the exported medium.
+        Union[None, dict[str, float]]: 
+            Either none or the exported medium.
     """
     
     # export medium to cobra
@@ -1459,6 +1629,11 @@ def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG',
 # Function to extract SQL schema with updated SBO/media tables
 def updated_db_to_schema(directory: str = './src/refinegems/data/database/'):
     """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
+
+    Args:
+        - directory(str,optional): 
+            Path to the directory of the updated DB.
+            Defaults to './src/refinegems/data/database/'.
     """
     # make sure given directory path ends with '/'
     if not directory.endswith('/'):

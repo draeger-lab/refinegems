@@ -49,10 +49,12 @@ def are_compartment_names_valid(model:cobra.Model) -> bool:
     """Check if compartment names of model are considered valid based on VALID_COMPARTMENTS.
 
     Args:
-        model (cobra.Model): The model, loaded with COBRApy.
+        - model (cobra.Model): 
+            The model, loaded with COBRApy.
 
     Returns:
-        bool: True, if valid, else false.
+        bool: 
+            True, if valid, else false.
     """
 
     for c in model.compartments.keys():
@@ -66,11 +68,11 @@ def resolve_compartment_names(model:cobra.Model):
     """Resolves compartment naming problems.
 
     Args:
-        model (cobra.Model): A COBRApy model object.
+        - model (cobra.Model): 
+            A COBRApy model object.
 
     Raises:
-        KeyError: Unknown compartment raises an error to add it to the mapping.
-            Important for developers.
+        KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
     """
 
     # check if compartment names are valid
@@ -97,11 +99,14 @@ def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
     """Parses a reaction equation string to dictionary 
 
     Args:
-        - eq (str): Equation of a reaction
-        - model (cobra.Model): Model loaded with COBRApy
+        - eq (str): 
+            Equation of a reaction
+        - model (cobra.Model): 
+            Model loaded with COBRApy
         
     Returns:
-       dict: Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
+        dict: 
+            Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
     """
     # from Alina Renz
     eq = eq.split(' ')
@@ -129,18 +134,22 @@ def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
 def get_reaction_annotation_dict(model:cobra.Model, db:Literal['KEGG','BiGG']) -> dict:
     """Create a dictionary of a model's reaction IDs and a choosen database ID as
     saved in the annotations of the model.
+
     The database ID can be choosen based on the strings for the namespace options
     in other functions.
 
     Args:
-        model (cobra.Model): A model loaded with COBRApy.
-        db (Literal['KEGG','BiGG']): The string denoting the database to map to.
+        - model (cobra.Model): 
+            A model loaded with COBRApy.
+        - db (Literal['KEGG','BiGG']): 
+            The string denoting the database to map to.
 
     Raises:
         ValueError: Unknown database string for paramezer db
 
     Returns:
-        dict: The mapping of the reaction IDs to the database IDs found in the annotations
+        dict: 
+            The mapping of the reaction IDs to the database IDs found in the annotations
     """
 
     react_dict = {}
@@ -167,11 +176,14 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
     """Generate a unique, random ID for a model entity for a model.
 
     Args:
-        model (cobra.Model): A model loaded with COBRApy.
-        entity_type (Literal['reac','meta'], optional): Type of model entity.  
+        - model (cobra.Model): 
+            A model loaded with COBRApy.
+        - entity_type (Literal['reac','meta'], optional): 
+            Type of model entity.  
             Can be 'reac' for Reaction or 'meta' for Metabolite.
             Defaults to 'reac'.
-        prefix (str, optional): prefix to set for the randomised part.
+        - prefix (str, optional): 
+            Prefix to set for the randomised part.
             Useful to identify the random IDs later on. 
             Defaults to ''.
 
@@ -179,7 +191,8 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
         ValueError: Unknown entity_type
 
     Returns:
-        str: The generate new and unique ID.
+        str: 
+            The generate new and unique ID.
     """
 
     match entity_type:
@@ -213,12 +226,15 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
     """Based on a given namespace, change the ID of a given model entity to it the set namespace.
 
     Currently working namespaces:
+
         - BiGG 
 
     Args:
-        model_entity (cobra.Reaction, cobra.Metabolite]): The model entity. 
+        - model_entity (cobra.Reaction, cobra.Metabolite]): 
+            The model entity. 
             Can be either a cobra.Reaction or cobra.Metabolite object.
-        namespace (Literal['BiGG']): The chosen namespace.
+        - namespace (Literal['BiGG']): 
+            The chosen namespace.
 
     Raises:
         ValueError: Unknown input for namespace
@@ -268,11 +284,14 @@ def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
     """Extracts KEGG Genes/Locus tags from given model
 
     Args:
-        - model (model-libsbml): Model loaded with libSBML
-        - kegg (bool): True if KEGG Genes should be extracted, otherwise False
+        - model (model-libsbml): 
+            Model loaded with libSBML
+        - kegg (bool): 
+            True if KEGG Genes should be extracted, otherwise False
 
     Returns:
-        pd.DataFrame: Table with all KEGG Genes/Locus tags in the model
+        pd.DataFrame: 
+            Table with all KEGG Genes/Locus tags in the model
     """
     genes_in_model = []
     for gene in model.getPlugin(0).getListOfGeneProducts():
@@ -294,13 +313,17 @@ def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg:
     """Compares the provided tables according to column 0/'Locus_tag'
     
     Args:
-        - gps_in_model (pd.DataFrame): Table containing the KEGG Gene IDs/Locus tags in the model
-        - db_genes (pd.DataFrame): Table containing the KEGG Gene IDs for the organism from KEGG/
-                                locus tags (Accession-2) from BioCyc
-        - kegg (bool): True if KEGG Genes should be extracted, otherwise False
+        - gps_in_model (pd.DataFrame): 
+            Table containing the KEGG Gene IDs/Locus tags in the model
+        - db_genes (pd.DataFrame): 
+            Table containing the KEGG Gene IDs for the organism from KEGG/
+            locus tags (Accession-2) from BioCyc
+        - kegg (bool): 
+            True if KEGG Genes should be extracted, otherwise False
         
     Returns:
-        pd.DataFrame: Table containing all missing genes
+        pd.DataFrame: 
+            Table containing all missing genes
     """
     in_db = db_genes.set_index(0) if kegg else db_genes.set_index('locus_tag')
     in_model = gps_in_model.set_index(0)
@@ -315,12 +338,16 @@ def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False, 
     """Extracts table of reactions/metabolites with BiGG IDs from model
 
     Args:
-        - model_libsbml (libModel): Model loaded with libSBML
-        - metabolites (bool): Set to True if metabolites from model should be extracted
-        - col_name (str): Name to be used for column in Table, default: 'bigg_id'
+        - model_libsbml (libModel): 
+            Model loaded with libSBML
+        - metabolites (bool): 
+            Set to True if metabolites from model should be extracted
+        - col_name (str): 
+            Name to be used for column in table. Defaults to 'bigg_id'.
 
     Returns:
-        pd.DataFrame: Table with model identifiers for either metabolites or reactions
+        pd.DataFrame: 
+            Table with model identifiers for either metabolites or reactions
     """
     reac_or_metab_list = model_libsbml.getListOfSpecies() if metabolites else model_libsbml.getListOfReactions()
 
@@ -338,12 +365,16 @@ def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tu
     """Creates GeneProduct in the given model
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - locus_tag (str): NCBI compatible locus_tag
-        - email (str): User Email to access the NCBI Entrez database
+        - model (libModel): 
+            Model loaded with libSBML
+        - locus_tag (str): 
+            NCBI compatible locus_tag
+        - email (str): 
+            User Email to access the NCBI Entrez database
 
     Returns:
         tuple: libSBML GeneProduct (1) & libSBML model (2)
+
             (1) GeneProduct: Created gene product
             (2) libModel: Model containing the created gene product
     """
@@ -363,14 +394,20 @@ def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein
     """Creates GeneProduct in the given model
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - model_id (str): ID identical to ID that CarveMe adds from the NCBI FASTA input file
-        - name (str): Name of the GeneProduct
-        - locus_tag (str): Genome-specific locus tag used as label in the model
-        - protein_id (str): NCBI Protein/RefSeq ID
+        - model (libModel): 
+            Model loaded with libSBML
+        - model_id (str): 
+            ID identical to ID that CarveMe adds from the NCBI FASTA input file
+        - name (str): 
+            Name of the GeneProduct
+        - locus_tag (str): 
+            Genome-specific locus tag used as label in the model
+        - protein_id (str): 
+            NCBI Protein/RefSeq ID
 
     Returns:
         tuple: libSBML GeneProduct (1) & libSBML model (2)
+
             (1) GeneProduct: Created gene product
             (2) libModel: Model containing the created gene product
     """
@@ -394,17 +431,24 @@ def create_species(
     """Creates Species/Metabolite in the given model
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - metabolite_id (str): Metabolite ID within model (If model from CarveMe, preferable a BiGG ID)
-        - name (str): Name of the metabolite
-        - compartment_id (str): ID of the compartment where metabolite resides
-        - charge (int): Charge for the metabolite
-        - chem_formula (str): Chemical formula for the metabolite
+        - model (libModel): 
+            Model loaded with libSBML
+        - metabolite_id (str): 
+            Metabolite ID within model (If model from CarveMe, preferable a BiGG ID)
+        - name (str): 
+            Name of the metabolite
+        - compartment_id (str): 
+            ID of the compartment where metabolite resides
+        - charge (int): 
+            Charge for the metabolite
+        - chem_formula (str): 
+            Chemical formula for the metabolite
 
     Returns:
         tuple: libSBML Species (1) & libSBML model (2)
-        (1) Species: Created species/metabolite
-        (2) libModel: Model containing the created metabolite
+            
+            (1) Species: Created species/metabolite
+            (2) libModel: Model containing the created metabolite
     """
     metabolite = model.createSpecies()
     metabolite.setId(f'M_{metabolite_id}')
@@ -426,10 +470,13 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
     """Infer if reaction is reversible from flux bounds
     
     Args:
-        - fluxes (dict): Dictionary containing the keys 'lower_bound' & 'upper_bound' 
-                        with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+        - fluxes (dict): 
+            Dictionary containing the keys 'lower_bound' & 'upper_bound' 
+            with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+    
     Returns:
-        bool: True if reversible else False
+        bool: 
+            True if reversible else False
     """
     return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
 
@@ -442,20 +489,32 @@ def create_reaction(
     """Creates new reaction in the given model
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - reaction_id (str): BiGG ID of the reaction to create
-        - name (str): Human readable name of the reaction
-        - reactants (dict): Metabolites as keys and their stoichiometry as values
-        - products (dict): Metabolites as keys and their stoichiometry as values
-        - fluxes (dict): Dictionary with lower_bound and upper_bound as keys
-        - reversible (bool): True/False for the reaction
-        - fast (bool): True/False for the reaction
-        - compartment (str): BiGG compartment ID of the reaction (if available)
-        - sbo (str): SBO term of the reaction
-        - genes (str|list): List of genes belonging to reaction
+        - model (libModel): 
+            Model loaded with libSBML
+        - reaction_id (str): 
+            BiGG ID of the reaction to create
+        - name (str): 
+            Human readable name of the reaction
+        - reactants (dict): 
+            Metabolites as keys and their stoichiometry as values
+        - products (dict): 
+            Metabolites as keys and their stoichiometry as values
+        - fluxes (dict): 
+            Dictionary with lower_bound and upper_bound as keys
+        - reversible (bool): 
+            True/False for the reaction
+        - fast (bool): 
+            True/False for the reaction
+        - compartment (str): 
+            BiGG compartment ID of the reaction (if available)
+        - sbo (str): 
+            SBO term of the reaction
+        - genes (str|list): 
+            List of genes belonging to reaction
 
     Returns:
         tuple: libSBML reaction (1) & libSBML model (2)
+        
             (1) Reaction: Created reaction 
             (2) libModel: Model containing the created reaction
     """

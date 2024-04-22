@@ -42,11 +42,14 @@ def load_model(modelpath: str|list[str], package:Literal['cobra','libsbml']) -> 
     """Load a model. 
 
     Args:
-        modelpath (str | list[str]): Path to the model or list of paths to models (string format).
-        package (Literal['cobra','libsbml']): Package to use to load the model.
+        - modelpath (str | list[str]): 
+            Path to the model or list of paths to models (string format).
+        - package (Literal['cobra','libsbml']): 
+            Package to use to load the model.
 
     Returns:
-        cobra.Model|list[cobra.Model]|libModel|list[libModel]: The loaded model(s).
+        cobra.Model|list[cobra.Model]|libModel|list[libModel]: 
+            The loaded model(s).
     """
 
     def load_cobra_model(modelpath:str) -> cobra.Model:
@@ -119,10 +122,12 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     """Loads model document using libSBML
 
     Args:
-        - modelpath (str): Path to GEM
+        - modelpath (str): 
+            Path to GEM
 
     Returns:
-        SBMLDocument: Loaded document by libSBML
+        SBMLDocument: 
+            Loaded document by libSBML
     """
     reader = SBMLReader()
     read = reader.readSBMLFromFile(modelpath)  # read from file
@@ -139,8 +144,8 @@ def write_model_to_file(model:libModel|cobra.Model, filename:str):
             The filename to save the model to.
 
     Raises:
-        - ValueError: Unknown file extension for model
-        - TypeError: Unknown model type
+        ValueError: Unknown file extension for model
+        TypeError: Unknown model type
     """
 
     # save cobra model
@@ -187,11 +192,14 @@ def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_na
     """Loads metabolite sheet from manual curation table
 
     Args:
-        - tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        - sheet_name (str): Sheet name for metabolite annotations. Defaults to 'metab'.
+        - tablepath (str): 
+            Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        - sheet_name (str): 
+            Sheet name for metabolite annotations. Defaults to 'metab'.
 
     Returns:
-        pd.DataFrame: Table containing specified sheet from Excel file
+        pd.DataFrame: 
+            Table containing specified sheet from Excel file
     """
     man_ann = pd.read_excel(tablepath, sheet_name)
     return man_ann
@@ -202,11 +210,14 @@ def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd
        | true from the refineGEMs database ('data/database/data.db')
 
     Args:
-        - table_name_or_query (str): Name of a table contained in the database 'data.db'/ a SQL query
-        - query (bool): Specifies if a query or a table name is provided with table_name_or_query
+        - table_name_or_query (str): 
+            Name of a table contained in the database 'data.db'/ a SQL query
+        - query (bool): 
+            Specifies if a query or a table name is provided with table_name_or_query
 
     Returns:
-        pd.DataFrame: Containing the table for which the name was provided from the database 'data.db'
+        pd.DataFrame: 
+            Containing the table for which the name was provided from the database 'data.db'
     """
     table_name_or_query = sqlalchemy.text(table_name_or_query) if query else table_name_or_query
     sqlalchemy_engine_input = f'sqlite:///{PATH_TO_DB}'
@@ -223,11 +234,14 @@ def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name:
     """Loads gapfill sheet from manual curation table
 
     Args:
-        - tablepath (str): Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        - sheet_name (str): Sheet name for reaction gapfilling. Defaults to 'gapfill'.
+        - tablepath (str): 
+            Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
+        - sheet_name (str): 
+            Sheet name for reaction gapfilling. Defaults to 'gapfill'.
 
     Returns:
-        pd.DataFrame: Table from Excel file sheet with name 'gapfill'/ specified sheet_name
+        pd.DataFrame: 
+            Table from Excel file sheet with name 'gapfill'/ specified sheet_name
     """
     man_gapf = pd.read_excel(tablepath, sheet_name)
     return man_gapf
@@ -238,10 +252,12 @@ def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
        | Transforms it into a table with a column containing the strings and a column containing the lists
 
     Args:
-        str2list (dict): Dictionary mapping strings to lists
+        str2list (dict): 
+            Dictionary mapping strings to lists
 
     Returns:
-        pd.DataFrame: Table with column containing the strings and column containing the lists
+        pd.DataFrame: 
+            Table with column containing the strings and column containing the lists
     """
     # Get max number of list length
     max_len_of_list = max(map(len, str2list.values()))
@@ -262,8 +278,10 @@ def write_df_to_xlsx(dataframe: pd.DataFrame, filepath: str):
     """Writes reports stored in dataframes to xlsx file
 
     Args:
-        - dataframe (pd.DataFrame): Table containing output
-        - filepath (str): Path to file with filename
+        - dataframe (pd.DataFrame): 
+            Table containing output
+        - filepath (str): 
+            Path to file with filename
     """
     writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
     dataframe.to_excel(writer)
@@ -274,10 +292,12 @@ def validate_libsbml_model(model: libModel) -> int:
     """Debug method: Validates a libSBML model with the libSBML validator
     
     Args:
-        - model (libModel): A libSBML model
+        - model (libModel): 
+            A libSBML model
         
     Returns:
-        int: Integer specifying if validate was successful or not
+        int: 
+            Integer specifying if validate was successful or not
     """
     validator = SBMLValidator()
     doc = model.getSBMLDocument()
@@ -294,11 +314,14 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     corresponding to the locus_tag
         
     Args:
-        - filepath (str): Path to FASTA file
-        - id_for_model (bool): True if model_id similar to autogenerated GeneProduct ID should be contained in resulting table
+        - filepath (str): 
+            Path to FASTA file
+        - id_for_model (bool): 
+            True if model_id similar to autogenerated GeneProduct ID should be contained in resulting table
         
     Returns:
-        pd.DataFrame: Table containing the columns locus_tag, Protein_id & Model_id
+        pd.DataFrame: 
+            Table containing the columns locus_tag, Protein_id & Model_id
     """
     keyword_list = ['protein', 'locus_tag']
     tmp_dict = dict()
@@ -351,10 +374,12 @@ def search_ncbi_for_gpr(locus: str) -> str:
     """Fetches protein name from NCBI
 
     Args:
-        - locus (str): NCBI compatible locus_tag
+        - locus (str): 
+            NCBI compatible locus_tag
 
     Returns:
-        str: Protein name|description
+        str: 
+            Protein name|description
     """
     handle = Entrez.efetch(
         db="protein",
@@ -376,10 +401,12 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
 
     Args:
-        gff_file (str): RefSeq GFF file of the input organism
+        - gff_file (str): 
+            RefSeq GFF file of the input organism
 
     Returns:
-        pd.DataFrame: Table mapping locus tags to their respective RefSeq identifiers
+        - pd.DataFrame: 
+            Table mapping locus tags to their respective RefSeq identifiers
     """
 
     locus_tag2id = {}
@@ -410,10 +437,12 @@ def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
     """Parses gff file of organism to find gene protein reactions based on locus tags
 
     Args:
-        - gff_file (str): Path to gff file of organism of interest
+        - gff_file (str): 
+            Path to gff file of organism of interest
 
     Returns:
-        pd.DataFrame: Table containing mapping from locus tag to GPR
+        pd.DataFrame: 
+            Table containing mapping from locus tag to GPR
     """
     db = gffutils.create_db(
         gff_file,
@@ -450,10 +479,12 @@ def search_sbo_label(sbo_number: str) -> str:
     """Looks up the SBO label corresponding to a given SBO Term number
 
     Args:
-        - sbo_number (str): Last three digits of SBO-Term as str
+        - sbo_number (str): 
+            Last three digits of SBO-Term as str
 
     Returns:
-        str: Denoted label for given SBO Term
+        str: 
+            Denoted label for given SBO Term
     """
     sbo_number = str(sbo_number)
     client = EBIClient()
@@ -466,10 +497,12 @@ def save_user_input(configpath: str) -> dict[str: str]:
     will also save the user input to a config if no config was given
 
     Args:
-        - configpath (str): Path to config file if present
+        - configpath (str): 
+            Path to config file if present
         
     Returns:
-        dict: Either loaded config file or created from user input
+        dict: 
+            Either loaded config file or created from user input
     """
     if os.path.isfile(configpath):
         with open(configpath) as f:
@@ -643,14 +676,17 @@ def save_user_input(configpath: str) -> dict[str: str]:
 # KEGG
 # ----
 # @TODO
-def kegg_reaction_parser(rn_id):
-    """Get the KEGG reaction entry for a KEGG reaction ID
-    and parse it to retrieve information in form of a dictionary.
+def kegg_reaction_parser(rn_id:str) -> dict: 
+    """Get the entry of a KEGG reaction ID and 
+    parse the information into a dictionary.
 
-    :param rn_id: The KEGG reaction ID that shall be retrived and parsed.
-    :type  rn_id: string
-    :returns:     Information about name, equationand database links of the entry (reaction).
-    :rtype:       dict, keys include 'name','db','rc' and 'equation'
+    Args:
+        - rn_id (str): 
+            A reaction ID existing in KEGG.
+
+    Returns:
+        dict: 
+            The KEGG entry information as a dictionary.
     """
 
     # get KEGG reaction entry

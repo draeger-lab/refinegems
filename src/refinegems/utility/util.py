@@ -30,16 +30,20 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
 
 def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=True, iupac=True) -> pd.DataFrame:
    """Adds information from CHEBI/BiGG to the provided dataframe.
+
    The following informations can be added:
+
    - charge
    - formula
    - iupac (name)
 
    Args:
-      - missing_metabs (pd.DataFrame): Table containing metabolites & the respective CHEBI & BiGG IDs
+      - missing_metabs (pd.DataFrame): 
+         Table containing metabolites & the respective CHEBI & BiGG IDs
          
    Returns:
-      pd.DataFrame: Input table extended with the charges & chemical formulas obtained from CHEBI/BiGG
+      pd.DataFrame: 
+         Input table extended with the charges & chemical formulas obtained from CHEBI/BiGG
    """
 
    # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
@@ -135,10 +139,12 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
    into the SBO scheme accessible by memote.
 
    Args:
-       model (cobra.Model): The cobra Model to be reannotated.
+      - model (cobra.Model): 
+         The cobra Model to be reannotated.
 
    Returns:
-       cobra.Model: The reannotated model (@TODO: check if return is really necessary)
+       cobra.Model: 
+         The reannotated model (@TODO: check if return is really necessary)
    """
 
    # biochem reactions
