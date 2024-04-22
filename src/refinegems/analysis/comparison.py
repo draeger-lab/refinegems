@@ -144,6 +144,10 @@ def plot_heatmap_dt(growth: pd.DataFrame):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, ha="right")
     return fig
 
+
+# @TODO
+# keep functionality or delete - will not work like this anymore
+#  -> function to generate input has been deprecated
 def plot_heatmap_native(growth: pd.DataFrame):
     """Creates a plot were if growth without additives is possible is marked from yellow to green otherwise black
 

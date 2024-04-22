@@ -348,6 +348,19 @@ def pancore(modelpath, pcpath, based_on,dir):
    report.save(dir)
 
 
+@analyse.command()
+@click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
+@click.option('--type','-t',required=False,type=click.Choice(['sboterm','entities']),
+              default=None, help='Type of comparison to be performed.')
+@click.option('--all',required=False, is_flag=True, default=False, 
+              help='Shortcut to run all comparisons. Overwrites input of type.')
+def compare(modelpaths,type,all):
+   """Compare models.
+   """
+   if all or 'sboterm' in type:
+      models = rg.utility.io.load_model(modelpaths)
+      fig = rg.analysis
+
 # analyse growth
 # --------------
 @analyse.group()
