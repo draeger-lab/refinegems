@@ -8,9 +8,10 @@ Model refinement
 ----------------
 .. toctree:: 
 
+    Automated polishing <modules-desc/polish>
     Biomass normalisation <modules-desc/biomass>
     Gap filling <modules-desc/gapfill>
-    Automated polishing <modules-desc/polish>
+    
 
 Model annotation
 ----------------

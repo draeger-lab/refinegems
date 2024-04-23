@@ -60,8 +60,8 @@ def config(filename,type):
 @click.argument('models',nargs=-1,type=click.Path())
 @click.option('-o','--based-on', required=False, type=click.Choice(['id']), default='id',help='Option on how to combine the models.')
 @click.option('-n','--name', required=False, type=str, default='pan-core-model',help='Name of the new pan-core model.')
-@click.option('-g','--keep-genes',is_flag=True, default=False)
-@click.option('--rcomp', '--resolve-compartments',is_flag=True)
+@click.option('-g','--keep-genes',is_flag=True, default=False, help='If set, the genes are kept in the pan-core model, otherwise they are deleted.')
+@click.option('--rcomp', '--resolve-compartments',is_flag=True, help='If set, tries to standardised the compartment names to the c,p,e,... namespace.')
 @click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
 def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    """Build a pan-core model.
@@ -126,12 +126,12 @@ def polish():
 @click.argument('model', type=str)
 @click.argument('email', type=str)
 @click.argument('path', type=str)
-@click.option('-i','--id_db', default='BiGG', type=str, help='Main database where identifiers in model come from')
-@click.option('-r', '--refseq_gff', default=None, type=str, help='Path to RefSeq GFF file of organism')
-@click.option('-p', '--protein_fasta', default=None, type=str, help='File used as input for CarveMe')
-@click.option('-l', '--lab_strain', default=False, type=bool, help='True if the strain was sequenced in a local lab')
-@click.option('-k', '--kegg_organism_id', default=None, type=str, help='KEGG organism identifier')
-def polish(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism_id):
+@click.option('-i','--id-db', default='BiGG', type=str, help='Main database where identifiers in model come from')
+@click.option('-r', '--refseq-gff', default=None, type=str, help='Path to RefSeq GFF file of organism')
+@click.option('-p', '--protein-fasta', default=None, type=str, help='File used as input for CarveMe')
+@click.option('-l', '--lab-strain', default=False, type=bool, help='True if the strain was sequenced in a local lab')
+@click.option('-k', '--kegg-organism-id', default=None, type=str, help='KEGG organism identifier')
+def run(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism_id):
    """Completes all steps to polish a model
 
    (Tested for models having either BiGG or VMH identifiers.)

@@ -24,6 +24,10 @@ please install the database and inspect it on your computer.
     available_media
     available_subsets
 
+.. hint::
+
+    For more information on how to access the database, please refer to :ref:`Usage`.
+
 Working with the Data
 ---------------------
 
@@ -39,4 +43,3 @@ Additionally, the last point refers to more information about accessing the data
 
     in_silico_media_generation
     db_architecture
-    access

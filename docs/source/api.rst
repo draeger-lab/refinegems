@@ -22,3 +22,10 @@ refineGEMs.cmd_access module
    :members:
    :undoc-members:
    :show-inheritance:
+
+More information: 
+
+.. toctree::
+   :maxdepth: 3
+   
+   Command line access points <cmd_desc>
