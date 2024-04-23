@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""TODO
+"""This module contains functions usable with multiple databases or those drawing
+information from multiple databases and therefore cannot be separated into the other 
+submodules.
 """
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehrenbach"

@@ -40,6 +40,12 @@ The media database
 
 TODO
 
+- access via command line
+- access via sql/vscode
+- access via python import 
+- the yaml -> new page
+
+
 .. hint::
 
   For more information about the database and its contents, refer to :ref:`Media & Subsets`.

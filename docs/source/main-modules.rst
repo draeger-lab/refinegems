@@ -10,6 +10,7 @@ Model refinement
 
     Automated polishing <modules-desc/polish>
     Biomass normalisation <modules-desc/biomass>
+    Energy generating cycles (EGCs) <modules-desc/egcs>
     Gap filling <modules-desc/gapfill>
     
 

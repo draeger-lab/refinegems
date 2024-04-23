@@ -198,8 +198,8 @@ an optionally, try to resolve them.
 
 Options:
 
-- ``--solver/-s``: Options to solve the EGCs. Following SOlvers are currently available:
-    - greedy: SOlve the EGCs by trying out modifications of single reactions (reversible, backward,forward,remove)
+- ``--solver/-s``: Options to solve the EGCs. Following Solvers are currently available:
+    - greedy: Solve the EGCs by trying out modifications of single reactions (reversible, backward,forward,remove)
 - ``--namespace/-n``: Namespace of the model.
 - ``--compartment/-c``: Compartments to check, separated by comma. Default is ``c,p``
 - ``--outfile/-o`` : File to save the updated model to.
