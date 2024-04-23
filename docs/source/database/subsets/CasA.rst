@@ -4,7 +4,7 @@ The definition of the Casamino acids (CasA) subset is based on the percentages a
 life Sciences\ :footcite:p:`USBiologicalCasA`.
 
 .. list-table:: CasA composition
-  :name: casa_comp
+  :name: casa_comp_sub
   :align: center
   :widths: 54 26
   :header-rows: 1

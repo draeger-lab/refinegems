@@ -10,26 +10,38 @@ and the KEGG identifier of your organism.
 Due to the KEGG REST API this is relatively slow (model of size 1500 reactions - 20 min).
 """
 
-import pandas as pd
-from bioservices.kegg import KEGG
+__author__ = "Famke Baeuerle"
+
+############################################################################
+# requirements
+############################################################################
+
 import io
+import pandas as pd
 import re
+
+from bioservices.kegg import KEGG
 from libsbml import Model as libModel
+
 from ...utility.io import parse_gff_for_gp_info
 from ...utility.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
 from .db import get_bigg_db_mapping, compare_bigg_model
 
-__author__ = "Famke Baeuerle"
+############################################################################
+# functions
+############################################################################
 
 
 def get_kegg_genes(organismid: str) -> pd.DataFrame:
     """Extracts list of genes from KEGG given an organism
 
     Args:
-        - organismid (str): KEGG ID of organism which the model is based on
+        - organismid (str): 
+            KEGG ID of organism which the model is based on
 
     Returns:
-        pd.DataFrame: Table of all genes denoted in KEGG for the organism
+        pd.DataFrame: 
+            Table of all genes denoted in KEGG for the organism
     """
     k = KEGG()
     gene_list = k.list(organismid)
@@ -41,10 +53,12 @@ def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
     """Creates columns with EC numbers for the locus tags of the genes
 
     Args:
-        - genes_kegg_notmodel (pd.DataFrame): Genes present in KEGG but not in the model
+        - genes_kegg_notmodel (pd.DataFrame): 
+            Genes present in KEGG but not in the model
 
     Returns:
-        pd.DataFrame: Table of genes with locus tag and EC number
+        pd.DataFrame: 
+            Table of genes with locus tag and EC number
     """
     k = KEGG()
 
@@ -87,10 +101,12 @@ def get_locus_ec_kegg(locus_ec: pd.DataFrame) -> pd.DataFrame:
     """Searches for KEGG reactions based on EC numbers
 
     Args:
-        - locus_ec (pd.DataFrame): Genes with locus tag and EC number
+        - locus_ec (pd.DataFrame): 
+            Genes with locus tag and EC number
 
     Returns:
-        pd.DataFrame: Table of genes with locus tag, EC number and KEGG Id
+        pd.DataFrame: 
+            Table of genes with locus tag, EC number and KEGG Id
     """
 
     def get_kegg_reaction(ec_number):
@@ -133,11 +149,14 @@ def get_locus_ec_kegg_bigg(locus_ec_kegg: pd.DataFrame, bigg_kegg: pd.DataFrame)
     """Merges table with genes from model with BiGG / KEGG mapping to add BiGG Ids
 
     Args:
-        - locus_ec_kegg (pd.DataFrame): Genes with locus tag, EC number and KEGG Id
-        - bigg_kegg (pd.DataFrame): BiGG IDs with corresponding KEGG Ids
+        - locus_ec_kegg (pd.DataFrame): 
+            Genes with locus tag, EC number and KEGG Id
+        - bigg_kegg (pd.DataFrame): 
+            BiGG IDs with corresponding KEGG Ids
 
     Returns:
-        pd.DataFrame: Table of genes with locus tag, EC number, KEGG Id and BiGG Id
+        pd.DataFrame: 
+            Table of genes with locus tag, EC number, KEGG Id and BiGG Id
     """
     locus_ec_kegg_bigg = locus_ec_kegg.merge(bigg_kegg, on=['KEGG'])
     return locus_ec_kegg_bigg
@@ -147,11 +166,14 @@ def get_locus_ec_kegg_bigg_gpr(locus_ec_kegg_bigg: pd.DataFrame, locus_gpr: pd.D
     """Merges table with genes from model if locus tag / GPR mapping to add GPRs
 
     Args:
-        - locus_ec_kegg_bigg (pd.DataFrame): Genes with locus tag, EC number, KEGG Id and BiGG Id
-        - locus_gpr (pd.DataFrame): Mapping from locus tags to GPRs
+        - locus_ec_kegg_bigg (pd.DataFrame): 
+            Genes with locus tag, EC number, KEGG Id and BiGG Id
+        - locus_gpr (pd.DataFrame): 
+            Mapping from locus tags to GPRs
 
     Returns:
-        pd.DataFrame: Table of genes with locus tag, EC number, KEGG Id, BiGG Id and GPR
+        pd.DataFrame: 
+            Table of genes with locus tag, EC number, KEGG Id, BiGG Id and GPR
     """
 
     def slice_locus(locus):
@@ -167,12 +189,16 @@ def kegg_gene_comp(model: libModel, organismid: str, gff_file: str) -> pd.DataFr
     """Exectues all steps to compare genes of the model to KEGG genes
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - organismid (str): KEGG ID of organism which the model is based on
-        - gff_file (str): Path to gff file of organism of interest
+        - model (libModel): 
+            Model loaded with libSBML
+        - organismid (str):
+            KEGG ID of organism which the model is based on
+        - gff_file (str): 
+            Path to gff file of organism of interest
 
     Returns:
-        pd.DataFrame: Table containing missing reactions with locus tag, EC number, KEGG Id, BiGG Id and GPR
+        pd.DataFrame: 
+            Table containing missing reactions with locus tag, EC number, KEGG Id, BiGG Id and GPR
     """
     model_genes = get_model_genes(model, True)
     model_reactions = get_model_reacs_or_metabs(model)

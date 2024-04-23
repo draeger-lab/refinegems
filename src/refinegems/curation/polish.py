@@ -10,23 +10,26 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
-import re, logging
 import cobra
-from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
+import logging
 import pandas as pd
-from bioservices.kegg import KEGG
-from libsbml import Model as libModel
-from libsbml import GeneProduct
-from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
+import re
+
 from Bio import Entrez
-from tqdm.auto import tqdm
-from functools import reduce
-from sortedcontainers import SortedDict, SortedSet
-from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from ..utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
+from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
+from bioservices.kegg import KEGG
 from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
+from functools import reduce
+from libsbml import Model as libModel
+from libsbml import GeneProduct
+from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
+from sortedcontainers import SortedDict, SortedSet
+from tqdm.auto import tqdm
+
+from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
+from ..utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 
 ################################################################################
 # variables
@@ -50,8 +53,10 @@ def add_metab(entity_list: list[Species], id_db: str):
 	   | (Currently, only BiGG & VMH IDs supported!)
 
     Args:
-        - entity_list (list): libSBML ListOfSpecies
-        - id_db (str): Name of the database of the IDs contained in a model 
+        - entity_list (list): 
+            libSBML ListOfSpecies
+        - id_db (str): 
+            Name of the database of the IDs contained in a model 
     """
     vmh_cut_pattern = '__\d+_' # To extract BiGG identifier
     
@@ -96,8 +101,10 @@ def add_reac(entity_list: list[Reaction], id_db: str):
        | (Currently, only BiGG & VMH IDs supported!)
 
         Args:
-            - entity_list (list): libSBML ListOfReactions
-            - id_db (str): Name of the database of the IDs contained in a model             
+            - entity_list (list): 
+                libSBML ListOfReactions
+            - id_db (str): 
+                Name of the database of the IDs contained in a model             
     """
     if id_db == 'VMH':
        bigg_reacs_ids = load_a_table_from_database('SELECT bigg_id FROM bigg_reactions')
@@ -137,7 +144,8 @@ def cv_notes_metab(species_list: list[Species]):
        | removes entry from notes and adds it as URL to the CVTerms of a metabolite
 
     Args:
-        - species_list (list): libSBML ListOfSpecies
+        - species_list (list): 
+            libSBML ListOfSpecies
     """
 
     for species in species_list:
@@ -177,7 +185,8 @@ def cv_notes_reac(reaction_list: list[Reaction]):
        | removes entry from notes and adds it as URL to the CVTerms of a reaction
 
     Args:
-        - reaction_list (list): libSBML ListOfReactions
+        - reaction_list (list): 
+            libSBML ListOfReactions
     """
 
     for reaction in reaction_list:
@@ -217,8 +226,10 @@ def polish_entities(entity_list: list, metabolite: bool):
     """Sets boundary condition and constant if not set for a metabolite
 
     Args:
-        - entity_list (list): libSBML ListOfSpecies or ListOfReactions
-        - metabolite (boolean): flag to determine whether entity = metabolite
+        - entity_list (list): 
+            libSBML ListOfSpecies or ListOfReactions
+        - metabolite (boolean): 
+            flag to determine whether entity = metabolite
     """
     for entity in entity_list:
         if metabolite:  # some polishing
@@ -235,17 +246,26 @@ def create_unit(
     """Creates unit for SBML model according to arguments
 
     Args:
-        - model_specs (tuple):    Level & Version of SBML model
-        - meta_id (str):          Meta ID for unit (Neccessary for URI)
-        - kind (str):             Unit kind constant (see libSBML for available constants)
-        - e (int):                Exponent of unit
-        - m (int):                Multiplier of unit
-        - s (int):                Scale of unit 
-        - uri_is (str):           URI supporting the specified unit
-        - uri_idf (str):          URI supporting the derived from unit
+        - model_specs (tuple):
+            Level & Version of SBML model
+        - meta_id (str): 
+            Meta ID for unit (Neccessary for URI)
+        - kind (str):
+            Unit kind constant (see libSBML for available constants)
+        - e (int): 
+            Exponent of unit
+        - m (int): 
+            Multiplier of unit
+        - s (int): 
+            Scale of unit 
+        - uri_is (str): 
+            URI supporting the specified unit
+        - uri_idf (str):
+            URI supporting the derived from unit
       
     Returns:
-        Unit: libSBML unit object
+        Unit: 
+            libSBML unit object
     """
     unit = Unit(*model_specs)
     unit.setKind(kind)
@@ -265,13 +285,18 @@ def create_unit_definition(model_specs: tuple[int], identifier: str, name: str,
     """Creates unit definition for SBML model according to arguments
    
     Args:
-        - model_specs (tuple): Level & Version of SBML model
-        - identifier (str):    Identifier for the defined unit
-        - name (str):          Full name of the defined unit
-        - units (list):        All units the defined unit consists of
+        - model_specs (tuple): 
+            Level & Version of SBML model
+        - identifier (str):
+            Identifier for the defined unit
+        - name (str): 
+            Full name of the defined unit
+        - units (list): 
+            All units the defined unit consists of
          
     Returns:
-        UnitDefinition: libSBML unit definition object
+        UnitDefinition: 
+            libSBML unit definition object
     """
     unit_definition = UnitDefinition(*model_specs)
     unit_definition.setId(identifier)
@@ -290,10 +315,12 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
     """Creates all fba units required for a constraint-based model
    
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
          
     Returns:
-        list: List of libSBML UnitDefinitions
+        list: 
+            List of libSBML UnitDefinitions
     """
     # Get model level & version for unit & unit definition
     model_specs = model.getLevel(), model.getVersion()
@@ -340,7 +367,8 @@ def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
     """Prints a list of libSBML UnitDefinitions as XMLNodes
    
     Args:
-        - contained_unit_defs (list): List of libSBML UnitDefinition objects
+        - contained_unit_defs (list): 
+            List of libSBML UnitDefinition objects
     """
     for unit_def in contained_unit_defs:
         logging.info(unit_def.toXMLNode())
@@ -350,8 +378,10 @@ def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[Uni
     """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - list_of_fba_units (list):  List of libSBML UnitDefinitions  
+        - model (libModel): 
+            Model loaded with libSBML
+        - list_of_fba_units (list):  
+            List of libSBML UnitDefinitions  
     """
        
     # Get all units already present in the model
@@ -390,7 +420,8 @@ def add_fba_units(model: libModel):
        | to the list of unit definitions (needed for FBA)
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
     """
     list_of_fba_units = create_fba_units(model)
     
@@ -407,7 +438,8 @@ def set_default_units(model: libModel):
     """Sets default units of model
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
     """ 
     for unit in model.getListOfUnitDefinitions():
       
@@ -433,7 +465,8 @@ def set_units(model: libModel):
     """Sets units of parameters in model
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
     """
     for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
         if any(
@@ -450,7 +483,8 @@ def add_compartment_structure_specs(model: libModel):
        | if not set (size & spatial dimension)
         
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
     """ 
     for compartment in model.getListOfCompartments():
       
@@ -471,7 +505,8 @@ def set_initial_amount(model: libModel):
     """Sets initial amount to all metabolites if not already set or if initial concentration is not set
     
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
     """
     for species in model.getListOfSpecies():
       
@@ -484,12 +519,17 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
     """Adds NCBI Id to genes as annotation
 
     Args:
-        - gene_list (list): libSBML ListOfGenes
-        - email (str): User Email to access the Entrez database
-        - locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
-        - protein_fasta (str): The path to the CarveMe protein.fasta input file
-        - lab_strain (bool): Needs to be set to True if strain was self-annotated
-                           and/or the locus tags in the CarveMe input file should be kept   
+        - gene_list (list): 
+            libSBML ListOfGenes
+        - email (str): 
+            User Email to access the Entrez database
+        - locus2id (pd.DataFrame): 
+            Table mapping locus tags to their corresponding RefSeq identifiers
+        - protein_fasta (str): 
+            The path to the CarveMe protein.fasta input file
+        - lab_strain (bool): 
+            Needs to be set to True if strain was self-annotated
+            and/or the locus tags in the CarveMe input file should be kept   
     """
     Entrez.email = email
     if locus2id is not None:
@@ -580,8 +620,10 @@ def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
     """Adds URIs to GeneProducts based on locus tag to indentifier mapping
 
     Args:
-        locus2id (pd.DataFrame): Table mapping locus tags to their corresponding RefSeq identifiers
-        gene_list (list[GeneProduct]): libSBML ListOfGenes
+        locus2id (pd.DataFrame): 
+            Table mapping locus tags to their corresponding RefSeq identifiers
+        gene_list (list[GeneProduct]): 
+            libSBML ListOfGenes
     """
     locus2id.set_index('LocusTag')
 
@@ -596,8 +638,10 @@ def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
     """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
 
     Args:
-        gene_list (list[GeneProduct]): libSBML ListOfGenes
-        kegg_organism_id (str): Organism identifier in the KEGG database
+        gene_list (list[GeneProduct]): 
+            libSBML ListOfGenes
+        kegg_organism_id (str): 
+            Organism identifier in the KEGG database
     """
     k = KEGG()
     mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
@@ -627,10 +671,12 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
        | & maps the database prefixes to their respective identifier sets
         
     Args:
-        - uri_list (list[str]): List containing CURIEs
+        - uri_list (list[str]): 
+            List containing CURIEs
             
     Returns:
         tuple: Two dictionaries (1) & (2)
+
             (1) SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
             (2) list: List of CURIEs that are invalid according to bioregistry
     """
@@ -837,11 +883,14 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
     """Generate a set of complete URIs from the provided prefix to identifier mapping
         
     Args:
-        - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets 
-        - new_pattern (bool):                          True if new pattern is wanted, otherwise False
+        - prefix2id (SortedDict[str: SortedSet[str]]): 
+            Dictionary containing a mapping from database prefixes to their respective identifier sets 
+        - new_pattern (bool): 
+            True if new pattern is wanted, otherwise False
             
     Returns:
-        SortedSet: Sorted set containing complete URIs
+        SortedSet: 
+            Sorted set containing complete URIs
     """
     uri_set = SortedSet()
     
@@ -879,10 +928,12 @@ def generate_miriam_compliant_uri_set(prefix2id: SortedDict[str: SortedSet[str]]
     """Generate a set of complete MIRIAM compliant URIs from the provided prefix to identifier mapping
         
     Args:
-        - prefix2id (SortedDict[str: SortedSet[str]]): Dictionary containing a mapping from database prefixes to their respective identifier sets
+        - prefix2id (SortedDict[str: SortedSet[str]]): 
+            Dictionary containing a mapping from database prefixes to their respective identifier sets
             
     Returns:
-        SortedSet: Sorted set containing complete URIs
+        SortedSet: 
+            Sorted set containing complete URIs
     """
     uri_set = SortedSet()
     
@@ -898,10 +949,14 @@ def add_uri_set(entity: SBase, qt, b_m_qt, uri_set: SortedSet[str]) -> list[str]
     """Add a complete URI set to the provided CVTerm
         
     Args:
-        - entity (SBase):               A libSBML SBase object like model, GeneProduct, etc.
-        - qt:                           A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
-        - b_m_qt:                       A libSBML biological or model qualifier type like BQB_IS|BQM_IS
-        - uri_set (SortedSet[str]):     SortedSet containing URIs
+        - entity (SBase): 
+            A libSBML SBase object like model, GeneProduct, etc.
+        - qt: 
+            A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+        - b_m_qt: 
+            A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+        - uri_set (SortedSet[str]): 
+            SortedSet containing URIs
     """        
     new_cvterm = generate_cvterm(qt, b_m_qt)
         
@@ -914,12 +969,16 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
     """Helper function: Removes duplicates & changes pattern according to new_pattern
 
     Args:
-        - entity (SBase):       A libSBML SBase object, either a model or an entity
-        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
-        - new_pattern (bool):   True if new pattern is wanted, otherwise False
+        - entity (SBase): 
+            A libSBML SBase object, either a model or an entity
+        - bioregistry (bool):
+            Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
+        - new_pattern (bool): 
+            True if new pattern is wanted, otherwise False
         
     Returns:
         tuple: Two lists (1) & (2)
+
             (1) list: List of all collected invalid annotations of one entity
             (2) list: List of all collected invalid CURIEs of one entity
     """
@@ -962,12 +1021,16 @@ def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple
     """Removes duplicates & changes pattern according to bioregistry or new_pattern
     
     Args:
-        - entities (SBase):     A libSBML SBase object, either a model or a list of entities
-        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
-        - new_pattern (bool):   True if new pattern is wanted, otherwise False
+        - entities (SBase): 
+            A libSBML SBase object, either a model or a list of entities
+        - bioregistry (bool):
+            Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
+        - new_pattern (bool):
+            True if new pattern is wanted, otherwise False
 
     Returns:
         tuple: Two dictionnaries (1) & (2)
+
             (1) dictionary: Mapping of entity identifier to list of corresponding not MIRIAM compliant annotations 
             (2) dictionary: Mapping of entity identifier to list of corresponding invalid CURIEs
     """
@@ -999,13 +1062,18 @@ def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, fi
        | & the same pattern is used for all CURIEs
         
     Args:
-        - model (libModel):     Model loaded with libSBML
-        - bioregistry (bool):   Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
-        - new_pattern (bool):   True if new pattern is wanted, otherwise False
-        - filename (str):       Path to output file for invalid CURIEs detected by improve_uris
+        - model (libModel): 
+            Model loaded with libSBML
+        - bioregistry (bool):
+            Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
+        - new_pattern (bool):
+            True if new pattern is wanted, otherwise False
+        - filename (str):
+             Path to output file for invalid CURIEs detected by improve_uris
         
     Returns:
-        libModel: libSBML model with polished annotations
+        libModel: 
+            libSBML model with polished annotations
     """
     list_of_entity2not_miriam, list_of_entity2invalid_curies = [], []
     listOf_dict = {
@@ -1058,13 +1126,18 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     """Updates Qualifiers to be MIRIAM compliant for an entity
 
     Args:
-        - entity (SBase): A libSBML SBase object like model, GeneProduct, etc.
-        - new_qt (Qualifier): A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
-        - new_b_m_qt (QualifierType): A libSBML biological or model qualifier type like BQB_IS|BQM_IS
-        - specific_db_prefix (str): Has to be set if only for a specific database the qualifier type should be changed. Can be 'kegg.genes', 'biocyc', etc.
+        - entity (SBase): 
+            A libSBML SBase object like model, GeneProduct, etc.
+        - new_qt (Qualifier): 
+            A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+        - new_b_m_qt (QualifierType): 
+            A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+        - specific_db_prefix (str): 
+            Has to be set if only for a specific database the qualifier type should be changed. Can be 'kegg.genes', 'biocyc', etc.
 
     Returns:
-        list: CURIEs that are not MIRIAM compliant
+        list: 
+            CURIEs that are not MIRIAM compliant
     """
     not_miriam_compliant = []
     pattern = f'{MIRIAM}|{OLD_MIRIAM}'
@@ -1119,14 +1192,20 @@ def change_qualifiers(model: libModel, entity_type: str, new_qt, new_b_m_qt, spe
     """Updates Qualifiers to be MIRIAM compliant for an entity type of a given model 
 
     Args:
-        - model (libModel):   Model loaded with libSBML
-        - entity_type (str): Any string of the following: model|compartment|metabolite|parameter|reaction|unit definition|unit|gene product|group
-        - new_qt (Qualifier): A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
-        - new_b_m_qt (QualifierType): A libSBML biological or model qualifier type like BQB_IS|BQM_IS
-        - specific_db_prefix (str): Has to be set if only for a specific database the qualifier type should be changed. Can be 'kegg.genes', 'biocyc', etc.
+        - model (libModel):
+            Model loaded with libSBML
+        - entity_type (str): 
+            Any string of the following: model|compartment|metabolite|parameter|reaction|unit definition|unit|gene product|group
+        - new_qt (Qualifier): 
+            A libSBML qualifier type: BIOLOGICAL_QUALIFIER|MODEL_QUALIFIER
+        - new_b_m_qt (QualifierType): 
+            A libSBML biological or model qualifier type like BQB_IS|BQM_IS
+        - specific_db_prefix (str): 
+            Has to be set if only for a specific database the qualifier type should be changed. Can be 'kegg.genes', 'biocyc', etc.
     
     Returns:
-        libModel: Model with changed qualifier for given entity type
+        libModel: 
+            Model with changed qualifier for given entity type
     """
     not_miriam_compliant = []
     listOf_dict = {
@@ -1168,11 +1247,14 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
     """Wrapper function to change qualifiers of all entities at once
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - lab_strain (bool): True if the strain was sequenced in a local lab
+        - model (libModel): 
+            Model loaded with libSBML
+        - lab_strain (bool): 
+            True if the strain was sequenced in a local lab
 
     Returns:
-        libModel: Model with all qualifiers updated to be MIRIAM compliant
+        libModel: 
+            Model with all qualifiers updated to be MIRIAM compliant
     """
     
     entity_list_mod = ['model',
@@ -1205,17 +1287,26 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
        | (Tested for models having either BiGG or VMH identifiers.)
 
     Args:
-        - model (libModel): model loaded with libSBML
-        - email (str): E-mail for Entrez
-        - id_db (str): Main database where identifiers in model come from
-        - refseq_gff (str): Path to RefSeq GFF file of organism
-        - protein_fasta (str): File used as input for CarveMe
-        - lab_strain (bool): True if the strain was sequenced in a local lab
-        - kegg_organism_id (str): KEGG organism identifier
-        - path (str): Output path for incorrect annotations file(s)
+        - model (libModel): 
+            model loaded with libSBML
+        - email (str): 
+            E-mail for Entrez
+        - id_db (str):
+            Main database where identifiers in model come from
+        - refseq_gff (str): 
+            Path to RefSeq GFF file of organism
+        - protein_fasta (str): 
+            File used as input for CarveMe
+        - lab_strain (bool): 
+            True if the strain was sequenced in a local lab
+        - kegg_organism_id (str): 
+            KEGG organism identifier
+        - path (str): 
+            Output path for incorrect annotations file(s)
     
     Returns:
-        libModel: Polished libSBML model
+        libModel: 
+            Polished libSBML model
     """
     colorama_init(autoreset=True)
     
@@ -1283,15 +1374,18 @@ def check_direction(model:cobra.Model,data:pd.DataFrame|str) -> cobra.Model:
     Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
-        data (pd.DataFrame | str): Either a pandas DataFrame or a path to a CSV file
+        model (cobra.Model): 
+            The model loaded with COBRApy.
+        data (pd.DataFrame | str): 
+            Either a pandas DataFrame or a path to a CSV file
             containing the BioCyc smart table.
 
     Raises:
         TypeError: Unknown data type for parameter data
 
     Returns:
-        cobra.Model: The edited model.
+        cobra.Model: 
+            The edited model.
     """
     
     match data:

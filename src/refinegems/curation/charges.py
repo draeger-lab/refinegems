@@ -6,24 +6,37 @@ When iterating through all metabolites present in a model, you will find several
 It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a 'BiGG' and a 'charge' column.
 """
 
-import pandas as pd
-from libsbml import Model as libModel
-from .db_access.modelseed import get_modelseed_compounds
-
 __author__ = "Famke Baeuerle"
 
+############################################################################
+# requirements
+############################################################################
+
+import pandas as pd
+
+from libsbml import Model as libModel
+
+from .db_access.modelseed import get_modelseed_compounds
+
+############################################################################
+# functions
+############################################################################
 
 def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple[libModel, dict]:
     """Adds charges taken from given database to metabolites which have no defined charge
 
     Args:
-        - model (libModel): Model loaded with libsbml
-        - compounds (pd.DataFrame): Containing database data with 'BiGG' (BiGG-Ids) and 'charge' (float or int) as columns
+        - model (libModel): 
+            Model loaded with libsbml
+        - compounds (pd.DataFrame): 
+            Containing database data with 'BiGG' (BiGG-Ids) and 'charge' (float or int) as columns
 
     Returns:
-        tuple: libSBML model (1) & dictionary 'metabolite_id': list(charges) (2)
-            (1) libModel: Model with added charges
-            (2) dict: Metabolites with respective multiple charges
+        tuple: 
+            libSBML model (1) & dictionary 'metabolite_id': list(charges) (2)
+
+                (1) libModel: Model with added charges
+                (2) dict: Metabolites with respective multiple charges
     """
     spe = model.getListOfSpecies()
     mulchar = dict()
@@ -52,10 +65,13 @@ def correct_charges_modelseed(model: libModel) -> tuple[libModel, dict]:
     """Wrapper function which completes the steps to charge correction with the ModelSEED database
 
     Args:
-        - model (libModel): Model loaded with libsbml
+        - model (libModel): 
+            Model loaded with libsbml
 
     Returns:
-        tuple: libSBML model (1) & dictionary 'metabolite_id': list(charges) (2)
+        tuple: 
+            libSBML model (1) & dictionary 'metabolite_id': list(charges) (2)
+            
             (1) libModel: Model with added charges
             (2) dict: Metabolites with respective multiple charges
     """

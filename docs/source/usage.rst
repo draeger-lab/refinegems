@@ -39,7 +39,7 @@ TODO
 - notebooks
 - polish, gapfill, configs and more
 
-See :doc:`examples <modules/examples>` to learn how to use refineGEMs.
+See :doc:`examples <modules-desc/examples>` to learn how to use refineGEMs.
 
 Some additional remarks
 -----------------------

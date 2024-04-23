@@ -176,7 +176,7 @@ class GrowthSimulationReport(Report):
                 Can be doubling time in minutes ('dt') or growth rates in mmol/gDWh ('h'). 
                 Defaults to 'dt'.
             - color_palette (str, optional):
-                 A colour gradient from the matplotlib library.
+                A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default. 
                 Defaults to 'YlGn'.
 
@@ -943,7 +943,7 @@ class CorePanAnalysisReport(Report):
 
         Args:
             - check (str, optional): 
-            Describes which part to check. Options are listed above.
+                Describes which part to check. Options are listed above.
                 Defaults to 'reaction-count'.
 
         Raises:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Gneral functions for curating a model.
+"""General functions for curating a model.
 
 Includes functions for adding annotations from manual tables, annotations synchronisation, 
 handling duplicates and more."""
@@ -11,12 +11,13 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 ################################################################################
 
 import cobra
-from libsbml import Model as libModel
 import pandas as pd
 import re
+import warnings
+
+from libsbml import Model as libModel
 from tqdm.auto import tqdm
 from typing import Literal
-import warnings
 
 from ..utility.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
 from ..utility.entities import create_gpr_from_locus_tag, create_reaction
@@ -39,12 +40,16 @@ def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - table (pd-DataFrame): Table in format of sheet gapfill from manual_curation.xlsx located in the data folder
-        - email (str): User Email to access the NCBI Entrez database
+        - model (libModel): 
+            Model loaded with libSBML
+        - table (pd-DataFrame): 
+            Table in format of sheet gapfill from manual_curation.xlsx located in the data folder
+        - email (str): 
+            User Email to access the NCBI Entrez database
 
     Returns:
-        libModel: Modified model with new reactions
+        libModel: 
+            Modified model with new reactions
     """
     for reaction_info in tqdm(table.groupby('BIGG')):
         reac_id = reaction_info[0]
@@ -77,11 +82,14 @@ def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libMo
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet metabs: Updates annotation of metabolites given in the table
 
     Args:
-        - model (libModel): Model loaded with libSBML
-        - table (pd-DataFrame): Table in format of sheet metabs from manual_curation.xlsx located in the data folder
+        - model (libModel): 
+            Model loaded with libSBML
+        - table (pd-DataFrame): 
+            Table in format of sheet metabs from manual_curation.xlsx located in the data folder
 
     Returns:
-        libModel: Modified model with new annotations
+        libModel: 
+            Modified model with new annotations
     """
     table = table.drop(['Name', 'FORMULA', 'Notiz'], axis=1).fillna(0)
     table['PUBCHEM'] = table['PUBCHEM'].astype(int)
@@ -109,10 +117,12 @@ def update_annotations_from_others(model: libModel) -> libModel:
     """Synchronizes metabolite annotations for core, periplasm and extracelullar
 
     Args:
-        - model (libModel): Model loaded with libSBML
+        - model (libModel): 
+            Model loaded with libSBML
 
     Returns:
-        libModel: Modified model with synchronized annotations
+        libModel: 
+            Modified model with synchronized annotations
     """
     for metab in model.getListOfSpecies():
         base = metab.getId()[:-2]
@@ -134,11 +144,13 @@ def complete_BioMetaCyc(model:cobra.Model) -> cobra.Model:
     reactions and generate them from the other if one of the two is missing.
 
     Args:
-        model (cobra.Model): A genome-scale model to be checked 
+        model (cobra.Model): 
+            A genome-scale model to be checked 
             for complete BioCyc/MetaCyc annotations.
 
     Returns:
-        cobra.Model: The updated model.
+        cobra.Model: 
+            The updated model.
     """
 
 
@@ -225,16 +237,20 @@ def resolve_duplicate_reactions(model:cobra.Model, based_on:str='reaction', remo
     the reactions be removed.
 
     Args:
-        model (cobra.Model): A model loaded with COBRApy.
-        based_on (str, optional): Label to base the resolvement process on . 
+        - model (cobra.Model): 
+            A model loaded with COBRApy.
+        - based_on (str, optional): 
+            Label to base the resolvement process on . 
             Can be 'reaction' or any other annotation label. 
             Defaults to 'reaction'.
-        remove_reac (bool, optional): When True, combines and remove duplicates. 
+        - remove_reac (bool, optional): 
+            When True, combines and remove duplicates. 
             Otherwise only reports the findings.
             Defaults to True.
 
     Returns:
-        cobra.Model: The model.
+        cobra.Model: 
+            The model.
     """
 
     # get annotation and compartment information
@@ -296,15 +312,19 @@ def resolve_duplicate_metabolites(model:cobra.Model, based_on:str='metanetx.chem
     Note: Depending on the starting database, the results might differ.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
-        based_on (str, optional): Label to base the resolvement process on . 
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - based_on (str, optional): 
+            Label to base the resolvement process on . 
             Can be any annotation label. 
             Defaults to 'metanetx.chemical'.
-        replace (bool, optional): Either report the duplicates (False) 
+        - replace (bool, optional): 
+            Either report the duplicates (False) 
             or replace them with one (True). Defaults to True.
 
     Returns:
-        cobra.Model: The model.
+        cobra.Model: 
+            The model.
     """
 
     # get annotation and compartment information
@@ -477,21 +497,27 @@ def resolve_duplicates(model:cobra.Model, check_reac:bool=True,
     """Resolve and remove (optional) duplicate metabolites and reactions in the model.
 
     Args:
-        model (cobra.Model): The model loaded with COBRApy.
-        check_reac (bool, optional): Whether to check reactions for duplicates. 
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - check_reac (bool, optional): 
+            Whether to check reactions for duplicates. 
             Defaults to True.
-        check_meta (Literal['default','exhaustive','skip'], optional): 
+        - check_meta (Literal['default','exhaustive','skip'], optional): 
             Whether to check for duplicate metabolites. 
             Defaults to 'default'.
-        replace_dupl_meta (bool, optional): Option to replace/remove duplicate metabolites. 
+        - replace_dupl_meta (bool, optional): 
+            Option to replace/remove duplicate metabolites. 
             Defaults to True.
-        remove_unused_meta (bool, optional): Option to remove unused metabolites. 
+        - remove_unused_meta (bool, optional): 
+            Option to remove unused metabolites. 
             Defaults to False.
-        remove_dupl_reac (bool, optional): Option to combine/remove duplicate reactions. 
+        - remove_dupl_reac (bool, optional): 
+            Option to combine/remove duplicate reactions. 
             Defaults to True.
 
     Returns:
-        cobra.Model: The (edited) model.
+        cobra.Model: 
+            The (edited) model.
     """
 
     # resolve duplicate metabolites

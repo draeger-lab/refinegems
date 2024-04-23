@@ -8,20 +8,31 @@
         * 'BioCyc': ~ 45mins - 1h
         * 'KEGG+BioCyc': ~ 3 - 4h  
 """
+
+__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+
+############################################################################
+# requirements
+############################################################################
+
 import ast
+import pandas as pd
+import numpy as np
+
+from colorama import init as colorama_init
+from colorama import Fore
 from libsbml import Model as libModel
+from typing import Union
+
 import refinegems.curation.db_access.kegg as rga_kegg
 import refinegems.curation.db_access.biocyc as rga_biocyc
 from .curate import update_annotations_from_others
 from ..utility.cvterms import add_cv_term_metabolites, add_cv_term_reactions 
 from ..utility.entities import create_gp, create_species, create_reaction
-import pandas as pd
-import numpy as np
-from typing import Union
-from colorama import init as colorama_init
-from colorama import Fore
 
-__author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
+############################################################################
+# functions
+############################################################################
 
 '''Skeleton for functions that could be used for a lab strain/organism which is in no database contained
 def get_genes_from_gff():
@@ -44,30 +55,47 @@ def gap_analysis(model_libsbml: libModel, gff_file: str, organismid:str, gapfill
        | to KEGG/BioCyc/both
 
     Args:
-        - model_libsbml (libModel): Model loaded with libSBML
-        - gff_file (str): Path to RefSeq GFF file
-        - organismid (str): KEGG organism code
-        - gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings 
-        - filename (str): Path to output file for gapfill analysis result
+        - model_libsbml (libModel): 
+            Model loaded with libSBML
+        - gff_file (str): 
+            Path to RefSeq GFF file
+        - organismid (str): 
+            KEGG organism code
+        - gapfill_params (dict): 
+            Dictionary obtained from YAML file containing the parameter mappings 
+        - filename (str): 
+            Path to output file for gapfill analysis result
         
     Returns:
-        - Case 'KEGG':
-            pd.DataFrame: Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
-        - Case 'BioCyc':
+        (1) Case 'KEGG':
+
+            pd.DataFrame: 
+                Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
+        
+        (2) Case 'BioCyc':
+
             tuple: Five tables (1) - (4)
-                (1) pd.DataFrame: Gap fill statistics with the columns 
-                                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+
+                (1) pd.DataFrame: 
+                    Gap fill statistics with the columns 
+                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+
                 (2) pd.DataFrame: Genes with the columns 
-                                    'locus_tag' 'protein_id' 'model_id' 'name'
+                    'locus_tag' 'protein_id' 'model_id' 'name'
+
                 (3) pd.DataFrame: Metabolites with the columns 
-                                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
-                (4) pd.DataFrame: Reactions with the columns 
-                                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
-                                    'bigg_reaction'
+                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
                 
-        - Case 'KEGG+BioCyc': 
-            tuple: Five tables (1)-(4) from output of 'BioCyc' & (5) from output of 'KEGG'
-                    -> Table reactions contains additionally column 'KEGG'
+                (4) pd.DataFrame: Reactions with the columns 
+                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
+                    'bigg_reaction'
+                
+        (3) Case 'KEGG+BioCyc':
+
+            tuple: 
+            
+                Five tables (1)-(4) from output of 'BioCyc' & (5) from output of 'KEGG'
+                -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
     db_to_compare = gapfill_params['db_to_compare']
@@ -133,11 +161,14 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
     """Main function to fill gaps in a model from a table
 
     Args:
-        - model_libsbml (libModel): Model loaded with libSBML
-        - gap_analysis_result (str|tuple): Path to Excel file from gap_analysis|Tuple of pd.DataFrames obtained from gap_analysis
+        - model_libsbml (libModel): 
+            Model loaded with libSBML
+        - gap_analysis_result (str|tuple): 
+            Path to Excel file from gap_analysis|Tuple of pd.DataFrames obtained from gap_analysis
         
     Returns:
-        libModel: Gap filled model
+        libModel: 
+            Gap filled model
     """
     model = model_libsbml
     missing_genes_df, missing_metabs_df, missing_reacs_df = None, None, None
@@ -236,14 +267,19 @@ def gapfill(
        | KEGG/BioCyc/(Genbank) GFF file
 
     Args:
-        - model_libsbml (libModel): Model loaded with libSBML
-        - gapfill_params (dict): Dictionary obtained from YAML file containing the parameter mappings
-        - filename (str): Path to output file for gapfill analysis result
-        - gapfill_model_out (str): Path where gapfilled model should be written to
+        - model_libsbml (libModel): 
+            Model loaded with libSBML
+        - gapfill_params (dict): 
+            Dictionary obtained from YAML file containing the parameter mappings
+        - filename (str): 
+            Path to output file for gapfill analysis result
+        - gapfill_model_out (str): 
+            Path where gapfilled model should be written to
         
     Returns:
-        tuple: ``gap_analysis()`` table(s) (1) & libSBML model (2)
-            (1) pd.DataFrame|tuple(pd.DataFrame): Result from function ``gap_analysis()``
+        tuple: :py:func:`~refinegems.curation.gapfill.gap_analysis()` table(s) (1) & libSBML model (2)
+
+            (1) pd.DataFrame|tuple(pd.DataFrame): Result from function :py:func:`~refinegems.curation.gapfill.gap_analysis()`
             (2) libModel: Gap filled model
     """
     gap_analysis_result = gap_analysis(model_libsbml, gapfill_params, filename)

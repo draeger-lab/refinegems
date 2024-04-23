@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""TODO
+"""
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehrenbach"
 
@@ -40,11 +42,14 @@ def compare_ids(id1: str, id2: str) -> bool:
     """Compares two strings/IDs & Returns True if one string matches most of the other
 
     Args:
-        - id1 (str): ID 1
-        - id2 (str): ID 2
+        - id1 (str): 
+            ID 1
+        - id2 (str): 
+            ID 2
 
     Returns:
-        bool: Indicates if most of one string contained in the other
+        bool: 
+            Indicates if most of one string contained in the other
     """
     id1_split, id2_split, id1_single_comp, id2_single_comp, id1_comp, id2_comp = None, None, None, None, None, None
     
@@ -91,12 +96,16 @@ def get_reaction_compartment(bigg_id: str) -> str:
         via the metabolites
 
     Args:
-        - bigg_id (str): BiGG reaction identifier
+        - bigg_id (str): 
+            BiGG reaction identifier
 
     Returns:
+
         (1) str: 
+
             - Compartment of the provided reaction if reaction in single compartment
             - 'exchange' if reaction in multiple compartments
+
         (2) np.nan: 'NaN' if one of the found compartments is not in COMPARTMENTS
     """
     
@@ -119,10 +128,12 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
         & returns table containing only reactions which happen in one of the provided compartments
         
     Args:
-        - complete_df (pd.DataFrame): Table containing at least the column 'bigg_id'.
+        - complete_df (pd.DataFrame): 
+            Table containing at least the column 'bigg_id'.
         
     Returns:
-        pd.DataFrame: Table containing reactions & their compartments
+        pd.DataFrame: 
+            Table containing reactions & their compartments
     """
     tqdm.pandas()
     
@@ -192,18 +203,21 @@ def get_bigg_db_mapping(map_to:str='BioCyc', metabolites:bool=True) -> pd.DataFr
     """Download a mapping of BiGG IDs to a specified database.
 
     Args:
-        map_to (str, optional): Name of the database to map to. 
+        map_to (str, optional): 
+            Name of the database to map to. 
             Ideally a column of the table in the database, 
             but SEED, KEGG and BioCyc are valid as well. 
             Defaults to 'BioCyc'.
-        metabolites (bool, optional): Flag to map reaction (False) or metabolite (True) IDs. 
+        metabolites (bool, optional): 
+            Flag to map reaction (False) or metabolite (True) IDs. 
             Defaults to True.
 
     Raises:
         KeyError: Given database name not found in database. Cannot perform mapping.
 
     Returns:
-        pd.DataFrame: The mapping as a table.
+        pd.DataFrame: 
+            The mapping as a table.
     """
 
     # adjust name to map to if necessary
@@ -250,12 +264,16 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
         Needed to back check previous comparisons.
 
     Args:
-        - complete_df (pd.DataFrame): Table that contains KEGG/BioCyc Id, BiGG Id & more
-        - model_entities (pd.DataFrame): BiGG Ids of entities in the model 
-        - metabolites (bool): True if names of metabolites should be added, otherwise false
+        - complete_df (pd.DataFrame): 
+            Table that contains KEGG/BioCyc Id, BiGG Id & more
+        - model_entities (pd.DataFrame): 
+            BiGG Ids of entities in the model 
+        - metabolites (bool): 
+            True if names of metabolites should be added, otherwise false
 
     Returns:
-        pd.DataFrame: Table containing entities present in KEGG/BioCyc but not in the model
+        pd.DataFrame: 
+            Table containing entities present in KEGG/BioCyc but not in the model
     """
     db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'  # Find out which database was used
     
@@ -314,10 +332,12 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
         ID as key & the respective absolute stoichiometric value as value
         
     Args:
-        - missing_reacs (pd.DataFrame): Table containing missing reactions (Only requires a column containing BiGG IDs)
+        - missing_reacs (pd.DataFrame): 
+            Table containing missing reactions (Only requires a column containing BiGG IDs)
             
     Returns:
-        pd.DataFrame: Table where for each BiGG reaction ID a dictionary containing reactants & products exists 
+        pd.DataFrame: 
+            Table where for each BiGG reaction ID a dictionary containing reactants & products exists 
     """
     
     def get_reactants_and_products_dicts(reaction_id: str) -> list[dict]:

@@ -341,7 +341,7 @@ class Medium:
         Args:
             - subset_name (str): 
                 The type of subset to be added. Name should be in database-substset-id.
-            default_flux (float, optional): 
+            - default_flux (float, optional): 
                 Default flux value to calculate fluxes from based  on the percentages saved in the database. 
                 Defaults to 10.0. 
 

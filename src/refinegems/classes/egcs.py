@@ -319,7 +319,7 @@ class EGCSolver():
                 String for the namespace used in the model. 
                 Current options include 'BiGG'.
                 Defaults to 'BiGG'.
-            compartment (list, optional): 
+            - compartment (list, optional): 
                 List of length 2 with the names of the compartments for the dissipations reactions. 
                 Defaults to ['c','p'].
 

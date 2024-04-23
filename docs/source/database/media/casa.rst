@@ -6,7 +6,7 @@ Casamino acids are a mixture of amino acids that potentially enhance growth. The
 the following *in sillico* definition.
 
 .. list-table:: CasA composition
-  :name: casa_comp
+  :name: casa_comp_med
   :align: center
   :widths: 54 26
   :header-rows: 1
