@@ -8,6 +8,8 @@ comparison module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 core_pan module
 ---------------
@@ -16,6 +18,8 @@ core_pan module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 growth module
 -------------
@@ -24,6 +28,8 @@ growth module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 investigate module
 ------------------
@@ -32,3 +38,5 @@ investigate module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:

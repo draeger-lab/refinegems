@@ -12,12 +12,12 @@ to analyse and simulate the growth of a model including:
 Growth 
 ------
 
-Using :py:func:`growth_analysis`, the growth between any number of models and media can be simulated.
+Using :py:func:`~refinegems.analysis.growth.growth_analysis`, the growth between any number of models and media can be simulated.
 For easier use, the media can be describes using a ``config_media.yaml`` file, which in turn can be used as input for the function.
 The media configuration file allows for many kinds of manipulation of the media from the in-build database, 
 as well as adding additional media from external sources to the list of media to be tested.
 
-.. note::
+.. hint::
 
   More information about the in-build media can be found under :ref:`Media & Subsets`.
 
@@ -49,7 +49,7 @@ by producing it itself. The objective values for the added sink reaction are rep
 Values higher than the growth threshold signify the ability of the model to produce the corresponding
 amino acids by itself (the model is auxotroph for the amino acid).
 
-The function return a report, which in turn can be e.g. visualised as a heatmap.
+The function returns a report, which in turn can be e.g. visualised as a heatmap.
 
 Below, an examplary heatmap based on the Master Thesis of Carolin Brune (...) for 
 *Klebsiella pneumoniae* MD01 can be seen. The model is able to produce all amino acids 
@@ -91,7 +91,7 @@ ways to calculate one, set using the parameter ``objective``:
 
 .. note:: 
 
-  The function always return a single solution, but there may be more than one solution, especially
+  The function always returns a single solution, but there may be more than one solution, especially
   for the third case.
 
 

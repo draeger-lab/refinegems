@@ -26,6 +26,7 @@ Analysis and simulation
 
 .. toctree:: 
     Growth simulation <modules-desc/growth>
+    Statistical report <modules-desc/stats>
 
 Further examples
 ----------------

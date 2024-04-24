@@ -22,6 +22,8 @@ refineGEMs.cmd_access module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 More information: 
 

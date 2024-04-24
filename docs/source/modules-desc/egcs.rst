@@ -14,8 +14,8 @@ Identify EGCs
 
 If the aim is to simply find the EGCs (e.g. for subsequent manual adjustment), 
 The :py:class:`~refinegems.classes.egcs.EGCSolver` provides the function 
-:py:meth:`~refinegems.classes.egcs.EGCSolver.fing_egcs` to automatically find the egcs present in the model.
-It implementation is based on :footcite:p:`fritzemeier2017erroneous`:
+:py:meth:`~refinegems.classes.egcs.EGCSolver.find_egcs` to automatically find the egcs present in the model.
+It implementation is based on :footcite:t:`fritzemeier2017erroneous`:
 
     1. Subsequently, a dissipation reaction for each energy metabolite is temporarily added to the model.
     2. The reaction bound are limited to 1.0/-1.0 and all exchange reactions to the cytosol are closed.

@@ -8,6 +8,8 @@ egcs module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 medium module
 -------------
@@ -16,6 +18,8 @@ medium module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 reports module
 --------------
@@ -24,3 +28,5 @@ reports module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:

@@ -15,6 +15,8 @@ biomass module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 charges module
 --------------
@@ -23,6 +25,8 @@ charges module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 curate module
 -------------
@@ -31,6 +35,8 @@ curate module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 gapfill module
 --------------
@@ -39,6 +45,8 @@ gapfill module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 pathways module
 ---------------

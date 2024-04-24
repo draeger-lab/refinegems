@@ -33,6 +33,7 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
     """Extract reactions identifiers from a model.
 
     Based on:
+
     - id: extracts the actual IDs as set in the model.
     - @TODO
 
@@ -47,7 +48,8 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
         ValueError: Unknown input for parameter based_on if not in given options.
 
     Returns:
-        list[str]: List of extracted IDs in the given format.
+        list[str]: 
+            List of extracted IDs in the given format.
     """
 
     match based_on:
@@ -58,7 +60,7 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
         
 
 def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
-    """Helper function for :py:func:`~rg.analysis.core_pan.generate_core_pan_model`. 
+    """Helper function for :py:func:`~refinegems.analysis.core_pan.generate_core_pan_model`. 
     Identify the core reactions from a set of reactions from different models. 
     Core reactions are reactions that occur in ALL the models.
 
@@ -67,7 +69,8 @@ def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
             List of reactions IDs for all model to be part of the core-pan model.
 
     Returns:
-        list[str]: List of the IDs of reactions that are defined as core.
+        list[str]: 
+            List of the IDs of reactions that are defined as core.
     """
 
     core = []
@@ -83,7 +86,7 @@ def find_core_reaction_ids(all_reactions: dict[str:list[str]]) -> list[str]:
 
 
 def find_pan_reactions(all_reactions: dict[str:list[str]], core: list[str]) -> list[str]:
-    """Helper function for :py:func:`~rg.analysis.core_pan.generate_core_pan_model`. Identify the pan reactions
+    """Helper function for :py:func:`~refinegems.analysis.core_pan.generate_core_pan_model`. Identify the pan reactions
     for a set of reactions of different model. Pan reactions are reactions, that are found
     in AT LEAST one model but NOT in all.
 
@@ -94,7 +97,8 @@ def find_pan_reactions(all_reactions: dict[str:list[str]], core: list[str]) -> l
             List of core reaction IDs, output of :py:func:`~rg.analysis.core_pan.find_core_reaction_ids`.
 
     Returns:
-        list[str]: List of pan reaction IDs.
+        list[str]: 
+            List of pan reaction IDs.
     """
 
     pan = {}
@@ -126,7 +130,8 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
         ValueError: Unknown input for parameter based_on.
 
     Returns:
-        list[cobra.Reaction]: List of the extracted reactions.
+        list[cobra.Reaction]: 
+            List of the extracted reactions.
     """
 
     match based_on:
@@ -170,7 +175,8 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
             if set. Default to True. 
 
     Returns:
-        cobra.Model: The generated core-pan model.
+        cobra.Model: 
+            The generated core-pan model.
     """
 
     # load all models
@@ -232,7 +238,8 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
         ValueError: Unknown input for parameter based_on.
 
     Returns:
-        CorePanAnalysisReport: The analysis results in form of a report object.
+        CorePanAnalysisReport: 
+            The analysis results in form of a report object.
     """
 
     results = CorePanAnalysisReport(model)

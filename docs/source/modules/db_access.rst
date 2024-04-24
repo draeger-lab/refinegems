@@ -8,6 +8,8 @@ biocyc module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 db module
 ---------
@@ -16,6 +18,8 @@ db module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 kegg module
 -----------
@@ -24,6 +28,8 @@ kegg module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 modelseed module
 ----------------
@@ -32,3 +38,5 @@ modelseed module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:

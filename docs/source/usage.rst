@@ -19,8 +19,8 @@ For more information, call the following in your command line or terminal
 
 or refer to the following section: :ref:`Command line access points`.
 
-inside Python
-^^^^^^^^^^^^^
+access from inside Python
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, refineGEMs can be directly imported into Python or a python script for full access of all modules, classes and more.
 

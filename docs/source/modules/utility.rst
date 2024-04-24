@@ -8,6 +8,8 @@ cvterms module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 databases module
 ----------------
@@ -16,6 +18,8 @@ databases module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 entities module
 ---------------
@@ -24,6 +28,8 @@ entities module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 io module
 ---------
@@ -32,6 +38,8 @@ io module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 set_up module
 -------------
@@ -40,6 +48,8 @@ set_up module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
 util module
 ------------
@@ -48,3 +58,5 @@ util module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
