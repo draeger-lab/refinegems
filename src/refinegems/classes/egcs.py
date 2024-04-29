@@ -414,7 +414,8 @@ class GreedyEGCSolver(EGCSolver):
         reac.bounds = bounds
         # check egcs removal and growth
         egc_test = self.egcs_removed(model, starting_egcs,namespace,compartment)
-        if len(egc_test) > 0 and model.optimize().objective_value > self.threshold:
+        res = model.optimize()
+        if len(egc_test) > 0 and res.status == 'optimal' and res.objective_value > self.threshold:
             return egc_test
         else:
             None
