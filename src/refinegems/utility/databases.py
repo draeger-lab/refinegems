@@ -66,13 +66,12 @@ validation_messages = {
 }
 
 
-# @TODO: adjust to new DB format (2tables in meida missing)
 def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    """Verifies if database has:
 
       - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
       - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
-      - 4 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance'
+      - 6 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance', 'subset' & 'subset2substance'
       - 1 table with name 'modelseed_compounds'
 
    Args:
@@ -91,7 +90,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    
    bigg_tables_contained = len([s for s in tables if re.match('^bigg_(?!to)(.*?)', s, re.IGNORECASE)]) == 2
    sbo_tables_contained = len([s for s in tables if re.match('(.*?)_sbo$', s, re.IGNORECASE)]) == 2
-   media_tables_contained = len([s for s in tables if re.match('^medium(.*?)|^substance(.*?)', s, re.IGNORECASE)]) == 4
+   media_tables_contained = len([s for s in tables if re.match('^medium(.*?)|^substance(.*?)|^subset(.*?)', s, re.IGNORECASE)]) == 6
    sbo_media_tables_contained = sbo_tables_contained and media_tables_contained  # These can only occur together
    modelseed_cmpd_tbl_contained = len([s for s in tables if s == 'modelseed_compounds']) == 1
    
