@@ -39,7 +39,7 @@ a.reference:visited {
 }
 /* In-line code*/
 code.literal {
-    color: #404040 !important;
+    color: #368429 !important; /*#668924*/
     background-color: #fbfbfb !important;
 }
 
