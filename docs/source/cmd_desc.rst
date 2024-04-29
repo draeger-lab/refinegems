@@ -26,7 +26,9 @@ General Options
 refinegems analyse 
 ------------------
 
-``refinegems analyse compare [MODELPATH]``
+.. code:: bash 
+    
+    refinegems analyse compare [MODELPATH]
 
 Compare multiple models.
 
@@ -35,7 +37,9 @@ Options:
 - ``--type/-t <sboterm|entities>`` : Type of comparison to perform. Multiple can be added.
 - ``--all`` : Perform all comparisons. Overwrites previous option.
 
-``refinegems analyse memote [MODELPATH]`` 
+.. code:: bash  
+    
+    refinegems analyse memote [MODELPATH]
     
 Perform a memote analsis on a model.
 
@@ -44,7 +48,9 @@ Options:
 - ``--score-only/-s`` : Return only the final score of the analysis.
 - ``--file/-f`` :  Name/Path to save output to. Only relecant if ``-s`` was not set.
 
-``refinegems analyse pancore [MODELPATH] [PCPATH]``
+.. code:: bash 
+  
+  refinegems analyse pancore [MODELPATH] [PCPATH]
 
 Compare the pan-core(-novel) information content of a model to a pan-core model.
 
@@ -54,7 +60,9 @@ Options:
   of the model entities
 - ``--dir/-d`` : Path to the output directory. 
 
-``refinegems analyse pathways [MODELPATH]``
+.. code:: bash 
+  
+  refinegems analyse pathways [MODELPATH]
 
 Analyse the KEGG pathways contained in a model.
 
@@ -62,7 +70,9 @@ Options:
 
 - ``--dir/-d`` : Path to the output directory. 
 
-``refinegems analyse stats [MODELPATH]``
+.. code:: bash 
+  
+  refinegems analyse stats [MODELPATH]
 
 Perform a statistical analysis of the model.
 
@@ -74,7 +84,9 @@ Options:
 refinegems analyse growth 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``refinegems analyse growth auxothrophies [MODELPATH]``
+.. code:: bash 
+  
+  refinegems analyse growth auxothrophies [MODELPATH]
 
 For a given set of media, test simulate the amino acid auxotrohpies of the model.
 
@@ -85,7 +97,9 @@ Options:
 - ``--colors/-c`` : Abbreviation of a matplotlib color palette for the graphics.
 - ``--dir/-d`` : Path to the output directory. 
 
-``refinegems analyse growth minimal-medium [MODELPATH]``
+.. code:: bash 
+  
+  refinegems analyse growth minimal-medium [MODELPATH]
 
 Calculate the minimal medium of a model. Can either be by minimising the fluxes of the current medium
 (``flux``), finding the minimal number of compounds needed for growth based on the current medium (``medium``) or the
@@ -97,7 +111,9 @@ Options:
 - ``--growth-rate/-r`` : Minimal growth rate that should be reached on the minimal medium. The smaller the value, the more computational expensive the calculation will be.
 - ``--dir/-d`` : Path to the output directory. 
 
-``refinegems analyse growth simulate [MODELPATHS]``
+.. code:: bash 
+  
+  refinegems analyse growth simulate [MODELPATHS]
 
 Simulate the growth of one or multiple models one or more media.
 
@@ -108,7 +124,9 @@ Options:
 - ``--colors/-c`` : Abbreviation of a matplotlib color palette for the graphics.
 - ``--dir/-d`` : Path to the output directory. 
 
-``refinegems analyse growth sources [MODELPATH]``
+.. code:: bash 
+  
+  refinegems analyse growth sources [MODELPATH]
 
 Simulate the growth for different sources. When choosing the starting medium, 
 it is useful to have at least one additional source of every other neccessary element separated 
@@ -126,22 +144,30 @@ Options:
 refinegems gaps
 ---------------
 
-``refinegems gaps find [MODELPATH] [GFF_FILE] [ORGANISMID] [GAPFILL_PARAMS] [FILENAME]``
+.. code:: bash 
+  
+  refinegems gaps find [MODELPATH] [GFF_FILE] [ORGANISMID] [GAPFILL_PARAMS] [FILENAME]
 
 Find gaps in a model based on the genes/gene products of the underlying organism.
 
-``refinegems gaps fill [MODEL] [GAP_ANALYSIS_RESULTS]``
+.. code:: bash 
+  
+  refinegems gaps fill [MODEL] [GAP_ANALYSIS_RESULTS]
 
 Fill the gaps in a model based on a user-provided input file.
 
-``refinegems gaps autofill [MODELPATH] [GAFILL_PARAMS] [FILENAME]``
+.. code:: bash 
+  
+  refinegems gaps autofill [MODELPATH] [GAFILL_PARAMS] [FILENAME]
 
-Automatically find and fill the gaps based on the genes/ gene products.
+Automatically find and fill the gaps based on the genes/gene products.
 
 refinegems media
 ----------------
 
-``refinegems media info``
+.. code:: bash 
+  
+  refinegems media info
 
 Retrieve information about the media database.
 
@@ -149,14 +175,18 @@ Options:
 
 - ``--list`` : List the available media.
 
-``refinegems media initialise``
+.. code:: bash  
+  
+  refinegems media initialise
 
 Initialse or update the media database.
 
 refinegems polish
 -----------------
 
-``refinegems polish run [MODEL] [EMAIL] [PATH]``
+.. code:: bash 
+  
+  refinegems polish run [MODEL] [EMAIL] [PATH]
 
 Options:
 
@@ -169,7 +199,9 @@ Options:
 refinegems refine
 -----------------
 
-``refinegems refine biomass [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine biomass [MODELPATH]
 
 Normalise the biomass objective functions of a model to improve the model consistency.
 
@@ -178,7 +210,9 @@ Options:
 - ``--cycles/-c`` : Maximal number of normalisation cycles to ensure the program is not running endlessly. The default is 10.
 - ``--outfile/-o`` : Optional, filename to save the updated model under. 
 
-``refinegems refine charges [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine charges [MODELPATH]
 
 Compare the charges in a model to the ModelSEED database and adjust them accordingly, if neccessary.
 
@@ -187,11 +221,15 @@ Options:
 - ``--dir/-d`` : Path to the output directory. 
 
 
-``refinegems refine direction [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine direction [MODELPATH]
 
 Check and - if neccessary - correct the direction of th reactions in a model.
 
-``refinegems refine egcs [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine egcs [MODELPATH]
 
 Indentify problematic energy generating cycles (EGCs) in the model 
 an optionally, try to resolve them.
@@ -207,11 +245,15 @@ Options:
 refinegems refine annot
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-``refinegems refine annot sboterms [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine annot sboterms [MODELPATH]
 
 Call the SBOannotator on a model to enhance/add SBOterms to the annotations.
 
-``refinegems refine annot pathways [MODELPATH]``
+.. code:: bash 
+  
+  refinegems refine annot pathways [MODELPATH]
 
 Add the KEGG pathways as group entities to the model.
 
@@ -219,7 +261,9 @@ Add the KEGG pathways as group entities to the model.
 refinegems setup 
 ----------------
 
-``refinegems setup build_pancore [MODELS]``
+.. code:: bash 
+  
+  refinegems setup build_pancore [MODELS]
 
 Using the given models, construct a pan-core model.
 
