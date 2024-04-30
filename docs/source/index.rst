@@ -24,7 +24,7 @@ Currently the ``refineGEMs`` toolbox includes the following features:
  ``refineGEMs`` also provides access points for other tools and manual curation: 
 
 * report `Memote <https://memote.readthedocs.io/en/latest/index.html>`__ score or report
-* * Updating the SBO-Term annotations based on SBOannotator\ :footcite:p:`Leonidou2023_sboann`,
+* Updating the SBO-Term annotations based on SBOannotator\ :footcite:p:`Leonidou2023_sboann`,
 * The correction of a model created with `CarveMe <https://github.com/cdanielmachado/carveme>`__ v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers),
 * The addition of `KEGG <https://www.genome.jp/kegg/kegg1.html>`__ Pathways as Groups (using the `libSBML <https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html>`__ Groups Plugin),
 * Updating the annotation of metabolites and extending the model with reactions (for the purpose of filling gaps) based on a table filled by the user ``data/manual_annotations.xlsx`` (Note: This only works when the structure of the `example Excel file <https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/manual_curation.xlsx>`__ is used.),

@@ -99,7 +99,8 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[s
         ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
 
     Returns:
-        list[str]: List of non-zero flux exchange reactions under the set type.
+        list[str]: 
+            List of non-zero flux exchange reactions under the set type.
     """
 
     match type:
@@ -558,12 +559,17 @@ def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
             Defaults to 'plot'.
 
     Raises:
-        TypeError: Unknown or mixed types in model list.
-        KeyError: Empty list for models detected.
-        ValueError: Unknown input type for models.
+        TypeError: Unknown or mixed types in model list.       
+
+        KeyError: Empty list for models detected.      
+
+        ValueError: Unknown input type for models.      
+
         TypeError: Unknown type found in media, should be list fo Medium.
-        ValueError: Unknown input for media.
-        ValueError: Unknown input for retrieve
+
+        ValueError: Unknown input for media.        
+
+        ValueError: Unknown input for retrieve       
         
     Returns:
         (1) Case: retrieve = report 
