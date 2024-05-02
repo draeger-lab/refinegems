@@ -732,6 +732,7 @@ class AuxotrophySimulationReport(Report):
         ax = fig.add_axes([0,0,1,1])
 
         # create heatmap
+        # @TODO: colour no-growth-values differently
         sns.heatmap(self.simulation_results, ax=ax, cmap=cmap, cbar_kws={'label': 'flux'}, annot = True, fmt='.2f')
 
         # add labels

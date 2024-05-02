@@ -760,7 +760,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
         ValueError: Unknown input for namespace parameter.
 
     Returns:
-        AuxotrophySimulationReport: The report for the test containing a table of the amino acids and the media names containing the simualted flux values.
+        AuxotrophySimulationReport: 
+            The report for the test containing a table of the amino acids and the media names containing the simualted flux values.
     """
 
     results = {}
@@ -774,8 +775,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
         auxotrophies = {}
         # then iterate over all amino acids
         for a in aa_list:
-            
-            entry = amino_acids.substance_table.loc[(amino_acids.substance_table['name'] == a) & (amino_acids.substance_table['db_type'] == namespace)]
+            entry = amino_acids.substance_table.loc[(amino_acids.substance_table['name'] == a) & (amino_acids.substance_table['db_type'].str.contains(namespace))]
 
             with model as m:
 
@@ -802,34 +802,32 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
                 else:
                     
                     # create and check IDs for the chosen namespace
+                    internal_meta = ""
                     match namespace:
                         case 'BiGG':
-                            internal_meta = ""
                             for np_id in entry['db_id']:
                                 if np_id + '_c' in [_.id for _ in m.metabolites]:
                                     internal_meta = np_id + '_c'
                                     break
-                            if internal_meta == "":
-                                warnings.warn(F'No identifier matched in cytosol for {a}.')
 
                             exchange_reac = 'EX_' + internal_meta
                             sink_reac = F'sink_{internal_meta}_tmp'
                         case _:
                             raise ValueError('Unknown namespace: {namespace}. Cannot create IDs.')
                                 
-                # create a pseudo reaction -> a sink reaction for the amino acid
-                # to use as the new objective
-                if internal_meta == "":
-                    pass
-                else:
-                    m.add_boundary(m.metabolites.get_by_id(internal_meta), type='sink', reaction_id=sink_reac)
-                    m.objective = sink_reac
-                    # if existent, close the exchange reaction
-                    if exchange_reac in [_.id for _ in m.exchanges]:
-                        m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
-                        m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
-                # and calculate the new objective
-                auxotrophies[a] = m.optimize().objective_value
+                    # create a pseudo reaction -> a sink reaction for the amino acid
+                    # to use as the new objective
+                    if internal_meta == "":
+                        warnings.warn(F'No identifier matched in cytosol for {a}.')
+                    else:
+                        m.add_boundary(m.metabolites.get_by_id(internal_meta), type='sink', reaction_id=sink_reac)
+                        m.objective = sink_reac
+                        # if existent, close the exchange reaction
+                        if exchange_reac in [_.id for _ in m.exchanges]:
+                            m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
+                            m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
+                    # and calculate the new objective
+                    auxotrophies[a] = m.optimize().objective_value
 
             # add the current test results to the list of all results
             results[med.name] = auxotrophies

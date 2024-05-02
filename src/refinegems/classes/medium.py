@@ -1442,7 +1442,7 @@ def generate_update_query(row: pd.Series) -> str:
     return update_query
 
 
-def generate_insert_query(row: pd.Series) -> str:
+def generate_insert_query(row: pd.Series, cursor) -> str:
     """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
 
@@ -1505,11 +1505,25 @@ def generate_insert_query(row: pd.Series) -> str:
             if not conditions_dict: 
                 raise UnboundLocalError(f'{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated.')
             if 'substance' in conditions_dict.keys():
-                insert_query += f'''(\
-                    (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
-                    {value_str}\
-                    )\
-                '''
+                res = cursor.execute(f'''SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'''')
+                substance_id = res.fetchone()[0]
+                ins = cursor.execute(f'''SELECT * FROM substance2db WHERE substance2db.substance_id = {substance_id} AND substance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\'''').fetchone()[2].split('+')
+                if len(ins) > 0:
+                    cur = row['new_value'].split(',')[1].strip().split('+')
+                    missing = [_ for _ in ins if _ not in cur]
+                    if len(missing) > 0:
+                        # TODO
+                        pass
+                    else:
+                        # nothing missing -> return @TODO
+                        pass
+                # insert can be done without any problems
+                else: 
+                    insert_query += f'''(\
+                        (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
+                        {value_str}\
+                        )\
+                    '''
 
             else: 
                 raise ValueError(f'{Fore.MAGENTA}No substance key specified. Chosen table {table} cannot be updated!')
@@ -1560,7 +1574,7 @@ def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH
             query = generate_update_query(row)
         # else, insert new values
         else:
-            query = generate_insert_query(row)
+            query = generate_insert_query(row,cursor)
                 
 
         # update the entry
@@ -1627,17 +1641,16 @@ def medium_to_model(model:cobra.Model, medium:Medium, namespace:str='BiGG',
 ############################################################################
 
 # Function to extract SQL schema with updated SBO/media tables
-def updated_db_to_schema(directory: str = './src/refinegems/data/database/'):
+def updated_db_to_schema(directory: str = '../data/database', inplace:bool=False):
     """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
 
     Args:
         - directory(str,optional): 
             Path to the directory of the updated DB.
-            Defaults to './src/refinegems/data/database/'.
+            Defaults to '../data/database'.
+        - inplace(bool, optional): 
+            If True, uses the default sql-file name, otherwise extends it with the prefix 'updated_'.
     """
-    # make sure given directory path ends with '/'
-    if not directory.endswith('/'):
-        directory = directory + '/'
     
     # Not needed to be included in Schema
     NOT_TO_SCHEMA = [
@@ -1647,9 +1660,14 @@ def updated_db_to_schema(directory: str = './src/refinegems/data/database/'):
         'modelseed_compounds'
         ]
     counter = 0 # To count rows in newly generated file
+
+    if inplace:
+        filename = 'media_db.sql'
+    else:
+        filename = 'updated_media_db.sql'
     
     conn = sqlite3.connect(PATH_TO_DB)
-    with open((f'{directory}updated_media_db.sql'), 'w') as file:
+    with open(Path(directory,filename), 'w') as file:
         for line in iterdump(conn):
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if 'CREATE TABLE' in line and counter != 0:
@@ -1660,7 +1678,9 @@ def updated_db_to_schema(directory: str = './src/refinegems/data/database/'):
 
 
 # entry point for entering a medium using the command line
-# TODO since database is part of package, direct accessing possible
+# @TODO since database is part of package, direct accessing possible
+# @TODO more entry points and where to put them?
+# @TEST : is this even valid???  
 def add_medium(database:str):
     
     # get external medium

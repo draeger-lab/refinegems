@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+__author__ = 'Gwendolyn O. Döbel und Carolin Brune'
+
 ################################################################################
 # requirements
 ################################################################################
@@ -14,8 +16,6 @@ from enum import Enum
 from sqlite3 import Error
 from pathlib import Path
 from importlib.resources import files
-
-__author__ = 'Gwendolyn O. Döbel und Carolin Brune'
 
 ################################################################################
 # variables
