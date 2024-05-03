@@ -1441,7 +1441,7 @@ def generate_update_query(row: pd.Series) -> str:
     
     return update_query
 
-
+# @TEST
 def generate_insert_query(row: pd.Series, cursor) -> str:
     """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
@@ -1512,11 +1512,10 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
                     cur = row['new_value'].split(',')[1].strip().split('+')
                     missing = [_ for _ in ins if _ not in cur]
                     if len(missing) > 0:
-                        # TODO
-                        pass
+                        update_value = '+'.join(sorted(cur+missing))
+                        insert_query = f'''UPDATE substance2db SET db_type = \'{update_value}\' WHERE substance2db.substance_id = {substance_id} AND szbbstance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\''''
                     else:
-                        # nothing missing -> return @TODO
-                        pass
+                        return None
                 # insert can be done without any problems
                 else: 
                     insert_query += f'''(\
@@ -1575,7 +1574,8 @@ def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH
         # else, insert new values
         else:
             query = generate_insert_query(row,cursor)
-                
+            if not query:
+                continue   
 
         # update the entry
         try:
