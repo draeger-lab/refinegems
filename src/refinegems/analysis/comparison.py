@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """ Provides functions to compare and visualize multiple models
 
-Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.
+Can mainly be used to compare growth behaviour of multiple models. 
+All other stats are shown in the memote report.
 """
-
 
 __author__ = "Famke Baeuerle"
 
@@ -12,6 +12,7 @@ __author__ = "Famke Baeuerle"
 ################################################################################
 
 import pandas as pd
+import matplotlib
 
 from cobra import Model as cobraModel
 from libsbml import Model as libModel
@@ -32,7 +33,8 @@ def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
             Models loaded with libSBML
 
     Returns:
-        pd.DataFrame: SBO Terms, number of reactions per Model and SBO Label
+        pd.DataFrame: 
+            SBO Terms, number of reactions per Model and SBO Label
     """
     mappings = {}
     for model in models:
@@ -42,7 +44,7 @@ def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
     df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
     return df
 
-def plot_rea_sbo_multiple(models: list[libModel], rename=None):
+def plot_rea_sbo_multiple(models: list[libModel], rename=None) -> matplotlib.axes.Axes:
     """Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models
 
     Args:
@@ -53,7 +55,8 @@ def plot_rea_sbo_multiple(models: list[libModel], rename=None):
             Defaults to None.
 
     Returns:
-        plot: Pandas stacked barchart
+        matplotlib.axes.Axes: 
+            Pandas stacked barchart
     """
     map = get_sbo_mapping_multiple(models)
     id_list = [mod.id for mod in models]
@@ -67,7 +70,7 @@ def plot_rea_sbo_multiple(models: list[libModel], rename=None):
     fig.legend(loc='lower right')
     return fig
 
-def plot_venn(models: list[cobraModel], entity: str, perc: bool=False, rename=None):
+def plot_venn(models: list[cobraModel], entity: str, perc: bool=False, rename=None) -> matplotlib.axes.Axes:
     """Creates Venn diagram to show the overlap of model entities
 
     Args:
@@ -83,7 +86,8 @@ def plot_venn(models: list[cobraModel], entity: str, perc: bool=False, rename=No
             Defaults to None.
 
     Returns:
-        plot: Venn diagram 
+        matplotlib.axes.Axes: 
+            Venn diagram 
     """
     intersec = {}
     for model in models:

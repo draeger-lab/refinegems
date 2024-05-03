@@ -89,10 +89,13 @@ If you use VSCode, a mustache file for the documentation style that can be integ
     """Description of the function...
 
     Args:
-        - input1 (type): this is what input1 does
+        - input1 (type):    
+            this is what input1 does
 
     Returns:
-        tuple: Two tables (1) & (2)
+        tuple: 
+            Two tables (1) & (2)
+
             (1) pd.DataFrame: Table with charge mismatches
             (2) pd.DataFrame: Table with formula mismatches
     """
@@ -101,15 +104,21 @@ If you use VSCode, a mustache file for the documentation style that can be integ
     """Description of the function...
 
     Args:
-        - input1 (type): this is what input1 does
-        - input2 (type): this is what input2 does
-        - input3 (type): this is what input3 does
+        - input1 (type): 
+            this is what input1 does
+        - input2 (type):
+            this is what input2 does
+        - input3 (type): 
+            this is what input3 does
 
     Returns:
-        (1) str:
-            - Return value 1
-            - Return value 2
-        (2) np.nan: Return value 3
+        (1) Case: str
+
+            Return value 1
+
+        (2) Case: np.nan
+        
+            Return value 2
     """
 
 We are also trying to make input and return types explicit by declaring those in the function header:

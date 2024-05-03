@@ -167,7 +167,8 @@ class EGCSolver():
                 Defaults to ['c','p'].
 
         Returns:
-            cobra.Model: The edited model.
+            cobra.Model: 
+                The edited model.
         """
     
         # retrieve information about dissipation reaction metabolites
@@ -198,7 +199,8 @@ class EGCSolver():
         Excludes dissipation reactions.
 
         Args:
-            - model (cobra.Model): COBRApy model
+            - model (cobra.Model): 
+                COBRApy model
         """
         external_comp = cobra.medium.find_external_compartment(model)
         # set fluxes for each reaction within model
@@ -243,11 +245,11 @@ class EGCSolver():
                 Defaults to ['c','p'].
 
         Returns:
-            (1) Case with_reacs=False  
+            (1) Case: with_reacs=False  
             
                 list: List of found EGC names.
 
-            (2) Case with_reacs=True  
+            (2) Case: with_reacs=True 
                 
                 tuple: tuple of (1) dictionary & (2) list
 
@@ -324,7 +326,8 @@ class EGCSolver():
                 Defaults to ['c','p'].
 
         Returns:
-            list: List of newly removed EGCs.
+            list: 
+                List of newly removed EGCs.
         """
 
         current_egcs = self.find_egcs(model, namespace=namespace, compartment=compartment)
@@ -555,7 +558,8 @@ class GreedyEGCSolver(EGCSolver):
                 Defaults to ['c','p'].
 
         Returns:
-            dict: Dictionary of potential modifications to resolve EGCs
+            dict: 
+                Dictionary of potential modifications to resolve EGCs
                 {"egc": {"MR":[potential_solutions],
                 "RB":[potential_solutions],
                 "RF":[potential_solutions],
@@ -642,7 +646,9 @@ class GreedyEGCSolver(EGCSolver):
                 Defaults to the in-build scoring matrix.
 
         Returns:
-            tuple: Tuple of (1) dict & (2) int:
+            tuple: 
+                Tuple of (1) dict & (2) int:
+                
                 (1) dictionary of reaction IDs and their mode of change
                 (2) score of the solution
         """
@@ -737,7 +743,8 @@ class GreedyEGCSolver(EGCSolver):
                 Defaults to ['c','p'].
 
         Returns:
-            dict: Dictionary with the following entries.
+            dict: 
+                Dictionary with the following entries.
 
                 - 'solution': List of reactions for the solution.
                 - 'score': Score of the solution.

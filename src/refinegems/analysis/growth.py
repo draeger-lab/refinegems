@@ -134,7 +134,8 @@ def get_secretion(model: cobraModel) -> list[str]:
             The cobra model to be tested.
 
     Returns:
-        list[str]: The list of IDs of secretion reactions
+        list[str]: 
+            The list of IDs of secretion reactions
     """
 
     with model:
@@ -153,7 +154,8 @@ def get_production(model: cobraModel) -> list[str]:
             Model loaded with COBRApy
 
     Returns:
-        list[str]: Ids of produced metabolites
+        list[str]: 
+            Ids of produced metabolites
     """
 
     with model:
@@ -179,7 +181,8 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
             Option to add a second medium list as supplements.
 
     Returns:
-        list[str]: The list of exchanges essential for growth.
+        list[str]: 
+            The list of exchanges essential for growth.
     """
     with model:
         if standard_uptake:
@@ -270,7 +273,8 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[Mediu
             Defaults to True.
 
     Returns:
-        dict: information on different media which metabs are missing (key: name of medium, values: list of exchanges)
+        dict: 
+            information on different media which metabs are missing (key: name of medium, values: list of exchanges)
     """
     
     default_uptake = get_uptake(model,'std')
@@ -304,7 +308,8 @@ def growth_sim_single(model: cobraModel, m: Medium, namespace:Literal['BiGG', 'N
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
 
     Returns:
-        SingleGrowthSimulationReport: Object with the simulation results
+        SingleGrowthSimulationReport: 
+            Object with the simulation results
     """
 
     with model:
@@ -362,7 +367,8 @@ def growth_sim_multi(models: cobraModel|list[cobraModel], media: Medium|list[Med
             The string can be 'min', 'std' or None.
 
     Returns:
-        GrowthSimulationReport: The compiled information of the simulation results.
+        GrowthSimulationReport: 
+            The compiled information of the simulation results.
     """
 
     # check input 
@@ -395,7 +401,9 @@ def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
             The path to a media configuration file in YAML-format.
 
     Returns:
-        tuple[list[Medium],list[str,None]]: Tuple of two lists (1) & (2)
+        tuple[list[Medium],list[str,None]]: 
+            Tuple of two lists (1) & (2)
+
             (1) list: list of the loaded media and 
             (2) list: list of supplement modes
     """
@@ -661,7 +669,8 @@ def get_essential_reactions_via_single_knockout(model: cobraModel) -> list[str]:
             Model loaded with COBRApy
 
     Returns:
-        list[str]: Ids of essential reactions
+        list[str]: 
+            Ids of essential reactions
     """
     ess = []
     for reaction in model.reactions:
@@ -685,7 +694,8 @@ def get_essential_exchanges_via_bounds(model: cobraModel) -> list[str]:
             Model loaded with COBRApy
 
     Returns:
-        list[str]: Ids of essential reactions
+        list[str]: 
+            Ids of essential reactions
     """
     medium = model.medium
     ess = []
@@ -709,7 +719,8 @@ def find_growth_enhancing_exchanges(model:cobraModel, base_medium: dict) -> pd.D
             Exchanges as keys and their flux bound as value (f.ex {'EX_glc__D_e' : 10.0})
 
     Returns:
-        pd.DataFrame: Exchanges sorted from highest to lowest growth rate improvement
+        pd.DataFrame: 
+            Exchanges sorted from highest to lowest growth rate improvement
     """
     with model:
         model.medium = base_medium
@@ -870,7 +881,8 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
         KeyError: No growth function in model. Please add one beforehand.
 
     Returns:
-        SourceTestReport: A report object with the results.
+        SourceTestReport: 
+            A report object with the results.
     """
     
     # validate input
@@ -953,9 +965,11 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
 # ......
 def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> Medium:
     """Get the minimal medium based on different objectives:
+
     - 'flux':      find the minimal fluxes based in current medium.
     - 'medium':    find the minimal number of compounds for the current medium.
     - 'exchanges': find the minimal number of compounds in a medium based on all avaiblae exchange reactions in the model.
+    
     Note: there may be multiple solution for the minimisation, but only 1 will be returned
 
     Args:
@@ -976,7 +990,8 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
         ValueError: unknown objective.
 
     Returns:
-        Medium: The medium that is a solution for the minimisation task.
+        Medium: 
+            The medium that is a solution for the minimisation task.
     """
 
 

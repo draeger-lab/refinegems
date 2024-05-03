@@ -121,7 +121,8 @@ def get_memote_score(memote_report: dict) -> float:
             Output from run_memote.
 
     Returns:
-        float: MEMOTE score
+        float: 
+            MEMOTE score
     """
     return memote_report['score']['total_score']
 
@@ -138,7 +139,8 @@ def get_num_reac_with_gpr(model:cobra.Model) -> int:
             The model loaded with COBRApy.
 
     Returns:
-        int: The number of reactions with a GPR.
+        int: 
+            The number of reactions with a GPR.
     """
 
     reac_with_gpr = 0
@@ -158,7 +160,9 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
             Model loaded with COBRApy
 
     Returns:
-        tuple: Lists of metabolites that might cause errors (1) - (3) 
+        tuple: 
+            Lists of metabolites that might cause errors (1) - (3) 
+
             (1) list: List of orphans
             (2) list: List of deadends
             (3) list: List of disconnected metabolites
@@ -194,7 +198,9 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
             Model loaded with COBRApy
 
     Returns:
-        tuple: Lists of reactions that might cause errors (1) & (2)
+        tuple: 
+            Lists of reactions that might cause errors (1) & (2)
+            
             (1) list: List of mass unbalanced reactions
             (2) list: List of charge unbalanced reactions
     """
@@ -230,7 +236,8 @@ def get_metabs_with_one_cvterm(model: libModel) -> list[str]:
             Model loaded with libSBML
 
     Returns:
-        list: Metabolite Ids with only one annotation
+        list: 
+            Metabolite Ids with only one annotation
     """
     spe = model.getListOfSpecies()
 
@@ -251,7 +258,8 @@ def get_reactions_per_sbo(model: libModel) -> dict:
             Model loaded with libSBML
 
     Returns:
-        dict: SBO Term as keys and number of reactions as values
+        dict: 
+            SBO Term as keys and number of reactions as values
     """
     sbos_dict = {}
     for react in model.getListOfReactions():
@@ -270,7 +278,8 @@ def plot_rea_sbo_single(model: libModel):
             Model loaded with libSBML
 
     Returns:
-        plot: Pandas Barchart
+        plot: 
+            Pandas Barchart
     """
     df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
     df = df[df[model.id]>3]
