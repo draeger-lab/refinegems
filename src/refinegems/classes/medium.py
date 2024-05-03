@@ -1649,7 +1649,7 @@ def updated_db_to_schema(directory: str = '../data/database', inplace:bool=False
             Path to the directory of the updated DB.
             Defaults to '../data/database'.
         - inplace(bool, optional): 
-            If True, uses the default sql-file name, otherwise extends it with the prefix 'updated_'.
+            If True, uses the default sql-file name, otherwise extends it with the prefix ``updated``.
     """
     
     # Not needed to be included in Schema

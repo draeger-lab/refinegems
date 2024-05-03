@@ -75,6 +75,13 @@ The model is optimised and the objective values for the BOF ist returned for all
   for the growth of the model as other compounds. Only under these conditions can the results of the 
   source test savely discussed in the context of changung a single source only.
 
+Below you can see the exempkary results for a *Klebsiella pneumoniae* model with a supplemented M9 medium.
+The supplemented M9 medium contains all trace elements the bacterium needs to grow e.g. iron and a single 
+nitrogen source that is swapped out during the test. Since the original nitrogen source was ammonia, swapping 
+it out does not eliminate another element from the medium.
+
+.. image:: ../images/N-source.png 
+
 
 Minimal medium
 --------------
