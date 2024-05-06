@@ -9,12 +9,16 @@ Currently the ``refineGEMs`` toolbox includes the following features:
 
 * loading GEMs with ``COBRApy`` and ``libSBML``
 * report the statistics of a model, including 
+
   * number of metabolites, reactions and genes
   * number of orphaned, deadends and disconnected metabolites
   * number of mass and charge unbalanced reactions
+
 * compare the genes present in the model to the genes found in:
+
   * the `KEGG <https://www.genome.jp/kegg/kegg1.html>`__ Database (Note: This requires the GFF file and the KEGG identifier of your organism.)
   * Or the `BioCyc <https://biocyc.org/>`__ Database (Note: This requires that a database entry for your organism exists in BioCyc.)
+  
 * compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the `ModelSEED <https://modelseed.org/>`__ Database.
 * finding and resolving duplicates
 * identifying and resolving EGCs (energy generating cycles)

@@ -238,6 +238,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
 
     Raises:
         ValueError: Unknown input for namespace
+        
         TypeError: Unknown type for model_entity
     """
 
