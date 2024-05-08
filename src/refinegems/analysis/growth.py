@@ -22,7 +22,7 @@ from ..curation.biomass import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import SingleGrowthSimulationReport, GrowthSimulationReport, AuxotrophySimulationReport, SourceTestReport
 from ..classes.medium import Medium, medium_to_model, read_from_cobra_model, load_medium_from_db, read_external_medium
-from typing import Literal
+from typing import Literal,Union
 
 ############################################################################
 # variables
@@ -37,7 +37,7 @@ MIN_GROWTH_THRESHOLD = 1.0e-5
 # growth simulation and more
 # --------------------------
 
-def set_bounds_to_default(model: cobraModel, reac_bounds:None|str|tuple[float] = None):
+def set_bounds_to_default(model: cobraModel, reac_bounds:Union[None,str,tuple[float]] = None):
     """Set the reactions bounds of a model to given default values.
     (Ir)reversibility is retained.
 
@@ -351,9 +351,9 @@ def growth_sim_single(model: cobraModel, m: Medium, namespace:Literal['BiGG', 'N
     return report
 
 
-def growth_sim_multi(models: cobraModel|list[cobraModel], media: Medium|list[Medium], 
+def growth_sim_multi(models: Union[cobraModel,list[cobraModel]], media: Union[Medium,list[Medium]], 
                      namespace:Literal['BiGG','Name']='BiGG', 
-                     supplement_modes:list[Literal['None','min','std']]|None|Literal['None','min','std']=None) -> GrowthSimulationReport:
+                     supplement_modes:Union[list[Literal['None','min','std']],None,Literal['None','min','std']]=None) -> GrowthSimulationReport:
     """Simulate the growth of (at least one) models on (at least one) media.
 
     Args:
@@ -539,11 +539,11 @@ def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
 
 # @IDEA : choose different namespaces for the media
 # @TEST : namespace implementation. Are connections correct?
-def growth_analysis(models:cobra.Model|str|list[str]|list[cobra.Model],
-                    media:Medium|list[Medium]|str,
+def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
+                    media:Union[Medium,list[Medium],str],
                     namespace:Literal["BiGG"]='BiGG',
-                    supplements:None|list[Literal[None,'std','min']]|Literal[None,'std','min']=None,
-                    retrieve:Literal['report','plot','both']='plot') -> GrowthSimulationReport|plt.Figure|tuple:
+                    supplements:Union[None,list[Literal[None,'std','min']],Literal[None,'std','min']]=None,
+                    retrieve:Literal['report','plot','both']='plot') -> Union[GrowthSimulationReport,plt.Figure,tuple]:
     """Perform a growth analysis
 
     Args:

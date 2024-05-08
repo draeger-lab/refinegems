@@ -26,7 +26,7 @@ from Bio import Entrez, SeqIO
 from refinegems.utility.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
-from typing import Literal
+from typing import Literal, Union
 
 ################################################################################
 # functions
@@ -35,7 +35,7 @@ from typing import Literal
 # models
 # ------
 
-def load_model(modelpath: str|list[str], package:Literal['cobra','libsbml']) -> cobra.Model|list[cobra.Model]|libModel|list[libModel]:
+def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml']) -> Union[cobra.Model,list[cobra.Model],libModel,list[libModel]]:
     """Load a model. 
 
     Args:
@@ -133,7 +133,7 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def write_model_to_file(model:libModel|cobra.Model, filename:str):
+def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
     """Save a model into a file.
 
     Args:

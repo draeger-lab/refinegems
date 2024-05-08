@@ -22,7 +22,7 @@ import warnings
 from importlib.resources import files
 from itertools import chain
 from pathlib import Path
-from typing import Literal
+from typing import Literal,Union
 
 from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_num_reac_with_gpr
 
@@ -698,7 +698,7 @@ class AuxotrophySimulationReport(Report):
 
     
     # auxotrophy sim visualisation
-    def visualise_auxotrophies(self, color_palette:str='YlGn', save:None|str=None) -> None|matplotlib.figure.Figure:
+    def visualise_auxotrophies(self, color_palette:str='YlGn', save:Union[None,str]=None) -> Union[None,matplotlib.figure.Figure]:
         """Visualise and/or save the results of the :py:func:`~refinegems.analysis.growth.test_auxotrophies` function.
 
         Args:

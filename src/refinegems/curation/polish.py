@@ -27,6 +27,7 @@ from libsbml import GeneProduct
 from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from sortedcontainers import SortedDict, SortedSet
 from tqdm.auto import tqdm
+from typing import Union
 
 from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
 from ..utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
@@ -1367,7 +1368,7 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
 # @TODO
 # @NOTE add a control to check if changing the reaction direction leads to EGC or so
 #   or is this unnessesary here
-def check_direction(model:cobra.Model,data:pd.DataFrame|str) -> cobra.Model:
+def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
     database table or dataFrame (need to contain at least the following columns:
