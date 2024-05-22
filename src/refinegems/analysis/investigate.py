@@ -10,15 +10,11 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 # requirements
 ################################################################################
 
-import memote
-import json
 import pandas as pd
 import cobra
-import time
 
 from libsbml import Model as libModel
 from cobra import Model as cobraModel
-from typing import Literal
 
 from memote.support import consistency
 # needed by memote.support.consistency
@@ -34,98 +30,6 @@ from ..utility.entities import reaction_equation_to_dict
 ################################################################################
 # functions
 ################################################################################
-
-# investigate with memote
-# -----------------------
-
-def run_memote(model: cobra.Model, type:Literal['json','html']='html', 
-               return_res:bool=False, save_res:str|None=None, verbose:bool=False) -> dict|str|None:
-    """Run the memote snapshot function on a given model loaded with COBRApy.
-
-    Args:
-        - model (cobra.Model): 
-            The model loaded with COBRApy.
-        - type (Literal['json','html'], optional): 
-            Type of report to produce. 
-            Can be 'html' or 'json'. 
-            Defaults to 'html'.
-        - return_res (bool, optional): 
-            Option to return the result. 
-            Defaults to False.
-        - save_res (str | None, optional): 
-            If given a path string, saves the report
-            under the given path. Defaults to None.
-        - verbose (bool, optional): 
-            Produce a more verbose ouput. 
-            Defaults to False.
-
-    Raises:
-        ValueError: Unknown input for parameter type
-
-    Returns:
-        (1) Case return_res = True and type = json 
-
-            dict: The json dictionary.
-
-        (2) Case return_res = True and type = html 
-
-            str: The html string.
-
-        (3) Case return_res = False
-        
-            None: no return
-    """
-
-    # verbose output I
-    if verbose:
-        print('\n# -------------------\n# Analyse with MEMOTE\n# -------------------')
-        start = time.time()
-
-    # run memote
-    ret, res = memote.suite.api.test_model(model, sbml_version=None, results=True,
-                                           pytest_args=None, exclusive=None, skip=None, 
-                                           experimental=None, solver_timeout=10)
-    
-    # load depending on type 
-    match type:
-        case 'html':
-            snap = memote.suite.api.snapshot_report(res, html=True)
-            result = snap
-        case 'json':
-            snap = memote.suite.api.snapshot_report(res, html=False)
-            result = json.loads(snap)
-        case _:
-            message = f'Unknown input for parameter type: {type} '
-            raise ValueError(message)
-        
-    # option to save report
-    if save_res:
-        with open(save_res, 'w') as f:
-            f.write(result)
-
-    # verbose output II
-    if verbose:
-        end = time.time()
-        print(F'\ttotal time: {end - start}s')
-
-    # option to return report
-    if return_res:
-        return result
-    
-
-def get_memote_score(memote_report: dict) -> float:
-    """Extracts MEMOTE score from report
-
-    Args:
-        - memote_report (dict): 
-            Output from run_memote.
-
-    Returns:
-        float: 
-            MEMOTE score
-    """
-    return memote_report['score']['total_score']
-
 
 # get basic model info
 # --------------------

@@ -1,5 +1,6 @@
-__all__ = ['cvterms','databases','entities','io','set_up','util']
+__all__ = ['connections', 'cvterms','databases','entities','io','set_up','util']
 
+from . import connections
 from . import cvterms
 from . import databases
 from . import entities
