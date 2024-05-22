@@ -22,7 +22,7 @@ import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore
 from libsbml import Model as libModel
-from typing import Union
+from typing import Union, Literal
 
 import refinegems.curation.db_access.kegg as rga_kegg
 import refinegems.curation.db_access.biocyc as rga_biocyc
@@ -50,22 +50,24 @@ def gff_gene_comp():
 # @TODO Add handling of columns: 'KEGG Reaction' 'MetaNetX'!!!
 
 
-def gap_analysis(model_libsbml: libModel, gff_file: str, organismid:str, gapfill_params: dict[str: str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
+def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'], gff_file: str, organismid:str, gapfill_params: list[str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """| Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
        | to KEGG/BioCyc/both
 
     Args:
         - model_libsbml (libModel): 
-            Model loaded with libSBML
+            Model loaded with libSBML 
+        - db_to_compare (Literal[&#39;KEGG&#39;, &#39;BioCyc&#39;, &#39;KEGG): 
+            Database to use for comparison to find missing entities
         - gff_file (str): 
             Path to RefSeq GFF file
         - organismid (str): 
             KEGG organism code
-        - gapfill_params (dict): 
+        - gapfill_params (_type_): 
             Dictionary obtained from YAML file containing the parameter mappings 
         - filename (str): 
-            Path to output file for gapfill analysis result
-        
+            Path to output file for gap analysis result
+
     Returns:
         (1) Case 'KEGG':
 

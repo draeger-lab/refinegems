@@ -8,19 +8,23 @@ __author__ = 'Carolin Brune, Gwendolyn O. Döbel'
 ################################################################################
 
 from traitlets import default
-from typing import Union
+from typing import Union, Literal
 import refinegems as rg
 import click
+import cloup
 from pathlib import Path
 import pandas as pd
+import logging
+
+from refinegems.curation.db_access import biocyc
 
 ################################################################################
 # Entry points
 ################################################################################
 
-@click.group()
-@click.help_option("--help", "-h")
-@click.version_option()
+@cloup.group()
+@cloup.help_option("--help", "-h")
+@cloup.version_option()
 def cli():
    """refineGEMs - A toolbox for fast curation and analysis of constraint-based metabolic models
    
@@ -42,7 +46,7 @@ def setup():
 @setup.command()
 @click.option('--filename', '-f', default='config.yaml', type=str, 
               show_default=True, help='Name (path) to save the config file under.')
-@click.option('--type', '-t', default='media', type=click.Choice(['media', 'refinegems']), 
+@click.option('--type', '-t', show_default=True, default='media', type=click.Choice(['media', 'refinegems']), 
               help='Type of config file to download. Either a file for media configuration or a file to run a refinement pipeline.')
 def config(filename,type):
     """Download a configuration file (.yaml).
@@ -58,11 +62,11 @@ def config(filename,type):
 # @TEST
 @setup.command()
 @click.argument('models',nargs=-1,type=click.Path())
-@click.option('-o','--based-on', required=False, type=click.Choice(['id']), default='id',help='Option on how to combine the models.')
-@click.option('-n','--name', required=False, type=str, default='pan-core-model',help='Name of the new pan-core model.')
-@click.option('-g','--keep-genes',is_flag=True, default=False, help='If set, the genes are kept in the pan-core model, otherwise they are deleted.')
-@click.option('--rcomp', '--resolve-compartments',is_flag=True, help='If set, tries to standardised the compartment names to the c,p,e,... namespace.')
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-o','--based-on', required=False, type=click.Choice(['id']), show_default=True, default='id',help='Option on how to combine the models.')
+@click.option('-n','--name', required=False, type=str, show_default=True, default='pan-core-model',help='Name of the new pan-core model.')
+@click.option('-g','--keep-genes',is_flag=True, show_default=True, default=False, help='If set, the genes are kept in the pan-core model, otherwise they are deleted.')
+@click.option('--rcomp', '--resolve-compartments',is_flag=True, help='If set, tries to standardise the compartment names to the c,p,e,... namespace.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True,  default='', help='Path to the output dir.')
 def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    """Build a pan-core model.
    """
@@ -83,7 +87,7 @@ def media():
 # Handle medium / media database
 # ------------------------------
 @media.command()
-@click.option('--list', is_flag=True, default=False, help='List the names of the media in the database.')
+@click.option('--list', is_flag=True, show_default=True, default=False, help='List the names of the media in the database.')
 #@click.option('--copy', is_flag=False, flag_value='./media.csv', default=None, type=click.Path(exists=False), 
 # help='Produce and save a copy of the media database.')
 def info(list): #,copy
@@ -126,11 +130,11 @@ def polish():
 @click.argument('model', type=str)
 @click.argument('email', type=str)
 @click.argument('path', type=str)
-@click.option('-i','--id-db', default='BiGG', type=str, help='Main database where identifiers in model come from')
-@click.option('-r', '--refseq-gff', default=None, type=str, help='Path to RefSeq GFF file of organism')
-@click.option('-p', '--protein-fasta', default=None, type=str, help='File used as input for CarveMe')
-@click.option('-l', '--lab-strain', default=False, type=bool, help='True if the strain was sequenced in a local lab')
-@click.option('-k', '--kegg-organism-id', default=None, type=str, help='KEGG organism identifier')
+@click.option('-i','--id-db', show_default=True, default='BiGG', type=str, help='Main database where identifiers in model come from')
+@click.option('-r', '--refseq-gff', show_default=True, default=None, type=str, help='Path to RefSeq GFF file of organism')
+@click.option('-p', '--protein-fasta', show_default=True, default=None, type=str, help='File used as input for CarveMe')
+@click.option('-l', '--lab-strain', show_default=True, default=False, type=bool, help='True if the strain was sequenced in a local lab')
+@click.option('-k', '--kegg-organism-id', show_default=True, default=None, type=str, help='KEGG organism identifier')
 def run(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism_id):
    """Completes all steps to polish a model
 
@@ -151,23 +155,52 @@ def gaps():
    """
 
 # Find gaps via genes
-# -------------------
+# -------------------     
+def get_gap_analysis_input(db_to_compare: Literal['KEGG', 'BioCyc']) -> dict:
+
+   parameters2inputs = {'organismid': None, 'gff_file': None, 'biocyc_files': None}
+
+   if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
+       parameters2inputs['organismid'] = click.prompt('Enter the KEGG Organism ID', type=str)
+       parameters2inputs['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file', type=click.Path(exists=True))
+   if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
+       Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'', type=click.Path(exists=True))
+       Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information', type=click.Path(exists=True))
+       Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information', type=click.Path(exists=True))
+       Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe', type=click.Path(exists=True))
+       parameters2inputs['biocyc_files'] = [Path0, Path1, Path2, Path3]
+   
+   return parameters2inputs
+
+
 @gaps.command()
-@click.argument('modelpath', type=str)
-@click.argument('gff_file', type=str)
-@click.argument('organismid', type=str)
-@click.argument('gapfill_params', type=dict)
-@click.argument('filename', type=str)
-def find(modelpath,gff_file,organismid,gapfill_params,filename):
+@cloup.argument('modelpath', type=click.Path(exists=True), help='Path to model file')
+@cloup.argument('filename', type=str, help='Path to output file for gap analysis result')
+@cloup.option_group(
+    'Reference database options',
+    cloup.option('-k', '--kegg', type=bool, help='Specifies if the KEGG API should be used for the gap analysis'),
+    cloup.option('-b', '--biocyc', 
+                 type=bool, help='Specifies if user-provided BioCyc files should be used for the gap analysis'),
+    constraint=cloup.constraints.RequireAtLeast(1)
+)
+def find(modelpath,kegg,biocyc,filename):
    """Find gaps in a model based on the genes/gene products of the underlying organism
    """
+   
+   db_to_compare = None
+   if kegg and biocyc: db_to_compare = 'KEGG+BioCyc'
+   elif kegg: db_to_compare = 'KEGG'
+   elif biocyc: db_to_compare = 'BioCyc'
+   
+   params2ins = get_gap_analysis_input(db_to_compare)
+   
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gap_analysis(model, gff_file, organismid, gapfill_params, filename)
+   rg.curation.gapfill.gap_analysis(model, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
 
 # Fill gaps via file
 # ------------------
 @gaps.command()
-@click.argument('model', type=str)
+@click.argument('modelpath', type=click.Path(exists=True))
 @click.argument('gap_analysis_results', type=Union[str, tuple])
 def fill(modelpath,gap_analysis_result):
    """Fill gaps in a model based on a user-provided input file
@@ -178,7 +211,7 @@ def fill(modelpath,gap_analysis_result):
 # Find and fill gaps via genes
 # ----------------------------
 @gaps.command()
-@click.argument('modelpath', type=str)
+@click.argument('modelpath', type=click.Path(exists=True))
 @click.argument('gapfill_params', type=dict)
 @click.argument('filename', type=str)
 def autofill(modelpath,gapfill_params,filename):
@@ -198,9 +231,9 @@ def refine():
    """
 
 @refine.command()
-@click.argument('modelpath', type=str)
-@click.option('-c', '--cycles', default=10, type=int, help='Maximal number of optimisation cycles that will be run.')
-@click.option('--outfile','-o',required=False, type=click.Path(), default='biomass_corrected.xml', help='Path to save the corrected model under.')
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-c', '--cycles', show_default=True, default=10, type=int, help='Maximal number of optimisation cycles that will be run.')
+@click.option('--outfile','-o',required=False, type=click.Path(), show_default=True, default='biomass_corrected.xml', help='Path to save the corrected model under.')
 def biomass(modelpath,cycles,outfile):
    """Changes the biomass reaction to be consistent
    """
@@ -212,8 +245,8 @@ def biomass(modelpath,cycles,outfile):
 
 # @TEST
 @refine.command()
-@click.argument('modelpath', type=str)
-@click.option('--dir','-d',required=False, type=click.Path(), default='', help='Directory to save the output to.')
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('--dir','-d',required=False, type=click.Path(), show_default=True, default='', help='Directory to save the output to.')
 def charges(modelpath,dir):
    """Changes the charges in a model by comparison to the ModelSEED database
    """
@@ -226,7 +259,7 @@ def charges(modelpath,dir):
 
 # @TODO
 @refine.command()
-@click.argument('modelpath', type=str)
+@click.argument('modelpath', type=click.Path(exists=True))
 def direction(modelpath,data):
    """Checks & if necessary, corrects the direction for each reaction in a model
    """
@@ -234,12 +267,13 @@ def direction(modelpath,data):
    rg.curation.polish.check_direction(model, data)
 
 # egcs
+#@TODO: Default for compartments -> Why c,p and not c,e,p?
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-@click.option('--solver', '-s',required=False,type=click.Choice(['greedy']), default=None, multiple=False, help='Type of solver for the EGCs.')
-@click.option('--namespace','-n',required=False, type=click.Choice(['BiGG']),default='BiGG',multiple=False, help='Namespace of the model.')
-@click.option('--compartment','-c', required=False, type=str, default='c,p', help='Compartments to check, seprated by comma only.')
-@click.option('--outfile','-o', required=False, type=click.Path(), default='fixed_egcs.xml',help='Path to save edited model to, if solver has been set.')
+@click.option('--solver', '-s',required=False,type=click.Choice(['greedy']), show_default=True, default=None, multiple=False, help='Type of solver for the EGCs.')
+@click.option('--namespace','-n',required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG',multiple=False, help='Namespace of the model.')
+@click.option('--compartment','-c', required=False, type=str, show_default=True, default='c,p', help='Compartments to check, separated by comma only.')
+@click.option('--outfile','-o', required=False, type=click.Path(), show_default=True, default='fixed_egcs.xml',help='Path to save edited model to, if solver has been set.')
 def egcs(modelpath, solver, namespace, compartment, outfile):
    """Identify and optionally solve EGCs.
    """
@@ -261,6 +295,7 @@ def egcs(modelpath, solver, namespace, compartment, outfile):
 
 # Annotation-related clean-up & Additional annotations
 # ---------------------------
+#@TODO: Check again if RefSeq/Genbank GFF or if origin doesn't matter! + Where does that belong/happen?
 @refine.group()
 def annot():
 	"""Clean-up annotations by adding MIRIAM-compliant qualifiers, changing URIs into the correct form, adding more 
@@ -269,7 +304,7 @@ def annot():
 	"""
  
 @annot.command()
-@click.argument('modelpath', type=str)
+@click.argument('modelpath', type=click.Path(exists=True))
 def sboterms(modelpath):
    """Calls SBOannotator to enhance the SBO terms in a model
    """
@@ -278,7 +313,7 @@ def sboterms(modelpath):
 
 
 @annot.command()
-@click.argument('modelpath', type=str)
+@click.argument('modelpath', type=click.Path(exists=True))
 def pathways(modelpath):
    """Add KEGG pathways as groups to a model
    """
@@ -295,9 +330,9 @@ def analyse():
 	"""
 
 @analyse.command()
-@click.argument('modelpath', type=str)
-@click.option('-s', '--score-only', is_flag=True, default=False, help='Specifies if memote is only run to return the score')
-@click.option('-f','--file', required=False, type=str, default='memote.html', help='Name or path to save the output to. Only relevent if -s it not set.')
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-s', '--score-only', is_flag=True, show_default=True, default=False, help='Specifies if memote is only run to return the score')
+@click.option('-f','--file', required=False, type=str, show_default=True, default='memote.html', help='Name or path to save the output to. Only relevant if -s is not set.')
 def memote(modelpath,score_only,file):
    """Perform a memote analysis.
    """
@@ -310,8 +345,8 @@ def memote(modelpath,score_only,file):
 
  # @TODO add colour option
 @analyse.command()
-@click.argument('modelpath', type=str)
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
 def pathways(modelpath,dir):
    """Analysis of pathways contained in a model
    """
@@ -323,8 +358,8 @@ def pathways(modelpath,dir):
 # @TODO: accept multiple models
 @analyse.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
-@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, show_default=True, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
 def stats(modelpath,dir,colors):
    """Generate a report on the statistics of a model.
    """
@@ -337,8 +372,8 @@ def stats(modelpath,dir,colors):
 @analyse.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.argument('pcpath', type=click.Path(exists=True))
-@click.option('-b','--based-on', type=click.Choice(['id']),required=False, default='id',help='Option on how to compare the models.')
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-b','--based-on', type=click.Choice(['id']),required=False, show_default=True, default='id',help='Option on how to compare the models.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
 def pancore(modelpath, pcpath, based_on,dir):
    """Compare a model to a pan-core model.
    """
@@ -350,9 +385,9 @@ def pancore(modelpath, pcpath, based_on,dir):
 
 @analyse.command()
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
-@click.option('--type','-t',required=False,type=click.Choice(['sboterm','entities']),
-              default=None, help='Type of comparison to be performed.')
-@click.option('--all',required=False, is_flag=True, default=False, 
+@click.option('--type','-t',required=False,type=click.Choice(['sboterm','entities']), 
+              show_default=True,  default=None, help='Type of comparison to be performed.')
+@click.option('--all',required=False, is_flag=True, show_default=True, default=False, 
               help='Shortcut to run all comparisons. Overwrites input of type.')
 def compare(modelpaths,type,all):
    """Compare models.
@@ -372,9 +407,9 @@ def growth():
 @growth.command()
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
 @click.option('-m','--media',required=True,type=click.Path(exists=True), help='Path to a media config file.')
-@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
-@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG', help='Namespace to use for the model.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, show_default=True, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
 def simulate(modelpaths,media,namespace,dir,colors):
    """Simulate the growth of the given model vs. media.
    """
@@ -386,9 +421,9 @@ def simulate(modelpaths,media,namespace,dir,colors):
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-m','--media',required=True,type=click.Path(exists=True), help='Path to a media config file.')
-@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
-@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG', help='Namespace to use for the model.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
+@click.option('-c', '--colors', required=False, type=str, show_default=True, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
 def auxotrophies(modelpath,media,namespace,dir,colors):
    """Test for auxotrophies for the 20 proteinogenic amino acids.
    """
@@ -397,15 +432,15 @@ def auxotrophies(modelpath,media,namespace,dir,colors):
    report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
    report.save(dir,colors)
 
-
+#@TODO --substances
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-e','--element', type=str, required=True, help='Element to perform the source test with. Needs to be a valid chemical, elemental Symbol.')
-@click.option('-s','--substances', type=str, required=False, default=None, multiple=True, help='Add substances from the database to test against. If none are given, resrs against the while database.')
-@click.option('-m', '--medium', required=False, type=str, default=None, help='Name of a medium from the database to use for the testing. If not given, uses the one from the model.')
-@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), default='BiGG', help='Namespace to use for the model.')
+@click.option('-s','--substances', type=str, required=False, show_default=True, default=None, multiple=True, help='Add substances from the database to test against. If none are given, resrs against the while database.')
+@click.option('-m', '--medium', required=False, type=str, show_default=True, default=None, help='Name of a medium from the database to use for the testing. If not given, uses the one from the model.')
+@click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG', help='Namespace to use for the model.')
 @click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
-@click.option('-c', '--colors', required=False, type=str, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+@click.option('-c', '--colors', required=False, type=str, show_default=True, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
 def sources(modelpath, element, substances, medium, namespace, dir, colors):
    """Test growth on different sources for an element.
    """ 
@@ -416,9 +451,9 @@ def sources(modelpath, element, substances, medium, namespace, dir, colors):
 
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-@click.option('-o','--objective', required=False, type=click.Choice(['flux','medium','exchanges']), default='flux',help='Set the type of minimal medium to be calculated: minimal fluxes, minimal compounds or based on the model exchange reactions.')
-@click.option('-r', '--growth-rate', required=False, type=float, default=0.5, help='Minimal rate to be reached by the minimal medium. The smaller the rate the more expensive the calculation.')
-@click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')
+@click.option('-o','--objective', required=False, type=click.Choice(['flux','medium','exchanges']), show_default=True, default='flux',help='Set the type of minimal medium to be calculated: minimal fluxes, minimal compounds or based on the model exchange reactions.')
+@click.option('-r', '--growth-rate', required=False, type=float, show_default=True, default=0.5, help='Minimal rate to be reached by the minimal medium. The smaller the rate the more expensive the calculation.')
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
 def minimal_medium(modelpath,objective, growth_rate, dir):
    """Calculate the minimal medium of a model.
 

@@ -469,7 +469,7 @@ def biocyc_gene_comp(
    # check paths
    for path in biocyc_file_paths:
       if not os.path.exists(path):
-         print(f"{path} does not exists, check input!")
+         print(f"{path} does not exist, check input!")
          break
 
    # Extract missing reactions from all missing genes
