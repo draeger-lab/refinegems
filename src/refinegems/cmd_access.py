@@ -17,6 +17,7 @@ import pandas as pd
 import logging
 
 from refinegems.curation.db_access import biocyc
+from refinegems.utility.io import write_model_to_file
 
 ################################################################################
 # Entry points
@@ -327,10 +328,17 @@ def sboterms(modelpath):
 
 @annot.command()
 @click.argument('modelpath', type=click.Path(exists=True))
+@click.option('-d','--dir', required=False, default='./', help='Path to the output dorectory')
 def pathways(modelpath):
    """Add KEGG pathways as groups to a model
    """
-   rg.curation.pathways.kegg_pathways(modelpath) # @TODO what exactly gets returned?
+   model, missing = rg.curation.pathways.kegg_pathways(modelpath) 
+   with open(Path(dir, 'reac_wo_kegg_pathway_groups.txt'), 'w') as outfile:
+      # save reactions with missing groups
+      for line in missing:
+            outfile.write(f'{line}\n')
+   # save model 
+   write_model_to_file(Path(dir,'model_with_added_KeggPathwayGroups.xml'))
 
 
 # -----------------------------------------------
