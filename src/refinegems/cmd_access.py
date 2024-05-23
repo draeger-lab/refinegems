@@ -172,7 +172,6 @@ def get_gap_analysis_input(db_to_compare: Literal['KEGG', 'BioCyc']) -> dict:
    
    return parameters2inputs
 
-
 @gaps.command()
 @cloup.argument('modelpath', type=click.Path(exists=True), help='Path to model file')
 @cloup.argument('filename', type=str, help='Path to output file for gap analysis result')
@@ -187,7 +186,7 @@ def find(modelpath,kegg,biocyc,filename):
    """Find gaps in a model based on the genes/gene products of the underlying organism
    """
    
-   db_to_compare = None
+   db_to_compare = ''
    if kegg and biocyc: db_to_compare = 'KEGG+BioCyc'
    elif kegg: db_to_compare = 'KEGG'
    elif biocyc: db_to_compare = 'BioCyc'
@@ -195,7 +194,7 @@ def find(modelpath,kegg,biocyc,filename):
    params2ins = get_gap_analysis_input(db_to_compare)
    
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gap_analysis(model, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
+   rg.curation.gapfill.gap_analysis(model, db_to_compare, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
 
 # Fill gaps via file
 # ------------------
@@ -211,14 +210,28 @@ def fill(modelpath,gap_analysis_result):
 # Find and fill gaps via genes
 # ----------------------------
 @gaps.command()
-@click.argument('modelpath', type=click.Path(exists=True))
-@click.argument('gapfill_params', type=dict)
-@click.argument('filename', type=str)
-def autofill(modelpath,gapfill_params,filename):
+@cloup.argument('modelpath', type=click.Path(exists=True), help='Path to model file')
+@cloup.argument('filename', type=str, help='Path to output file for gap analysis result')
+@cloup.option_group(
+    'Reference database options',
+    cloup.option('-k', '--kegg', type=bool, help='Specifies if the KEGG API should be used for the gap analysis'),
+    cloup.option('-b', '--biocyc', 
+                 type=bool, help='Specifies if user-provided BioCyc files should be used for the gap analysis'),
+    constraint=cloup.constraints.RequireAtLeast(1)
+)
+def autofill(modelpath,kegg,biocyc,filename):
    """Automatically find and fill gaps based on the genes/gene products
    """
+   
+   db_to_compare = ''
+   if kegg and biocyc: db_to_compare = 'KEGG+BioCyc'
+   elif kegg: db_to_compare = 'KEGG'
+   elif biocyc: db_to_compare = 'BioCyc'
+   
+   params2ins = get_gap_analysis_input(db_to_compare)
+   
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gapfill(model, gapfill_params, filename)
+   rg.curation.gapfill.gapfill(model, db_to_compare, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
 
 
 # --------------

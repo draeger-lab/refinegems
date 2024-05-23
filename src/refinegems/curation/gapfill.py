@@ -48,23 +48,23 @@ def gff_gene_comp():
 '''
 
 # @TODO Add handling of columns: 'KEGG Reaction' 'MetaNetX'!!!
+# @TODO Change KEGG part to have the same results as the BioCyc  part
 
-
-def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'], gff_file: str, organismid:str, gapfill_params: list[str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
+def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'], gff_file: str, organismid:str, biocyc_files: list[str], filename: str) -> Union[pd.DataFrame, tuple]:  # (Genbank) GFF file
     """| Main function to infer gaps in a model by comparing the locus tags of the GeneProducts 
        | to KEGG/BioCyc/both
 
     Args:
         - model_libsbml (libModel): 
             Model loaded with libSBML 
-        - db_to_compare (Literal[&#39;KEGG&#39;, &#39;BioCyc&#39;, &#39;KEGG): 
+        - db_to_compare (Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'): 
             Database to use for comparison to find missing entities
         - gff_file (str): 
             Path to RefSeq GFF file
         - organismid (str): 
             KEGG organism code
-        - gapfill_params (_type_): 
-            Dictionary obtained from YAML file containing the parameter mappings 
+        - biocyc_files (list[str])): 
+            List containing the required BioCyc input files for the BioCyc gap analysis
         - filename (str): 
             Path to output file for gap analysis result
 
@@ -100,7 +100,6 @@ def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc
                 -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
-    db_to_compare = gapfill_params['db_to_compare']
     result = None
     
     if db_to_compare not in ['KEGG', 'BioCyc', 'KEGG+BioCyc']:  # 'GFF', 
@@ -123,7 +122,7 @@ def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc
             # use one of the options \'BioCyc\' or \'GFF\'
         
     elif db_to_compare == 'BioCyc':
-        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, gapfill_params['biocyc_files'])
+        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, biocyc_files)
         result = missing_biocyc
         
         ''' Implement here call of function that can be used with lab strain/organism which is in no database contained
@@ -137,7 +136,7 @@ def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc
     elif db_to_compare == 'KEGG+BioCyc':
         missing_kegg_reacs = rga_kegg.kegg_gene_comp(model_libsbml, organismid, gff_file)
         missing_kegg_reacs.drop(['name', 'locus_tag', 'EC'], axis=1, inplace=True)
-        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, gapfill_params['biocyc_files'])
+        missing_biocyc = rga_biocyc.biocyc_gene_comp(model_libsbml, biocyc_files)
         
         stats, missing_biocyc_genes, missing_biocyc_metabs, missing_biocyc_reacs = missing_biocyc 
         missing_combined_reacs = missing_biocyc_reacs.merge(missing_kegg_reacs[['bigg_id', 'KEGG']], how='left', on='bigg_id')
@@ -263,20 +262,24 @@ def gapfill_model(model_libsbml: libModel, gap_analysis_result: Union[str, tuple
 
 
 def gapfill(
-    model_libsbml: libModel, gapfill_params: dict[str: str], filename: str
+    model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'], gff_file: str, organismid:str, biocyc_files: list[str], filename: str
     ) -> Union[tuple[pd.DataFrame, libModel], tuple[tuple, libModel]]:
     """| Main function to fill gaps in a model by comparing the locus tags of the GeneProducts to 
        | KEGG/BioCyc/(Genbank) GFF file
 
     Args:
         - model_libsbml (libModel): 
-            Model loaded with libSBML
-        - gapfill_params (dict): 
-            Dictionary obtained from YAML file containing the parameter mappings
+            Model loaded with libSBML 
+        - db_to_compare (Literal['KEGG', 'BioCyc', 'KEGG+BioCyc'): 
+            Database to use for comparison to find missing entities
+        - gff_file (str): 
+            Path to RefSeq GFF file
+        - organismid (str): 
+            KEGG organism code
+        - biocyc_files (list[str])): 
+            List containing the required BioCyc input files for the BioCyc gap analysis
         - filename (str): 
-            Path to output file for gapfill analysis result
-        - gapfill_model_out (str): 
-            Path where gapfilled model should be written to
+            Path to output file for gap analysis result
         
     Returns:
         tuple: :py:func:`~refinegems.curation.gapfill.gap_analysis()` table(s) (1) & libSBML model (2)
@@ -284,7 +287,7 @@ def gapfill(
             (1) pd.DataFrame|tuple(pd.DataFrame): Result from function :py:func:`~refinegems.curation.gapfill.gap_analysis()`
             (2) libModel: Gap filled model
     """
-    gap_analysis_result = gap_analysis(model_libsbml, gapfill_params, filename)
+    gap_analysis_result = gap_analysis(model_libsbml, db_to_compare, gff_file, organismid, biocyc_files, filename)
     model = gapfill_model(model_libsbml, gap_analysis_result)
     
     return gap_analysis_result, model
