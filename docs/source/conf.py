@@ -12,8 +12,9 @@
 #
 import os
 import sys
+from pathlib import Path
 # import sphinx_rtd_theme
-sys.path.insert(0, os.path.abspath('../../src/'))
+sys.path.insert(0, os.path.abspath(Path('..','..','src')))
 
 
 # -- Project information -----------------------------------------------------
@@ -74,14 +75,14 @@ html_static_path = ['_static']
 html_css_files = ['custom_theme.css']
 
 # Adds logo to documentation page
-html_logo = 'images/refineGEMs_logo.png'
+html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
     'display_version': False
 }
 
 #Adds logo as favicon to tab
-html_favicon = 'images/refineGEMs_logo.png'
+html_favicon = str(Path('images','refineGEMs_logo.png'))
 
 # Changes code highlighting
 pygments_style = 'blinds-light'
@@ -95,31 +96,31 @@ master_doc = 'index'
 # -- Autodoc -----------------------------------------------------------------
 
 # we need those to display the code comments otherwise the functions cannot be imported
-autodoc_mock_imports = ["psycopg2", 
-                        "gffutils",
-                        "cplex.exceptions",
-                        "cplex",
-                        "cobra",
-                        "pandas",
-                        "libsbml",
-                        "numpy",
-                        "bioservices",
-                        "bioregistry",
-                        "bs4",
-                        "memote",
-                        "tqdm",
-                        "psycopg2",
-                        "Bio",
-                        "sqlalchemy",
-                        "ratelimit",
-                        "libchebipy",
-                        "ols_client",
-                        "charges",
-                        "click",
-                        "yaml",
-                        "sortedcontainers",
-                        "colorama",
-                        "matplotlib",
-                        "seaborn",
-                        "venn"
-                        ]
+# autodoc_mock_imports = ["psycopg2", 
+#                         "gffutils",
+#                         "cplex.exceptions",
+#                         "cplex",
+#                         "cobra",
+#                         "pandas",
+#                         "libsbml",
+#                         "numpy",
+#                         "bioservices",
+#                         "bioregistry",
+#                         "bs4",
+#                         "memote",
+#                         "tqdm",
+#                         "psycopg2",
+#                         "Bio",
+#                         "sqlalchemy",
+#                         "ratelimit",
+#                         "libchebipy",
+#                         "ols_client",
+#                         "charges",
+#                         "click",
+#                         "yaml",
+#                         "sortedcontainers",
+#                         "colorama",
+#                         "matplotlib",
+#                         "seaborn",
+#                         "venn"
+#                         ]
