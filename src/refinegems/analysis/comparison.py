@@ -48,22 +48,32 @@ def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
     df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
     return df
 
-def plot_rea_sbo_multiple(models: list[libModel], rename=None, 
+def plot_rea_sbo_multiple(models: list[libModel], rename:dict=None, 
                           color_palette:Union[str,list[str]]='Paired',
                           figsize:tuple=(10,10)) -> matplotlib.figure.Figure:
     """Plots reactions per SBO Term in horizontal bar chart with stacked bars for the models
 
     Args:
         - models (list[libModel]): 
-            Models loaded with libSBML
+            List of the models loaded with libsbml
         - rename (dict, optional): 
             Rename model ids to custom names. 
             Defaults to None.
+        - color_palette (Union[str,list[str]], optional): 
+            Color palette (from Matplotlib) to use for the plot. 
+            Defaults to 'Paired'.
+        - figsize (tuple, optional): 
+            Size of the plot. 
+            Defaults to (10,10).
+
+    Raises:
+        TypeError: Unkown type for color_palette
 
     Returns:
         matplotlib.figure.Figure: 
-            The results as a stacked barchart
+            The results as a stacked barchart.
     """
+    
     # set the colours 
     match color_palette:
         case str():
