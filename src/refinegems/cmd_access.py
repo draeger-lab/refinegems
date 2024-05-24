@@ -15,6 +15,7 @@ import cloup
 from pathlib import Path
 import pandas as pd
 import logging
+import sys
 
 from refinegems.curation.db_access import biocyc
 from refinegems.utility.io import write_model_to_file
@@ -406,16 +407,24 @@ def pancore(modelpath, pcpath, based_on,dir):
 
 @analyse.command()
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
-@click.option('--type','-t',required=False,type=click.Choice(['sboterm','entities']), 
-              show_default=True,  default=None, help='Type of comparison to be performed.')
+# @TODO 
+#    extend / add different comparison options
+@click.option('--type','-t',required=False,type=click.Choice(['sboterm']), multiple=True,
+              show_default=True,  default=[], help='Type of comparison to be performed.')
 @click.option('--all',required=False, is_flag=True, show_default=True, default=False, 
               help='Shortcut to run all comparisons. Overwrites input of type.')
-def compare(modelpaths,type,all):
+@click.option('-d', '--dir', required=False, type=click.Path(file_okay=False), show_default=True, default='comparison', help='Path to the output dir.')
+@click.option('-c','--colour', required=False, type=str, default='Paired', show_default=True, help='Name of Matplotlib colour palette for the plot.')
+def compare(modelpaths,type,all,dir,colour):
    """Compare models.
    """
+   Path(dir).mkdir(parents=True, exist_ok=True)
+   # compare SBOterms
    if all or 'sboterm' in type:
-      models = rg.utility.io.load_model(modelpaths)
-      fig = rg.analysis
+      models = rg.utility.io.load_model(list(modelpaths),'libsbml')
+      fig = rg.analysis.comparison.plot_rea_sbo_multiple(models,color_palette=colour)
+      fig.savefig(Path(dir, 'sboterm'), dpi=400, bbox_inches='tight')
+
 
 # analyse growth
 # --------------

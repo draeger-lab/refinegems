@@ -101,11 +101,11 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
         case list():
 
             loaded_models = []
-            for modelpath in modelpath:
+            for m in modelpath:
                 if package == 'cobra':
-                    loaded_models.append(load_cobra_model(modelpath))
+                    loaded_models.append(load_cobra_model(m))
                 elif package == 'libsbml':
-                    loaded_models.append(load_libsbml_model(modelpath))
+                    loaded_models.append(load_libsbml_model(m))
             return loaded_models
         
         # read in a single model
