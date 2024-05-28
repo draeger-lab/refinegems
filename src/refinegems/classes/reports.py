@@ -634,12 +634,15 @@ class KEGGPathwayAnalysisReport(Report):
         return fig
 
 
-    def save(self, dir:str) -> None:
+    def save(self, dir:str, colors:str='YlGn') -> None:
         """Save the content of the report as plots.
 
         Args:
             - dir (str): 
                 Path to a directory to save the output directory with all the plot in.
+            - colors(str,optional):
+                Colour palette for the plots.
+                Should be a valid name of a matplotlib sequential colour palette.
         """
 
         # collect all produced file in one directory
@@ -658,29 +661,29 @@ class KEGGPathwayAnalysisReport(Report):
         # 1.) global KEGG IDs
         if self.kegg_global:
             # with id
-            fig = self.visualise_kegg_pathway(plot_type='global', label='id')
+            fig = self.visualise_kegg_pathway(plot_type='global', label='id', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_global_id.png'), bbox_inches='tight')
             # with name
-            fig = self.visualise_kegg_pathway(plot_type='global', label='name')
+            fig = self.visualise_kegg_pathway(plot_type='global', label='name', color_palette=colors)
             fig.savefig(Path(dir, 'pathway-analysis','pathway_global_name.png'), bbox_inches='tight')
         # 2.) Overview KEGG IDs
         if self.kegg_over:
             # with id
-            fig = self.visualise_kegg_pathway(plot_type='overview', label='id')
+            fig = self.visualise_kegg_pathway(plot_type='overview', label='id', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_overview_id.png'), bbox_inches='tight')
             # with name
-            fig = self.visualise_kegg_pathway(plot_type='overview', label='name')
+            fig = self.visualise_kegg_pathway(plot_type='overview', label='name', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_overview_name.png'), bbox_inches='tight')
         # 3.) rest
         if self.kegg_paths:
             # grouped by high-level terms
-            fig = self.visualise_kegg_pathway(plot_type='high', label='name')
+            fig = self.visualise_kegg_pathway(plot_type='high', label='name', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_high.png'), bbox_inches='tight')
             # all with id
-            fig = self.visualise_kegg_pathway(plot_type='existing', label='id')
+            fig = self.visualise_kegg_pathway(plot_type='existing', label='id', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_existing_id.png'), bbox_inches='tight')
             # all with name
-            fig = self.visualise_kegg_pathway(plot_type='existing', label='name')
+            fig = self.visualise_kegg_pathway(plot_type='existing', label='name', color_palette=colors)
             fig.savefig(Path(dir,'pathway-analysis','pathway_existing_name.png'), bbox_inches='tight')
 
 

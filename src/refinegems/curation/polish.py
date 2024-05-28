@@ -1068,7 +1068,8 @@ def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, fi
         - bioregistry (bool):
             Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
         - new_pattern (bool):
-            True if new pattern is wanted, otherwise False
+            True if new pattern is wanted, otherwise False.
+            Note that bioregistry internally only uses the new patter.
         - filename (str):
              Path to output file for invalid CURIEs detected by improve_uris
         
