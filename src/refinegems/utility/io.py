@@ -66,11 +66,11 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
         extension = os.path.splitext(modelpath)[1].replace('.','')
 
         match extension:
-            case 'xml':
+            case 'xml' | 'sbml':
                 data = cobra.io.read_sbml_model(modelpath)
             case 'json':
                 data = cobra.io.load_json_model(modelpath)
-            case 'yml':
+            case 'yml' | 'yaml':
                 data = cobra.io.load_yaml_model(modelpath)
             case 'mat':
                 data = cobra.io.load_matlab_model(modelpath)

@@ -29,6 +29,8 @@ from memote.support import consistency
 from memote.support import consistency_helpers as con_helpers
 
 from ..curation.biomass import test_biomass_presence
+from ..sboann import sbo_annotation
+from libsbml import Model as libModel
 
 # note:
 #    for BOFdat to run correctly, you need to change 'solution.f' to 'solution.objective_value'
@@ -268,5 +270,20 @@ def get_memote_score(memote_report: dict) -> float:
     return memote_report['score']['total_score']
 
 
+# SBOannotator
+# ------------
 
+# @TODO 
+#     change to usage of the actual SBOannotator (as soon as its works)
+def run_SBOannotator(model: libModel) -> libModel:
+    """Run SBOannotator on a model to annotate the SBO terms.
 
+    Args:
+        - model (libModel): 
+            The model loaded with libsbml
+
+    Returns:
+        libModel: 
+            The model with corrected / added SBO terms.
+    """
+    return sbo_annotation(model)
