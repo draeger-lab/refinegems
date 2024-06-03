@@ -53,7 +53,7 @@ Below is the list of currently available Solvers implemented in the toolbox.
 .. note::
 
     We are working on extending this list to allow for better, faster and/or more fitting 
-    solutions for resolvong EGCs.
+    solutions for resolving EGCs.
 
 Greedy approach
 ^^^^^^^^^^^^^^^
@@ -73,7 +73,7 @@ found EGCs. The modifications of the reactions include:
 The algorithmn runs resonably fast, however since it only consideres single reaction modifications, 
 some EGCs may remain unsolved (these will be reported at the end of the solving process).
 
-This Solver can be accesed via
+This Solver can be accessed via
 
 .. code-block:: bash 
 

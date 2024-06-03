@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Provides functions / connections to after tools for easier access and usage.
+""" Provides functions / connections to other tools for easier access and usage.
 """
 
 __author__ = "Famke Baeuerle und Carolin Brune"

@@ -8,6 +8,7 @@ Add KEGG pathways from reaction:
 You can use this to add KEGG pathways with the libSBML Groups plugin.
 
 The workflow of the script is as follows:
+
 1. Extraction of the KEGG reaction IDs from the annotations of your reactions
 2. Identification, in which KEGG pathways these reactions occur
 3. Addition of all KEGG pathways for a reaction with the biological qualifier ``OCCURS_IN`` to the annotations

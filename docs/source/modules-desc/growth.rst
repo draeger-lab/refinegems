@@ -75,10 +75,11 @@ The model is optimised and the objective values for the BOF ist returned for all
   for the growth of the model as other compounds. Only under these conditions can the results of the 
   source test savely discussed in the context of changung a single source only.
 
-Below you can see the exempkary results for a *Klebsiella pneumoniae* model with a supplemented M9 medium.
+Below you can see the examplary results for a *Klebsiella pneumoniae* model with a supplemented M9 medium.
 The supplemented M9 medium contains all trace elements the bacterium needs to grow e.g. iron and a single 
 nitrogen source that is swapped out during the test. Since the original nitrogen source was ammonia, swapping 
-it out does not eliminate another element from the medium.
+it out does not eliminate another element from the medium. The information, which cell contains which source, is saved in 
+a seperate table to ensure good readability of the graphic.
 
 .. image:: ../images/N-source.png 
 
@@ -86,15 +87,15 @@ it out does not eliminate another element from the medium.
 Minimal medium
 --------------
 
-Using the :py:func:`~refinegems.analysis.growth.model_minimal_medium`, a minimal medium (composition)
+Using :py:func:`~refinegems.analysis.growth.model_minimal_medium`, a minimal medium (composition)
 can be calculated.
 
 Since the description of a minimal medium can vary, refineGEMs provides different 
 ways to calculate one, set using the parameter ``objective``:
 
-- flux: find the minimal fluxes for the current medium 
-- medium: find the minimal number of compounds based on the current medium
-- exchanges: find the minimal number of compounds for a medium based on the exchange reactions in the model
+- ``flux``: find the minimal fluxes for the current medium 
+- ``medium``: find the minimal number of compounds based on the current medium
+- ``exchanges``: find the minimal number of compounds for a medium based on the exchange reactions in the model
 
 .. note:: 
 

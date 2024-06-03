@@ -47,7 +47,7 @@ Setup a conda virtual environment and use its pip to install refineGEMs into tha
 
    pip install .
 
-This will install all packags denoted in `setup.py`. 
+This will install all packags denoted in `pyproject.toml`. 
 
 If `which pip` does not show pip in the conda environment you can also create a local environment for which you can control the path and use its pip:
 
@@ -59,8 +59,10 @@ If `which pip` does not show pip in the conda environment you can also create a 
 
    <EnvName>/bin/pip install .
 
-If you want to be able to savely import the package from anywhere while also retaining the possibility to edit the code, 
-it is recommended to change the last line from the previous code block to :code:`pip install -e . --config-settings editable_mode=strict` (useful for developer).
+.. hint::
+
+   If you want to be able to savely import the package from anywhere while also retaining the possibility to edit the code, 
+   it is recommended to change the last line from the previous code block to :code:`pip install -e . --config-settings editable_mode=strict` (useful for developer).
 
 **Pipenv**
 

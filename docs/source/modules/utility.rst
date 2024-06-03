@@ -1,6 +1,16 @@
 refinegems.utility
 ==================
 
+connection module
+-----------------
+
+.. automodule:: refinegems.utility.connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members: 
+   :special-members:
+
 cvterms module
 --------------
 

@@ -60,9 +60,9 @@ Its structure is as follows:
         name 2:
         ...
 
-The block begins with the keyword ``media``. This block can contain an arbitrary amount of
-subdictionary. The placeholder ``name`` can be substituted for the name for the media or a name of a medium in 
-the media database. The following options can be used to further modify the media (but no modification (empty dict) ist
+The block begins with the keyword ``media``. This block can contain an arbitrary number of
+subdictionary. Each starts with a name. The placeholder ``name`` can be substituted with a name for a medium or a name of a medium in 
+the media database. The following options can be used to further modify each medium (but no modification (empty dict) is
 neccessary):
 
 - ``base`` None or str

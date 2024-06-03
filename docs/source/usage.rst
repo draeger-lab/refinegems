@@ -81,7 +81,7 @@ Access the database via a config.yaml
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If the idea is to load a list of media - from the database or externel, with or without modifications -
 it might be useful to use the media configuration file. There, different media names with options for 
-modifications can be listed and subsequently loaded using :py:func:`~refinegems.classes.medium` or used as input for other 
+modifications can be listed and subsequently loaded using :py:class:`~refinegems.classes.medium` or used as input for other 
 entry points that requires a list of media or the config itself. 
 
 .. toctree::

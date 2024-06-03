@@ -1,24 +1,21 @@
 SBOannotator with refineGEMs
 ============================
 
+refineGEMs provides a connection to the `SBOannotator <https://github.com/draeger-lab/SBOannotator>`__\ :footcite:p:`Leonidou2023_sboann`
+to annotate a model with SBO terms.
+
 .. warning:: 
 
-    This part is under heavy reconstruction, please wait for future updates.
+    The back-end of this function (:py:func:`~refinegems.utility.connections.run_SBOannotator`) is under heavy construction, but it should still work for the user.
 
-RefineGEMs offers access to the functionalities of `SBOannotator <https://github.com/draeger-lab/SBOannotator>`__\ :footcite:p:`Leonidou2023_sboann`. 
-
-The ``sboann`` module is splitted into a lot of small functions which are all annotated, however when using it for SBO-Term annotation it only makes sense to run the function ``sbo_annotation``: 
-
-.. autofunction:: refinegems.sboann.sbo_annotation
-    :noindex:
+The functionality can be called as follows:
 
 .. code:: python
     :linenos:
     
-    import refinegems as rg 
-    model_sboann = rg.sboann.sbo_annotation(<path to your model>)
-    rg.io.write_to_file(model_sboann, <path to modified model>)
+    # model is the model loaded with libSBML
+    from refinegems.utility.connections import run_SBOannotator
 
-If you use it from the refineGEMs toolbox with the config you can get a visualization of the SBO-Term distribution before and after the SBO-Term update.
+    model_with_sbo = run_SBOannotator(model)
 
 .. footbibliography::
