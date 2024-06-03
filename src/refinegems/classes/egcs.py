@@ -638,7 +638,7 @@ class GreedyEGCSolver(EGCSolver):
             - results (dict): 
                 Output of :py:func:`find_mods_resolve_egcs_greedy`.
             - egc_reactions (dict): 
-                Output of :py:func:`find_egcs` with 'with_reac=True'.
+                Output of :py:meth:`~refinegems.classes.egcs.EGCSolver.find_egcs` with 'with_reac=True'.
                 Should be the EGCs before calculating any solutions and applying them.
             - scoring_matrix (dict, optional): 
                 Dictionary of the modifications types 

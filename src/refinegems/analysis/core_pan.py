@@ -94,7 +94,7 @@ def find_pan_reactions(all_reactions: dict[str:list[str]], core: list[str]) -> l
         - all_reactions (dict[str:list[str]): 
             List of reactions IDs for all model to be part of the core-pan model.
         - core (list[str]): 
-            List of core reaction IDs, output of :py:func:`~rg.analysis.core_pan.find_core_reaction_ids`.
+            List of core reaction IDs, output of :py:func:`~refinegems.analysis.core_pan.find_core_reaction_ids`.
 
     Returns:
         list[str]: 
