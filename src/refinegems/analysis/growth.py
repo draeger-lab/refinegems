@@ -626,15 +626,14 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
         
     # collect all media into list
     # ---------------------------
-    media_list = []
     match media:
         # single medium
         case Medium():
-            media_list = [media]
+            media = [media]
         # list of media
         case list():
             if all(isinstance(_,Medium) for _ in media):
-                media_list = media
+                pass
             else:
                 raise TypeError('Unknown type found in media, should be list fo Medium.')
         # string - connection to YAML config file

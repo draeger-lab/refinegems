@@ -129,11 +129,11 @@ class GrowthSimulationReport(Report):
             List of the media names.
     """
 
-    def __init__(self, reports:list[SingleGrowthSimulationReport] = []):
+    def __init__(self, reports:list[SingleGrowthSimulationReport] = None):
 
-        self.reports = reports
-        self.models = set([_.model_name for _ in reports])
-        self.media = set([_.medium_name for _ in reports])
+        self.reports = reports if reports else []
+        self.models = set([_.model_name for _ in reports]) if reports else set()
+        self.media = set([_.medium_name for _ in reports]) if reports else set()
 
     def __str__(self) -> str:
         
