@@ -675,10 +675,10 @@ def get_essential_reactions_via_single_knockout(model: cobraModel) -> list[str]:
     for reaction in model.reactions:
         with model as model:
             reaction.knock_out()
-            model.optimize()
-            if model.objective_value <= 11:
+            sol = model.optimize().objective_value
+            if  sol <= 11:
                 print('%s blocked (bounds: %s), new growth rate %f $' %
-                      (reaction.id, str(reaction.bounds), model.objective.value))
+                      (reaction.id, str(reaction.bounds), sol))
                 ess.append(reaction.id)
 
     return ess
