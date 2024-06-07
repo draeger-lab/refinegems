@@ -5,6 +5,32 @@ Welcome to refineGEMs!
 Overview
 --------
 
+TODO: image can only link to html, but html or all three are the same!!!
+
+TODO: center images
+
+.. image:: ./images/buttons/Install.png
+  :width: 20%
+  :target: installation.html
+  :alt: Model refinement
+
+.. image:: ./images/buttons/Usage.png
+  :width: 20%
+  :target: main-modules.html
+  :alt: Annotation
+
+.. image:: ./images/buttons/Media.png
+  :width: 20%
+  :target: database/intro.html
+  :alt: Analysis and simulation
+
+.. image:: ./images/buttons/Code.png
+  :width: 20%
+  :target: api.html
+  :alt: Code
+
+
+
 Currently the ``refineGEMs`` toolbox includes the following features:
 
 * Loading GEMs with ``COBRApy`` and ``libSBML``

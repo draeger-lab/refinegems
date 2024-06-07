@@ -6,6 +6,7 @@ possible applications of refineGEMs in the context of different areas of model c
 
 Model refinement
 ----------------
+
 .. toctree:: 
 
     Automated polishing <modules-desc/polish>
