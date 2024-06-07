@@ -28,7 +28,7 @@ Quick Access to Main Sites
 
 .. raw:: html
 
-  <a class="reference external image-reference" href="installation.html">
+  <a class="reference external image-reference" href="usage.html">
     <img src='_images/Usage.png' alt='Model refinement' title='Model refinement' style="width: 20%;">
   </a>
 
@@ -38,7 +38,7 @@ Quick Access to Main Sites
 
 .. raw:: html
 
-  <a class="reference external image-reference" href="installation.html">
+  <a class="reference external image-reference" href="database/intro.html">
     <img src='_images/Media.png' alt='Media database' title='Media Database' style="width: 20%;">
   </a>
 
@@ -48,7 +48,7 @@ Quick Access to Main Sites
 
 .. raw:: html
 
-  <a class="reference external image-reference" href="installation.html">
+  <a class="reference external image-reference" href="api.html">
     <img src='_images/Code.png' alt='Code' title='Code' style="width: 20%;">
   </a>
 
@@ -84,8 +84,5 @@ When using ``refineGEMs``, please cite the latest publication:
    pipeline
    Help and FAQ <help>
    Notes for developers <development>
-
-* :ref:`genindex`
-* :ref:`search`
 
 .. footbibliography::
