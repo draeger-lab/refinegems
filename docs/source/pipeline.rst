@@ -1,6 +1,10 @@
 Pipeline: From genome sequence to draft model
 =============================================
 
+.. warning::
+
+    This pipeline will be moved to ``SPECIMEN`` and implemented there in a future update.
+
 Generating a model for an organism where no information on genes and proteins is obtainable via any database 
 causes the problem that the model will not contain valid database identifiers for any GeneProduct. To resolve this issue the 
 workflow in Figure :numref:`workflow` can be used.
