@@ -37,6 +37,9 @@ a.reference:visited {
 .wy-nav-content a.reference.internal {
     color: #b4a069 !important;
 }
+.wy-nav-content {
+    max-width: 75% !important;
+}
 /* In-line code*/
 code.literal {
     color: #368429 !important; /*#668924*/
