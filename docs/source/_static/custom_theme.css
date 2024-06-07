@@ -126,15 +126,3 @@ code.literal {
     white-space: normal !important;
 }
 
-/* text for hovering over image*/
-
-.title {
-    display: none;
-    position: relative;
-    text-align: center;
-    top: -170px;
-}
-
-.wrap:hover div.title {
-    display: block;
-}
