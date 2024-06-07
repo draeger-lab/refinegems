@@ -249,8 +249,8 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
         case 'id':
 
             # separate cp_model reactions into core and pan list
-            core_reac_list = [_.id for _ in cp_model.reactions if _.notes['pan-core']=='core']
-            pan_reac_list = [_.id for _ in cp_model.reactions if _.notes['pan-core']=='pan']
+            core_reac_list = [_.id for _ in cp_model.reactions if _.notes['core-pan']=='core']
+            pan_reac_list = [_.id for _ in cp_model.reactions if _.notes['core-pan']=='pan']
 
             # compare model to the core and pan reaction list
             results.core_reac = [_.id for _ in model.reactions if _.id in core_reac_list]
