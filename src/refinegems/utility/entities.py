@@ -13,6 +13,7 @@ import cobra
 import pandas as pd
 from random import choice 
 import re
+import warnings
 from string import ascii_uppercase, digits
 
 from Bio import Entrez
@@ -362,8 +363,11 @@ def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False, 
     return reac_or_metab_list_df
 
 
+# @TOCO check for new-ish functionalities / merge with create_gp and delete
 def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
     """Creates GeneProduct in the given model
+
+    **Deprecation warning**: will be deprecated in a future update.
 
     Args:
         - model (libModel): 
@@ -379,6 +383,9 @@ def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tu
             (1) GeneProduct: Created gene product
             (2) libModel: Model containing the created gene product
     """
+    mes = f'create_gpr_from_locus_tag will be deprecated in a future update.'
+    warnings.warn(mes,type=FutureWarning)
+
     Entrez.email = email
     name, locus = search_ncbi_for_gpr(locus_tag)
     gpr = model.getPlugin(0).createGeneProduct()

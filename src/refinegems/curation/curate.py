@@ -35,9 +35,12 @@ NH_PATTERN = re.compile('nh[3-4]')
     
 # add information from manual curation
 # ------------------------------------
-         
+
+# @ TODO : check against gapfill & co for new-ish functionalities and delete        
 def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
+
+    **Deprecation warning**: will be deprecated in a future update.
 
     Args:
         - model (libModel): 
@@ -51,6 +54,9 @@ def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -
         libModel: 
             Modified model with new reactions
     """
+    mes = f'add_reactions_from_table will be deprecated in a future update.'
+    warnings.warn(mes,type=FutureWarning)
+
     for reaction_info in tqdm(table.groupby('BIGG')):
         reac_id = reaction_info[0]
         if model.getReaction(str(reac_id)) is None:
@@ -78,8 +84,11 @@ def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -
     return model
 
 
+# @ TODO : check against gapfill & co for new-ish functionalities and delete     
 def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet metabs: Updates annotation of metabolites given in the table
+
+    **Deprecation warning**: will be deprecated in a future update.
 
     Args:
         - model (libModel): 
@@ -91,6 +100,9 @@ def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libMo
         libModel: 
             Modified model with new annotations
     """
+    mes = f'update_annotations_from_table will be deprecated in a future update.'
+    warnings.warn(mes,type=FutureWarning)
+
     table = table.drop(['Name', 'FORMULA', 'Notiz'], axis=1).fillna(0)
     table['PUBCHEM'] = table['PUBCHEM'].astype(int)
     for metab_info in tqdm(table.groupby('BIGG')):
