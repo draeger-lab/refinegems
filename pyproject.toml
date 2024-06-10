@@ -14,6 +14,7 @@ authors = [
 ]
 maintainers = [
     {name = "Tobias Fehrenbach"},
+    {name = "Nina Roßbach"},
 ]
 
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'

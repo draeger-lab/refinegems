@@ -81,7 +81,6 @@ When using ``refineGEMs``, please cite the latest publication:
    main-modules
    database/intro
    Content of refineGEMs <api>
-   pipeline
    Help and FAQ <help>
    Notes for developers <development>
 
