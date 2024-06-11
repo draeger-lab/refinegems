@@ -5,7 +5,7 @@ This page provides furth help if you run into problems with refineGEMs.
 
 .. warning::
 
-    With the release of version 2.0, refineGEMs will no longer work with Python ....
+    With the release of version 2.0, refineGEMs will only work with Python 3.10+.
 
 Help
 ----
