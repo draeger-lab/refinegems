@@ -1,6 +1,81 @@
 Development
 ===========
 
+To maintain or extend the toolbox ``refineGEMs`` please install the package via GitHub.
+
+.. warning::
+   refineGEMs requires at least Python 3.10 since version 2.0.0.
+
+.. hint::
+
+   For help and information about known bugs, refer to :ref:`Help and FAQ`.
+
+Installation for developers
+---------------------------
+
+Into a Conda environment
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setup a conda virtual environment and use its pip to install ``refineGEMs`` into that environment.
+
+.. code:: console
+
+   # clone or pull the latest source code
+   git clone https://github.com/draeger-lab/refinegems.git
+   cd refinegems
+
+   conda create -n <EnvName> python=<Specific Python version >= 3.10>
+
+   conda activate <EnvName>
+
+   # check that pip comes from <EnvName>
+   which pip
+
+   pip install .
+
+This will install all packags denoted in `pyproject.toml`. 
+
+If `which pip` does not show pip in the conda environment you can also create a local environment for which you can 
+control the path and use its pip:
+
+.. code:: console
+
+   conda create --prefix ./<EnvName>
+
+   conda activate <path to EnvName>
+
+   <EnvName>/bin/pip install .
+
+Into a Pipenv environment
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can use `pipenv <https://pipenv.pypa.io/en/latest/>`__ to keep all dependencies together. Therefore, you will need 
+to install ``pipenv`` first. To install ``refineGEMs`` locally complete the following steps:
+
+.. code:: console
+
+   # install pipenv using pip
+   pip install pipenv
+
+   # clone or pull the latest source code
+   git clone https://github.com/draeger-lab/refinegems.git
+   cd refinegems
+
+   # install all dependencies from Pipfile
+   pipenv install .
+
+   # initiate a session in the virtual environment
+   pipenv shell
+
+The ``pipenv`` package can also be installed via Anaconda (recommended
+if you are a Windows user).
+
+.. hint::
+
+   If you want to be able to savely import the package from anywhere while also retaining the possibility to edit the 
+   code, it is recommended to change the :code:`pip install` line from the code blocks to 
+   :code:`pip install -e . --config-settings editable_mode=strict`.
+
 Additional packages required for development
 --------------------------------------------
 
@@ -23,49 +98,32 @@ Installing the packages
 ^^^^^^^^^^^^^^^^^^^^^^^
 You can install the packages via pip to your local environment:
 
-.. code:: bash
+.. code:: console
     :class: copyable
 
     pip install accessible-pygments sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
 
-.. code:: bash
+.. code:: console
     :class: copyable
 
     python -m pip install pip-tools
-
-Troubleshooting of installation issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-| If you run into an error with pandoc, `here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
-| If you install pandoc with conda use:
-
-.. code:: bash
-    :class: copyable
-    
-    conda install -c conda-forge pandoc
-
-If you run into an error with jinja2, just switch to version 3.0.3:
-
-.. code:: bash
-    :class: copyable
-    
-    pip install jinja2==3.0.3
 
 Updating the `requirements.txt`
 -------------------------------
 | To create the `requirements.txt` adjust the `requirements.in` file as needed in the folder docs.
 | Then navigate to the folder docs in the command line:
 
-.. code-block:: bash
+.. code-block:: console
     :class: copyable
 
     cd docs
 
 and use the following command to automatically generate the new `requirements.txt`:
 
-.. code-block:: bash
+.. code-block:: console
     :class: copyable
     
-    python3.9 -m piptools compile --output-file=requirements.txt requirements.in
+    python3 -m piptools compile --strip-extras --output-file=requirements.txt requirements.in
 
 Debugging switches
 ------------------
@@ -80,7 +138,7 @@ Guidelines for code documentation
 We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. 
 To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
 
-If you use VSCode, a mustache file for the documentation style that can be integrated into VSCode can be found in the ``dev``` directory.
+If you use VSCode, a `mustache file for the documentation style <https://github.com/draeger-lab/refinegems/blob/dev-2/dev/docstring-format.mustache>`__ that can be integrated into VSCode (`dev <https://github.com/draeger-lab/refinegems/tree/dev-2/dev>`__ directory of refineGEMs).
 
 .. code:: python
     :linenos:

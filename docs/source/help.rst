@@ -1,17 +1,10 @@
 Help and FAQ
 ============
 
-This page provides furth help if you run into problems with refineGEMs.
-
-.. warning::
-
-    With the release of version 2.0, refineGEMs will only work with Python 3.10+.
+This page provides help if you run into problems with ``refineGEMs``.
 
 Help
 ----
-
-
-
 
 Known Issues and Bugs
 ---------------------
@@ -23,19 +16,74 @@ Known Issues and Bugs
 Pydantic
 ^^^^^^^^
 
-Pydantic warning `underscore_attrs_are_private has been removed` has not - yet - caused any issues
-however, the core of the problems (= what causes the warning) has yet to be identifies. 
+Pydantic warning `underscore_attrs_are_private has been removed` has not - yet - caused any issues.
+However, the core of the problem (= what causes the warning) has yet to be identified. 
 
 FAQ
 ---
 
-**When do I use ``lab_strain=True``?**
+This site addresses frequently asked questions not addressed in other pages of the ``refineGEMs`` documentation.
 
-Using ``lab_strain=True`` has the following two requirements:
+How do I install ``refineGEMs``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Please see :ref:`Installation`.
+
+How do I install ``refineGEMs`` as developer?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Please see :ref:`Installation for developers`.
+
+How do I cite ``refineGEMs``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Please see :ref:`How to cite`.
+
+After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Deactivate all environments including the base environment
+2. Activate base
+3. Activate the ``refineGEMs`` environment
+
+I cannot access ``python`` from within my conda environment in my VSCode terminal. What can I do?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Deactivate base and reactivate again:
+
+.. code:: console
+
+   conda deactivate
+   conda deactivate
+   conda activate base
+   conda activate <your conda env>
+
+.. note::
+    TODO: Merge both FAQs for conda environment in VSCode and wrong Python version with MacOS?
+
+My ``pipenv`` is not locking after f.ex. moving the repository. What can I do?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
+
+How to solve errors caused by ``pandoc`` (Development)?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+| `Here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
+| If you install pandoc with conda use:
+
+.. code:: console
+    :class: copyable
     
-    1. The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.
-        If there is no available data for the modeled organism in any database these identifiers can be added with 
-        the ``PGAB`` pipeline described in ``SPECIMEN`` before draft model creation.  
-    2. Input of a FASTA file containing header lines similar to:
-        >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-        Of the description part in the header line only locus_tag, protein and protein_id are important for :py:mod:`~refinegems.curation.polish`.
+    conda install -c conda-forge pandoc
+
+How to solve errors caused by ``jinja2`` (Development)?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Just switch to version 3.0.3:
+
+.. code:: console
+    :class: copyable
+    
+    pip install jinja2==3.0.3
+
+When do I use ``lab_strain=True``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the parameter ``lab_strain`` is set to ``True`` it is assumed that the input model was created for a strain of an 
+organism for which so far no data is available in any database. To get sufficient information for the knowledge-base 
+stored within the model of the strain the ``PGAB`` pipeline described in ``SPECIMEN`` should be used before model 
+creation. The resulting FASTA from the ``PGAB`` pipeline can then be used als input for CarveMe and is then also 
+required as additional input for :py:mod:`~refinegems.curation.polish`. In this case the parameter ``lab_strain`` should 
+be set to ``True``.
