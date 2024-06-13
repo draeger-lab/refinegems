@@ -28,8 +28,8 @@ How do I install ``refineGEMs``?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please see :ref:`Installation`.
 
-How do I install ``refineGEMs`` as developer?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+How do I install ``refineGEMs`` as a developer?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please see :ref:`Installation for developers`.
 
 How do I cite ``refineGEMs``?
@@ -39,22 +39,12 @@ Please see :ref:`How to cite`.
 After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1. Deactivate all environments including the base environment
-2. Activate base
-3. Activate the ``refineGEMs`` environment
+2. Activate your environment for ``refinegems``again
 
 I cannot access ``python`` from within my conda environment in my VSCode terminal. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Deactivate base and reactivate again:
+Please refer to the solution for :ref:`After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?`
 
-.. code:: console
-
-   conda deactivate
-   conda deactivate
-   conda activate base
-   conda activate <your conda env>
-
-.. note::
-    TODO: Merge both FAQs for conda environment in VSCode and wrong Python version with MacOS?
 
 My ``pipenv`` is not locking after f.ex. moving the repository. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -72,7 +62,7 @@ How to solve errors caused by ``pandoc`` (Development)?
 
 How to solve errors caused by ``jinja2`` (Development)?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Just switch to version 3.0.3:
+Try to switch to version 3.0.3:
 
 .. code:: console
     :class: copyable
