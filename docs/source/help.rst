@@ -38,8 +38,9 @@ Please see :ref:`How to cite`.
 
 After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1. Deactivate all environments including the base environment
-2. Activate your environment for ``refinegems``again
+2. Activate your environment for ``refinegems`` again
 
 I cannot access ``python`` from within my conda environment in my VSCode terminal. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
