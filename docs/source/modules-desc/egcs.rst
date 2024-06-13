@@ -60,12 +60,12 @@ Greedy approach
 
 **class** :py:class:`~refinegems.classes.egcs.GreedyEGCSolver`
 
-This approach is loosely based on :footcite:p:`fritzemeier2017erroneous`. 
+This approach is loosely based on :footcite:t:`fritzemeier2017erroneous`. 
 It is a greedy, mathematical approach, that tries to resolve the EGCs by changing the reactions modes
 of a single reaction each time and finding the smallest set of reactions that can resolve the biggest set of 
 found EGCs. The modifications of the reactions include:
 
-- make it reversible
+- make reaction reversible
 - delete backward reaction
 - delete forward reaction
 - delete complete reaction

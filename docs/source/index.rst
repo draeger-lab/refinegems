@@ -28,8 +28,8 @@ Quick access to main sites
 
 .. raw:: html
 
-  <a class="reference external image-reference" href="usage.html">
-    <img src='_images/Usage.png' alt='Usage' title='Usage' style="width: 20%;">
+  <a class="reference external image-reference" href="main-modules.html">
+    <img src='_images/Usage.png' alt='Applications' title='Applications' style="width: 20%;">
   </a>
 
 .. image:: images/buttons/Media.png
