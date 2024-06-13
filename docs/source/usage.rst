@@ -1,7 +1,10 @@
-Usage
-======
 
-This page show to to quickly access the ``refinegems`` toolbox. More more detailed examples see :ref:`About different applications`.
+Usage
+=====
+
+This page shows how to quickly access the ``refinegems`` toolbox. More more detailed examples see :ref:`About different applications`.
+
+----
 
 Access points
 -------------
@@ -34,6 +37,7 @@ Or, e.g.:
 
   from refinegems.analysis.growth import growth_analysis
   
+----
 
 The media database  
 ------------------

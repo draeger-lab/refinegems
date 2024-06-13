@@ -43,9 +43,8 @@ a.reference:visited {
 /* In-line code*/
 code.literal {
     color: #368429 !important; /*#668924*/
-    background-color: #fbfbfb !important;
+    background-color: #f7f4ee !important;
 }
-
 /* Function definition headers colouring */
 .sig.sig-object.py {
     color: #b4a069 !important;
