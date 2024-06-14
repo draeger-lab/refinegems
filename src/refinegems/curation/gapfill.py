@@ -70,34 +70,21 @@ def gap_analysis(model_libsbml: libModel, db_to_compare: Literal['KEGG', 'BioCyc
 
     Returns:
         (1) Case 'KEGG':
-
-            pd.DataFrame: 
-                Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
+                pd.DataFrame: 
+                    Table containing the columns 'bigg_id' 'locus_tag' 'EC' 'KEGG' 'name' 'GPR'
         
         (2) Case 'BioCyc':
-
-            tuple: Five tables (1) - (4)
-
-                (1) pd.DataFrame: 
-                    Gap fill statistics with the columns 
-                    'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
-
-                (2) pd.DataFrame: Genes with the columns 
-                    'locus_tag' 'protein_id' 'model_id' 'name'
-
-                (3) pd.DataFrame: Metabolites with the columns 
-                    'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'  
-                
-                (4) pd.DataFrame: Reactions with the columns 
-                    'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 
-                    'bigg_reaction'
+                tuple: 
+                    Five tables (1) - (4)
+                    
+                    (1) pd.DataFrame: Gap fill statistics with the columns 'Missing entity' 'Total' 'Have BiGG ID' 'Can be added' 'Notes'
+                    (2) pd.DataFrame: Genes with the columns 'locus_tag' 'protein_id' 'model_id' 'name'
+                    (3) pd.DataFrame: Metabolites with the columns 'bigg_id' 'name' 'BioCyc' 'compartment' 'Chemical Formula' 'InChI-Key' 'ChEBI' 'charge'      
+                    (4) pd.DataFrame: Reactions with the columns 'bigg_id' 'name' 'BioCyc' 'locus_tag' 'Reactants' 'Products' 'EC' 'Fluxes' 'Spontaneous?' 'bigg_reaction'
                 
         (3) Case 'KEGG+BioCyc':
-
-            tuple: 
-            
-                Five tables (1)-(4) from output of 'BioCyc' & (5) from output of 'KEGG'
-                -> Table reactions contains additionally column 'KEGG'
+                tuple: 
+                    Five tables (1)-(4) from output of 'BioCyc' & (5) from output of 'KEGG' -> Table reactions contains additionally column 'KEGG'
     """
     colorama_init(autoreset=True)
     result = None
@@ -282,8 +269,9 @@ def gapfill(
             Path to output file for gap analysis result
         
     Returns:
-        tuple: :py:func:`~refinegems.curation.gapfill.gap_analysis()` table(s) (1) & libSBML model (2)
-
+        tuple: 
+            :py:func:`~refinegems.curation.gapfill.gap_analysis()` table(s) (1) & libSBML model (2)
+            
             (1) pd.DataFrame|tuple(pd.DataFrame): Result from function :py:func:`~refinegems.curation.gapfill.gap_analysis()`
             (2) libModel: Gap filled model
     """

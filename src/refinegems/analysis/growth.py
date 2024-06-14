@@ -232,13 +232,13 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
             Defaults to False (returns reaction IDs).
 
     Returns:
-        (1) Case: combine = False
+        (1) Case ``combine = False``:
+                list: 
+                    List of the exchange reaction IDs of the additives.
 
-            list: List of the exchange reaction IDs of the additives.
-
-        (2) Case: combine = True
-
-            Medium: Supplemented medium as a dictionary.
+        (2) Case ``combine = True``:
+                Medium: 
+                    Supplemented medium as a dictionary.
     """
 
     # find essential exchange reactions
@@ -850,6 +850,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
 # -----------
 
 # @TODO : set new default for substances - ideally a subset or so
+# @TODO : Allow incomplete substance names to be valid, example: 'Glucose' instead of 'D-Glucose'
 # @TODO : more namespace options, currently only BiGG available
 def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|Medium=None, namespace:Literal['BiGG']='BiGG') -> SourceTestReport:
     """Test the growth of a model when switching out the source of a given chemical element for
