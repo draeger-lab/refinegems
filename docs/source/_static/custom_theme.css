@@ -41,10 +41,21 @@ a.reference:visited {
     max-width: 75% !important;
 }
 /* In-line code*/
-code.literal {
+code.docutils {
     color: #368429 !important; /*#668924*/
     background-color: #f7f4ee !important;
 }
+code.xref{
+    color: #b4a069 !important; /*#668924*/
+    background-color: #fbfbfb !important;
+}
+.rst-content code.xref{
+    font-weight: normal;
+}
+/* Special header line to separate pages */
+hr{
+    border-top: 1px solid #b4a069;
+} /* .docutils */
 /* Function definition headers colouring */
 .sig.sig-object.py {
     color: #b4a069 !important;
