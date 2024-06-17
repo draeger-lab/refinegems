@@ -56,7 +56,7 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
                 Can be a xml, json, yml or mat file.
 
         Raises:
-            ValueError: Unknown file extension
+            - ValueError: Unknown file extension
 
         Returns:
             cobra.Model: 
@@ -142,9 +142,8 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
             The filename to save the model to.
 
     Raises:
-        ValueError: Unknown file extension for model
-
-        TypeError: Unknown model type
+        - ValueError: Unknown file extension for model
+        - TypeError: Unknown model type
     """
 
     # save cobra model

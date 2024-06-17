@@ -67,7 +67,7 @@ def plot_rea_sbo_multiple(models: list[libModel], rename:dict=None,
             Defaults to (10,10).
 
     Raises:
-        TypeError: Unkown type for color_palette
+        - TypeError: Unkown type for color_palette
 
     Returns:
         matplotlib.figure.Figure: 

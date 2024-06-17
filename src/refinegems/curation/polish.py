@@ -676,7 +676,8 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
             List containing CURIEs
             
     Returns:
-        tuple: Two dictionaries (1) & (2)
+        tuple: 
+            Two dictionaries (1) & (2)
 
             (1) SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
             (2) list: List of CURIEs that are invalid according to bioregistry
@@ -978,7 +979,8 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
             True if new pattern is wanted, otherwise False
         
     Returns:
-        tuple: Two lists (1) & (2)
+        tuple: 
+            Two lists (1) & (2)
 
             (1) list: List of all collected invalid annotations of one entity
             (2) list: List of all collected invalid CURIEs of one entity
@@ -1030,7 +1032,8 @@ def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple
             True if new pattern is wanted, otherwise False
 
     Returns:
-        tuple: Two dictionnaries (1) & (2)
+        tuple: 
+            Two dictionnaries (1) & (2)
 
             (1) dictionary: Mapping of entity identifier to list of corresponding not MIRIAM compliant annotations 
             (2) dictionary: Mapping of entity identifier to list of corresponding invalid CURIEs
@@ -1383,7 +1386,7 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
             containing the BioCyc smart table.
 
     Raises:
-        TypeError: Unknown data type for parameter data
+        - TypeError: Unknown data type for parameter data
 
     Returns:
         cobra.Model: 

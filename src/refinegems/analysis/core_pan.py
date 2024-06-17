@@ -45,7 +45,7 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
             How and which IDs to extract. Defaults to 'id'.
 
     Raises:
-        ValueError: Unknown input for parameter based_on if not in given options.
+        - ValueError: Unknown input for parameter based_on if not in given options.
 
     Returns:
         list[str]: 
@@ -127,7 +127,7 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
             Defaults to ('core-pan','core').
 
     Raises:
-        ValueError: Unknown input for parameter based_on.
+        - ValueError: Unknown input for parameter based_on.
 
     Returns:
         list[cobra.Reaction]: 
@@ -235,7 +235,7 @@ def compare_to_core_pan(model:cobra.Model, cp_model:cobra.Model, based_on:Litera
             Defaults to 'id'.
 
     Raises:
-        ValueError: Unknown input for parameter based_on.
+        - ValueError: Unknown input for parameter based_on.
 
     Returns:
         CorePanAnalysisReport: 

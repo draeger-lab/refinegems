@@ -50,7 +50,7 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:Union[None,str,tuple[fl
             The user can set personal values by entering a tuple of two floats.
 
     Raises:
-        ValueError: Problematic input for bounds, if neither None, "cobra" or a tuple of floats is entered for reac_bounds.
+        - ValueError: Problematic input for bounds, if neither None, "cobra" or a tuple of floats is entered for reac_bounds.
     """
 
     # user-specific default bounds (tuple of two floats)
@@ -96,7 +96,7 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[s
             Defaults to '^EX'.
 
     Raises:
-        ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
+        - ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
 
     Returns:
         list[str]: 
@@ -567,30 +567,25 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
             Defaults to 'plot'.
 
     Raises:
-        TypeError: Unknown or mixed types in model list.       
+        - TypeError: Unknown or mixed types in model list.       
+        - KeyError: Empty list for models detected.      
+        - ValueError: Unknown input type for models.      
+        - TypeError: Unknown type found in media, should be list fo Medium.
+        - ValueError: Unknown input for media.        
+        - ValueError: Unknown input for retrieve      
 
-        KeyError: Empty list for models detected.      
-
-        ValueError: Unknown input type for models.      
-
-        TypeError: Unknown type found in media, should be list fo Medium.
-
-        ValueError: Unknown input for media.        
-
-        ValueError: Unknown input for retrieve       
-        
     Returns:
-        (1) Case: retrieve = report 
+        (1) Case: ``retrieve = report``:
+                GrowthSimulationReport: 
+                    The generated report object.
 
-            GrowthSimulationReport: the report
+        (2) Case: ``retrieve = plot``:
+                plt.Figure:
+                    The finished plot
 
-        (2) Case: retrieve = plot 
-
-            plt.Figure: the plot
-
-        (3) Case: retrieve = both 
-        
-            tuple: the report and the list
+        (3) Case: ``retrieve = both``:
+                tuple: 
+                    The (0) report and the graphic (1).
     """
 
     # read-in all models into list
@@ -767,7 +762,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
             Defaults to 'BiGG'.
 
     Raises:
-        ValueError: Unknown input for namespace parameter.
+        - ValueError: Unknown input for namespace parameter.
 
     Returns:
         AuxotrophySimulationReport: 
@@ -878,7 +873,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|
             Defaults to 'BiGG'.
 
     Raises:
-        KeyError: No growth function in model. Please add one beforehand.
+        - KeyError: No growth function in model. Please add one beforehand.
 
     Returns:
         SourceTestReport: 
@@ -987,7 +982,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
             Defaults to False.
 
     Raises:
-        ValueError: unknown objective.
+        - ValueError: unknown objective.
 
     Returns:
         Medium: 

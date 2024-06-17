@@ -218,7 +218,8 @@ def compare_to_modelseed(model: cobraModel) -> tuple[pd.DataFrame, pd.DataFrame]
             Model loaded with COBRApy
 
     Returns:
-        tuple: Tables with charge (1) & formula (2) mismatches
+        tuple: 
+            Tables with charge (1) & formula (2) mismatches
 
             (1) pd.DataFrame: Table with charge mismatches 
             (2) pd.DataFrame: Table with formula mismatches

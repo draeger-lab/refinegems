@@ -123,12 +123,12 @@ def test_biomass_consistency(model: cobraModel, reaction_id: str) -> Union[float
 
     Returns:
         (1) Case: problematic input
-
-            str: an error message.
+                str: 
+                    an error message.
         
         (2) Case: successful testing
-
-            float: biomass weight
+                float: 
+                    biomass weight
     """
     reaction = model.reactions.get_by_id(reaction_id)
     try:

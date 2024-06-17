@@ -425,7 +425,7 @@ class GrowthSimulationReport(Report):
                 Defaults to 'YlGn'.
 
         Raises:
-            ValueError: If the parameter 'how' is given something unexpected.
+            - ValueError: If the parameter 'how' is given something unexpected.
         """
 
         match how:
@@ -714,13 +714,13 @@ class AuxotrophySimulationReport(Report):
                 Path to a directory, if the output shall be saved. Defaults to None (returns the figure).
 
         Returns:
-            (1) Case: save = str
-
-                None: No return, as the visulaisation is directly saved.
+            (1) Case: ``save = str``
+                    None: No 
+                        return, as the visulaisation is directly saved.
             
-            (2) Case: save = None
-            
-                matplotlib.figure.Figure: The plotted figure.
+            (2) Case: ``save = None``
+                    matplotlib.figure.Figure: 
+                        The plotted figure.
         """
         
         # create colour gradient
@@ -951,7 +951,7 @@ class CorePanAnalysisReport(Report):
                 Defaults to 'reaction-count'.
 
         Raises:
-            ValueError: Unknown string for parameter check. 
+            - ValueError: Unknown string for parameter check. 
 
         Returns:
             bool: 

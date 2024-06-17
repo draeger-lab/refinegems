@@ -100,13 +100,13 @@ class EGCSolver():
                     Defaults to ['c','p'].
 
             Returns:
-                (1) Case: no found
-                    
-                    None: nothing to return
+                (1) Case: metabolites not found
+                        None: 
+                            nothing to return
                 
                 (2) Case: found  
-                
-                    dict: the mapping of IDs of the metabolites to the factors.
+                        dict: 
+                            The mapping of IDs of the metabolites to the factors.
             """
 
             found_ids = {}
@@ -245,16 +245,16 @@ class EGCSolver():
                 Defaults to ['c','p'].
 
         Returns:
-            (1) Case: with_reacs=False  
-            
-                list: List of found EGC names.
+            (1) Case: ``with_reacs = False``
+                    list: 
+                        List of found EGC names.
 
-            (2) Case: with_reacs=True 
-                
-                tuple: tuple of (1) dictionary & (2) list
+            (2) Case: ``with_reacs = True``
+                    tuple: 
+                        tuple of (1) dictionary & (2) list:
 
-                    (1) dict: dictionary of the EGCs 
-                    (2) list: their reactions that showed fluxes and the objective values of the test.
+                        (1) dict: dictionary of the EGCs 
+                        (2) list: their reactions that showed fluxes and the objective values of the test.
         """
         # add 15 energy dissipation reactions
         with model as mod_model:  
@@ -405,12 +405,12 @@ class GreedyEGCSolver(EGCSolver):
 
         Returns:
             (1) Case if EGCs removed  
-            
-                list: List of EGCs that can be removed with the change 
+                    list: 
+                        List of EGCs that can be removed with the change 
             
             (2) Case no removal possible  
-            
-                None: no return
+                    None: 
+                        no return
         """
 
         # set new reaction bounds
@@ -730,6 +730,8 @@ class GreedyEGCSolver(EGCSolver):
                    compartment:list=['c','p']) -> dict|None:
         """Run the complete greedy EGC solving process.
 
+        Note: The input model gets changed, if EGCs can be solved.
+
         Args:
             - model (cobra.Model): 
                 The model loaded with COBRApy.
@@ -750,8 +752,6 @@ class GreedyEGCSolver(EGCSolver):
                 - 'score': Score of the solution.
                 - 'remaining egcs': List of EGCs that could not be solved.
 
-                Note: additionally, the input model gets changed,
-                if EGCs can be solved.
         """
         egc_reactions, obj_vals = self.find_egcs(model, with_reacs=True,
                                                  namespace=namespace,

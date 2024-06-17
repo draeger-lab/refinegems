@@ -65,6 +65,7 @@ def are_compartment_names_valid(model:cobra.Model) -> bool:
     return True
 
 
+# @TODO extend + change else case?
 def resolve_compartment_names(model:cobra.Model):
     """Resolves compartment naming problems.
 
@@ -73,7 +74,7 @@ def resolve_compartment_names(model:cobra.Model):
             A COBRApy model object.
 
     Raises:
-        KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
+        - KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
     """
 
     # check if compartment names are valid
@@ -146,7 +147,7 @@ def get_reaction_annotation_dict(model:cobra.Model, db:Literal['KEGG','BiGG']) -
             The string denoting the database to map to.
 
     Raises:
-        ValueError: Unknown database string for paramezer db
+        - ValueError: Unknown database string for paramezer db
 
     Returns:
         dict: 
@@ -189,7 +190,7 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
             Defaults to ''.
 
     Raises:
-        ValueError: Unknown entity_type
+        - ValueError: Unknown entity_type
 
     Returns:
         str: 
@@ -238,9 +239,8 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
             The chosen namespace.
 
     Raises:
-        ValueError: Unknown input for namespace
-        
-        TypeError: Unknown type for model_entity
+        - ValueError: Unknown input for namespace
+        - TypeError: Unknown type for model_entity
     """
 
     match model_entity:
@@ -378,7 +378,8 @@ def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tu
             User Email to access the NCBI Entrez database
 
     Returns:
-        tuple: libSBML GeneProduct (1) & libSBML model (2)
+        tuple: 
+            libSBML GeneProduct (1) & libSBML model (2)
 
             (1) GeneProduct: Created gene product
             (2) libModel: Model containing the created gene product
@@ -414,7 +415,8 @@ def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein
             NCBI Protein/RefSeq ID
 
     Returns:
-        tuple: libSBML GeneProduct (1) & libSBML model (2)
+        tuple: 
+            libSBML GeneProduct (1) & libSBML model (2)
 
             (1) GeneProduct: Created gene product
             (2) libModel: Model containing the created gene product
@@ -453,7 +455,8 @@ def create_species(
             Chemical formula for the metabolite
 
     Returns:
-        tuple: libSBML Species (1) & libSBML model (2)
+        tuple: 
+            libSBML Species (1) & libSBML model (2)
             
             (1) Species: Created species/metabolite
             (2) libModel: Model containing the created metabolite
@@ -521,7 +524,8 @@ def create_reaction(
             List of genes belonging to reaction
 
     Returns:
-        tuple: libSBML reaction (1) & libSBML model (2)
+        tuple: 
+            libSBML reaction (1) & libSBML model (2)
         
             (1) Reaction: Created reaction 
             (2) libModel: Model containing the created reaction

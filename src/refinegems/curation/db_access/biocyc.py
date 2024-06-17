@@ -153,7 +153,8 @@ def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame) -> tuple
          missing genes
                                           
    Returns:
-      tuple: Two tables (1) & (2) 
+      tuple: 
+         Two tables (1) & (2) 
 
          (1) pd.DataFrame: Table with the column Compound containing all compounds required for the missing BioCyc reactions
          (2) pd.DataFrame: Table with the column bigg_id containing all compounds required for the missing BiGG reactions
@@ -191,14 +192,17 @@ def get_missing_reactions(
          'Reaction-Direction' 'Spontaneous?'
       
    Returns:
-      tuple: Tuple (1) & table (2)
+      tuple: 
+         Tuple (1) & table (2)
 
-         (1) tuple: Two tables (1) & (2)
+         (1) tuple: 
+               Two tables (1) & (2)
 
-            (1) pd.DataFrame: Table containing only the metabolites corresponding to the missing BioCyc reactions
-            (2) pd.DataFrame: Table containing only the metabolites corresponding to the missing BiGG reactions
+               (1) pd.DataFrame: Table containing only the metabolites corresponding to the missing BioCyc reactions
+               (2) pd.DataFrame: Table containing only the metabolites corresponding to the missing BiGG reactions
          
-         (2) pd.DataFrame: Table containing the missing reactions with the corresponding data
+         (2) pd.DataFrame: 
+               Table containing the missing reactions with the corresponding data
    """
    model_reacs = get_model_reacs_or_metabs(model_libsbml)
    biocyc_reacs = get_biocyc_reactions(inpath)
@@ -265,8 +269,7 @@ def get_missing_metabolites(
    model_libsbml: libModel, metabs_from_reacs: tuple[pd.DataFrame, pd.DataFrame], inpath: str
    ) -> pd.DataFrame: 
    """Subsets the BioCyc table with the following columns: 'Compound' 'Chemical Formula' 'InChI-Key' 'ChEBI'
-      to obtain the missing metabolites with all the corresponding data
-      & Adds the according BiGG Compound identifiers
+      to obtain the missing metabolites with all the corresponding data and adds the according BiGG Compound identifiers
       
    Args:
       - model_libsml (libModel): 
@@ -279,7 +282,8 @@ def get_missing_metabolites(
          'Compound' 'Chemical Formula' 'InChI-Key'
       
    Returns:
-      tuple: Two tables (1) & (2)
+      tuple: 
+         Two tables (1) & (2)
 
          (1) Table containing the metabolites corresponding to the missing reactions without BiGG IDs
          (2) Table containing the metabolites corresponding to the missing reactions with BiGG IDs
@@ -323,7 +327,8 @@ def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.D
          Path to a FASTA file where the headers contain the information protein_id and locus_tag
          
    Returns:
-      tuple: Two tables (1) & (2)
+      tuple: 
+         Two tables (1) & (2)
 
          (1) pd.DataFrame: Table with the columns locus_tag, Protein_id & Model_id 
                            (The model_id is similar to how CarveMe generates the GeneProduct ID.)
@@ -458,7 +463,8 @@ def biocyc_gene_comp(
          List of the files required for the BioCyc analysis
          
    Returns: 
-      tuple: Five tables (1) - (5)
+      tuple: 
+         Five tables (1) - (5)
 
          (1) pd.DataFrame: Table containing the statistics of the BioCyc gapfill analysis
          (2) pd.DataFrame: Table containing the missing genes that belong to the missing reactions

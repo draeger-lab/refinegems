@@ -103,12 +103,16 @@ def get_reaction_compartment(bigg_id: str) -> str:
 
     Returns:
 
-        (1) str: 
+        (1) Case ``compartment in COMPARTMENTS``
+                str: 
+                    Either 
+                    
+                    - Compartment of the provided reaction if reaction in single compartment
+                    - 'exchange' if reaction in multiple compartments
 
-            - Compartment of the provided reaction if reaction in single compartment
-            - 'exchange' if reaction in multiple compartments
-
-        (2) np.nan: 'NaN' if one of the found compartments is not in COMPARTMENTS
+        (2) Case not a valid compartment:
+                np.nan: 
+                    'NaN' if one of the found compartments is not in COMPARTMENTS
     """
     
     metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
@@ -215,7 +219,7 @@ def get_bigg_db_mapping(map_to:str='BioCyc', metabolites:bool=True) -> pd.DataFr
             Defaults to True.
 
     Raises:
-        KeyError: Given database name not found in database. Cannot perform mapping.
+        - KeyError: Given database name not found in database. Cannot perform mapping.
 
     Returns:
         pd.DataFrame: 

@@ -203,20 +203,20 @@ def run_memote(model: cobra.Model, type:Literal['json','html']='html',
             Defaults to False.
 
     Raises:
-        ValueError: Unknown input for parameter type
+        - ValueError: Unknown input for parameter type
 
     Returns:
-        (1) Case return_res = True and type = json 
+        (1) Case ``return_res = True`` and ``type = json``:
+                dict: 
+                    The json dictionary.
 
-            dict: The json dictionary.
+        (2) Case ``return_res = True`` and ``type = html``:
+                str: 
+                    The html string.
 
-        (2) Case return_res = True and type = html 
-
-            str: The html string.
-
-        (3) Case return_res = False
-        
-            None: no return
+        (3) Case ``return_res = False``:
+                None: 
+                    no return
     """
 
     # verbose output I

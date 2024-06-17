@@ -409,7 +409,7 @@ class Medium:
                 Specifies the output format type.
 
         Raises:
-            ValueError: Unknown format type for table.
+            - ValueError: Unknown format type for table.
 
         Returns:
             pd.DataFrame: 
@@ -543,7 +543,7 @@ class Medium:
                 Defaults to 80.
 
         Raises:
-            ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
+            - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
         """
 
         match type:
@@ -579,7 +579,7 @@ class Medium:
                 Double the flux of oxygen. Defaults to True.
 
         Raises:
-            ValueError: Unknown namespace.
+            - ValueError: Unknown namespace.
 
         Returns:
             dict[str,float]: 
@@ -645,7 +645,7 @@ def load_substance_table_from_db(mediumname: str, database:str,
             How to load the table. Defaults to 'standard'.
 
     Raises:
-        ValueError: Unknown type for loading the substance table.
+        - ValueError: Unknown type for loading the substance table.
 
     Returns:
         pd.DataFrame: 
@@ -698,7 +698,7 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
             How to load the medium. Defaults to 'standard'.
 
     Raises:
-        ValueError: Unknown medium name.
+        - ValueError: Unknown medium name.
 
     Returns:
         Medium: 
@@ -878,7 +878,7 @@ def read_external_medium(how:str, **kwargs) -> Medium:
             Available options are given above.
 
     Raises:
-        ValueError: Unknown description for how.
+        - ValueError: Unknown description for how.
 
     Returns:
         Medium: 

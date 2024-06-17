@@ -35,8 +35,8 @@ def correct_charges_from_db(model: libModel, compounds: pd.DataFrame) -> tuple[l
         tuple: 
             libSBML model (1) & dictionary 'metabolite_id': list(charges) (2)
 
-                (1) libModel: Model with added charges
-                (2) dict: Metabolites with respective multiple charges
+            (1) libModel: Model with added charges
+            (2) dict: Metabolites with respective multiple charges
     """
     spe = model.getListOfSpecies()
     mulchar = dict()
