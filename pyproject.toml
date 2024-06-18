@@ -34,34 +34,49 @@ classifiers = [
 
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
-    "cobra>=0.28.0", 
     "biopython>=1.79",
     "bioregistry>=0.10.132",
     "bioservices>=1.11.2",
-    "memote>=0.17.0", 
-    "pandas>=1.2.4",
-    "numpy>=1.20.3,<2.0.0",  # @TODO wait for update
-    "gffutils>=0.10.1",
-    "markupsafe>=2.0.1",
-    "depinfo>=1.7.0",
-    "sortedcontainers>=2.4.0",
-    "sqlite_dump>=0.1.1",
-    "libchebipy>=1.0.10",
-    "ratelimit>=2.2.1",
-    "sqlalchemy>=2.0.0",
-    "venn>=0.1.3",
-    "ols-client>=0.1.3",
-    "seaborn>=0.12.2",
-    "click>=8.1.3",
-    "z3-solver>=4.13.0.0",
-    "multiprocess>=0.70.16",
-    "cloup>=3.0.5",
     "bofdat", # @TODO write script to change it to be able to run it
-    "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration" # @TODO does not distribute all files
+    "click>=8.1.3",
+    "cloup>=3.0.5",
+    "cobra>=0.28.0", 
+    "depinfo>=1.7.0",
+    "gffutils>=0.10.1",
+    "libchebipy>=1.0.10",
+    "markupsafe>=2.0.1",
+    "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration", # @TODO does not distribute all files
+    'matplotlib >= 3.8.2',
+    "memote>=0.17.0", 
+    "multiprocess>=0.70.16",
+    "numpy>=1.20.3,<2.0.0",  # @TODO wait for update
+    "ols-client>=0.1.3",
+    "pandas>=1.2.4",
+    'pyyaml>=6.0.1',
+    "ratelimit>=2.2.1",
+    "seaborn>=0.12.2",
+    "sortedcontainers>=2.4.0",
+    "sqlalchemy>=2.0.0",
+    "sqlite_dump>=0.1.1",
+    "venn>=0.1.3",
+    "z3-solver>=4.13.0.0",
 ]
 
+[project.optional-dependencies]
+# developer/docs installation dependancies
+docs = ["accessible-pygments",
+       "sphinx", 
+       "nbsphinx",
+       "sphinx_rtd_theme",
+       "pandoc",
+       "ipython",
+       "sphinxcontrib-bibtex",
+       "sphinx_copybutton",
+       "pip-tools"]
+
 [project.urls]
-homepage = 'https://github.com/draeger-lab/refinegems'
+# homepage
+repository = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
 
 [project.scripts]
