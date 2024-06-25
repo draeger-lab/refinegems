@@ -37,7 +37,7 @@ from ..utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_f
 ################################################################################
 
 #------------------------------------------------ Constant variables --------------------------------------------------#
-BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN']
+BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta: 
     
 ################################################################################
 # functions

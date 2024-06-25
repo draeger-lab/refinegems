@@ -53,8 +53,8 @@ statistics_dict = {
       'Only metabolites that are required for the missing reactions',
       'Only reactions that belong to the missing genes/proteins'
       ]
-   }
-statistics_df = pd.DataFrame(statistics_dict).set_index('Missing entity')
+   } #: :meta: 
+statistics_df = pd.DataFrame(statistics_dict).set_index('Missing entity') #: :meta: 
 
 ############################################################################
 # functions

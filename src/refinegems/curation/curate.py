@@ -27,7 +27,7 @@ from .biomass import test_biomass_presence
 # variables
 ################################################################################
 
-NH_PATTERN = re.compile('nh[3-4]')
+NH_PATTERN = re.compile('nh[3-4]') #: :meta: 
 
 ################################################################################
 # functions

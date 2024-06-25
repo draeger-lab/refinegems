@@ -28,7 +28,7 @@ from typing import Literal,Union
 # variables
 ############################################################################
 
-MIN_GROWTH_THRESHOLD = 1.0e-5
+MIN_GROWTH_THRESHOLD = 1.0e-5 #: :meta: 
 
 ############################################################################
 # functions

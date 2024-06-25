@@ -95,6 +95,8 @@ master_doc = 'index'
 
 # -- Autodoc -----------------------------------------------------------------
 
+autodoc_preserve_defaults = True
+
 # we need those to display the code comments otherwise the functions cannot be imported
 # autodoc_mock_imports = ["psycopg2", 
 #                         "gffutils",

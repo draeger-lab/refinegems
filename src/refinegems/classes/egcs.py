@@ -41,9 +41,9 @@ DISSIPATION_RXNS = {
     "ACCOA": {"Acetyl-CoA": -1, "Water [H2O]": -1, "Hydrogen [H(+)]": 1, "Acetate [Acetic acid]": 1, "Coenzyme A": 1},
     "GLU": {"D-Glucose": -1, "Water [H2O]": -1, "2-Oxoglutarate [Oxoglutaric acid]": 1, "Ammonia": 1, "Hydrogen [H(+)]": 2},
     "PROTON": {"Hydrogen [H(+)]": 1, "Hydrogen [H(+)] transported": -1}
-}
+} #: :meta: 
 
-ECG_SCORING_MATRIX = {'MR':1, 'RB':3, 'RF':3,'RM':6}
+ECG_SCORING_MATRIX = {'MR':1, 'RB':3, 'RF':3,'RM':6} #: :meta: 
 
 ################################################################################
 # classes

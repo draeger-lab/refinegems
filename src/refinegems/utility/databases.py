@@ -21,10 +21,10 @@ from importlib.resources import files
 # variables
 ################################################################################
 
-PATH_TO_DB_FOLDER = files('refinegems.data.database')
-PATH_TO_DB = PATH_TO_DB_FOLDER.joinpath('data.db')
-VERSION_FILE = PATH_TO_DB_FOLDER.joinpath('current_bigg_db_version.txt')
-VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version'
+PATH_TO_DB_FOLDER = files('refinegems.data.database') #: :meta hide-value: 
+PATH_TO_DB = PATH_TO_DB_FOLDER.joinpath('data.db') #: :meta hide-value: 
+VERSION_FILE = PATH_TO_DB_FOLDER.joinpath('current_bigg_db_version.txt') #: :meta hide-value: 
+VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version' #: :meta: 
 
 ################################################################################
 # functions

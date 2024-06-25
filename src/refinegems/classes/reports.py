@@ -32,7 +32,7 @@ from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deade
 
 KEGG_GLOBAL_PATHWAY = {'01100': 'Metabolic pathways',
                        '01110': 'Biosynthesis of secondary metabolites',
-                       '01120': 'Microbial metabolism in diverse environments'}
+                       '01120': 'Microbial metabolism in diverse environments'} #: :meta: 
 
 KEGG_OVERVIEW_PATHWAY = {'01200': 'Carbon metabolism',
                          '01210': '2-Oxocarboxylic acid metabolism',
@@ -41,10 +41,10 @@ KEGG_OVERVIEW_PATHWAY = {'01200': 'Carbon metabolism',
                          '01232': 'Nucleotide metabolism',
                          '01250': 'Biosynthesis of nucleotide sugars',
                          '01240': 'Biosynthesis of cofactors',
-                         '01220': 'Degradation of aromatic compounds'}
+                         '01220': 'Degradation of aromatic compounds'} #: :meta: 
 
-KEGG_METABOLISM_PATHWAY = files('refinegems.data.pathway').joinpath('KEGG_pathway_metabolism.csv')
-KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"
+KEGG_METABOLISM_PATHWAY = files('refinegems.data.pathway').joinpath('KEGG_pathway_metabolism.csv') #: :meta hide-value: 
+KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023" #: :meta: 
 
 ################################################################################
 # classes

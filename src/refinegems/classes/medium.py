@@ -22,10 +22,10 @@ __author__ = "Carolin Brune"
 # variables
 ############################################################################
 
-ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG']
-REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source']
-INTEGER_REGEX = re.compile('^[-+]?([1-9]\d*|0)$')
-FLOAT_REGEX = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?')
+ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG'] #: :meta: 
+REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source'] #: :meta: 
+INTEGER_REGEX = re.compile('^[-+]?([1-9]\d*|0)$') #: :meta: 
+FLOAT_REGEX = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?') #: :meta:  
 
 ############################################################################
 # classes

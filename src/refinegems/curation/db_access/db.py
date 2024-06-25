@@ -26,15 +26,15 @@ from multiprocessing import Pool
 # variables
 ################################################################################
 
-ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y')
-ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm')
-BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/'
-BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/'
+ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y') #: :meta: 
+ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm') #: :meta: 
+BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
+BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
 
 # .............................................
 # @TODO : merge with compartment in entities.py
 # .............................................
-COMPARTMENTS = ('c', 'e', 'p')
+COMPARTMENTS = ('c', 'e', 'p') #: :meta: 
 
 ################################################################################
 # functions

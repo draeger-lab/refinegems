@@ -33,11 +33,12 @@ from .io import search_ncbi_for_gpr
 # ....................
 # @TODO
 #     extension needed
+#     + fusion with the stuff in db.py
 # ....................
-VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'}
+VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'} #: :meta: 
 COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
                 'C_c': 'c', 'C_e': 'e', 'C_p': 'p',
-                '':'y'}
+                '':'y'} #: :meta: 
 
 ################################################################################
 # functions
