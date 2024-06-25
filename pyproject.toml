@@ -45,7 +45,7 @@ dependencies = [
     "gffutils>=0.10.1",
     "libchebipy>=1.0.10",
     "markupsafe>=2.0.1",
-    "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration", # @TODO does not distribute all files
+    "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix", # @TODO wait for pull request
     'matplotlib >= 3.8.2',
     "memote>=0.17.0", 
     "multiprocess>=0.70.16",
