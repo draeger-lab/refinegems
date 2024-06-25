@@ -7,17 +7,13 @@ __author__ = 'Carolin Brune, Gwendolyn O. Döbel'
 # Requirements
 ################################################################################
 
-from traitlets import default
 from typing import Union, Literal
 import refinegems as rg
 import click
 import cloup
 from pathlib import Path
 import pandas as pd
-import logging
-import sys
 
-from refinegems.curation.db_access import biocyc
 from refinegems.utility.io import write_model_to_file
 
 ################################################################################
