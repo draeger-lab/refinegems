@@ -536,7 +536,8 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
     if locus2id is not None:
         locus2id = locus2id.set_index('ProteinID')
                     
-    id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment          
+    id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment
+    entry = None # Needs to be initialised, otherwise UnboundLocalError: local variable 'entry' referenced before assignment
     if protein_fasta:
         if protein_fasta.strip() != '': 
             id2locus_name = parse_fasta_headers(protein_fasta)
@@ -992,7 +993,8 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
     
     for cvterm in cvterms:
         tmp_list = []
-        
+        current_b_m_qt = None # Needs to be initialised, otherwise UnboundLocalError: local variable 'current_b_m_qt' referenced before assignment
+
         # Retrieve QualifierType & Biological/ModelQualifierType before resource is removed!
         current_qt = cvterm.getQualifierType()
                 
