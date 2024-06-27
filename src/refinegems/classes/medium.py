@@ -548,9 +548,9 @@ class Medium:
 
         match type:
             case 'tsv':
-                self.substance_table.to_csv(Path(dir,self.name + '_min_medium.' + '.tsv'), sep='\t', index=False)
+                self.substance_table.to_csv(Path(dir,self.name + '_min_medium' + '.tsv'), sep='\t', index=False)
             case 'csv':
-                self.substance_table.to_csv(Path(dir,self.name + '_min_medium.' + '.csv'), sep=';', index=False)
+                self.substance_table.to_csv(Path(dir,self.name + '_min_medium' + '.csv'), sep=';', index=False)
             case 'docs' | 'rst':
                 self.produce_medium_docs_table(folder = dir, max_width = max_widths)
             case _:
