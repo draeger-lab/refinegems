@@ -108,6 +108,13 @@ You can install the packages via pip to your local environment:
 
     python -m pip install pip-tools
 
+Alternatively, install the tool with the extra `docs`, e.g. 
+
+.. code:: console
+    :class: copyable
+
+     pip install -e ".[dev]" --config-settings editable_mode=strict  
+
 Updating the `requirements.txt`
 -------------------------------
 | To create the `requirements.txt` adjust the `requirements.in` file as needed in the folder docs.
@@ -187,3 +194,36 @@ We are also trying to make input and return types explicit by declaring those in
     def my_func(input1: int, input2: str, input3: Model) -> tuple[str, int]:
 
 More details for certain specifics can also be found `here <https://github.com/draeger-lab/refinegems/issues/74>`__.
+
+Information about working on the media database
+-----------------------------------------------
+
+Add of update information in the database
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+At the end of the :py:mod:`~refinegems.classes.medium` module are a set of funtions for automatic curation 
+of the database. 
+
+More information about how to run these can be found in the ``db_extension.ipynb`` notebook in the `dev <https://github.com/draeger-lab/refinegems/tree/dev-2/dev>`__ folder 
+inside the `GitHub repository <https://github.com/draeger-lab/refinegems/>`_.
+
+Create docs for media and subsets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After adding a new medium or subset to the database or updating existing information, 
+the new documentation pages (.rst) can be generated automatically
+
+For the media definition, use :py:func:`~refinegems.classes.medium.Medium.export_to_file`:
+
+.. code:: python
+    :linenos:
+
+    new_medium = load_medium_from_db(<name>)
+    new_medium.export_to_file(type='docs',dir=<path>)
+
+To create the documentation page for a subset, use :py:func:`~refinegems.classes.medium.generate_docs_for_subset`:
+
+.. code:: python 
+    :linenos:
+
+    generate_docs_for_subset(<name>,folder='<path>')

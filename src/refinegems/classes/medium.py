@@ -776,14 +776,10 @@ def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80)
         - max_width (int, optional): 
             Maximal table width for the documentation page. Defaults to 80.
     """
-
-    # make sure given directory path ends with '/'
-    if not folder.endswith('/'):
-        folder = folder + '/'
     
     name, description, subs = load_subset_from_db(subset_name)
 
-    with open(folder + f'{name}.rst', 'w') as f:
+    with open(Path(folder,f'{name}.rst'), 'w') as f:
         
         partition = max_width // 3
         width = f"{str(max_width-partition)} {partition}"
