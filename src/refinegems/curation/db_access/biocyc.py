@@ -226,6 +226,7 @@ def get_missing_reactions(
    
    # Subset missing_reactions with BiGG BioCyc
    missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
+   # TODO: collect non-matched entries // return all // namespace independance ????
    missing_reactions = bigg2biocyc_reacs.merge(missing_reactions, on='BioCyc')
    
    # Get amount of missing reactions that have a BiGG ID

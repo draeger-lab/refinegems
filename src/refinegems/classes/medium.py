@@ -821,8 +821,9 @@ def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80)
 def read_substances_from_file(path: str) -> pd.DataFrame: 
     """Read in a TSV with substance information into a table.
 
-    Format of the TSV:
-    name | formula | flux | source | X | X | ...
+    Format of the TSV (with example):
+    name \t formula \t flux \t source \t X \t X | ...
+    water \t H20 \t 10.0 \t .....
 
     X: placeholder for database names (columns filled with corresponding IDs of the substances)
     X = see ALLOWED_DATABASE_LINKS
@@ -858,7 +859,7 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
     return substance_table
 
 # @TEST file flag for how
-def read_external_medium(how:str, **kwargs) -> Medium:
+def read_external_medium(how:Literal['file','console'], **kwargs) -> Medium:
     """Read in an external medium. 
 
     Currently available options for how
@@ -873,7 +874,7 @@ def read_external_medium(how:str, **kwargs) -> Medium:
     Information should but do not need to contain name, description and reference.
 
     Args:
-        - how (str): 
+        - how (Literal['file','console']): 
             How (or from where) the medium should be read in.
             Available options are given above.
 

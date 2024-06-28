@@ -585,6 +585,8 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                 add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
+                # @TODO: Where does the "entry" below come from? 
+                # #      Is the variable name even correct?
                 if (locus2id is not None) and (entry in locus2id.index):
                     locus = locus2id.loc[entry, 'LocusTag']
 
@@ -997,12 +999,20 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
 
         # Retrieve QualifierType & Biological/ModelQualifierType before resource is removed!
         current_qt = cvterm.getQualifierType()
-                
-        if current_qt == BIOLOGICAL_QUALIFIER:
-            current_b_m_qt = cvterm.getBiologicalQualifierType()
-        elif current_qt == MODEL_QUALIFIER:
-            current_b_m_qt = cvterm.getModelQualifierType()
-            
+
+        match current_qt:
+
+            case BIOLOGICAL_QUALIFIER():
+                current_b_m_qt = cvterm.getBiologicalQualifierType()
+
+            case MODEL_QUALIFIER():
+                current_b_m_qt = cvterm.getModelQualifierType()
+
+            case _:
+                mes = f'Unknown qualifier type detected in model: {current_qt}'
+                raise TypeError(mes)
+
+
         current_uris = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
     
         for cu in current_uris:
