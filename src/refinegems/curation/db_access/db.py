@@ -10,17 +10,20 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 # requirements
 ################################################################################
 
+from multiprocessing import Pool
+import numpy as np
+import pandas as pd
+from ratelimit import limits, sleep_and_retry
 import re
 import requests
 import sqlite3
-import pandas as pd
+from tqdm import tqdm
+
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
-import numpy as np
+
 from ...utility.io import load_a_table_from_database
 from ...utility.databases import PATH_TO_DB
-from tqdm import tqdm
-from ratelimit import limits, sleep_and_retry
-from multiprocessing import Pool
+from ...utility.entities import VALID_COMPARTMENTS
 
 ################################################################################
 # variables
@@ -30,11 +33,6 @@ ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g',
 ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm') #: :meta: 
 BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
 BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
-
-# .............................................
-# @TODO : merge with compartment in entities.py
-# .............................................
-COMPARTMENTS = ('c', 'e', 'p') #: :meta: 
 
 ################################################################################
 # functions
@@ -103,7 +101,7 @@ def get_reaction_compartment(bigg_id: str) -> str:
 
     Returns:
 
-        (1) Case ``compartment in COMPARTMENTS``
+        (1) Case ``compartment in VALID_COMPARTMENTS.keys()``
                 str: 
                     Either 
                     
@@ -112,13 +110,13 @@ def get_reaction_compartment(bigg_id: str) -> str:
 
         (2) Case not a valid compartment:
                 np.nan: 
-                    'NaN' if one of the found compartments is not in COMPARTMENTS
+                    'NaN' if one of the found compartments is not in VALID_COMPARTMENTS.keys()
     """
     
     metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
             
     comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
-    contained_in_compartments = [(comp in COMPARTMENTS) for comp in comps]  # Get True for correct compartment        
+    contained_in_compartments = [(comp in VALID_COMPARTMENTS.keys()) for comp in comps]  # Get True for correct compartment        
     if not all(contained_in_compartments):  # At least one compartment not correct
         return np.nan
     else:  # All compartments correct
@@ -192,7 +190,7 @@ def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd
     complete_df.rename(columns={'bigg_id_list': 'bigg_id'}, inplace=True)  # Rename 'bigg_id_list' to 'bigg_id'
 
     # (2) Get all compartments for each reaction from BiGG database API
-    print(f'Getting all IDs with correct compartment {COMPARTMENTS}...')
+    print(f'Getting all IDs with correct compartment {VALID_COMPARTMENTS.keys()}...')
     results = multi_get_reaction_compartment(complete_df)
     complete_df["compartment"] = results
 
@@ -324,7 +322,7 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     if metabolites:
         def get_compartment_from_id(bigg_id: str):
             compartment = bigg_id[-1]
-            return compartment if compartment in COMPARTMENTS else np.nan  # To filter the incorrect compartments out
+            return compartment if compartment in VALID_COMPARTMENTS.keys() else np.nan  # To filter the incorrect compartments out
         
         entities_missing_in_model['compartment'] = entities_missing_in_model.apply(
             lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
