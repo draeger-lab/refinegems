@@ -22,6 +22,7 @@ from colorama import init as colorama_init
 from colorama import Fore, Style
 from datetime import date
 from functools import reduce
+import libsbml
 from libsbml import Model as libModel
 from libsbml import GeneProduct
 from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
@@ -1002,10 +1003,10 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
 
         match current_qt:
 
-            case BIOLOGICAL_QUALIFIER():
+            case libsbml.BIOLOGICAL_QUALIFIER:
                 current_b_m_qt = cvterm.getBiologicalQualifierType()
 
-            case MODEL_QUALIFIER():
+            case libsbml.MODEL_QUALIFIER:
                 current_b_m_qt = cvterm.getModelQualifierType()
 
             case _:
