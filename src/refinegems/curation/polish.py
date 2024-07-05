@@ -883,6 +883,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 curie_dict[prefix] = SortedSet()
             curie_dict[prefix].add(identifier)
             
+
     return curie_dict, invalid_curies
 
 def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
@@ -920,8 +921,8 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
                 separator = ':'
                 
             elif re.fullmatch('^biocyc$', prefix, re.IGNORECASE):  # Get identifier for biocyc
-                prefix = f'biocyc{SEPARATOR}META'
-                separator = ':'
+                prefix = f'biocyc' # META
+                # separator = ':'
 
             
             uri = MIRIAM + prefix + separator + identifier

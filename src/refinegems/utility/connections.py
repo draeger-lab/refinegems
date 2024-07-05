@@ -11,6 +11,7 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 import cobra
 import json
 import memote
+import shutil
 import tempfile
 import time
 import warnings
@@ -20,8 +21,12 @@ from BOFdat import step2
 from BOFdat.util import update
 from BOFdat.util.update import determine_coefficients
 
+from importlib.resources import files
+from libsbml import Model as libModel
 from MCC import MassChargeCuration
 from pathlib import Path
+from libsbml import readSBML
+from sboannotator.SBOannotator import sbo_annotator
 from typing import Literal
 
 from memote.support import consistency
@@ -29,8 +34,8 @@ from memote.support import consistency
 from memote.support import consistency_helpers as con_helpers
 
 from ..curation.biomass import test_biomass_presence
-from ..sboann import sbo_annotation
-from libsbml import Model as libModel
+from ..utility.io import write_model_to_file
+from ..curation.polish import polish_annotations
 
 # note:
 #    for BOFdat to run correctly, you need to change 'solution.f' to 'solution.objective_value'
@@ -274,7 +279,7 @@ def get_memote_score(memote_report: dict) -> float:
 # ------------
 
 # @TODO 
-#     change to usage of the actual SBOannotator (as soon as its works)
+#     currently only working with old pattern 
 def run_SBOannotator(model: libModel) -> libModel:
     """Run SBOannotator on a model to annotate the SBO terms.
 
@@ -286,4 +291,18 @@ def run_SBOannotator(model: libModel) -> libModel:
         libModel: 
             The model with corrected / added SBO terms.
     """
-    return sbo_annotation(model)
+
+    dbs_scheme = files('sboannotator').joinpath('create_dbs.sql')
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        # switch to old pattern
+        model = polish_annotations(model, False, False,str(Path(tempdir,'missingCurie')))
+        write_model_to_file(model,str(Path(tempdir,'tempmodel.xml')))
+        # run SBOannotator
+        doc = readSBML(str(Path(tempdir,'tempmodel.xml')))
+        model = doc.getModel()
+        copy_scheme = shutil.copy(dbs_scheme,Path(tempdir,'dbs.sql'))
+        model = sbo_annotator(doc,model,'constrained-based',str(Path(tempdir,'dbs')),str(Path(tempdir,'dud.xml')))
+        # re-switch to new pattern
+        model = polish_annotations(model, True, True,str(Path(tempdir,'missingCurie')))
+    return model
