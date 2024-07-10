@@ -296,7 +296,7 @@ def run_SBOannotator(model: libModel) -> libModel:
 
     with tempfile.TemporaryDirectory() as tempdir:
         # switch to old pattern
-        model = polish_annotations(model, False, False,str(Path(tempdir,'missingCurie')))
+        #model = polish_annotations(model, False, False,str(Path(tempdir,'missingCurie')))
         write_model_to_file(model,str(Path(tempdir,'tempmodel.xml')))
         # run SBOannotator
         doc = readSBML(str(Path(tempdir,'tempmodel.xml')))
@@ -304,5 +304,5 @@ def run_SBOannotator(model: libModel) -> libModel:
         copy_scheme = shutil.copy(dbs_scheme,Path(tempdir,'dbs.sql'))
         model = sbo_annotator(doc,model,'constrained-based',str(Path(tempdir,'dbs')),str(Path(tempdir,'dud.xml')))
         # re-switch to new pattern
-        model = polish_annotations(model, True, True,str(Path(tempdir,'missingCurie')))
+        # model = polish_annotations(model, True, True,str(Path(tempdir,'missingCurie')))
     return model
