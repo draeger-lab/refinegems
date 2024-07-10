@@ -1000,7 +1000,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
     # minimize_components = iteration
     # ...............................
 
-    # minimise the fluxes od the current medium
+    # minimise the fluxes of the current medium
     if objective == 'flux':
         max_growth = model.slim_optimize()
         min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
