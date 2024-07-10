@@ -71,6 +71,13 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
    rg.utility.io.write_model_to_file(pancore_mod,Path(dir,name +'.xml'))
 
+# ------------
+# get examples
+# ------------
+# @TODO
+#  def gapfill_table()
+
+
 # ----------------------
 # all about the media DB
 # ----------------------
