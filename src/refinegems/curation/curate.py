@@ -40,7 +40,9 @@ NH_PATTERN = re.compile('nh[3-4]') #: :meta:
 def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
 
-    **Deprecation warning**: will be deprecated in a future update.
+    .. warning::
+        .. deprecated:: 2.0.0
+           Use :py:func:`~refinegems.curation.gapfill.gapfill_model` instead.
 
     Args:
         - model (libModel): 
@@ -88,7 +90,9 @@ def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -
 def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet metabs: Updates annotation of metabolites given in the table
 
-    **Deprecation warning**: will be deprecated in a future update.
+    .. warning::
+        .. deprecated:: 2.0.0
+           Use :py:func:`~refinegems.curation.gapfill.gapfill_model` instead if you want to add completely new content.
 
     Args:
         - model (libModel): 
