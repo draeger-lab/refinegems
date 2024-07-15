@@ -33,11 +33,11 @@ Working with the Data
 
 For understanding the database and the data it contains, it is vital to understand the meaning of
 an *in silico* medium and how to transform a medium e.g. from the labratory (*in vivo* medium)
-into an *in silico* medium. 
+into an *in silico* medium. Our standardised aproach is described in :doc:`in_silico_media_generation`.
 
-Afterwards, you can find a detailed explaination of the database architecture.
+You can find a detailed explanation of the database architecture under :doc:`db_architecture`.
 
-Additionally, the last point refers to more information about accessing the database.
+Additionally, the last point refers to more information about accessing the database. ``TODO`` Worauf bezieht sich das hier genau?
 
 .. toctree::
 

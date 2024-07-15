@@ -56,7 +56,7 @@ Connections to other tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``refineGEMs`` also provides access points for other tools:
 
-* Reporting the `Memote <https://memote.readthedocs.io/en/latest/index.html>`__ score or generating a complete `Memote <https://memote.readthedocs.io/en/latest/index.html>`__ report
+* Reporting the `MEMOTE <https://memote.readthedocs.io/en/latest/index.html>`__ score or generating a complete MEMOTE report
 * Updating the SBO-Term annotations based on `SBOannotator <https://github.com/draeger-lab/SBOannotator>`__\ :footcite:p:`Leonidou2023_sboann`
 * Balancing the masses and charges with `MassChargeCuration (MCC) <https://github.com/Biomathsys/MassChargeCuration>`__\ :footcite:p:`Finnem2023_mcc`
 * Correcting a biomass objective function with `BOFdat <https://github.com/jclachance/BOFdat>`__
