@@ -37,7 +37,7 @@ dependencies = [
     "biopython>=1.79",
     "bioregistry>=0.10.132",
     "bioservices>=1.11.2",
-    "bofdat", # @TODO write script to change it to be able to run it
+    "bofdat@git+https://github.com/draeger-lab/BOFdat", # our fork with hot fix(es)
     "click>=8.1.3",
     "cloup>=3.0.5",
     "cobra>=0.28.0", 
