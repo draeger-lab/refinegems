@@ -162,6 +162,16 @@ def gaps():
 # Find gaps via genes
 # -------------------     
 def get_gap_analysis_input(db_to_compare: Literal['KEGG', 'BioCyc']) -> dict:
+   """Form to retrieve input files for :py:func:`~refinegems.curation.gapfill.gap_analysis`
+
+   Args:
+       - db_to_compare (Literal['KEGG', 'BioCyc']): 
+           Database to compare model content to
+
+   Returns:
+       dict: 
+           Input dictionary for :py:func:`~refinegems.curation.gapfill.gap_analysis`
+   """
 
    parameters2inputs = {'organismid': None, 'gff_file': None, 'biocyc_files': None}
 
