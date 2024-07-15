@@ -3,7 +3,7 @@ refineGEMs package
 
 Here is an overview on all functions. 
 
-For an alphabetically ordered list, see * :ref:`genindex`.
+For an alphabetically ordered list, see the :ref:`genindex`.
 
 Subpackages
 -----------
