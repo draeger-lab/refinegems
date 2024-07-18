@@ -431,12 +431,15 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     return pd.DataFrame(locus_tag2id)
 
 
-def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
-    """Parses gff file of organism to find gene protein reactions based on locus tags
+def parse_gff_for_gp_info(gff_file: str, old_locus:bool=False) -> pd.DataFrame:
+    """Parses gff file of organism to extract gene protein reaction - locus tag mapping.
 
     Args:
         - gff_file (str): 
             Path to gff file of organism of interest
+        - old_locus (bool, optional): 
+            Set to True to extract the old locus tag instead. 
+            Defaults to False.
 
     Returns:
         pd.DataFrame: 
@@ -463,7 +466,10 @@ def parse_gff_for_gp_info(gff_file: str) -> pd.DataFrame:
 
     def extract_locus(feature):
         try:
-            return db[feature].attributes['old_locus_tag'][0]
+            if old_locus:
+                return db[feature].attributes['old_locus_tag'][0]
+            else:
+                return db[feature].attributes['locus_tag'][0]
         except BaseException:
             pass
         return None

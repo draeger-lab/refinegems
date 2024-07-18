@@ -277,6 +277,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
 # extracting reactions & Co via libsbml
 # -------------------------------------
 
+# @DEPRECATED
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
     """Extracts KEGG Genes/Locus tags from given model
@@ -307,6 +308,7 @@ def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
 
 
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
+# Might be possible to deprecate
 def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg: bool=True) -> pd.DataFrame:
     """Compares the provided tables according to column 0/'Locus_tag'
     

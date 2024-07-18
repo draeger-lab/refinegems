@@ -97,6 +97,35 @@ def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
     return locus_ec
 
 
+# @NEW : better version of the KEGG parser in get_locus_ec
+def parse_KEGG_gene(locus_tag):
+    
+    gene_info = dict()
+    gene_info['orgid:locus'] = locus_tag
+    
+    # retireve KEGG gene entry 
+    k = KEGG()
+    gene_entry = k.parse(k.get(locus_tag))
+    
+    if 'ORTHOLOGY' in gene_entry.keys():
+        # gett KEGG orthology ID
+        kegg_orthology = list(gene_entry['ORTHOLOGY'].keys())
+        gene_info['kegg.orthology'] = kegg_orthology
+        # get EC number
+        ec_numbers = [re.search('(?<=EC:).*(?=\])',_).group(0) for _ in gene_entry['ORTHOLOGY'].values() if re.search('(?<=EC:).*(?=\])',_)]
+        gene_info['ec-code'] = ec_numbers
+
+    # get more information about connections to other databases
+    if 'DBLINKS' in gene_entry.keys():
+        for dbname, ids in gene_entry['DBLINKS'].items():
+            conform_dbname = re.sub(pattern='(NCBI)(.*)(ID$)', repl='\\1\\2',string=dbname) # Remove ID if NCBI in name
+            conform_dbname = re.sub('[^\w]','',conform_dbname) # remove special signs except underscore
+            conform_dbname = conform_dbname.lower() # make lower case
+            gene_info[conform_dbname] = ids
+
+    return gene_info
+
+
 def get_locus_ec_kegg(locus_ec: pd.DataFrame) -> pd.DataFrame:
     """Searches for KEGG reactions based on EC numbers
 
