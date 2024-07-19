@@ -73,8 +73,11 @@ class KEGGapFiller(GapFiller):
     def __init__(self, organismid) -> None:
         super().__init__()
         self.organismid = organismid
+        self.report = dict()
         
-    def get_missing_genes(self, model:libModel, gffpath:str, old_locus:bool=False):
+    # @TODO: progress bar and parallelising
+    # @TODO: logging
+    def get_missing_genes(self, model:libModel):
     
         # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis/entities --- Modified
         def get_model_genes(model: libModel) -> pd.DataFrame:
@@ -98,7 +101,8 @@ class KEGGapFiller(GapFiller):
                             if 'kegg.genes' in uri: 
                                 genes_in_model.append(re.split('kegg.genes:|kegg.genes/',uri)[1]) # work with olf/new pattern
 
-            return pd.DataFrame(genes_in_model)
+            return pd.DataFrame(genes_in_model, columns=['orgid:locus'])
+        
         
         # Step 1: get genes from model
         genes_in_model = get_model_genes(model)
@@ -115,18 +119,15 @@ class KEGGapFiller(GapFiller):
         # Step 4: extract locus tag
         genes_not_in_model['locus_tag'] = genes_not_in_model['orgid:locus'].str.split(':').str[1]
         
-        # Step 5: map to GFF
-        gff_info = parse_gff_for_gp_info(gffpath,old_locus)
-        genes_not_in_model.merge(gff_info,how='left',on='locus_tag')
-        
-        # Step 6: map to EC via KEGG
+        # Step 5: map to EC via KEGG
         geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].apply(parse_KEGG_gene)))
-        genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
+        genes_not_in_model = genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
         
         # @TODO : What to report where and when
         self.report['missing genes (total)'] = len(genes_not_in_model)
         
         return genes_not_in_model 
+    
     
     def get_missing_reacs(self, model, genes_not_in_model):
         
@@ -135,16 +136,20 @@ class KEGGapFiller(GapFiller):
         reac_model_list = [_.id[2:] for _ in reac_model_list] # crop 'R_' prefix
         reac_model_table = pd.DataFrame({'id':reac_model_list}) # @TODO : only uses the ID
         
-        
-        # Step 2: mapping based on KEGG gene ID  
-        #   -> maybe better in previous function as only for gene
-        
+        # Step 2: filter missing gene list + extract ECs
+        # @TODO: what should happen, if no ec-code was found -> output sth?
+        reac_options = genes_not_in_model[['ec-code','ncbiprotein']]        # get relevant infos for reacs
+        missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
+        # transform table into EC-number vs. list of NCBI protein IDs
+        eccode = missing_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        ncbiprot = missing_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        missing_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
+        missing_reacs.groupby(missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
+                
         # Step 3: mapping based on EC number (via KEGG)
         
         # Step 4: map to BiGG
-        
-        
-        
+
         # Step 6: compare to model 
         
         pass 

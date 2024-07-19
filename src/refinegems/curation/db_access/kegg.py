@@ -49,6 +49,7 @@ def get_kegg_genes(organismid: str) -> pd.DataFrame:
     return pd.read_table(io.StringIO(gene_list), header=None)
 
 
+# @DEPRECATED : still needed 
 def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
     """Creates columns with EC numbers for the locus tags of the genes
 
@@ -113,7 +114,8 @@ def parse_KEGG_gene(locus_tag):
         gene_info['kegg.orthology'] = kegg_orthology
         # get EC number
         ec_numbers = [re.search('(?<=EC:).*(?=\])',_).group(0) for _ in gene_entry['ORTHOLOGY'].values() if re.search('(?<=EC:).*(?=\])',_)]
-        gene_info['ec-code'] = ec_numbers
+        if isinstance(ec_numbers,list) and len(ec_numbers) > 0:
+            gene_info['ec-code'] = ec_numbers
 
     # get more information about connections to other databases
     if 'DBLINKS' in gene_entry.keys():
