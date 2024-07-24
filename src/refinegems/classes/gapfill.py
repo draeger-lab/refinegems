@@ -16,9 +16,11 @@ from libsbml import Model as libModel
 from bioservices.kegg import KEGG
 import io
 import re
+from tqdm import tqdm
+tqdm.pandas()
 
-from ..utility.io import parse_gff_for_gp_info
-from ..curation.db_access.kegg import parse_KEGG_gene
+from ..utility.io import load_a_table_from_database
+from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 
 ############################################################################
 # variables
@@ -39,9 +41,9 @@ class GapFiller(ABC):
         self.geneid_type = 'ncbi' # @TODO
         self._statistics = dict()
         
-    @abstractmethod
-    def load_gene_list(self):
-        pass
+    #@abstractmethod
+    #def load_gene_list(self):
+    #    pass
 
     @abstractmethod
     def get_missing_genes(self, model):
@@ -73,7 +75,8 @@ class KEGGapFiller(GapFiller):
     def __init__(self, organismid) -> None:
         super().__init__()
         self.organismid = organismid
-        self.report = dict()
+        # self.report = dict()
+        self.manual_curation = dict()
         
     # @TODO: progress bar and parallelising
     # @TODO: logging
@@ -105,54 +108,109 @@ class KEGGapFiller(GapFiller):
         
         
         # Step 1: get genes from model
+        # ----------------------------
         genes_in_model = get_model_genes(model)
         
         # Step 2: get genes of organism from KEGG
+        # ---------------------------------------
         gene_KEGG_list = KEGG().list(self.organismid)
         gene_KEGG_table = pd.read_table(io.StringIO(gene_KEGG_list), header=None)
         gene_KEGG_table.columns = ['orgid:locus','CDS','position','protein']
         gene_KEGG_table = gene_KEGG_table[['orgid:locus']]
         
         # Step 3: KEGG vs. model genes -> get missing genes for model
+        # ----------------------------
         genes_not_in_model = gene_KEGG_table[~gene_KEGG_table['orgid:locus'].isin(genes_in_model['orgid:locus'])]
         
         # Step 4: extract locus tag
+        # -------------------------
         genes_not_in_model['locus_tag'] = genes_not_in_model['orgid:locus'].str.split(':').str[1]
         
         # Step 5: map to EC via KEGG
-        geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].apply(parse_KEGG_gene)))
+        # --------------------------
+        # @DEBUGGING ...................
+        # genes_not_in_model = genes_not_in_model.iloc[330:350,:]
+        # ..............................
+        geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].progress_apply(parse_KEGG_gene)))
         genes_not_in_model = genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
         
         # @TODO : What to report where and when
-        self.report['missing genes (total)'] = len(genes_not_in_model)
+        # self.report['missing genes (total)'] = len(genes_not_in_model)
         
         return genes_not_in_model 
     
-    
+    # @TODO : logging
+    # @TODO : paralellising possibilities?
+    # @TODO : progress bar
     def get_missing_reacs(self, model, genes_not_in_model):
         
         # Step 1: get reactions from model 
+        # --------------------------------
         reac_model_list = model.getListOfReactions()
         reac_model_list = [_.id[2:] for _ in reac_model_list] # crop 'R_' prefix
-        reac_model_table = pd.DataFrame({'id':reac_model_list}) # @TODO : only uses the ID
-        
+
         # Step 2: filter missing gene list + extract ECs
-        # @TODO: what should happen, if no ec-code was found -> output sth?
+        # ----------------------------------------------
         reac_options = genes_not_in_model[['ec-code','ncbiprotein']]        # get relevant infos for reacs
         missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
+        self.manual_curation['genes'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
+        # check, if any automatic gapfilling is possible
+        if len(missing_reacs) == 0:
+            return None
         # transform table into EC-number vs. list of NCBI protein IDs
         eccode = missing_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
         ncbiprot = missing_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
         missing_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
-        missing_reacs.groupby(missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
+        missing_reacs = missing_reacs.groupby(missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
+        
+        # Step 3: Map to MetaNetX
+        # -----------------------
+        # convert table into one EC-number a row
+        mnx_reac_prop = load_a_table_from_database('mnx_reac_prop',False)
+        mnx_reac_prop.drop('is_balanced', inplace=True, axis=1)
+        mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(';') if isinstance(x,str) else None)
+        mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
+        # merge tables on EC-number
+        reacs_mapped = missing_reacs.merge(mnx_reac_prop, on='ec-code', how='left')
+        reacs_mapped.rename({'mnx_equation':'equation'}, inplace=True, axis=1)
+        reacs_mapped['via'] = reacs_mapped['id'].apply(lambda x: 'MetaNetX' if x else None)
                 
-        # Step 3: mapping based on EC number (via KEGG)
-        
         # Step 4: map to BiGG
+        # -------------------
+        if reacs_mapped.id.isnull().values.any():
+            # load BiGG reaction namespace
+            bigg_reacs = load_a_table_from_database('bigg_reactions',False)
+            bigg_reacs.dropna(subset='EC Number', inplace=True)
+            bigg_reacs = bigg_reacs[['id','reaction_string','EC Number']].rename({'reaction_string':'equation','EC Number':'ec-code'}, inplace=False, axis=1)
+            bigg_reacs['ec-code'] = bigg_reacs['ec-code'].apply(lambda x: x.split(',') if isinstance(x,str) else None)
+            bigg_reacs = bigg_reacs.explode('ec-code')
+            # merge unmapped entries with BiGG on EC-number 
+            bigg_mapping = reacs_mapped[reacs_mapped['id'].isnull()][['ec-code','ncbiprotein']].merge(bigg_reacs, on=['ec-code'], how='left')
+            bigg_mapping['via'] = bigg_mapping['id'].apply(lambda x: 'BiGG' if x else None)
+            # combine with MNX results
+            reacs_mapped = pd.concat([reacs_mapped[~reacs_mapped['id'].isnull()],bigg_mapping], axis=0, ignore_index=True)
 
-        # Step 6: compare to model 
-        
-        pass 
+        # Step 5: Map to KEGG
+        # ------------------- 
+        if reacs_mapped.id.isnull().values.any():
+            # get KEGG EC number information
+            kegg_mapped = pd.DataFrame.from_dict(list(reacs_mapped[reacs_mapped['id'].isnull()]['ec-code'].progress_apply(parse_KEGG_ec)))
+            # kegg_mapped = kegg_mapped.explode('id')      
+            kegg_mapped['is_transport'] = None
+            kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
+            # join with NCBI protein ID
+            kegg_mapped = reacs_mapped[reacs_mapped['id'].isnull()][['ec-code','ncbiprotein']].merge(kegg_mapped, on=['ec-code'], how='left')
+            # merge with input
+            reacs_mapped = pd.concat([reacs_mapped[~reacs_mapped['id'].isnull()],kegg_mapped], axis=0, ignore_index=True)
+            reacs_mapped.mask(reacs_mapped.isna(), other=None, inplace=True)
+                
+        # Results
+        # -------
+        reacs_mapped = reacs_mapped.explode('id', ignore_index=True).explode('id', ignore_index=True)
+        # need manual curation
+        self.manual_curation['reacs'] = reacs_mapped[reacs_mapped['id'].isnull()]
+                
+        return reacs_mapped[~reacs_mapped['id'].isnull()] 
     
     
 # ----------------------

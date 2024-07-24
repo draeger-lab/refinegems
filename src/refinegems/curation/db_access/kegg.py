@@ -21,6 +21,7 @@ import pandas as pd
 import re
 
 from bioservices.kegg import KEGG
+from Bio.KEGG import REST, Gene, Enzyme
 from libsbml import Model as libModel
 
 from ...utility.io import parse_gff_for_gp_info
@@ -49,7 +50,7 @@ def get_kegg_genes(organismid: str) -> pd.DataFrame:
     return pd.read_table(io.StringIO(gene_list), header=None)
 
 
-# @DEPRECATED : still needed 
+# @DEPRECATED : still needed ?
 def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
     """Creates columns with EC numbers for the locus tags of the genes
 
@@ -99,7 +100,7 @@ def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
 
 
 # @NEW : better version of the KEGG parser in get_locus_ec
-def parse_KEGG_gene(locus_tag):
+def bioservices_parse_KEGG_gene(locus_tag):
     
     gene_info = dict()
     gene_info['orgid:locus'] = locus_tag
@@ -108,6 +109,12 @@ def parse_KEGG_gene(locus_tag):
     k = KEGG()
     gene_entry = k.parse(k.get(locus_tag))
     
+    # skip, if no entry found
+    if not gene_entry:
+        gene_info['ec-code'] = None
+        return gene_info
+    
+    # extract orthology and ec-code
     if 'ORTHOLOGY' in gene_entry.keys():
         # gett KEGG orthology ID
         kegg_orthology = list(gene_entry['ORTHOLOGY'].keys())
@@ -115,7 +122,10 @@ def parse_KEGG_gene(locus_tag):
         # get EC number
         ec_numbers = [re.search('(?<=EC:).*(?=\])',_).group(0) for _ in gene_entry['ORTHOLOGY'].values() if re.search('(?<=EC:).*(?=\])',_)]
         if isinstance(ec_numbers,list) and len(ec_numbers) > 0:
-            gene_info['ec-code'] = ec_numbers
+            gene_info['ec-code'] = [ec for ec_str in ec_numbers for ec in ec_str.split(' ')]
+            
+    if not 'ec-code' in gene_info.keys():
+        gene_info['ec-code'] = None
 
     # get more information about connections to other databases
     if 'DBLINKS' in gene_entry.keys():
@@ -126,6 +136,130 @@ def parse_KEGG_gene(locus_tag):
             gene_info[conform_dbname] = ids
 
     return gene_info
+
+# @NEW / FASTER version of the above using Biopython
+def parse_KEGG_gene(locus_tag):
+    
+    gene_info = dict()
+    gene_info['orgid:locus'] = locus_tag
+    
+    # retireve KEGG gene entry 
+    try: 
+        gene_entry = list(Gene.parse(REST.kegg_get(locus_tag)))[0]
+    except Exception as e:
+        # @TODO : warning / logging
+        gene_entry = None
+    
+    # skip, if no entry found
+    if not gene_entry:
+        gene_info['ec-code'] = None
+        return gene_info
+    
+    # extract orthology and ec-code
+    if len(gene_entry.orthology) > 0:
+        # gett KEGG orthology ID
+        kegg_orthology = [_[0] for _ in gene_entry.orthology]
+        gene_info['kegg.orthology'] = kegg_orthology
+        # get EC number
+        ec_numbers = [re.search('(?<=EC:).*(?=\])',orth[1]).group(0) for orth in gene_entry.orthology if re.search('(?<=EC:).*(?=\])',orth[1])]
+        if isinstance(ec_numbers,list) and len(ec_numbers) > 0:
+            gene_info['ec-code'] = [ec for ec_str in ec_numbers for ec in ec_str.split(' ')]
+            
+    if not 'ec-code' in gene_info.keys():
+        gene_info['ec-code'] = None
+        
+    # get more information about connections to other databases
+    if len(gene_entry.dblinks) > 0:
+        for dbname,ids in gene_entry.dblinks:
+            conform_dbname = re.sub(pattern='(NCBI)(.*)(ID$)', repl='\\1\\2',string=dbname) # Remove ID if NCBI in name
+            conform_dbname = re.sub('[^\w]','',conform_dbname) # remove special signs except underscore
+            conform_dbname = conform_dbname.lower() # make lower case
+            gene_info[conform_dbname] = ids
+            
+    return gene_info
+            
+    
+# @NEW : better version of the KEGG parser in get_locus_ec_kegg
+def bioservices_parse_KEGG_ec(ec):
+    
+    ec_info = dict()
+    ec_info['ec-code'] = ec
+    
+    # retrieve KEGG entry
+    k = KEGG()
+    ec_entry = k.parse(k.get(ec))
+    
+    # retrieve reaction information from entry 
+    if 'ALL_REAC' in ec_entry.keys():
+        ec_info['id'] = [_.rstrip(';') for _ in ec_entry['ALL_REAC'] ]
+        if '(other)' in ec_info['id']:
+            ec_info['id'].remove('(other)')
+    else:
+        ec_info['id'] = None
+        
+    # retrieve reaction equation
+    if not ec_info['id'] and 'REACTION' in ec_entry.keys():
+        ec_info['equation'] = [" ".join(_) for _ in ec_entry['REACTION']]
+    else:
+        ec_info['equation'] = None
+    
+    # retrieve database links from entry
+    refs = dict()
+    if 'ORTHOLOGY' in ec_entry.keys():
+        refs['kegg.orthology'] = list(ec_entry['ORTHOLOGY'].keys())
+    if 'PATHWAY' in ec_entry.keys():
+        refs['kegg.pathway'] = list(ec_entry['PATHWAY'].keys())
+    # @TODO extend as needed
+    if 'DBLINKS' in ec_entry.keys():
+        for dbname, ids in ec_entry['DBLINKS'].items():
+            if 'BRENDA' in dbname:
+                refs['brenda'] = ids
+            if 'CAS' == dbname:
+                refs['cas'] = ids
+    ec_info['reference'] = refs
+    
+    return ec_info
+
+# @NEW / FASTER version of the above using Biopython
+def parse_KEGG_ec(ec):
+    
+    ec_info = dict()
+    ec_info['ec-code'] = ec
+    
+    # retrieve KEGG entry
+    try:
+        ec_entry = list(Enzyme.parse(REST.kegg_get(ec)))[0]
+    except Exception as e:
+        # @TODO logging / warning
+        ec_entry = None
+        ec_info['id'] = None
+        ec_info['equation'] = None
+        return ec_info
+    
+    # retrieve reaction information from entry 
+    rn_numbers = [re.search('(?<=RN:).*(?=\])',reac).group(0) for reac in ec_entry.reaction if re.search('(?<=RN:).*(?=\])',reac)]
+    if len(rn_numbers) > 0:
+        ec_info['id'] = [_.split(' ') for _ in rn_numbers]
+        ec_info['equation'] = None
+    else:
+        ec_info['id'] = None
+        ec_info['equation'] = ec_entry.reaction
+        
+    # retrieve database links from entry
+    refs = dict()
+    # orthology not possible with biopython
+    if len(ec_entry.pathway) > 0:
+        refs['kegg.pathway'] = [_[1] for _ in ec_entry.pathway]
+    # @TODO extend as needed
+    if len(ec_entry.dblinks) > 0:
+        for dbname, ids in ec_entry.dblinks:
+            if 'BRENDA' in dbname:
+                refs['brenda'] = ids
+            if 'CAS' == dbname:
+                refs['cas'] = ids
+    ec_info['reference'] = refs
+    
+    return ec_info
 
 
 def get_locus_ec_kegg(locus_ec: pd.DataFrame) -> pd.DataFrame:
