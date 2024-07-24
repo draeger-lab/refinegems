@@ -1,7 +1,7 @@
 """_summary_
 """
 
-__author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Carolin Brune"
+__author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihaneh Mostolizadeh"
 
 ############################################################################
 # requirements
@@ -19,7 +19,9 @@ import re
 from tqdm import tqdm
 tqdm.pandas()
 
+from ..curation.db_access.db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs
 from ..utility.io import load_a_table_from_database
+from ..utility.entities import get_model_reacs_or_metabs
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 
 ############################################################################
@@ -218,11 +220,26 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 
 class BioCycGapFiller(GapFiller):
+    """
+    | @TODO: Write correct doc string
+    |
+    |
+    |
+    |These three TXT files can be obtained through creating SmartTables in BioCyc and exporting these as 
+    |Spreadsheets with the parameter FrameID (one & two) or Common name (three). 
+    |SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
+    |SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
+    |SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
+
+    Args:
+        - GapFiller (_type_): 
+            _description_
+    """
 
     def __init__(self, model: libModel, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str) -> None:
         super().__init__()
         self._biocyc_gene_tbl = self.biocyc_gene_tbl(biocyc_gene_tbl_path) # @TODO: Das ist eigtl self.full_gene_list von GapFiller!
-        self._biocyc_reacs_tbl = self.biocyc_reacs_tbl(biocyc_reacs_tbl_path)
+        self._biocyc_rxn_tbl = self.biocyc_rxn_tbl(biocyc_reacs_tbl_path)
         self._model = model
         self.missing_biocyc_genes = None
         self.missing_biocyc_reacs = None
@@ -256,11 +273,11 @@ class BioCycGapFiller(GapFiller):
         self._BioCyc_gene_tbl = biocyc_genes
 
     @property
-    def biocyc_reacs_tbl(self):
-        return self._biocyc_reacs_tbl
+    def biocyc_rxn_tbl(self):
+        return self._biocyc_rxn_tbl
 
-    @biocyc_reacs_tbl.setter
-    def biocyc_reacs_tbl(biocyc_reacs_tbl_path: str) -> pd.DataFrame:
+    @biocyc_rxn_tbl.setter
+    def biocyc_rxn_tbl(biocyc_reacs_tbl_path: str) -> pd.DataFrame:
         """Parses TSV file from BioCyc to retrieve 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number',
            'Reaction-Direction' & 'Spontaneous?'
 
@@ -281,7 +298,7 @@ class BioCycGapFiller(GapFiller):
                                      dtype=str
                                      )
         biocyc_reacs.rename(columns=
-                            {'Reactants of reaction': 'Reactants', 'Products of reaction': 'Products', 'EC-Number': 'EC'},
+                            {'Reactants of reaction': 'Reactants', 'Products of reaction': 'Products', 'EC-Number': 'ec-code'},
                             inplace=True
                             )
         biocyc_reacs.replace('', np.nan, inplace=True)
@@ -294,100 +311,76 @@ class BioCycGapFiller(GapFiller):
         """
         
         # Step 1: get genes from model
-        geneps_in_model = [_.getLabel() for _ in self.model.getPlugin(0).getListOfGeneProducts()]
+        # ----------------------------
+        geneps_in_model = [_.getLabel() for _ in self._model.getPlugin(0).getListOfGeneProducts()]
 
         # Step 2: Get genes of organism from BioCyc
+        # -----------------------------------------
         # For now see setter: BioCyc_gene_tbl
         
         # Step 3: BioCyc vs. model genes -> get missing genes for model
+        # -------------------------------------------------------------
         self.missing_biocyc_genes = self.biocyc_gene_tbl[~self.biocyc_gene_tbl['locus_tag'].isin(geneps_in_model['locus_tag'])]
 
         # Step 4: Get amount of missing genes from BioCyc for statistics
+        # --------------------------------------------------------------
         self._statistics['Protein']['Total'] = len(self.missing_biocyc_genes['locus_tag'].unique().tolist())
 
+    # @TODO Result with columns: ec-code | ncbiprotein | id | equation (Gibt es das in BioCyc?) (| reference )| is_transport (Gibt es das in BioCyc?) | via
     def get_missing_reacs(self) -> tuple[tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
-        """Subsets the BioCyc table with the following columns: 
+        """Subsets the BioCyc table with the following columns:
          'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
-         to obtain the missing reactions with all the corresponding data 
-         & Adds the according BiGG Reaction identifiers
-
-        Args:
-           - inpath (str): 
-                Path to file from BioCyc containing the following columns:
-                'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 
-                'Reaction-Direction' 'Spontaneous?'
-      
-        Returns:
-           tuple: 
-                Tuple (1) & table (2)
-
-                (1) tuple: 
-                        Two tables (1) & (2)
-
-                        (1) pd.DataFrame: Table containing only the metabolites corresponding to the missing BioCyc reactions
-                        (2) pd.DataFrame: Table containing only the metabolites corresponding to the missing BiGG reactions
-         
-                (2) pd.DataFrame: 
-                        Table containing the missing reactions with the corresponding data
+         to obtain the missing reactions with all the corresponding data
         """
-   
-        missing_biocyc_reactions = pd.DataFrame(
+        
+        # Step 1: get reactions from model
+        # --------------------------------
+        reac_model_list = get_model_reacs_or_metabs(self._model)
+
+        # Step 2: filter missing gene list + extract ECs
+        # ----------------------------------------------
+        # Expand missing genes result table to merge with Biocyc reactions table
+        missing_biocyc_genes = pd.DataFrame(
            self.missing_biocyc_genes['Reaction'].str.split('//').tolist(), index=self.missing_biocyc_genes['locus_tag']
            ).stack()
-        missing_biocyc_reactions = missing_biocyc_reactions.reset_index([0, 'locus_tag'])
-        missing_biocyc_reactions.columns = ['locus_tag', 'Reaction']
-        missing_biocyc_reactions['Reaction'] = missing_biocyc_reactions['Reaction'].str.strip()
-
-        model_reacs = get_model_reacs_or_metabs(model_libsbml)
-        biocyc_reacs = get_biocyc_reactions(inpath)
+        missing_biocyc_genes = missing_biocyc_genes.reset_index([0, 'locus_tag'])
+        missing_biocyc_genes.columns = ['locus_tag', 'Reaction']
+        missing_biocyc_genes['Reaction'] = missing_biocyc_genes['Reaction'].str.strip()
 
         # Get missing reactions from missing genes
-        missing_reactions = genes2reaction.merge(biocyc_reacs, on='Reaction')
+        missing_reacs = self.missing_biocyc_genes.merge(self.biocyc_rxn_tbl, on='Reaction')
 
         # Turn entries with '//' into lists
-        missing_reactions['Reactants'] = missing_reactions['Reactants'].str.split('\s*//\s*')
-        missing_reactions['Products'] = missing_reactions['Products'].str.split('\s*//\s*')
-        missing_reactions['EC'] = missing_reactions['EC'].str.split('\s*//\s*')
+        missing_reacs['Reactants'] = missing_reacs['Reactants'].str.split('\s*//\s*')
+        missing_reacs['Products'] = missing_reacs['Products'].str.split('\s*//\s*')
+        missing_reacs['ec-code'] = missing_reacs['EC'].str.split('\s*//\s*')
 
+        # Step 3: Get content for column ncbiprotein
+        # ------------------------------------------
         # Turn locus_tag column into lists of locus tags per reaction
-        locus_tags_as_list = missing_reactions.groupby('Reaction')['locus_tag'].apply(list).reset_index(name='locus_tag')
-        missing_reactions.drop('locus_tag', axis=1, inplace=True)
-        missing_reactions = locus_tags_as_list.merge(missing_reactions, on='Reaction')
-        self._statistics['Reaction']['Total'] = len(missing_reactions['Reaction'].unique().tolist())
+        locus_tags_as_list = missing_reacs.groupby('Reaction')['locus_tag'].apply(list).reset_index(name='locus_tag')
+        missing_reacs.drop('locus_tag', axis=1, inplace=True)
+        missing_reacs = locus_tags_as_list.merge(missing_reacs, on='Reaction')
 
-        # Get BiGG BioCyc
-        bigg2biocyc_reacs = get_bigg_db_mapping('BioCyc',False)
+        # @TODO: Map locus tags to corresponding protein IDs
 
-        # Subset missing_reactions with BiGG BioCyc
-        missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
-        # TODO: collect non-matched entries // return all // namespace independance ????
-        missing_reactions = bigg2biocyc_reacs.merge(missing_reactions, on='BioCyc')
+        # Step 4: Get amount of missing reactions from BioCyc for statistics
+        # ------------------------------------------------------------------
+        self._statistics['Reaction']['Total'] = len(missing_reacs['Reaction'].unique().tolist())
 
-        # Get amount of missing reactions that have a BiGG ID
-        self._statistics['Reaction']['Have BiGG ID'] = len(missing_reactions['BioCyc'].unique().tolist())
-
-        # Subset missing_reactions with model_reacs
-        missing_reactions = compare_bigg_model(missing_reactions, model_reacs)
-
-        # Get amount of missing reactions that are not in the model
-        self._statistics['Reaction']['Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
-
-        # Add reactants & products dictionary with stoichiometric values to the reactions table
-        missing_reactions = add_stoichiometric_values_to_reacs(missing_reactions)
-
-        # Get all metabolites for the missing reactions
-        biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
-        return (biocyc_metabs_from_reacs, bigg_metabs_from_reacs), missing_reactions 
-
-   
-
-   
-        return missing_biocyc_reactions
+        
+        return missing_reacs
 
     
 # ----------------
 # Gapfilling no DB
 # ----------------
+# @NOTE: Ideas from Gwendolyn O. Döbel for lab strains
+# Get all  possible genes by filtering .gff according to 'bio_type=protein_coding' & 'product=hypothetical protein'
+# Compare the list of genes with the ones already in the model & add all missing genes
+# Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
+# -> Create tables mapping locus tag to old ID, locus tag to new ID & merge 
+# -> Specify user input locus_tag start from NCBI PGAP
 
 class GeneGapFiller(GapFiller):
     pass
@@ -395,3 +388,31 @@ class GeneGapFiller(GapFiller):
 ############################################################################
 # functions
 ############################################################################
+
+
+############################################################################
+# For filtering
+############################################################################
+
+# Get BiGG BioCyc
+bigg2biocyc_reacs = get_bigg_db_mapping('BioCyc',False)
+
+# Subset missing_reactions with BiGG BioCyc
+missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
+# TODO: collect non-matched entries // return all // namespace independance ????
+missing_reactions = bigg2biocyc_reacs.merge(missing_reactions, on='BioCyc')
+
+# Get amount of missing reactions that have a BiGG ID
+self._statistics['Reaction']['Have BiGG ID'] = len(missing_reactions['BioCyc'].unique().tolist())
+
+# Subset missing_reactions with model_reacs
+missing_reactions = compare_bigg_model(missing_reactions, model_reacs)
+
+# Get amount of missing reactions that are not in the model
+self._statistics['Reaction']['Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
+
+# Add reactants & products dictionary with stoichiometric values to the reactions table
+missing_reactions = add_stoichiometric_values_to_reacs(missing_reactions)
+
+# Get all metabolites for the missing reactions
+biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
