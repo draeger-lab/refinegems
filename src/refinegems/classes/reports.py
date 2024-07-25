@@ -1159,7 +1159,7 @@ class ModelInfoReport(Report):
         # set up the figure
         fig = plt.figure()
         fig.suptitle(f'Basic information for model {self.name}', fontsize=16)
-        grid = gspec.GridSpec(2,2, height_ratios=[2,1], hspace=0.4)
+        grid = gspec.GridSpec(2,2, height_ratios=[1,1.5], hspace=0.4)
 
         # 1: plot reacs, metabs and gene counts
         # -------------------------------------
@@ -1180,7 +1180,7 @@ class ModelInfoReport(Report):
         # 2: plot reacs with gpr
         # ----------------------
 
-        local_grid = gspec.GridSpecFromSubplotSpec(2,1, subplot_spec=grid[1,:])
+        local_grid = gspec.GridSpecFromSubplotSpec(2,1, subplot_spec=grid[1,:], height_ratios=[1,3.5], hspace=0)
         ax3 = plt.Subplot(fig, local_grid[0,0])
         fig.add_subplot(ax3)
         ax4 = plt.Subplot(fig, local_grid[1,0])
@@ -1213,30 +1213,24 @@ class ModelInfoReport(Report):
         only_mass = [_ for _ in self.mass_unbalanced if not _ in mass_and_charge]
         only_charge = [_ for _ in self.charge_unbalanced if not _ in mass_and_charge]
 
-        stacked_bars = {'mass and charge': np.array([len(mass_and_charge)]),
-                        'mass only': np.array([len(only_mass)]),
-                        'charge only': np.array([len(only_charge)])}
-        bottom = np.zeros(1)
+        pie_data = [len(mass_and_charge), len(only_charge), len(only_mass)]
 
-        c = 0.3
+        pie_label = ['mass and charge','charge only','mass only']
 
-        for label,count in stacked_bars.items():
-            if count > 0:
-                p = ax4.barh(['reactions'],count,
-                            label=label, left=0.0,
-                            color=[cmap(c)])
-                ax4.bar_label(p, count, rotation=270)
-                bottom += count
-                c += 0.3
+        def func(pct, allvals):
+            absolute = int(np.round(pct/100.*np.sum(allvals)))
+            if absolute == 0:
+                return ""
+            return f"{pct:.1f}% ({absolute:d})"
 
-        ax4.set_xlabel('count')
-        ax4.set_ylabel('unbal.')
-        ax4.tick_params(left = False,labelleft = False ,
-                                labelbottom = False, bottom = False)
-        ax4.legend(title='unbalanced', 
-                bbox_to_anchor=(0.875, 0,0.5, 0.25), loc="center right")
+        wedges, texts, autotexts = ax4.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
+                                   explode = [0, 0, 0], wedgeprops=dict(width=0.4), 
+                                   colors=[cmap(0.2),cmap(0.6), cmap(0.8), cmap(0.4)])
 
-
+        ax4.legend(wedges, pie_label,
+           title="unbalanced",
+           loc="center left",
+           bbox_to_anchor=(1, 0, 0.5, 1))
 
         # 3: plot deadends, orhphans etc. for metabs
         # ------------------------------------------
@@ -1248,6 +1242,8 @@ class ModelInfoReport(Report):
 
         def func(pct, allvals):
             absolute = int(np.round(pct/100.*np.sum(allvals)))
+            if absolute == 0:
+                return ""
             return f"{pct:.1f}% ({absolute:d})"
 
         wedges, texts, autotexts  = ax2.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
