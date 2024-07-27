@@ -24,7 +24,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Literal,Union
 
-from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_num_reac_with_gpr
+from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_reac_with_gpr
+from ..curation.biomass import test_biomass_presence
 
 ################################################################################
 # variables
@@ -1100,8 +1101,11 @@ class ModelInfoReport(Report):
         self.mass_unbalanced = mass_charge[0]
         self.charge_unbalanced = mass_charge[1]
         # gpr
-        self.with_gpr = get_num_reac_with_gpr(model)
-
+        self.pseudo = len(model.boundary) + len(test_biomass_presence(model))
+        with_gpr = get_reac_with_gpr(model)
+        self.normal_with_gpr = with_gpr[0]
+        self.pseudo_with_gpr = with_gpr[1]
+        
     def format_table(self, all_counts=True) -> pd.DataFrame:
         """Put the information of the report into a pandas DataFrame table.
 
@@ -1125,7 +1129,7 @@ class ModelInfoReport(Report):
                 'disconnects': [', '.join(self.disconnects)] if not all_counts else [len(self.disconnects)],
                 'mass unbalanced': [', '.join(self.mass_unbalanced)] if not all_counts else [len(self.mass_unbalanced)],
                 'charge unbalanced': [', '.join(self.charge_unbalanced)] if not all_counts else [len(self.charge_unbalanced)],
-                '#reactions with gpr': [self.with_gpr]
+                '#reactions with gpr': [len(self.pseudo_with_gpr)+len(self.normal_with_gpr)]
                 } 
         return pd.DataFrame(data)
 
@@ -1159,8 +1163,8 @@ class ModelInfoReport(Report):
         # set up the figure
         fig = plt.figure()
         fig.suptitle(f'Basic information for model {self.name}', fontsize=16)
-        grid = gspec.GridSpec(2,2, height_ratios=[1,1.5], hspace=0.4)
-
+        grid = gspec.GridSpec(2,2, height_ratios=[1,1], hspace=0.4)
+        
         # 1: plot reacs, metabs and gene counts
         # -------------------------------------
 
@@ -1180,33 +1184,32 @@ class ModelInfoReport(Report):
         # 2: plot reacs with gpr
         # ----------------------
 
-        local_grid = gspec.GridSpecFromSubplotSpec(2,1, subplot_spec=grid[1,:], height_ratios=[1,3.5], hspace=0)
+        local_grid = gspec.GridSpecFromSubplotSpec(1,2, subplot_spec=grid[1,:], wspace=0.75)
         ax3 = plt.Subplot(fig, local_grid[0,0])
         fig.add_subplot(ax3)
-        ax4 = plt.Subplot(fig, local_grid[1,0])
+        ax4 = plt.Subplot(fig, local_grid[0,1])
         fig.add_subplot(ax4)
         # ax3 = fig.add_subplot(grid[1,:])
 
         # plot reacs with gpr
-        stacked_bars = {'with gpr': np.array([self.with_gpr]),
-                        'no gpr': ([self.reac - self.with_gpr])}
-        bottom = np.zeros(1)
+        pie_data = [len(self.normal_with_gpr), (self.reac - self.pseudo) - len(self.normal_with_gpr), len(self.pseudo_with_gpr), self.pseudo - len(self.pseudo_with_gpr)]
 
-        c = 0.3
+        pie_label = ['normal/+','normal/-','pseudo/+', 'pseudo/-']
 
-        for label,count in stacked_bars.items():
-            p = ax3.barh(['reactions'],count,
-                        label=label, left=0.0,
-                        color=[cmap(c)])
-            ax3.bar_label(p, count, rotation=270)
-            bottom += count
-            c += 0.5
+        def func(pct, allvals):
+            absolute = int(np.round(pct/100.*np.sum(allvals)))
+            if absolute == 0:
+                return ""
+            return f"{pct:.1f}% ({absolute:d})"
 
-        ax3.set_title('C) Reactions')
-        ax3.set_ylabel('gpr')
-        ax3.tick_params(left = False,labelleft = False ,
-                                labelbottom = False, bottom = False)
-        ax3.legend(bbox_to_anchor=(0.75, 0, 0.5, 1.05), loc="center right")
+        wedges, texts, autotexts = ax3.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
+                                   explode = [0, 0, 0, 0], wedgeprops=dict(width=0.4), 
+                                   colors=[cmap(0.2), cmap(0.6), cmap(0.8), cmap(0.4)])
+
+        ax3.legend(wedges, pie_label,
+           title="reaction +/- gpr",
+           loc="center left",
+           bbox_to_anchor=(1, 0, 0.5, 1))
 
         # plot reacs which are unbalanced
         mass_and_charge = [_ for _ in self.mass_unbalanced if _ in self.charge_unbalanced]
@@ -1225,12 +1228,14 @@ class ModelInfoReport(Report):
 
         wedges, texts, autotexts = ax4.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
                                    explode = [0, 0, 0], wedgeprops=dict(width=0.4), 
-                                   colors=[cmap(0.2),cmap(0.6), cmap(0.8), cmap(0.4)])
+                                   colors=[cmap(0.2),cmap(0.4), cmap(0.6)])
 
         ax4.legend(wedges, pie_label,
            title="unbalanced",
            loc="center left",
            bbox_to_anchor=(1, 0, 0.5, 1))
+        
+        fig.text(0.5, 0.45, "C) Reactions", ha="center", va="center", fontsize=12)
 
         # 3: plot deadends, orhphans etc. for metabs
         # ------------------------------------------

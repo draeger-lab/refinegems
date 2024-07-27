@@ -22,6 +22,7 @@ from memote.support import consistency_helpers as con_helpers
 
 from ..utility.io import search_sbo_label
 from ..utility.entities import reaction_equation_to_dict
+from ..curation.biomass import test_biomass_presence
 
 ################################################################################
 # variables
@@ -34,26 +35,33 @@ from ..utility.entities import reaction_equation_to_dict
 # get basic model info
 # --------------------
 
-def get_num_reac_with_gpr(model:cobra.Model) -> int:
-    """Extract the number of reactions that have a gene production rule
-    from a given model.
+def get_reac_with_gpr(model:cobra.Model) -> tuple[list[str], list[str]]:
+    """Extract the reactions that have a gene production rule from a given model.
 
     Args:
         - model (cobra.Model): 
             The model loaded with COBRApy.
 
     Returns:
-        int: 
-            The number of reactions with a GPR.
+        tuple: 
+            (1) list: List of normal reactions with gpr
+            (2) list: List of pseudoreactions with gpr
     """
+    pseudoreactions = model.boundary
+    for biomass in test_biomass_presence(model):
+        pseudoreactions.append(model.reactions.get_by_id(biomass))
 
-    reac_with_gpr = 0
+    normal = []
+    pseudo = []
     for reac in model.reactions:
         # check for GPR
         if len(reac.genes) > 0:
-            reac_with_gpr += 1
+            if reac in pseudoreactions:
+                pseudo.append(reac)
+            else:
+                normal.append(reac)
 
-    return reac_with_gpr
+    return (normal, pseudo)
 
 
 def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], list[str], list[str]]:
@@ -95,7 +103,7 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
 
 # @TODO: what about exchange reactions not starting with an EX - as usually the case within the BiGG namespace? 
 def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]:
-    """Creates lists of mass and charge unbalanced reactions,vwithout exchange reactions since they are unbalanced per definition
+    """Creates lists of mass and charge unbalanced reactions, without exchange reactions since they are unbalanced per definition
 
     Args:
         - model (cobraModel): 
