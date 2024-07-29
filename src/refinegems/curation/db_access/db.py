@@ -10,6 +10,7 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 # requirements
 ################################################################################
 
+from Bio import Entrez
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -18,6 +19,7 @@ import re
 import requests
 import sqlite3
 from tqdm import tqdm
+import xmltodict
 
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
@@ -368,3 +370,21 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
       
     return missing_reacs
  
+ 
+# NCBI parser
+# -----------
+
+# fetching the EC number (if possible) from NCBI 
+# based on an NCBI protein ID (accession version number)
+def get_ec_from_ncbi(mail:str,ncbiprot:str):
+    try: 
+        Entrez.email = mail
+        handle = Entrez.efetch(db='protein', id=ncbiprot, rettype='gpc', retmode='xml')
+        for feature_dict in xmltodict.parse(handle)['INSDSet']['INSDSeq']['INSDSeq_feature-table']['INSDFeature']:
+            if isinstance(feature_dict['INSDFeature_quals']['INSDQualifier'], list):
+                for qual in feature_dict['INSDFeature_quals']['INSDQualifier']:
+                    if qual['INSDQualifier_name'] == 'EC_number':
+                        return qual['INSDQualifier_value']
+    except Exception as e:
+        # @TODO : logging / warning etc
+        return None

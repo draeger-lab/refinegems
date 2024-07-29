@@ -28,6 +28,10 @@ from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from typing import Literal, Union
 
 ################################################################################
+# variables
+################################################################################
+
+################################################################################
 # functions
 ################################################################################
 
@@ -394,6 +398,8 @@ def search_ncbi_for_gpr(locus: str) -> str:
                 if feature.type == "CDS":
                     return record.description, feature.qualifiers["locus_tag"][0]
 
+# gff 
+# ---
 
 def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
@@ -431,6 +437,7 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     return pd.DataFrame(locus_tag2id)
 
 
+# @DEPRECATE 
 def parse_gff_for_gp_info(gff_file: str, old_locus:bool=False) -> pd.DataFrame:
     """Parses gff file of organism to extract gene protein reaction - locus tag mapping.
 
@@ -478,6 +485,33 @@ def parse_gff_for_gp_info(gff_file: str, old_locus:bool=False) -> pd.DataFrame:
         lambda row: extract_locus(row['Parent']), axis=1)
     return mapping_df.drop('Parent', axis=1)
 
+
+def parse_gff_for_cds(gffpath, keep_attributes=None):
+    # load the gff
+    gff = gffutils.create_db(gffpath, ':memory:', merge_strategy="create_unique")
+    # extract the attributes of the CDS 
+    cds = pd.DataFrame.from_dict([_.attributes for _ in gff.features_of_type('CDS')])
+    cds = cds.explode('locus_tag')
+    genes = pd.DataFrame.from_dict([_.attributes for _ in gff.features_of_type('gene')])
+    genes = genes.explode('locus_tag')
+    if 'old_locus_tag' in genes.columns and 'locus_tag' in genes.columns:
+        cds = cds.merge(genes[['locus_tag','old_locus_tag']], how='left', 
+                        on='locus_tag')
+        cds.drop(columns=['locus_tag'], inplace=True)
+        cds.rename(columns={'old_locus_tag':'locus_tag'},inplace=True)
+    # keep only certain columns
+    if keep_attributes:
+        cds = cds[[_ for _ in cds.columns if _ in list(keep_attributes.keys())]]
+        # rename columns 
+        cds.rename(columns={k:v for k,v in keep_attributes.items() if k in cds.columns}, inplace=True)
+    if 'locus_tag' in cds.columns:
+        cds = cds.explode('locus_tag')
+
+    return cds
+
+
+# else:
+# -----
 
 def search_sbo_label(sbo_number: str) -> str:
     """Looks up the SBO label corresponding to a given SBO Term number

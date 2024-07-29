@@ -9,8 +9,11 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihane
 
 from abc import ABC, abstractmethod
 
+import cobra
 import pandas as pd
 import numpy as np
+
+from typing import Literal
 
 from libsbml import Model as libModel
 from bioservices.kegg import KEGG
@@ -20,13 +23,104 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from ..curation.db_access.db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs
-from ..utility.io import load_a_table_from_database
+from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds, load_model
 from ..utility.entities import get_model_reacs_or_metabs
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 
 ############################################################################
 # variables
 ############################################################################
+
+
+############################################################################
+# where to put 
+############################################################################
+
+# Mapping of EC numbers
+# ---------------------
+
+def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
+    
+    def _map_ec_to_reac_mnx(unmapped_reacs):
+    
+        # input: pd.DataFrame with a least the ec-code column
+        # load MNX reac prop table
+        mnx_reac_prop = load_a_table_from_database('mnx_reac_prop',False)
+        # convert table into one EC-number a row
+        mnx_reac_prop.drop('is_balanced', inplace=True, axis=1)
+        mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(';') if isinstance(x,str) else None)
+        # exclude entries without EC-number
+        mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
+        # merge with unmapped reactions
+        reacs_mapped = unmapped_reacs.merge(mnx_reac_prop, on='ec-code', how='left')
+        reacs_mapped.rename({'mnx_equation':'equation'}, inplace=True, axis=1)
+        reacs_mapped['via'] = reacs_mapped['id'].apply(lambda x: 'MetaNetX' if x else None)
+        
+        return reacs_mapped      
+    
+
+    def _map_ec_to_reac_bigg(unmapped_reacs):
+        
+        # load BiGG reaction namespace
+        bigg_reacs = load_a_table_from_database('bigg_reactions',False)
+        bigg_reacs.dropna(subset='EC Number', inplace=True)
+        bigg_reacs = bigg_reacs[['id','reaction_string','EC Number']].rename({'reaction_string':'equation','EC Number':'ec-code'}, inplace=False, axis=1)
+        bigg_reacs['ec-code'] = bigg_reacs['ec-code'].apply(lambda x: x.split(',') if isinstance(x,str) else None)
+        bigg_reacs = bigg_reacs.explode('ec-code')
+        # merge with unmapped reactions
+        bigg_mapping = unmapped_reacs.merge(bigg_reacs, on=['ec-code'], how='left')
+        bigg_mapping.mask(bigg_mapping.isna(), other=None, inplace=True)
+        # make conform to format
+        bigg_mapping['reference'] = None
+        bigg_mapping['is_transport'] = None
+        bigg_mapping['via'] = bigg_mapping['id'].apply(lambda x: 'BiGG' if x else None)
+        
+        return bigg_mapping
+
+
+    def _map_ec_to_reac_kegg(unmapped_reacs):
+        
+        # get KEGG EC number information
+        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec)))   
+        kegg_mapped['is_transport'] = None
+        kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
+        kegg_mapped.explode(column='id')
+        
+        return kegg_mapped
+
+
+    # input table should have format: 
+    #   ec-code | ncbiprotein
+    #   one EC number per row, list of ncbiprotein per row allowed
+    if len(table.columns) != 2 or 'ec-code' not in table.columns or 'ncbiprotein' not in table.columns:
+        raise ValueError('Wrong table format. Cannot map EC to reaction.')
+    
+    # map to MetaNetX
+    if use_MNX:
+        table = _map_ec_to_reac_mnx(table)
+    
+    # map to BiGG
+    if use_BiGG:
+        if 'id' in table.columns:
+            to_map = table[table['id'].isna()][['ec-code','ncbiprotein']]    
+            if len(to_map) > 0:        
+                to_map = _map_ec_to_reac_bigg(to_map) 
+                table = pd.concat([to_map,table[~table['id'].isna()]])
+        else:
+            table = _map_ec_to_reac_bigg(table)
+    
+    # map to KEGG
+    if use_KEGG: 
+        if 'id' in table.columns:
+            to_map = table[table['id'].isna()][['ec-code','ncbiprotein']] 
+            if len(to_map) > 0:
+                to_map = _map_ec_to_reac_kegg(to_map) 
+                table = pd.concat([to_map,table[~table['id'].isna()]])
+        else:
+            table = _map_ec_to_reac_kegg(table)
+    
+    # output:   ec-code ncbiprotein	id	equation	reference	is_transport	via
+    return table 
 
 ############################################################################
 # classes
@@ -42,6 +136,7 @@ class GapFiller(ABC):
         self.full_gene_list = None
         self.geneid_type = 'ncbi' # @TODO
         self._statistics = dict()
+        self.manual_curation = dict()
         
     #@abstractmethod
     #def load_gene_list(self):
@@ -54,6 +149,42 @@ class GapFiller(ABC):
     @abstractmethod
     def get_missing_reacs(self,model):
         pass
+
+    def _find_reac_in_model(self, model: cobra.Model, eccode:str, id:str, 
+               idtype:Literal['MetaNetX','KEGG','BiGG', 'BioCyc'], 
+               include_ec_match:bool=False):
+        # @TODO Ensure that user has requested BioCyc identifiers.org version? 
+        # -> Could be done with polish_annotations
+        MAPPING = {
+            'MetaNetX':'metanetx.reaction', 
+            'KEGG':'kegg.reaction',
+            'BiGG':'bigg.reaction',
+            'BioCyc': 'metacyc.reaction'
+            }
+
+        found = []
+        for r in model.reactions:
+            if MAPPING[idtype] in r.annotation.keys():
+                if (isinstance(r.annotation[MAPPING[idtype]],list) and 
+                    id in r.annotation[MAPPING[idtype]]):
+                    found.append(r.id)
+                elif (isinstance(r.annotation[MAPPING[idtype]],str) and 
+                      id == r.annotation[MAPPING[idtype]]):
+                    found.append(r.id)
+            if include_ec_match and eccode and 'ec-code' in r.annotation.keys():
+                if (isinstance(r.annotation['ec-code'],list) and 
+                    eccode in r.annotation['ec-code']):
+                    found.append(r.id)
+                elif (isinstance(r.annotation['ec-code'],str) and 
+                      eccode == r.annotation['ec-code']):
+                    found.append(r.id)
+            
+        found = list(set(found))
+        
+        if len(found) > 0:
+            return found
+        
+        return None
     
     # @abstractmethod
     # def run(self,model):
@@ -78,7 +209,7 @@ class KEGGapFiller(GapFiller):
         super().__init__()
         self.organismid = organismid
         # self.report = dict()
-        self.manual_curation = dict()
+        
         
     # @TODO: progress bar and parallelising
     # @TODO: logging
@@ -132,6 +263,7 @@ class KEGGapFiller(GapFiller):
         # --------------------------
         # @DEBUGGING ...................
         # genes_not_in_model = genes_not_in_model.iloc[330:350,:]
+        # print(UserWarning('Running in debugging mode.'))
         # ..............................
         geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].progress_apply(parse_KEGG_gene)))
         genes_not_in_model = genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
@@ -144,18 +276,13 @@ class KEGGapFiller(GapFiller):
     # @TODO : logging
     # @TODO : paralellising possibilities?
     # @TODO : progress bar
-    def get_missing_reacs(self, model, genes_not_in_model):
-        
-        # Step 1: get reactions from model 
-        # --------------------------------
-        reac_model_list = model.getListOfReactions()
-        reac_model_list = [_.id[2:] for _ in reac_model_list] # crop 'R_' prefix
-
-        # Step 2: filter missing gene list + extract ECs
+    def get_missing_reacs(self,model:cobra.Model,genes_not_in_model):
+ 
+        # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
         reac_options = genes_not_in_model[['ec-code','ncbiprotein']]        # get relevant infos for reacs
         missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
-        self.manual_curation['genes'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
+        # self.manual_curation['genes'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
         # check, if any automatic gapfilling is possible
         if len(missing_reacs) == 0:
             return None
@@ -165,54 +292,21 @@ class KEGGapFiller(GapFiller):
         missing_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
         missing_reacs = missing_reacs.groupby(missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
         
-        # Step 3: Map to MetaNetX
-        # -----------------------
-        # convert table into one EC-number a row
-        mnx_reac_prop = load_a_table_from_database('mnx_reac_prop',False)
-        mnx_reac_prop.drop('is_balanced', inplace=True, axis=1)
-        mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(';') if isinstance(x,str) else None)
-        mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
-        # merge tables on EC-number
-        reacs_mapped = missing_reacs.merge(mnx_reac_prop, on='ec-code', how='left')
-        reacs_mapped.rename({'mnx_equation':'equation'}, inplace=True, axis=1)
-        reacs_mapped['via'] = reacs_mapped['id'].apply(lambda x: 'MetaNetX' if x else None)
-                
-        # Step 4: map to BiGG
-        # -------------------
-        if reacs_mapped.id.isnull().values.any():
-            # load BiGG reaction namespace
-            bigg_reacs = load_a_table_from_database('bigg_reactions',False)
-            bigg_reacs.dropna(subset='EC Number', inplace=True)
-            bigg_reacs = bigg_reacs[['id','reaction_string','EC Number']].rename({'reaction_string':'equation','EC Number':'ec-code'}, inplace=False, axis=1)
-            bigg_reacs['ec-code'] = bigg_reacs['ec-code'].apply(lambda x: x.split(',') if isinstance(x,str) else None)
-            bigg_reacs = bigg_reacs.explode('ec-code')
-            # merge unmapped entries with BiGG on EC-number 
-            bigg_mapping = reacs_mapped[reacs_mapped['id'].isnull()][['ec-code','ncbiprotein']].merge(bigg_reacs, on=['ec-code'], how='left')
-            bigg_mapping['via'] = bigg_mapping['id'].apply(lambda x: 'BiGG' if x else None)
-            # combine with MNX results
-            reacs_mapped = pd.concat([reacs_mapped[~reacs_mapped['id'].isnull()],bigg_mapping], axis=0, ignore_index=True)
-
-        # Step 5: Map to KEGG
-        # ------------------- 
-        if reacs_mapped.id.isnull().values.any():
-            # get KEGG EC number information
-            kegg_mapped = pd.DataFrame.from_dict(list(reacs_mapped[reacs_mapped['id'].isnull()]['ec-code'].progress_apply(parse_KEGG_ec)))
-            # kegg_mapped = kegg_mapped.explode('id')      
-            kegg_mapped['is_transport'] = None
-            kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
-            # join with NCBI protein ID
-            kegg_mapped = reacs_mapped[reacs_mapped['id'].isnull()][['ec-code','ncbiprotein']].merge(kegg_mapped, on=['ec-code'], how='left')
-            # merge with input
-            reacs_mapped = pd.concat([reacs_mapped[~reacs_mapped['id'].isnull()],kegg_mapped], axis=0, ignore_index=True)
-            reacs_mapped.mask(reacs_mapped.isna(), other=None, inplace=True)
-                
-        # Results
-        # -------
+        # Step 2: map EC to reaction(s) if possible
+        # -----------------------------------------
+        # via MNX, BiGG, KEGG
+        reacs_mapped = map_ec_to_reac(missing_reacs)
+        
+        # Step 3: clean and map to model reactions
+        # ----------------------------------------
         reacs_mapped = reacs_mapped.explode('id', ignore_index=True).explode('id', ignore_index=True)
         # need manual curation
         self.manual_curation['reacs'] = reacs_mapped[reacs_mapped['id'].isnull()]
+        # map to model reactions
+        reacs_mapped = reacs_mapped[~reacs_mapped['id'].isnull()] 
+        reacs_mapped['add_to_GPR'] = reacs_mapped.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
                 
-        return reacs_mapped[~reacs_mapped['id'].isnull()] 
+        return reacs_mapped
     
     
 # ----------------------
@@ -225,10 +319,12 @@ class BioCycGapFiller(GapFiller):
     |
     |
     |
-    |These three TXT files can be obtained through creating SmartTables in BioCyc and exporting these as 
+    |These three TXT files can be obtained through creating SmartTables in BioCyc 
+    |and exporting these as 
     |Spreadsheets with the parameter FrameID (one & two) or Common name (three). 
     |SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
-    |SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
+    |SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 
+    |'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
     |SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
 
     Args:
@@ -236,41 +332,62 @@ class BioCycGapFiller(GapFiller):
             _description_
     """
 
-    def __init__(self, model: libModel, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str) -> None:
+    def __init__(self, model: libModel, biocyc_gene_tbl_path: str, 
+                 biocyc_reacs_tbl_path: str, fasta:str) -> None:
         super().__init__()
-        self._biocyc_gene_tbl = self.biocyc_gene_tbl(biocyc_gene_tbl_path) # @TODO: Das ist eigtl self.full_gene_list von GapFiller!
+        self._biocyc_gene_tbl = self.biocyc_gene_tbl(biocyc_gene_tbl_path) 
+        # @TODO: Das ist eigtl self.full_gene_list von GapFiller!
         self._biocyc_rxn_tbl = self.biocyc_rxn_tbl(biocyc_reacs_tbl_path)
         self._model = model
-        self.missing_biocyc_genes = None
-        self.missing_biocyc_reacs = None
-        self.missing_biocyc_metabs = None
+        self._fasta = fasta
+        self.missing_genes = None
+        self.missing_reacs = None
+        self.missing_metabs = None
 
     @property
     def biocyc_gene_tbl(self):
         return self._BioCyc_gene_tbl
     
     @biocyc_gene_tbl.setter
-    # @TODO: Hier sollten wir noch diskutieren, ob Accession-2 oder Accession-1 hard coded sein sollten oder nicht
+    # @TODO: Hier sollten wir noch diskutieren, ob Accession-2 oder Accession-1 
+    # hard coded sein sollten oder nicht
     #        Dafür müssten wir nochmal ein paar entries in BioCyc dazu anschauen.
-    # Locus tags in GenBank GFF file == BioCyc Accession-2 == Old locus tags in RefSeq GFF file
+    # Locus tags in GenBank GFF file == BioCyc Accession-2 == Old locus tags in 
+    # RefSeq GFF file
     # Locus tags in RefSeq GFF file == BioCyc Accession-1
     # Label in model == Locus tag from GenBank GFF file == BioCyc Accession-2
     def biocyc_gene_tbl(self, biocyc_gene_tbl_path: str) -> pd.DataFrame:
-        """Parses TSV file from BioCyc to retrieve 'Accession-2' & the corresponding 'Reactions of gene'
+        """Parses TSV file from BioCyc to retrieve 'Accession-2' & the 
+        corresponding 'Reactions of gene'
     
         Args:
            - inpath (str): 
-              Path to file from BioCyc containing the 'Accession-2' to 'Reactions of gene' mapping
+              Path to file from BioCyc containing the 'Accession-2' to 
+              'Reactions of gene' mapping
            
         Returns:
            pd.DataFrame: 
               Table containing only rows where a 'Reaction of gene' exists
         """
-        biocyc_genes = pd.read_table(biocyc_gene_tbl_path, usecols=['Accession-2', 'Reactions of gene'], dtype=str)
-        biocyc_genes.rename(columns={'Accession-2': 'locus_tag', 'Reactions of gene': 'Reaction'}, inplace=True)
+        # Read table
+        biocyc_genes = pd.read_table(
+            biocyc_gene_tbl_path, 
+            usecols=['Accession-2', 'Reactions of gene'], 
+            dtype=str
+            )
+
+        # Rename columns for further use
+        biocyc_genes.rename(
+            columns={
+                'Accession-2': 'locus_tag', 'Reactions of gene': 'id'
+                }, 
+            inplace=True)
+
+        # Turn empty strings into NaNs & Remove NaNs
         biocyc_genes.replace('', np.nan, inplace=True)
         biocyc_genes.dropna(inplace=True)
-        self._BioCyc_gene_tbl = biocyc_genes
+        
+        return biocyc_genes
 
     @property
     def biocyc_rxn_tbl(self):
@@ -278,41 +395,62 @@ class BioCycGapFiller(GapFiller):
 
     @biocyc_rxn_tbl.setter
     def biocyc_rxn_tbl(biocyc_reacs_tbl_path: str) -> pd.DataFrame:
-        """Parses TSV file from BioCyc to retrieve 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number',
-           'Reaction-Direction' & 'Spontaneous?'
+        """Parses TSV file from BioCyc to retrieve 'Reaction', 'Object ID', 
+        'Reactants of reaction', 'Products of reaction', 'EC-Number', 
+        'Reaction-Direction' & 'Spontaneous?'
 
         Args:
            - biocyc_reacs_tbl_path (str):   
               Path to file from BioCyc containing the following columns:
-              'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 
+              'Reaction' 'Object ID' 'Reactants of reaction' 
+              'Products of reaction' 'EC-Number' 'Reaction-Direction' 
               'Spontaneous?'
 
         Returns:
            pd.DataFrame: 
               Table containing all BioCyc reactions from provided file
         """
-   
-        biocyc_reacs = pd.read_table(biocyc_reacs_tbl_path, usecols=
-                                     ['Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 
-                                      'Reaction-Direction', 'Spontaneous?'],
-                                     dtype=str
-                                     )
-        biocyc_reacs.rename(columns=
-                            {'Reactants of reaction': 'Reactants', 'Products of reaction': 'Products', 'EC-Number': 'ec-code'},
-                            inplace=True
-                            )
+        # Read table
+        biocyc_reacs = pd.read_table(
+            biocyc_reacs_tbl_path, 
+            usecols=[
+                'Reaction', 'Object ID', 'Reactants of reaction', 
+                'Products of reaction', 'EC-Number', 'Reaction-Direction', 
+                'Spontaneous?'
+                ],
+            dtype=str
+            )
+
+        # Rename columns for further use
+        biocyc_reacs.rename(
+            columns={
+                'Reaction': 'equation', 'Object ID': 'id',
+                'Reactants of reaction': 'Reactants', 
+                'Products of reaction': 'Products', 'EC-Number': 'ec-code'
+                },
+            inplace=True
+            )
+
+        # Turn empty strings into NaNs
         biocyc_reacs.replace('', np.nan, inplace=True)
+
+        # Specify empty entries in 'Spontaneous?' as False
+        # @TODO Does this really make sense?
         biocyc_reacs['Spontaneous?'] = biocyc_reacs['Spontaneous?'].fillna('F')
-        biocyc_reacs.dropna(subset=['Reaction', 'Reactants', 'Products', 'EC'], inplace=True)
+
         return biocyc_reacs
-    
+
     def get_missing_genes(self):
-        """Retrieves the missing genes and reactions from the BioCyc table according to the 'Accession-2' identifiers
+        """Retrieves the missing genes and reactions from the BioCyc table 
+        according to the 'Accession-2' identifiers
         """
         
         # Step 1: get genes from model
         # ----------------------------
-        geneps_in_model = [_.getLabel() for _ in self._model.getPlugin(0).getListOfGeneProducts()]
+        geneps_in_model = [
+            _.getLabel() 
+            for _ in self._model.getPlugin(0).getListOfGeneProducts()
+            ]
 
         # Step 2: Get genes of organism from BioCyc
         # -----------------------------------------
@@ -320,18 +458,51 @@ class BioCycGapFiller(GapFiller):
         
         # Step 3: BioCyc vs. model genes -> get missing genes for model
         # -------------------------------------------------------------
-        self.missing_biocyc_genes = self.biocyc_gene_tbl[~self.biocyc_gene_tbl['locus_tag'].isin(geneps_in_model['locus_tag'])]
+        self.missing_genes = self.biocyc_gene_tbl[
+            ~self.biocyc_gene_tbl['locus_tag'].isin(
+                geneps_in_model['locus_tag']
+                )
+            ]
 
-        # Step 4: Get amount of missing genes from BioCyc for statistics
+        # Step 4: Get ncbiprotein IDs
+        # ---------------------------
+        # Read in FASTA file to obtain locus_tag2ncbiportein mapping
+        # @TODO: GFF parsing better?
+        locus_tag2ncbiprotein_df = parse_fasta_headers(self._fasta)
+        locus_tag2ncbiprotein_df.rename(
+            columns={'protein_id': 'ncbiprotein'},
+            inplace=True
+            )
+
+        # Get the complete missing genes dataframe with the ncbiprotein IDs
+        self.missing_genes = self.missing_genes.merge(
+            locus_tag2ncbiprotein_df, on='locus_tag'
+            )
+
+        # Step 5: Get amount of missing genes from BioCyc for statistics
         # --------------------------------------------------------------
-        self._statistics['Protein']['Total'] = len(self.missing_biocyc_genes['locus_tag'].unique().tolist())
+        self._statistics['Protein']['Total'] = len(
+            self.missing_genes['locus_tag'].unique().tolist()
+            )
 
-    # @TODO Result with columns: ec-code | ncbiprotein | id | equation (Gibt es das in BioCyc?) (| reference )| is_transport (Gibt es das in BioCyc?) | via
-    def get_missing_reacs(self) -> tuple[tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+        # Step 6: Prepare results
+        # -----------------------
+        # DataFrame for return
+        missing_genes_res = self.missing_genes[['locus_tag', 'ncbiprotein']]
+        # DataFrame for missing reactions
+        self.missing_genes = self.missing_genes[['ncbiprotein', 'id']]
+
+        return missing_genes_res
+
+    def get_missing_reacs(self):
         """Subsets the BioCyc table with the following columns:
-         'Reaction' 'Reactants of reaction' 'Products of reaction' 'EC-Number' 'Reaction-Direction' 'Spontaneous?'
-         to obtain the missing reactions with all the corresponding data
+         'Reaction' 'Object ID' 'Reactants of reaction' 'Products of reaction' 
+         'EC-Number' 'Reaction-Direction' 'Spontaneous?' to obtain the missing 
+         reactions with all the corresponding data
         """
+        # @TODO 
+        # map to model reactions
+        self._find_reac_in_model()
         
         # Step 1: get reactions from model
         # --------------------------------
@@ -340,34 +511,49 @@ class BioCycGapFiller(GapFiller):
         # Step 2: filter missing gene list + extract ECs
         # ----------------------------------------------
         # Expand missing genes result table to merge with Biocyc reactions table
-        missing_biocyc_genes = pd.DataFrame(
-           self.missing_biocyc_genes['Reaction'].str.split('//').tolist(), index=self.missing_biocyc_genes['locus_tag']
+        missing_genes = pd.DataFrame(
+           self.missing_genes['Reaction'].str.split('//').tolist(), 
+           index=self.missing_genes['ncbiprotein']
            ).stack()
-        missing_biocyc_genes = missing_biocyc_genes.reset_index([0, 'locus_tag'])
-        missing_biocyc_genes.columns = ['locus_tag', 'Reaction']
-        missing_biocyc_genes['Reaction'] = missing_biocyc_genes['Reaction'].str.strip()
+        missing_genes = missing_genes.reset_index(
+            [0, 'ncbiprotein']
+            )
+        missing_genes.columns = ['ncbiprotein', 'Reaction']
+        missing_genes['id'] = missing_genes['id'].str.strip()
 
         # Get missing reactions from missing genes
-        missing_reacs = self.missing_biocyc_genes.merge(self.biocyc_rxn_tbl, on='Reaction')
+        missing_reacs = self.missing_genes.merge(
+            self.biocyc_rxn_tbl, on='id'
+            )
 
         # Turn entries with '//' into lists
         missing_reacs['Reactants'] = missing_reacs['Reactants'].str.split('\s*//\s*')
         missing_reacs['Products'] = missing_reacs['Products'].str.split('\s*//\s*')
-        missing_reacs['ec-code'] = missing_reacs['EC'].str.split('\s*//\s*')
+        missing_reacs['ec-code'] = missing_reacs['ec-code'].str.split('\s*//\s*')
 
         # Step 3: Get content for column ncbiprotein
         # ------------------------------------------
-        # Turn locus_tag column into lists of locus tags per reaction
-        locus_tags_as_list = missing_reacs.groupby('Reaction')['locus_tag'].apply(list).reset_index(name='locus_tag')
-        missing_reacs.drop('locus_tag', axis=1, inplace=True)
-        missing_reacs = locus_tags_as_list.merge(missing_reacs, on='Reaction')
-
-        # @TODO: Map locus tags to corresponding protein IDs
+        # Turn ncbiprotein column into lists of ncbiprotein IDs per reaction
+        ncbiprotein_as_list = missing_reacs.groupby('id')['ncbiprotein'].apply(list).reset_index(name='ncbiprotein')
+        missing_reacs.drop('ncbiprotein', axis=1, inplace=True)
+        missing_reacs = ncbiprotein_as_list.merge(missing_reacs, on='id')
 
         # Step 4: Get amount of missing reactions from BioCyc for statistics
         # ------------------------------------------------------------------
-        self._statistics['Reaction']['Total'] = len(missing_reacs['Reaction'].unique().tolist())
+        self._statistics['Reaction']['Total'] = len(
+            missing_reacs['id'].unique().tolist()
+            )
 
+        # Step 5: Map to model reactions & cleanup
+        # ----------------------------------------
+        # Add column 'via'
+        missing_reacs['via'] = 'BioCyc'
+
+        # Filter reacs for already in model
+        missing_reacs['add_to_GPR'] = missing_reacs.apply(
+            lambda x: 
+                self._find_reac_in_model(self._model,x['ec-code'],x['id'],x['via']), axis=1
+            )
         
         return missing_reacs
 
@@ -381,19 +567,72 @@ class BioCycGapFiller(GapFiller):
 # Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
 # -> Create tables mapping locus tag to old ID, locus tag to new ID & merge 
 # -> Specify user input locus_tag start from NCBI PGAP
-
+# # Skeleton for functions that could be used for a lab strain/organism which is in no database contained
+# def get_genes_from_gff():
+#     pass
+# 
+# 
+# def get_related_metabs_reactions_blast():
+#     pass
+# 
+# 
+# def gff_gene_comp():
+#     pass
+# 
+# 
 class GeneGapFiller(GapFiller):
-    pass
+    
+    GFF_COLS = {'locus_tag':'locus_tag', 
+                    'eC_number':'ec-code', 
+                    'protein_id':'ncbiprotein'} # :meta:
+    
+    def __init__(self) -> None:
+        super().__init__()
+        
+    def get_missing_genes(self,gffpath,model:libModel):
+    
+        # get all CDS from gff
+        all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)
+        # get all genes from model by locus tag
+        model_locustags = [g.getLabel() for g in model.getPlugin(0).getListOfGeneProducts()]
+        # filter
+        missing_genes = all_genes.loc[~all_genes['locus_tag'].isin(model_locustags)]
+        # formatting
+        for col in self.GFF_COLS.values():
+            if col not in missing_genes.columns:
+                missing_genes[col] = None
+                
+        # save genes with no locus tag for manual curation
+        self.manual_curation['gff no locus tag'] = missing_genes[missing_genes['locus_tag'].isna()]['ncbiprotein']
+        
+        # output
+        # ncbiprotein | locus_tag | ec-code
+        missing_genes =  missing_genes[~missing_genes['locus_tag'].isna()]
+        missing_genes = missing_genes.explode('ncbiprotein')
+        return missing_genes
+    
+    def get_missing_reacs(self):
+        
+        pass
 
 ############################################################################
 # functions
 ############################################################################
 
 
+
+
 ############################################################################
 # For filtering
 ############################################################################
+# Evtl hier: 
+'''
+biocyc_reacs.dropna(
+    subset=['id', 'Reactants', 'Products', 'EC'], inplace=True
+    )
+'''
 
+''' Mapping to BiGG + addition of more information on BiGG Reactions
 # Get BiGG BioCyc
 bigg2biocyc_reacs = get_bigg_db_mapping('BioCyc',False)
 
@@ -416,3 +655,43 @@ missing_reactions = add_stoichiometric_values_to_reacs(missing_reactions)
 
 # Get all metabolites for the missing reactions
 biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
+'''
+
+# Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
+def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
+   """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'
+   
+   Args:
+      - missing_reacs (pd.DataFrame): 
+         Table containing reactions & the respective Reaction-Directions
+         
+   Returns:
+      pd.DataFrame: 
+         Input table extended with the fluxes lower & upper bounds obtained from 
+         the Reaction-Directions
+   """
+    
+   def get_fluxes(row: pd.Series) -> dict[str: str]:
+      direction = row['Reaction-Direction']
+      fluxes = {}
+      
+      if type(direction) == float:
+         # Use default bounds as described in readthedocs from COBRApy
+         fluxes['lower_bound'] = 'cobra_0_bound'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      elif 'RIGHT-TO-LEFT' in direction:
+         fluxes['lower_bound'] = 'cobra_default_lb'
+         fluxes['upper_bound'] = 'cobra_0_bound'
+      elif 'LEFT-TO-RIGHT' in direction:
+         fluxes['lower_bound'] = 'cobra_0_bound'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      elif 'REVERSIBLE' in direction:
+         fluxes['lower_bound'] = 'cobra_default_lb'
+         fluxes['upper_bound'] = 'cobra_default_ub'
+      
+      return str(fluxes)
+   
+   missing_reacs['fluxes'] = missing_reacs.apply(get_fluxes, axis=1)
+   missing_reacs.drop('Reaction-Direction', axis=1, inplace=True)
+   
+   return missing_reacs

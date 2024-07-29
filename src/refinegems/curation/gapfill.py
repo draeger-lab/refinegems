@@ -34,19 +34,6 @@ from ..utility.entities import create_gp, create_species, create_reaction
 # functions
 ############################################################################
 
-'''Skeleton for functions that could be used for a lab strain/organism which is in no database contained
-def get_genes_from_gff():
-    pass
-
-
-def get_related_metabs_reactions_blast():
-    pass
-
-
-def gff_gene_comp():
-    pass
-'''
-
 # @TODO Add handling of columns: 'KEGG Reaction' 'MetaNetX'!!!
 # @TODO Change KEGG part to have the same results as the BioCyc  part
 

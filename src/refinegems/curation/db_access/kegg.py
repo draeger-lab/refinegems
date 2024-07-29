@@ -227,6 +227,7 @@ def parse_KEGG_ec(ec):
     ec_info['ec-code'] = ec
     
     # retrieve KEGG entry
+    # @TODO : add time restraint and tries for time out only
     try:
         ec_entry = list(Enzyme.parse(REST.kegg_get(ec)))[0]
     except Exception as e:
@@ -234,6 +235,7 @@ def parse_KEGG_ec(ec):
         ec_entry = None
         ec_info['id'] = None
         ec_info['equation'] = None
+        ec_info['reference'] = None
         return ec_info
     
     # retrieve reaction information from entry 

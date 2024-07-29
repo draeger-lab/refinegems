@@ -36,7 +36,6 @@ import requests
 
 from ...utility.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
 from .db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
-from ...utility.io import parse_fasta_headers
 
 ############################################################################
 # variables
@@ -172,46 +171,6 @@ def get_missing_metabolites(
    return missing_metabolites
 
 
-def get_missing_genes(missing_reactions: pd.DataFrame, fasta: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-   """Retrieves all missing genes that belong to the obtained missing reactions
-   
-   Args: 
-      - missing_reactions (pd.DataFrame): 
-         Table containing all obtained missing reactions
-      - fasta (str): 
-         Path to a FASTA file where the headers contain the information protein_id and locus_tag
-         
-   Returns:
-      tuple: 
-         Two tables (1) & (2)
-
-         (1) pd.DataFrame: Table with the columns locus_tag, Protein_id & Model_id 
-                           (The model_id is similar to how CarveMe generates the GeneProduct ID.)
-         (2) pd.DataFrame: The input pandas dataframe for the reactions where column 'locus_tag' is exchanged by 'gene_product'
-   """
-   # Get locus tags from the missing reactions
-   locus_tags = list(set([lt for row in missing_reactions['locus_tag'] for lt in row]))
-   locus_tags_df = pd.DataFrame(pd.Series(locus_tags), columns=['locus_tag'])
-   
-   # Get protein and GeneProduct ID for the model from FASTA file
-   ids_df = parse_fasta_headers(fasta, id_for_model=True)
-   
-   # Get the complete dataframe with the protein & model id
-   missing_genes = locus_tags_df.merge(ids_df, on='locus_tag')
-   statistics_df.loc['Protein', 'Can be added'] = len(missing_genes['locus_tag'].unique().tolist())
-   
-   # Replace the locus tags in the reaction dataframe with the gene model ID
-   def transform_lt_into_gp_model_id(locus_tag_list: list[str]) -> list[str]:
-      return [missing_genes.loc[lt, 'model_id'] for lt in locus_tag_list]
-   
-   missing_genes.set_index('locus_tag', inplace=True)
-   missing_reactions['gene_product'] = missing_reactions['locus_tag'].map(transform_lt_into_gp_model_id)
-   missing_genes.reset_index(inplace=True)
-   missing_reactions.drop('locus_tag', axis=1, inplace=True)
-   
-   return missing_genes, missing_reactions
-
-
 def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.DataFrame:
    """Adds charges & chemical formulae from CHEBI/BiGG to the provided dataframe
 
@@ -266,44 +225,7 @@ def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.
    
    return missing_metabs
 
-# Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
-def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
-   """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'
-   
-   Args:
-      - missing_reacs (pd.DataFrame): 
-         Table containing reactions & the respective Reaction-Directions
-         
-   Returns:
-      pd.DataFrame: 
-         Input table extended with the fluxes lower & upper bounds obtained from 
-         the Reaction-Directions
-   """
-    
-   def get_fluxes(row: pd.Series) -> dict[str: str]:
-      direction = row['Reaction-Direction']
-      fluxes = {}
-      
-      if type(direction) == float:
-         # Use default bounds as described in readthedocs from COBRApy
-         fluxes['lower_bound'] = 'cobra_0_bound'
-         fluxes['upper_bound'] = 'cobra_default_ub'
-      elif 'RIGHT-TO-LEFT' in direction:
-         fluxes['lower_bound'] = 'cobra_default_lb'
-         fluxes['upper_bound'] = 'cobra_0_bound'
-      elif 'LEFT-TO-RIGHT' in direction:
-         fluxes['lower_bound'] = 'cobra_0_bound'
-         fluxes['upper_bound'] = 'cobra_default_ub'
-      elif 'REVERSIBLE' in direction:
-         fluxes['lower_bound'] = 'cobra_default_lb'
-         fluxes['upper_bound'] = 'cobra_default_ub'
-      
-      return str(fluxes)
-   
-   missing_reacs['fluxes'] = missing_reacs.apply(get_fluxes, axis=1)
-   missing_reacs.drop('Reaction-Direction', axis=1, inplace=True)
-   
-   return missing_reacs
+
 
 
 def biocyc_gene_comp(
