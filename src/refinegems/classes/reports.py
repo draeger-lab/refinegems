@@ -1064,23 +1064,29 @@ class ModelInfoReport(Report):
         - name: 
             A string for the name of the model.
         - reac: 
-            An int that describes the number of reactions in the model.
+            List of the reactions in the model.
         - meta: 
-            An int that describes the number of metabolites in the model.
+            List of the metabolites in the model.
         - gene: 
-            An int that describes the numver of genes in the model.
+            An int that describes the number of genes in the model.
         - orphans: 
             List of metabolite IDs that are considered orphans.
         - deadends: 
             List of metabolite IDs that are considered dead-ends.
         - disconnects: 
-            List of metabolites that are disconnected in the model.
+            List of metabolite IDs that are disconnected in the model.
+        - mass_charge_unbalanced:
+            List of reaction IDs that are unbalanced regarding their mass and their charges.
         - mass_unbalanced: 
-            List of reaction IDs that are unbalanced regarding their mass.
+            List of reaction IDs that are unbalanced regarding their mass only.
         - charge_unbalanced: 
-            List of reactions IDs that are unbalanced regarding their charges.
-        - with_gpr: 
-            Integer describing the number of reactions that have a gene production rule.
+            List of reactions IDs that are unbalanced regarding their charges only.
+        - pseudo:
+            List of pseudoreaction IDs (sinks, demands, exchanges) in the model.
+        - normal_with_gpr: 
+            List of reactions IDs that are normal reactions with gpr.
+        - pseudo_with_gpr:
+            List of reactions IDs that are pseudoreactions with gpr.
     """
     
     def __init__(self, model) -> None:
@@ -1088,8 +1094,8 @@ class ModelInfoReport(Report):
         # cobra version
         # basics
         self.name = model.id
-        self.reac = len(model.reactions)
-        self.meta = len(model.metabolites)
+        self.reac = model.reactions
+        self.meta = model.metabolites
         self.gene = len(model.genes)
         # ends
         meta_ordedi = get_orphans_deadends_disconnected(model)
@@ -1098,10 +1104,11 @@ class ModelInfoReport(Report):
         self.disconnects = meta_ordedi[2]
         # balance
         mass_charge = get_mass_charge_unbalanced(model)
-        self.mass_unbalanced = mass_charge[0]
-        self.charge_unbalanced = mass_charge[1]
+        self.mass_charge_unbalanced = [_ for _ in mass_charge[0] if _ in mass_charge[1]]
+        self.mass_unbalanced = [_ for _ in mass_charge[0] if not _ in self.mass_charge_unbalanced]
+        self.charge_unbalanced = [_ for _ in mass_charge[1] if not _ in self.mass_charge_unbalanced]
         # gpr
-        self.pseudo = len(model.boundary) + len(test_biomass_presence(model))
+        self.pseudo = [_.id for _ in model.boundary] + test_biomass_presence(model)
         with_gpr = get_reac_with_gpr(model)
         self.normal_with_gpr = with_gpr[0]
         self.pseudo_with_gpr = with_gpr[1]
@@ -1121,15 +1128,17 @@ class ModelInfoReport(Report):
         """
 
         data = {'model': [self.name],
-                '#reactions': [self.reac],
-                '#metabolites': [self.meta],
+                '#reactions': [len(self.reac)],
+                '#metabolites': [len(self.meta)],
                 '#genes': [self.gene],
                 'orphans': [', '.join(self.orphans)] if not all_counts else [len(self.orphans)],
                 'dead-ends': [', '.join(self.deadends)] if not all_counts else [len(self.deadends)],
                 'disconnects': [', '.join(self.disconnects)] if not all_counts else [len(self.disconnects)],
+                'mass and charge unbalanced': [', '.join(self.mass_charge_unbalanced)] if not all_counts else [len(self.mass_charge_unbalanced)],
                 'mass unbalanced': [', '.join(self.mass_unbalanced)] if not all_counts else [len(self.mass_unbalanced)],
                 'charge unbalanced': [', '.join(self.charge_unbalanced)] if not all_counts else [len(self.charge_unbalanced)],
-                '#reactions with gpr': [len(self.pseudo_with_gpr)+len(self.normal_with_gpr)]
+                '#normal reactions with gpr': [', '.join(self.normal_with_gpr)] if not all_counts else [len(self.normal_with_gpr)],
+                '#pseudoreactions with gpr': [', '.join(self.pseudo_with_gpr)] if not all_counts else [len(self.pseudo_with_gpr)],
                 } 
         return pd.DataFrame(data)
 
@@ -1170,11 +1179,11 @@ class ModelInfoReport(Report):
 
         ax1 = fig.add_subplot(grid[0,0])
         p = ax1.bar(['reactions','metabolites','genes'],
-            [self.reac,self.meta,self.gene],
+            [len(self.reac),len(self.meta),self.gene],
             color=[cmap(0.25),cmap(0.5),cmap(0.8)]
             # edgecolor='black',
             )
-        ax1.bar_label(p, [self.reac,self.meta,self.gene])
+        ax1.bar_label(p, [len(self.reac),len(self.meta),self.gene])
         ax1.set_ylabel('count')
         ax1.tick_params(axis='both', which='major', labelsize=9)
         ax1.set_title('A) Overview')
@@ -1192,7 +1201,7 @@ class ModelInfoReport(Report):
         # ax3 = fig.add_subplot(grid[1,:])
 
         # plot reacs with gpr
-        pie_data = [len(self.normal_with_gpr), (self.reac - self.pseudo) - len(self.normal_with_gpr), len(self.pseudo_with_gpr), self.pseudo - len(self.pseudo_with_gpr)]
+        pie_data = [len(self.normal_with_gpr), (len(self.reac) - len(self.pseudo)) - len(self.normal_with_gpr), len(self.pseudo_with_gpr), len(self.pseudo) - len(self.pseudo_with_gpr)]
 
         pie_label = ['normal/+','normal/-','pseudo/+', 'pseudo/-']
 
@@ -1212,11 +1221,7 @@ class ModelInfoReport(Report):
            bbox_to_anchor=(1, 0, 0.5, 1))
 
         # plot reacs which are unbalanced
-        mass_and_charge = [_ for _ in self.mass_unbalanced if _ in self.charge_unbalanced]
-        only_mass = [_ for _ in self.mass_unbalanced if not _ in mass_and_charge]
-        only_charge = [_ for _ in self.charge_unbalanced if not _ in mass_and_charge]
-
-        pie_data = [len(mass_and_charge), len(only_charge), len(only_mass)]
+        pie_data = [len(self.mass_charge_unbalanced), len(self.charge_unbalanced), len(self.mass_unbalanced)]
 
         pie_label = ['mass and charge','charge only','mass only']
 
@@ -1241,7 +1246,7 @@ class ModelInfoReport(Report):
         # ------------------------------------------
         ax2 = fig.add_subplot(grid[0,1])
         pie_data = [len(self.deadends), len(self.orphans), len(self.disconnects)]
-        pie_data.append(self.meta - sum(pie_data))
+        pie_data.append(len(self.meta) - sum(pie_data))
 
         pie_label = ['dead-ends','orphans','disconnects','rest']
 
@@ -1283,10 +1288,47 @@ class ModelInfoReport(Report):
 
         # save the statistics report
         self.format_table().to_csv(Path(dir,f'{self.name}_report.csv'),sep=';')
+
         # save the visualisation
         fig = self.visualise(color_palette)
-        fig.savefig(Path(dir,'info_report_vis.png'), bbox_inches='tight', dpi=400)
+        fig.savefig(Path(dir,f'{self.name}_visual.png'), bbox_inches='tight', dpi=400)
 
+        # save the ids for unbalanced, gpr, ordedi
+        balance = []
+        for reaction in self.reac:
+            if reaction.id in self.mass_charge_unbalanced:
+                balance.append((reaction.id, 'mass and charge unbalanced'))
+            elif reaction.id in self.mass_unbalanced:
+                balance.append((reaction.id, 'mass unbalanced only'))
+            elif reaction.id in self.charge_unbalanced:
+                balance.append((reaction.id, 'charge unbalanced only'))
+            else:
+                balance.append((reaction.id, 'balanced'))
+        pd.DataFrame(balance).to_csv(Path(dir,f'{self.name}_id_balance.csv'), sep=';', header=False)
+
+        gpr = []
+        for reaction in self.reac:
+            if reaction.id in self.normal_with_gpr:
+                gpr.append((reaction.id, 'normal reaction with gpr'))
+            elif reaction.id in self.pseudo_with_gpr:
+                gpr.append((reaction.id, 'pseudoreaction with gpr'))
+            elif reaction.id in self.pseudo:
+                gpr.append((reaction.id, 'pseudoreaction without gpr'))
+            else:
+                gpr.append((reaction.id, 'normal reaction without gpr'))
+        pd.DataFrame(gpr).to_csv(Path(dir,f'{self.name}_id_gpr.csv'), sep=';', header=False)
+
+        ordedi = []
+        for metabolite in self.meta:
+            if metabolite.id in self.orphans:
+                ordedi.append((metabolite.id, 'orphan'))
+            elif metabolite.id in self.deadends:
+                ordedi.append((metabolite.id, 'deadend'))
+            elif metabolite.id in self.disconnects:
+                ordedi.append((metabolite.id, 'disconnect'))
+            else:
+                ordedi.append((metabolite.id, 'rest'))
+        pd.DataFrame(ordedi).to_csv(Path(dir,f'{self.name}_id_ordedi.csv'), sep=';', header=False)
 
 # @TODO
 class MultiModelInfoReport(Report):
