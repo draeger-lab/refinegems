@@ -57,9 +57,9 @@ def get_reac_with_gpr(model:cobra.Model) -> tuple[list[str], list[str]]:
         # check for GPR
         if len(reac.genes) > 0:
             if reac in pseudoreactions:
-                pseudo.append(reac)
+                pseudo.append(reac.id)
             else:
-                normal.append(reac)
+                normal.append(reac.id)
 
     return (normal, pseudo)
 
