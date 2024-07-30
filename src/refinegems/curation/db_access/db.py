@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """This module contains functions usable with multiple databases or those drawing
 information from multiple databases and therefore cannot be separated into the other 
-submodules.
+submodules. Additionally, this module contains function for databases not covered by
+the other modules.
 """
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehrenbach"
@@ -10,22 +11,26 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 # requirements
 ################################################################################
 
-from Bio import Entrez
-from multiprocessing import Pool
 import numpy as np
 import pandas as pd
-from ratelimit import limits, sleep_and_retry
 import re
 import requests
 import sqlite3
-from tqdm import tqdm
 import xmltodict
 
+from Bio import Entrez
+from multiprocessing import Pool
+from ratelimit import limits, sleep_and_retry
+from tqdm import tqdm
+from typing import Literal
+
+tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
-from ...utility.io import load_a_table_from_database
+from ...utility.connections import run_DIAMOND_blastp, filter_DIAMOND_blastp_results
 from ...utility.databases import PATH_TO_DB
 from ...utility.entities import VALID_COMPARTMENTS
+from ...utility.io import load_a_table_from_database, create_missing_genes_protein_fasta
 
 ################################################################################
 # variables
@@ -388,3 +393,73 @@ def get_ec_from_ncbi(mail:str,ncbiprot:str):
     except Exception as e:
         # @TODO : logging / warning etc
         return None
+    
+# Uniprot
+# -------
+
+def map_dmnd_res_to_sp_ec_brenda(dmnd_results:pd.DataFrame, 
+                                 swissprot_mapping_path:str):
+    
+    def _combine_EC_BRENDA(brenda:str,ec:str):
+    
+        nums_list = []
+        # get brenda ids
+        if brenda and not pd.isna(brenda):
+            for num in brenda.split(';'):
+                nums_list.append(num.strip())
+
+        # get ec numbers
+        if ec and not pd.isna(ec):
+            for num in ec.split(';'):
+                nums_list.append(num.strip())
+            
+        # remove duplicates
+        nums_list = list(set(nums_list))
+        # filter non-complete EC numbers : X.X.X.X => 7 or more characters
+        nums_list = [_ for _ in nums_list if len(_) >= 7]
+            
+        return nums_list
+    
+    # load the SwissProt mapping file
+    swissprot_mapping = pd.read_csv(swissprot_mapping_path, sep='\t')
+    swissprot_mapping.dropna(subset=['BRENDA','EC number'], how='all',inplace=True)
+    
+    # extract SwissProts IDs from subject_ID
+    dmnd_results.columns = ['locus_tag','UniProt']
+    dmnd_results['UniProt'] = dmnd_results['UniProt'].apply(lambda x: x.split('|')[1])
+    
+    # match
+    dmnd_results = dmnd_results.merge(swissprot_mapping, left_on='UniProt', right_on='Entry', how='left')
+    dmnd_results.drop('Entry', axis=1, inplace=True)
+    dmnd_results['ec-code'] = dmnd_results.apply(lambda x: _combine_EC_BRENDA(x['BRENDA'],x['EC number']), axis=1)
+    dmnd_results.drop(['BRENDA','EC number'], axis=1, inplace=True)
+    dmnd_results = dmnd_results.explode('ec-code')
+    dmnd_results.drop_duplicates(inplace=True)
+    
+    return dmnd_results
+
+def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame, 
+                         swissprot_mapping_file:str,
+                         outdir:str=None,
+                         sens:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
+                         cov:float=95.0,
+                         t:int=2, pid:float=90.0):
+    
+    # Step 1: Make a FASTA out of the missing genes
+    miss_fasta = create_missing_genes_protein_fasta(fasta,outdir,missing_genes)
+    # Step 2: Run DIAMOND
+    #         blastp mode against SwissProt DB
+    blast_path = run_DIAMOND_blastp(miss_fasta, db, 
+                                    sensitivity=sens,
+                                    coverage=cov,
+                                    threads=t,
+                                    outdir=outdir)
+    # Step 3: filter DIAMOND hits
+    dmnd_res = filter_DIAMOND_blastp_results(blast_path, pid)
+    # Step 4: map to Swissprot mapping file
+    mapped_res = map_dmnd_res_to_sp_ec_brenda(dmnd_res, swissprot_mapping_file)
+    # Step 5: Aggregate UniProt IDs for unique combinations of 
+    #         EC numbers and locus tags
+    mapped_res = mapped_res.groupby(['locus_tag','ec-code']).agg({'UniProt': lambda x: x.tolist()}).reset_index()
+    
+    return mapped_res

@@ -11,7 +11,7 @@ __author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. 
 # requirements
 ################################################################################
 
-from Bio.KEGG import REST
+
 import cobra
 import os
 import re
@@ -22,9 +22,11 @@ import pandas as pd
 
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
+from Bio.KEGG import REST
 from refinegems.utility.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
+from pathlib import Path
 from typing import Literal, Union
 
 ################################################################################
@@ -183,9 +185,6 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
         raise TypeError(message)
     
 
-# media
-# -----
-
 # other
 # -----
 # @TODO: sort more, make it more readable
@@ -306,6 +305,8 @@ def validate_libsbml_model(model: libModel) -> int:
     
     return validator.validate(doc)
 
+# FASTA
+# -----
 
 def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
     """Parses FASTA file headers to obtain:
@@ -371,6 +372,47 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
             
     return pd.DataFrame(locus2ids)
 
+
+def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
+    
+    # format the missing genes' locus tags
+    locus_tags_dict = {_:'[locus_tag='+_+']' for _ in list(missing_genes['locus_tag'])}
+    
+    # parse the protein FASTA
+    protfasta = SeqIO.parse(fasta,'fasta')
+    
+    # extract the sequences of the missing genes only
+    missing_seqs = []
+    for seq in protfasta:
+        # Case 1: locus tag equals FASTA header
+        if seq.id in locus_tags_dict.keys():
+            missing_seqs.append(seq)
+        # Case 2: locus tag as descriptor
+        elif any([k for k,v in locus_tags_dict.items() if v in seq.description]):
+            for k,v in locus_tags_dict.items():
+                if v in seq.description:
+                    seq.id = k
+                    missing_seqs.append(seq)
+                    break
+        # Case _: locus tag either in model or errounous
+        else:
+            pass
+        
+    # save the collected sequences in a new file
+    if outdir:
+        outfile = Path(outdir,'missing_genes.fasta')
+    else:
+        outfile = Path('missing_genes.fasta')
+    SeqIO.write(missing_seqs, outfile, 'fasta')
+    
+    return outfile
+
+
+
+
+# NCBI
+# ----
+# move to databases/db
 
 def search_ncbi_for_gpr(locus: str) -> str:
     """Fetches protein name from NCBI
@@ -533,6 +575,8 @@ def search_sbo_label(sbo_number: str) -> str:
 
 # KEGG
 # ----
+# is this still needed?
+# move to KEGG module
 # @TODO
 def kegg_reaction_parser(rn_id:str) -> dict: 
     """Get the entry of a KEGG reaction ID and 

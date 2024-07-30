@@ -122,6 +122,7 @@ def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
     # output:   ec-code ncbiprotein	id	equation	reference	is_transport	via
     return table 
 
+
 ############################################################################
 # classes
 ############################################################################
