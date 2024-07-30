@@ -11,11 +11,9 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 import cobra
 import json
 import memote
-import pandas as pd
 import shutil
 import tempfile
 import time
-import subprocess
 import warnings
 
 from BOFdat import step1
@@ -309,40 +307,3 @@ def run_SBOannotator(model: libModel) -> libModel:
         # model = polish_annotations(model, True, True,str(Path(tempdir,'missingCurie')))
     return model
 
-
-# DIAMOND
-# -------
-
-def run_DIAMOND_blastp(fasta:str, db:str, 
-                       sensitivity:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
-                       coverage:float=95.0,
-                       threads:int=2,
-                       outdir:str=None, outname:str='DIAMOND_blastp_res.tsv'):
-    
-    if outdir:
-        outname = Path(outdir,'DIAMOND_blastp_res.tsv')
-        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
-    else:
-        outname = Path(outname)
-        logfile = Path('log_DIAMOND_blastp.txt')
-      
-    # @TODO: test, if it works with different paths and their problems  
-    # @TODO: write additional output to a logfile, not stderr
-    subprocess.run([F'diamond blastp -d {db} -q {fasta} --{sensitivity} --query-cover {coverage} -p {int(threads)} -o {outname} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore 2> {logfile}'], shell=True)
-
-    return outname
-
-def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0):
-    
-    if pid_theshold > 100.0 or pid_theshold < 0.0:
-        raise ValueError('PID threshold has to be between 0.0 and 100.0')
-    
-    # load diamond results
-    diamond_results = pd.read_csv(blasttsv, sep='\t', header=None)
-    diamond_results.columns = ['query_ID', 'subject_ID', 'PID', 'align_len', 'no_mismatch', 'no_gapopen', 'query_start', 'query_end', 'subject_start', 'subject_end','E-value','bitscore']
-    # filter by PID
-    diamond_results = diamond_results[diamond_results['PID']>=pid_theshold]
-    # trim cols
-    diamond_results = diamond_results[['query_ID','subject_ID']]
-    
-    return diamond_results

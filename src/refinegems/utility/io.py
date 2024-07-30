@@ -23,11 +23,12 @@ import pandas as pd
 from ols_client import EBIClient
 from Bio import Entrez, SeqIO
 from Bio.KEGG import REST
-from refinegems.utility.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
 from typing import Literal, Union
+
+from .databases import PATH_TO_DB, initialise_database
 
 ################################################################################
 # variables

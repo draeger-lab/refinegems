@@ -22,8 +22,8 @@ import re
 from tqdm import tqdm
 tqdm.pandas()
 
-from ..curation.db_access.db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs
-from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds, load_model
+from ..curation.db_access.db import get_ec_from_ncbi, get_ec_via_swissprot
+from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds
 from ..utility.entities import get_model_reacs_or_metabs
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 
@@ -119,6 +119,9 @@ def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
         else:
             table = _map_ec_to_reac_kegg(table)
     
+    # explode
+    table = table.explode('id', ignore_index=True).explode('id', ignore_index=True)
+        
     # output:   ec-code ncbiprotein	id	equation	reference	is_transport	via
     return table 
 
@@ -300,7 +303,6 @@ class KEGGapFiller(GapFiller):
         
         # Step 3: clean and map to model reactions
         # ----------------------------------------
-        reacs_mapped = reacs_mapped.explode('id', ignore_index=True).explode('id', ignore_index=True)
         # need manual curation
         self.manual_curation['reacs'] = reacs_mapped[reacs_mapped['id'].isnull()]
         # map to model reactions
@@ -612,10 +614,103 @@ class GeneGapFiller(GapFiller):
         missing_genes = missing_genes.explode('ncbiprotein')
         return missing_genes
     
-    def get_missing_reacs(self):
+    def get_missing_reacs(self, model:cobra.Model, 
+                          missing_genes:pd.DataFrame, 
+                          # prefix for pseudo ncbiprotein ids
+                          prefix:str='refinegems',
+                          # NCBI params
+                          mail:str=None, 
+                          check_NCBI:bool=False,
+                          # SwissProt
+                          fasta:str=None, 
+                          dmnd_db:str=None, 
+                          swissprot_map:str=None,
+                          **kwargs):
         
-        pass
+        # Case 1:  no EC
+        # --------------
+        case_1 = missing_genes[missing_genes['ec-code'].isna()]
+        not_case_1 = missing_genes[~missing_genes['ec-code'].isna()]
+        if len(case_1) > 0:
+            
+            # Option 1: BLAST against SwissProt
+            # +++++++++++++++++++++++++++++++++    
+            # -> BLAST (DIAMOND) against SwissProt to get EC/BRENDA 
+            # @TEST
+            if fasta and dmnd_db and swissprot_map:
+                case_1_mapped = get_ec_via_swissprot(fasta,dmnd_db,
+                                            case_1,
+                                            swissprot_map,
+                                            **kwargs) # further optional params for the mapping
+                case_1.drop('ec-code', inplace=True, axis=1)
+                case_1 = case_1.merge(case_1_mapped, on='locus_tag', how='left')
+                not_case_1['UniProt'] = None
+                
+            # Option 2: Use ML to predict EC
+            # ++++++++++++++++++++++++++++++
+            # @TODO
+            # -> sth like DeepECTransformer (tools either not good, 
+            #    not installable or no license)
+            # -> use ECRECer Web service output as input 
+            #    (whole protein fasta -> wait for Gwendolyn's results) -> does not work / not return
+            # -> use CLEAN webservice
+            #    same problem as above with the web tool
 
+        self.manual_curation['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()] 
+        
+        mapped_reacs = pd.concat([case_1[~(case_1['ncbiprotein'].isna() & case_1['ec-code'].isna())],not_case_1])
+
+        # convert NaNs to None
+        mapped_reacs.mask(mapped_reacs.isna(), other=None, inplace=True)
+
+        # Case 2: still no EC but ncbiprotein
+        # -----------------------------------
+        #       -> access ncbi for ec (optional) 
+        # @DEBUGGING ...................
+        mapped_reacs = mapped_reacs.iloc[0:5,:]
+        print(UserWarning('Running in debugging mode.'))
+        # ..............................
+        if check_NCBI and mail:
+            mapped_reacs['ec-code'] = mapped_reacs.progress_apply(lambda x: get_ec_from_ncbi(mail,x['ncbiprotein']) if not x['ec-code'] and not x['ncbiprotein'].isna() else x['ec-code'], axis=1)
+        
+        # save entries with no EC for manual curation
+        self.manual_curation['no EC'] = mapped_reacs[mapped_reacs['ec-code'].isna()]
+        mapped_reacs = mapped_reacs[~mapped_reacs['ec-code'].isna()]
+        
+        # check, if any automatic gapfilling is still possible
+        if len(mapped_reacs) == 0:
+            return None
+        
+        # create pseudoids for entries with no ncbiprotein id
+        mapped_reacs['ncbiprotein'] = mapped_reacs.apply(lambda x: f'{prefix}_{x["locus_tag"]}' if not x['ncbiprotein'] else x['ncbiprotein'], axis=1)
+
+        # Case 3: EC found
+        # ----------------
+        
+        # update the gene information
+        updated_missing_genes = mapped_reacs.copy()
+        
+        # reformat missing reacs 
+        mapped_reacs.drop(['UniProt','locus_tag'], inplace=True, axis=1)
+        
+        # transform table into EC-number vs. list of NCBI protein IDs
+        # @TODO make a func out of this - occurs on multiple occasions
+        eccode = mapped_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        ncbiprot = mapped_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        mapped_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
+        mapped_reacs = mapped_reacs.groupby(mapped_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
+        
+        # map EC to reactions
+        mapped_reacs = map_ec_to_reac(mapped_reacs[['ec-code','ncbiprotein']])
+        
+        # @TODO the stuff below also appear multiple times
+        # save for manual curation
+        self.manual_curation['reacs, no mapping'] = mapped_reacs[mapped_reacs['id'].isnull()]
+        # map to model
+        mapped_reacs = mapped_reacs[~mapped_reacs['id'].isnull()]
+        mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
+        
+        return updated_missing_genes, mapped_reacs
 ############################################################################
 # functions
 ############################################################################

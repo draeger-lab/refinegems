@@ -16,10 +16,12 @@ import pandas as pd
 import re
 import requests
 import sqlite3
+import subprocess
 import xmltodict
 
 from Bio import Entrez
 from multiprocessing import Pool
+from pathlib import Path
 from ratelimit import limits, sleep_and_retry
 from tqdm import tqdm
 from typing import Literal
@@ -27,7 +29,6 @@ from typing import Literal
 tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
-from ...utility.connections import run_DIAMOND_blastp, filter_DIAMOND_blastp_results
 from ...utility.databases import PATH_TO_DB
 from ...utility.entities import VALID_COMPARTMENTS
 from ...utility.io import load_a_table_from_database, create_missing_genes_protein_fasta
@@ -394,6 +395,45 @@ def get_ec_from_ncbi(mail:str,ncbiprot:str):
         # @TODO : logging / warning etc
         return None
     
+    
+# DIAMOND
+# -------
+# @ISSUE / @NOTE / @TODO
+#   putting these in connections leads to an import error
+
+def run_DIAMOND_blastp(fasta:str, db:str, 
+                       sensitivity:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
+                       coverage:float=95.0,
+                       threads:int=2,
+                       outdir:str=None, outname:str='DIAMOND_blastp_res.tsv'):
+    
+    if outdir:
+        outname = Path(outdir,'DIAMOND_blastp_res.tsv')
+        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
+    else:
+        outname = Path(outname)
+        logfile = Path('log_DIAMOND_blastp.txt')
+      
+    # @TODO: test, if it works with different paths and their problems  
+    # @TODO: write additional output to a logfile, not stderr
+    subprocess.run([F'diamond blastp -d {db} -q {fasta} --{sensitivity} --query-cover {coverage} -p {int(threads)} -o {outname} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore 2> {logfile}'], shell=True)
+
+    return outname
+
+def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0):
+    
+    if pid_theshold > 100.0 or pid_theshold < 0.0:
+        raise ValueError('PID threshold has to be between 0.0 and 100.0')
+    
+    # load diamond results
+    diamond_results = pd.read_csv(blasttsv, sep='\t', header=None)
+    diamond_results.columns = ['query_ID', 'subject_ID', 'PID', 'align_len', 'no_mismatch', 'no_gapopen', 'query_start', 'query_end', 'subject_start', 'subject_end','E-value','bitscore']
+    # filter by PID
+    diamond_results = diamond_results[diamond_results['PID']>=pid_theshold]
+    # trim cols
+    diamond_results = diamond_results[['query_ID','subject_ID']]
+    
+    return diamond_results
 # Uniprot
 # -------
 
@@ -461,5 +501,5 @@ def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame,
     # Step 5: Aggregate UniProt IDs for unique combinations of 
     #         EC numbers and locus tags
     mapped_res = mapped_res.groupby(['locus_tag','ec-code']).agg({'UniProt': lambda x: x.tolist()}).reset_index()
-    
+
     return mapped_res
