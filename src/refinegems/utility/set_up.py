@@ -40,6 +40,10 @@ def download_url(dowload_type:Literal['SwissProt gapfill'],
             swissprot_api = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
             swissprot_mapping_api = 'https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_brenda%2Cec%2Csequence&format=tsv&query=%28*%29+AND+%28reviewed%3Atrue%29'
             urls = {'SwissProt.fasta':swissprot_api, 'SwissProt_mapping.tsv':swissprot_mapping_api}
+            # @TODO warning / prompt about size 
+            #   1.: TSV with UniprotID, BRENDA and EC -7.7MB (26.07.2024)
+            #   2.: FASTA with sequences ~280MB (26.07.2024)
+            # @TODO contruct DIAMOND database in this step as well?
         case _:
             mes = f'Unknown database or file: {name}'
             raise ValueError(mes)
