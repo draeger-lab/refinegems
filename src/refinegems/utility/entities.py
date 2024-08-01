@@ -421,7 +421,7 @@ def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein
     """
     id_db = None
     gp = model.getPlugin(0).createGeneProduct()
-    gp.setId(model_id)
+    gp.setId(model_id) # libsbml advised to use set/getIdAttribute
     gp.setName(name)
     gp.setLabel(locus_tag)
     gp.setSBOTerm('SBO:0000243')

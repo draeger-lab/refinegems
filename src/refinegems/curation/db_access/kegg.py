@@ -138,7 +138,22 @@ def bioservices_parse_KEGG_gene(locus_tag):
     return gene_info
 
 # @NEW / FASTER version of the above using Biopython
-def parse_KEGG_gene(locus_tag):
+def parse_KEGG_gene(locus_tag:str) -> dict:
+    """Based on a locus tag, fetch the corresponding KEGG entry and
+    parse it into a dictionary containing the following information (if available):
+    
+    - ec-code
+    - orthology
+    - references
+
+    Args:
+        - locus_tag (str): 
+            The locus in the format <orgnismid>:<locus_tag>
+
+    Returns:
+        dict: 
+            The collected information.
+    """
     
     gene_info = dict()
     gene_info['orgid:locus'] = locus_tag
@@ -221,7 +236,24 @@ def bioservices_parse_KEGG_ec(ec):
     return ec_info
 
 # @NEW / FASTER version of the above using Biopython
-def parse_KEGG_ec(ec):
+def parse_KEGG_ec(ec:str) -> dict:
+    """Based on an EC number, fetch the corresponding KEGG entry and
+    parse it into a dictionary containing the following information (if available):
+    
+    - ec-code
+    - id (kegg.reference)
+    - equation
+    - reference 
+    - pathway
+
+    Args:
+        - ec (str): 
+            The EC number in the format 'x.x.x.x'
+
+    Returns:
+        dict: 
+            The collected information about the KEGG entry.
+    """
     
     ec_info = dict()
     ec_info['ec-code'] = ec

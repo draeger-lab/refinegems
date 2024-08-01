@@ -13,7 +13,7 @@ import cobra
 import pandas as pd
 import numpy as np
 
-from typing import Literal
+from typing import Literal, Union
 
 from libsbml import Model as libModel
 from bioservices.kegg import KEGG
@@ -137,7 +137,7 @@ def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
 class GapFiller(ABC):
 
     def __init__(self) -> None:
-        self.full_gene_list = None
+        self.full_gene_list = None  # really a good idea? GeneGapFiller does not need it at all
         self.geneid_type = 'ncbi' # @TODO
         self._statistics = dict()
         self.manual_curation = dict()
@@ -156,7 +156,7 @@ class GapFiller(ABC):
 
     def _find_reac_in_model(self, model: cobra.Model, eccode:str, id:str, 
                idtype:Literal['MetaNetX','KEGG','BiGG', 'BioCyc'], 
-               include_ec_match:bool=False):
+               include_ec_match:bool=False) -> Union[None, list]:
         # @TODO Ensure that user has requested BioCyc identifiers.org version? 
         # -> Could be done with polish_annotations
         MAPPING = {
@@ -592,7 +592,7 @@ class GeneGapFiller(GapFiller):
     def __init__(self) -> None:
         super().__init__()
         
-    def get_missing_genes(self,gffpath,model:libModel):
+    def get_missing_genes(self,gffpath,model:libModel) -> pd.DataFrame:
     
         # get all CDS from gff
         all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)
@@ -625,7 +625,7 @@ class GeneGapFiller(GapFiller):
                           fasta:str=None, 
                           dmnd_db:str=None, 
                           swissprot_map:str=None,
-                          **kwargs):
+                          **kwargs) -> tuple:
         
         # Case 1:  no EC
         # --------------
@@ -711,6 +711,10 @@ class GeneGapFiller(GapFiller):
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
         
         return updated_missing_genes, mapped_reacs
+    
+    
+    
+    
 ############################################################################
 # functions
 ############################################################################
