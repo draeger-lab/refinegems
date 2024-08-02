@@ -1169,6 +1169,24 @@ class ModelInfoReport(Report):
             warnings.warn('Unknown color palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps['YlGn']
 
+        # function to adjust position of labels
+        def adjust_label_position(autotexts, min_dist):
+            positions = np.array([text.get_position() for text in autotexts])
+            for i in range(len(autotexts)):
+                if autotexts[i].get_text() != "":
+                    for j in range(i+1, len(autotexts)):
+                        if autotexts[i].get_text() != "":
+                            dist = np.linalg.norm(positions[i]-positions[j])
+                            if dist < min_dist:
+                                shift = (min_dist-dist)/2
+                                delta = positions[j] - positions[i]
+                                direction = delta / np.linalg.norm(delta)
+                                positions[i] -= direction*shift
+                                positions[j] += direction*shift
+    
+            for i, text in enumerate(autotexts):
+                text.set_position(positions[i])
+
         # set up the figure
         fig = plt.figure()
         fig.suptitle(f'Basic information for model {self.name}', fontsize=16)
@@ -1212,8 +1230,10 @@ class ModelInfoReport(Report):
             return f"{pct:.1f}% ({absolute:d})"
 
         wedges, texts, autotexts = ax3.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
-                                   explode = [0, 0, 0, 0], wedgeprops=dict(width=0.4), 
+                                   wedgeprops=dict(width=0.4), 
                                    colors=[cmap(0.2), cmap(0.6), cmap(0.8), cmap(0.4)])
+
+        adjust_label_position(autotexts, 0.2)
 
         ax3.legend(wedges, pie_label,
            title="reaction +/- gpr",
@@ -1232,8 +1252,10 @@ class ModelInfoReport(Report):
             return f"{pct:.1f}% ({absolute:d})"
 
         wedges, texts, autotexts = ax4.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
-                                   explode = [0, 0, 0], wedgeprops=dict(width=0.4), 
+                                   wedgeprops=dict(width=0.4), 
                                    colors=[cmap(0.2),cmap(0.4), cmap(0.6)])
+
+        adjust_label_position(autotexts, 0.2)
 
         ax4.legend(wedges, pie_label,
            title="unbalanced",
@@ -1259,6 +1281,8 @@ class ModelInfoReport(Report):
         wedges, texts, autotexts  = ax2.pie(pie_data, autopct=lambda pct: func(pct, pie_data), 
             explode = [0.1, 0.1, 0.1, 0], wedgeprops=dict(width=0.4), 
             colors=[cmap(0.2),cmap(0.6), cmap(0.8), cmap(0.4)])
+
+        adjust_label_position(autotexts, 0.25)
 
         ax2.legend(wedges, pie_label,
                 title="Metabolites",
