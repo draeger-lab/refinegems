@@ -196,8 +196,9 @@ def plot_rea_sbo_single(model: libModel):
     df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
     df = df[df[model.id]>3]
     df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
-    fig = df.drop('SBO-Term', axis=1).sort_values(model.id).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
-    fig.set_ylabel('')
-    fig.set_xlabel('number of reactions', fontsize=16)
-    fig.legend(loc='lower right')
+    ax = df.drop('SBO-Term', axis=1).sort_values(model.id).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
+    ax.set_ylabel('')
+    ax.set_xlabel('number of reactions', fontsize=16)
+    ax.legend(loc='lower right')
+    fig = ax.get_figure()
     return fig
