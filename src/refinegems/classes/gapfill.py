@@ -667,7 +667,7 @@ class GeneGapFiller(GapFiller):
         # -----------------------------------
         #       -> access ncbi for ec (optional) 
         # @DEBUGGING ...................
-        mapped_reacs = mapped_reacs.iloc[0:5,:]
+        mapped_reacs = mapped_reacs.iloc[300:350,:]
         print(UserWarning('Running in debugging mode.'))
         # ..............................
         if check_NCBI and mail:
