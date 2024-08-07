@@ -19,6 +19,7 @@ from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_
 
 metabol_db_dict = {
                    'BIGG': 'bigg.metabolite:',
+                   'BiGG': 'bigg.metabolite:',
                    'BIOCYC': 'biocyc:META:',
                    'BioCyc': 'biocyc:META:',
                    'BRENDA': 'brenda:',
@@ -45,6 +46,7 @@ metabol_db_dict = {
 
 reaction_db_dict = {
                     'BIGG': 'bigg.reaction:',
+                    'BiGG': 'bigg.metabolite:',
                     'BioCyc': 'biocyc:META:',
                     'BRENDA': 'brenda:',
                     'EC': 'ec-code:',
