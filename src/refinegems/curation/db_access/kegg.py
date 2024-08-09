@@ -10,7 +10,7 @@ and the KEGG identifier of your organism.
 Due to the KEGG REST API this is relatively slow (model of size 1500 reactions - 20 min).
 """
 
-__author__ = "Famke Baeuerle"
+__author__ = "Famke Baeuerle and Carolin Brune"
 
 ############################################################################
 # requirements

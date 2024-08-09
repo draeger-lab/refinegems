@@ -10,19 +10,28 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 ################################################################################
 
 import cobra 
+import json
 import pandas as pd
-from random import choice 
 import re
+import requests
+import urllib
 import warnings
-from string import ascii_uppercase, digits
 
 from Bio import Entrez
+from Bio.KEGG import REST, Compound
 from libsbml import Model as libModel
-from libsbml import GeneProduct, Species, Reaction
+from libsbml import GeneProduct, Species, Reaction, FbcOr, FbcAnd, GeneProductRef
+from random import choice 
+from string import ascii_uppercase, digits
 from typing import Union, Literal
 
 from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
-from .io import search_ncbi_for_gpr
+from .io import search_ncbi_for_gpr, load_a_table_from_database
+from ..developement.decorators import *
+# @TODO @TEST for import problems 
+# # -> afraid, this might cause a circular import (due to curation)
+from ..curation.db_access.db import parse_reac_str
+from ..curation.db_access.kegg import kegg_reaction_parser
 
 ################################################################################
 # variables
@@ -39,8 +48,12 @@ COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
 # functions
 ################################################################################
 
-# handling compartments - cobra
-# -----------------------------
+# ++++++++++++++++++++++++++++++++++++++++
+# COBRApy - models
+# ++++++++++++++++++++++++++++++++++++++++
+
+# handling compartments 
+# ---------------------
 
 def are_compartment_names_valid(model:cobra.Model) -> bool:
     """Check if compartment names of model are considered valid based on VALID_COMPARTMENTS.
@@ -90,8 +103,8 @@ def resolve_compartment_names(model:cobra.Model):
             raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Cannot resolve problem.')
 
 
-# handling cobra entities
-# -----------------------
+# handling cobra entities (features)
+# ----------------------------------
         
 def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
     """Parses a reaction equation string to dictionary 
@@ -274,6 +287,1115 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
             raise TypeError(mes)
         
 
+# originally from SPECIMEN HQTB --- changed / extended
+# @TODO - are all needed checks covered? any more needed?
+def isreaction_complete(reac:cobra.Reaction, 
+                        name_check:bool=False,
+                        formula_check:Literal['none','existence','wildcard','strict']='existence',
+                        exclude_dna:bool=True, 
+                        exclude_rna:bool=True) -> bool:
+    
+    # check reaction features
+    # -----------------------
+    # check name
+    if name_check:
+        if reac.id == '' or pd.isnull(reac.name):
+            return False
+    # check for RNA/DNA
+    if exclude_dna and 'DNA' in reac.name:
+        return False
+    if exclude_rna and 'RNA' in reac.name:
+        return False
+
+    # check metabolites features
+    # --------------------------
+    for m in reac.metabolites:
+        # check id
+        if m.id == '' or pd.isnull(m.id):
+            return False
+        # check name
+        if name_check and (m.name == '' or pd.isnull(m.name)):
+            return False
+        # check formula
+        match formula_check:
+            # case 1: no formula checking
+            case 'none':
+                pass
+            # case 2: check, if formula is set
+            case 'existence':
+                if m.formula == '' or pd.isnull(m.formula):
+                    return False
+            # case 3: check, if formula is set and only contains alphanumerical characters
+            case 'wildcard':
+                if m.formula == '' or pd.isnull(m.formula) or not m.formula.isalnum():
+                    return False
+            # case 4: check, if formula is set, constains only alphanumerical characters and no rest R
+            case 'strict':
+                if m.formula == '' or pd.isnull(m.formula) or not m.formula.isalnum() or bool(re.search(r'R(?![a-z])', 'CH2HOROH')):
+                    return False
+            # default case: Warning + no formula check
+            case _:
+                mes = f'Unknown options for formula_check: {formula_check}\nChecking the metabolite formula will be skipped.'
+                warnings.warn(mes,UserWarning)
+        
+
+    return True
+
+# extending annotations
+# ---------------------
+# @TODO is this a good place for these functions or maybe somewhere else?
+
+# @TODO name of this function is not good
+def get_BiGG_metabs_annotation_via_dbid(metabolite:cobra.Metabolite, 
+                                        id:str, dbcol:str, 
+                                        compartment:str = 'c') -> None:
+    """Search for a BiGG ID and add it to a metabolite annotation. 
+    The search is based on a column name of the BiGG metabolite table
+    and an ID to search for. Additionally, using the given compartment name, 
+    the found IDs are filtered for matching compartments.
+
+    Args:
+        - metabolite (cobra.Metabolite): 
+            The metabolite. Needs to a a COBRApy Metabolte object.
+        - id (str): 
+            The ID to search for in the database.
+        - dbcol (str): 
+            Name of the column of the database to check the ID against.
+        - compartment (str, optional): 
+            The compartment name. Needs to be a valid BiGG compartment ID. 
+            Defaults to 'c'.
+    """
+    # check, if a BiGG annotation is given
+    if not 'bigg.metabolite' in metabolite.annotation.keys():
+        # seach the database for the found id
+        bigg_search = load_a_table_from_database(
+            f'SELECT * FROM bigg_metabolites WHERE \'{dbcol}\' = \'{id}\'',
+            query=True)
+        if len(bigg_search) > 0:
+            # check, if the matches also match the compartment
+            metabolite.annotation['bigg.metabolite'] = [_ for _ in bigg_search['id'].tolist() if _.endswith(f'_{compartment}')]
+            # add final matches to the annotations of the metabolite
+            if len(metabolite.annotation['bigg.metabolite']) == 0:
+                metabolite.annotation.pop('bigg.metabolite')
+ 
+ 
+def add_annotations_from_BiGG_metabs(metabolite:cobra.Metabolite) -> None:
+    """Check a cobra.metabolite for bigg.metabolite annotations. If they exists, 
+    search for more annotations in the BiGG database and add them to the metabolite.
+
+    Args:
+        - metabolite (cobra.Metabolite): 
+            The metabolite object.
+    """
+    if 'bigg.metabolite' in metabolite.annotation.keys():
+        bigg_information = load_a_table_from_database(
+            'SELECT * FROM bigg_metabolites WHERE id = \'' + f'\' OR id = \''.join(metabolite.annotation['bigg.metabolite']) + '\'',
+            query=True)
+        db_id_bigg = {'BioCyc':'biocyc', 'MetaNetX (MNX) Chemical':'metanetx.chemical','SEED Compound':'seed.compound','CHEBI':'chebi', 'KEGG Compound':'kegg.compound'}
+        for db in db_id_bigg:
+            info = list(set(bigg_information[db].dropna().to_list()))
+            if len(info) > 0:
+                info = ','.join(info)
+                info = [x.strip() for x in info.split(',')] # make sure all entries are a separate list object
+                if db_id_bigg[db] in metabolite.annotation.keys():
+                    metabolite.annotation[db_id_bigg[db]] = list(set(info + metabolite.annotation[db_id_bigg[db]]))
+                else:
+                    metabolite.annotation[db_id_bigg[db]] = info
+
+
+def _add_annotations_from_bigg_reac_row(row:pd.Series, reac:cobra.Reaction) -> None:
+    """Given a row of the BiGG reaction database table and a cobra.Reaction object,
+    extend the annotation of the latter with the information of the former.
+
+    Args:
+        - row (pd.Series): 
+            The row of the database table.
+        - reac (cobra.Reaction): 
+            The reaction object.
+    """
+    
+    dbnames = {'RHEA':'rhea','BioCyc':'biocyc','MetaNetX (MNX) Equation':'metanetx.reaction','EC Number':'ec-code'}
+    for dbname,dbprefix in dbnames.items():
+        if row[dbname]:
+            ids_to_add = row[dbname].split(',')
+            if dbprefix in reac.annotation.keys():
+                reac.annotation[dbprefix] = list(set(reac.annotation[dbprefix]).union(set(ids_to_add)))
+            else:
+                reac.annotation[dbprefix] = ids_to_add
+
+
+def _add_annotations_from_dict_cobra(references:dict, entity:cobra.Reaction|cobra.Metabolite|cobra.Model) -> None:
+    """Given a dictionary and a cobra object, add the former as annotations to the latter.
+    The keys of the dictionary are used as the annotation labels, the values as the values.
+    If the keys are already in the entity, the values will be combined (union).
+
+    Args:
+        - references (dict): 
+            The dictionary with the references to add the entity.
+        - entity (cobra.Reaction | cobra.Metabolite | cobra.Model): 
+            The entity to add annotations to.
+    """
+    # add additional references from the parameter
+    for db,idlist in references.items():
+        if not isinstance(idlist,list):
+            idlist = [idlist]
+        if db in entity.annotation.keys():
+            entity.annotation[db] = list(set(entity.annotation[db] + idlist))
+        else:
+            entity.annotation[db] = idlist
+
+
+# adding metabolites to cobra models
+# ----------------------------------
+
+@template
+def build_metabolite_xxx(id:str, model:cobra.Model, 
+                         namespace:str,
+                         compartment:str,
+                         idprefix:str) -> cobra.Metabolite: 
+    """Template function for building a cobra.Metabolite.
+    
+    .. note::
+    
+        This is a template function for developers. It is cannot be executed.
+
+    Args:
+        - id (str): 
+            _description_
+        - model (cobra.Model): 
+            _description_
+        - namespace (str): 
+            _description_
+        - compartment (str): 
+            _description_
+        - idprefix (str): 
+            _description_
+
+    Returns:
+        cobra.Metabolite: 
+            _description_
+    """
+    # change xxx to database or way the metabolite will be reconstructed with
+    # check if id in model
+    # get information via id
+    # collection formation in a new metabolite object
+    # add more annotations from other databases
+    # adjust namespace
+    # check model again for new namespace
+    pass
+
+
+# originally from SPECIMEN
+# @TODO some issues left
+# current version works on a couple of examples 
+def build_metabolite_mnx(id: str, model:cobra.Model, 
+                         namespace:str='BiGG',
+                         compartment:str='c',
+                         idprefix:str='refineGEMs') -> cobra.Metabolite | None:
+    """Build a cobra.Metabolite object from a MetaNetX ID. 
+    This function will NOT directly add the metabolite to the model, 
+    if the contruction is successful.
+
+    Args:
+        - id (str): 
+            A MetaNetX ID of a metabolite.
+        - model (cobra.Model): 
+            The model, the metabolite will be build for.
+        - namespace (str, optional): 
+            Name to use for the model ID. If namespace cannot be matched,
+            will use a random ID. 
+            Defaults to 'BiGG'.
+        - compartment (str, optional): 
+            Compartment of the metabolite. Defaults to 'c'.
+        - idprefix (str, optional): 
+            Prefix for the random ID. Defaults to 'refineGEMs'.
+
+    Returns:
+        Case construction successful or match found in model:
+        
+            cobra.Metabolite: 
+                The metabolite object.
+        
+        Case construction failed:
+                
+            None:
+                Nothing to return.
+    """
+
+    # fast check if compound already in model
+    # ------------------------------------------
+    # step 1: check if MetaNetX ID in model
+    matches = [x.id for x in model.metabolites if 'metanetx.chemical' in x.annotation and x.annotation['metanetx.chemical']==id and x.compartment == compartment]
+
+    # step 2: if yes, retrieve metabolite from model
+        # case 1: multiple matches found
+    if len(matches) > 0:
+        if len(matches) > 1:
+            # ................
+            # @TODO what to do
+            # currently, just the first one is taken
+            # ................
+            match = model.metabolites.get_by_id(matches[0])
+        #  case 2: only one match found
+        else:
+            match = model.metabolites.get_by_id(matches[0])
+
+        # step 3: add metabolite
+        return match
+
+    # if not, create new metabolite
+    # -----------------------------
+    metabolite_prop = load_a_table_from_database(f'SELECT * FROM mnx_chem_prop WHERE id = \'{id}\'')
+    metabolite_anno = load_a_table_from_database(f'SELECT * FROM mnx_chem_xref WHERE id = \'{id}\'')
+    if len(metabolite_prop) == 0: # cannot construct metabolite
+        return None
+    else:
+        
+        # step 1: create a random metabolite ID
+        new_metabolite = cobra.Metabolite(create_random_id(model, 'meta', idprefix)) 
+
+        # step 2: add features
+        # --------------------
+        new_metabolite.formula = metabolite_prop['formula'].iloc[0]
+        new_metabolite.name = metabolite_prop['name'].iloc[0]
+        new_metabolite.charge = metabolite_prop['charge'].iloc[0]
+        new_metabolite.compartment = compartment
+
+        # step 3: add notes
+        # -----------------
+        new_metabolite.notes['created with'] = 'refineGEMs GapFiller, metanetx.chemical'
+
+        # step 4: add annotations
+        # -----------------------
+        # add SBOTerm
+        new_metabolite.annotation['sbo'] = 'SBO:0000247'
+        
+        # add information directly available from the mnx_chem_prop table 
+        new_metabolite.annotation['metanetx.chemical'] = [metabolite_prop['id'].iloc[0]]
+        if not pd.isnull(metabolite_prop['InChIKey'].iloc[0]):
+            new_metabolite.annotation['inchikey'] = metabolite_prop['InChIKey'].iloc[0].split('=')[1]
+        
+        # get more annotation from the mnx_chem_xref table
+        for db in ['kegg.compound','metacyc.compound','seed.compound','bigg.metabolite','chebi']:
+            db_matches = metabolite_anno[metabolite_anno['source'].str.contains(db)]
+            if len(db_matches) > 0:
+                new_metabolite.annotation[db] = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
+
+        # Cleanup BiGG annotations (MetaNetX only saves universal)
+        # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
+        if 'bigg.metabolite' in new_metabolite.annotation.keys():
+            new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
+        else:
+            # if no BiGG was found in MetaNetX, try reverse search in BiGG
+            get_BiGG_metabs_annotation_via_dbid(new_metabolite, id, 'MetaNetX (MNX) Chemical', compartment)
+                
+        # add additional information from BiGG (if ID found)    
+        add_annotations_from_BiGG_metabs(new_metabolite)
+
+        # step 5: change ID according to namespace
+        # ----------------------------------------
+        match_id_to_namespace(new_metabolite,namespace)
+       
+        # step 6: re-check existence of ID in model
+        # -----------------------------------------
+        # @TODO : check complete annotations? 
+        #        - or let those be covered by the duplicate check later on?
+        if new_metabolite.id in [_.id for _ in model.metabolites]:
+            return model.metabolites.get_by_id(new_metabolite.id)
+           
+    return new_metabolite
+
+
+# originally from SPECIMEN
+# @TODO some issues left
+# current version works on a couple of examples 
+def build_metabolite_kegg(kegg_id:str, model:cobra.Model, 
+                          namespace:Literal['BiGG']='BiGG', 
+                          compartment:str='c',
+                          idprefix='refineGEMs') -> cobra.Metabolite | None:
+    """Build a cobra.Metabolite object from a KEGG ID. 
+    This function will NOT directly add the metabolite to the model, 
+    if the contruction is successful.
+
+    Args:
+        - kegg_id (str): 
+            A KEGG ID of a metabolite.
+        - model (cobra.Model): 
+            The model, the metabolite will be build for.
+        - namespace (str, optional): 
+            Name to use for the model ID. If namespace cannot be matched,
+            will use a random ID. 
+            Defaults to 'BiGG'.
+        - compartment (str, optional): 
+            Compartment of the metabolite. Defaults to 'c'.
+        - idprefix (str, optional): 
+            Prefix for the random ID. Defaults to 'refineGEMs'.
+
+    Returns:
+        Case construction successful or match found in model:
+        
+            cobra.Metabolite: 
+                The build metabolite object.
+        
+        Case construction failed:
+                
+            None:
+                Nothing to return.
+    """
+    
+    # ---------------------------------------
+    # fast check if compound already in model
+    # ---------------------------------------
+    # step 1: check via KEGG ID
+    matches = [x.id for x in model.metabolites if ('kegg.compound' in x.annotation and x.annotation['kegg.compound'] == kegg_id)]
+    if len(matches) > 0:
+        # step 2: model id --> metabolite object
+        #  case 1: multiple matches found
+        if len(matches) > 1:
+            # .......
+            # @TODO
+            # .......
+            match = model.metabolites.get_by_id(matches[0])
+        #  case 2: only one match found
+        else:
+            match = model.metabolites.get_by_id(matches[0])
+
+        # step 3: add metabolite
+        return match
+
+    # -----------------------------
+    # if not, create new metabolite
+    # -----------------------------
+    
+    # step 1: retrieve KEGG entry for compound
+    # ----------------------------------------
+    try:
+        kegg_handle = REST.kegg_get(kegg_id)
+        kegg_record = [r for r in Compound.parse(kegg_handle)][0]
+    except urllib.error.HTTPError:
+        warnings.warn(F'HTTPError: {kegg_id}')
+        return None
+    except ConnectionResetError:
+        warnings.warn(F'ConnectionResetError: {kegg_id}')
+        return None
+    except urllib.error.URLError:
+        warnings.warn(F'URLError: {kegg_id}')
+        return None
+
+    # step 2: create a random metabolite ID
+    # -------------------------------------
+    new_metabolite = cobra.Metabolite(create_random_id(model, 'meta',idprefix)) 
+
+    # step 3: add features
+    # --------------------
+    # set name from KEGG and additionally use it as ID if there is none yet
+    if isinstance(kegg_record.name, list):
+        # @TODO : better way to choose a name than to just take the first entry???
+        new_metabolite.name = kegg_record.name[0]
+    else:
+        new_metabolite.name = kegg_record.name
+    # set compartment
+    new_metabolite.compartment = compartment
+    # set formula
+    new_metabolite.formula = kegg_record.formula
+
+    # step 4: add notes
+    # -----------------
+    new_metabolite.notes['created with'] = 'refineGEMs GapFiller, KEGG.compound'
+
+    # step 5: add annotations
+    # -----------------------
+    # add annotation from the KEGG entry
+    new_metabolite.annotation['kegg.compound'] = kegg_id
+    db_idtf = {'CAS':'cas','PubChem':'pubchem.compound','ChEBI':'chebi'}
+    for db,ids in kegg_record.dblinks:
+        if db in db_idtf:
+            new_metabolite.annotation[db_idtf[db]] = ids
+            
+    # add SBOTerm
+    new_metabolite.annotation['sbo'] = 'SBO:0000247'
+
+    # search for infos in MetaNetX
+    # @TODO, since the table are readily available at the database now
+    mnx_info = load_a_table_from_database(
+        f'SELECT * FROM mnx_chem_xref WHERE source = \'kegg.compound:{kegg_id}\'',
+        query=True
+    )
+    if len(mnx_info) > 0:
+        mnx_ids = list(set(mnx_info['id']))
+    # mapping is unambiguously
+    if len(mnx_ids) == 1:
+        mnx_info = load_a_table_from_database(
+        f'SELECT * FROM mnx_chem_prop WHERE id = \'{mnx_ids[0]}\'',
+        query=True
+        )
+        # add charge 
+        new_metabolite.charge = mnx_info['charge'].iloc[0]
+        # add more annotations
+        new_metabolite.annotation['metanetx.chemical'] = [mnx_info['id'].iloc[0]]
+        if not pd.isnull(mnx_info['InChIKey'].iloc[0]):
+            new_metabolite.annotation['inchikey'] = mnx_info['InChIKey'].iloc[0].split('=')[1]
+        
+        # get more annotation from the mnx_chem_xref table 
+        metabolite_anno = load_a_table_from_database(f'SELECT * FROM mnx_chem_xref WHERE id = \'{mnx_info["id"]}\'')
+        for db in ['kegg.compound','metacyc.compound','seed.compound','bigg.metabolite','chebi']:
+            db_matches = metabolite_anno[metabolite_anno['source'].str.contains(db)]
+            if len(db_matches) > 0:
+                mnx_tmp = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
+                if db in new_metabolite.annotation.keys():
+                    new_metabolite.annotation[db] = list(set(mnx_tmp + new_metabolite.annotation[db]))
+                else:
+                    new_metabolite.annotation[db] = mnx_tmp
+
+    else:
+        pass
+        # @TODO : how to handle multiple matches, e.g. getting charge will be complicated
+        
+    # Cleanup BiGG annotations (MetaNetX only saves universal)
+    # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
+    if 'bigg.metabolite' in new_metabolite.annotation.keys():
+        new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
+    
+    # if no BiGG ID, try reverse search
+    get_BiGG_metabs_annotation_via_dbid(new_metabolite, id, 'KEGG Compound', compartment)
+    
+    # search for annotations in BiGG
+    add_annotations_from_BiGG_metabs(new_metabolite)
+
+    # step 6: change ID according to namespace
+    # ----------------------------------------
+    match_id_to_namespace(new_metabolite,namespace)
+    
+    # step 7: re-check existence of ID in model
+    # -----------------------------------------
+    # @TODO : check complete annotations? 
+    #        - or let those be covered by the duplicate check later on?
+    if new_metabolite.id in [_.id for _ in model.metabolites]:
+        return model.metabolites.get_by_id(new_metabolite.id)
+
+    return new_metabolite
+
+
+# @TEST some more, somewhat works, but who knows...
+# @TODO some comments inside
+# @NOTE expects the non-universal BiGG ID (meaning the one with the compartment abbreviation
+#       at the end) -> change behaviour or keep it?
+def build_metabolite_bigg(id:str, model:cobra.Model, 
+                         namespace:Literal['BiGG']='BiGG',
+                         idprefix:str='refineGEMs') -> cobra.Metabolite | None: 
+    """Build a cobra.Metabolite object from a BiGG ID. 
+    This function will NOT directly add the metabolite to the model, 
+    if the contruction is successful.
+
+    Args:
+        - id (str): 
+            A BiGG ID of a metabolite.
+        - model (cobra.Model): 
+            The model, the metabolite will be build for.
+        - namespace (str, optional): 
+            Name to use for the model ID. If namespace cannot be matched,
+            will use a random ID. 
+            Defaults to 'BiGG'.
+        - compartment (str, optional): 
+            Compartment of the metabolite. Defaults to 'c'.
+        - idprefix (str, optional): 
+            Prefix for the random ID. Defaults to 'refineGEMs'.
+
+    Returns:
+        Case construction successful or match found in model:
+        
+            cobra.Metabolite: 
+                The build metabolite object.
+        
+        Case construction failed:
+                
+            None:
+                Nothing to return.
+    """
+
+    
+    compartment = id.rsplit('_',1)[1]
+    # ------------------------------------------
+    # fast check if compound already in model
+    # ------------------------------------------
+    # step 1: check if MetaNetX ID in model
+    matches = [x.id for x in model.metabolites if 'bigg.metabolite' in x.annotation and (x.annotation['bigg.metabolite']==id or x.annotation['bigg.metabolite']==id.rsplit('_',1)[0]) and x.compartment == compartment]
+    # step 2: if yes, retrieve metabolite from model
+        # case 1: multiple matches found
+    if len(matches) > 0:
+        if len(matches) > 1:
+            # ................
+            # @TODO what to do
+            # currently, just the first one is taken
+            # ................
+            match = model.metabolites.get_by_id(matches[0])
+        #  case 2: only one match found
+        else:
+            match = model.metabolites.get_by_id(matches[0])
+
+        # step 3: add metabolite
+        return match
+    
+    # -----------------------------
+    # if not, create new metabolite
+    # -----------------------------
+    # get information from the database
+    bigg_res = load_a_table_from_database(
+            f'SELECT * FROM bigg_metabolites WHERE id = \'{id}\'',
+            query=True)
+    if len(bigg_res) > 0:
+        bigg_res = bigg_res.iloc[0,:]
+    else:
+        return None # not data = no recontruction
+    # get information from MNX if ID available
+    mnx_res=None
+    if bigg_res['MetaNetX (MNX) Chemical']:
+        mnx_res = load_a_table_from_database(
+            f'SELECT * FROM mnx_chem_prop WHERE id=\'{bigg_res["MetaNetX (MNX) Chemical"]}\'',
+            query=True)
+        if len(mnx_res) > 0:
+            mnx_res = mnx_res.iloc[0,:]
+        else:
+            mnx_res=None 
+    
+    # step 1: create a random metabolite ID
+    # -------------------------------------
+    new_metabolite = cobra.Metabolite(create_random_id(model, 'meta', idprefix)) 
+    
+    # step 2: add features
+    # --------------------
+    new_metabolite.name = bigg_res['name']
+    new_metabolite.compartment = compartment
+    if mnx_res is not None:
+        if mnx_res['charge']:
+            new_metabolite.charge = mnx_res['charge']
+        if mnx_res['formula']:
+            new_metabolite.formula = mnx_res['formula']
+            
+    if not new_metabolite.formula or not new_metabolite.charge:
+        try:
+            bigg_fetch = json.loads(requests.get(f'http://bigg.ucsd.edu/api/v2/universal/metabolites/{id.rsplit("_",1)[0]}').text)
+            if 'formulae' in bigg_fetch.keys() and not new_metabolite.formula:     
+                new_metabolite.formula = bigg_fetch['formulae'][0]
+            if 'charges' in bigg_fetch.keys() and new_metabolite.charge:   
+                new_metabolite.charge = bigg_fetch['charges'][0]
+        except Exception as e:
+            # @TODO
+            pass
+    
+    # step 3: add notes
+    # -----------------
+    new_metabolite.notes['created with'] = 'refineGEMs GapFiller, BiGG'
+
+    # step 4: add annotations
+    # -----------------------
+    # add SBOTerm
+    new_metabolite.annotation['sbo'] = 'SBO:0000247'
+    # add infos from BiGG
+    new_metabolite.annotation['bigg.metabolite'] = [id]  # @TODO or use the universal id?
+    add_annotations_from_BiGG_metabs(new_metabolite)
+    # add annotations from MNX
+    if mnx_res is not None:
+        if mnx_res['InChI'] and 'inchi' not in new_metabolite.annotation.keys():
+            new_metabolite.annotation['inchi'] = mnx_res['InChI']
+        if mnx_res['InChIKey'] and 'inchikey' not in new_metabolite.annotation.keys():
+            new_metabolite.annotation['inchikey'] = mnx_res['InChIKey']
+    
+    # step 5: change ID according to namespace
+    # ----------------------------------------
+    match_id_to_namespace(new_metabolite,namespace)
+    
+    # step 6: re-check existence of ID in model
+    # -----------------------------------------
+    # @TODO : check complete annotations? 
+    #        - or let those be covered by the duplicate check later on?
+    if new_metabolite.id in [_.id for _ in model.metabolites]:
+        return model.metabolites.get_by_id(new_metabolite.id)
+    
+    return new_metabolite
+    
+
+@implement
+def build_metabolite_biocyc(id:str, model:cobra.Model, 
+                         namespace:str,
+                         compartment:str,
+                         idprefix:str) -> cobra.Metabolite: 
+    pass
+
+
+# adding reactions cobra models
+# -----------------------------
+
+# TODO
+#   extend the build function so, that all of them can take either the id or an equation 
+#   as input for rebuilding the reaction (would also be beneficial for semi-manual curation)
+
+@template
+# @TODO complete it
+def build_reaction_xxx():
+    pass
+
+
+# @TEST (more) - tries some cases, in which it seems to work
+# @TODO
+def build_reaction_mnx(model:cobra.Model, id:str,
+                      reac_str:str = None,
+                      references:dict={},
+                      idprefix='refineGEMs',
+                      namespace:Literal['BiGG']='BiGG') -> cobra.Reaction | None | list:
+    """Construct a new reaction for a model from a MetaNetX reaction ID.
+    This function will NOT add the reaction directly to the model, if the 
+    construction process is successful.
+
+    Args:
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - id (str): 
+            A MetaNetX reaction ID.
+        - reac_str (str, optional): 
+            The reaction equation string from the database. 
+            Defaults to None.
+        - references (dict, optional): 
+            Additional annotations to add to the reaction (idtype:[value]). 
+            Defaults to {}.
+        - idprefix (str, optional): 
+            Prefix for the pseudo-identifier. Defaults to 'refineGEMs'.
+        - namespace (Literal['BiGG'], optional): 
+            Namespace to use for the reaction ID. 
+            If namespace cannot be matched, uses the pseudo-ID
+            Defaults to 'BiGG'.
+
+    Returns:
+        Case successful construction:
+            
+            cobra.Reaction:
+                The newly build reaction object. 
+            
+        Case construction not possible:
+            
+            None:
+                Nothing to return.
+            
+        Case reaction found in model.
+            
+            list: 
+                List of matching reaction IDs (in model).
+    """
+    
+    # ---------------------
+    # check, if ID in model
+    # ---------------------
+    matches_found = [_.id for _ in model.reactions if 'metanetx.reaction' in _.annotation.keys() and _.annotation['metanetx.reaction']==id]
+    if len(matches_found) > 0:
+        return matches_found
+    
+    # -----------------------------
+    # otherwise, build new reaction
+    # -----------------------------
+    
+    # get relevant part of table from database
+    mnx_reac_refs = load_a_table_from_database(
+        f'SELECT * FROM mnx_reac_xref WHERE id = \'{id}\'',
+        query=True)
+    mnx_reac_refs = mnx_reac_refs[~(mnx_reac_refs['description']=='secondary/obsolete/fantasy identifier')]
+    
+    # create reaction object
+    new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
+    
+    # set name of reaction
+    name = ''
+    for desc in mnx_reac_refs['description']:
+        if '|' in desc: # entry has a name and an equation string
+            name = desc.split('|')[0]
+            break # one name is enough
+    new_reac.name = name 
+    
+    # get metabolites
+    # ---------------
+    if not reac_str:
+        mnx_reac_prop = load_a_table_from_database(
+                f'SELECT * FROM mnx_reac_prop WHERE id = \'{id}\'',
+                query=True)
+        reac_str = mnx_reac_prop['mnx_equation'][0]
+        if mnx_reac_prop['ec-code'][0]:
+            references['ec-code'] = mnx_reac_prop['ec-code'][0]
+        
+    if reac_str:
+        reactants,products,comparts,rev = parse_reac_str(reac_str,'MetaNetX')
+    else:
+        return None
+    # ............................................................
+    # @TODO / Issue
+    #    reac_prop / mnx equation only saves generic compartments 1 and 2 (MNXD1 / MNXD2)
+    #    how to get the (correct) compartment?
+    #    current solution 1 -> c, 2 -> e
+    comparts = ['c' if _ == 'MNXD1' else 'e' for _ in comparts ]
+    # ............................................................
+    metabolites = {}
+    meta_counter = 0
+    
+    # reconstruct reactants
+    for mid,factor in reactants.items():
+        tmp_meta = build_metabolite_mnx(mid,model,
+                                        namespace,
+                                        comparts[meta_counter],idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = -1*factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # reconstruct products
+    for mid,factor in products.items():
+        tmp_meta = build_metabolite_mnx(mid,model,
+                                        namespace,
+                                        comparts[meta_counter],idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # add metabolites to reaction
+    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
+    new_reac.add_metabolites(metabolites)
+    
+    # set reversibility
+    if rev:
+        new_reac.bounds = (1000.0,1000.0)
+    else:
+        new_reac.bounds = (0.0,1000.0)
+        
+    # get annotations
+    # ---------------
+    new_reac.annotation['sbo'] = 'SBO:0000167'
+    # get more annotation from the mnx_reac_xref table
+    for db in ['bigg.reaction','kegg.reaction','seed.reaction','metacyc.reaction','rhea']:
+        db_matches = mnx_reac_refs[mnx_reac_refs['source'].str.contains(db)]
+        if len(db_matches) > 0:
+            new_reac.annotation[db] = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
+            # update reactions direction, if MetaCyc has better information
+            if db == 'metacyc.reaction' and len(db_matches[db_matches['source'].str.contains('-->')]):
+                new_reac.bounds = (0.0,1000.0)
+    # add additional references from the parameter
+    _add_annotations_from_dict_cobra(references,new_reac)
+    
+    # get annotations
+    # ---------------
+    new_reac.annotation['sbo'] = 'SBO:0000167'
+
+    # add notes
+    # ---------
+    new_reac.notes['created with'] = 'refineGEMs GapFiller, MetaNetX'
+    
+    # match ID to namespace
+    # ---------------------
+    match_id_to_namespace(new_reac,namespace)
+    
+    return new_reac
+
+
+# @TEST (more) - tries some cases, in which it seems to work
+# @TODO some things still open (for discussion)
+def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
+                        references:dict={},
+                        idprefix='refineGEMs',
+                        namespace:Literal['BiGG']='BiGG') -> None:
+    """Construct a new reaction for a model from either a KEGG reaction ID
+    or a KEGG equation string.
+    This function will NOT add the reaction directly to the model, if the 
+    construction process is successful.
+
+    Args:
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - id (str,optional): 
+            A KEGG reaction ID.
+        - reac_str (str, optional): 
+            The reaction equation string from the database. 
+            Defaults to None.
+        - references (dict, optional): 
+            Additional annotations to add to the reaction (idtype:[value]). 
+            Defaults to {}.
+        - idprefix (str, optional): 
+            Prefix for the pseudo-identifier. Defaults to 'refineGEMs'.
+        - namespace (Literal['BiGG'], optional): 
+            Namespace to use for the reaction ID. 
+            If namespace cannot be matched, uses the pseudo-ID
+            Defaults to 'BiGG'.
+
+    Returns:
+        Case successful construction:
+            
+            cobra.Reaction:
+                The newly build reaction object. 
+            
+        Case construction not possible:
+            
+            None:
+                Nothing to return.
+            
+        Case reaction found in model.
+            
+            list: 
+                List of matching reaction IDs (in model).
+    """
+    
+    # either reaction id or a reaction string needed for reconstruction
+    if not id and not reac_str:
+        return None # reconstruction not possible
+    
+    # create an empty reaction with random id
+    new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
+    
+    # -------------
+    # KEGG ID given
+    # -------------
+    if id:
+        # check, if reaction in model
+        matches = [_.id for _ in model.reactions if 'kegg.reaction' in _.annotation.keys() and _.annotation['kegg.reaction']==id]
+        if len(matches) > 0:
+            return matches # return matched reaction ids in list
+        
+        # retrieve information from KEGG
+        kegg_info = kegg_reaction_parser(id)
+        if kegg_info:
+            if 'name' in kegg_info.keys():
+                new_reac.name = kegg_info['name']
+            if 'equation' in kegg_info.keys():
+                reac_str = kegg_info['equation'] if not reac_str else reac_str
+            if 'db' in kegg_info.keys():
+                new_reac.annotation = kegg_info['db']
+    
+    # -------------------------------------
+    # Reaction reconstruction from equation
+    # -------------------------------------
+    
+    # skip, if not reaction string is available
+    if not reac_str:
+        return None # reconstruction not possible
+    
+    # parse reaction string
+    reactants,products,comparts,rev = parse_reac_str(reac_str,'KEGG')
+        
+    # ..............................................
+    # @TODO
+    # KEGG has no information about compartments !!!
+    # current solution: always use c
+    compartment = 'c'
+    # ..............................................
+    metabolites = {}
+    meta_counter = 0
+    
+    # reconstruct reactants
+    for mid,factor in reactants.items():
+        tmp_meta = build_metabolite_kegg(mid,model,
+                                        namespace,
+                                        compartment,idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = -1*factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # reconstruct products
+    for mid,factor in products.items():
+        tmp_meta = build_metabolite_kegg(mid,model,
+                                        namespace,
+                                        compartment,idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+    
+    # add metabolites to reaction
+    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
+    new_reac.add_metabolites(metabolites)
+    
+    # set reversibility
+    if rev:
+        new_reac.bounds = (1000.0,1000.0)
+    else:
+        new_reac.bounds = (0.0,1000.0)
+    
+    # --------------------
+    # add more information
+    # --------------------
+    new_reac.annotation['sbo'] = 'SBO:0000167'
+    # get more information from searching the KEGG ID in BiGG
+    bigg_res = load_a_table_from_database(
+            f'SELECT * FROM bigg_reactions WHERE \"KEGG Reaction\" = \'{id}\'',
+            query=True)
+    for idx,row in bigg_res.iterrows():
+        r,p,compartments,r = parse_reac_str(row['reaction_string'],'BiGG')
+        # .........................................
+        # @TODO part 2 of compartment issue
+        # find the reaction with 'c' as compartment
+        if len(set(compartments)) == 1 and compartments[0] == 'c':
+            new_reac.annotation['bigg.reaction'] = row['id']
+            # @TODO add more information, exclude None entries
+            _add_annotations_from_bigg_reac_row(row, new_reac)
+            break
+        # .........................................
+
+    # @IDEA / @TODO get more information from MetaNetX
+    
+    # add additional references from the parameter
+    _add_annotations_from_dict_cobra(references,new_reac)
+    
+    # add notes
+    # ---------
+    new_reac.notes['created with'] = 'refineGEMs GapFiller, KEGG'
+    
+    # match ID to namespace
+    # ---------------------
+    match_id_to_namespace(new_reac,namespace)
+    
+    return new_reac
+
+
+# @TEST
+# @TODO some things still open (for discussion)
+def build_reaction_bigg(model:cobra.Model, id:str, 
+                        reac_str:str = None, 
+                        references:dict={},
+                        idprefix='refineGEMs',
+                        namespace:Literal['BiGG']='BiGG'):
+    """Construct a new reaction for a model from a BiGG reaction ID.
+    This function will NOT add the reaction directly to the model, if the 
+    construction process is successful.
+
+    Args:
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - id (str): 
+            A BiGG reaction ID.
+        - reac_str (str, optional): 
+            The reaction equation string from the database. 
+            Currently, this param is not doing anything in this function @TODO.
+            Defaults to None.
+        - references (dict, optional): 
+            Additional annotations to add to the reaction (idtype:[value]). 
+            Defaults to {}.
+        - idprefix (str, optional): 
+            Prefix for the pseudo-identifier. Defaults to 'refineGEMs'.
+        - namespace (Literal['BiGG'], optional): 
+            Namespace to use for the reaction ID. 
+            If namespace cannot be matched, uses the pseudo-ID
+            Defaults to 'BiGG'.
+
+    Returns:
+        Case successful construction:
+            
+            cobra.Reaction:
+                The newly build reaction object. 
+            
+        Case construction not possible:
+            
+            None:
+                Nothing to return.
+            
+        Case reaction found in model.
+            
+            list: 
+                List of matching reaction IDs (in model).
+    """
+    
+    # ---------------------
+    # check, if ID in model
+    # ---------------------
+    matches_found = [_.id for _ in model.reactions if 'bigg.reaction' in _.annotation.keys() and _.annotation['bigg.reaction']==id]
+    if len(matches_found) > 0:
+        return matches_found
+    
+    # -----------------------------
+    # otherwise, build new reaction
+    # -----------------------------
+    # create reaction object
+    new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
+    
+    # get information from the database
+    bigg_reac_info = load_a_table_from_database(
+            f'SELECT * FROM bigg_reactions WHERE id = \'{id}\'',
+            query=True).iloc[0,:]
+    new_reac.name = bigg_reac_info['name']
+    
+    # add metabolites
+    # ---------------
+    reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
+    
+    metabolites = {}
+    meta_counter = 0
+    # reconstruct reactants
+    for mid,factor in reactants.items():
+        tmp_meta = build_metabolite_bigg(mid,model,
+                                        namespace,
+                                        idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = -1*factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # reconstruct products
+    for mid,factor in products.items():
+        tmp_meta = build_metabolite_bigg(mid,model,
+                                        namespace,
+                                        idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # add metabolites to reaction
+    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
+    new_reac.add_metabolites(metabolites)
+    
+    # set reversibility
+    if rev:
+        new_reac.bounds = (1000.0,1000.0)
+    else:
+        new_reac.bounds = (0.0,1000.0)
+    
+    # add annotations
+    # ---------------
+    # add SBOTerm
+    new_reac.annotation['sbo'] = 'SBO:0000167'
+    # add infos from BiGG
+    new_reac.annotation['bigg.reaction'] = [id]
+    _add_annotations_from_bigg_reac_row(bigg_reac_info, new_reac)
+    # add additional references from the parameter
+    _add_annotations_from_dict_cobra(references,new_reac)
+    
+    # add notes
+    # ---------
+    new_reac.notes['created with'] = 'refineGEMs GapFiller, BiGG'
+    
+    # match ID to namespace
+    # ---------------------
+    match_id_to_namespace(new_reac,namespace)
+
+    return new_reac
+    
+    
+@implement
+def build_reaction_biocyc():
+    pass
+
+
+@implement
+# maybe for later, if we need something to work independantly from namespace
+# and outside the gapfilling
+def build_reaction():
+    pass
+
+
+# ++++++++++++++++++++++++++++++++++++++++
+# libSBML - models
+# ++++++++++++++++++++++++++++++++++++++++
+
 # extracting reactions & Co via libsbml
 # -------------------------------------
 
@@ -361,7 +1483,25 @@ def get_model_reacs_or_metabs(model_libsbml: libModel, metabolites: bool=False, 
     return reac_or_metab_list_df
 
 
-# @TOCO check for new-ish functionalities / merge with create_gp and delete
+def get_reversible(fluxes: dict[str: str]) -> bool:
+    """Infer if reaction is reversible from flux bounds
+    
+    Args:
+        - fluxes (dict): 
+            Dictionary containing the keys 'lower_bound' & 'upper_bound' 
+            with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
+    
+    Returns:
+        bool: 
+            True if reversible else False
+    """
+    return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
+
+
+# create model entities using libSBML
+# -----------------------------------
+
+# @TODO check for new-ish functionalities / merge with create_gp and delete
 def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
     """Creates GeneProduct in the given model
 
@@ -397,7 +1537,10 @@ def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tu
     return gpr, model
 
 
-def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, libModel]:
+# @TODO : check, if the function (in ths way), is still used anywhere and adjust to the 
+# new one
+# @DEPRECATE
+def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, libModel]:
     """Creates GeneProduct in the given model
 
     Args:
@@ -432,6 +1575,58 @@ def create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein
     if id_db: add_cv_term_genes(protein_id, id_db, gp)
     return gp, model
 
+
+# @NEW - substitues the one above 
+# --> WARNING: Output is different now
+# @TODO generalise addition of references -> maybe kwargs
+def create_gp(model:libModel, protein_id:str, 
+              model_id:str=None,
+              name:str=None, locus_tag:str=None,
+              uniprot:tuple[list,bool]=None) -> None:
+    """Creates GeneProduct in the given libSBML model.
+
+    Args:
+        - model (libModel): 
+            The model object, loaded with libSBML.
+        - protein_id (str): 
+            (NCBI) Protein ID of the gene.
+        - model_id (str, optional): 
+            If given, uses this string as the ID of the gene in the model. 
+            ID should be identical to ID that CarveMe adds from the NCBI FASTA input file.
+            Defaults to None.
+        - name (str, optional): 
+            Name of the GeneProduct. Defaults to None.
+        - locus_tag (str, optional): 
+            Genome-specific locus tag. Will be used as label in the model. 
+            Defaults to None.
+        - uniprot (tuple[list,bool], optional): 
+            Tuple of a list of UniProt IDs and a boolean for whether the strain is from the lab or
+            a database. Defaults to None.
+    """
+    
+    # create gene product object
+    gp = model.getPlugin(0).createGeneProduct()
+    # set basic attributes
+    if model_id:                            # ID 
+        gp.setIdAttribute(model_id)
+    else:
+        geneid = f'G_{protein_id}'.replace('.','_') # remove problematic signs
+        gp.setIdAttribute(geneid)               
+    if name: gp.setName(name)               # Name  
+    if locus_tag: gp.setLabel(locus_tag)    # Label
+    gp.setSBOTerm('SBO:0000243')            # SBOterm
+    gp.setMetaId(f'meta_G_{protein_id}')    # Meta ID
+    # test for NCBI/RefSeq
+    if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
+        id_db = 'REFSEQ'
+    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
+    if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
+    # add further references
+    # @TODO extend or generalise
+    if uniprot:
+        for uniprotid in uniprot[0]:
+            add_cv_term_genes(uniprotid, 'UNIPROT', gp, uniprot[1]) # UniProt
+      
 
 def create_species(
     model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
@@ -473,21 +1668,6 @@ def create_species(
     metabolite.getPlugin(0).setChemicalFormula(chem_formula)
     add_cv_term_metabolites(metabolite_id[:-2], 'BIGG', metabolite)
     return metabolite, model
-
-
-def get_reversible(fluxes: dict[str: str]) -> bool:
-    """Infer if reaction is reversible from flux bounds
-    
-    Args:
-        - fluxes (dict): 
-            Dictionary containing the keys 'lower_bound' & 'upper_bound' 
-            with values in ['cobra_default_lb', 'cobra_0_bound', 'cobra_default_ub']
-    
-    Returns:
-        bool: 
-            True if reversible else False
-    """
-    return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
 
 
 def create_reaction(
@@ -558,3 +1738,60 @@ def create_reaction(
     add_cv_term_reactions(reaction_id, 'BIGG', reaction)
     return reaction, model
  
+
+# @TODO : does it cover indeed all cases (for adding GPR together) ?
+# @TODO : only support OR connection
+def create_gpr(reaction:Reaction,gene:str|list[str]) -> None:
+    """For a given libSBML Reaction and a gene ID or a list of gene IDs, 
+    create a gene production rule inside the reaction.
+    
+    Currently only supports 'OR' causality.
+
+    Args:
+        - reaction (libsbml.Reaction): 
+            The reaction object to add the GPR to.
+        - gene (str | list[str]): 
+            Either a gene ID or a list of gene IDs, that will be added to the GPR 
+            (OR causality).
+    """
+
+    # Step 1: test, if there is already a gpr
+    # ---------------------------------------
+    old_association_str = None
+    old_association_fbc = None
+    if reaction.getPlugin(0).getGeneProductAssociation():
+        old_association = reaction.getPlugin(0).getGeneProductAssociation().getListOfAllElements()
+        # case 1: only a single association
+        if len(old_association) == 1 and isinstance(old_association[0],GeneProductRef):
+            old_association_str = old_association[0].getGeneProduct()
+        # case 2: nested structure of asociations
+        elif isinstance(old_association[0], FbcOr) or isinstance(old_association[0], FbcAnd):
+            old_association_fbc = old_association[0].clone()
+            # this should get the highest level association (that includes all others)
+
+                    
+    # Step 2: create new gene product association 
+    # -------------------------------------------
+    if old_association_str and isinstance(gene,str):
+        gene = [old_association_str,id]
+    elif old_association_str  and isinstance(gene,list):
+        gene.append(old_association_str)
+        
+    # add the old association rule as an 'OR' (if needed)
+    if not old_association_fbc:
+        new_association = reaction.getPlugin(0).createGeneProductAssociation()
+    else:
+        new_association = reaction.getPlugin(0).createGeneProductAssociation().createOr()
+        new_association.addAssociation(old_association_fbc)
+
+    # add the remaining genes 
+    # @TODO currently, only connection possible is 'OR'
+    if isinstance(gene,str):
+        new_association.createGeneProductRef().setGeneProduct(gene)
+    elif isinstance(gene,list) and len(gene) == 1:
+        new_association.createGeneProductRef().setGeneProduct(gene[0])
+    elif isinstance(gene,list) and len(gene) > 1:
+        gpa_or =  new_association.createOr()
+        for i in gene:
+            gpa_or.createGeneProductRef().setGeneProduct(i)
+            

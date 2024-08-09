@@ -11,6 +11,7 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 # requirements
 ################################################################################
 
+import cobra
 import numpy as np
 import pandas as pd
 import re
@@ -96,6 +97,9 @@ def compare_ids(id1: str, id2: str) -> bool:
 
     return similar_ids
  
+
+# BiGG
+# ----
 
 @sleep_and_retry
 @limits(calls=10, period=1)
@@ -377,6 +381,9 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
     return missing_reacs
  
  
+ # @TODO : name is an issue
+
+ 
 # NCBI parser
 # -----------
 
@@ -434,6 +441,7 @@ def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0):
     diamond_results = diamond_results[['query_ID','subject_ID']]
     
     return diamond_results
+
 # Uniprot
 # -------
 
@@ -503,3 +511,109 @@ def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame,
     mapped_res = mapped_res.groupby(['locus_tag','ec-code']).agg({'UniProt': lambda x: x.tolist()}).reset_index()
 
     return mapped_res
+
+
+# general
+# -------
+
+# @TODO: BioCyc missing
+def parse_reac_str(equation:str, 
+                   type:Literal['BiGG','BioCyc','MetaNetX','KEGG']='MetaNetX') -> tuple[dict,dict,list,bool]:
+    """Parse a reaction string.
+
+    Args:
+        - equation (str): 
+            The equation of a reaction as a string (as saved in the database).
+        - type (Literal['BiGG','BioCyc','MetaNetX','KEGG'], optional): 
+            The name of the database the equation was taken from. 
+            Can be 'BiGG','BioCyc','MetaNetX','KEGG'.
+            Defaults to 'MetaNetX'.
+
+    Returns:
+        tuple: 
+            
+            Tuple of (1) dict, (2) dict, (3) list & (4) bool:
+            
+            1. Dictionary with the reactant IDs and their stoichiometric factors.
+            2. Dictionary with the product IDs and their stoichiometric factors.
+            3. List of compartment IDs or None, if they cannot be extract from the equation.
+            4. True, if the reaction is reversible, else False.
+    """
+
+    products = {}
+    reactants = {}
+    compartments = list()
+    is_product = False
+    reversible = True
+
+    match type:
+        case 'MetaNetX':
+            for s in equation.split(' '):
+                # switch from reactants to products
+                if s == '=':
+                    is_product = True
+                # found stoichiometric factor
+                elif s.isnumeric():
+                    factor = float(s)
+                # skip
+                elif s == '+':
+                    continue
+                # found metabolite
+                else:
+                    # get information from MetaNetX
+                    metabolite, compartment = s.split('@')
+                    compartments.append(compartment)
+                    
+                    if is_product:
+                        products[metabolite] = factor
+                    else:
+                        reactants[metabolite] = factor
+                        
+        case 'BiGG':
+            factor = 1.0 # BiGG does not use factor 1 in the quations
+            for s in equation.split(' '):
+                # found factor
+                if s.replace('.','').isdigit():
+                    factor = float(s)
+                # switch from reactants to products
+                elif s == '-->' :
+                    is_product = True
+                    reversible = False
+                elif s == '<->':
+                    is_product = True
+                # skip
+                elif s == '+':
+                    continue
+                # found metabolite
+                else:
+                    compartments.append(s.rsplit('_',1)[1])
+                    if is_product:
+                        products[s] = factor
+                    else:
+                        reactants[s] = factor
+                    factor = 1.0
+              
+        case 'KEGG':
+            compartments = None
+            factor = 1.0
+            for s in equation.split(' '):
+                if s.isnumeric():
+                    factor = float(s)
+                elif s == '+':
+                    continue
+                elif s == '<=>': # @TODO are there more options?
+                    is_product = True
+                else:
+                    if is_product:
+                        products[s] = factor
+                    else:
+                        reactants[s] = factor
+                    factor = 1.0
+        
+        case 'BioCyc':
+            pass
+                  
+    return (reactants,products,compartments,reversible)
+        
+        
+ 

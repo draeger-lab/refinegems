@@ -10,21 +10,22 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihane
 from abc import ABC, abstractmethod
 
 import cobra
-import pandas as pd
+import io
 import numpy as np
+import pandas as pd
+import re
+import warnings
 
+from bioservices.kegg import KEGG
+from libsbml import Model as libModel
 from typing import Literal, Union
 
-from libsbml import Model as libModel
-from bioservices.kegg import KEGG
-import io
-import re
 from tqdm import tqdm
 tqdm.pandas()
 
 from ..curation.db_access.db import get_ec_from_ncbi, get_ec_via_swissprot
 from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds
-from ..utility.entities import get_model_reacs_or_metabs
+from ..utility.entities import get_model_reacs_or_metabs, create_gp, create_gpr
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 
 ############################################################################
@@ -145,6 +146,9 @@ class GapFiller(ABC):
     #@abstractmethod
     #def load_gene_list(self):
     #    pass
+    
+    # abstract methods
+    # ----------------
 
     @abstractmethod
     def get_missing_genes(self, model):
@@ -153,6 +157,9 @@ class GapFiller(ABC):
     @abstractmethod
     def get_missing_reacs(self,model):
         pass
+    
+    # finding the gaps
+    # ----------------
 
     def _find_reac_in_model(self, model: cobra.Model, eccode:str, id:str, 
                idtype:Literal['MetaNetX','KEGG','BiGG', 'BioCyc'], 
@@ -190,12 +197,88 @@ class GapFiller(ABC):
         
         return None
     
-    # @abstractmethod
-    # def run(self,model):
-    #     pass
+    
+    # actual "Filling" part
+    # ---------------------
+    
+    # @TODO logging? or remove self?
+    def add_genes_from_table(self,model:libModel, gene_table:pd.DataFrame) -> None:
+        """Create new GeneProduct for a table of genes in the format:
+        
+        | ncbiprotein | locus_tag | UniProt | ... |
+        
+        The dots symbolise additional columns, that can be passed to the function, 
+        but will not be used by it. The other columns, except UniProt, are required.
+
+        Args:
+            - model (libModel): 
+                _description_
+            - gene_table (pd.DataFrame): 
+                The table with the genes to add. At least needs the columns
+                '','' and 'ec-code'.
+        """
+    
+        # ncbiprotein | locus_tag | ...
+        # work on a copy to ensure input stays the same
+        gene_table = gene_table.copy()
+        # gene_table.drop(columns=['ec-code'],inplace=True)
+        
+        # create gps from the table and add them to the model
+        if 'UniProt' in gene_table.columns:
+            for idx,x in gene_table.iterrows():
+                create_gp(model, x['ncbiprotein'], 
+                        locus_tag=x['locus_tag'],
+                        uniprot=(x['UniProt'],True))
+        else:
+            for idx,x in gene_table.iterrows():
+                create_gp(model, x['ncbiprotein'], 
+                        locus_tag=x['locus_tag'])
+                
+
+    # @TODO seems very ridgid, better ways to find the ids?
+    def add_gene_reac_associations_from_table(model:libModel,
+                                            reac_table:pd.DataFrame) -> None:
+        """Using a table with at least the columns 'ncbiprotein' 
+        (containing e.g. NCBI protein identifier (lists), should be gene IDs in the model)
+        and 'add_to_GPR' (containing reactions identifier (lists)), add the gene IDs to the 
+        GPRs of the corresponding reactions.
+
+        Args:
+            - model (libModel): 
+                The model loaded with libSBML.
+            - reac_table (pd.DataFrame): 
+                The table containing at least the columns 'ncbiprotein' (gene IDs) and
+                'add_to_GPR' (reaction IDs)
+        """
+        
+        model_gene_ids = [_.getId() for _ in model.getPlugin(0).getListOfGeneProducts()]
+        
+        # get each unique ncbiprotein vs reaction mapping
+        reac_table = reac_table[['ncbiprotein','add_to_GPR']]
+        reac_table = reac_table.explode('ncbiprotein').explode('add_to_GPR')
+        reac_table.drop_duplicates(inplace=True)
+        
+        # add the genes to the corresponding GPRs
+        for idx,row in reac_table.iterrows():
+            # check, if G_+ncbiprotein in model
+            # if yes, add gpr
+            geneid = 'G_'+row['ncbiprotein'].replace('.','_')
+            reacid = 'R_'+row['add_to_GPR']
+            if geneid in model_gene_ids:
+                create_gpr(model.getReaction(reacid),geneid)
+            # else, print warning
+            else:
+                mes = f'Cannot find {geneid} in model. Should be added to {reacid}'
+                warnings.warn(mes,UserWarning)
+    
+
+
 
     def fill_model(self, model):
         pass
+    
+    # reporting
+    # ---------
 
     def calculate_stats(self):
         pass
@@ -582,7 +665,11 @@ class BioCycGapFiller(GapFiller):
 # def gff_gene_comp():
 #     pass
 # 
-# 
+#
+
+# ---------------------------------
+# GapFilling with GFF and Swissprot
+# ---------------------------------
 class GeneGapFiller(GapFiller):
     
     GFF_COLS = {'locus_tag':'locus_tag', 
