@@ -170,6 +170,38 @@ class GapFiller(ABC):
     def _find_reac_in_model(self, model: cobra.Model, eccode:str, id:str, 
                idtype:Literal['MetaNetX','KEGG','BiGG', 'BioCyc'], 
                include_ec_match:bool=False) -> Union[None, list]:
+        """Helper function of :py:class:`~refinegems.classes.gapfill.GapFiller`.
+        Search the model for an ID (and optionally EC number), to determine, if the 
+        reaction is in the model.
+
+        Args:
+            - model (cobra.Model): 
+                The model loaded with COBRApy.
+            - eccode (str): 
+                The EC number in the format: X.X.X.X
+            - id (str): 
+                The ID to search for.
+            - idtype (Literal['MetaNetX','KEGG','BiGG', 'BioCyc']): 
+                Name of the database the ID belongs to.
+            - include_ec_match (bool, optional): 
+                Option to include a match if only the EC number matches. 
+                Defaults to False.
+
+        Returns:
+            Case one or more match found:
+
+                list:
+
+                    List of the ID of the reactions in the model, that match 
+                    the query.
+                    
+            Case no match:
+            
+                None:
+                
+                    Nothing found.
+        """
+        
         # @TODO Ensure that user has requested BioCyc identifiers.org version? 
         # -> Could be done with polish_annotations
         MAPPING = {
