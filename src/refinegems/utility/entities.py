@@ -290,6 +290,34 @@ def isreaction_complete(reac:cobra.Reaction,
                         formula_check:Literal['none','existence','wildcard','strict']='existence',
                         exclude_dna:bool=True, 
                         exclude_rna:bool=True) -> bool:
+    """Check, if a reaction object can be considered a complete reaction.
+    The parameters can set the strictness of the checking.
+    Useful for checking, if a reaction can be added to a model 
+    or if it might break it. For example, a missing model ID in either reaction or
+    metabolites returns false.
+    
+    
+
+    Args:
+        - reac (cobra.Reaction): 
+            The reaction object (COBRApy) to test.
+        - name_check (bool, optional): 
+            Option to force reaction and metabolites to have the name attribute set. 
+            Defaults to False.
+        - formula_check (Literal['none','existence','wildcard','strict'], optional): 
+            Option to check the formula. 'none' disables the check, 
+            'existence' tests, if a formula is set, 'wildcard' additionally checks for wild cards
+            (returns false if one found) and 'strict' also checks for the rest symbol 'R'.
+            Defaults to 'existence'.
+        - exclude_dna (bool, optional): 
+            Option to set DNA reactions to invalid. Defaults to True.
+        - exclude_rna (bool, optional): 
+            Option to set RNA reaction to invalid. Defaults to True.
+
+    Returns:
+        bool: 
+            True, if the checks are passed successfully, else False.
+    """
     
     # check reaction features
     # -----------------------
@@ -1022,8 +1050,6 @@ def parse_reac_str(equation:str,
     return (reactants,products,compartments,reversible)
         
         
- 
-
 # TODO
 #   extend the build function so, that all of them can take either the id or an equation 
 #   as input for rebuilding the reaction (would also be beneficial for semi-manual curation)

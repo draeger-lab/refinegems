@@ -491,7 +491,38 @@ def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame,
                          outdir:str=None,
                          sens:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
                          cov:float=95.0,
-                         t:int=2, pid:float=90.0):
+                         t:int=2, pid:float=90.0) -> pd.DataFrame:
+    """Based on a protein FASTA and a missing genes tables, mapped them to EC numbers 
+    using a Swissprot DIAMOND database and a SwissProt mapping file (see :py:func:`~refinegems.utility.set_up.download_url`
+    on how to download the needed files).
+
+    Args:
+        - fasta (str): 
+            Path to the FASTA protein file.
+        - db (str): 
+            Path to the DIAMOND database (SwissProt).
+        - missing_genes (pd.DataFrame): 
+            The table of missing genes.
+        - swissprot_mapping_file (str): 
+            Path to the SwissProt mapping file.
+        - outdir (str, optional): 
+            Path to a directory to write the output to. 
+            Defaults to None.
+        - sens (Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive'], optional): 
+            Sensitivity mode of DIAMOND blastp. Defaults to 'more-sensitive'.
+        - cov (float, optional): 
+            Coverage threshold for DIAMOND blastp. Defaults to 95.0.
+        - t (int, optional): 
+            Number of threads to use for DIAMOND blastp. Defaults to 2.
+        - pid (float, optional): 
+            Percentage identity value to use as a cutoff for the results
+            of the DIAMOND blastp run. Defaults to 90.0.
+
+    Returns:
+        pd.DataFrame: 
+            The missing genes table extended by the mapping to an EC number, 
+            if successful.
+    """
     
     # Step 1: Make a FASTA out of the missing genes
     miss_fasta = create_missing_genes_protein_fasta(fasta,outdir,missing_genes)

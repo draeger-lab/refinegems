@@ -17,6 +17,7 @@ import re
 import warnings
 
 from bioservices.kegg import KEGG
+from itertools import chain
 from libsbml import Model as libModel
 from typing import Literal, Union
 
@@ -25,8 +26,15 @@ tqdm.pandas()
 
 from ..curation.db_access.db import get_ec_from_ncbi, get_ec_via_swissprot
 from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds
-from ..utility.entities import get_model_reacs_or_metabs, create_gp, create_gpr
+from ..utility.entities import get_model_reacs_or_metabs, create_gp, create_gpr, build_reaction_bigg, build_reaction_biocyc, build_reaction_kegg, build_reaction_mnx, isreaction_complete
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
+from ..developement.decorators import *
+
+
+# Note:
+#   some reactions have @DEBUGGING 
+#   enable these parts to shorten runtime during debugging (used to work on a subset, 
+#   not on the whole input)
 
 ############################################################################
 # variables
@@ -142,19 +150,17 @@ class GapFiller(ABC):
         self.geneid_type = 'ncbi' # @TODO
         self._statistics = dict()
         self.manual_curation = dict()
-        
-    #@abstractmethod
-    #def load_gene_list(self):
-    #    pass
     
     # abstract methods
     # ----------------
 
     @abstractmethod
+    # TODO write output format and what this functions needs to do
     def get_missing_genes(self, model):
         pass
     
     @abstractmethod
+    # TODO write output format and what this functions needs to do
     def get_missing_reacs(self,model):
         pass
     
@@ -236,8 +242,8 @@ class GapFiller(ABC):
                 
 
     # @TODO seems very ridgid, better ways to find the ids?
-    def add_gene_reac_associations_from_table(model:libModel,
-                                            reac_table:pd.DataFrame) -> None:
+    def add_gene_reac_associations_from_table(self,model:libModel,
+                                              reac_table:pd.DataFrame) -> None:
         """Using a table with at least the columns 'ncbiprotein' 
         (containing e.g. NCBI protein identifier (lists), should be gene IDs in the model)
         and 'add_to_GPR' (containing reactions identifier (lists)), add the gene IDs to the 
@@ -272,10 +278,162 @@ class GapFiller(ABC):
                 warnings.warn(mes,UserWarning)
     
 
+    # @TODO BioCyc not implemeneted
+    # @TODO logging, save stuff for manual curation etc.
+    # @TEST - somewhat seems to work - for now
+    def add_reactions_from_table(self, model:cobra.Model,
+                                 missing_reac_table:pd.DataFrame,
+                                 idprefix:str='refineGEMs',
+                                 namespace:Literal['BiGG']='BiGG') -> pd.DataFrame:
+        """Helper function to add reactions to a model from the missing_reactions table 
+        (output of the chosen implementation of :py:meth:`~refinegems.classes.gapfill.GapFiller.get_missing_reacs`)
+
+        Args:
+            - model (cobra.Model): 
+                The model, loaded with COBRpy.
+            - missing_reac_table (pd.DataFrame): 
+                The missing reactions table.
+            - idprefix (str, optional): 
+                A prefix to use, if pseudo-IDs need to be created. 
+                Defaults to 'refineGEMs'.
+            - namespace (Literal['BiGG'], optional): 
+                Namespace to use for the reactions and metabolites 
+                (and the model). Defaults to 'BiGG'.
+                
+        Raises:
+            - TypeError: Unknown return type for reac param. Please contact the developers.
+
+        Returns:
+            pd.DataFrame: 
+                Table containing the information about which genes can now be added 
+                to reactions (use for GPR cutation).
+        """
+        
+        # reconstruct reactions
+        # ---------------------
+        for idx,row in tqdm(missing_reac_table.iterrows(), 
+                            desc='Trying to add missing reacs',
+                            total=missing_reac_table.shape[0]):
+            # build reaction
+            reac = None
+            match row['via']:
+                # MetaNetX
+                case 'MetaNetX':
+                    reac = build_reaction_mnx(model,row['id'],
+                                            reac_str=row['equation'],
+                                            references={'ec-code':[row['ec-code']]},
+                                            idprefix=idprefix,
+                                            namespace=namespace)      
+                # KEGG
+                case 'KEGG':
+                    refs = row['references']
+                    refs['ec-code'] = row['ec-code']
+                    reac = build_reaction_kegg(model,row['id'],
+                                            reac_str=row['equation'],
+                                            references=refs,
+                                            idprefix=idprefix,
+                                            namespace=namespace)
+                # BiGG
+                case 'BiGG':
+                    reac = build_reaction_bigg(model,row['id'],
+                                            references={'ec-code':[row['ec-code']]},
+                                            idprefix=idprefix,
+                                            namespace=namespace)
+                # BioCyc @TODO
+                case 'BioCyc':
+                    reac = build_reaction_biocyc()
+                # Unknown database
+                case _:
+                    mes = f'''Unknown database name for reaction reconstruction: {row["via"]}\n
+                    Reaction will not be reconstructed.'''
+                    warnings.warn(mes,UserWarning)
+            
+            # check output of reconstruction
+            # ------------------------------
+            # case 1: reconstruction was not possible
+            if not reac:
+                pass # nothing to do here
+            # case 2: reaction(s) found in model
+            elif isinstance(reac,list):
+                # add found names to the add_to_GPR column of the table
+                current_gpr = missing_reac_table.loc[idx,'add_to_GPR']
+                if not current_gpr:
+                    missing_reac_table.at[idx,'add_to_GPR'] = reac
+                else:
+                    missing_reac_table.at[idx,'add_to_GPR'] = list(set(reac + current_gpr))
+            # case 3: new reaction was generated
+            elif isinstance(reac,cobra.Reaction):
+                # validate reaction
+                if isreaction_complete(reac):
+                    # add reaction to model (if validation succesful)
+                    model.add_reactions([reac])
+                    # add reaction ID to table under add_to_GPR
+                    current_gpr = missing_reac_table.loc[idx,'add_to_GPR']
+                    if not current_gpr:
+                        missing_reac_table.at[idx,'add_to_GPR'] = reac.id
+                    else:
+                        current_gpr.append(reac.id)
+                        missing_reac_table.at[idx,'add_to_GPR'] = list(set(current_gpr))
+            # case 4: should never occur
+            else:
+                mes = f'Unknown return type for reac param. Please contact the developers.'
+                raise TypeError(mes)
+            
+        #@TODO
+        # save reactions, that could not be recontructed, for manual curation
+        manual_curation_reacs = missing_reac_table[missing_reac_table['add_to_GPR'].isnull()]
+        # return the updated table with successfully reconstructed reaction ids 
+        # to enable adding the genes
+        missing_gprs = missing_reac_table[~missing_reac_table['add_to_GPR'].isnull()]
+        return missing_gprs
 
 
-    def fill_model(self, model):
-        pass
+    @implement
+    def fill_model(self, model, 
+                   missing_genes:pd.DataFrame, 
+                   missing_reacs:pd.DataFrame) -> None:
+        
+        # @TODO what model as input - make irrelevant? 
+        # -> load model type needed? allow path?
+        
+        # @TODO logging, manual curation and stuff
+        
+        # Step 1: Add genes to model whoose reactions are already in it
+        # -------------------------------------------------------------
+        # filter the respective genes and reactions
+        reacs_in_model = missing_reacs[~(missing_reacs['add_to_GPR'].isnull())]
+        ncbiprot_with_reacs_in_model = [*chain(*list(reacs_in_model['ncbiprotein']))]
+        genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+        
+        if len(genes_with_reacs_in_model) > 0:
+            # add genes as gene products to model
+            self.add_genes_from_table(model, genes_with_reacs_in_model)
+        
+            # extend gene production rules 
+            self.add_gene_reac_associations_from_table(model,reacs_in_model)
+            
+            # what remains:
+            missing_reacs = missing_reacs[missing_reacs['add_to_GPR'].isnull()]
+            missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
+        
+        # ..............................
+        # @TODO
+        
+        # Step 2: Add reactions to model, if reconstruction successful
+        # ------------------------------------------------------------
+        # if len(missing_reacs) > 0:
+        #   self.add_reactions_from_table()
+        
+        # Step 3: Add GPRs + genes for the newly curated reactions 
+        # --------------------------------------------------------
+        # filter genes based on result above 
+        # if something:
+        #   self.add_genes_from_table()
+        #   self.add_gene_reac_associations_from_table()
+        
+        # ..............................
+        
+
     
     # reporting
     # ---------
@@ -670,6 +828,7 @@ class BioCycGapFiller(GapFiller):
 # ---------------------------------
 # GapFilling with GFF and Swissprot
 # ---------------------------------
+
 class GeneGapFiller(GapFiller):
     
     GFF_COLS = {'locus_tag':'locus_tag', 
