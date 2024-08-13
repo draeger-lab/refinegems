@@ -153,7 +153,7 @@ def map_ec_to_reac(table:pd.DataFrame,
         """
         
         # get KEGG EC number information
-        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec)))   
+        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec, desc='Mapping reacs to KEGG')))   
         kegg_mapped['is_transport'] = None
         kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
         kegg_mapped.explode(column='id')
@@ -209,9 +209,23 @@ def map_ec_to_reac(table:pd.DataFrame,
 class GapFiller(ABC):
 
     def __init__(self) -> None:
-        self.full_gene_list = None  # really a good idea? GeneGapFiller does not need it at all
+        self.full_gene_list = None  # @TODO really a good idea? GeneGapFiller does not need it at all
         self.geneid_type = 'ncbi' # @TODO
-        self._statistics = dict()
+        # collect stats & Co, can be extended by subclasses
+        self._statistics = {  
+                'genes':{
+                    'missing (before)': 0,
+                    'added': 0,
+                    'missing (after)': 0
+                },
+                'reactions':{
+                    'added (total)': 0,
+                    'failed to build': 0
+                },
+                'metabolites':{
+                    
+                }
+            }
         self.manual_curation = dict()
     
     # abstract methods
@@ -302,7 +316,7 @@ class GapFiller(ABC):
     # actual "Filling" part
     # ---------------------
     
-    # @TODO logging? or remove self?
+    # @TODO logging? 
     def add_genes_from_table(self,model:libModel, gene_table:pd.DataFrame) -> None:
         """Create new GeneProduct for a table of genes in the format:
         
@@ -326,12 +340,16 @@ class GapFiller(ABC):
         
         # create gps from the table and add them to the model
         if 'UniProt' in gene_table.columns:
-            for idx,x in gene_table.iterrows():
+            for idx,x in tqdm(gene_table.iterrows(), 
+                              total=len(gene_table),
+                              desc='Adding genes to model'):
                 create_gp(model, x['ncbiprotein'], 
                         locus_tag=x['locus_tag'],
                         uniprot=(x['UniProt'],True))
         else:
-            for idx,x in gene_table.iterrows():
+            for idx,x in tqdm(gene_table.iterrows(), 
+                              total=len(gene_table),
+                              desc='Adding genes to model'):
                 create_gp(model, x['ncbiprotein'], 
                         locus_tag=x['locus_tag'])
                 
@@ -374,7 +392,7 @@ class GapFiller(ABC):
     
 
     # @TODO BioCyc not implemeneted
-    # @TODO logging, save stuff for manual curation etc.
+    # @TODO logging, save stuff for manual curation etc. -> started a bit
     # @TEST - somewhat seems to work - for now
     def add_reactions_from_table(self, model:cobra.Model,
                                  missing_reac_table:pd.DataFrame,
@@ -477,6 +495,7 @@ class GapFiller(ABC):
                                        exclude_rna=exclude_rna):
                     # add reaction to model (if validation succesful)
                     model.add_reactions([reac])
+                    self._statistics['reactions']['added (total)'] = self._statistics['reactions']['added (total)'] + 1
                     # add reaction ID to table under add_to_GPR
                     current_gpr = missing_reac_table.loc[idx,'add_to_GPR']
                     if not current_gpr:
@@ -489,9 +508,11 @@ class GapFiller(ABC):
                 mes = f'Unknown return type for reac param. Please contact the developers.'
                 raise TypeError(mes)
             
-        #@TODO
         # save reactions, that could not be recontructed, for manual curation
         manual_curation_reacs = missing_reac_table[missing_reac_table['add_to_GPR'].isnull()]
+        self.manual_curation['reaction, building failed'] = manual_curation_reacs
+        self._statistics['reactions']['failed to build'] = len(manual_curation_reacs)
+        
         # return the updated table with successfully reconstructed reaction ids 
         # to enable adding the genes
         missing_gprs = missing_reac_table[~missing_reac_table['add_to_GPR'].isnull()]
@@ -500,6 +521,7 @@ class GapFiller(ABC):
 
     # @TODO : logging
     # @TODO : save stuff for report / manual curation
+    # @TEST - only tested in debugging mode with GeneGapFiller
     def fill_model(self, model:Union[cobra.Model,libModel], 
                    missing_genes:pd.DataFrame, 
                    missing_reacs:pd.DataFrame,
@@ -532,6 +554,7 @@ class GapFiller(ABC):
         """
         
         # load the correct type of model for the first step
+        # @TODO probably not working under Windows
         match model:
             case cobra.Model():
                 with NamedTemporaryFile(suffix='.xml') as tmp:
@@ -549,7 +572,7 @@ class GapFiller(ABC):
         reacs_in_model = missing_reacs[~(missing_reacs['add_to_GPR'].isnull())]
         ncbiprot_with_reacs_in_model = [*chain(*list(reacs_in_model['ncbiprotein']))]
         genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
-        
+        self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
         if len(genes_with_reacs_in_model) > 0:
             # add genes as gene products to model
             self.add_genes_from_table(model, genes_with_reacs_in_model)
@@ -581,12 +604,6 @@ class GapFiller(ABC):
                 write_model_to_file(model,tmp.name)
                 cobramodel = load_model(tmp.name,'cobra')
             
-            # more complex alternative, if the above should have problems under Windows
-            # with TemporaryDirectory() as td:
-            #     tmpfile = Path(td,'model.xml')
-            #     write_model_to_file(model,tmpfile)
-            #     cobramodel = load_model(tmpfile,'cobra')
-            
             # .......................
             # @DEBUGGING
             if len(missing_reacs) > 10:
@@ -596,12 +613,12 @@ class GapFiller(ABC):
                 
             # add reactions to model  
             missing_gprs = self.add_reactions_from_table(cobramodel,missing_reacs,**kwargs)
-            # @TODO save some logging or so
-        
+
         # Step 3: Add GPRs + genes for the newly curated reactions 
         # --------------------------------------------------------
         
         # re-load model with libsbml
+        # @TODO does not seem to work as expected under Windows
         with NamedTemporaryFile(suffix='.xml') as tmp:
             write_model_to_file(cobramodel,tmp.name)
             model = load_model(tmp.name,'libsbml')
@@ -610,14 +627,17 @@ class GapFiller(ABC):
             # filter for genes for GPRs but not yet in model
             ncbiprot_with_reacs_in_model = [*chain(*list(missing_gprs['ncbiprotein']))]
             genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+            self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
             if len(genes_with_reacs_in_model) > 0:
                 # add genes as gene products to model
                 self.add_genes_from_table(model, genes_with_reacs_in_model)
                 # extend gene production rules 
                 self.add_gene_reac_associations_from_table(model,reacs_in_model)
         
-        # @TODO : save the still missing genes for manual curation somewhere
+        # collect stats and stuff dor manual curation
         missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
+        self.manual_curation['missing genes (after gap filling)'] = missing_genes
+        self._statistics['genes']['missing (after)'] = len(missing_genes)
         
         return model
         
@@ -641,12 +661,23 @@ class KEGGapFiller(GapFiller):
     def __init__(self, organismid) -> None:
         super().__init__()
         self.organismid = organismid
-        # self.report = dict()
         
         
-    # @TODO: progress bar and parallelising
+    # @TODO: parallelising
     # @TODO: logging
-    def get_missing_genes(self, model:libModel):
+    def get_missing_genes(self, model:libModel) -> pd.DataFrame:
+        """Get the missing genes in model in comparison to the KEGG entry of the 
+        organism.
+
+        Args:
+            - model (libModel): 
+                The model loaded with libSBML.
+
+        Returns:
+            pd.DataFrame: 
+                A table containing the missing genes 
+                (format: <organism id>:<locus>)
+        """
     
         # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis/entities --- Modified
         def get_model_genes(model: libModel) -> pd.DataFrame:
@@ -695,14 +726,15 @@ class KEGGapFiller(GapFiller):
         # Step 5: map to EC via KEGG
         # --------------------------
         # @DEBUGGING ...................
-        # genes_not_in_model = genes_not_in_model.iloc[330:350,:]
-        # print(UserWarning('Running in debugging mode.'))
+        genes_not_in_model = genes_not_in_model.iloc[330:350,:]
+        print(UserWarning('Running in debugging mode.'))
         # ..............................
         geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].progress_apply(parse_KEGG_gene)))
         genes_not_in_model = genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
+        genes_not_in_model = genes_not_in_model.explode('ncbiprotein')
         
-        # @TODO : What to report where and when
-        # self.report['missing genes (total)'] = len(genes_not_in_model)
+        # collect stats
+        self._statistics['genes']['missing (before)'] = len(genes_not_in_model)
         
         return genes_not_in_model 
     
@@ -1039,14 +1071,20 @@ class GeneGapFiller(GapFiller):
             if col not in missing_genes.columns:
                 missing_genes[col] = None
                 
+        # collect stats
+        self._statistics['genes']['missing (before)'] = len(missing_genes)
+                
         # save genes with no locus tag for manual curation
         self.manual_curation['gff no locus tag'] = missing_genes[missing_genes['locus_tag'].isna()]['ncbiprotein']
+        self._statistics['genes']['no locus tag'] = len(self.manual_curation['gff no locus tag'])
         
         # output
         # ncbiprotein | locus_tag | ec-code
         missing_genes =  missing_genes[~missing_genes['locus_tag'].isna()]
         missing_genes = missing_genes.explode('ncbiprotein')
+        
         return missing_genes
+    
     
     def get_missing_reacs(self, model:cobra.Model, 
                           missing_genes:pd.DataFrame, 
@@ -1070,7 +1108,6 @@ class GeneGapFiller(GapFiller):
             # Option 1: BLAST against SwissProt
             # +++++++++++++++++++++++++++++++++    
             # -> BLAST (DIAMOND) against SwissProt to get EC/BRENDA 
-            # @TEST
             if fasta and dmnd_db and swissprot_map:
                 case_1_mapped = get_ec_via_swissprot(fasta,dmnd_db,
                                             case_1,
@@ -1093,6 +1130,7 @@ class GeneGapFiller(GapFiller):
         self.manual_curation['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()] 
         
         mapped_reacs = pd.concat([case_1[~(case_1['ncbiprotein'].isna() & case_1['ec-code'].isna())],not_case_1])
+        self._statistics['reactions']['no NCBI, no EC'] = len(self.manual_curation['no ncbiprotein, no EC'])
 
         # convert NaNs to None
         mapped_reacs.mask(mapped_reacs.isna(), other=None, inplace=True)
@@ -1109,6 +1147,7 @@ class GeneGapFiller(GapFiller):
         
         # save entries with no EC for manual curation
         self.manual_curation['no EC'] = mapped_reacs[mapped_reacs['ec-code'].isna()]
+        self._statistics['reactions']['NCBI, no EC'] = len(self.manual_curation['no EC'])
         mapped_reacs = mapped_reacs[~mapped_reacs['ec-code'].isna()]
         
         # check, if any automatic gapfilling is still possible
@@ -1140,6 +1179,7 @@ class GeneGapFiller(GapFiller):
         # @TODO the stuff below also appear multiple times
         # save for manual curation
         self.manual_curation['reacs, no mapping'] = mapped_reacs[mapped_reacs['id'].isnull()]
+        self._statistics['reactions']['no NCBI, no EC'] = len(self.manual_curation['reacs, no mapping'])
         # map to model
         mapped_reacs = mapped_reacs[~mapped_reacs['id'].isnull()]
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
