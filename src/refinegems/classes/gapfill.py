@@ -19,13 +19,14 @@ import warnings
 from bioservices.kegg import KEGG
 from itertools import chain
 from libsbml import Model as libModel
+from tempfile import NamedTemporaryFile
 from typing import Literal, Union
 
 from tqdm import tqdm
 tqdm.pandas()
 
 from ..curation.db_access.db import get_ec_from_ncbi, get_ec_via_swissprot
-from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds
+from ..utility.io import load_a_table_from_database, parse_fasta_headers, parse_gff_for_cds, load_model, write_model_to_file
 from ..utility.entities import get_model_reacs_or_metabs, create_gp, create_gpr, build_reaction_bigg, build_reaction_biocyc, build_reaction_kegg, build_reaction_mnx, isreaction_complete
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 from ..developement.decorators import *
@@ -48,9 +49,49 @@ from ..developement.decorators import *
 # Mapping of EC numbers
 # ---------------------
 
-def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
+def map_ec_to_reac(table:pd.DataFrame, 
+                   use_MNX:bool=True, use_BiGG:bool=True, 
+                   use_KEGG:bool=True) -> pd.DataFrame:
+    """Based on a table of NCBI protein IDs and EC numbers, 
+    map them to reactions via different databases 
+    (if a mapping is possible).
     
-    def _map_ec_to_reac_mnx(unmapped_reacs):
+    input table should have format: 
+        ec-code | ncbiprotein
+        
+    output table has the format:
+        ec-code | ncbiprotein | id | equation | reference | is_transport | via
+
+    Args:
+        - table (pd.DataFrame): 
+            The input table.
+        - use_MNX (bool, optional): 
+            Try mapping using the MetaNetX database. 
+            Defaults to True.
+        - use_BiGG (bool, optional): 
+            Try mapping using the BiGG database. 
+            Defaults to True.
+        - use_KEGG (bool, optional): 
+            Try mapping using the KEGG database. 
+            Defaults to True.
+
+    Returns:
+        pd.DataFrame: 
+            The extended table.
+    """
+    
+    def _map_ec_to_reac_mnx(unmapped_reacs:pd.DataFrame) -> pd.DataFrame:
+        """Helper function of :py:func:`~refinegems.classes.gapfill.map_ec_to_reac`
+        for the mapping using the MetaNetX database.
+
+        Args:
+            - unmapped_reacs (pd.DataFrame): 
+                The input table (ec-code and ncbiprotein columns)
+
+        Returns:
+            pd.DataFrame: 
+                The extended table
+        """
     
         # input: pd.DataFrame with a least the ec-code column
         # load MNX reac prop table
@@ -68,7 +109,18 @@ def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
         return reacs_mapped      
     
 
-    def _map_ec_to_reac_bigg(unmapped_reacs):
+    def _map_ec_to_reac_bigg(unmapped_reacs:pd.DataFrame) -> pd.DataFrame:
+        """Helper function of :py:func:`~refinegems.classes.gapfill.map_ec_to_reac`
+        for the mapping using the BiGG database.
+
+        Args:
+            - unmapped_reacs (pd.DataFrame): 
+                The input table (ec-code and ncbiprotein columns)
+
+        Returns:
+            pd.DataFrame: 
+                The extended table
+        """
         
         # load BiGG reaction namespace
         bigg_reacs = load_a_table_from_database('bigg_reactions',False)
@@ -87,7 +139,18 @@ def map_ec_to_reac(table, use_MNX=True, use_BiGG=True, use_KEGG=True):
         return bigg_mapping
 
 
-    def _map_ec_to_reac_kegg(unmapped_reacs):
+    def _map_ec_to_reac_kegg(unmapped_reacs:pd.DataFrame) -> pd.DataFrame:
+        """Helper function of :py:func:`~refinegems.classes.gapfill.map_ec_to_reac`
+        for the mapping using the KEGG database.
+
+        Args:
+            - unmapped_reacs (pd.DataFrame): 
+                The input table (ec-code and ncbiprotein columns)
+
+        Returns:
+            pd.DataFrame: 
+                The extended table
+        """
         
         # get KEGG EC number information
         kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec)))   
@@ -273,7 +336,7 @@ class GapFiller(ABC):
                         locus_tag=x['locus_tag'])
                 
 
-    # @TODO seems very ridgid, better ways to find the ids?
+    # @TODO seems very rigid, better ways to find the ids?
     def add_gene_reac_associations_from_table(self,model:libModel,
                                               reac_table:pd.DataFrame) -> None:
         """Using a table with at least the columns 'ncbiprotein' 
@@ -315,6 +378,9 @@ class GapFiller(ABC):
     # @TEST - somewhat seems to work - for now
     def add_reactions_from_table(self, model:cobra.Model,
                                  missing_reac_table:pd.DataFrame,
+                                 formula_check:Literal['none','existence','wildcard','strict']='existence',
+                                 exclude_dna:bool=True,
+                                 exclude_rna:bool=True,
                                  idprefix:str='refineGEMs',
                                  namespace:Literal['BiGG']='BiGG') -> pd.DataFrame:
         """Helper function to add reactions to a model from the missing_reactions table 
@@ -324,7 +390,17 @@ class GapFiller(ABC):
             - model (cobra.Model): 
                 The model, loaded with COBRpy.
             - missing_reac_table (pd.DataFrame): 
-                The missing reactions table.
+                The missing reactions table.  
+            - formula_check (Literal['none','existence','wildcard','strict'], optional):
+                Param for checking metabolite formula before adding them to the model.
+                For more information, refer to :py:func:`~refinegems.utility.entities.isreaction_complete`
+                Defaults to 'existence'.
+            - exclude_dna (bool, optional):
+                Option to exclude reaction containing 'DNA' from being added to the model.
+                Defaults to True.
+            - exclude_rna (bool, optional):
+                Option to exclude reaction containing 'RNA' from being added to the model.
+                Defaults to True.
             - idprefix (str, optional): 
                 A prefix to use, if pseudo-IDs need to be created. 
                 Defaults to 'refineGEMs'.
@@ -338,7 +414,7 @@ class GapFiller(ABC):
         Returns:
             pd.DataFrame: 
                 Table containing the information about which genes can now be added 
-                to reactions (use for GPR cutation).
+                to reactions (use for GPR curation).
         """
         
         # reconstruct reactions
@@ -396,13 +472,15 @@ class GapFiller(ABC):
             # case 3: new reaction was generated
             elif isinstance(reac,cobra.Reaction):
                 # validate reaction
-                if isreaction_complete(reac):
+                if isreaction_complete(reac, formula_check=formula_check,
+                                       exclude_dna=exclude_dna,
+                                       exclude_rna=exclude_rna):
                     # add reaction to model (if validation succesful)
                     model.add_reactions([reac])
                     # add reaction ID to table under add_to_GPR
                     current_gpr = missing_reac_table.loc[idx,'add_to_GPR']
                     if not current_gpr:
-                        missing_reac_table.at[idx,'add_to_GPR'] = reac.id
+                        missing_reac_table.at[idx,'add_to_GPR'] = [reac.id]
                     else:
                         current_gpr.append(reac.id)
                         missing_reac_table.at[idx,'add_to_GPR'] = list(set(current_gpr))
@@ -420,15 +498,50 @@ class GapFiller(ABC):
         return missing_gprs
 
 
-    @implement
-    def fill_model(self, model, 
+    # @TODO : logging
+    # @TODO : save stuff for report / manual curation
+    def fill_model(self, model:Union[cobra.Model,libModel], 
                    missing_genes:pd.DataFrame, 
-                   missing_reacs:pd.DataFrame) -> None:
+                   missing_reacs:pd.DataFrame,
+                   **kwargs) -> libModel:
+        """Based on a table of missing reactions and missing metabolites, 
+        fill the gaps in a model as good as possible automatically.
         
-        # @TODO what model as input - make irrelevant? 
-        # -> load model type needed? allow path?
+        .. note::
         
-        # @TODO logging, manual curation and stuff
+            This model rewrite and reloads the input model. Only the returned model
+            has all the edits.
+
+        Args:
+            - model (Union[cobra.Model,libModel]): 
+                The model, either a libSBML or COBRApy model entity.
+            - missing_genes (pd.DataFrame): 
+                The table containing the missing genes' information.
+            - missing_reacs (pd.DataFrame): 
+                The table containing the missing reactions' information.
+            - kwargs:
+                Additional parameters to be passed to 
+                :py:meth:`~refinegems.classes.gapfill.GapFiller.add_reactions_from_table`.
+
+        Raises:
+            - TypeError: Unknown type of model.
+
+        Returns:
+            libModel: 
+                The gap-filled model.
+        """
+        
+        # load the correct type of model for the first step
+        match model:
+            case cobra.Model():
+                with NamedTemporaryFile(suffix='.xml') as tmp:
+                    write_model_to_file(model,tmp.name)
+                    model = load_model(tmp.name,'libsbml')
+            case libModel():
+                pass
+            case _:
+                mes = f'Unknown type of model: {type(model)}'
+                raise TypeError(mes)
         
         # Step 1: Add genes to model whoose reactions are already in it
         # -------------------------------------------------------------
@@ -448,26 +561,69 @@ class GapFiller(ABC):
             missing_reacs = missing_reacs[missing_reacs['add_to_GPR'].isnull()]
             missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
         
-        # ..............................
-        # @TODO
         
         # Step 2: Add reactions to model, if reconstruction successful
         # ------------------------------------------------------------
-        # if len(missing_reacs) > 0:
-        #   self.add_reactions_from_table()
+        # @TODO : prefilter to only have each ID once? -> neccessary?
+        # print(missing_reacs.columns)
+        # print(missing_reacs.groupby('id').agg({'ec-code': lambda x: list(set(x.tolist())),
+        #                                        'ncbiprotein': lambda x: [xss for xs in x for xss in xs],
+        #                                        'equation': lambda x: x[0],
+        #                                        'reference': lambda x: ???,
+        #                                        'is_transport': lambda x: x[0],
+        #                                        'via': lambda x: x[0],
+        #                                        'add_to_GPR': None
+        #                                        }))
+        if len(missing_reacs) > 0:
+            
+            # re-load model with cobrapy
+            with NamedTemporaryFile(suffix='.xml') as tmp:
+                write_model_to_file(model,tmp.name)
+                cobramodel = load_model(tmp.name,'cobra')
+            
+            # more complex alternative, if the above should have problems under Windows
+            # with TemporaryDirectory() as td:
+            #     tmpfile = Path(td,'model.xml')
+            #     write_model_to_file(model,tmpfile)
+            #     cobramodel = load_model(tmpfile,'cobra')
+            
+            # .......................
+            # @DEBUGGING
+            if len(missing_reacs) > 10:
+                missing_reacs = missing_reacs.sample(10)
+                print('fill_model: Running in debugging mode')
+            # .......................
+                
+            # add reactions to model  
+            missing_gprs = self.add_reactions_from_table(cobramodel,missing_reacs,**kwargs)
+            # @TODO save some logging or so
         
         # Step 3: Add GPRs + genes for the newly curated reactions 
         # --------------------------------------------------------
-        # filter genes based on result above 
-        # if something:
-        #   self.add_genes_from_table()
-        #   self.add_gene_reac_associations_from_table()
         
-        # ..............................
+        # re-load model with libsbml
+        with NamedTemporaryFile(suffix='.xml') as tmp:
+            write_model_to_file(cobramodel,tmp.name)
+            model = load_model(tmp.name,'libsbml')
+            
+        if len(missing_gprs) > 0:
+            # filter for genes for GPRs but not yet in model
+            ncbiprot_with_reacs_in_model = [*chain(*list(missing_gprs['ncbiprotein']))]
+            genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+            if len(genes_with_reacs_in_model) > 0:
+                # add genes as gene products to model
+                self.add_genes_from_table(model, genes_with_reacs_in_model)
+                # extend gene production rules 
+                self.add_gene_reac_associations_from_table(model,reacs_in_model)
+        
+        # @TODO : save the still missing genes for manual curation somewhere
+        missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
+        
+        return model
         
 
     
-    # reporting
+    # reporting -> new class in reports?
     # ---------
 
     def calculate_stats(self):

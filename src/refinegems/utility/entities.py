@@ -1215,6 +1215,9 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     # match ID to namespace
     # ---------------------
     match_id_to_namespace(new_reac,namespace)
+    # re-check, if reaction not in the model based on the namespace
+    if new_reac.id in [_.id for _ in model.reactions]:
+        return [new_reac.id]
     
     return new_reac
 
@@ -1375,6 +1378,9 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     # match ID to namespace
     # ---------------------
     match_id_to_namespace(new_reac,namespace)
+    # re-check, if reaction not in the model based on the namespace
+    if new_reac.id in [_.id for _ in model.reactions]:
+        return [new_reac.id]
     
     return new_reac
 
@@ -1500,6 +1506,9 @@ def build_reaction_bigg(model:cobra.Model, id:str,
     # match ID to namespace
     # ---------------------
     match_id_to_namespace(new_reac,namespace)
+    # re-check, if reaction not in the model based on the namespace
+    if new_reac.id in [_.id for _ in model.reactions]:
+        return [new_reac.id]
 
     return new_reac
     
