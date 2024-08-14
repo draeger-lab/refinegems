@@ -93,10 +93,10 @@ def map_ec_to_reac(table:pd.DataFrame,
                 The extended table
         """
     
-        # input: pd.DataFrame with a least the ec-code column
+        # input: pd.DataFrame with at least the ec-code column
         # load MNX reac prop table
         mnx_reac_prop = load_a_table_from_database('mnx_reac_prop',False)
-        # convert table into one EC-number a row
+        # convert table into one EC-number per row
         mnx_reac_prop.drop('is_balanced', inplace=True, axis=1)
         mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(';') if isinstance(x,str) else None)
         # exclude entries without EC-number
@@ -330,7 +330,9 @@ class GapFiller(ABC):
                 _description_
             - gene_table (pd.DataFrame): 
                 The table with the genes to add. At least needs the columns
-                '','' and 'ec-code'.
+                '','' and 'ec-code'. 
+                @TODO: Hier fehlt was, oder? Passt auch 
+                nicht ganz zu den Spaltennamen oben...
         """
     
         # ncbiprotein | locus_tag | ...
@@ -526,7 +528,7 @@ class GapFiller(ABC):
                    missing_genes:pd.DataFrame, 
                    missing_reacs:pd.DataFrame,
                    **kwargs) -> libModel:
-        """Based on a table of missing reactions and missing metabolites, 
+        """Based on a table of missing genes and missing reactions, 
         fill the gaps in a model as good as possible automatically.
         
         .. note::
@@ -566,7 +568,7 @@ class GapFiller(ABC):
                 mes = f'Unknown type of model: {type(model)}'
                 raise TypeError(mes)
         
-        # Step 1: Add genes to model whoose reactions are already in it
+        # Step 1: Add genes to model whose reactions are already in it
         # -------------------------------------------------------------
         # filter the respective genes and reactions
         reacs_in_model = missing_reacs[~(missing_reacs['add_to_GPR'].isnull())]
@@ -1262,6 +1264,9 @@ def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.Da
       elif 'REVERSIBLE' in direction:
          fluxes['lower_bound'] = 'cobra_default_lb'
          fluxes['upper_bound'] = 'cobra_default_ub'
+      else:
+         #@TODO LOGGING.WARNING + Set to reversible
+         pass
       
       return str(fluxes)
    
