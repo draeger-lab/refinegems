@@ -531,7 +531,7 @@ class GapFiller(ABC):
         
         .. note::
         
-            This model rewrite and reloads the input model. Only the returned model
+            This model rewrites and reloads the input model. Only the returned model
             has all the edits.
 
         Args:
@@ -634,7 +634,7 @@ class GapFiller(ABC):
                 # extend gene production rules 
                 self.add_gene_reac_associations_from_table(model,reacs_in_model)
         
-        # collect stats and stuff dor manual curation
+        # collect stats and stuff for manual curation
         missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
         self.manual_curation['missing genes (after gap filling)'] = missing_genes
         self._statistics['genes']['missing (after)'] = len(missing_genes)
