@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Literal,Union
 
 from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_reac_with_gpr
-from ..curation.biomass import test_biomass_presence
+from ..utility.entities import test_biomass_presence
 
 ################################################################################
 # variables

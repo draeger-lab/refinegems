@@ -30,6 +30,7 @@ from typing import Literal
 tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
+from ...utility.connections import BIGG_REACTIONS_URL
 from ...utility.databases import PATH_TO_DB
 from ...utility.entities import VALID_COMPARTMENTS
 from ...utility.io import load_a_table_from_database, create_missing_genes_protein_fasta
@@ -40,8 +41,6 @@ from ...utility.io import load_a_table_from_database, create_missing_genes_prote
 
 ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y') #: :meta: 
 ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm') #: :meta: 
-BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
-BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
 
 ################################################################################
 # functions

@@ -35,7 +35,8 @@ import pandas as pd
 import requests
 
 from ...utility.entities import get_model_genes, get_model_reacs_or_metabs, compare_gene_lists
-from .db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
+from .db import get_bigg_db_mapping, compare_bigg_model, add_stoichiometric_values_to_reacs
+from ...utility.connections import BIGG_METABOLITES_URL
 
 ############################################################################
 # variables

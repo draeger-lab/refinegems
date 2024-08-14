@@ -78,14 +78,50 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
 #  def gapfill_table()
 
 
-# ----------------------
-# all about the media DB
-# ----------------------
+# --------------------
+# work on the database
+# --------------------
+
+@cli.group()
+def database():
+   """Access, curate, etc. the in-build database.
+   """
+   
+@database.command()
+def initialise():
+   """Initialise or update the database.
+   """
+   rg.utility.databases.initialise_database()
+   
+@database.command()
+@click.argument('databasename', type=click.Choice(['MetaNetX']))
+@click.option('-c','--chunksize',show_default=True, default=1, help='Chunksize for the download in kB. Defaults to 1.')
+def add_namespace(databasename, chunksize):
+   """Add or update table for a given namespace/database to the database.
+   """
+   match databasename:
+      case 'MetaNetX':
+         rg.utility.set_up.update_mnx_namespace(chunksize=chunksize)
+      case _:
+         mes = f'Unknown database name: {databasename}'
+         raise ValueError(mes)
+         
+   
+@database.command()
+def reset():
+   """Reset the database by removing additionally downloaded tables.
+   """
+   rg.utility.set_up.reset_database()
+
+# -------------------
+# all about the media 
+# -------------------
 # @TODO more functionalities???
+# @TODO merge with database?
 
 @cli.group()
 def media():
-   """Access the media database.
+   """Access the media part of the database.
    """
 
 # @TODO: Download a file with all media for a specific database?
@@ -111,13 +147,6 @@ def info(list): #,copy
         db = specimen.classes.medium.load_media_db()
         specimen.classes.medium.save_db(db,click.format_filename(copy))
 '''
-
-@media.command()
-def initialise():
-   """Initialise or update the database.
-   """
-   rg.utility.databases.initialise_database()
-
 
 
 # --------------

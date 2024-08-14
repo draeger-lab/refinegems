@@ -28,7 +28,7 @@ from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
 from typing import Literal, Union
 
-from .databases import PATH_TO_DB, initialise_database
+from .databases import PATH_TO_DB
 
 ################################################################################
 # variables

@@ -33,9 +33,8 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
-from ..curation.biomass import test_biomass_presence
-from ..utility.io import write_model_to_file
-from ..curation.polish import polish_annotations
+from .entities import test_biomass_presence
+from .io import write_model_to_file
 
 # note:
 #    for BOFdat to run correctly, you need to change 'solution.f' to 'solution.objective_value'
@@ -44,6 +43,13 @@ from ..curation.polish import polish_annotations
 ################################################################################
 # variables
 ################################################################################
+
+# database urls
+# -------------
+
+BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
+BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
+
 
 ################################################################################
 # functions

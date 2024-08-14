@@ -12,8 +12,10 @@ import sqlite3
 import requests
 import logging
 import pandas as pd
+
 from enum import Enum
 from sqlite3 import Error
+from tqdm import tqdm
 from pathlib import Path
 from importlib.resources import files
 
@@ -25,6 +27,16 @@ PATH_TO_DB_FOLDER = files('refinegems.data.database') #: :meta hide-value:
 PATH_TO_DB = PATH_TO_DB_FOLDER.joinpath('data.db') #: :meta hide-value: 
 VERSION_FILE = PATH_TO_DB_FOLDER.joinpath('current_bigg_db_version.txt') #: :meta hide-value: 
 VERSION_URL = 'http://bigg.ucsd.edu/api/v2/database_version' #: :meta: 
+
+mnx_db_namespace = {'reac_prop': ('https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_prop.tsv', 
+                                  ['id','mnx_equation','reference','ec-code','is_balanced','is_transport']),
+                    'reac_xref': ('https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_xref.tsv',
+                                  ['source','id','description']),
+                    'chem_prop': ('https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_prop.tsv',
+                                  ['id','name','reference','formula','charge','mass','InChI','InChIKey','SMILES']),
+                    'chem_xref': ('https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_xref.tsv',
+                                  ['source','id','description'])
+                    }
 
 ################################################################################
 # functions
@@ -357,3 +369,127 @@ def initialise_database():
       validity_code = is_valid_database(cursor)
       print(validation_messages.get(validity_code))
       con.close()
+
+# about MetaNetX Information
+# --------------------------
+# DISCLAIMER:
+# Database information from MetaNetX
+# distributed under https://creativecommons.org/licenses/by/4.0/
+# Citation: MetaNetX/MNXref: unified namespace for metabolites and biochemical reactions in the context of metabolic models
+#           Sébastien Moretti, Van Du T Tran, Florence Mehl, Mark Ibberson, Marco Pagni
+#           Nucleic Acids Research (2021), 49(D1):D570-D574
+
+# @TODO time warning + progress bar (waiting w/o info is tedious)
+def update_mnx_namespaces(db:Path|str=PATH_TO_DB, chunksize=1):
+    con = sqlite3.connect(db)
+    for name,values in mnx_db_namespace.items():
+        link,colnames = values
+        mnx_table = []
+        for chunk in tqdm(pd.read_csv(link, sep='\t', comment='#', 
+                                      names=colnames, 
+                                      chunksize=chunksize*1024), 
+                                      desc=f'Downloading {name}',
+                                      unit='B'):# progress bar will not work -> no totel length info
+            mnx_table.append(chunk) 
+
+        match name:
+            # Reaction property table
+            case 'reac_prop':
+                total_len = sum([len(_) for _ in mnx_table])
+                with tqdm(total=total_len, unit='entries', 
+                          desc='Add to DB') as pbar:
+                    for i,chunk in enumerate(mnx_table):
+                        if i == 0:
+                            exists = 'replace'
+                        else:
+                            exists = 'append'
+                        chunk.to_sql(
+                            'mnx_'+name, con, 
+                            if_exists=exists, index=False, 
+                            dtype={'id':'TEXT PRIMARY KEY'}
+                            )
+                        pbar.update(len(chunk)) 
+        
+            # Reaction cross-reference table
+            case 'reac_xref':
+                cursor = con.cursor()
+                cursor.execute('DROP TABLE IF EXISTS mnx_reac_xref')
+                empty_table = """ CREATE TABLE mnx_reac_xref (
+                                  source TEXT,
+                                  id TEXT,
+                                  description TEXT,
+                                  CONSTRAINT PK_mnx_reac_xref PRIMARY KEY (source,id)
+                                  FOREIGN KEY(id) REFERENCES mnx_reac_prop(id)
+                              );
+                              """
+                cursor.execute(empty_table)
+                total_len = sum([len(_) for _ in mnx_table])
+                with tqdm(total=total_len, unit='entries',
+                          desc='Add to DB') as pbar:
+                    for i,chunk in enumerate(mnx_table):
+                        chunk.to_sql(
+                            'mnx_'+name, con, 
+                            if_exists='append', index=False
+                            )
+                        pbar.update(len(chunk))
+                
+            # Metabolite properties table
+            case 'chem_prop':
+                total_len = sum([len(_) for _ in mnx_table])
+                with tqdm(total=total_len, unit='entries',
+                          desc='Add to DB') as pbar:
+                    for i,chunk in enumerate(mnx_table):
+                        if i == 0:
+                            exists = 'replace'
+                        else:
+                            exists = 'append'
+                        chunk.to_sql(
+                            'mnx_'+name, con, 
+                            if_exists=exists, index=False, 
+                            dtype={'id':'TEXT PRIMARY KEY'}
+                            )
+                        pbar.update(len(chunk))
+            # @TODO : there seems to be a problem with the unique constraint and case-sensitivity
+            case 'chem_xref':
+                total_len = sum([len(_) for _ in mnx_table])
+                cursor = con.cursor()
+                cursor.execute('DROP TABLE IF EXISTS mnx_chem_xref')
+                empty_table = """ CREATE TABLE mnx_chem_xref (
+                                  source TEXT,
+                                  id TEXT,
+                                  description TEXT,
+                                  CONSTRAINT PK_mnx_chem_xref PRIMARY KEY (source,id)
+                                  FOREIGN KEY(id) REFERENCES mnx_chem_prop(id)
+                              );
+                              """
+                cursor.execute(empty_table)
+                with tqdm(total=total_len, unit='entries',
+                          desc='Add to DB') as pbar:
+                    for i,chunk in enumerate(mnx_table):
+                        chunk.to_sql(
+                            'mnx_'+name, con, 
+                            if_exists='append', index=False
+                            )
+                        pbar.update(len(chunk))
+    con.close()
+    
+
+# @TEST
+def reset_database(database:Path|str=PATH_TO_DB):
+    """Remove tables for certain databases to allow pushing of the database
+    to GitHub (reduce size).
+
+    Args:
+        - database (Path | str, optional): 
+            Path to the database. Defaults to PATH_TO_DB, the in-build database.
+    """
+    # establish connection
+    con = sqlite3.connect(database)
+    cursor = con.cursor()
+    # remove MetaNetX tables
+    cursor.execute('DROP TABLE IF EXISTS mnx_chem_xref')
+    cursor.execute('DROP TABLE IF EXISTS mnx_reac_xref')
+    cursor.execute('DROP TABLE IF EXISTS mnx_chem_prop')
+    cursor.execute('DROP TABLE IF EXISTS mnx_reac_prop')
+    # close connection
+    con.close()

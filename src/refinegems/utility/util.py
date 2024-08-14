@@ -5,7 +5,7 @@ import libchebipy
 import pandas as pd
 import requests
 
-from  ..curation.db_access.db import BIGG_METABOLITES_URL
+from  .connections import BIGG_METABOLITES_URL
 
 __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 

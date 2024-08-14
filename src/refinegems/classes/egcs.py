@@ -9,7 +9,7 @@ __author__ = 'Carolin Brune and Tobias Fehrenbach'
 
 from ..analysis.growth import MIN_GROWTH_THRESHOLD, set_bounds_to_default
 from .medium import Medium
-from ..curation.biomass import test_biomass_presence
+from ..utility.entities import test_biomass_presence
 
 import cobra
 import pandas as pd
