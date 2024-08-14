@@ -1300,6 +1300,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
+
 def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
            protein_fasta: str, lab_strain: bool, kegg_organism_id: str, path: str) -> libModel: 
     """| Completes all steps to polish a model

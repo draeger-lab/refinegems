@@ -1,4 +1,4 @@
-"""_summary_
+"""Add more reactions, genes and more to a model based on different gap-filling methods.
 """
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihaneh Mostolizadeh"
@@ -19,6 +19,7 @@ import warnings
 from bioservices.kegg import KEGG
 from itertools import chain
 from libsbml import Model as libModel
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Literal, Union
 
@@ -207,6 +208,22 @@ def map_ec_to_reac(table:pd.DataFrame,
 # -------------
 
 class GapFiller(ABC):
+    """Abstract base class for the gap filling. 
+    
+    Already includes functions for the "filling" part of the gap-filling approach
+    and some helper functions. Each subclass needs an implementation of `get_missing_genes` 
+    and `get_missing_reactions` to determine the entities, that are missing in the model.
+
+    Attributes:
+        - full_gene_list (list): 
+            List of the all the genes. @TODO see code
+        - geneid_type (str):
+            What type of gene ID the model contains. 
+            Defaults to 'ncbi'.
+        - _statistics (dict):
+            Dictionary of statistical information of the gap-filling run. Includes e.g.
+            the number of added genes and reactions. 
+    """
 
     def __init__(self) -> None:
         self.full_gene_list = None  # @TODO really a good idea? GeneGapFiller does not need it at all
@@ -659,6 +676,18 @@ class GapFiller(ABC):
 # --------------------
 
 class KEGGapFiller(GapFiller):
+    """Based on a KEGG organism ID (corresponding to the organism of the model),
+    find missing genes in the model and map them to reactions to try and fill the gaps
+    found with the KEGG database. 
+
+    Attributes:
+    
+    - GapFiller Attributes:
+        all attributes of the parent class, :py:class:`~refinegems.classes.gapfill.GapFiller`
+    - organismid (str, required):
+        Abbreviation of the organism in the KEGG database.
+    
+    """
 
     def __init__(self, organismid) -> None:
         super().__init__()
@@ -780,22 +809,18 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 
 class BioCycGapFiller(GapFiller):
-    """
-    | @TODO: Write correct doc string
-    |
-    |
-    |
-    |These three TXT files can be obtained through creating SmartTables in BioCyc 
-    |and exporting these as 
-    |Spreadsheets with the parameter FrameID (one & two) or Common name (three). 
-    |SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
-    |SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 
-    |'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
-    |SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
+    """| @TODO: Write correct doc string
+    
+    | These three TXT files can be obtained through creating SmartTables in BioCyc 
+    | and exporting these as 
+    | Spreadsheets with the parameter FrameID (one & two) or Common name (three). 
+    | SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
+    | SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 
+    | 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
+    | SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
 
-    Args:
-        - GapFiller (_type_): 
-            _description_
+    Attributes:
+    @TODO
     """
 
     def __init__(self, model: libModel, biocyc_gene_tbl_path: str, 
@@ -1052,15 +1077,25 @@ class BioCycGapFiller(GapFiller):
 # ---------------------------------
 
 class GeneGapFiller(GapFiller):
+    """Find gaps in the model using the GFF file of the underlying genome 
+    and the Swissprot database and optionally NCBI.
+    
+    This gap filling approach tries to identify missing genes from the GFF file
+    and uses DIAMOND to run a blastp search for homologs against the Swissprot database.
+    
+    .. hint::
+        Files required for this approach can be downloaded with :py:func:`~refinegems.utility.set_up.download_url`
+    
+    """
     
     GFF_COLS = {'locus_tag':'locus_tag', 
                     'eC_number':'ec-code', 
-                    'protein_id':'ncbiprotein'} # :meta:
+                    'protein_id':'ncbiprotein'} # :meta: 
     
     def __init__(self) -> None:
         super().__init__()
         
-    def get_missing_genes(self,gffpath,model:libModel) -> pd.DataFrame:
+    def get_missing_genes(self,gffpath:Union[str|Path],model:libModel) -> pd.DataFrame:
     
         # get all CDS from gff
         all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)

@@ -38,16 +38,6 @@ curate module
    :private-members: 
    :special-members:
 
-gapfill module
---------------
-
-.. automodule:: refinegems.curation.gapfill
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members: 
-   :special-members:
-
 pathways module
 ---------------
 

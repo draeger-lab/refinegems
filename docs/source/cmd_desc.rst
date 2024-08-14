@@ -163,6 +163,33 @@ Fill the gaps in a model based on a user-provided input file.
 
 Automatically find and fill the gaps based on the genes/gene products.
 
+
+refinegems database
+-------------------
+
+.. code:: bash  
+  
+  refinegems database initialise
+
+Initialse or update the in-build database.
+
+.. code:: bash 
+
+  refinegems database add_namespace [DATABASENAME]
+
+Add or update tables for additional namespaces/databases into/of the in-build database.
+
+Options:
+
+- ``--chunksize/-c`` Size (in kB) of data to download per chunk, if a download is required.
+
+.. code:: bash
+
+  refinegems database reset
+
+Reset the database by removing all additionally added tables (added with e.g. add_namespace)
+
+
 refinegems media
 ----------------
 
@@ -176,11 +203,6 @@ Options:
 
 - ``--list`` : List the available media.
 
-.. code:: bash  
-  
-  refinegems media initialise
-
-Initialse or update the media database.
 
 refinegems polish
 -----------------

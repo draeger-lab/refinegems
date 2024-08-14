@@ -31,11 +31,31 @@ PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml'
 # --------------------------
 # @TEST
 # @TODO : add an entry point?
-def download_url(dowload_type:Literal['SwissProt gapfill'],
+def download_url(download_type:Literal['SwissProt gapfill'],
                  directory:str=None,k:int=10):
+    """Download files necessary for certain functionalities of the toolbox from 
+    the internet. 
+    
+    Currently available:
+    - 'SwissProt gapfill': download files needed for the :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
+    
+
+    Args:
+        - dowload_type (Literal['SwissProt gapfill']): 
+            Type of files to download.
+        - directory (str, optional): 
+            Path to a directory to save the downloaded files to. 
+            Defaults to None.
+        - k (int, optional): 
+            Chunksize in kB. 
+            Defaults to 10.
+
+    Raises:
+        - ValueError: Unknown database or file
+    """
     
     # match URLS to type of database, that the user wants to download
-    match dowload_type:
+    match download_type:
         case 'SwissProt gapfill':
             swissprot_api = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
             swissprot_mapping_api = 'https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_brenda%2Cec%2Csequence&format=tsv&query=%28*%29+AND+%28reviewed%3Atrue%29'
