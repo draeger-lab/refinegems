@@ -53,7 +53,7 @@ def download_url(download_type:Literal['SwissProt gapfill'],
     """
     
     # match URLS to type of database, that the user wants to download
-    match dowload_type:
+    match download_type:
         case 'SwissProt gapfill':
             swissprot_api = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
             swissprot_mapping_api = 'https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_brenda%2Cec%2Csequence&format=tsv&query=%28*%29+AND+%28reviewed%3Atrue%29'
