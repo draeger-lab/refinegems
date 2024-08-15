@@ -4,6 +4,9 @@
 Depending on the application the model needs to be loaded with cobra (memote) or with libSBML (activation of groups). 
 The media definitions are denoted in a csv within the data folder of this repository, thus the functions will only work if the user clones the repository. 
 The manual_annotations table has to follow the specific layout given in the data folder in order to work with this module.
+
+.. warning:: 
+    *Deprecated in 2.0.0*: The functionalities have been moved to the refinegems.utility.io  module as of 2.0.0
 """
 
 import cobra
@@ -22,6 +25,12 @@ from refinegems.databases import PATH_TO_DB, initialise_database
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from datetime import date
+
+import warnings
+mes = 'The refinegems.io module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.utility.io module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
+
 
 __author__ = "Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. Döbel"
 

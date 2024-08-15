@@ -2,6 +2,9 @@
 """ Provides functions to simulate growth on any medium
 
 Tailored to work with the media denoted in the local db, should work with any medium as long as its defined in a csv with ; as delimiter and BiGG Ids for the compounds. Use refinegems.io.load_medium_custom and hand this to the growth_one_medium_from_default or growth_one_medium_from_minimum function.
+
+.. warning::
+    *Deprecated as of version 2.0.0*: This module had a mahor restructering, but the functionalities can be found in refinegems.analysis.growth.
 """
 
 import logging
@@ -13,6 +16,12 @@ from cobra import Reaction
 from cobra import Model as cobraModel
 
 __author__ = "Famke Baeuerle"
+
+import warnings
+mes = 'The refinegems.growth module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.analysis.curation module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
+
 
 
 def set_fluxes_to_simulate(reaction: Reaction) -> Reaction:

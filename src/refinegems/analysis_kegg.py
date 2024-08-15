@@ -8,6 +8,10 @@ This section needs a gff file of your organism, the txt file from BiGG containin
 and the KEGG identifier of your organism.
 
 Due to the KEGG REST API this is relatively slow (model of size 1500 reactions - 20 min).
+
+.. warning:: 
+    *Deprecated as of version 2.0.0*: The functions have been sorted into different modules. The main idea of the 
+    gap filling via KEGG can be found in refinegems.classes.gapfill.KEGGapFiller 
 """
 
 import pandas as pd
@@ -18,6 +22,11 @@ from libsbml import Model as libModel
 from refinegems.io import parse_gff_for_gp_info
 from refinegems.entities import get_model_genes, compare_gene_lists, get_model_reacs_or_metabs
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model
+
+import warnings
+mes = 'The refinegems.analysis_kegg module will be deprecated from version 2.0.0 onwards. For more information, refer to the documentation for 2.0.0.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle"
 

@@ -2,12 +2,20 @@
 """ Functions to enable annotation of entities using a manual curated table
 
 While working on GEMs the user might come across ill-annotated or missing metabolites, reactions and genes. This module aims to enable faster manual curation by  allowing to edit an excel table directly which is used to update the given model. This module makes use of the cvterms module aswell.
+
+.. warning:: 
+    *Deprecated as of version 2.0.0*: The (not removed) functionalities can be accessed via refinegems.curation.curate from 2.0.0 onwards.
 """
 import pandas as pd
 from tqdm.auto import tqdm
 from libsbml import Model as libModel
 from refinegems.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
 from refinegems.entities import create_gpr_from_locus_tag, create_reaction
+
+import warnings
+mes = 'The refinegems.curate module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.curation.curate module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle"
     

@@ -2,6 +2,9 @@
 """ Provides functions for adding KEGG reactions as Group Pathways
 
 If your organism occurs in the KEGG database, extract the KEGG reaction ID from the annotations of your reactions and identify, in which KEGG pathways this reaction occurs. Add all KEGG pathways for a reaction then as annotations with the biological qualifier ‘OCCURS_IN’ to the respective reaction.
+
+.. warning:: 
+    *Deprecated since 2.0.0*: The functionalities can be found in the refinegems.curation.pathways module from 2.0.0 onwards.
 """
 
 from tqdm.auto import tqdm
@@ -11,6 +14,11 @@ from bioservices import KEGG
 from refinegems.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
 
 __author__ = "Famke Baeuerle"
+
+import warnings
+mes = 'The refinegems.pathways module will be deprecated from version 2.0.0 onwards. Use the refinegems.curation.pathways module to find the functionalities.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 
 def load_model_enable_groups(modelpath: str) -> libModel:

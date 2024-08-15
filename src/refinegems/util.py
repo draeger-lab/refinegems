@@ -1,9 +1,18 @@
-"""Collection of utility functions."""
+"""Collection of utility functions.
+
+.. warning:: 
+   *Deprecated in version 2.0.0*: From 2.0.0 onwards, see refinegems.utility.util for these functionalities.
+"""
 
 import libchebipy
 import pandas as pd
 import requests
 from refinegems.analysis_db import BIGG_METABOLITES_URL
+
+import warnings
+mes = 'The refinegems.util module will be deprecated from version 2.0.0 onwards. Use the refinegems.utility.util module to find the functionalities.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 

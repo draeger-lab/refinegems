@@ -7,6 +7,9 @@
         * 'KEGG': ~ 2h
         * 'BioCyc': ~ 45mins - 1h
         * 'KEGG+BioCyc': ~ 3 - 4h  
+        
+    .. warning::
+        *Deprecated as of version 2.0.0*: The gap filling approach have been extended and restructured into OOP. They can be found under refinegems.classes.gapfill from 2.0.0 onwards.
 """
 import ast
 import math
@@ -21,6 +24,11 @@ import numpy as np
 from typing import Union
 from colorama import init as colorama_init
 from colorama import Fore
+
+import warnings
+mes = 'The refinegems.gapfill module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.classes.gapfill module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 

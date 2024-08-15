@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""*Deprecated as of 2.0.0*: Functionalities can be found in the refinegems.utility.entities module from 2.0.0 onwards.
+"""
 import re
 import pandas as pd
 from Bio import Entrez
@@ -7,6 +9,11 @@ from libsbml import GeneProduct, Species, Reaction
 from refinegems.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
 from refinegems.io import search_ncbi_for_gpr
 from typing import Union
+
+import warnings
+mes = 'The refinegems.entities module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.utility.entities module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 

@@ -11,6 +11,9 @@ Spreadsheets with the parameter FrameID (one & two) or Common name (three).
 SmartTable one: Should contain 'Accession-2' and 'Reactions of gene', 
 SmartTable two: Should contain 'Reaction', 'Reactants of reaction', 'Products of reaction', 'EC-Number', 'Reaction-Direction' and 'Spontaneous?'
 SmartTable three: Should contain 'Compound', 'Chemical Formula' and 'InChI-Key'.
+
+.. warning:: 
+   *Deprecated as of version 2.0.0*: This idea for a gapfilling approach can be found in refinegems.classes.gapfill.BioCycGapFiller.
 """
 # Get all  possible genes by filtering .gff according to 'bio_type=protein_coding' & 'product=hypothetical protein'
 # Compare the list of genes with the ones already in the model & add all missing genes
@@ -28,6 +31,11 @@ from refinegems.entities import get_model_genes, get_model_reacs_or_metabs, comp
 from refinegems.analysis_db import get_bigg2other_db, compare_bigg_model, add_stoichiometric_values_to_reacs, BIGG_METABOLITES_URL
 from refinegems.io import parse_fasta_headers
 import os
+
+import warnings
+mes = 'The refinegems.analysis_biocyc module will be deprecated from version 2.0.0 onwards. This idea for a gapfilling approach can be found in refinegems.classes.gapfill.BioCycGapFiller.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Gwendolyn O. Döbel and Dr. Reihaneh Mostolizadeh"
 

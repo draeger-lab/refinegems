@@ -4,11 +4,19 @@
 When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin('fbc').isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.
 
 It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a 'BiGG' and a 'charge' column.
+
+.. warning:: 
+    *Deprecated as of version 2.0.0*: Functionalities can be found in the submodule refinegems.curation.charges.
 """
 
 import pandas as pd
 from libsbml import Model as libModel
 from refinegems.modelseed import get_modelseed_compounds
+
+import warnings
+mes = 'The refinegems.charges module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.curation.charges module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle"
 
