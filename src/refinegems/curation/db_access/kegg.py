@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-""" Provides functions to compare genes found in KEGG and in the model
+"""Retrieve and parse information from the KEGG database. 
+
+old text (most functionality described here has been moved or deprecated)
+
+Provides functions to compare genes found in KEGG and in the model
 
 Extracts all KEGG ids from the annotations and compares them to a list for you organism from KEGG.
 Reactions with KEGG ids not found in the model are expanded to a table containing the KEGG id,
@@ -50,94 +54,6 @@ def get_kegg_genes(organismid: str) -> pd.DataFrame:
     return pd.read_table(io.StringIO(gene_list), header=None)
 
 
-# @DEPRECATED : still needed ?
-def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
-    """Creates columns with EC numbers for the locus tags of the genes
-
-    Args:
-        - genes_kegg_notmodel (pd.DataFrame): 
-            Genes present in KEGG but not in the model
-
-    Returns:
-        pd.DataFrame: 
-            Table of genes with locus tag and EC number
-    """
-    k = KEGG()
-
-    ec_dict = {}
-    for gene in genes_kegg_notmodel:
-        entry = k.parse(k.get(gene))
-        try:
-            ec_dict[entry['ENTRY']] = (entry['ORTHOLOGY'])
-        except(KeyError):
-            pass
-
-    real_ec = {}
-    for entry, ortho in ec_dict.items():
-        for key, value in ortho.items():
-            m = re.search('(?:EC).*', value)
-            if m:
-                real_ec[entry[:12]] = '[' + m.group(0)
-
-    locus_ec = pd.DataFrame.from_dict(
-        real_ec,
-        orient='index').reset_index().rename(
-        columns={
-            'index': 'locus_tag',
-            0: 'EC-number'})
-
-    def slice_ec(ec):
-        new = ec[4:]
-        new2 = new[:-1]
-        return new2
-
-    locus_ec['EC'] = locus_ec.apply(
-        lambda row: slice_ec(
-            row['EC-number']), axis=1)
-    locus_ec = locus_ec.drop('EC-number', axis=1)
-
-    return locus_ec
-
-
-# @NEW : better version of the KEGG parser in get_locus_ec
-def bioservices_parse_KEGG_gene(locus_tag):
-    
-    gene_info = dict()
-    gene_info['orgid:locus'] = locus_tag
-    
-    # retireve KEGG gene entry 
-    k = KEGG()
-    gene_entry = k.parse(k.get(locus_tag))
-    
-    # skip, if no entry found
-    if not gene_entry:
-        gene_info['ec-code'] = None
-        return gene_info
-    
-    # extract orthology and ec-code
-    if 'ORTHOLOGY' in gene_entry.keys():
-        # gett KEGG orthology ID
-        kegg_orthology = list(gene_entry['ORTHOLOGY'].keys())
-        gene_info['kegg.orthology'] = kegg_orthology
-        # get EC number
-        ec_numbers = [re.search('(?<=EC:).*(?=\])',_).group(0) for _ in gene_entry['ORTHOLOGY'].values() if re.search('(?<=EC:).*(?=\])',_)]
-        if isinstance(ec_numbers,list) and len(ec_numbers) > 0:
-            gene_info['ec-code'] = [ec for ec_str in ec_numbers for ec in ec_str.split(' ')]
-            
-    if not 'ec-code' in gene_info.keys():
-        gene_info['ec-code'] = None
-
-    # get more information about connections to other databases
-    if 'DBLINKS' in gene_entry.keys():
-        for dbname, ids in gene_entry['DBLINKS'].items():
-            conform_dbname = re.sub(pattern='(NCBI)(.*)(ID$)', repl='\\1\\2',string=dbname) # Remove ID if NCBI in name
-            conform_dbname = re.sub('[^\w]','',conform_dbname) # remove special signs except underscore
-            conform_dbname = conform_dbname.lower() # make lower case
-            gene_info[conform_dbname] = ids
-
-    return gene_info
-
-# @NEW / FASTER version of the above using Biopython
 def parse_KEGG_gene(locus_tag:str) -> dict:
     """Based on a locus tag, fetch the corresponding KEGG entry and
     parse it into a dictionary containing the following information (if available):
@@ -194,48 +110,6 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
     return gene_info
             
     
-# @NEW : better version of the KEGG parser in get_locus_ec_kegg
-def bioservices_parse_KEGG_ec(ec):
-    
-    ec_info = dict()
-    ec_info['ec-code'] = ec
-    
-    # retrieve KEGG entry
-    k = KEGG()
-    ec_entry = k.parse(k.get(ec))
-    
-    # retrieve reaction information from entry 
-    if 'ALL_REAC' in ec_entry.keys():
-        ec_info['id'] = [_.rstrip(';') for _ in ec_entry['ALL_REAC'] ]
-        if '(other)' in ec_info['id']:
-            ec_info['id'].remove('(other)')
-    else:
-        ec_info['id'] = None
-        
-    # retrieve reaction equation
-    if not ec_info['id'] and 'REACTION' in ec_entry.keys():
-        ec_info['equation'] = [" ".join(_) for _ in ec_entry['REACTION']]
-    else:
-        ec_info['equation'] = None
-    
-    # retrieve database links from entry
-    refs = dict()
-    if 'ORTHOLOGY' in ec_entry.keys():
-        refs['kegg.orthology'] = list(ec_entry['ORTHOLOGY'].keys())
-    if 'PATHWAY' in ec_entry.keys():
-        refs['kegg.pathway'] = list(ec_entry['PATHWAY'].keys())
-    # @TODO extend as needed
-    if 'DBLINKS' in ec_entry.keys():
-        for dbname, ids in ec_entry['DBLINKS'].items():
-            if 'BRENDA' in dbname:
-                refs['brenda'] = ids
-            if 'CAS' == dbname:
-                refs['cas'] = ids
-    ec_info['reference'] = refs
-    
-    return ec_info
-
-# @NEW / FASTER version of the above using Biopython
 def parse_KEGG_ec(ec:str) -> dict:
     """Based on an EC number, fetch the corresponding KEGG entry and
     parse it into a dictionary containing the following information (if available):
@@ -296,6 +170,59 @@ def parse_KEGG_ec(ec:str) -> dict:
     return ec_info
 
 
+# re-check for deprecation
+# ------------------------
+
+# @DEPRECATED : still needed ?
+def get_locus_ec(genes_kegg_notmodel: pd.DataFrame) -> pd.DataFrame:
+    """Creates columns with EC numbers for the locus tags of the genes
+
+    Args:
+        - genes_kegg_notmodel (pd.DataFrame): 
+            Genes present in KEGG but not in the model
+
+    Returns:
+        pd.DataFrame: 
+            Table of genes with locus tag and EC number
+    """
+    k = KEGG()
+
+    ec_dict = {}
+    for gene in genes_kegg_notmodel:
+        entry = k.parse(k.get(gene))
+        try:
+            ec_dict[entry['ENTRY']] = (entry['ORTHOLOGY'])
+        except(KeyError):
+            pass
+
+    real_ec = {}
+    for entry, ortho in ec_dict.items():
+        for key, value in ortho.items():
+            m = re.search('(?:EC).*', value)
+            if m:
+                real_ec[entry[:12]] = '[' + m.group(0)
+
+    locus_ec = pd.DataFrame.from_dict(
+        real_ec,
+        orient='index').reset_index().rename(
+        columns={
+            'index': 'locus_tag',
+            0: 'EC-number'})
+
+    def slice_ec(ec):
+        new = ec[4:]
+        new2 = new[:-1]
+        return new2
+
+    locus_ec['EC'] = locus_ec.apply(
+        lambda row: slice_ec(
+            row['EC-number']), axis=1)
+    locus_ec = locus_ec.drop('EC-number', axis=1)
+
+    return locus_ec
+
+
+# @DEPRECATED : still needed ?
 def get_locus_ec_kegg(locus_ec: pd.DataFrame) -> pd.DataFrame:
     """Searches for KEGG reactions based on EC numbers
 
@@ -344,6 +271,7 @@ def get_locus_ec_kegg(locus_ec: pd.DataFrame) -> pd.DataFrame:
     return locus_ec_kegg
 
 
+# @DEPRECATED : still needed ?
 def get_locus_ec_kegg_bigg(locus_ec_kegg: pd.DataFrame, bigg_kegg: pd.DataFrame) -> pd.DataFrame:
     """Merges table with genes from model with BiGG / KEGG mapping to add BiGG Ids
 
@@ -361,6 +289,7 @@ def get_locus_ec_kegg_bigg(locus_ec_kegg: pd.DataFrame, bigg_kegg: pd.DataFrame)
     return locus_ec_kegg_bigg
 
 
+# @DEPRECATED : still needed ?
 def get_locus_ec_kegg_bigg_gpr(locus_ec_kegg_bigg: pd.DataFrame, locus_gpr: pd.DataFrame) -> pd.DataFrame:
     """Merges table with genes from model if locus tag / GPR mapping to add GPRs
 
@@ -384,6 +313,7 @@ def get_locus_ec_kegg_bigg_gpr(locus_ec_kegg_bigg: pd.DataFrame, locus_gpr: pd.D
     return locus_ec_kegg_bigg.merge(locus_gpr, how='left', on='locus_tag')
 
 
+# @DEPRECATED - basically an old version of first part of the KEGGapFiller
 def kegg_gene_comp(model: libModel, organismid: str, gff_file: str) -> pd.DataFrame:
     """Exectues all steps to compare genes of the model to KEGG genes
 
@@ -413,5 +343,4 @@ def kegg_gene_comp(model: libModel, organismid: str, gff_file: str) -> pd.DataFr
     missing_reactions = compare_bigg_model(
         locus_ec_kegg_bigg_gpr, model_reactions)
     return missing_reactions
-
 

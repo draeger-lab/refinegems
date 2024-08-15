@@ -19,8 +19,6 @@ from typing import Literal
 ################################################################################
 
 PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml') #: :meta hide-value: 
-# @TODO
-# PATH_REFINEGEMS_CONFIG = files('data.config').joinpath('config.yaml')
 
 ################################################################################
 # functions
@@ -29,14 +27,14 @@ PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml'
 # --------------------------
 # download databases / files
 # --------------------------
-# @TEST
-# @TODO : add an entry point?
+# @TODO
 def download_url(download_type:Literal['SwissProt gapfill'],
                  directory:str=None,k:int=10):
     """Download files necessary for certain functionalities of the toolbox from 
     the internet. 
     
     Currently available:
+    
     - 'SwissProt gapfill': download files needed for the :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
     
 

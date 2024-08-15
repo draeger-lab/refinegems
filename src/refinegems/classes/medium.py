@@ -1,22 +1,39 @@
-import io
-import re
+#!/usr/bin/env python
+"""Provides the medium class and additional functions to handle media.
+
+Functionalities include (amongst others):
+
+- loading a medium into a Medium object from a database, a file or a model
+- adding a medium to a model
+- adding media information to the database
+- extending, change and manipulate various parts of a medium to create the desired medium 
+"""
+
+__author__ = "Carolin Brune"
+
+################################################################################
+# requirements
+################################################################################
+
 import cobra
 import copy
+import io
 import numpy as np
 import pandas as pd
+import random
+import re
 import sqlite3
+import string
 import sys
 import warnings
-from typing import Literal, Union, Any
-import random
-import string
-from sqlite_dump import iterdump
-from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
+
 from colorama import init as colorama_init
 from colorama import Fore
 from pathlib import Path
+from sqlite_dump import iterdump
+from typing import Literal, Union, Any
 
-__author__ = "Carolin Brune"
+from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
 
 ############################################################################
 # variables
@@ -1674,17 +1691,20 @@ def updated_db_to_schema(directory: str = '../data/database', inplace:bool=False
     conn.close()
 
 
+# ..................................................................
 # entry point for entering a medium using the command line
 # @TODO since database is part of package, direct accessing possible
-# @TODO more entry points and where to put them?
+# @TODO more entry points and where to put them? -> cmd_access?
+# @RENAME
 # @TEST : is this even valid???  
-def add_medium(database:str):
+# def add_medium(database:str):
     
-    # get external medium
-    medium = read_external_medium('console')
+#     # get external medium
+#     medium = read_external_medium('console')
 
-    # add to database
-    enter_medium_into_db(medium, database)
+#     # add to database
+#     enter_medium_into_db(medium, database)
     
-    # Generate updated SQl schema
-    updated_db_to_schema()
+#     # Generate updated SQl schema
+#     updated_db_to_schema()
+# ..................................................................

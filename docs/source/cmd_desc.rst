@@ -284,6 +284,32 @@ Add the KEGG pathways as group entities to the model.
 refinegems setup 
 ----------------
 
+.. code:: bash
+
+  refinegems setup config 
+
+Download a configuration file for a specific functionality of the toolbox.
+
+Options:
+
+- ``--filename/-f`` : Name or path of a file to save the config under.
+- ``--type/-t`` : Type of config to download. Defaults to *media*.
+
+.. code:: bash
+
+  refinegems setup data [DOWNLOADTYPE]
+
+Download file(s) needed for a given functionality of the toolbox.
+
+Current options include:
+
+- 'SwissProt\_gapfill': download the SwissProt sequences as a FASTA and a mappng of their ID to BRENDA/EC for gapfilling
+
+Options:
+
+- ``--dir/-d`` : Path to directory to save the downloaded files to.
+- ``--chunksize/-c`` : Size the chunk to download (in kB).
+
 .. code:: bash 
   
   refinegems setup build_pancore [MODELS]

@@ -39,11 +39,11 @@ def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=
 
    Args:
       - missing_metabs (pd.DataFrame): 
-         Table containing metabolites & the respective CHEBI & BiGG IDs
+         Table containing metabolites & the respective ChEBI & BiGG IDs
          
    Returns:
       pd.DataFrame: 
-         Input table extended with the charges & chemical formulas obtained from CHEBI/BiGG
+         Input table extended with the charges & chemical formulas obtained from ChEBI/BiGG.
    """
 
    # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
@@ -134,6 +134,7 @@ def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=
 # SBO
 # ---
 
+# @TODO extend to cover more reactions
 def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
    """Reannotate the SBO annotations (e.g. from SBOannotator) of a model 
    into the SBO scheme accessible by memote.
@@ -144,7 +145,7 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
 
    Returns:
        cobra.Model: 
-         The reannotated model (@TODO: check if return is really necessary)
+         The reannotated model 
    """
 
    # biochem reactions
@@ -155,4 +156,3 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
 
     # @TODO: add transport reactions?
 
-   return model

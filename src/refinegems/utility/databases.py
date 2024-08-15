@@ -1,4 +1,17 @@
 #!/usr/bin/env python
+"""Variables, functions and more for the developement, extension and maintainance of 
+the in-build database.
+
+.. note:: 
+
+   Some functionalities for handling and dealing with the media are in the 
+   :py:mod:`~refinegems.classes.medium` module.
+   
+.. hint:: 
+
+   Further functions for accessing the database can be found in the :py:mod:`~refinegems.utility.io`
+   module, e.g. :py:func:`~refinegems.utility.io.load_a_table_from_database`
+"""
 
 __author__ = 'Gwendolyn O. Döbel und Carolin Brune'
 

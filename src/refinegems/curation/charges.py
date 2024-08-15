@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 """ Provides functions for adding charges to metabolites
 
-When iterating through all metabolites present in a model, you will find several which have no defined charge (metab.getPlugin('fbc').isSetCharge() = false). This can lead to charge imbalanced reactions. This script takes information on metabolite charges from the ModelSEED database. A charge is automatically added to a metabolite if it has no defined charge and if there is only one charge denoted in ModelSEED. When multiple charges are present, the metabolite and the possible charges are noted and later returned in a dictionary.
+When iterating through all metabolites present in a model, you will find several 
+which have no defined charge (``metab.getPlugin('fbc').isSetCharge() = false``). 
+This can lead to charge imbalanced reactions. This script takes information on 
+metabolite charges from the ModelSEED database. A charge is automatically added to 
+a metabolite if it has no defined charge and if there is only one charge denoted in 
+ModelSEED. When multiple charges are present, the metabolite and the possible charges 
+are noted and later returned in a dictionary.
 
-It is possible to use the correct_charges_from_db function with other databases. The user just needs to make sure that the compounds dataframe has a 'BiGG' and a 'charge' column.
+It is possible to use the correct_charges_from_db function with other databases. 
+The user just needs to make sure that the compounds dataframe has a 'BiGG' and 
+a 'charge' column.
 """
 
 __author__ = "Famke Baeuerle"

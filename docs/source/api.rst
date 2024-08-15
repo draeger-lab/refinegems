@@ -14,6 +14,7 @@ Subpackages
    analysis <modules/analysis>
    classes <modules/classes>
    curation <modules/curation>
+   developement <modules/developement>
    utility <modules/utility>
 
 

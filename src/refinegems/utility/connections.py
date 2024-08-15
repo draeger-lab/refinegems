@@ -37,8 +37,9 @@ from .entities import test_biomass_presence
 from .io import write_model_to_file
 
 # note:
-#    for BOFdat to run correctly, you need to change 'solution.f' to 'solution.objective_value'
+#    for BOFdat to run correctly, one needs to change 'solution.f' to 'solution.objective_value'
 #    in the coenzymes_and_ions.py file of BOFdat
+#    -> see forked version of it in the Draeger-lab github
 
 ################################################################################
 # variables
@@ -272,7 +273,7 @@ def get_memote_score(memote_report: dict) -> float:
 
     Args:
         - memote_report (dict): 
-            Output from run_memote.
+            Output from :py:func:`~refinegems.utility.connections.run_memote`.
 
     Returns:
         float: 
@@ -284,14 +285,12 @@ def get_memote_score(memote_report: dict) -> float:
 # SBOannotator
 # ------------
 
-# @TODO 
-#     currently only working with old pattern 
 def run_SBOannotator(model: libModel) -> libModel:
     """Run SBOannotator on a model to annotate the SBO terms.
 
     Args:
         - model (libModel): 
-            The model loaded with libsbml
+            The model loaded with libSBML.
 
     Returns:
         libModel: 
@@ -301,15 +300,11 @@ def run_SBOannotator(model: libModel) -> libModel:
     dbs_scheme = files('sboannotator').joinpath('create_dbs.sql')
 
     with tempfile.TemporaryDirectory() as tempdir:
-        # switch to old pattern
-        #model = polish_annotations(model, False, False,str(Path(tempdir,'missingCurie')))
         write_model_to_file(model,str(Path(tempdir,'tempmodel.xml')))
         # run SBOannotator
         doc = readSBML(str(Path(tempdir,'tempmodel.xml')))
         model = doc.getModel()
         copy_scheme = shutil.copy(dbs_scheme,Path(tempdir,'dbs.sql'))
         model = sbo_annotator(doc,model,'constrained-based',str(Path(tempdir,'dbs')),str(Path(tempdir,'dud.xml')))
-        # re-switch to new pattern
-        # model = polish_annotations(model, True, True,str(Path(tempdir,'missingCurie')))
     return model
 

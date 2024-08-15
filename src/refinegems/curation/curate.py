@@ -35,7 +35,8 @@ NH_PATTERN = re.compile('nh[3-4]') #: :meta:
 # add information from manual curation
 # ------------------------------------
 
-# @ TODO : check against gapfill & co for new-ish functionalities and delete        
+# @ TODO : check against gapfill & co for new-ish functionalities and delete    
+# @DEPRECATED    
 def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet gapfill: Adds all reactions with their info given in the table to the given model
 
@@ -85,7 +86,8 @@ def add_reactions_from_table(model: libModel, table: pd.DataFrame, email: str) -
     return model
 
 
-# @ TODO : check against gapfill & co for new-ish functionalities and delete     
+# @ TODO : check against gapfill & co for new-ish functionalities and delete  
+# @DEPRECATED     
 def update_annotations_from_table(model: libModel, table: pd.DataFrame) -> libModel:
     """Wrapper function to use with table format given in data/manual_curation.xlsx, sheet metabs: Updates annotation of metabolites given in the table
 

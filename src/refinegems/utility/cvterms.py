@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Helper module to work with annotations (CVTerms)
+"""Helper module to work with annotations (CVTerms)
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
 """
@@ -42,7 +42,7 @@ metabol_db_dict = {
                    #'UPA': 'unipathway.compound:', #closed due to financial issues
                    #'UniPathway Compound': 'unipathway.compound:'
                    'VMH': 'vmhmetabolite:'
-                  }
+                  } #: :meta hide-value: 
 
 reaction_db_dict = {
                     'BIGG': 'bigg.reaction:',
@@ -62,19 +62,19 @@ reaction_db_dict = {
                     #'UPA': 'unipathway.reaction:',
                     #'UniPathway Reaction': 'unipathway.reaction:'
                     'VMH': 'vmhreaction:'
-                   }
+                   } #: :meta hide-value: 
 
 gene_db_dict = {
                 'KEGG': 'kegg.genes:',
                 'NCBI': 'ncbiprotein:',
                 'REFSEQ': 'refseq:',
                 'UNIPROT': 'uniprot:'
-               }
+               } #: :meta hide-value: 
 
-pathway_db_dict = {'KEGG': 'kegg.pathway:'}
+pathway_db_dict = {'KEGG': 'kegg.pathway:'} #: :meta hide-value: 
 
-MIRIAM = 'https://identifiers.org/'
-OLD_MIRIAM = 'http://identifiers.org/'
+MIRIAM = 'https://identifiers.org/' #: :meta hide-value: 
+OLD_MIRIAM = 'http://identifiers.org/' #: :meta hide-value: 
 
 ################################################################################
 # functions

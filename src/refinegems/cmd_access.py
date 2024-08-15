@@ -39,8 +39,8 @@ def setup():
    """Set-up tools, folder structure and more for running the program.
    """
 
-# Get a config file
-# -----------------
+# download important stuff
+# ------------------------
 @setup.command()
 @click.option('--filename', '-f', default='config.yaml', type=str, 
               show_default=True, help='Name (path) to save the config file under.')
@@ -49,10 +49,21 @@ def setup():
 def config(filename,type):
     """Download a configuration file (.yaml).
 
-    Download a configuration file to edit for running the complete
-    workflow or provide the media configuration.
+    Download a configuration file to edit for running a specific function
+    or provide the media configuration file.
     """
     rg.utility.set_up.download_config(filename, type)
+    
+
+@setup.command()
+@click.argument('downloadtype', type=click.Choice(['SwissProt_gapfill']))
+@click.option('-d', '--dir', required=False, type=click.Path(), show_default=True,  default='', help='Path to the output dir.')
+@click.option('-c', '--chunksize', required=False, type=int, show_default=True, default=10, help='Chunksizre for the download in kB. Defaults to 10.')
+def data(downloadtype, dir, chunksize):
+   """Download file(s) needed for a given functionality of the toolbox.
+   """
+   dltype = downloadtype.replace('_',' ')
+   rg.utility.set_up.download_url(dltype, dir,chunksize)
    
 
 # build a pan-core model

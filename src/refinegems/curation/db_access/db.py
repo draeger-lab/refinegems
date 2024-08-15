@@ -2,7 +2,7 @@
 """This module contains functions usable with multiple databases or those drawing
 information from multiple databases and therefore cannot be separated into the other 
 submodules. Additionally, this module contains function for databases not covered by
-the other modules.
+the other submodules of :py:mod:`~refinegems.curation.db_access`.
 """
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehrenbach"
@@ -11,7 +11,6 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Tobias Fehr
 # requirements
 ################################################################################
 
-import cobra
 import numpy as np
 import pandas as pd
 import re
@@ -103,8 +102,7 @@ def compare_ids(id1: str, id2: str) -> bool:
 @sleep_and_retry
 @limits(calls=10, period=1)
 def get_reaction_compartment(bigg_id: str) -> str:
-    """Retrieves the compatment(s) a reaction is hapening in from the BiGG reaction identifier
-        via the metabolites
+    """Retrieves the compatment(s) a reaction is hapening in from the BiGG reaction identifier via the metabolites
 
     Args:
         - bigg_id (str): 
@@ -139,8 +137,8 @@ def get_reaction_compartment(bigg_id: str) -> str:
 # @TEST
 # @NOTE : A lot of warnings
 def keep_only_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
-    """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments
-        & returns table containing only reactions which happen in one of the provided compartments
+    """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments 
+    & returns table containing only reactions which happen in one of the provided compartments
         
     Args:
         - complete_df (pd.DataFrame): 
@@ -276,7 +274,7 @@ def get_bigg_db_mapping(map_to:str='BioCyc', metabolites:bool=True) -> pd.DataFr
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, metabolites: bool=False) -> pd.DataFrame:
     """Compares missing entities obtained through genes extracted via KEGG/BioCyc to entities in the model
-        Needed to back check previous comparisons.
+    Needed to back check previous comparisons.
 
     Args:
         - complete_df (pd.DataFrame): 
@@ -344,7 +342,7 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
 
 def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFrame:
     """Adds for each reaction a dictionary containing the reactants & products as dictionaries with the BiGG Metabolite 
-        ID as key & the respective absolute stoichiometric value as value
+    ID as key & the respective absolute stoichiometric value as value
         
     Args:
         - missing_reacs (pd.DataFrame): 
@@ -388,7 +386,26 @@ def add_stoichiometric_values_to_reacs(missing_reacs: pd.DataFrame) -> pd.DataFr
 
 # fetching the EC number (if possible) from NCBI 
 # based on an NCBI protein ID (accession version number)
-def get_ec_from_ncbi(mail:str,ncbiprot:str):
+# @TODO logging
+def get_ec_from_ncbi(mail:str,ncbiprot:str) -> str|None:
+    """Based on a NCBI protein accession number, try and fetch the 
+    EC number from NCBI.
+
+    Args:
+        - mail (str): 
+            User's mail address for the NCBI ENtrez tool.
+        - ncbiprot (str): 
+            The NCBI protein accession number.
+
+    Returns:
+        (1) Case: fetching successful 
+                str: 
+                    The EC number associated with the protein ID based on NCBI.
+        
+        (2) Case: fetching unsuccessful
+                None:
+                    Nothing to return
+     """
     try: 
         Entrez.email = mail
         handle = Entrez.efetch(db='protein', id=ncbiprot, rettype='gpc', retmode='xml')
@@ -398,20 +415,49 @@ def get_ec_from_ncbi(mail:str,ncbiprot:str):
                     if qual['INSDQualifier_name'] == 'EC_number':
                         return qual['INSDQualifier_value']
     except Exception as e:
-        # @TODO : logging / warning etc
+        # @TODO : logging / warning etc. ?
         return None
     
     
 # DIAMOND
 # -------
-# @ISSUE / @NOTE / @TODO
-#   putting these in connections leads to an import error
 
+# @ISSUE / @NOTE / @TODO
+#   is this the right place to put these functions?
 def run_DIAMOND_blastp(fasta:str, db:str, 
                        sensitivity:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
                        coverage:float=95.0,
                        threads:int=2,
-                       outdir:str=None, outname:str='DIAMOND_blastp_res.tsv'):
+                       outdir:str=None, outname:str='DIAMOND_blastp_res.tsv') -> str:
+    """Run DIAMOND in BLASTp mode.
+
+    Args:
+        - fasta (str): 
+            The FASTA file to BLAST for.
+        - db (str): 
+            The DIAMOND database file to BLAST against
+        - sensitivity (Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive'], optional): 
+            Sensitivity mode for DIAMOND. 
+            Defaults to 'more-sensitive'.
+        - coverage (float, optional): 
+            A parameter for DIAMOND
+            Coverage theshold for the hits. 
+            Defaults to 95.0.
+        - threads (int, optional): 
+            A parameter for DIAMOND.
+            Number of threds to be used while BLASTing.
+            Defaults to 2.
+        - outdir (str, optional): 
+            Path to a directory to write the output files to. 
+            Defaults to None.
+        - outname (str, optional): 
+            Name of the result file (name only, not a path). 
+            Defaults to 'DIAMOND_blastp_res.tsv'.
+
+    Returns:
+        str: 
+            Path to the results of the DIAMOND BLASTp run. 
+    """
     
     if outdir:
         outname = Path(outdir,'DIAMOND_blastp_res.tsv')
@@ -426,7 +472,27 @@ def run_DIAMOND_blastp(fasta:str, db:str,
 
     return outname
 
-def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0):
+def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0) -> pd.DataFrame:
+    """Filter the results of a DIAMOND BLASTp run (see 
+    :py:func:`~refinegems.curation.db_access.db.run_DIAMOND_blastp`)
+    by percentage identity value (PID) and extract the matching pairs of query 
+    and subject IDs.
+
+    Args:
+        - blasttsv (str): 
+            Path to the DIAMOND BLASTp result file.
+        - pid_theshold (float, optional): 
+            Threshold value for the PID. Given in percent.
+            Defaults to 90.0.
+
+    Raises:
+        - ValueError: PID threshold has to be between 0.0 and 100.0
+
+    Returns:
+        pd.DataFrame: 
+            A table with the columns query_ID and subject_ID containing hits from
+            BLAST run with s PID higher than the given threshold value.
+    """
     
     if pid_theshold > 100.0 or pid_theshold < 0.0:
         raise ValueError('PID threshold has to be between 0.0 and 100.0')
@@ -445,9 +511,36 @@ def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0):
 # -------
 
 def map_dmnd_res_to_sp_ec_brenda(dmnd_results:pd.DataFrame, 
-                                 swissprot_mapping_path:str):
+                                 swissprot_mapping_path:str) -> pd.DataFrame:
+    """Map the results of a DIAMOND BLASTp run (filtered, see 
+    :py:func:`~refinegems.curation.db_access.db.filter_DIAMOND_blastp_results`)
+
+    Args:
+        - dmnd_results (pd.DataFrame): 
+            The results of the DIAMOND run.
+        - swissprot_mapping_path (str): 
+            The path to the SwissProt mapping file (IDs against BRENDA and EC,
+            for information on how to get them, refer to :py:func:`~refinegems.utility.set_up.download_url`)
+
+    Returns:
+        pd.DataFrame: 
+            The resulting mapping (no duplicates).
+    """
     
-    def _combine_EC_BRENDA(brenda:str,ec:str):
+    def _combine_EC_BRENDA(brenda:str,ec:str) -> list:
+        """Helper function for combining the entries for BRENDA and EC number 
+        for one ID (SwissProt mapping file) into a list of EC numbers.
+
+        Args:
+            - brenda (str): 
+                The BRENDA column value.
+            - ec (str): 
+                The EC number column value.
+
+        Returns:
+            list: 
+                The list with the EC numbers.
+        """
     
         nums_list = []
         # get brenda ids

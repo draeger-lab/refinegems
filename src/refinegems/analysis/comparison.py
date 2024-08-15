@@ -48,6 +48,7 @@ def get_sbo_mapping_multiple(models: list[libModel]) -> pd.DataFrame:
     df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
     return df
 
+
 def plot_rea_sbo_multiple(models: list[libModel], rename:dict=None, 
                           color_palette:Union[str,list[str]]='Paired',
                           figsize:tuple=(10,10)) -> matplotlib.figure.Figure:

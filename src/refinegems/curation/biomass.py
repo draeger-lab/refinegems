@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Döbel.
 
-This module provides functions to be used to assess the biomass weight as well as normalise it.
+This module provides functions to normalise the biomass objective function(s).
 """
 
 __author__ = "MEMOTE and Gwendolyn O. Döbel"
