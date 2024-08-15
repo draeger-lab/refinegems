@@ -371,6 +371,7 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
 
 # @TODO: 
 #     more namespace options
+#     Maybe bioregistry for mapping of id to namespace?
 def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
     """Based on a given namespace, change the ID of a given model entity to it the set namespace.
 
@@ -1192,13 +1193,20 @@ def parse_reac_str(equation:str,
     return (reactants,products,compartments,reversible)
         
         
-# TODO
+# @TODO
 #   extend the build function so, that all of them can take either the id or an equation 
 #   as input for rebuilding the reaction (would also be beneficial for semi-manual curation)
 
 @template
 # @TODO complete it
 def build_reaction_xxx():
+    '''
+    model:cobra.Model, id:str=None,
+                       reac_str:str=None,
+                       references:dict={},
+                       idprefix:str='refineGEMs',
+                       namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, None, list]:
+    ''' 
     pass
 
 
@@ -1207,8 +1215,8 @@ def build_reaction_xxx():
 def build_reaction_mnx(model:cobra.Model, id:str,
                       reac_str:str = None,
                       references:dict={},
-                      idprefix='refineGEMs',
-                      namespace:Literal['BiGG']='BiGG') -> cobra.Reaction | None | list:
+                      idprefix:str='refineGEMs',
+                      namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, None, list]:
     """Construct a new reaction for a model from a MetaNetX reaction ID.
     This function will NOT add the reaction directly to the model, if the 
     construction process is successful.
@@ -1368,8 +1376,8 @@ def build_reaction_mnx(model:cobra.Model, id:str,
 # @TODO some things still open (for discussion)
 def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
                         references:dict={},
-                        idprefix='refineGEMs',
-                        namespace:Literal['BiGG']='BiGG') -> None:
+                        idprefix:str='refineGEMs',
+                        namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, None, list]:
     """Construct a new reaction for a model from either a KEGG reaction ID
     or a KEGG equation string.
     This function will NOT add the reaction directly to the model, if the 
@@ -1532,8 +1540,8 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
 def build_reaction_bigg(model:cobra.Model, id:str, 
                         reac_str:str = None, 
                         references:dict={},
-                        idprefix='refineGEMs',
-                        namespace:Literal['BiGG']='BiGG'):
+                        idprefix:str='refineGEMs',
+                        namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, None, list]:
     """Construct a new reaction for a model from a BiGG reaction ID.
     This function will NOT add the reaction directly to the model, if the 
     construction process is successful.
@@ -1656,13 +1664,123 @@ def build_reaction_bigg(model:cobra.Model, id:str,
     
     
 @implement
-def build_reaction_biocyc():
-    pass
+def build_reaction_biocyc(model:cobra.Model, id:str=None,
+                          reac_str:str=None,
+                          references:dict={},
+                          idprefix:str='refineGEMs',
+                          namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, list, None]:
+    """Construct a new reaction for a model from a BiGG reaction ID.
+    This function will NOT add the reaction directly to the model, if the 
+    construction process is successful.
+
+    Args:
+        - model (cobra.Model): 
+            The model loaded with COBRApy.
+        - id (str): 
+            A BioCyc reaction ID.
+        - reac_str (str, optional): 
+            The reaction equation string from the database.
+            Defaults to None.
+        - references (dict, optional): 
+            Additional annotations to add to the reaction (idtype:[value]). 
+            Defaults to {}.
+        - idprefix (str, optional): 
+            Prefix for the pseudo-identifier. Defaults to 'refineGEMs'.
+        - namespace (Literal['BiGG'], optional): 
+            Namespace to use for the reaction ID. 
+            If namespace cannot be matched, uses the pseudo-ID
+            Defaults to 'BiGG'.
+
+    Returns:
+        Case successful construction:
+            
+            cobra.Reaction:
+                The newly build reaction object. 
+            
+        Case construction not possible:
+            
+            None:
+                Nothing to return.
+            
+        Case reaction found in model.
+            
+            list: 
+                List of matching reaction IDs (in model).
+    """
+    
+    # ---------------------
+    # check, if ID in model
+    # ---------------------
+    matches_found = [_.id for _ in model.reactions if 'bigg.reaction' in _.annotation.keys() and _.annotation['bigg.reaction']==id]
+    if len(matches_found) > 0:
+        return matches_found
+    
+    # -----------------------------
+    # otherwise, build new reaction
+    # -----------------------------
+    # create reaction object
+    new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
+    
+    # get information from the database
+    bigg_reac_info = load_a_table_from_database(
+            f'SELECT * FROM bigg_reactions WHERE id = \'{id}\'',
+            query=True).iloc[0,:]
+    new_reac.name = bigg_reac_info['name']
+    
+    # add metabolites
+    # ---------------
+    reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
+    
+    metabolites = {}
+    meta_counter = 0
+    # reconstruct reactants
+    for mid,factor in reactants.items():
+        tmp_meta = build_metabolite_bigg(mid,model,
+                                        namespace,
+                                        idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = -1*factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # reconstruct products
+    for mid,factor in products.items():
+        tmp_meta = build_metabolite_bigg(mid,model,
+                                        namespace,
+                                        idprefix)
+        if tmp_meta:
+            metabolites[tmp_meta] = factor
+            meta_counter += 1
+        else:
+            return None # not able to build reaction successfully
+        
+    # add metabolites to reaction
+    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
+    new_reac.add_metabolites(metabolites)
+    
+    # set reversibility
+    if rev:
+        new_reac.bounds = (1000.0,1000.0)
+    else:
+        new_reac.bounds = (0.0,1000.0)
+    
+    # add annotations
+    # ---------------
+    # add SBOTerm
+    new_reac.annotation['sbo'] = 'SBO:0000167'
+    # add infos from BiGG
+    new_reac.annotation['bigg.reaction'] = [id]
+    _add_annotations_from_bigg_reac_row(bigg_reac_info, new_reac)
+    # add additional references from the parameter
+    _add
 
 
 @implement
 # maybe for later, if we need something to work independantly from namespace
 # and outside the gapfilling
+# Or would it be better to have a function add_reaction() that only adds 
+# reactions built with the previuous functions?
 def build_reaction():
     pass
 
@@ -1674,7 +1792,7 @@ def build_reaction():
 # extracting reactions & Co via libsbml
 # -------------------------------------
 
-# @DEPRECATED
+# @DEPRECATE
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
     """Extracts KEGG Genes/Locus tags from given model
