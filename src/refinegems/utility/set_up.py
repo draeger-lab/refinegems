@@ -31,31 +31,11 @@ PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml'
 # --------------------------
 # @TEST
 # @TODO : add an entry point?
-def download_url(download_type:Literal['SwissProt gapfill'],
+def download_url(dowload_type:Literal['SwissProt gapfill'],
                  directory:str=None,k:int=10):
-    """Download files necessary for certain functionalities of the toolbox from 
-    the internet. 
-    
-    Currently available:
-    - 'SwissProt gapfill': download files needed for the :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
-    
-
-    Args:
-        - dowload_type (Literal['SwissProt gapfill']): 
-            Type of files to download.
-        - directory (str, optional): 
-            Path to a directory to save the downloaded files to. 
-            Defaults to None.
-        - k (int, optional): 
-            Chunksize in kB. 
-            Defaults to 10.
-
-    Raises:
-        - ValueError: Unknown database or file
-    """
     
     # match URLS to type of database, that the user wants to download
-    match download_type:
+    match dowload_type:
         case 'SwissProt gapfill':
             swissprot_api = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
             swissprot_mapping_api = 'https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_brenda%2Cec%2Csequence&format=tsv&query=%28*%29+AND+%28reviewed%3Atrue%29'
@@ -69,19 +49,30 @@ def download_url(download_type:Literal['SwissProt gapfill'],
             raise ValueError(mes)
 
     # download each file
-    for name,url in urls:
-        r = requests.get(url, stream=True) # open download stream
-        filename = Path(directory,name) if directory else Path(name)
-        with open(filename, 'wb') as f:
-            pbar = tqdm(desc=f'Downloading {name}', 
-                        unit="B", unit_scale=True, unit_divisor=1024, 
-                        total=int( r.headers['Content-Length'] )) # make the progress bar
-            pbar.clear()  #  clear 0% info
-            for chunk in r.iter_content(chunk_size=k*1024): 
-                if chunk: # filter out keep-alive new chunks
-                    pbar.update(len(chunk)) # update progress bar
-                    f.write(chunk)
-            pbar.close()
+    for name, url in urls.items():
+        r = requests.get(url, stream=True)
+        filename = Path(directory, name) if directory else Path(name)
+        
+        # Check if Content-Length is available
+        total_length = r.headers.get('Content-Length') # Make the progress bar
+        if total_length is None:
+            # Content-Length is missing, so we download without a progress bar
+            with open(filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=k * 1024):
+                    if chunk:
+                        f.write(chunk)
+        else:
+            total_length = int(total_length)
+            with open(filename, 'wb') as f:
+                pbar = tqdm(desc=f'Downloading {name}', 
+                            unit="B", unit_scale=True, unit_divisor=1024, 
+                            total=total_length)
+                pbar.clear()
+                for chunk in r.iter_content(chunk_size=k * 1024):
+                    if chunk: # Filter out keep-alive new chunks
+                        pbar.update(len(chunk)) # Update progress bar
+                        f.write(chunk)
+                pbar.close()
 
 # ---------------------
 # handling config files
