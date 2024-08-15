@@ -383,6 +383,7 @@ def initialise_database():
       print(validation_messages.get(validity_code))
       con.close()
 
+
 # about MetaNetX Information
 # --------------------------
 # DISCLAIMER:

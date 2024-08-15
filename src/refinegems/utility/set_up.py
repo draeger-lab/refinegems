@@ -75,6 +75,7 @@ def download_url(download_type:Literal['SwissProt gapfill'],
         total_length = r.headers.get('Content-Length') # Make the progress bar
         if total_length is None:
             # Content-Length is missing, so we download without a progress bar
+            # @TODO logging
             with open(filename, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=k * 1024):
                     if chunk:
