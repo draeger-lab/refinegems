@@ -309,7 +309,8 @@ def validate_libsbml_model(model: libModel) -> int:
 
 # FASTA
 # -----
-
+# @DEPRECATE: This function could maybe be deprecated in a future update.
+# @TODO: Check usage!
 def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
     """Parses FASTA file headers to obtain:
     
