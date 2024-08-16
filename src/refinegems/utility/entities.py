@@ -1147,7 +1147,7 @@ def parse_reac_str(equation:str,
                         reactants[metabolite] = factor
                         
         case 'BiGG':
-            factor = 1.0 # BiGG does not use factor 1 in the quations
+            factor = 1.0 # BiGG does not use factor 1 in the equations
             for s in equation.split(' '):
                 # found factor
                 if s.replace('.','').isdigit():
@@ -1188,7 +1188,28 @@ def parse_reac_str(equation:str,
                     factor = 1.0
         
         case 'BioCyc':
-            pass
+            compartments = ['c']
+            factor = 1.0 # BioCyc does not use factor 1 in the equations
+            reac = equation.split('  ') # Contains now reactant site, sign, products site
+            for s in reac[0].split(' + '): # @TODO: Multiple spaces even in compound name!!!
+                if s.isnumeric(): # @TODO: Does not work like that!!!
+                    factor = float(s)
+                elif s == 'a' or s == 'an':
+                    factor = 1.0
+                else:
+                    reactants[s] = factor
+                factor = 1.0
+            for s in reac[2].split(' + '):
+                if s.isnumeric():
+                    factor = float(s)
+                elif s == 'a' or s == 'an':
+                    factor = 1.0
+                elif s == '+':
+                    continue
+                else:
+                    products[s] = factor
+                factor = 1.0
+            
                   
     return (reactants,products,compartments,reversible)
         
@@ -1581,6 +1602,15 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             list: 
                 List of matching reaction IDs (in model).
     """
+    # @TODO: 
+    # 1. If no Reaction-Direction is provided set direction to reversible!
+    # 2. No compartment provided -> Set compartment to cytosol
+    # 3. Set charge to zero?
+    # 4. Get information on formula with requests? biocyc api seems not helpful!
+    # 5. In Reihaneh's/Finn Mier's code in py4gems all reactants have stoichiometry -1 and all products 1...
+    #   -> Found example that stoichiometry in equation! Split at spaces to get?
+    # @DISCUSSION: Still no clue on how to map the names in the equations to actual biocyc compound IDs...
+    # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
     
     # ---------------------
     # check, if ID in model
