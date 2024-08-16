@@ -213,8 +213,8 @@ class GapFiller(ABC):
     """Abstract base class for the gap filling. 
     
     Already includes functions for the "filling" part of the gap-filling approach
-    and some helper functions. Each subclass needs an implementation of `get_missing_genes` 
-    and `get_missing_reactions` to determine the entities, that are missing in the model.
+    and some helper functions. Each subclass needs an implementation of `find_missing_genes` 
+    and `find_missing_reactions` to determine the entities, that are missing in the model.
 
     Attributes:
         - full_gene_list (list): 
@@ -252,12 +252,12 @@ class GapFiller(ABC):
 
     @abstractmethod
     # TODO write output format and what this functions needs to do
-    def get_missing_genes(self, model):
+    def find_missing_genes(self, model):
         pass
     
     @abstractmethod
     # TODO write output format and what this functions needs to do
-    def get_missing_reacs(self,model):
+    def find_missing_reacs(self,model):
         pass
     
     # finding the gaps
@@ -412,7 +412,7 @@ class GapFiller(ABC):
                 warnings.warn(mes,UserWarning)
     
 
-    # @TODO BioCyc not implemeneted
+    # @TEST BioCyc
     # @TODO logging, save stuff for manual curation etc. -> started a bit
     # @TEST - somewhat seems to work - for now
     def add_reactions_from_table(self, model:cobra.Model,
@@ -423,7 +423,7 @@ class GapFiller(ABC):
                                  idprefix:str='refineGEMs',
                                  namespace:Literal['BiGG']='BiGG') -> pd.DataFrame:
         """Helper function to add reactions to a model from the missing_reactions table 
-        (output of the chosen implementation of :py:meth:`~refinegems.classes.gapfill.GapFiller.get_missing_reacs`)
+        (output of the chosen implementation of :py:meth:`~refinegems.classes.gapfill.GapFiller.find_missing_reacs`)
 
         Args:
             - model (cobra.Model): 
@@ -486,9 +486,16 @@ class GapFiller(ABC):
                                             references={'ec-code':[row['ec-code']]},
                                             idprefix=idprefix,
                                             namespace=namespace)
-                # BioCyc @TODO
+                # BioCyc 
+                # @TEST
                 case 'BioCyc':
-                    reac = build_reaction_biocyc()
+                    refs = row['references']
+                    refs['ec-code'] = row['ec-code']
+                    reac = build_reaction_kegg(model,row['id'],
+                                            reac_str=row['equation'],
+                                            references=refs,
+                                            idprefix=idprefix,
+                                            namespace=namespace)
                 # Unknown database
                 case _:
                     mes = f'''Unknown database name for reaction reconstruction: {row["via"]}\n
@@ -698,7 +705,7 @@ class KEGGapFiller(GapFiller):
         
     # @TODO: parallelising
     # @TODO: logging
-    def get_missing_genes(self, model:libModel) -> pd.DataFrame:
+    def find_missing_genes(self, model:libModel) -> pd.DataFrame:
         """Get the missing genes in model in comparison to the KEGG entry of the 
         organism.
 
@@ -732,7 +739,7 @@ class KEGGapFiller(GapFiller):
                         for idx in range(cv_term.getNumResources()):
                             uri = cv_term.getResourceURI(idx)
                             if 'kegg.genes' in uri: 
-                                genes_in_model.append(re.split('kegg.genes:|kegg.genes/',uri)[1]) # work with olf/new pattern
+                                genes_in_model.append(re.split('kegg.genes:|kegg.genes/',uri)[1]) # work with old/new pattern
 
             return pd.DataFrame(genes_in_model, columns=['orgid:locus'])
         
@@ -775,7 +782,7 @@ class KEGGapFiller(GapFiller):
     # @TODO : paralellising possibilities?
     # @TODO : progress bar
     # @TODO : self._statistics for reactions
-    def get_missing_reacs(self,model:cobra.Model,genes_not_in_model):
+    def find_missing_reacs(self,model:cobra.Model,genes_not_in_model):
  
         # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
@@ -839,13 +846,10 @@ class BioCycGapFiller(GapFiller):
             'id' | 'ncbiprotein' | 'name' | 'equation' | 'Reactants' | 
             'Products' | 'ec-code' | 'Reaction-Direction' | 'via' | 'add_to_gpr'
     """
-    # @TODO: Add column 'references' 
-    # & move entries from 'name', 'Reactants', 'Products', 'ec-code' & 
-    # 'Reaction-Direction' to 'references'
     # @NOTE: Columns 'Reactants' & 'Products' could be unnecessary
     # -> Retrieve information from BioCyc-API?
     # -> Retrieve information from MetaCyc Compounds table? 
-    #   (Could maybe also added to rg internal db)
+    #   (Could maybe also be added to rg internal db)
     def __init__(self, biocyc_gene_tbl_path: str, 
                  biocyc_reacs_tbl_path: str, gff:str) -> None:
         super().__init__()
@@ -861,7 +865,7 @@ class BioCycGapFiller(GapFiller):
         return self._biocyc_gene_tbl
     
     @biocyc_gene_tbl.setter
-    # @TODO: Hier sollten wir noch diskutieren, ob Accession-2 oder Accession-1 
+    # @DISCUSSION: Hier sollten wir noch diskutieren, ob Accession-2 oder Accession-1 
     # hard coded sein sollten oder nicht
     #        Dafür müssten wir nochmal ein paar entries in BioCyc dazu anschauen.
     # Locus tags in GenBank GFF file == BioCyc Accession-2 == Old locus tags in 
@@ -882,25 +886,27 @@ class BioCycGapFiller(GapFiller):
                 Table containing only rows where a 'Reaction of gene' exists
         """
         # Read table
-        biocyc_genes = pd.read_table(
+        self._biocyc_gene_tbl = pd.read_table(
             biocyc_gene_tbl_path, 
             usecols=['Accession-2', 'Reactions of gene'], 
             dtype=str
             )
 
         # Rename columns for further use
-        biocyc_genes.rename(
+        self._biocyc_gene_tbl.rename(
             columns={
                 'Accession-2': 'locus_tag', 'Reactions of gene': 'id'
                 }, 
             inplace=True)
 
-        # Turn empty strings into NaNs & Remove NaNs
-        # @DISCUSSION: Too hard-coded? Should I keep the NaNs? Or at least keep them for the report?
-        biocyc_genes.replace('', np.nan, inplace=True)
-        biocyc_genes.dropna(inplace=True)
-        
-        self._biocyc_gene_tbl = biocyc_genes
+        # Turn empty strings into NaNs
+        self._biocyc_gene_tbl.replace('', np.nan, inplace=True)
+
+        # Save not mappable genes
+        self.manual_curation['BioCyc genes not mappable'] = self._biocyc_gene_tbl[self._biocyc_gene_tbl.isna()]
+
+        # Remove NaNs
+        self._biocyc_gene_tbl.dropna(inplace=True)
 
     @property
     def biocyc_rxn_tbl(self):
@@ -925,7 +931,7 @@ class BioCycGapFiller(GapFiller):
                 Table containing all BioCyc reactions from provided file
         """
         # Read table
-        biocyc_reacs = pd.read_table(
+        self._biocyc_rxn_tbl = pd.read_table(
             biocyc_reacs_tbl_path, 
             usecols=[
                 'Reaction', 'Object ID', 'Reactants of reaction', 
@@ -936,7 +942,7 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Rename columns for further use
-        biocyc_reacs.rename(
+        self._biocyc_rxn_tbl.rename(
             columns={
                 'Reaction': 'equation', 'Object ID': 'id',
                 'Reactants of reaction': 'Reactants', 
@@ -947,17 +953,14 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Turn empty strings into NaNs
-        biocyc_reacs.replace('', np.nan, inplace=True)
+        self._biocyc_rxn_tbl.replace('', np.nan, inplace=True)
 
         # Set entries in is_spontaneous to booleans &
         # specify empty entries in 'is_spontaneous' as False
-        biocyc_reacs['is_spontaneous'].replace({'T': True, 'F': False}, inplace=True)
-        biocyc_reacs['is_spontaneous'] = biocyc_reacs['is_spontaneous'].fillna(False)
+        self._biocyc_rxn_tbl['is_spontaneous'].replace({'T': True, 'F': False}, inplace=True)
+        self._biocyc_rxn_tbl['is_spontaneous'] = self._biocyc_rxn_tbl['is_spontaneous'].fillna(False)
 
-        self._biocyc_rxn_tbl = biocyc_reacs
-
-    # @DISCUSSION: Change get method to setter?
-    def get_missing_genes(self, model: libModel):
+    def find_missing_genes(self, model: libModel):
         """Retrieves the missing genes and reactions from the BioCyc table 
         according to the 'Accession-2' identifiers
 
@@ -1007,7 +1010,7 @@ class BioCycGapFiller(GapFiller):
             self.missing_genes['locus_tag'].unique().tolist()
             )
 
-    def get_missing_reacs(self, model: cobra.Model):
+    def find_missing_reacs(self, model: cobra.Model):
         """Retrieves the missing reactions with more information like the 
         equation, EC code, etc. according to the missing genes
 
@@ -1019,7 +1022,7 @@ class BioCycGapFiller(GapFiller):
         # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
         # Drop locus tag column as not needed for here
-        missing_genes = self.missing_genes.drop('locus_tag', axis=1)
+        missing_genes = self.missing_genes.drop(['locus_tag', 'name'], axis=1)
         
         # Expand missing genes result table to merge with Biocyc reactions table
         missing_genes = pd.DataFrame(
@@ -1033,53 +1036,59 @@ class BioCycGapFiller(GapFiller):
         missing_genes['id'] = missing_genes['id'].str.strip()
 
         # Get missing reactions from missing genes
-        missing_reacs = missing_genes.merge(
+        self.missing_reacs = missing_genes.merge(
             self.biocyc_rxn_tbl, on='id'
             )
 
         # Turn entries with '//' into lists
-        missing_reacs['Reactants'] = missing_reacs['Reactants'].str.split('\s*//\s*')
-        missing_reacs['Products'] = missing_reacs['Products'].str.split('\s*//\s*')
-        missing_reacs['ec-code'] = missing_reacs['ec-code'].str.split('\s*//\s*')
+        self.missing_reacs['Reactants'] = self.missing_reacs['Reactants'].str.split('\s*//\s*')
+        self.missing_reacs['Products'] = self.missing_reacs['Products'].str.split('\s*//\s*')
+        self.missing_reacs['ec-code'] = self.missing_reacs['ec-code'].str.split('\s*//\s*')
 
         # Step 2: Get content for column ncbiprotein
         # ------------------------------------------
         # Turn ncbiprotein column into lists of ncbiprotein IDs per reaction
-        ncbiprotein_as_list = missing_reacs.groupby('id')['ncbiprotein'].apply(list).reset_index(name='ncbiprotein')
-        missing_reacs.drop('ncbiprotein', axis=1, inplace=True)
-        missing_reacs = ncbiprotein_as_list.merge(missing_reacs, on='id')
-        missing_reacs['ncbiprotein'] = missing_reacs['ncbiprotein'].apply(
+        ncbiprotein_as_list = self.missing_reacs.groupby('id')['ncbiprotein'].apply(list).reset_index(name='ncbiprotein')
+        self.missing_reacs.drop('ncbiprotein', axis=1, inplace=True)
+        self.missing_reacs = ncbiprotein_as_list.merge(self.missing_reacs, on='id')
+        self.missing_reacs['ncbiprotein'] = self.missing_reacs['ncbiprotein'].apply(
             lambda x: 
                 x if not None in x else list(filter(None, x))
         )
         
         # Add 'G_spontaneous' as gene product if marked as spontaneous &
         # drop is_spontaneous column
-        missing_reacs['ncbiprotein'] = missing_reacs.apply(
+        self.missing_reacs['ncbiprotein'] = self.missing_reacs.apply(
             lambda x: 
                 x['ncbiprotein'] if not x['is_spontaneous'] else x['ncbiprotein'].append('spontaneous'),
             axis=1
         )
-        missing_reacs.drop('is_spontaneous', axis=1, inplace=True)
+        self.missing_reacs.drop('is_spontaneous', axis=1, inplace=True)
 
         # Step 3: Get amount of missing reactions from BioCyc for statistics
         # ------------------------------------------------------------------
         self._statistics['reactions']['missing (before)'] = len(
-            missing_reacs['id'].unique().tolist()
+            self.missing_reacs['id'].unique().tolist()
             )
 
         # Step 4: Map to model reactions & cleanup
         # ----------------------------------------
         # Add column 'via'
-        missing_reacs['via'] = 'BioCyc'
+        self.missing_reacs['via'] = 'BioCyc'
 
         # Filter reacs for already in model
-        missing_reacs['add_to_GPR'] = missing_reacs.apply(
+        self.missing_reacs['add_to_GPR'] = self.missing_reacs.apply(
             lambda x: 
                 self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1
             )
-        
-        self.missing_reacs = missing_reacs
+
+        # Add column 'references' 
+        # & move entries from 'Reactants', 'Products' & 
+        # 'Reaction-Direction' to 'references'
+        self.missing_reacs['references'] = self.missing_reacs[['Reactants', 'Products', 'Reaction-Direction']].to_dict('records')
+
+        # Remove columns 'Reactants', 'Products' & 'Reaction-Direction'
+        self.missing_reacs.drop(['Reactants', 'Products', 'Reaction-Direction'], axis=1, inplace=True)
 
     
 # ----------------
@@ -1128,7 +1137,7 @@ class GeneGapFiller(GapFiller):
     def __init__(self) -> None:
         super().__init__()
         
-    def get_missing_genes(self,gffpath:Union[str|Path],model:libModel) -> pd.DataFrame:
+    def find_missing_genes(self,gffpath:Union[str|Path],model:libModel) -> pd.DataFrame:
     
         # get all CDS from gff
         all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)
@@ -1157,7 +1166,7 @@ class GeneGapFiller(GapFiller):
         return missing_genes
     
     
-    def get_missing_reacs(self, model:cobra.Model, 
+    def find_missing_reacs(self, model:cobra.Model, 
                           missing_genes:pd.DataFrame, 
                           # prefix for pseudo ncbiprotein ids
                           prefix:str='refinegems',
