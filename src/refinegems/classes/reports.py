@@ -26,6 +26,7 @@ from typing import Literal,Union
 
 from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_reac_with_gpr
 from ..utility.entities import test_biomass_presence
+from ..developement.decorators import *
 
 ################################################################################
 # variables
@@ -1371,10 +1372,22 @@ class MultiModelInfoReport(Report):
         self.table = pd.concat(self.table, other.table)
 
     # @TODO
+    @implement
     def visualise(self):
         pass
 
+    @implement
     # @TODO
     def save(self):
         pass
 
+
+# @TODO
+@implement
+class GapFillerReport(Report):
+    
+    @implement
+    def __init__(self) -> None:
+        super().__init__()
+        
+    

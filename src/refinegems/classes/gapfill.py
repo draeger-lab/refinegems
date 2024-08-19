@@ -228,8 +228,15 @@ class GapFiller(ABC):
     """
 
     def __init__(self) -> None:
+        
+        # data
         self.full_gene_list = None  # @TODO really a good idea? GeneGapFiller does not need it at all
+        self.missing_genes = None       # missing genes, that have not yet been sorted into any category
+        self.missing_reactions = None   # missing reacs, that have not yet been sorted into any category
+        
+        # general information
         self.geneid_type = 'ncbi' # @TODO
+        
         # collect stats & Co, can be extended by subclasses
         self._statistics = {  
                 'genes':{
@@ -551,8 +558,6 @@ class GapFiller(ABC):
     # @TODO : save stuff for report / manual curation
     # @TEST - only tested in debugging mode with GeneGapFiller
     def fill_model(self, model:Union[cobra.Model,libModel], 
-                   missing_genes:pd.DataFrame, 
-                   missing_reacs:pd.DataFrame,
                    **kwargs) -> libModel:
         """Based on a table of missing genes and missing reactions, 
         fill the gaps in a model as good as possible automatically.
@@ -565,10 +570,6 @@ class GapFiller(ABC):
         Args:
             - model (Union[cobra.Model,libModel]): 
                 The model, either a libSBML or COBRApy model entity.
-            - missing_genes (pd.DataFrame): 
-                The table containing the missing genes' information.
-            - missing_reacs (pd.DataFrame): 
-                The table containing the missing reactions' information.
             - kwargs:
                 Additional parameters to be passed to 
                 :py:meth:`~refinegems.classes.gapfill.GapFiller.add_reactions_from_table`.
@@ -597,9 +598,9 @@ class GapFiller(ABC):
         # Step 1: Add genes to model whose reactions are already in it
         # -------------------------------------------------------------
         # filter the respective genes and reactions
-        reacs_in_model = missing_reacs[~(missing_reacs['add_to_GPR'].isnull())]
+        reacs_in_model = self.missing_reacs[~(self.missing_reacs['add_to_GPR'].isnull())]
         ncbiprot_with_reacs_in_model = [*chain(*list(reacs_in_model['ncbiprotein']))]
-        genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+        genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
         self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
         if len(genes_with_reacs_in_model) > 0:
             # add genes as gene products to model
@@ -609,8 +610,8 @@ class GapFiller(ABC):
             self.add_gene_reac_associations_from_table(model,reacs_in_model)
             
             # what remains:
-            missing_reacs = missing_reacs[missing_reacs['add_to_GPR'].isnull()]
-            missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
+            self.missing_reacs = self.missing_reacs[self.missing_reacs['add_to_GPR'].isnull()]
+            self.missing_genes = self.missing_genes[~(self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
         
         
         # Step 2: Add reactions to model, if reconstruction successful
@@ -684,6 +685,7 @@ class GapFiller(ABC):
 # Gapfilling with KEGG
 # --------------------
 
+# @TEST
 class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
@@ -705,18 +707,15 @@ class KEGGapFiller(GapFiller):
         
     # @TODO: parallelising
     # @TODO: logging
-    def find_missing_genes(self, model:libModel) -> pd.DataFrame:
+    def find_missing_genes(self, model:libModel):
         """Get the missing genes in model in comparison to the KEGG entry of the 
-        organism.
+        organism. Saves a table containing the missing genes (format: <organism id>:<locus>)
+        to the attribute missing_genes.
 
         Args:
             - model (libModel): 
                 The model loaded with libSBML.
-
-        Returns:
-            pd.DataFrame: 
-                A table containing the missing genes 
-                (format: <organism id>:<locus>)
+                
         """
     
         # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis/entities --- Modified
@@ -776,19 +775,20 @@ class KEGGapFiller(GapFiller):
         # collect stats
         self._statistics['genes']['missing (before)'] = len(genes_not_in_model)
         
-        return genes_not_in_model 
+        self.missing_genes = genes_not_in_model 
+    
     
     # @TODO : logging
     # @TODO : paralellising possibilities?
     # @TODO : progress bar
     # @TODO : self._statistics for reactions
-    def find_missing_reacs(self,model:cobra.Model,genes_not_in_model):
+    def find_missing_reacs(self,model:cobra.Model):
  
         # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
-        reac_options = genes_not_in_model[['ec-code','ncbiprotein']]        # get relevant infos for reacs
+        reac_options = self.missing_genes[['ec-code','ncbiprotein']]        # get relevant infos for reacs
         missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
-        # self.manual_curation['genes'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
+        self.manual_curation['no EC/ncbiprotein'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
         # check, if any automatic gapfilling is possible
         if len(missing_reacs) == 0:
             return None
@@ -811,7 +811,7 @@ class KEGGapFiller(GapFiller):
         reacs_mapped = reacs_mapped[~reacs_mapped['id'].isnull()] 
         reacs_mapped['add_to_GPR'] = reacs_mapped.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
                 
-        return reacs_mapped
+        self.missing_reacs = reacs_mapped
     
     
 # ----------------------
@@ -1118,6 +1118,7 @@ class BioCycGapFiller(GapFiller):
 # GapFilling with GFF and Swissprot
 # ---------------------------------
 
+# @TEST
 class GeneGapFiller(GapFiller):
     """Find gaps in the model using the GFF file of the underlying genome 
     and the Swissprot database and optionally NCBI.
@@ -1137,7 +1138,7 @@ class GeneGapFiller(GapFiller):
     def __init__(self) -> None:
         super().__init__()
         
-    def find_missing_genes(self,gffpath:Union[str|Path],model:libModel) -> pd.DataFrame:
+    def find_missing_genes(self,gffpath:Union[str|Path],model:libModel):
     
         # get all CDS from gff
         all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)
@@ -1163,11 +1164,10 @@ class GeneGapFiller(GapFiller):
         missing_genes =  missing_genes[~missing_genes['locus_tag'].isna()]
         missing_genes = missing_genes.explode('ncbiprotein')
         
-        return missing_genes
+        self.missing_genes = missing_genes
     
     
-    def find_missing_reacs(self, model:cobra.Model, 
-                          missing_genes:pd.DataFrame, 
+    def find_missing_reacs(self, model:cobra.Model,  
                           # prefix for pseudo ncbiprotein ids
                           prefix:str='refinegems',
                           # NCBI params
@@ -1181,8 +1181,8 @@ class GeneGapFiller(GapFiller):
         
         # Case 1:  no EC
         # --------------
-        case_1 = missing_genes[missing_genes['ec-code'].isna()]
-        not_case_1 = missing_genes[~missing_genes['ec-code'].isna()]
+        case_1 = self.missing_genes[self.missing_genes['ec-code'].isna()]
+        not_case_1 = self.missing_genes[~self.missing_genes['ec-code'].isna()]
         if len(case_1) > 0:
             
             # Option 1: BLAST against SwissProt
@@ -1264,7 +1264,9 @@ class GeneGapFiller(GapFiller):
         mapped_reacs = mapped_reacs[~mapped_reacs['id'].isnull()]
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
         
-        return updated_missing_genes, mapped_reacs
+        # update attributes
+        self.missing_genes = updated_missing_genes
+        self.missing_reacs = mapped_reacs
     
     
     
