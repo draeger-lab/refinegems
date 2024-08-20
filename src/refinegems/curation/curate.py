@@ -314,7 +314,14 @@ def resolve_duplicate_reactions(model:cobra.Model, based_on:str='reaction', remo
 
                         # combine gene reaction rules
                         for r_id in mnx[1]['id'].tolist()[1:]:
-                            keep_reac.gene_reaction_rule = keep_reac.gene_reaction_rule + model.reactions.get_by_id(r_id).gene_reaction_rule
+                            gpr_to_add = model.reactions.get_by_id(r_id).gene_reaction_rule
+                            if gpr_to_add and gpr_to_add != '':
+                                if keep_reac.gene_reaction_rule and  keep_reac.gene_reaction_rule != '': # add two existing rules
+                                     keep_reac.gene_reaction_rule =  keep_reac.gene_reaction_rule + ' or ' + gpr_to_add
+                                else:
+                                    keep_reac.gene_reaction_rule = gpr_to_add # add the one existing the other 
+                            else:
+                                pass # nothing to add
                             model.reactions.get_by_id(r_id).delete()
                             print(F'\tDuplicate reaction {r_id} found. Combined to {keep_reac.id} and deleted.')
                     else:
