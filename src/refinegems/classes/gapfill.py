@@ -616,17 +616,8 @@ class GapFiller(ABC):
         
         # Step 2: Add reactions to model, if reconstruction successful
         # ------------------------------------------------------------
-        # @TODO : prefilter to only have each ID once? -> neccessary?
-        # print(missing_reacs.columns)
-        # print(missing_reacs.groupby('id').agg({'ec-code': lambda x: list(set(x.tolist())),
-        #                                        'ncbiprotein': lambda x: [xss for xs in x for xss in xs],
-        #                                        'equation': lambda x: x[0],
-        #                                        'reference': lambda x: ???,
-        #                                        'is_transport': lambda x: x[0],
-        #                                        'via': lambda x: x[0],
-        #                                        'add_to_GPR': None
-        #                                        }))
-        if len(missing_reacs) > 0:
+
+        if len(self.missing_reacs) > 0:
             
             # re-load model with cobrapy
             with NamedTemporaryFile(suffix='.xml') as tmp:
@@ -635,13 +626,13 @@ class GapFiller(ABC):
             
             # .......................
             # @DEBUGGING
-            if len(missing_reacs) > 10:
-                missing_reacs = missing_reacs.sample(10)
+            if len(self.missing_reacs) > 10:
+                self.missing_reacs = self.missing_reacs.sample(10)
                 print('fill_model: Running in debugging mode')
             # .......................
                 
             # add reactions to model  
-            missing_gprs = self.add_reactions_from_table(cobramodel,missing_reacs,**kwargs)
+            missing_gprs = self.add_reactions_from_table(cobramodel,self.missing_reacs,**kwargs)
 
         # Step 3: Add GPRs + genes for the newly curated reactions 
         # --------------------------------------------------------
@@ -655,7 +646,7 @@ class GapFiller(ABC):
         if len(missing_gprs) > 0:
             # filter for genes for GPRs but not yet in model
             ncbiprot_with_reacs_in_model = [*chain(*list(missing_gprs['ncbiprotein']))]
-            genes_with_reacs_in_model = missing_genes[missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+            genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
             self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
             if len(genes_with_reacs_in_model) > 0:
                 # add genes as gene products to model
@@ -664,9 +655,9 @@ class GapFiller(ABC):
                 self.add_gene_reac_associations_from_table(model,reacs_in_model)
         
         # collect stats and stuff for manual curation
-        missing_genes = missing_genes[~(missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
-        self.manual_curation['missing genes (after gap filling)'] = missing_genes
-        self._statistics['genes']['missing (after)'] = len(missing_genes)
+        self.missing_genes = self.missing_genes[~(self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
+        self.manual_curation['missing genes (after gap filling)'] = self.missing_genes
+        self._statistics['genes']['missing (after)'] = len(self.missing_genes)
         
         return model
         
@@ -787,21 +778,21 @@ class KEGGapFiller(GapFiller):
         # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
         reac_options = self.missing_genes[['ec-code','ncbiprotein']]        # get relevant infos for reacs
-        missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
-        self.manual_curation['no EC/ncbiprotein'] = reac_options.loc[~reac_options.index.isin(missing_reacs.index)]
+        self.missing_reacs = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
+        self.manual_curation['no EC/ncbiprotein'] = reac_options.loc[~reac_options.index.isin(self.missing_reacs.index)]
         # check, if any automatic gapfilling is possible
-        if len(missing_reacs) == 0:
+        if len(self.missing_reacs) == 0:
             return None
         # transform table into EC-number vs. list of NCBI protein IDs
-        eccode = missing_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
-        ncbiprot = missing_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
-        missing_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
-        missing_reacs = missing_reacs.groupby(missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
+        eccode = self.missing_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        ncbiprot = self.missing_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
+        self.missing_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
+        self.missing_reacs = self.missing_reacs.groupby(self.missing_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
         
         # Step 2: map EC to reaction(s) if possible
         # -----------------------------------------
         # via MNX, BiGG, KEGG
-        reacs_mapped = map_ec_to_reac(missing_reacs)
+        reacs_mapped = map_ec_to_reac(self.missing_reacs)
         
         # Step 3: clean and map to model reactions
         # ----------------------------------------
@@ -1145,26 +1136,24 @@ class GeneGapFiller(GapFiller):
         # get all genes from model by locus tag
         model_locustags = [g.getLabel() for g in model.getPlugin(0).getListOfGeneProducts()]
         # filter
-        missing_genes = all_genes.loc[~all_genes['locus_tag'].isin(model_locustags)]
+        self.missing_genes = all_genes.loc[~all_genes['locus_tag'].isin(model_locustags)]
         # formatting
         for col in self.GFF_COLS.values():
-            if col not in missing_genes.columns:
-                missing_genes[col] = None
+            if col not in self.missing_genes.columns:
+                self.missing_genes[col] = None
 
         # @TODO: We found duplicates! -> Remove? 
         # collect stats
-        self._statistics['genes']['missing (before)'] = len(missing_genes)
+        self._statistics['genes']['missing (before)'] = len(self.missing_genes)
                 
         # save genes with no locus tag for manual curation
-        self.manual_curation['gff no locus tag'] = missing_genes[missing_genes['locus_tag'].isna()]['ncbiprotein']
+        self.manual_curation['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
         self._statistics['genes']['no locus tag'] = len(self.manual_curation['gff no locus tag'])
         
         # output
         # ncbiprotein | locus_tag | ec-code
-        missing_genes =  missing_genes[~missing_genes['locus_tag'].isna()]
-        missing_genes = missing_genes.explode('ncbiprotein')
-        
-        self.missing_genes = missing_genes
+        self.missing_genes =  self.missing_genes[~self.missing_genes['locus_tag'].isna()]
+        self.missing_genes = self.missing_genes.explode('ncbiprotein')
     
     
     def find_missing_reacs(self, model:cobra.Model,  

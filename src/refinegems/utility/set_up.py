@@ -18,7 +18,7 @@ from typing import Literal
 # variables
 ################################################################################
 
-PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yaml') #: :meta hide-value: 
+PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yml') #: :meta hide-value: 
 
 ################################################################################
 # functions
@@ -97,19 +97,18 @@ def download_url(download_type:Literal['SwissProt gapfill'],
 # handling config files
 # ---------------------
 
-# @TODO : sth for gapfilling?
-def download_config(filename:str='./my_config.yaml', type=Literal['media','refinegems']):
+
+def download_config(filename:str='./my_config.yaml', type=Literal['media']):
     """Load a configuration file from the package and save a copy of it for the user to edit.
 
     Args:
         - filename (str, optional): 
             Filename to write the config to/save it under as. 
             Defaults to './my_config.yaml'.
-        - type (Literal['media','refinegems'], optional): 
+        - type (Literal['media'], optional): 
             Type of configuration file to load.
-            Can be 'media' for the media config file or 
-            'refinegems' for the refinegmes pipeline configuration file. 
-            Defaults to Literal['media','refinegems'].
+            Can be 'media' for the media config file.
+            Defaults to Literal['media'].
     """
 
     def copy_config_yaml(infile:str, outfile:str):
@@ -132,13 +131,6 @@ def download_config(filename:str='./my_config.yaml', type=Literal['media','refin
         # copy media config
         case 'media':           
             copy_config_yaml(PATH_MEDIA_CONFIG, filename)
-
-        # @TODO
-        # refinegems config
-        case 'gapfill':
-            
-            # copy_config_yaml(..., filename)
-            pass
 
         # type not found
         case _:

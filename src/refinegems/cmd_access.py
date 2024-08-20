@@ -112,7 +112,7 @@ def add_namespace(databasename, chunksize):
    """
    match databasename:
       case 'MetaNetX':
-         rg.utility.set_up.update_mnx_namespace(chunksize=chunksize)
+         rg.utility.databases.update_mnx_namespaces(chunksize=chunksize)
       case _:
          mes = f'Unknown database name: {databasename}'
          raise ValueError(mes)
@@ -122,7 +122,7 @@ def add_namespace(databasename, chunksize):
 def reset():
    """Reset the database by removing additionally downloaded tables.
    """
-   rg.utility.set_up.reset_database()
+   rg.utility.databases.reset_database()
 
 # -------------------
 # all about the media 
