@@ -1186,30 +1186,6 @@ def parse_reac_str(equation:str,
                     else:
                         reactants[s] = factor
                     factor = 1.0
-        
-        case 'BioCyc':
-            compartments = ['c']
-            factor = 1.0 # BioCyc does not use factor 1 in the equations
-            reac = equation.split('  ') # Contains now reactant site, sign, products site
-            for s in reac[0].split(' + '): # @TODO: Multiple spaces even in compound name!!!
-                if s.isnumeric(): # @TODO: Does not work like that!!!
-                    factor = float(s)
-                elif s == 'a' or s == 'an':
-                    factor = 1.0
-                else:
-                    reactants[s] = factor
-                factor = 1.0
-            for s in reac[2].split(' + '):
-                if s.isnumeric():
-                    factor = float(s)
-                elif s == 'a' or s == 'an':
-                    factor = 1.0
-                elif s == '+':
-                    continue
-                else:
-                    products[s] = factor
-                factor = 1.0
-            
                   
     return (reactants,products,compartments,reversible)
         

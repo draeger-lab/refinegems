@@ -1,4 +1,14 @@
+#!/usr/bin/env python
+# @TODO: Correct/Rewrite doc string
 """Add more reactions, genes and more to a model based on different gap-filling methods.
+    The `gapfill` module can be used either with KEGG were you only need the KEGG organism code or with BioCyc or with both (Options: 'KEGG', 'BioCyc', 'KEGG+BioCyc').
+    For how to obtain the BioCyc tables look into the documentation under: 'Main modules' > 'Gap filling' > 'Automated gap filling'.
+    
+    Run times: 
+    
+        * 'KEGG': ~ 2h
+        * 'BioCyc': ~ 45mins - 1h
+        * 'KEGG+BioCyc': ~ 3 - 4h  
 """
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihaneh Mostolizadeh"
@@ -33,6 +43,16 @@ from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_mod
 from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_biocyc, build_reaction_kegg, build_reaction_mnx, isreaction_complete
 from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
 from ..developement.decorators import *
+
+##### Coloured text:
+from colorama import init as colorama_init
+from colorama import Fore
+
+def coloured_example_text():
+    colorama_init(autoreset=True)
+    print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
+      'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
+      'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
 
 
 # Note:
@@ -493,16 +513,7 @@ class GapFiller(ABC):
                                             references={'ec-code':[row['ec-code']]},
                                             idprefix=idprefix,
                                             namespace=namespace)
-                # BioCyc 
-                # @TEST
-                case 'BioCyc':
-                    refs = row['references']
-                    refs['ec-code'] = row['ec-code']
-                    reac = build_reaction_kegg(model,row['id'],
-                                            reac_str=row['equation'],
-                                            references=refs,
-                                            idprefix=idprefix,
-                                            namespace=namespace)
+                    
                 # Unknown database
                 case _:
                     mes = f'''Unknown database name for reaction reconstruction: {row["via"]}\n
@@ -824,8 +835,7 @@ class BioCycGapFiller(GapFiller):
         - biocyc_reacs_tbl_path (str, required): 
             Path to organism-specific SmartTable for reactions from BioCyc;
             Should contain the columns: 
-            'Reaction' | 'Object ID' | 'Reactants of reaction' | 
-            'Products of reaction'| 'EC-Number' | 'Reaction-Direction' | 
+            'Reaction' | 'Object ID' | 'EC-Number' | 'Reaction-Direction' | 
             'Spontaneous?'
         - gff (str, required): 
             Path to organism-specific GFF file
@@ -834,13 +844,10 @@ class BioCycGapFiller(GapFiller):
             'locus_tag' | 'id' | 'ncbiprotein' | 'name'
         - missing_reacs (pd.DataFrame):
             DataFrame containing the missing reactions with the columns 
-            'id' | 'ncbiprotein' | 'name' | 'equation' | 'Reactants' | 
-            'Products' | 'ec-code' | 'Reaction-Direction' | 'via' | 'add_to_gpr'
+            'id' | 'ncbiprotein' | 'equation' | 'ec-code' | 
+            'Reaction-Direction' | 'via' | 'add_to_GPR'
     """
-    # @NOTE: Columns 'Reactants' & 'Products' could be unnecessary
-    # -> Retrieve information from BioCyc-API?
-    # -> Retrieve information from MetaCyc Compounds table? 
-    #   (Could maybe also be added to rg internal db)
+    
     def __init__(self, biocyc_gene_tbl_path: str, 
                  biocyc_reacs_tbl_path: str, gff:str) -> None:
         super().__init__()
@@ -893,11 +900,19 @@ class BioCycGapFiller(GapFiller):
         # Turn empty strings into NaNs
         self._biocyc_gene_tbl.replace('', np.nan, inplace=True)
 
-        # Save not mappable genes
-        self.manual_curation['BioCyc genes not mappable'] = self._biocyc_gene_tbl[self._biocyc_gene_tbl.isna()]
+        # Drop only complete empty rows
+        self._biocyc_gene_tbl.dropna(how='all', inplace=True)
 
-        # Remove NaNs
-        self._biocyc_gene_tbl.dropna(inplace=True)
+        # Save not mappable genes
+        self.manual_curation['BioCyc genes unmappable'] = self._biocyc_gene_tbl[self._biocyc_gene_tbl['id'].isna()]
+
+        # Add amount of unmappable genes to statistics
+        self._statistics['genes']['missing (unmappable)'] = len(
+            self.manual_curation['BioCyc genes unmappable']['locus_tag'].unique().tolist()
+            )
+
+        # Remove all rows where 'id' NaNs
+        self._biocyc_gene_tbl.dropna(subset='id', nplace=True)
 
     @property
     def biocyc_rxn_tbl(self):
@@ -906,15 +921,13 @@ class BioCycGapFiller(GapFiller):
     @biocyc_rxn_tbl.setter
     def biocyc_rxn_tbl(self, biocyc_reacs_tbl_path: str) -> pd.DataFrame:
         """Parses TSV file from BioCyc to retrieve 'Reaction', 'Object ID', 
-        'Reactants of reaction', 'Products of reaction', 'EC-Number', 
-        'Reaction-Direction' & 'Spontaneous?'
+        'EC-Number', 'Reaction-Direction' & 'Spontaneous?'
 
         Args:
             - biocyc_reacs_tbl_path (str):   
                 Path to organism-specific SmartTable for reactions from BioCyc;
                 Should contain the columns: 
-                'Reaction' | 'Object ID' | 'Reactants of reaction' | 
-                'Products of reaction'| 'EC-Number' | 'Reaction-Direction' | 
+                'Reaction' | 'Object ID' | 'EC-Number' | 'Reaction-Direction' | 
                 'Spontaneous?'
 
         Returns:
@@ -925,8 +938,7 @@ class BioCycGapFiller(GapFiller):
         self._biocyc_rxn_tbl = pd.read_table(
             biocyc_reacs_tbl_path, 
             usecols=[
-                'Reaction', 'Object ID', 'Reactants of reaction', 
-                'Products of reaction', 'EC-Number', 'Reaction-Direction', 
+                'Reaction', 'Object ID', 'EC-Number', 'Reaction-Direction', 
                 'Spontaneous?'
                 ],
             dtype=str
@@ -936,9 +948,7 @@ class BioCycGapFiller(GapFiller):
         self._biocyc_rxn_tbl.rename(
             columns={
                 'Reaction': 'equation', 'Object ID': 'id',
-                'Reactants of reaction': 'Reactants', 
-                'Products of reaction': 'Products', 'EC-Number': 'ec-code',
-                'Spontaneous?': 'is_spontaneous'
+                'EC-Number': 'ec-code', 'Spontaneous?': 'is_spontaneous'
                 },
             inplace=True
             )
@@ -1031,9 +1041,7 @@ class BioCycGapFiller(GapFiller):
             self.biocyc_rxn_tbl, on='id'
             )
 
-        # Turn entries with '//' into lists
-        self.missing_reacs['Reactants'] = self.missing_reacs['Reactants'].str.split('\s*//\s*')
-        self.missing_reacs['Products'] = self.missing_reacs['Products'].str.split('\s*//\s*')
+        # Turn ec-code entries with '//' into lists
         self.missing_reacs['ec-code'] = self.missing_reacs['ec-code'].str.split('\s*//\s*')
 
         # Step 2: Get content for column ncbiprotein
@@ -1062,8 +1070,8 @@ class BioCycGapFiller(GapFiller):
             self.missing_reacs['id'].unique().tolist()
             )
 
-        # Step 4: Map to model reactions & cleanup
-        # ----------------------------------------
+        # Step 4: Map BioCyc to model reactions & cleanup
+        # -----------------------------------------------
         # Add column 'via'
         self.missing_reacs['via'] = 'BioCyc'
 
@@ -1074,13 +1082,29 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Add column 'references' 
-        # & move entries from 'Reactants', 'Products' & 
-        # 'Reaction-Direction' to 'references'
-        self.missing_reacs['references'] = self.missing_reacs[['Reactants', 'Products', 'Reaction-Direction']].to_dict('records')
+        # & move entries from 'Reaction-Direction' to 'references'
+        self.missing_reacs['references'] = self.missing_reacs[['Reaction-Direction']].to_dict('records')
 
-        # Remove columns 'Reactants', 'Products' & 'Reaction-Direction'
-        self.missing_reacs.drop(['Reactants', 'Products', 'Reaction-Direction'], axis=1, inplace=True)
+        # Remove column 'Reaction-Direction'
+        self.missing_reacs.drop(['Reaction-Direction'], axis=1, inplace=True)
 
+        # Step 5: Map missing reactions without entries in column 'add_to_GPR' 
+        #         to other databases to get a parsable reaction equation
+        # --------------------------------------------------------------------
+        # Map to MetaNetX
+
+        # Map to BiGG
+
+        # Step 6: Get results
+        # -------------------
+        # Split missing reactios based on entries in 'via' & 'add_to_GPR'
+        mask = (self.missing_reacs['via'] == 'BioCyc') & (self.missing_reacs['add_to_GPR'].isna())
+        
+        # DataFrame with unmappable BioCyc IDs & No entries in 'add_to_GPR'
+        self.manual_curation['BioCyc reactions unmappable'] = self.missing_reacs[mask]
+
+        # DataFrame with either mapped BioCyc IDs or Entries in 'add_to_GPR'
+        self.missing_reacs = self.missing_reacs[~mask]
     
 # ----------------
 # Gapfilling no DB
