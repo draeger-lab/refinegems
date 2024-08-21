@@ -31,6 +31,17 @@ databases module
    :private-members: 
    :special-members:
 
+db\_access module
+-----------------
+
+.. automodule:: refinegems.utility.db_access
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members: 
+   :special-members:
+
+
 entities module
 ---------------
 

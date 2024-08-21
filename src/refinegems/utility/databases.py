@@ -188,6 +188,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
                 key, value = link.split(':',1)
                 key = key.strip()
                 value = value.rsplit('/',1)[1].strip()
+                value = value.removeprefix('META:') # @TODO: Make case insensitive!
                 if key in database_ids.keys():
                     database_ids[key].append(value)
                 else:

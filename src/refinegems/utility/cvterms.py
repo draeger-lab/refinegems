@@ -10,6 +10,7 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 # requirements
 ################################################################################
 
+import cobra
 import logging
 from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 
@@ -80,6 +81,33 @@ OLD_MIRIAM = 'http://identifiers.org/' #: :meta hide-value:
 # functions
 ################################################################################
 
+# cobra
+# -----
+
+def _add_annotations_from_dict_cobra(references:dict, entity:cobra.Reaction|cobra.Metabolite|cobra.Model) -> None:
+    """Given a dictionary and a cobra object, add the former as annotations to the latter.
+    The keys of the dictionary are used as the annotation labels, the values as the values.
+    If the keys are already in the entity, the values will be combined (union).
+
+    Args:
+        - references (dict): 
+            The dictionary with the references to add the entity.
+        - entity (cobra.Reaction | cobra.Metabolite | cobra.Model): 
+            The entity to add annotations to.
+    """
+    # add additional references from the parameter
+    for db,idlist in references.items():
+        if not isinstance(idlist,list):
+            idlist = [idlist]
+        if db in entity.annotation.keys():
+            entity.annotation[db] = list(set(entity.annotation[db] + idlist))
+        else:
+            entity.annotation[db] = idlist
+
+
+
+# libsbml
+# -------
 
 def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
     """Adds CVTerm to a unit

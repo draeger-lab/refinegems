@@ -22,8 +22,7 @@ import logging
 import pandas as pd
 
 from ols_client import EBIClient
-from Bio import Entrez, SeqIO
-from Bio.KEGG import REST
+from Bio import SeqIO
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
@@ -277,20 +276,6 @@ def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
     return df
 
 
-def write_df_to_xlsx(dataframe: pd.DataFrame, filepath: str):
-    """Writes reports stored in dataframes to xlsx file
-
-    Args:
-        - dataframe (pd.DataFrame): 
-            Table containing output
-        - filepath (str): 
-            Path to file with filename
-    """
-    writer = pd.ExcelWriter(str(os.path.abspath('.')) + '/' + filepath)
-    dataframe.to_excel(writer)
-    writer.save()
-
-
 def validate_libsbml_model(model: libModel) -> int:
     """Debug method: Validates a libSBML model with the libSBML validator
     
@@ -306,6 +291,7 @@ def validate_libsbml_model(model: libModel) -> int:
     doc = model.getSBMLDocument()
     
     return validator.validate(doc)
+
 
 # FASTA
 # -----
@@ -411,39 +397,7 @@ def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
     return outfile
 
 
-
-
-# NCBI
-# ----
-# move to databases/db
-
-def search_ncbi_for_gpr(locus: str) -> str:
-    """Fetches protein name from NCBI
-
-    Args:
-        - locus (str): 
-            NCBI compatible locus_tag
-
-    Returns:
-        str: 
-            Protein name|description
-    """
-    handle = Entrez.efetch(
-        db="protein",
-        id=locus,
-        rettype="gbwithparts",
-        retmode='text')
-    records = SeqIO.parse(handle, "gb")
-
-    for i, record in enumerate(records):
-        if (locus[0] == 'W'):
-            return record.description, locus
-        else:
-            for feature in record.features:
-                if feature.type == "CDS":
-                    return record.description, feature.qualifiers["locus_tag"][0]
-
-# gff 
+# GFF
 # ---
 
 def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
@@ -480,55 +434,6 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
 
     return pd.DataFrame(locus_tag2id)
-
-
-# @DEPRECATE 
-def parse_gff_for_gp_info(gff_file: str, old_locus:bool=False) -> pd.DataFrame:
-    """Parses gff file of organism to extract gene protein reaction - locus tag mapping.
-
-    Args:
-        - gff_file (str): 
-            Path to gff file of organism of interest
-        - old_locus (bool, optional): 
-            Set to True to extract the old locus tag instead. 
-            Defaults to False.
-
-    Returns:
-        pd.DataFrame: 
-            Table containing mapping from locus tag to GPR
-    """
-    db = gffutils.create_db(
-        gff_file,
-        ':memory:',
-        merge_strategy='create_unique')
-    mapping_cds = {}
-    for feature in db.all_features():
-        attr = dict(feature.attributes)
-        try:
-            if str(attr['gbkey'][0]) == 'CDS':
-                mapping_cds[attr['Name'][0]] = attr['Parent'][0]
-        except BaseException:
-            pass
-    mapping_df = pd.DataFrame.from_dict(
-        mapping_cds,
-        columns=['Parent'],
-        orient='index').reset_index().rename(
-        columns={
-            'index': 'GPR'})
-
-    def extract_locus(feature):
-        try:
-            if old_locus:
-                return db[feature].attributes['old_locus_tag'][0]
-            else:
-                return db[feature].attributes['locus_tag'][0]
-        except BaseException:
-            pass
-        return None
-
-    mapping_df['locus_tag'] = mapping_df.apply(
-        lambda row: extract_locus(row['Parent']), axis=1)
-    return mapping_df.drop('Parent', axis=1)
 
 
 def parse_gff_for_cds(gffpath, keep_attributes=None):
@@ -573,86 +478,3 @@ def search_sbo_label(sbo_number: str) -> str:
     client = EBIClient()
     sbo = client.get_term('sbo', 'http://biomodels.net/SBO/SBO_0000' + sbo_number)
     return sbo['_embedded']['terms'][0]['label']
-
-
-
-# KEGG
-# ----
-
-# @TODO open issues
-def kegg_reaction_parser(rn_id:str) -> dict: 
-    """Get the entry of a KEGG reaction ID and 
-    parse the information into a dictionary.
-
-    Args:
-        - rn_id (str): 
-            A reaction ID existing in KEGG.
-
-    Returns:
-        dict: 
-            The KEGG entry information as a dictionary.
-    """
-
-    # get KEGG reaction entry
-    try:
-        kegg_reac = REST.kegg_get(F'rn:{rn_id}')
-        kegg_reac = kegg_reac.read()
-    except Exception as e:
-        # @TODO
-        return None
-
-    # parse the entry for necessary information
-    features = {}
-    db_entries = []
-    pathways = []
-    rc = []
-    references = {'kegg.reaction':rn_id}
-    collect = False
-    for line in kegg_reac.split('\n'):
-        if line:
-            if line.startswith('NAME'):
-                features['name'] = line.replace('NAME','',1).strip()
-            elif line.startswith('EQUATION'):
-                features['equation'] = line.replace('EQUATION','',1).strip()
-            elif line.startswith('ENZYME'):
-                references['ec-code'] = line.replace('ENZYME','',1).strip()
-            elif line.startswith('RCLASS'):
-                rc.append(line.replace('RCLASS','',1).strip().split(' ')[0])
-                collect = True
-            elif line.startswith('PATHWAY'):
-                pathways.append(line.replace('PATHWAY','',1).strip().split(' ')[0])
-                collect = True
-            elif line.startswith('DBLINKS'):
-                db_entries.append(line.replace('DBLINKS','',1).strip())
-                collect = True
-            elif collect == True and line[0] != '/':
-                if len(db_entries) == 0:
-                    if line[0].isupper():
-                        collect = False
-                    else:
-                        line = line.strip()
-                        if line.startswith('RC'):
-                            rc.append(line.split(' ')[0])
-                        else:
-                            pathways.append(line.split(' ')[0])
-                else:
-                    db_entries.append(line.strip())
-            else:
-                continue
-
-    # parse references
-    for entry in db_entries:
-        db, identifier = entry.split(':')
-        db = db.strip().lower()
-        if db in references:
-            references[db] = references[db].append(identifier)
-        else:
-            references[db] = [identifier.strip()]
-    if len(pathways) > 0:
-        references['kegg.pathway'] = pathways
-    if len(rc) > 0:
-        references['kegg.rclass'] = rc
-    if len(references) > 0:
-        features['db'] = references
-
-    return features

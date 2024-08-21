@@ -24,7 +24,7 @@ import pandas as pd
 
 from libsbml import Model as libModel
 
-from .db_access.modelseed import get_modelseed_compounds
+from ..utility.db_access import get_modelseed_compounds
 
 ############################################################################
 # functions

@@ -20,7 +20,8 @@ from tqdm.auto import tqdm
 from typing import Literal
 
 from ..utility.cvterms import add_cv_term_reactions, add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
-from ..utility.entities import create_gpr_from_locus_tag, create_reaction,test_biomass_presence
+from ..utility.entities import create_gpr_from_locus_tag, create_reaction
+from ..utility.util import test_biomass_presence
 
 ################################################################################
 # variables

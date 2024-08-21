@@ -1,11 +1,14 @@
 """Collection of utility functions."""
 
 import cobra
-import libchebipy
-import pandas as pd
-import requests
+import logging
 
-from  .connections import BIGG_METABOLITES_URL
+import memote.support.helpers as helpers
+from memote.utils import truncate
+
+from libsbml import Reaction
+from six import iteritems
+from typing import Union
 
 __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
@@ -21,115 +24,17 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
                    "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
                    "SBO:0000376", "SBO:0000401"] #: :meta: 
 
+# compartments
+# ------------
+VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'} #: :meta: 
+COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
+                'C_c': 'c', 'C_e': 'e', 'C_p': 'p',
+                '':'y'} #: :meta:
+
+
 ################################################################################
 # functions
 ################################################################################
-
-# ChEBI
-# -----
-
-def add_info_from_ChEBI_BiGG(missing_metabs: pd.DataFrame, charge=True, formula=True, iupac=True) -> pd.DataFrame:
-   """Adds information from CHEBI/BiGG to the provided dataframe.
-
-   The following informations can be added:
-
-   - charge
-   - formula
-   - iupac (name)
-
-   Args:
-      - missing_metabs (pd.DataFrame): 
-         Table containing metabolites & the respective ChEBI & BiGG IDs
-         
-   Returns:
-      pd.DataFrame: 
-         Input table extended with the charges & chemical formulas obtained from ChEBI/BiGG.
-   """
-
-   # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
-   def get_chebi_id(row: pd.Series) -> str:
-
-      chebi = row.get('ChEBI')
-      if pd.isnull(chebi):
-         return None
-      elif type(chebi) == str: # check for mulitple entries (assuming first one is the best fitting one)
-         chebi = chebi.split(',')[0]
-         if 'CHEBI' in chebi:
-            return chebi
-         else:
-            return 'CHEBI:' + chebi
-      else:
-         return 'CHEBI:' + str(chebi)
-
-   # Finds the charges through the ChEBI/BiGG API, defaults to: 0
-   def find_charge(row: pd.Series) -> int:
-      chebi_id = get_chebi_id(row)
-      bigg_id = str(row.get('bigg_id'))
-      charge = None
-      if chebi_id:  # Get charge from ChEBI (Returns always a charge)
-         chebi_entity = libchebipy.ChebiEntity(chebi_id)
-         return chebi_entity.get_charge()
-      elif bigg_id != 'nan':  # Get charge from BiGG if no ChEBI ID available
-         try:
-            charge = requests.get(BIGG_METABOLITES_URL + bigg_id[:-2]).json()['charges'][0]  # Take first charge
-         except ValueError:
-            pass   
-         # If no charge was found, charge=0
-         return charge if charge else 0
-    
-    # Finds the chemical formula through the ChEBI/BiGG API, defaults to: 'No formula'
-   def find_formula(row: pd.Series) -> str:
-      chebi_id = get_chebi_id(row)
-      bigg_id, chem_form = str(row.get('bigg_id')), str(row.get('Chemical Formula'))
-      chem_formula = None
-      if chebi_id: # Get formula from ChEBI
-         chebi_entity = libchebipy.ChebiEntity(chebi_id)
-         chem_formula = chebi_entity.get_formula()
-      if not chem_formula:  # If no formula was found with ChEBI/No ChEBI ID available
-         if bigg_id != 'nan': # Get formula from BiGG
-            try:
-               chem_formula = requests.get(BIGG_METABOLITES_URL + bigg_id[:-2]).json()['formulae'][0]  # Take first formula
-            except ValueError:
-               pass
-         if not chem_formula: # If no formula was found with BiGG ID
-            # Get formula already existing in dataframe or set to 'No formula'
-            chem_formula = chem_form if chem_form != 'nan' else 'No formula'
-      return chem_formula
-   
-   # using the ChEBI ID, retrieve the IUPAC name from the ChEBI database.
-   def find_iupac(row: pd.Series) -> str:
-
-      chebi_id = get_chebi_id(row)
-      if chebi_id:
-         chebi_entity = libchebipy.ChebiEntity(chebi_id)
-         # only take the IUPAC names
-         iupac_names = []
-         for name in chebi_entity.get_names():
-            print(name)
-            if name.get_source() == 'IUPAC':
-               iupac_names.append(name.get_name())
-               break
-
-         if len(iupac_names) > 0:
-            iupac_name = ', '.join(iupac_names)
-         else:
-            iupac_name = None
-      else:
-         iupac_name = None
-
-      return iupac_name
-
-   if charge:
-      missing_metabs['charge'] = missing_metabs.apply(find_charge, axis=1)
-   if formula:
-      missing_metabs['New Chemical Formula'] = missing_metabs.apply(find_formula, axis=1)
-      missing_metabs['Chemical Formula'] = missing_metabs['New Chemical Formula']
-      missing_metabs.drop('New Chemical Formula', axis=1, inplace=True)
-   if iupac:
-      missing_metabs['ChEBI_IUPAC'] = missing_metabs.apply(find_iupac, axis=1)
-   
-   return missing_metabs
-
 
 # SBO
 # ---
@@ -156,3 +61,139 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
 
     # @TODO: add transport reactions?
 
+
+# handling biomass reaction
+# -------------------------
+def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
+    """
+    Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#LL42C3-L42C3
+    
+    Expect the model to contain at least one biomass reaction.
+
+    The biomass composition aka biomass formulation aka biomass reaction
+    is a common pseudo-reaction accounting for biomass synthesis in
+    constraints-based modelling. It describes the stoichiometry of
+    intracellular compounds that are required for cell growth. While this
+    reaction may not be relevant to modeling the metabolism of higher
+    organisms, it is essential for single-cell modeling.
+
+    Implementation:
+    Identifies possible biomass reactions using two principal steps:
+    
+        1. Return reactions that include the SBO annotation "SBO:0000629" for
+        biomass.
+        
+        2. If no reactions can be identified this way:
+        
+            1. Look for the ``buzzwords`` "biomass", "growth" and "bof" in reaction IDs.
+            2. Look for metabolite IDs or names that contain the ``buzzword`` "biomass" and obtain the set of reactions they are involved in.
+            3. Remove boundary reactions from this set.
+            4. Return the union of reactions that match the buzzwords and of the reactions that metabolites are involved in that match the buzzword.
+        
+    This test checks if at least one biomass reaction is present.
+    
+    If no reaction can be identified return None.
+
+    """
+    biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
+    outcome = len(biomass_rxn) > 0
+    logging.info(
+        """In this model the following {} biomass reaction(s) were
+        identified: {}""".format(
+            len(biomass_rxn), truncate(biomass_rxn)
+        )
+    )
+    if outcome: return biomass_rxn
+    else: return None
+
+
+def sum_biomass_weight(reaction: Reaction) -> float:
+    """
+    From MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/support/biomass.py#L95
+    
+    Compute the sum of all reaction compounds.
+
+    This function expects all metabolites of the biomass reaction to have
+    formula information assigned.
+
+    Args:
+        - reaction (Reaction): 
+            The biomass reaction of the model under investigation.
+
+    Returns:
+        float: 
+            The molecular weight of the biomass reaction in units of g/mmol.
+    """
+    return (
+        sum(
+            -coef * met.formula_weight
+            for (met, coef) in iteritems(reaction.metabolites)
+        )
+        / 1000.0
+    )
+    
+    
+def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[float, str]:
+    """
+    Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#L89
+    
+    Expect biomass components to sum up to 1 g[CDW].
+
+    This test only yields sensible results if all biomass precursor
+    metabolites have chemical formulas assigned to them.
+    The molecular weight of the biomass reaction in metabolic models is
+    defined to be equal to 1 g/mmol. Conforming to this is essential in order
+    to be able to reliably calculate growth yields, to cross-compare models,
+    and to obtain valid predictions when simulating microbial consortia. A
+    deviation from 1 - 1E-03 to 1 + 1E-06 is accepted.
+
+    Implementation:
+    Multiplies the coefficient of each metabolite of the biomass reaction with
+    its molecular weight calculated from the formula, then divides the overall
+    sum of all the products by 1000.
+
+    Args: 
+        - model(cobraModel):
+            The model loaded with COBRApy.
+        - reaction_id(str):
+            Reaction ID of a BOF.
+
+    Returns:
+        (1) Case: problematic input
+                str: 
+                    an error message.
+        
+        (2) Case: successful testing
+                float: 
+                    biomass weight
+    """
+    reaction = model.reactions.get_by_id(reaction_id)
+    try:
+        biomass_weight = sum_biomass_weight(reaction)
+    except TypeError:
+        message = """
+        One or more of the biomass components do not have a defined formula or contain unspecified chemical groups.
+        The biomass overall weight could thus not be calculated.
+        """
+        return message
+    else:
+        if ((1 - 1e-03) < biomass_weight < (1 + 1e-06)):
+            logging.info(            
+                """The component molar mass of the biomass reaction {} sums up to {}
+                which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
+                """.format(
+                    reaction_id, biomass_weight
+                    )
+                )
+        else:
+            logging.warning(
+                """The component molar mass of the biomass reaction {} sums up to {}
+                which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
+                """.format(
+                    reaction_id, biomass_weight
+                )
+            )
+    #outcome = (1 - 1e-03) < biomass_weight < (1 + 1e-06) -> Need to implement that for check
+    # To account for numerical inaccuracies, a range from 1-1e0-3 to 1+1e-06
+    # is implemented in the assertion check
+    return biomass_weight

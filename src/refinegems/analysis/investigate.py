@@ -21,7 +21,7 @@ from memote.support import consistency
 from memote.support import consistency_helpers as con_helpers
 
 from ..utility.io import search_sbo_label
-from ..utility.entities import test_biomass_presence
+from ..utility.util import test_biomass_presence
 
 ################################################################################
 # variables

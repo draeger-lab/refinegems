@@ -18,7 +18,7 @@ import warnings
 import yaml
 
 from cobra import Model as cobraModel
-from ..utility.entities import test_biomass_presence
+from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import SingleGrowthSimulationReport, GrowthSimulationReport, AuxotrophySimulationReport, SourceTestReport
 from ..classes.medium import Medium, medium_to_model, read_from_cobra_model, load_medium_from_db, read_external_medium

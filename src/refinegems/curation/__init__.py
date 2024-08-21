@@ -1,6 +1,4 @@
-__all__ = ['db_access','biomass','charges','curate','pathways','polish']
-
-from . import db_access
+__all__ = ['biomass','charges','curate','pathways','polish']
 
 from . import biomass
 from . import charges

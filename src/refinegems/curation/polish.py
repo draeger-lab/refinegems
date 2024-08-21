@@ -31,7 +31,8 @@ from tqdm.auto import tqdm
 from typing import Union
 
 from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from ..utility.io import search_ncbi_for_gpr, parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
+from ..utility.db_access import search_ncbi_for_gpr
+from ..utility.io import parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 
 ################################################################################
 # variables

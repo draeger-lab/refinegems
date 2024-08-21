@@ -11,7 +11,9 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 import cobra
 import json
 import memote
+import pandas as pd
 import shutil
+import subprocess
 import tempfile
 import time
 import warnings
@@ -33,7 +35,7 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
-from .entities import test_biomass_presence
+from .util import test_biomass_presence
 from .io import write_model_to_file
 
 # note:
@@ -44,13 +46,6 @@ from .io import write_model_to_file
 ################################################################################
 # variables
 ################################################################################
-
-# database urls
-# -------------
-
-BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
-BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
-
 
 ################################################################################
 # functions
@@ -146,6 +141,94 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
 
     return new_objective
 
+
+# DIAMOND
+# -------
+
+# @ISSUE / @NOTE / @TODO
+#   is this the right place to put these functions?
+def run_DIAMOND_blastp(fasta:str, db:str, 
+                       sensitivity:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
+                       coverage:float=95.0,
+                       threads:int=2,
+                       outdir:str=None, outname:str='DIAMOND_blastp_res.tsv') -> str:
+    """Run DIAMOND in BLASTp mode.
+
+    Args:
+        - fasta (str): 
+            The FASTA file to BLAST for.
+        - db (str): 
+            The DIAMOND database file to BLAST against
+        - sensitivity (Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive'], optional): 
+            Sensitivity mode for DIAMOND. 
+            Defaults to 'more-sensitive'.
+        - coverage (float, optional): 
+            A parameter for DIAMOND
+            Coverage theshold for the hits. 
+            Defaults to 95.0.
+        - threads (int, optional): 
+            A parameter for DIAMOND.
+            Number of threds to be used while BLASTing.
+            Defaults to 2.
+        - outdir (str, optional): 
+            Path to a directory to write the output files to. 
+            Defaults to None.
+        - outname (str, optional): 
+            Name of the result file (name only, not a path). 
+            Defaults to 'DIAMOND_blastp_res.tsv'.
+
+    Returns:
+        str: 
+            Path to the results of the DIAMOND BLASTp run. 
+    """
+    
+    if outdir:
+        outname = Path(outdir,'DIAMOND_blastp_res.tsv')
+        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
+    else:
+        outname = Path(outname)
+        logfile = Path('log_DIAMOND_blastp.txt')
+      
+    # @TODO: test, if it works with different paths and their problems  
+    # @TODO: write additional output to a logfile, not stderr
+    subprocess.run([F'diamond blastp -d {db} -q {fasta} --{sensitivity} --query-cover {coverage} -p {int(threads)} -o {outname} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore 2> {logfile}'], shell=True)
+
+    return outname
+
+def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0) -> pd.DataFrame:
+    """Filter the results of a DIAMOND BLASTp run (see 
+    :py:func:`~refinegems.curation.db_access.db.run_DIAMOND_blastp`)
+    by percentage identity value (PID) and extract the matching pairs of query 
+    and subject IDs.
+
+    Args:
+        - blasttsv (str): 
+            Path to the DIAMOND BLASTp result file.
+        - pid_theshold (float, optional): 
+            Threshold value for the PID. Given in percent.
+            Defaults to 90.0.
+
+    Raises:
+        - ValueError: PID threshold has to be between 0.0 and 100.0
+
+    Returns:
+        pd.DataFrame: 
+            A table with the columns query_ID and subject_ID containing hits from
+            BLAST run with s PID higher than the given threshold value.
+    """
+    
+    if pid_theshold > 100.0 or pid_theshold < 0.0:
+        raise ValueError('PID threshold has to be between 0.0 and 100.0')
+    
+    # load diamond results
+    diamond_results = pd.read_csv(blasttsv, sep='\t', header=None)
+    diamond_results.columns = ['query_ID', 'subject_ID', 'PID', 'align_len', 'no_mismatch', 'no_gapopen', 'query_start', 'query_end', 'subject_start', 'subject_end','E-value','bitscore']
+    # filter by PID
+    diamond_results = diamond_results[diamond_results['PID']>=pid_theshold]
+    # trim cols
+    diamond_results = diamond_results[['query_ID','subject_ID']]
+    
+    return diamond_results
 
 
 # MCC - MassChargeCuration
@@ -307,4 +390,5 @@ def run_SBOannotator(model: libModel) -> libModel:
         copy_scheme = shutil.copy(dbs_scheme,Path(tempdir,'dbs.sql'))
         model = sbo_annotator(doc,model,'constrained-based',str(Path(tempdir,'dbs')),str(Path(tempdir,'dud.xml')))
     return model
+
 

@@ -17,7 +17,7 @@ from cobra import Reaction
 from six import iteritems
 from typing import Union
 
-from ..utility.entities import test_biomass_consistency, test_biomass_presence
+from ..utility.util import test_biomass_consistency, test_biomass_presence
 
 ############################################################################
 # variables
