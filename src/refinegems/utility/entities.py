@@ -9,10 +9,9 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
+import ast
 import cobra 
 import json
-import logging
-import memote.support.helpers as helpers
 import pandas as pd
 import re
 import requests
@@ -23,26 +22,25 @@ from Bio import Entrez
 from Bio.KEGG import REST, Compound
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, Reaction, FbcOr, FbcAnd, GeneProductRef
-from memote.utils import truncate
-from random import choice 
-from six import iteritems
+
+from random import choice
 from string import ascii_uppercase, digits
 from typing import Union, Literal
+from tqdm import tqdm
 
-from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions
-from .io import search_ncbi_for_gpr, load_a_table_from_database, kegg_reaction_parser
+tqdm.pandas()
+pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
+
+from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, _add_annotations_from_dict_cobra
+from .db_access import search_ncbi_for_gpr, kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
+from .io import load_a_table_from_database
+from .util import COMP_MAPPING, VALID_COMPARTMENTS
 from ..developement.decorators import *
 
 ################################################################################
 # variables
 ################################################################################
 
-# compartments
-# ------------
-VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'} #: :meta: 
-COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
-                'C_c': 'c', 'C_e': 'e', 'C_p': 'p',
-                '':'y'} #: :meta: 
 
 ################################################################################
 # functions
@@ -101,144 +99,6 @@ def resolve_compartment_names(model:cobra.Model):
 
         else:
             raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Cannot resolve problem.')
-
-
-# handling biomass reaction
-# -------------------------
-def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
-    """
-    Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#LL42C3-L42C3
-    
-    Expect the model to contain at least one biomass reaction.
-
-    The biomass composition aka biomass formulation aka biomass reaction
-    is a common pseudo-reaction accounting for biomass synthesis in
-    constraints-based modelling. It describes the stoichiometry of
-    intracellular compounds that are required for cell growth. While this
-    reaction may not be relevant to modeling the metabolism of higher
-    organisms, it is essential for single-cell modeling.
-
-    Implementation:
-    Identifies possible biomass reactions using two principal steps:
-    
-        1. Return reactions that include the SBO annotation "SBO:0000629" for
-        biomass.
-        
-        2. If no reactions can be identified this way:
-        
-            1. Look for the ``buzzwords`` "biomass", "growth" and "bof" in reaction IDs.
-            2. Look for metabolite IDs or names that contain the ``buzzword`` "biomass" and obtain the set of reactions they are involved in.
-            3. Remove boundary reactions from this set.
-            4. Return the union of reactions that match the buzzwords and of the reactions that metabolites are involved in that match the buzzword.
-        
-    This test checks if at least one biomass reaction is present.
-    
-    If no reaction can be identified return None.
-
-    """
-    biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
-    outcome = len(biomass_rxn) > 0
-    logging.info(
-        """In this model the following {} biomass reaction(s) were
-        identified: {}""".format(
-            len(biomass_rxn), truncate(biomass_rxn)
-        )
-    )
-    if outcome: return biomass_rxn
-    else: return None
-
-
-def sum_biomass_weight(reaction: Reaction) -> float:
-    """
-    From MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/support/biomass.py#L95
-    
-    Compute the sum of all reaction compounds.
-
-    This function expects all metabolites of the biomass reaction to have
-    formula information assigned.
-
-    Args:
-        - reaction (Reaction): 
-            The biomass reaction of the model under investigation.
-
-    Returns:
-        float: 
-            The molecular weight of the biomass reaction in units of g/mmol.
-    """
-    return (
-        sum(
-            -coef * met.formula_weight
-            for (met, coef) in iteritems(reaction.metabolites)
-        )
-        / 1000.0
-    )
-    
-    
-def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[float, str]:
-    """
-    Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#L89
-    
-    Expect biomass components to sum up to 1 g[CDW].
-
-    This test only yields sensible results if all biomass precursor
-    metabolites have chemical formulas assigned to them.
-    The molecular weight of the biomass reaction in metabolic models is
-    defined to be equal to 1 g/mmol. Conforming to this is essential in order
-    to be able to reliably calculate growth yields, to cross-compare models,
-    and to obtain valid predictions when simulating microbial consortia. A
-    deviation from 1 - 1E-03 to 1 + 1E-06 is accepted.
-
-    Implementation:
-    Multiplies the coefficient of each metabolite of the biomass reaction with
-    its molecular weight calculated from the formula, then divides the overall
-    sum of all the products by 1000.
-
-    Args: 
-        - model(cobraModel):
-            The model loaded with COBRApy.
-        - reaction_id(str):
-            Reaction ID of a BOF.
-
-    Returns:
-        (1) Case: problematic input
-                str: 
-                    an error message.
-        
-        (2) Case: successful testing
-                float: 
-                    biomass weight
-    """
-    reaction = model.reactions.get_by_id(reaction_id)
-    try:
-        biomass_weight = sum_biomass_weight(reaction)
-    except TypeError:
-        message = """
-        One or more of the biomass components do not have a defined formula or contain unspecified chemical groups.
-        The biomass overall weight could thus not be calculated.
-        """
-        return message
-    else:
-        if ((1 - 1e-03) < biomass_weight < (1 + 1e-06)):
-            logging.info(            
-                """The component molar mass of the biomass reaction {} sums up to {}
-                which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
-                """.format(
-                    reaction_id, biomass_weight
-                    )
-                )
-        else:
-            logging.warning(
-                """The component molar mass of the biomass reaction {} sums up to {}
-                which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
-                """.format(
-                    reaction_id, biomass_weight
-                )
-            )
-    #outcome = (1 - 1e-03) < biomass_weight < (1 + 1e-06) -> Need to implement that for check
-    # To account for numerical inaccuracies, a range from 1-1e0-3 to 1+1e-06
-    # is implemented in the assertion check
-    return biomass_weight
-
 
 
 # handling cobra entities (features)
@@ -367,6 +227,36 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
                 return label
             
         j = j + 1
+
+
+# @NOTE: Add to reaction handling for `build_reac_bigg`?
+def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+   """Extracts a set of all reactants & products from the missing reactions
+   
+   Args:
+      - missing_reactions (pd.DataFrame): 
+         Table containing all missing reactions found through the 
+         missing genes
+                                          
+   Returns:
+      tuple: 
+         Two tables (1) & (2) 
+
+         (1) pd.DataFrame: Table with the column Compound containing all compounds required for the missing BioCyc reactions
+         (2) pd.DataFrame: Table with the column bigg_id containing all compounds required for the missing BiGG reactions
+   """
+   # Get all BioCyc metabolites necessary for the BioCyc reactions
+   biocyc_reactants = [r for row in missing_reactions['Reactants'] for r in row]
+   biocyc_products = [p for row in missing_reactions['Products'] for p in row]
+   biocyc_metabolites = list(set([*biocyc_reactants, *biocyc_products]))
+   
+   # Get all BiGG metabolites necessary for the BiGG reactions
+   bigg_reactions = [ast.literal_eval(str(reac_dict)) for reac_dict in missing_reactions['bigg_reaction']]
+   bigg_reactants = [r for reac_dict in bigg_reactions for r in reac_dict.get('reactants')]
+   bigg_products = [p for reac_dict in bigg_reactions for p in reac_dict.get('products')]
+   bigg_metabolites = list(set([*bigg_reactants, *bigg_products]))
+   
+   return (pd.DataFrame(biocyc_metabolites, columns=['Compound']), pd.DataFrame(bigg_metabolites, columns=['bigg_id']))
 
 
 # @TODO: 
@@ -507,109 +397,6 @@ def isreaction_complete(reac:cobra.Reaction,
         
 
     return True
-
-# extending annotations
-# ---------------------
-# @TODO is this a good place for these functions or maybe somewhere else?
-
-# @TODO name of this function is not good
-def get_BiGG_metabs_annotation_via_dbid(metabolite:cobra.Metabolite, 
-                                        id:str, dbcol:str, 
-                                        compartment:str = 'c') -> None:
-    """Search for a BiGG ID and add it to a metabolite annotation. 
-    The search is based on a column name of the BiGG metabolite table
-    and an ID to search for. Additionally, using the given compartment name, 
-    the found IDs are filtered for matching compartments.
-
-    Args:
-        - metabolite (cobra.Metabolite): 
-            The metabolite. Needs to a a COBRApy Metabolte object.
-        - id (str): 
-            The ID to search for in the database.
-        - dbcol (str): 
-            Name of the column of the database to check the ID against.
-        - compartment (str, optional): 
-            The compartment name. Needs to be a valid BiGG compartment ID. 
-            Defaults to 'c'.
-    """
-    # check, if a BiGG annotation is given
-    if not 'bigg.metabolite' in metabolite.annotation.keys():
-        # seach the database for the found id
-        bigg_search = load_a_table_from_database(
-            f'SELECT * FROM bigg_metabolites WHERE \'{dbcol}\' = \'{id}\'',
-            query=True)
-        if len(bigg_search) > 0:
-            # check, if the matches also match the compartment
-            metabolite.annotation['bigg.metabolite'] = [_ for _ in bigg_search['id'].tolist() if _.endswith(f'_{compartment}')]
-            # add final matches to the annotations of the metabolite
-            if len(metabolite.annotation['bigg.metabolite']) == 0:
-                metabolite.annotation.pop('bigg.metabolite')
- 
- 
-def add_annotations_from_BiGG_metabs(metabolite:cobra.Metabolite) -> None:
-    """Check a cobra.metabolite for bigg.metabolite annotations. If they exists, 
-    search for more annotations in the BiGG database and add them to the metabolite.
-
-    Args:
-        - metabolite (cobra.Metabolite): 
-            The metabolite object.
-    """
-    if 'bigg.metabolite' in metabolite.annotation.keys():
-        bigg_information = load_a_table_from_database(
-            'SELECT * FROM bigg_metabolites WHERE id = \'' + f'\' OR id = \''.join(metabolite.annotation['bigg.metabolite']) + '\'',
-            query=True)
-        db_id_bigg = {'BioCyc':'biocyc', 'MetaNetX (MNX) Chemical':'metanetx.chemical','SEED Compound':'seed.compound','CHEBI':'chebi', 'KEGG Compound':'kegg.compound'}
-        for db in db_id_bigg:
-            info = list(set(bigg_information[db].dropna().to_list()))
-            if len(info) > 0:
-                info = ','.join(info)
-                info = [x.strip() for x in info.split(',')] # make sure all entries are a separate list object
-                if db_id_bigg[db] in metabolite.annotation.keys():
-                    metabolite.annotation[db_id_bigg[db]] = list(set(info + metabolite.annotation[db_id_bigg[db]]))
-                else:
-                    metabolite.annotation[db_id_bigg[db]] = info
-
-
-def _add_annotations_from_bigg_reac_row(row:pd.Series, reac:cobra.Reaction) -> None:
-    """Given a row of the BiGG reaction database table and a cobra.Reaction object,
-    extend the annotation of the latter with the information of the former.
-
-    Args:
-        - row (pd.Series): 
-            The row of the database table.
-        - reac (cobra.Reaction): 
-            The reaction object.
-    """
-    
-    dbnames = {'RHEA':'rhea','BioCyc':'biocyc','MetaNetX (MNX) Equation':'metanetx.reaction','EC Number':'ec-code'}
-    for dbname,dbprefix in dbnames.items():
-        if row[dbname]:
-            ids_to_add = row[dbname].split(',')
-            if dbprefix in reac.annotation.keys():
-                reac.annotation[dbprefix] = list(set(reac.annotation[dbprefix]).union(set(ids_to_add)))
-            else:
-                reac.annotation[dbprefix] = ids_to_add
-
-
-def _add_annotations_from_dict_cobra(references:dict, entity:cobra.Reaction|cobra.Metabolite|cobra.Model) -> None:
-    """Given a dictionary and a cobra object, add the former as annotations to the latter.
-    The keys of the dictionary are used as the annotation labels, the values as the values.
-    If the keys are already in the entity, the values will be combined (union).
-
-    Args:
-        - references (dict): 
-            The dictionary with the references to add the entity.
-        - entity (cobra.Reaction | cobra.Metabolite | cobra.Model): 
-            The entity to add annotations to.
-    """
-    # add additional references from the parameter
-    for db,idlist in references.items():
-        if not isinstance(idlist,list):
-            idlist = [idlist]
-        if db in entity.annotation.keys():
-            entity.annotation[db] = list(set(entity.annotation[db] + idlist))
-        else:
-            entity.annotation[db] = idlist
 
 
 # adding metabolites to cobra models
@@ -754,7 +541,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
             new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
         else:
             # if no BiGG was found in MetaNetX, try reverse search in BiGG
-            get_BiGG_metabs_annotation_via_dbid(new_metabolite, id, 'MetaNetX (MNX) Chemical', compartment)
+            get_BiGG_metabs_annot_via_dbid(new_metabolite, id, 'MetaNetX (MNX) Chemical', compartment)
                 
         # add additional information from BiGG (if ID found)    
         add_annotations_from_BiGG_metabs(new_metabolite)
@@ -924,7 +711,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
         new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
     
     # if no BiGG ID, try reverse search
-    get_BiGG_metabs_annotation_via_dbid(new_metabolite, id, 'KEGG Compound', compartment)
+    get_BiGG_metabs_annot_via_dbid(new_metabolite, id, 'KEGG Compound', compartment)
     
     # search for annotations in BiGG
     add_annotations_from_BiGG_metabs(new_metabolite)
@@ -1080,20 +867,11 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
         return model.metabolites.get_by_id(new_metabolite.id)
     
     return new_metabolite
-    
-
-@implement
-def build_metabolite_biocyc(id:str, model:cobra.Model, 
-                         namespace:str,
-                         compartment:str,
-                         idprefix:str) -> cobra.Metabolite: 
-    pass
 
 
 # adding reactions cobra models
 # -----------------------------
 
-# @TODO: BioCyc missing
 def parse_reac_str(equation:str, 
                    type:Literal['BiGG','BioCyc','MetaNetX','KEGG']='MetaNetX') -> tuple[dict,dict,list,bool]:
     """Parse a reaction string.
@@ -1667,119 +1445,6 @@ def build_reaction_bigg(model:cobra.Model, id:str,
         return [new_reac.id]
 
     return new_reac
-    
-    
-@implement
-def build_reaction_biocyc(model:cobra.Model, id:str=None,
-                          reac_str:str=None,
-                          references:dict={},
-                          idprefix:str='refineGEMs',
-                          namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, list, None]:
-    """Construct a new reaction for a model from a BiGG reaction ID.
-    This function will NOT add the reaction directly to the model, if the 
-    construction process is successful.
-
-    Args:
-        - model (cobra.Model): 
-            The model loaded with COBRApy.
-        - id (str): 
-            A BioCyc reaction ID.
-        - reac_str (str, optional): 
-            The reaction equation string from the database.
-            Defaults to None.
-        - references (dict, optional): 
-            Additional annotations to add to the reaction (idtype:[value]). 
-            Defaults to {}.
-        - idprefix (str, optional): 
-            Prefix for the pseudo-identifier. Defaults to 'refineGEMs'.
-        - namespace (Literal['BiGG'], optional): 
-            Namespace to use for the reaction ID. 
-            If namespace cannot be matched, uses the pseudo-ID
-            Defaults to 'BiGG'.
-
-    Returns:
-        Case successful construction:
-            
-            cobra.Reaction:
-                The newly build reaction object. 
-            
-        Case construction not possible:
-            
-            None:
-                Nothing to return.
-            
-        Case reaction found in model.
-            
-            list: 
-                List of matching reaction IDs (in model).
-    """
-    
-    # ---------------------
-    # check, if ID in model
-    # ---------------------
-    matches_found = [_.id for _ in model.reactions if 'bigg.reaction' in _.annotation.keys() and _.annotation['bigg.reaction']==id]
-    if len(matches_found) > 0:
-        return matches_found
-    
-    # -----------------------------
-    # otherwise, build new reaction
-    # -----------------------------
-    # create reaction object
-    new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
-    
-    # get information from the database
-    bigg_reac_info = load_a_table_from_database(
-            f'SELECT * FROM bigg_reactions WHERE id = \'{id}\'',
-            query=True).iloc[0,:]
-    new_reac.name = bigg_reac_info['name']
-    
-    # add metabolites
-    # ---------------
-    reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
-    
-    metabolites = {}
-    meta_counter = 0
-    # reconstruct reactants
-    for mid,factor in reactants.items():
-        tmp_meta = build_metabolite_bigg(mid,model,
-                                        namespace,
-                                        idprefix)
-        if tmp_meta:
-            metabolites[tmp_meta] = -1*factor
-            meta_counter += 1
-        else:
-            return None # not able to build reaction successfully
-        
-    # reconstruct products
-    for mid,factor in products.items():
-        tmp_meta = build_metabolite_bigg(mid,model,
-                                        namespace,
-                                        idprefix)
-        if tmp_meta:
-            metabolites[tmp_meta] = factor
-            meta_counter += 1
-        else:
-            return None # not able to build reaction successfully
-        
-    # add metabolites to reaction
-    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
-    new_reac.add_metabolites(metabolites)
-    
-    # set reversibility
-    if rev:
-        new_reac.bounds = (1000.0,1000.0)
-    else:
-        new_reac.bounds = (0.0,1000.0)
-    
-    # add annotations
-    # ---------------
-    # add SBOTerm
-    new_reac.annotation['sbo'] = 'SBO:0000167'
-    # add infos from BiGG
-    new_reac.annotation['bigg.reaction'] = [id]
-    _add_annotations_from_bigg_reac_row(bigg_reac_info, new_reac)
-    # add additional references from the parameter
-    _add
 
 
 @implement

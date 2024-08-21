@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # @TODO: Correct/Rewrite doc string
+# @TEST - new runtimes 
 """Add more reactions, genes and more to a model based on different gap-filling methods.
     The `gapfill` module can be used either with KEGG were you only need the KEGG organism code or with BioCyc or with both (Options: 'KEGG', 'BioCyc', 'KEGG+BioCyc').
     For how to obtain the BioCyc tables look into the documentation under: 'Main modules' > 'Gap filling' > 'Automated gap filling'.
@@ -19,13 +20,12 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune and Dr. Reihane
 
 from abc import ABC, abstractmethod
 
-import ast
 import cobra
 import io
-from matplotlib import axis
 import numpy as np
 import pandas as pd
 import re
+import sqlite3
 import warnings
 
 from bioservices.kegg import KEGG
@@ -38,10 +38,11 @@ from typing import Literal, Union
 from tqdm import tqdm
 tqdm.pandas()
 
-from ..curation.db_access.db import get_ec_from_ncbi, get_ec_via_swissprot
+from ..utility.databases import PATH_TO_DB
+from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec, add_stoichiometric_values_to_reacs_from_bigg
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
-from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_biocyc, build_reaction_kegg, build_reaction_mnx, isreaction_complete
-from ..curation.db_access.kegg import parse_KEGG_gene, parse_KEGG_ec
+from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, extract_metabolites_from_reactions
+from ..utility.util import VALID_COMPARTMENTS
 from ..developement.decorators import *
 
 ##### Coloured text:
@@ -55,7 +56,7 @@ def coloured_example_text():
       'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
 
 
-# Note:
+# @Note:
 #   some reactions have @DEBUGGING 
 #   enable these parts to shorten runtime during debugging (used to work on a subset, 
 #   not on the whole input)
@@ -66,8 +67,120 @@ def coloured_example_text():
 
 
 ############################################################################
-# where to put 
+# functions
 ############################################################################
+
+# @DISCUSSION: Keep for end user? Use somewhere else? Or deprecate?
+# Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
+def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, metabolites: bool=False) -> pd.DataFrame:
+    """Compares missing entities obtained through genes extracted via KEGG/BioCyc to entities in the model
+    Needed to back check previous comparisons.
+
+    Args:
+        - complete_df (pd.DataFrame): 
+            Table that contains KEGG/BioCyc Id, BiGG Id & more
+        - model_entities (pd.DataFrame): 
+            BiGG Ids of entities in the model 
+        - metabolites (bool): 
+            True if names of metabolites should be added, otherwise false
+
+    Returns:
+        pd.DataFrame: 
+            Table containing entities present in KEGG/BioCyc but not in the model
+    """
+    db = 'KEGG' if 'KEGG' in complete_df.columns else 'BioCyc'  # Find out which database was used
+    
+    # Get only IDs that are not in model
+    mapp = complete_df.set_index('bigg_id')
+    entities = model_entities.set_index('bigg_id')
+    entities_missing_in_model = mapp[~mapp.index.isin(
+        entities.index)].reset_index()
+    
+    db_ids = entities_missing_in_model.groupby('bigg_id')[db].agg(set)  # Get a set of all BioCyc/KEGG IDs belonging to one BiGG ID
+    
+    # Add set of BioCyc/KEGG IDs belonging to one BiGG ID to the dataframe
+    entities_missing_in_model.set_index('bigg_id', inplace=True)
+    entities_missing_in_model.loc[:, db] = db_ids
+    entities_missing_in_model.reset_index(inplace=True)
+    
+    if 'id_group' in entities_missing_in_model.columns:  # Remove reaction ID duplicates but keep all related BiGG & BioCyc/KEGG IDs in a list
+        aliases = entities_missing_in_model.groupby(['compartment', 'id_group'])['bigg_id'].agg(set)  # Get a set of the 'duplicated' BiGG reaction IDs -> aliases
+        entities_missing_in_model.drop_duplicates(['compartment', 'id_group'], inplace=True, ignore_index=True)  # Drop duplicates where compartments & id_group same
+        
+        # Add set of BiGG ID aliases to the dataframe
+        entities_missing_in_model.set_index(['compartment', 'id_group'], inplace=True)
+        entities_missing_in_model.loc[:, 'bigg_aliases'] = aliases
+        entities_missing_in_model.reset_index(inplace=True)
+        
+        entities_missing_in_model.drop(labels='id_group', axis=1, inplace=True)  # id_group is not longer necessary
+        
+    entities_missing_in_model.drop_duplicates(subset='bigg_id', inplace=True, ignore_index=True)  # Remove BiGG ID duplicates
+    
+    # Add name column to dataframe
+    def get_name_from_bigg(bigg_id: str):
+        bigg_db = 'bigg_metabolites' if metabolites else 'bigg_reactions'
+        query = f"SELECT name FROM {bigg_db} WHERE bigg_id=\'{bigg_id}\'"
+        name_from_bigg = con.execute(query).fetchone()[0]
+        return name_from_bigg
+    
+    con = sqlite3.connect(PATH_TO_DB)  # Open connection to database
+    entities_missing_in_model['name'] = entities_missing_in_model['bigg_id'].map(get_name_from_bigg)
+    con.close()
+    
+    # Add compartment ID to all BiGG metabolites
+    if metabolites:
+        def get_compartment_from_id(bigg_id: str):
+            compartment = bigg_id[-1]
+            return compartment if compartment in VALID_COMPARTMENTS.keys() else np.nan  # To filter the incorrect compartments out
+        
+        entities_missing_in_model['compartment'] = entities_missing_in_model.apply(
+            lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
+        entities_missing_in_model.dropna(subset=['compartment'], inplace=True)  # Drop all BiGG metabolite IDs which have no valid compartment
+    
+    return entities_missing_in_model
+
+
+# Mapping for BioCyc Reactions
+# ----------------------------
+def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[str: int]]:
+
+    statistics = {
+        'mapped2MNX': 0, 
+        'mapped2BiGG': 0, 
+        'mapped2KEGG': 0, 
+        'remaining_unmapped': 0
+    }
+
+    # Drop NaNs in relevant columns
+    biocyc_reacs.dropna(subset=['id', 'ec-code'], inplace=True)
+
+    # Mapping to BiGG + addition of more information on BiGG Reactions
+    # Get BiGG BioCyc
+    bigg2biocyc_reacs = load_a_table_from_database('SELECT id, BioCyc from bigg_reactions')
+
+    # Subset missing_reactions with BiGG BioCyc
+    bigg2biocyc_reacs.rename({'id': 'BiGG', 'BioCyc': 'id'}, inplace=True)
+    # @TODO: collect non-matched entries // return all // namespace independance ????
+    biocyc_reacs = bigg2biocyc_reacs.merge(biocyc_reacs, on='BioCyc', how='right')
+
+    # Get amount of missing reactions that have a BiGG ID
+    statistics['Reaction']['Have BiGG ID'] = len(biocyc_reacs['BioCyc'].unique().tolist())
+
+    # Get amount of missing reactions that are not in the model
+    statistics['Reaction']['Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
+
+    # Add reactants & products dictionary with stoichiometric values to the reactions table
+    missing_reactions = add_stoichiometric_values_to_reacs_from_bigg(missing_reactions)
+
+    # Get all metabolites for the missing reactions
+    biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
+
+    # @NOTE
+    # @TODO
+    missing_bc_reacs = 'mapped_reacs + unmapped_reacs'
+
+    return missing_bc_reacs, statistics
+    
 
 # Mapping of EC numbers
 # ---------------------
@@ -176,7 +289,7 @@ def map_ec_to_reac(table:pd.DataFrame,
         """
         
         # get KEGG EC number information
-        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec, desc='Mapping reacs to KEGG')))   
+        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec)))   
         kegg_mapped['is_transport'] = None
         kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
         kegg_mapped.explode(column='id')
@@ -637,9 +750,9 @@ class GapFiller(ABC):
             
             # .......................
             # @DEBUGGING
-            if len(self.missing_reacs) > 10:
-                self.missing_reacs = self.missing_reacs.sample(10)
-                print('fill_model: Running in debugging mode')
+            # if len(self.missing_reacs) > 10:
+            #     self.missing_reacs = self.missing_reacs.sample(10)
+            #     print('fill_model: Running in debugging mode')
             # .......................
                 
             # add reactions to model  
@@ -692,6 +805,10 @@ class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
     found with the KEGG database. 
+    
+    .. note::
+    
+        Due to the KEGG REST API this is relatively slow.
 
     Attributes:
     
@@ -767,8 +884,8 @@ class KEGGapFiller(GapFiller):
         # Step 5: map to EC via KEGG
         # --------------------------
         # @DEBUGGING ...................
-        genes_not_in_model = genes_not_in_model.iloc[330:350,:]
-        print(UserWarning('Running in debugging mode.'))
+        # genes_not_in_model = genes_not_in_model.iloc[330:350,:]
+        # print(UserWarning('Running in debugging mode.'))
         # ..............................
         geneKEGG_mapping = pd.DataFrame.from_dict(list(genes_not_in_model['orgid:locus'].progress_apply(parse_KEGG_gene)))
         genes_not_in_model = genes_not_in_model.merge(geneKEGG_mapping, how='left', on='orgid:locus')
@@ -1232,8 +1349,8 @@ class GeneGapFiller(GapFiller):
         # -----------------------------------
         #       -> access ncbi for ec (optional) 
         # @DEBUGGING ...................
-        mapped_reacs = mapped_reacs.iloc[300:350,:]
-        print(UserWarning('Running in debugging mode.'))
+        # mapped_reacs = mapped_reacs.iloc[300:350,:]
+        # print(UserWarning('Running in debugging mode.'))
         # ..............................
         if check_NCBI and mail:
             mapped_reacs['ec-code'] = mapped_reacs.progress_apply(lambda x: get_ec_from_ncbi(mail,x['ncbiprotein']) if not x['ec-code'] and not x['ncbiprotein'].isna() else x['ec-code'], axis=1)
@@ -1294,37 +1411,7 @@ class GeneGapFiller(GapFiller):
 ############################################################################
 # For filtering
 ############################################################################
-# Evtl hier: 
-'''
-biocyc_reacs.dropna(
-    subset=['id', 'Reactants', 'Products', 'EC'], inplace=True
-    )
-'''
-
-''' Mapping to BiGG + addition of more information on BiGG Reactions
-# Get BiGG BioCyc
-bigg2biocyc_reacs = get_bigg_db_mapping('BioCyc',False)
-
-# Subset missing_reactions with BiGG BioCyc
-missing_reactions.rename(columns={'Reaction': 'BioCyc'}, inplace=True)
-# @TODO: collect non-matched entries // return all // namespace independance ????
-missing_reactions = bigg2biocyc_reacs.merge(missing_reactions, on='BioCyc')
-
-# Get amount of missing reactions that have a BiGG ID
-self._statistics['Reaction']['Have BiGG ID'] = len(missing_reactions['BioCyc'].unique().tolist())
-
-# Subset missing_reactions with model_reacs
-missing_reactions = compare_bigg_model(missing_reactions, model_reacs)
-
-# Get amount of missing reactions that are not in the model
-self._statistics['Reaction']['Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
-
-# Add reactants & products dictionary with stoichiometric values to the reactions table
-missing_reactions = add_stoichiometric_values_to_reacs(missing_reactions)
-
-# Get all metabolites for the missing reactions
-biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
-'''
+# Evtl hier:
 
 # Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
 def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
