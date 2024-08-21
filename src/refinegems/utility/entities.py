@@ -1111,9 +1111,9 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     
     # set reversibility
     if rev:
-        new_reac.bounds = (1000.0,1000.0)
+        new_reac.bounds = cobra.Configuration().bounds
     else:
-        new_reac.bounds = (0.0,1000.0)
+        new_reac.bounds = (0.0,cobra.Configuration().upper_bound)
         
     # get annotations
     # ---------------
@@ -1125,7 +1125,7 @@ def build_reaction_mnx(model:cobra.Model, id:str,
             new_reac.annotation[db] = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
             # update reactions direction, if MetaCyc has better information
             if db == 'metacyc.reaction' and len(db_matches[db_matches['source'].str.contains('-->')]):
-                new_reac.bounds = (0.0,1000.0)
+                new_reac.bounds = (0.0,cobra.Configuration().upper_bound)
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references,new_reac)
     
@@ -1223,11 +1223,12 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     # Reaction reconstruction from equation
     # -------------------------------------
     
-    # skip, if not reaction string is available
+    # skip, if no reaction string is available
     if not reac_str:
         return None # reconstruction not possible
     
     # parse reaction string
+    # @TODO filter out not useable reaction strings
     reactants,products,comparts,rev = parse_reac_str(reac_str,'KEGG')
         
     # ..............................................
@@ -1356,15 +1357,6 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             list: 
                 List of matching reaction IDs (in model).
     """
-    # @TODO: 
-    # 1. If no Reaction-Direction is provided set direction to reversible!
-    # 2. No compartment provided -> Set compartment to cytosol
-    # 3. Set charge to zero?
-    # 4. Get information on formula with requests? biocyc api seems not helpful!
-    # 5. In Reihaneh's/Finn Mier's code in py4gems all reactants have stoichiometry -1 and all products 1...
-    #   -> Found example that stoichiometry in equation! Split at spaces to get?
-    # @DISCUSSION: Still no clue on how to map the names in the equations to actual biocyc compound IDs...
-    # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
     
     # ---------------------
     # check, if ID in model

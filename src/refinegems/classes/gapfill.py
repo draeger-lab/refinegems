@@ -289,7 +289,10 @@ def map_ec_to_reac(table:pd.DataFrame,
         """
         
         # get KEGG EC number information
-        kegg_mapped = pd.DataFrame.from_dict(list(unmapped_reacs.progress_apply(parse_KEGG_ec)))   
+        eccodes = unmapped_reacs['ec-code']
+        kegg_mapped = pd.DataFrame.from_dict(list(eccodes.progress_apply(parse_KEGG_ec)))
+        kegg_mapped = unmapped_reacs.merge(kegg_mapped, on='ec-code')
+        
         kegg_mapped['is_transport'] = None
         kegg_mapped['via'] = kegg_mapped['id'].apply(lambda x: 'KEGG' if x else None)
         kegg_mapped.explode(column='id')
@@ -316,6 +319,7 @@ def map_ec_to_reac(table:pd.DataFrame,
                 table = pd.concat([to_map,table[~table['id'].isna()]])
         else:
             table = _map_ec_to_reac_bigg(table)
+            
     
     # map to KEGG
     if use_KEGG: 
@@ -368,7 +372,7 @@ class GapFiller(ABC):
         self.missing_reactions = None   # missing reacs, that have not yet been sorted into any category
         
         # general information
-        self.geneid_type = 'ncbi' # @TODO
+        self.geneid_type = 'ncbi' # @TODO more options?
         
         # collect stats & Co, can be extended by subclasses
         self._statistics = {  
@@ -680,6 +684,7 @@ class GapFiller(ABC):
 
     # @TODO : logging
     # @TODO : save stuff for report / manual curation
+    # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
     # @TEST - only tested in debugging mode with GeneGapFiller
     def fill_model(self, model:Union[cobra.Model,libModel], 
                    **kwargs) -> libModel:
@@ -749,7 +754,7 @@ class GapFiller(ABC):
                 cobramodel = load_model(tmp.name,'cobra')
             
             # .......................
-            # @DEBUGGING
+            # @DEBUG
             # if len(self.missing_reacs) > 10:
             #     self.missing_reacs = self.missing_reacs.sample(10)
             #     print('fill_model: Running in debugging mode')
@@ -883,7 +888,7 @@ class KEGGapFiller(GapFiller):
         
         # Step 5: map to EC via KEGG
         # --------------------------
-        # @DEBUGGING ...................
+        # @DEBUG .......................
         # genes_not_in_model = genes_not_in_model.iloc[330:350,:]
         # print(UserWarning('Running in debugging mode.'))
         # ..............................
@@ -936,7 +941,9 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 # Gapfilling with BioCyc
 # ----------------------
-
+# @TODO: Possibility to add KEGG Reaction & MetaNetX IDs to SmartTable 
+#       -> So far these are empty for my test cases
+#       -> Could be added in a future update
 class BioCycGapFiller(GapFiller):
     """
     | @TODO: Write correct doc string
@@ -1348,7 +1355,7 @@ class GeneGapFiller(GapFiller):
         # Case 2: still no EC but ncbiprotein
         # -----------------------------------
         #       -> access ncbi for ec (optional) 
-        # @DEBUGGING ...................
+        # @DEBUG .......................
         # mapped_reacs = mapped_reacs.iloc[300:350,:]
         # print(UserWarning('Running in debugging mode.'))
         # ..............................
@@ -1412,7 +1419,6 @@ class GeneGapFiller(GapFiller):
 # For filtering
 ############################################################################
 # Evtl hier:
-
 # Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
 def replace_reaction_direction_with_fluxes(missing_reacs: pd.DataFrame) -> pd.DataFrame:
    """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'

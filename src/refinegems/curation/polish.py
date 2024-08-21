@@ -1469,11 +1469,15 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
         if not pd.isnull(direction):
             if 'REVERSIBLE' in direction:
                 # set reaction as reversible by setting default values for upper and lower bounds
-                r.lower_bound = -1000.
+                r.lower_bound = cobra.Configuration().lower_bound
             elif 'RIGHT-TO-LEFT' in direction:
                 # invert the default values for the boundaries
-                r.lower_bound = -1000.
-                r.upper_bound = 0.
+                r.lower_bound = cobra.Configuration().lower_bound
+                r.upper_bound = 0.0
+            elif 'LEFT-To-RIGHT' in direction:
+                # In case direction was already wrong
+                r.lower_bound = 0.0
+                r.upper_bound = cobra.Configuration().upper_bound
             else:
                 # left to right case is the standart for adding reactions
                 # = nothing left to do
