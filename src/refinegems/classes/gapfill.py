@@ -378,6 +378,7 @@ class GapFiller(ABC):
         self._statistics = {  
                 'genes':{
                     'missing (before)': 0,
+                    'duplicates': 0,
                     'added': 0,
                     'missing (after)': 0
                 },
@@ -710,6 +711,13 @@ class GapFiller(ABC):
             libModel: 
                 The gap-filled model.
         """
+        # filter out duplicates genes to avoid duplicates IDs in the model
+        # @TODO: Better idea to add duplicate genes
+        if len(self.missing_genes) != len(self.missing_genes['ncbiprotein'].unique()):
+            self.manual_curation['duplicate genes (not added)'] = self.missing_genes[self.missing_genes.duplicated(subset=['ncbiprotein'])]
+            self._statistics['genes']['duplicates'] = self._statistics['genes']['duplicates'] + len(self.manual_curation['duplicate genes (not added)'])
+            self.missing_genes = self.missing_genes[~self.missing_genes.duplicated(subset=['ncbiprotein'])]
+    
         
         # load the correct type of model for the first step
         # @TODO probably not working under Windows
@@ -1036,7 +1044,7 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Remove all rows where 'id' NaNs
-        self._biocyc_gene_tbl.dropna(subset='id', nplace=True)
+        self._biocyc_gene_tbl.dropna(subset='id', inplace=True)
 
     @property
     def biocyc_rxn_tbl(self):
@@ -1222,7 +1230,7 @@ class BioCycGapFiller(GapFiller):
         # Step 6: Get results
         # -------------------
         # Split missing reactios based on entries in 'via' & 'add_to_GPR'
-        mask = (self.missing_reacs['via'] == 'BioCyc') & (self.missing_reacs['add_to_GPR'].isna())
+        mask = (self.missing_reacs['via'] == 'BioCyc') | (self.missing_reacs['add_to_GPR'].isna())
         
         # DataFrame with unmappable BioCyc IDs & No entries in 'add_to_GPR'
         self.manual_curation['BioCyc reactions unmappable'] = self.missing_reacs[mask]
@@ -1290,7 +1298,6 @@ class GeneGapFiller(GapFiller):
             if col not in self.missing_genes.columns:
                 self.missing_genes[col] = None
 
-        # @TODO: We found duplicates! -> Remove? 
         # collect stats
         self._statistics['genes']['missing (before)'] = len(self.missing_genes)
                 
@@ -1298,11 +1305,11 @@ class GeneGapFiller(GapFiller):
         self.manual_curation['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
         self._statistics['genes']['no locus tag'] = len(self.manual_curation['gff no locus tag'])
         
-        # output
+        # formatting
         # ncbiprotein | locus_tag | ec-code
         self.missing_genes =  self.missing_genes[~self.missing_genes['locus_tag'].isna()]
         self.missing_genes = self.missing_genes.explode('ncbiprotein')
-    
+        
     
     def find_missing_reacs(self, model:cobra.Model,  
                           # prefix for pseudo ncbiprotein ids
