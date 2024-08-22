@@ -147,7 +147,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
     statistics = {
         'mapped2MNX': 0, 
         'mapped2BiGG': 0, 
-        'mapped2KEGG': 0, 
         'remaining_unmapped': 0
     }
 
@@ -156,31 +155,32 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
 
     # Mapping to BiGG + addition of more information on BiGG Reactions
     # Get BiGG BioCyc
-    bigg2biocyc_reacs = load_a_table_from_database('SELECT id, BioCyc from bigg_reactions')
+    bigg2biocyc_reacs = load_a_table_from_database('SELECT id, BioCyc, name, reaction_string from bigg_reactions')
 
-    # Subset missing_reactions with BiGG BioCyc
-    bigg2biocyc_reacs.rename({'id': 'BiGG', 'BioCyc': 'id'}, inplace=True)
-    # @TODO: collect non-matched entries // return all // namespace independance ????
-    biocyc_reacs = bigg2biocyc_reacs.merge(biocyc_reacs, on='BioCyc', how='right')
+    # Change column names to fit input table
+    bigg2biocyc_reacs.rename({'id': 'BiGG'}, axis=1, inplace=True)
+    bigg2biocyc_reacs.rename({'BioCyc': 'id'}, axis=1, inplace=True)
+
+    # Crop table to contain BiGG IDs set per BioCyc ID
+    bigg_as_list = bigg2biocyc_reacs.groupby('id')['BiGG'].apply(set).reset_index(name='BiGG')
+    bigg2biocyc_reacs.drop('BiGG', axis=1, inplace=True)
+    bigg2biocyc_reacs = bigg_as_list.merge(bigg2biocyc_reacs, on='id')
+    
+    biocyc_reacs = bigg2biocyc_reacs.merge(biocyc_reacs, on='id')
 
     # Get amount of missing reactions that have a BiGG ID
-    statistics['Reaction']['Have BiGG ID'] = len(biocyc_reacs['BioCyc'].unique().tolist())
+    statistics['mapped2BiGG'] = len(biocyc_reacs.loc[biocyc_reacs['BiGG'].notna(), 'id'].unique().tolist())
 
-    # Get amount of missing reactions that are not in the model
-    statistics['Reaction']['Can be added'] = len(missing_reactions['bigg_id'].unique().tolist())
-
+    # @DEPRECATE: Transfer this to model filling!
     # Add reactants & products dictionary with stoichiometric values to the reactions table
-    missing_reactions = add_stoichiometric_values_to_reacs_from_bigg(missing_reactions)
-
-    # Get all metabolites for the missing reactions
-    biocyc_metabs_from_reacs, bigg_metabs_from_reacs = extract_metabolites_from_reactions(missing_reactions)
+    # biocyc_reacs = add_stoichiometric_values_to_reacs_from_bigg(biocyc_reacs)
 
     # @NOTE
     # @TODO
-    missing_bc_reacs = 'mapped_reacs + unmapped_reacs'
+    missing_bc_reacs = biocyc_reacs # 'mapped_reacs + unmapped_reacs'
 
     return missing_bc_reacs, statistics
-    
+
 
 # Mapping of EC numbers
 # ---------------------
@@ -355,7 +355,7 @@ class GapFiller(ABC):
 
     Attributes:
         - full_gene_list (list): 
-            List of the all the genes. @TODO see code
+            List of all the genes. @TODO see code
         - geneid_type (str):
             What type of gene ID the model contains. 
             Defaults to 'ncbi'.
@@ -967,8 +967,7 @@ class BioCycGapFiller(GapFiller):
         - biocyc_reacs_tbl_path (str, required): 
             Path to organism-specific SmartTable for reactions from BioCyc;
             Should contain the columns: 
-            'Reaction' | 'Object ID' | 'EC-Number' | 'Reaction-Direction' | 
-            'Spontaneous?'
+            'Reaction' | 'Object ID' | 'EC-Number' | 'Spontaneous?'
         - gff (str, required): 
             Path to organism-specific GFF file
         - missing_genes (pd.DataFrame):
@@ -976,8 +975,7 @@ class BioCycGapFiller(GapFiller):
             'locus_tag' | 'id' | 'ncbiprotein' | 'name'
         - missing_reacs (pd.DataFrame):
             DataFrame containing the missing reactions with the columns 
-            'id' | 'ncbiprotein' | 'equation' | 'ec-code' | 
-            'Reaction-Direction' | 'via' | 'add_to_GPR'
+            'id' | 'ncbiprotein' | 'equation' | 'ec-code' | 'via' | 'add_to_GPR'
     """
     
     def __init__(self, biocyc_gene_tbl_path: str, 
@@ -1053,14 +1051,13 @@ class BioCycGapFiller(GapFiller):
     @biocyc_rxn_tbl.setter
     def biocyc_rxn_tbl(self, biocyc_reacs_tbl_path: str) -> pd.DataFrame:
         """Parses TSV file from BioCyc to retrieve 'Reaction', 'Object ID', 
-        'EC-Number', 'Reaction-Direction' & 'Spontaneous?'
+        'EC-Number' & 'Spontaneous?'
 
         Args:
             - biocyc_reacs_tbl_path (str):   
                 Path to organism-specific SmartTable for reactions from BioCyc;
                 Should contain the columns: 
-                'Reaction' | 'Object ID' | 'EC-Number' | 'Reaction-Direction' | 
-                'Spontaneous?'
+                'Reaction' | 'Object ID' | 'EC-Number' | 'Spontaneous?'
 
         Returns:
             pd.DataFrame: 
@@ -1070,8 +1067,7 @@ class BioCycGapFiller(GapFiller):
         self._biocyc_rxn_tbl = pd.read_table(
             biocyc_reacs_tbl_path, 
             usecols=[
-                'Reaction', 'Object ID', 'EC-Number', 'Reaction-Direction', 
-                'Spontaneous?'
+                'Reaction', 'Object ID', 'EC-Number', 'Spontaneous?'
                 ],
             dtype=str
             )
@@ -1176,8 +1172,10 @@ class BioCycGapFiller(GapFiller):
         # Turn ec-code entries with '//' into lists
         self.missing_reacs['ec-code'] = self.missing_reacs['ec-code'].str.split('\s*//\s*')
 
-        # Step 2: Get content for column ncbiprotein
-        # ------------------------------------------
+        # @TODO: Analyse where duplicates come from & remove there!
+        # -> Maybe come from missing_genes?
+        # Step 2: Aggregate IDs to one per row & Get content for column ncbiprotein
+        # -------------------------------------------------------------------------
         # Turn ncbiprotein column into lists of ncbiprotein IDs per reaction
         ncbiprotein_as_list = self.missing_reacs.groupby('id')['ncbiprotein'].apply(list).reset_index(name='ncbiprotein')
         self.missing_reacs.drop('ncbiprotein', axis=1, inplace=True)
@@ -1213,12 +1211,8 @@ class BioCycGapFiller(GapFiller):
                 self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1
             )
 
-        # Add column 'references' 
-        # & move entries from 'Reaction-Direction' to 'references'
-        self.missing_reacs['references'] = self.missing_reacs[['Reaction-Direction']].to_dict('records')
-
-        # Remove column 'Reaction-Direction'
-        self.missing_reacs.drop(['Reaction-Direction'], axis=1, inplace=True)
+        # Add column 'references'
+        self.missing_reacs['references'] = None
 
         # Step 5: Map missing reactions without entries in column 'add_to_GPR' 
         #         to other databases to get a parsable reaction equation
