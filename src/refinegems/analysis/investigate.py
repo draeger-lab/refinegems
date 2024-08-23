@@ -43,6 +43,8 @@ def get_reac_with_gpr(model:cobra.Model) -> tuple[list[str], list[str]]:
 
     Returns:
         tuple: 
+            Lists of reactions with GPR (1) & (2):
+
             (1) list: List of normal reactions with gpr
             (2) list: List of pseudoreactions with gpr
     """

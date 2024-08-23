@@ -215,8 +215,10 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
     """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
     which can be added to the new one to enable growths.
 
-    @WARNING this functions currently only check via single deletions not via correlated ones. MIght lead to problems in 
-    complecated cases, e.g. missing carbon source but multiple ones in the standard medium.
+    .. warning:: 
+        This function currently only checks via single deletions not via correlated ones. 
+        Might lead to problems in complecated cases, e.g. missing carbon source but
+        multiple ones in the standard medium.
 
     Args:
         - model (cobraModel): 
@@ -274,7 +276,7 @@ def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[Mediu
 
     Returns:
         dict: 
-            information on different media which metabs are missing (key: name of medium, values: list of exchanges)
+            Information on different media which metabs are missing (key: name of medium, values: list of exchanges).
     """
     
     default_uptake = get_uptake(model,'std')

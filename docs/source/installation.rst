@@ -20,3 +20,7 @@ To install refineGEMs as Python package from `PyPI <https://pypi.org/project/ref
    pip install refineGEMs
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
+
+.. hint:: 
+
+   For the installation for developers, refer to :ref:`installation for developers`

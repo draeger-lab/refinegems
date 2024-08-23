@@ -24,8 +24,14 @@ General Options
 - ``--help``: Call the help page of the command.
 - ``--version``: Show the version  and exit.
 
+----
+
+
 refinegems analyse 
 ------------------
+
+Analyse a model by testing for auxotrophies and growth on different media along 
+with finding EGCs and looking at overall model statistics. 
 
 .. code:: bash 
     
@@ -85,6 +91,8 @@ Options:
 refinegems analyse growth 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Analyse the growth under different conditions.
+
 .. code:: bash 
   
   refinegems analyse growth auxothrophies [MODELPATH]
@@ -142,6 +150,35 @@ Options:
 - ``--colors/-c`` : Abbreviation of a matplotlib color palette for the graphics.
 - ``--dir/-d`` : Path to the output directory. 
 
+
+refinegems database
+-------------------
+
+Access, curate, etc. the in-build database.
+
+.. code:: bash  
+  
+  refinegems database initialise
+
+Initialise or update the in-build database.
+
+.. code:: bash 
+
+  refinegems database add_namespace [DATABASENAME]
+
+Add or update tables for additional namespaces/databases into/of the in-build database.
+
+Options:
+
+- ``--chunksize/-c`` Size (in kB) of data to download per chunk, if a download is required.
+
+.. code:: bash
+
+  refinegems database reset
+
+Reset the database by removing all additionally added tables (added with e.g. add_namespace)
+
+
 refinegems gaps
 ---------------
 
@@ -164,34 +201,10 @@ Fill the gaps in a model based on a user-provided input file.
 Automatically find and fill the gaps based on the genes/gene products.
 
 
-refinegems database
--------------------
-
-.. code:: bash  
-  
-  refinegems database initialise
-
-Initialse or update the in-build database.
-
-.. code:: bash 
-
-  refinegems database add_namespace [DATABASENAME]
-
-Add or update tables for additional namespaces/databases into/of the in-build database.
-
-Options:
-
-- ``--chunksize/-c`` Size (in kB) of data to download per chunk, if a download is required.
-
-.. code:: bash
-
-  refinegems database reset
-
-Reset the database by removing all additionally added tables (added with e.g. add_namespace)
-
-
 refinegems media
 ----------------
+
+Access the media part of the database.
 
 .. code:: bash 
   
@@ -222,6 +235,9 @@ Options:
 refinegems refine
 -----------------
 
+Refine a model. Includes steps like biomass, charges, SBO annotation, reaction direction correction and addition 
+of Pathways and further gene product annotations.
+
 .. code:: bash 
   
   refinegems refine biomass [MODELPATH]
@@ -248,7 +264,7 @@ Options:
   
   refinegems refine direction [MODELPATH]
 
-Check and - if neccessary - correct the direction of th reactions in a model.
+Check and - if neccessary - correct the direction of the reactions in a model.
 
 .. code:: bash 
   
@@ -268,6 +284,8 @@ Options:
 refinegems refine annot
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Add annotations to your model.
+
 .. code:: bash 
   
   refinegems refine annot sboterms [MODELPATH]
@@ -283,6 +301,8 @@ Add the KEGG pathways as group entities to the model.
 
 refinegems setup 
 ----------------
+
+Set-up tools, folder structure and more for running the program.
 
 .. code:: bash
 

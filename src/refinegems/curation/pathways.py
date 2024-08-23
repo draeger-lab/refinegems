@@ -59,13 +59,13 @@ def extract_kegg_reactions(model: libModel) -> tuple[dict, list]:
 
     Args:
         - model (libModel): 
-            Model loaded with libSBML. Output of load_model_enable_groups.
+            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
 
     Returns:
         tuple: 
             Dictionary 'reaction_id': 'KEGG_id' (1) & List of reactions without KEGG Id (2)
             
-            (1) dict: Reaction Id as key and Kegg Id as value
+            (1) dict: Reaction Id as key and KEGG Id as value
             (2) list: Ids of reactions without KEGG annotation
     """
     list_reac = model.getListOfReactions()
@@ -87,11 +87,11 @@ def extract_kegg_pathways(kegg_reactions: dict) -> dict:
 
     Args:
         - kegg_reactions (dict): 
-            Reaction Id as key and Kegg Id as value. Output[0] from extract_kegg_reactions.
+            Reaction Id as key and KEGG Id as value. Output[0] from :py:func:`~refinegems.curation.pathways.extract_kegg_reactions`.
 
     Returns:
         dict: 
-            Reaction Id as key and Kegg Pathway Id as value
+            Reaction Id as key and KEGG Pathway Id as value
     """
     k = KEGG()
     kegg_pathways = {}
@@ -111,17 +111,17 @@ def extract_kegg_pathways(kegg_reactions: dict) -> dict:
 
 
 def add_kegg_pathways(model, kegg_pathways) -> libModel:
-    """Add KEGG reactions as BQB_OCCURS_IN
+    """Add KEGG reactions as BQB_OCCURS_IN.
 
     Args:
         - model (libModel): 
-            Model loaded with libSBML. Output of load_model_enable_groups.
+            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
         - kegg_pathways (dict): 
-            Reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
+            Reaction Id as key and KEGG Pathway Id as value. Output of :py:func:`~refinegems.curation.pathways.extract_kegg_pathways`.
 
     Returns:
         libModel: 
-            modified model with KEGG pathways
+        Modified model with KEGG pathways.
     """
     list_reac = model.getListOfReactions()
 
@@ -134,15 +134,15 @@ def add_kegg_pathways(model, kegg_pathways) -> libModel:
 
 
 def get_pathway_groups(kegg_pathways) -> dict:
-    """Group reaction into pathways
+    """Group reaction into pathways.
 
     Args:
         - kegg_pathways (dict): 
-            Reaction Id as key and Kegg Pathway Id as value. Output of extract_kegg_pathways.
+            Reaction Id as key and KEGG Pathway Id as value. Output of :py:func:`~refinegems.curation.pathways.extract_kegg_pathways`.
 
     Returns:
         dict: 
-            KEGG Pathway Id as key and reactions Ids as values
+            KEGG Pathway Id as key and reactions Ids as values.
     """
     pathway_groups = {}
     for reaction in kegg_pathways.keys():
@@ -155,17 +155,17 @@ def get_pathway_groups(kegg_pathways) -> dict:
 
 
 def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
-    """Use group module to add reactions to Kegg pathway
+    """Use group module to add reactions to KEGG pathway.
 
     Args:
         - model (libModel): 
-            Model loaded with libSBML. Output of load_model_enable_groups.
+            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
         - pathway_groups (dict): 
-            KEGG Pathway Id as key and reactions Ids as values. Output of get_pathway_groups.
+            KEGG Pathway Id as key and reactions Ids as values. Output of :py:func:`~refinegmes.curation.pathways.get_pathway_groups`.
 
     Returns:
         libModel: 
-            modified model with groups for pathways
+            Modified model with groups for pathways.
     """
     k = KEGG()
     groups = model.getPlugin('groups')
@@ -209,7 +209,7 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
 
     Args:
         - modelpath (str): 
-            Path to GEM
+            Path to GEM.
         
     Returns:
         tuple: 

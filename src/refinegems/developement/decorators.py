@@ -22,7 +22,7 @@ def template(func):
     """A decorator for template functions.
     
     Template functions are not executable and are mainly for giving developers 
-    a sense of how function for the functionality this template is for should look like.
+    a sense of how functions for the functionality this template is for should look like.
     """
     def wrapper():
         raise RuntimeError('This function is a template for developers.\nIt cannot be executed.')

@@ -138,6 +138,16 @@ Debugging switches
 - You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
 - If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
 - For debugging of pandas warnings or issues ``pd.options.mode.chained_assignment = None`` needs to be commented out.
+- | Additionally, some modules contain comment blocks of the following format:
+
+.. code-block:: python
+    :class: copyable
+
+    # @DEBUG ...............
+    # some code
+    # ......................
+
+| By enabling the code lines between the dotted lines, a debugging-mode is run, which e.g. subsets the data to shorten the runtime to make debugging faster.
 
 Guidelines for code documentation
 ---------------------------------

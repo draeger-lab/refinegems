@@ -196,7 +196,7 @@ def run_DIAMOND_blastp(fasta:str, db:str,
 
 def filter_DIAMOND_blastp_results(blasttsv:str, pid_theshold:float=90.0) -> pd.DataFrame:
     """Filter the results of a DIAMOND BLASTp run (see 
-    :py:func:`~refinegems.curation.db_access.db.run_DIAMOND_blastp`)
+    :py:func:`~refinegems.utility.connections.run_DIAMOND_blastp`)
     by percentage identity value (PID) and extract the matching pairs of query 
     and subject IDs.
 

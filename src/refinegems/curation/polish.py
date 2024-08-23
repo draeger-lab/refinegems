@@ -52,14 +52,15 @@ BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta:
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
 def add_metab(entity_list: list[Species], id_db: str):
     """| Adds the ID of metabolites as URI to the annotation field
-       | For a VMH model, additionally, the corresponding BiGG IDs are added! 
-	   | (Currently, only BiGG & VMH IDs supported!)
+    | For a VMH model, additionally, the corresponding BiGG IDs are added! 
+	
+    (Currently, only BiGG & VMH IDs supported!)
 
     Args:
         - entity_list (list): 
             libSBML ListOfSpecies
         - id_db (str): 
-            Name of the database of the IDs contained in a model 
+            Name of the database of the IDs contained in a model.
     """
     vmh_cut_pattern = '__\d+_' # To extract BiGG identifier
     
@@ -143,8 +144,8 @@ def add_reac(entity_list: list[Reaction], id_db: str):
 
 #----------- Functions to transfer URIs from the notes field to the annotations for metabolites & reactions -----------# 
 def cv_notes_metab(species_list: list[Species]):
-    """| Checks the notes field for information which should be in the annotation field
-       | removes entry from notes and adds it as URL to the CVTerms of a metabolite
+    """Checks the notes field for information which should be in the annotation field.
+    Removes entry from notes and adds it as URL to the CVTerms of a metabolite
 
     Args:
         - species_list (list): 
@@ -184,8 +185,8 @@ def cv_notes_metab(species_list: list[Species]):
 
 
 def cv_notes_reac(reaction_list: list[Reaction]):
-    """| Checks the notes field for information which should be in the annotation field
-       | removes entry from notes and adds it as URL to the CVTerms of a reaction
+    """Checks the notes field for information which should be in the annotation field.
+    Removes entry from notes and adds it as URL to the CVTerms of a reaction
 
     Args:
         - reaction_list (list): 
@@ -414,13 +415,14 @@ def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[Uni
 
 #-------------------------------------- Function to add units & UnitDefinitions ---------------------------------------#
 def add_fba_units(model: libModel):
-    """| Adds:
-       |     - mmol per gDW per h
-       |     - mmol per gDW 
-       |     - hour (h)
-       |     - femto litre (fL)
-       |
-       | to the list of unit definitions (needed for FBA)
+    """Adds:
+    
+       - mmol per gDW per h
+       - mmol per gDW 
+       - hour (h)
+       - femto litre (fL)
+       
+       to the list of unit definitions (needed for FBA)
 
     Args:
         - model (libModel): 
@@ -483,7 +485,7 @@ def set_units(model: libModel):
 #-------------------------- Functions to add default settings for compartments & metabolites --------------------------#            
 def add_compartment_structure_specs(model: libModel):
     """| Adds the required specifications for the compartment structure
-       | if not set (size & spatial dimension)
+    | if not set (size & spatial dimension)
         
     Args:
         - model (libModel): 
@@ -673,8 +675,7 @@ def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
 
 #------------------- Functions to change the CURIE pattern/CVTerm qualifier & qualifier type --------------------------#
 def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[str]], list[str]]:
-    """| Gets a list of URIs
-       | & maps the database prefixes to their respective identifier sets
+    """Gets a list of URIs & maps the database prefixes to their respective identifier sets
         
     Args:
         - uri_list (list[str]): 
@@ -1077,8 +1078,8 @@ def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple
 
 
 def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, filename: str) -> libModel:
-    """| Polishes all annotations in a model such that no duplicates are present 
-       | & the same pattern is used for all CURIEs
+    """Polishes all annotations in a model such that no duplicates are present 
+    & the same pattern is used for all CURIEs
         
     Args:
         - model (libModel): 
@@ -1304,8 +1305,9 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
            protein_fasta: str, lab_strain: bool, kegg_organism_id: str, path: str) -> libModel: 
-    """| Completes all steps to polish a model
-       | (Tested for models having either BiGG or VMH identifiers.)
+    """Completes all steps to polish a model
+    
+    (Tested for models having either BiGG or VMH identifiers.)
 
     Args:
         - model (libModel): 

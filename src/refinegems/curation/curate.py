@@ -155,7 +155,7 @@ def complete_BioMetaCyc(model:cobra.Model) -> cobra.Model:
 
 def resolve_duplicate_reactions(model:cobra.Model, based_on:str='reaction', remove_reac:bool=True) -> cobra.Model:
     """Resolve and remove duplicate reaction based on their reaction equation
-    and matching database identifiers. Only if all match or are nan will one of
+    and matching database identifiers. Only if all match or a comparison with nan occurs will one of
     the reactions be removed.
 
     Args:
@@ -238,7 +238,9 @@ def resolve_duplicate_reactions(model:cobra.Model, based_on:str='reaction', remo
 def resolve_duplicate_metabolites(model:cobra.Model, based_on:str='metanetx.chemical', replace:bool=True) -> cobra.Model:
     """Resolve duplicate metabolites in a model. Metabolites are considered
     duplicate if they share the same annotations (same or nan).
-    Note: Depending on the starting database, the results might differ.
+    
+    .. note:: 
+        Depending on the starting database, the results might differ.
 
     Args:
         - model (cobra.Model): 

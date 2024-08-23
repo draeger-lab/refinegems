@@ -133,7 +133,7 @@ def get_reaction_compartment_from_bigg(bigg_id: str) -> str:
 
         (2) Case not a valid compartment:
                 np.nan: 
-                    'NaN' if one of the found compartments is not in VALID_COMPARTMENTS.keys()
+                    'NaN' if one of the found compartments is not in :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`
     """
     
     metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
@@ -613,7 +613,7 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
 
     Args:
         - locus_tag (str): 
-            The locus in the format <orgnismid>:<locus_tag>
+            The locus in the format <organism_id>:<locus_tag>
 
     Returns:
         dict: 
@@ -860,7 +860,7 @@ def get_modelseed_charges(modelseed_compounds: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         - modelseed_compounds (pd.DataFrame): 
-            ModelSEED data. Output from get_modelseed_compounds.
+            ModelSEED data. Output from :py:func:`~refinegems.utility.db_access.get_modelseed_compounds`.
 
     Returns:
         pd.DataFrame: 
@@ -881,9 +881,9 @@ def compare_model_modelseed(model_charges: pd.DataFrame, modelseed_charges: pd.D
 
     Args:
         - model_charges (pd.DataFrame): 
-            Charges and formulae of model metabolites. Output of get_model_charges.
+            Charges and formulae of model metabolites. Output of :py:func:`~refinegems.utility.db_access.get_model_charges`.
         - modelseed_charges (pd.DataFrame): 
-            Charges and formulae of ModelSEED metabolites. Output of get_modelseed_charges.
+            Charges and formulae of ModelSEED metabolites. Output of :py:func:`~refinegems.utility.db_access.get_modelseed_charges`.
 
     Returns:
         pd.DataFrame: 
@@ -909,7 +909,7 @@ def get_charge_mismatch(df_comp: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         df_comp (pd.DataFrame): 
-            Charge and formula mismatches. Output from compare_model_modelseed.
+            Charge and formula mismatches. Output from :py:func:`~refinegems.utility.db_access.compare_model_modelseed`.
 
     Returns:
         pd.DataFrame: 
@@ -924,7 +924,7 @@ def get_formula_mismatch(df_comp: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         df_comp (pd.DataFrame): 
-            Charge and formula mismatches. Output from compare_model_modelseed.
+            Charge and formula mismatches. Output from :py:func:`~refinegems.utility.db_access.compare_model_modelseed`.
 
     Returns:
         pd.DataFrame: 
@@ -939,7 +939,7 @@ def get_compared_formulae(formula_mismatch: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         formula_mismatch (pd.DataFrame): 
-            Table with column containing atom comparison. Output from get_formula_mismatch.
+            Table with column containing atom comparison. Output from :py:func:`~refinegems.utility.db_access.get_formula_mismatch`.
 
     Returns:
         pd.DataFrame: 

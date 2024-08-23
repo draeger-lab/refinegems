@@ -1,13 +1,6 @@
 refinegems.curation
 ===================
 
-Sub-subpackages
----------------
-
-.. toctree::
-
-    db_access
-
 biomass module
 --------------
 

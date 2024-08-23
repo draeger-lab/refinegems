@@ -191,102 +191,119 @@ def run(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism
 # ----------------------------------------------------------------------------------
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
+# @TODO gaps group still for the old gapfill - rewrite or delete
+
 @cli.group()
 def gaps():
-   """If requested finds gaps in a model based on the gene products in the model and either files from biocyc or via the
-   KEGG API.
-   If requested fills gaps either via the automatically obtained missing entities or via a manually created file 
-   provided by the user.
-   """
-
-# Find gaps via genes
-# -------------------     
-def get_gap_analysis_input(db_to_compare: Literal['KEGG', 'BioCyc']) -> dict:
-   """Form to retrieve input files for :py:func:`~refinegems.curation.gapfill.gap_analysis`
-
-   Args:
-       - db_to_compare (Literal['KEGG', 'BioCyc']): 
-           Database to compare model content to
-
-   Returns:
-       dict: 
-           Input dictionary for :py:func:`~refinegems.curation.gapfill.gap_analysis`
-   """
-
-   parameters2inputs = {'organismid': None, 'gff_file': None, 'biocyc_files': None}
-
-   if db_to_compare == 'KEGG' or db_to_compare == 'KEGG+BioCyc':
-       parameters2inputs['organismid'] = click.prompt('Enter the KEGG Organism ID', type=str)
-       parameters2inputs['gff_file'] = click.prompt('Enter the path to your organisms RefSeq GFF file', type=click.Path(exists=True))
-   if db_to_compare == 'BioCyc' or db_to_compare == 'KEGG+BioCyc':
-       Path0 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with the columns \'Accession-2\' and \'Reaction of gene\'', type=click.Path(exists=True))
-       Path1 = click.prompt('Enter the path to your BioCyc TXT file containing a SmartTable with all reaction relevant information', type=click.Path(exists=True))
-       Path2 = click.prompt('Enter the path to your Biocyc TXT file containing a SmartTable with all metabolite relevant information', type=click.Path(exists=True))
-       Path3 = click.prompt('Enter path to protein FASTA file used as input for CarveMe', type=click.Path(exists=True))
-       parameters2inputs['biocyc_files'] = [Path0, Path1, Path2, Path3]
-   
-   return parameters2inputs
+   """Find and fill gaps in a model."""
 
 @gaps.command()
-@cloup.argument('modelpath', type=click.Path(exists=True), help='Path to model file')
-@cloup.argument('filename', type=str, help='Path to output file for gap analysis result')
+@cloup.argument('alg', type=click.Choice(['KEGG','BioCyc','Gene']),
+                help='Type of automated gap filling algorithm, that shall be used.')
+@cloup.argument('modelpath', type=click.Path(exists=True, dir_okay=False), 
+                help='Path to the model.')
 @cloup.option_group(
-    'Reference database options',
-    cloup.option('-k', '--kegg', type=bool, help='Specifies if the KEGG API should be used for the gap analysis'),
-    cloup.option('-b', '--biocyc', 
-                 type=bool, help='Specifies if user-provided BioCyc files should be used for the gap analysis'),
-    constraint=cloup.constraints.RequireAtLeast(1)
+   "General options",
+   cloup.option('-o','--outdir', type=click.Path(exists=True, file_okay=False), 
+                default='./', show_default=True, 
+                help='Path to a directory to write the output to.'),
+   cloup.option('-f','--fill', is_flag=True, type=bool, default=False,
+                help='If True, tries to fill the gaps in the model.'),
+   cloup.option('--fc','--formula-check', type=click.Choice(['none','existence','wildcard','strict']),
+                default='existence', show_choices=True, show_default=True,
+                help='Set the filter for which metabolite formulas are valid to be added to the model.'),
+   cloup.option('--no-dna', is_flag=True, type=bool, default=False, 
+                help='Exclude DNA reactions (name-based) from being added to the model.'),
+   cloup.option('--no-rna', is_flag=True, type=bool, default=False, 
+                help='Exclude RNA reactions (name-based) from being added to the model.'),
+   cloup.option('-p','--idprefix', type=str, default='refineGEMs', show_default=True,
+                help='Prefix for the random IDs, if an ID does not exists for the given namespace.'),
+   cloup.option('-n','--namespace', type=click.Choice(['BiGG']), default='BiGG',
+                show_default=True, help='Namespace used in the model.')
 )
-def find(modelpath,kegg,biocyc,filename):
-   """Find gaps in a model based on the genes/gene products of the underlying organism
-   """
-   
-   db_to_compare = ''
-   if kegg and biocyc: db_to_compare = 'KEGG+BioCyc'
-   elif kegg: db_to_compare = 'KEGG'
-   elif biocyc: db_to_compare = 'BioCyc'
-   
-   params2ins = get_gap_analysis_input(db_to_compare)
-   
-   model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gap_analysis(model, db_to_compare, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
-
-# Fill gaps via file
-# ------------------
-@gaps.command()
-@click.argument('modelpath', type=click.Path(exists=True))
-@click.argument('gap_analysis_results', type=Union[str, tuple])
-def fill(modelpath,gap_analysis_result):
-   """Fill gaps in a model based on a user-provided input file
-   """
-   model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gapfill_model(model, gap_analysis_result)
-
-# Find and fill gaps via genes
-# ----------------------------
-@gaps.command()
-@cloup.argument('modelpath', type=click.Path(exists=True), help='Path to model file')
-@cloup.argument('filename', type=str, help='Path to output file for gap analysis result')
 @cloup.option_group(
-    'Reference database options',
-    cloup.option('-k', '--kegg', type=bool, help='Specifies if the KEGG API should be used for the gap analysis'),
-    cloup.option('-b', '--biocyc', 
-                 type=bool, help='Specifies if user-provided BioCyc files should be used for the gap analysis'),
-    constraint=cloup.constraints.RequireAtLeast(1)
+   "KEGG required parameters",
+   "Parameters required when running the KEGG gap filling algorithmn",
+   cloup.option('--orgid', type=str, help='KEGG organism ID'),
+   constraint = cloup.constraints.If(cloup.constraints.Equal('alg','KEGG'), 
+                                     then=cloup.constraints.require_all)
 )
-def autofill(modelpath,kegg,biocyc,filename):
-   """Automatically find and fill gaps based on the genes/gene products
-   """
+@cloup.option_group(
+   "BioCyc required parameters",
+   "Parameters required when running the KEGG gap filling algorithmn",
+   cloup.option('--gt','--genetable', type=click.Path(exists=True, dir_okay=False),
+                help='Path to the BioCyc gene smart table.'),
+   cloup.option('--rt','--reactable', type=click.Path(exists=True, dir_okay=False),
+                help='Path to the BioCyc gene smart table.'),
+   cloup.option('--gff-bc', type=click.Path(exists=True, dir_okay=False),
+                help='Path to the GFF.'),
+   constraint = cloup.constraints.If(cloup.constraints.Equal('alg','BioCyc'), 
+                                     then=cloup.constraints.require_all)
+)
+@cloup.option_group(
+   "Gene required parameters",
+   "Parameters required when running the GeneGapFiller algorithm",
+   cloup.option('--gff-g', type=click.Path(exists=True, dir_okay=False),
+                help='Path to the GFF.'),
+   constraint = cloup.constraints.If(cloup.constraints.Equal('alg','Gene'), 
+                                     then=cloup.constraints.require_all)
+)
+@cloup.option_group(
+   "Gene optional parameters",
+   "Optional / conditionally interdependant parameters for the gene gap filling algorithm",
+   cloup.option('--prot-prefix', type=str, default='refineGEMs',
+                show_default = True,
+                help='Prefix for pseudo-protein IDs.'),
+   cloup.option('--mail', type=str, default=None, help='Mail address for NCBI requests.'),
+   cloup.option('--nbci','--check-ncbi', is_flag=True, default=False,
+                help='Enable searching protein IDs in NCBI. This increases the runtime significantly.'),
+   cloup.option('--fasta', type=click.Path(exists=True, dir_okay=False), default=None,
+                help='Path to the protein FASTA of the model.'),
+   cloup.option('--dmnd-db', type=click.Path(exists=True, dir_okay=False), default=None,
+                 help = 'Path to the SwissProt DIAMOND database.'),
+   cloup.option('--sp-map','--swissprot-mapping', type=click.Path(exists=True, dir_okay=False),
+                default=None, help='Path to the SwissProt mapping file (ID against EC and BRENDA)'),
+   cloup.option('-s','--sensitivity', type=click.Choice(['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']),
+                default='more-sensitive', show_default=True, show_choices=True,
+                help='Sensitivity mode for running DIAMOND.'),
+   cloup.option('--cov', type=float, default=90.0, show_default=True,
+                help='Coverage value (passed to DIAMOND)'),
+   cloup.option('--pid', type=float, default=95.0, show_default=False,
+                help='Percentage identity threshold value for filtering DIAMOND results.'),
+   cloup.option('-t','--threads',type=int, default=2, show_default=True, 
+                help='Number of threads to be used by DIAMOND.'), 
+)
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.IsSet('ncbi'), then=cloup.constraints.require_all), ['mail'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','sp_map'),then=cloup.constraints.AllSet), ['fasta','dmnd_db','sp_map'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('s','cov','pid','t'),then=cloup.constraints.AllSet), ['fasta','dmnd_db','sp_map'])
+def automated_gapfill(alg,modelpath,outdir,fill,
+                      formula_check, no_dna, no_rna,
+                      idprefix, namespace,
+                      orgid,
+                      genetable,reactable,gff_bc,
+                      gff_g,
+                      prot_prefix, mail, ncbi, 
+                      fasta, dmnd_db, sp_map, sensitivity, cov, pid, threads):
    
-   db_to_compare = ''
-   if kegg and biocyc: db_to_compare = 'KEGG+BioCyc'
-   elif kegg: db_to_compare = 'KEGG'
-   elif biocyc: db_to_compare = 'BioCyc'
+   # @TODO incomplete 
+   pass 
    
-   params2ins = get_gap_analysis_input(db_to_compare)
-   
+   cmodel = rg.utility.io.load_model(modelpath, 'cobra')
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.curation.gapfill.gapfill(model, db_to_compare, params2ins['gff_file'], params2ins['organismid'], params2ins['biocyc_files'], filename)
+   # find gaps
+   
+   gapfiller = rg.classes.gapfill.KEGGapFiller(orgid)
+   gapfiller.missing_genes(model)
+   gapfiller.missing_reacs(cmodel)
+   # fill gaps
+   if fill:
+      model = gapfiller.fill_model(model)
+      # save model
+      write_model_to_file(model, Path(outdir, 'gapfilled_model.xml'))
+   # @TODO report stats
+   # @TODO report manual curation
+   
+   
 
 
 # --------------

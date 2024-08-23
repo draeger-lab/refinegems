@@ -54,7 +54,8 @@ from ..developement.decorators import *
 # ---------------------
 
 def are_compartment_names_valid(model:cobra.Model) -> bool:
-    """Check if compartment names of model are considered valid based on VALID_COMPARTMENTS.
+    """Check if compartment names of model are considered valid based on 
+    :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`.
 
     Args:
         - model (cobra.Model): 
@@ -115,7 +116,7 @@ def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
         
     Returns:
         dict: 
-            Metabolite Ids as keys and their coefficients as values (negative = educts, positive = products)
+            Metabolite Ids as keys and their coefficients as values (negative = reactants, positive = products)
     """
     # from Alina Renz
     eq = eq.split(' ')
@@ -465,15 +466,13 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
             Prefix for the random ID. Defaults to 'refineGEMs'.
 
     Returns:
-        Case construction successful or match found in model:
+        1. Case construction successful or match found in model:
+                cobra.Metabolite: 
+                    The metabolite object.
         
-            cobra.Metabolite: 
-                The metabolite object.
-        
-        Case construction failed:
-                
-            None:
-                Nothing to return.
+        2. Case construction failed:      
+                None:
+                    Nothing to return.
     """
 
     # fast check if compound already in model
@@ -587,15 +586,13 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
             Prefix for the random ID. Defaults to 'refineGEMs'.
 
     Returns:
-        Case construction successful or match found in model:
+        1. Case construction successful or match found in model:     
+                cobra.Metabolite: 
+                    The build metabolite object.
         
-            cobra.Metabolite: 
-                The build metabolite object.
-        
-        Case construction failed:
-                
-            None:
-                Nothing to return.
+        2. Case construction failed:
+                None:
+                    Nothing to return.
     """
     
     # ---------------------------------------
@@ -759,15 +756,13 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
             Prefix for the random ID. Defaults to 'refineGEMs'.
 
     Returns:
-        Case construction successful or match found in model:
+        1. Case construction successful or match found in model:
+                cobra.Metabolite: 
+                    The build metabolite object.
         
-            cobra.Metabolite: 
-                The build metabolite object.
-        
-        Case construction failed:
-                
-            None:
-                Nothing to return.
+        2. Case construction failed:   
+                None:
+                    Nothing to return.
     """
 
     
@@ -889,7 +884,6 @@ def parse_reac_str(equation:str,
 
     Returns:
         tuple: 
-            
             Tuple of (1) dict, (2) dict, (3) list & (4) bool:
             
             1. Dictionary with the reactant IDs and their stoichiometric factors.
@@ -1018,20 +1012,17 @@ def build_reaction_mnx(model:cobra.Model, id:str,
             Defaults to 'BiGG'.
 
     Returns:
-        Case successful construction:
+        1. Case successful construction:         
+                cobra.Reaction:
+                    The newly build reaction object. 
             
-            cobra.Reaction:
-                The newly build reaction object. 
+        2. Case construction not possible:       
+                None:
+                    Nothing to return.
             
-        Case construction not possible:
-            
-            None:
-                Nothing to return.
-            
-        Case reaction found in model.
-            
-            list: 
-                List of matching reaction IDs (in model).
+        3. Case reaction found in model.
+                list: 
+                    List of matching reaction IDs (in model).
     """
     
     # ---------------------
@@ -1180,20 +1171,17 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
             Defaults to 'BiGG'.
 
     Returns:
-        Case successful construction:
+        1. Case successful construction:
+                cobra.Reaction:
+                    The newly build reaction object. 
             
-            cobra.Reaction:
-                The newly build reaction object. 
+        2. Case construction not possible:
+                None:
+                    Nothing to return.
             
-        Case construction not possible:
-            
-            None:
-                Nothing to return.
-            
-        Case reaction found in model.
-            
-            list: 
-                List of matching reaction IDs (in model).
+        3. Case reaction found in model.
+                list: 
+                    List of matching reaction IDs (in model).
     """
     
     # either reaction id or a reaction string needed for reconstruction
@@ -1316,6 +1304,7 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
 
 # @TEST
 # @TODO some things still open (for discussion)
+# @TODO implement reac_str usage
 def build_reaction_bigg(model:cobra.Model, id:str, 
                         reac_str:str = None, 
                         references:dict={},
@@ -1332,7 +1321,7 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             A BiGG reaction ID.
         - reac_str (str, optional): 
             The reaction equation string from the database. 
-            Currently, this param is not doing anything in this function @TODO.
+            Currently, this param is not doing anything in this function.
             Defaults to None.
         - references (dict, optional): 
             Additional annotations to add to the reaction (idtype:[value]). 
@@ -1345,20 +1334,17 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             Defaults to 'BiGG'.
 
     Returns:
-        Case successful construction:
+        1. Case successful construction:
+                cobra.Reaction:
+                    The newly build reaction object. 
             
-            cobra.Reaction:
-                The newly build reaction object. 
+        2. Case construction not possible:
+                None:
+                    Nothing to return.
             
-        Case construction not possible:
-            
-            None:
-                Nothing to return.
-            
-        Case reaction found in model.
-            
-            list: 
-                List of matching reaction IDs (in model).
+        3. Case reaction found in model.
+                list: 
+                    List of matching reaction IDs (in model).
     """
     
     # ---------------------
