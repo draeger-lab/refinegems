@@ -537,6 +537,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
 
         # Cleanup BiGG annotations (MetaNetX only saves universal)
         # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
+        # @TODO : save ID in the correct way
         if 'bigg.metabolite' in new_metabolite.annotation.keys():
             new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
         else:
@@ -643,11 +644,13 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     # step 3: add features
     # --------------------
     # set name from KEGG and additionally use it as ID if there is none yet
-    if isinstance(kegg_record.name, list):
-        # @TODO : better way to choose a name than to just take the first entry???
+    if isinstance(kegg_record.name, list) and len(kegg_record.name) > 0:
+        # @DISCUSSION : better way to choose a name than to just take the first entry???
         new_metabolite.name = kegg_record.name[0]
-    else:
+    elif isinstance(kegg_record.name, str) and len(kegg_record.name) > 0:
         new_metabolite.name = kegg_record.name
+    else:
+        new_metabolite.name = '' # @DISCUSSION any ideas for good default values?
     # set compartment
     new_metabolite.compartment = compartment
     # set formula
@@ -670,40 +673,40 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     new_metabolite.annotation['sbo'] = 'SBO:0000247'
 
     # search for infos in MetaNetX
-    # @TODO, since the table are readily available at the database now
     mnx_info = load_a_table_from_database(
         f'SELECT * FROM mnx_chem_xref WHERE source = \'kegg.compound:{kegg_id}\'',
         query=True
     )
+    # if matches have been found
     if len(mnx_info) > 0:
         mnx_ids = list(set(mnx_info['id']))
-    # mapping is unambiguously
-    if len(mnx_ids) == 1:
-        mnx_info = load_a_table_from_database(
-        f'SELECT * FROM mnx_chem_prop WHERE id = \'{mnx_ids[0]}\'',
-        query=True
-        )
-        # add charge 
-        new_metabolite.charge = mnx_info['charge'].iloc[0]
-        # add more annotations
-        new_metabolite.annotation['metanetx.chemical'] = [mnx_info['id'].iloc[0]]
-        if not pd.isnull(mnx_info['InChIKey'].iloc[0]):
-            new_metabolite.annotation['inchikey'] = mnx_info['InChIKey'].iloc[0].split('=')[1]
-        
-        # get more annotation from the mnx_chem_xref table 
-        metabolite_anno = load_a_table_from_database(f'SELECT * FROM mnx_chem_xref WHERE id = \'{mnx_info["id"]}\'')
-        for db in ['kegg.compound','metacyc.compound','seed.compound','bigg.metabolite','chebi']:
-            db_matches = metabolite_anno[metabolite_anno['source'].str.contains(db)]
-            if len(db_matches) > 0:
-                mnx_tmp = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
-                if db in new_metabolite.annotation.keys():
-                    new_metabolite.annotation[db] = list(set(mnx_tmp + new_metabolite.annotation[db]))
-                else:
-                    new_metabolite.annotation[db] = mnx_tmp
+        # mapping is unambiguously
+        if len(mnx_ids) == 1:
+            mnx_info = load_a_table_from_database(
+            f'SELECT * FROM mnx_chem_prop WHERE id = \'{mnx_ids[0]}\'',
+            query=True
+            )
+            # add charge 
+            new_metabolite.charge = mnx_info['charge'].iloc[0]
+            # add more annotations
+            new_metabolite.annotation['metanetx.chemical'] = [mnx_info['id'].iloc[0]]
+            if not pd.isnull(mnx_info['InChIKey'].iloc[0]):
+                new_metabolite.annotation['inchikey'] = mnx_info['InChIKey'].iloc[0].split('=')[1]
+            
+            # get more annotation from the mnx_chem_xref table 
+            metabolite_anno = load_a_table_from_database(f'SELECT * FROM mnx_chem_xref WHERE id = \'{mnx_info["id"]}\'')
+            for db in ['kegg.compound','metacyc.compound','seed.compound','bigg.metabolite','chebi']:
+                db_matches = metabolite_anno[metabolite_anno['source'].str.contains(db)]
+                if len(db_matches) > 0:
+                    mnx_tmp = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
+                    if db in new_metabolite.annotation.keys():
+                        new_metabolite.annotation[db] = list(set(mnx_tmp + new_metabolite.annotation[db]))
+                    else:
+                        new_metabolite.annotation[db] = mnx_tmp
 
-    else:
-        pass
-        # @TODO : how to handle multiple matches, e.g. getting charge will be complicated
+        else:
+            pass
+            # @TODO : how to handle multiple matches, e.g. getting charge will be complicated
         
     # Cleanup BiGG annotations (MetaNetX only saves universal)
     # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
@@ -1455,36 +1458,6 @@ def build_reaction():
 # extracting reactions & Co via libsbml
 # -------------------------------------
 
-# @DEPRECATE
-# Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
-def get_model_genes(model: libModel, kegg: bool=False) -> pd.DataFrame:
-    """Extracts KEGG Genes/Locus tags from given model
-
-    Args:
-        - model (model-libsbml): 
-            Model loaded with libSBML
-        - kegg (bool): 
-            True if KEGG Genes should be extracted, otherwise False
-
-    Returns:
-        pd.DataFrame: 
-            Table with all KEGG Genes/Locus tags in the model
-    """
-    genes_in_model = []
-    for gene in model.getPlugin(0).getListOfGeneProducts():
-        if kegg:
-            cv_terms = gene.getCVTerms()
-            if cv_terms:
-                for cv_term in cv_terms:
-                    for idx in range(cv_term.getNumResources()):
-                        uri = cv_term.getResourceURI(idx)
-                        if 'kegg.genes' in uri: genes_in_model.append(uri.split('kegg.genes:')[1])
-        else:
-            genes_in_model.append(gene.getLabel())
-
-    return pd.DataFrame(genes_in_model)
-
-
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 # Might be possible to deprecate
 def compare_gene_lists(gps_in_model: pd.DataFrame, db_genes: pd.DataFrame, kegg: bool=True) -> pd.DataFrame:
@@ -1828,8 +1801,9 @@ def create_gpr(reaction:Reaction,gene:str|list[str]) -> None:
                     
     # Step 2: create new gene product association 
     # -------------------------------------------
+
     if old_association_str and isinstance(gene,str):
-        gene = [old_association_str,id]
+        gene = [old_association_str,gene]
     elif old_association_str  and isinstance(gene,list):
         gene.append(old_association_str)
         
@@ -1850,4 +1824,5 @@ def create_gpr(reaction:Reaction,gene:str|list[str]) -> None:
         gpa_or =  new_association.createOr()
         for i in gene:
             gpa_or.createGeneProductRef().setGeneProduct(i)
+
             

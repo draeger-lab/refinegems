@@ -716,7 +716,7 @@ class GapFiller(ABC):
                                             namespace=namespace)      
                 # KEGG
                 case 'KEGG':
-                    refs = row['references']
+                    refs = row['reference']
                     refs['ec-code'] = row['ec-code']
                     reac = build_reaction_kegg(model,row['id'],
                                             reac_str=row['equation'],

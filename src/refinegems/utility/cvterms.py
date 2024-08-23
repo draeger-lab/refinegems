@@ -100,7 +100,10 @@ def _add_annotations_from_dict_cobra(references:dict, entity:cobra.Reaction|cobr
         if not isinstance(idlist,list):
             idlist = [idlist]
         if db in entity.annotation.keys():
-            entity.annotation[db] = list(set(entity.annotation[db] + idlist))
+            if isinstance(entity.annotation[db],list):
+                entity.annotation[db] = list(set(entity.annotation[db] + idlist))
+            else:
+                entity.annotation[db] = list(set(list(entity.annotation[db]) + idlist))
         else:
             entity.annotation[db] = idlist
 

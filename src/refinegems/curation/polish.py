@@ -28,7 +28,7 @@ from libsbml import GeneProduct
 from libsbml import Species, Reaction, Unit, UnitDefinition, SBase, UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND, MODEL_QUALIFIER, BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO, BiolQualifierType_toString, ModelQualifierType_toString
 from sortedcontainers import SortedDict, SortedSet
 from tqdm.auto import tqdm
-from typing import Union
+from typing import Union, Literal
 
 from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
 from ..utility.db_access import search_ncbi_for_gpr
@@ -1486,3 +1486,67 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
     return model
 
 
+# extract annotations fron a libsbml model
+# @NOTE takes much longer than it would in a cobra model
+#       -> currently not in usage
+def getAnnotationDict_libsbml(entity: Union[Reaction,Species]) -> dict|None:
+    """Try to extract the annotations from a libSBML entity as a dictionary.
+
+    Args:
+        - entity (Union[Reaction,Species]): 
+            The SBML entity.
+
+    Returns:
+        1. Case: retrieval successful
+                dict:
+                    The annotations.
+        2. Case: not successful
+                None: 
+                    Nothing to return
+    """
+    try: 
+        for cvterm in entity.getCVTerms():
+            current_uris = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
+            return get_set_of_curies(current_uris)[0]
+    except Exception as e:
+        return None
+    
+def hasAnnotation_libmodel(id:str, idtype:str, 
+                           entitytype:Literal['species','reaction'], 
+                           libmodel:libModel) -> list:
+    """Check a libSBML models reactions or species for a certain annotation
+    id.
+
+    Args:
+        - id (str): 
+            The ID to search for.
+        - idtype (str): 
+            Type of ID given e.g. metanetx.reaction.
+        - entitytype (Literal['species','reaction']): 
+            Entitytype to search. Can be 'reaction' or 'species'.
+        - libmodel (libModel): 
+            The libSBML model to perform the search on.
+
+    Raises:
+        - ValueError: Unknown entity type
+
+    Returns:
+        list: 
+            List of IDs of model entities of the given type, that have the ID 
+            in their annotations under the given idtype.
+    """
+    match entitytype:
+        case 'reaction':
+            entitylist = libmodel.getListOfReactions()
+        case 'species':
+            entitylist = libmodel.getListOfSpecies()
+        case _:
+            mes = f'Unknown entity type: {entitytype}'
+            raise ValueError(mes)
+        
+    found = []
+    for r in entitylist:
+        annots = getAnnotationDict_libsbml(r)
+        if annots and idtype in annots.keys() and id in annots[idtype]:
+            found.append(r.getId())
+    return found 

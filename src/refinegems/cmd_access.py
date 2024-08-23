@@ -7,13 +7,15 @@ __author__ = 'Carolin Brune, Gwendolyn O. Döbel'
 # Requirements
 ################################################################################
 
+from pathlib import Path
 from typing import Union, Literal
-import refinegems as rg
+
 import click
 import cloup
-from pathlib import Path
 import pandas as pd
+import warnings
 
+import refinegems as rg
 from refinegems.utility.io import write_model_to_file
 
 ################################################################################
@@ -85,8 +87,7 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
 # ------------
 # get examples
 # ------------
-# @TODO
-#  def gapfill_table()
+# @DISCUSSION explain how to do manual gapfilling
 
 
 # --------------------
@@ -127,8 +128,7 @@ def reset():
 # -------------------
 # all about the media 
 # -------------------
-# @TODO more functionalities???
-# @TODO merge with database?
+# @TODO more functionalities / entry points
 
 @cli.group()
 def media():
@@ -147,7 +147,7 @@ def info(list): #,copy
 
     Can be used to either check 
     - the available media 
-    -  TODO to make a copy for further use.
+    -  @TODO to make a copy for further use.
     """
     if list:
         possible_media = rg.utility.io.load_a_table_from_database('medium', False)['name'].to_list()
@@ -176,7 +176,7 @@ def polish():
 @click.argument('email', type=str)
 @click.argument('path', type=str)
 @click.option('-i','--id-db', show_default=True, default='BiGG', type=str, help='Main database where identifiers in model come from')
-@click.option('-r', '--refseq-gff', show_default=True, default=None, type=str, help='Path to RefSeq GFF file of organism')
+@click.option('-r', '--refseq-gff', show_default=True, default=None, type=str, help='Path to RefSeq GFF file of organism') # @DISCUSSION only RefSeq or does GenBank work as well?
 @click.option('-p', '--protein-fasta', show_default=True, default=None, type=str, help='File used as input for CarveMe')
 @click.option('-l', '--lab-strain', show_default=True, default=False, type=bool, help='True if the strain was sequenced in a local lab')
 @click.option('-k', '--kegg-organism-id', show_default=True, default=None, type=str, help='KEGG organism identifier')
@@ -325,7 +325,7 @@ def charges(modelpath,dir):
    charg_tab.to_csv(Path(dir,'multiple_charges.csv',sep=';'))
        
 
-# @TODO
+# @TODO function unfinished
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 def direction(modelpath,data):
@@ -333,6 +333,9 @@ def direction(modelpath,data):
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    rg.curation.polish.check_direction(model, data)
+   warnings.warn('Function not yet fully implemented - please contact developers.')
+   pass
+
 
 # egcs
 #@TODO: Default for compartments -> Why c,p and not c,e,p?
@@ -361,14 +364,12 @@ def egcs(modelpath, solver, namespace, compartment, outfile):
 
 
 
-# Annotation-related clean-up & Additional annotations
+# Annotation-related clean-up 
+# & Additional annotations
 # ---------------------------
-#@TODO: Check again if RefSeq/Genbank GFF or if origin doesn't matter! + Where does that belong/happen?
 @refine.group()
 def annot():
-	"""Clean-up annotations by adding MIRIAM-compliant qualifiers, changing URIs into the correct form, adding more 
- 	specific SBO annotations and synchronising all annotations to BioCyc. Additionally, adds gene product annotations 
-  	either from the GFF file of the organism or via KEGG.
+	"""Add annotations to your model.
 	"""
  
 @annot.command()
@@ -377,7 +378,7 @@ def sboterms(modelpath):
    """Calls SBOannotator to enhance the SBO terms in a model
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.sboann.sbo_annotation(model)
+   rg.utility.connections.run_SBOannotator(model)
 
 
 @annot.command()

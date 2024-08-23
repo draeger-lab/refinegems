@@ -188,23 +188,6 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
 
 # other
 # -----
-# @TODO: sort more, make it more readable
-
-def load_manual_annotations(tablepath: str='data/manual_curation.xlsx', sheet_name: str='metab') -> pd.DataFrame:
-    """Loads metabolite sheet from manual curation table
-
-    Args:
-        - tablepath (str): 
-            Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        - sheet_name (str): 
-            Sheet name for metabolite annotations. Defaults to 'metab'.
-
-    Returns:
-        pd.DataFrame: 
-            Table containing specified sheet from Excel file
-    """
-    man_ann = pd.read_excel(tablepath, sheet_name)
-    return man_ann
 
 
 def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd.DataFrame:

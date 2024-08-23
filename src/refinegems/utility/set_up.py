@@ -61,7 +61,7 @@ def download_url(download_type:Literal['SwissProt gapfill'],
             # @TODO warning / prompt about size 
             #   1.: TSV with UniprotID, BRENDA and EC -7.7MB (26.07.2024)
             #   2.: FASTA with sequences ~280MB (26.07.2024)
-            # @TODO contruct DIAMOND database in this step as well?
+            # @DISCUSSION contruct DIAMOND database in this step as well?
         case _:
             mes = f'Unknown database or file: {name}'
             raise ValueError(mes)
