@@ -36,6 +36,17 @@ COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
 # functions
 ################################################################################
 
+# @DISCUSSION: Might be useful for logging?
+##### Coloured text:
+# from colorama import init as colorama_init
+# from colorama import Fore
+# 
+# def coloured_example_text():
+#     colorama_init(autoreset=True)
+#     print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
+#       'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
+#       'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
+
 # SBO
 # ---
 
