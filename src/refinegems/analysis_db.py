@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+""".. warning:: 
+    *Deprecated as of version 2.0.0*: Functionalities can be found in refinegems. @TODO
+"""
 import re
 import requests
 import sqlite3
@@ -12,6 +15,11 @@ from typing import Literal
 from tqdm import tqdm
 from ratelimit import limits, sleep_and_retry
 from multiprocessing import Pool
+
+import warnings
+mes = 'The refinegems.analysis_db module will be deprecated from version 2.0.0 onwards. For more information, refer to the documentation for 2.0.0.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Tobias Fehrenbach"
 

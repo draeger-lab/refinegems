@@ -2,6 +2,10 @@
 """ Provides functions to compare and visualize multiple models
 
 Can mainly be used to compare growth behaviour of multiple models. All other stats are shown in the memote report.
+
+.. warning:: 
+    *Deprecated as of version 2.0.0*: Functionalities have been split into refinegems.analysis.comparison and refinegems.classes.report. See the documentation 
+    for version 2.0.0 for more information.
 """
 
 import pandas as pd
@@ -16,6 +20,11 @@ from cobra import Model as cobraModel
 from refinegems.io import load_medium_from_db, search_sbo_label
 from refinegems.growth import growth_one_medium_from_default, growth_one_medium_from_minimal
 from refinegems.investigate import initial_analysis, get_reactions_per_sbo
+
+import warnings
+mes = 'The refinegems.growth module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.analysis.comparison and refinegems.classes.report modules from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle"
 

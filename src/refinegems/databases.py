@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+.. warning:: 
+   *Deprecated as of version 2.0.0*: The functionalities have been moved to refinegems.utility.databases"""
 import io
 import re
 import sqlite3
@@ -8,6 +11,11 @@ from enum import Enum
 from sqlite3 import Error
 from os import path
 from importlib.resources import files
+
+import warnings
+mes = 'The refinegems.databases module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.utility.databases module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = 'Gwendolyn O. Döbel'
 

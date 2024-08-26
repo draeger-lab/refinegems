@@ -2,6 +2,9 @@
 """ Reports mismatches in charges and formulae based on ModelSEED
 
 Extracts ModelSEED data from a given tsv file, extracts all metabolites from a given model. Both lists of metabolites are compared by charge and formula.
+
+.. warning:: 
+    *Deprecated since 2.0.0*: From 2.0.0 onwards, the functionalities can be found in refinegem.curation.db_access.modelseed
 """
 import pandas as pd
 import re
@@ -11,6 +14,10 @@ from cobra import Model as cobraModel
 
 __author__ = "Famke Baeuerle and Jan-Philipp Leusch"
 
+import warnings
+mes = 'The refinegems.modelseed module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.curation.db_access.modelseed module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 def get_modelseed_compounds() -> pd.DataFrame:
     """Extracts compounds from ModelSEED which have BiGG Ids

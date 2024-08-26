@@ -1,6 +1,10 @@
 Addition of KEGG Pathways
 =========================
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | Functions have been moved to :py:mod:`refinegems.curation.pathways`.
+
 The KEGG database holds information on metabolic pathways. You can use this module to add KEGG pathways with the libSBML Groups plugin.
 
 The workflow of the script is as follows:

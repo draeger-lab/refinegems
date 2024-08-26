@@ -1,6 +1,11 @@
 Pipeline: From genome sequence to draft model
 =============================================
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | The idea for this workflow has been incorporated into `SPECIMEN <https://github.com/draeger-lab/SPECIMEN>`__ under the name PGAB (PGAP-based) workflow.
+    | Beware that SPECIMEN only runs with refineGEMs 2.0.0 (starting with developmental versions).
+
 Generating a model for an organism where no information on genes and proteins is obtainable via any database 
 causes the problem that the model will not contain valid database identifiers for any GeneProduct. To resolve this issue the 
 workflow in Figure :numref:`workflow` can be used.

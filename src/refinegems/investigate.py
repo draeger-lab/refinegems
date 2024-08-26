@@ -2,6 +2,10 @@
 """ Provides functions to investigate the model and test with MEMOTE
 
 These functions enable simple testing of any model using MEMOTE and access to its number of reactions, metabolites and genes.
+
+.. warning:: 
+    *Deprecated in 2.0.0*: The functionalities have mainly been moved to refinegems.analysis.investigate and refinegems.utility.connections.
+    For more information, refer to the updated docs for version 2.0.0.
 """
 
 import os
@@ -16,6 +20,12 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 from refinegems.io import load_model_cobra, load_model_libsbml, search_sbo_label
+
+import warnings
+mes = 'The refinegems.investifate module will be deprecated from version 2.0.0 onwards. Most functionalities can be found in the refinegems.analysis.investigate module from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
+
 
 __author__ = "Famke Baeuerle and Alina Renz"
 

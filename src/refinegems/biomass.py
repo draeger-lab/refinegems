@@ -2,6 +2,10 @@
 """Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Döbel.
 
 This module provides functions to be used to assess the biomass weight as well as normalise it.
+
+.. warning:: 
+    *Deprecated as of 2.0.0*: Functionalities have been split into refinegems.curation.biomass and refinegems.utility.entities. 
+    For more information, refer to the updated documentation of version 2.0.0.
 """
 
 import os
@@ -14,6 +18,11 @@ from six import iteritems
 import memote.support.helpers as helpers
 from memote.utils import truncate
 from typing import Union
+
+import warnings
+mes = 'The refinegems.biomass module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.curation.biomass and refinegems.utility.entities modules from 2.0.0 onwards.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 __author__ = "MEMOTE and Gwendolyn O. Döbel"
 

@@ -1,6 +1,10 @@
 Growth simulation with refineGEMs
 =================================
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | Functions have been (mostly) moved and extenden in :py:mod:`refinegems.analysis.growth`.
+
 Interpreting the results
 ------------------------
 Outputs a table with the column headers:

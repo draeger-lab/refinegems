@@ -2,6 +2,8 @@
 """Can be used to polish a model (created with CarveMe v.1.5.1)
 
 The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.
+
+*Deprecated since version 2.0.0*: From 2.0.0 onwards, you can find the functionalities in refinegems.curation.polish
 """
 
 import re, logging
@@ -20,6 +22,10 @@ from datetime import date
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
+import warnings
+mes = 'The refinegems.polish module will be deprecated from version 2.0.0 onwards. Use the refinegems.curation.polish module to find the functionalities.'
+warnings.warn(mes,DeprecationWarning)
+warnings.warn(mes,FutureWarning)
 
 #------------------------------------------------ Constant variables --------------------------------------------------#
 BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN']
