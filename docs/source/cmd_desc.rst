@@ -170,7 +170,7 @@ Add or update tables for additional namespaces/databases into/of the in-build da
 
 Options:
 
-- ``--chunksize/-c`` Size (in kB) of data to download per chunk, if a download is required.
+- ``--chunksize/-c``: Size (in kB) of data to download per chunk, if a download is required.
 
 .. code:: bash
 
@@ -184,21 +184,57 @@ refinegems gaps
 
 .. code:: bash 
   
-  refinegems gaps find [MODELPATH] [GFF_FILE] [ORGANISMID] [GAPFILL_PARAMS] [FILENAME]
+  refinegems gaps find [ALGORITHMN] [MODELPATH] [OPTIONS]
 
-Find gaps in a model based on the genes/gene products of the underlying organism.
+Find gaps in a model and optionally try to fill them.
+Algorthmn for the gap filling is chosen by the first argument.
 
-.. code:: bash 
-  
-  refinegems gaps fill [MODEL] [GAP_ANALYSIS_RESULTS]
+General Options
 
-Fill the gaps in a model based on a user-provided input file.
+- ``-o``, ``--outdir``: Path to a directory to write the output to.  [default: ``./``]
+- ``-f``, ``--fill``: If True, tries to fill the gaps in the model.
+- ``--fc``, ``--formula-check``: [none,existence,wildcard,strict] Set the filter for which metabolite formulas are valid to be added to the model. [default: existence]
+- ``--no-dna``: Exclude DNA reactions (name-based) from being added to the model.
+- ``--no-rna``: Exclude RNA reactions (name-based) from being added to the model.
+- ``-p``, ``--idprefix``: Prefix for the random IDs, if an ID does not exists for the given namespace. [default: refineGEMs]
+- ``-n``, ``--namespace``: [BiGG]  Namespace used in the model.  [default: BiGG]
 
-.. code:: bash 
-  
-  refinegems gaps autofill [MODELPATH] [GAFILL_PARAMS] [FILENAME]
+| KEGG required parameters: [all required if ``ALG="KEGG"``]
+| Parameters required when running the KEGG gap filling algorithmn
 
-Automatically find and fill the gaps based on the genes/gene products.
+- ``--orgid``: KEGG organism ID
+
+| BioCyc required parameters: [all required if ``ALG="BioCyc"``]
+| Parameters required when running the KEGG gap filling algorithmn
+
+- ``--gt``, ``--genetable``: Path to the BioCyc gene smart table.
+- ``--rt``, ``--reactable``: Path to the BioCyc gene smart table.
+- ``--gff-bc``: Path to the GFF.
+
+| Gene required parameters: [all required if ``ALG="Gene"``]
+| Parameters required when running the GeneGapFiller algorithm
+
+- ``--gff-g``: Path to the GFF.
+
+| Gene optional parameters:
+| Optional / conditionally interdependant parameters for the gene gap filling algorithm
+
+- ``--prot-prefix``: Prefix for pseudo-protein IDs.  [default: refineGEMs]
+- ``--mail``: Mail address for NCBI requests.
+- ``--ncbi``, ``--check-ncbi``: Enable searching protein IDs in NCBI. This increases the runtime significantly.
+- ``--fasta``: Path to the protein FASTA of the model.
+- ``--dmnd-db``: Path to the SwissProt DIAMOND database.
+- ``--sp-map``, ``--swissprot-mapping``: Path to the SwissProt mapping file (ID against EC and BRENDA)
+- ``-s``, ``--sensitivity``: [sensitive,more-sensitive,very-sensitive,ultra-sensitive] Sensitivity mode for running DIAMOND.  [default: more-sensitive]
+- ``--cov``: Coverage value (passed to DIAMOND)  [default: 90.0]
+- ``--pid``: Percentage identity threshold value for filtering DIAMOND results.
+- ``-t``, ``--threads``: Number of threads to be used by DIAMOND.  [default: 2]
+
+Constraints:
+
+- ``--mail`` is required if ``--check-ncbi`` is set
+- if one of ``--fasta``, ``--dmnd-db``, ``--swissprot-mapping`` is set, all need to be set
+- ``--fasta``, ``--dmnd-db``, ``--swissprot-mapping`` are all required if any of ``--sensitivity``, ``--cov``, ``--pid`` and ``--threads`` is set
 
 
 refinegems media

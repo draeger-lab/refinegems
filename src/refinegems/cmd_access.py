@@ -192,12 +192,12 @@ def run(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
 # @TODO gaps group still for the old gapfill - rewrite or delete
-
+# @TEST help is displayed alright but untested
 @cli.group()
 def gaps():
    """Find and fill gaps in a model."""
 
-@gaps.command()
+@gaps.command(show_constraints=True)
 @cloup.argument('alg', type=click.Choice(['KEGG','BioCyc','Gene']),
                 help='Type of automated gap filling algorithm, that shall be used.')
 @cloup.argument('modelpath', type=click.Path(exists=True, dir_okay=False), 
@@ -255,7 +255,7 @@ def gaps():
                 show_default = True,
                 help='Prefix for pseudo-protein IDs.'),
    cloup.option('--mail', type=str, default=None, help='Mail address for NCBI requests.'),
-   cloup.option('--nbci','--check-ncbi', is_flag=True, default=False,
+   cloup.option('--ncbi','--check-ncbi', is_flag=True, default=False,
                 help='Enable searching protein IDs in NCBI. This increases the runtime significantly.'),
    cloup.option('--fasta', type=click.Path(exists=True, dir_okay=False), default=None,
                 help='Path to the protein FASTA of the model.'),
@@ -274,8 +274,8 @@ def gaps():
                 help='Number of threads to be used by DIAMOND.'), 
 )
 @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.IsSet('ncbi'), then=cloup.constraints.require_all), ['mail'])
-@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','sp_map'),then=cloup.constraints.AllSet), ['fasta','dmnd_db','sp_map'])
-@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('s','cov','pid','t'),then=cloup.constraints.AllSet), ['fasta','dmnd_db','sp_map'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','sp_map'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('sensitivity','cov','pid','threads'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
 def automated_gapfill(alg,modelpath,outdir,fill,
                       formula_check, no_dna, no_rna,
                       idprefix, namespace,
@@ -290,16 +290,42 @@ def automated_gapfill(alg,modelpath,outdir,fill,
    
    cmodel = rg.utility.io.load_model(modelpath, 'cobra')
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   # find gaps
    
-   gapfiller = rg.classes.gapfill.KEGGapFiller(orgid)
+   # set class instance
+   match alg:
+      case 'KEGG':
+         gapfiller = rg.classes.gapfill.KEGGapFiller(orgid)
+         # find gaps
+         gapfiller.missing_genes(model)
+         gapfiller.missing_reacs(cmodel)
+      case 'BioCyc':
+         gapfiller = rg.classes.gapfill.BioCycGapFiller(genetable,
+                                                        reactable,
+                                                        gff_bc)
+         # find gaps
+         gapfiller.missing_genes(model)
+         gapfiller.missing_reacs(cmodel)
+      case 'Gene':
+         gapfiller = rg.classes.gapfill.GeneGapFiller()
+         # find gaps
+         gapfiller.missing_genes(gff_g,model)
+         gapfiller.missing_reacs(cmodel, prot_prefix, mail, ncbi, fasta, dmnd_db, sp_map,
+                                 sensitivity, cov, pid, threads)
+      case _:
+         mes = f'Unknown option for algorthmn type: {alg}'
+         raise ValueError(mes)
+   # find gaps
    gapfiller.missing_genes(model)
    gapfiller.missing_reacs(cmodel)
    # fill gaps
    if fill:
-      model = gapfiller.fill_model(model)
+      model = gapfiller.fill_model(model, 
+                                   formula_check=formula_check,
+                                   exclude_dnae=no_dna, exclude_rna=no_rna,
+                                   idprefix=idprefix, namespace=namespace)
       # save model
       write_model_to_file(model, Path(outdir, 'gapfilled_model.xml'))
+      
    # @TODO report stats
    # @TODO report manual curation
    
