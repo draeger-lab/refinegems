@@ -113,7 +113,7 @@ Alternatively, install the tool with the extra `docs`, e.g.
 .. code:: console
     :class: copyable
 
-     pip install -e ".[dev]" --config-settings editable_mode=strict  
+     pip install -e ".[docs]" --config-settings editable_mode=strict  
 
 Updating the `requirements.txt`
 -------------------------------
@@ -138,7 +138,8 @@ Debugging switches
 - You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
 - If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
 - For debugging of pandas warnings or issues ``pd.options.mode.chained_assignment = None`` needs to be commented out.
-- | Additionally, some modules contain comment blocks of the following format:
+- | Additionally, some modules contain comment blocks inf the format shown below.
+  | By enabling the code lines between the dotted lines, a debugging-mode is run, which e.g. subsets the data to shorten the runtime to make debugging faster.
 
 .. code-block:: python
     :class: copyable
@@ -146,8 +147,6 @@ Debugging switches
     # @DEBUG ...............
     # some code
     # ......................
-
-| By enabling the code lines between the dotted lines, a debugging-mode is run, which e.g. subsets the data to shorten the runtime to make debugging faster.
 
 Guidelines for code documentation
 ---------------------------------
@@ -204,6 +203,7 @@ We are also trying to make input and return types explicit by declaring those in
     def my_func(input1: int, input2: str, input3: Model) -> tuple[str, int]:
 
 More details for certain specifics can also be found `here <https://github.com/draeger-lab/refinegems/issues/74>`__.
+
 
 Information about working on the media database
 -----------------------------------------------
