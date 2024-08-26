@@ -5,6 +5,13 @@ to help with the curation of genome-scale metabolic models (GEMS).
 
 .. hint:: For bug reports please write issues on the `GitHub page <https://github.com/draeger-lab/refinegems/issues>`__ or open a discussion `here <https://github.com/draeger-lab/refinegems/discussions>`__.
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | Due to massive restructuring and extension, all functions have been moved into new modules.
+    | If you used any functions from refineGEMs until now and want to use version 2.0.0 in the future, make sure to check your code after the version change.
+    | For the main pipeline in main.py see `SPECIMEN <https://github.com/draeger-lab/SPECIMEN>`__ as it will be deprecated from version 2.0.0 onwards.
+    | Beware that SPECIMEN only runs with refineGEMs 2.0.0 (starting with developmental versions).
+
 Overview
 --------
 

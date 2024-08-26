@@ -1,6 +1,10 @@
 Filling gaps with refineGEMs
 ============================
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | New options for gap filling can be found under :py:mod:`refinegems.classes.gapfill`.
+
 There are two possibilities to use refineGEMs to fill gaps.
 
 Manual gap filling

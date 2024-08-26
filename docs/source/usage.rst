@@ -4,6 +4,12 @@ Usage
 Usage as standalone application
 -------------------------------
 
+.. warning:: 
+    | ``main.py`` will be deprecated from version 2.0.0 onwards.*
+    | For the main pipeline in main.py see the CarveMe-ModelPolisher-based (CMPB) workflow in `SPECIMEN <https://github.com/draeger-lab/SPECIMEN>`__.
+    | Beware that SPECIMEN only runs with refineGEMs 2.0.0 (starting with developmental versions).
+
+
 The script ``main.py`` can be used directly in the command line after
 entering the virtual environment with ``pipenv shell`` or ``conda activate <EnvName>``.
 
@@ -139,6 +145,11 @@ The repository structure has the following intention:
 
 Usage as python module
 ----------------------
+
+.. warning:: 
+    | *Function calls will be deprecated from version 2.0.0 onwards.*
+    | Due to massive restructuring and extension, all functions have been moved into new modules.
+    | If you used any functions from refineGEMs until now and want to use version 2.0.0 in the future, make sure to check your code after the version change.
 
 See :doc:`examples <modules/examples>` to learn how to use refineGEMs.
 Note that at this time most of the modules only make sense when you use the respective main functions:

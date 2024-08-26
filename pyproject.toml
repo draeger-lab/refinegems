@@ -39,6 +39,7 @@ dependencies = [
     "biopython>=1.79",
     "bioregistry",
     "bioservices",
+    "Deprecated",
     "importlib-resources<=5.13.0",
     # MEMOTE > 0.14.0 -> depinfo >=2.0.0
     "memote>=0.13.0, <2.0.0",
