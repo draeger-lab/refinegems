@@ -13,7 +13,6 @@ Model refinement
     Biomass normalisation <modules-desc/biomass>
     Energy generating cycles (EGCs) <modules-desc/egcs>
     Gap filling <modules-desc/gapfill>
-    
 
 Model annotation
 ----------------
