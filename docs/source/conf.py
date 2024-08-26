@@ -13,9 +13,13 @@
 import os
 import sys
 from pathlib import Path
-# import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath(Path('..','..','src')))
 
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
 
 # -- Project information -----------------------------------------------------
 
@@ -24,7 +28,7 @@ project_copyright = '2024, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune
 author = 'Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 
 # The full version, including alpha/beta/rc tags
-release = '1.4.1'
+release = '2.0.0-alpha.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -78,7 +82,8 @@ html_css_files = ['custom_theme.css']
 html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
-    'display_version': False
+    'display_version': False,
+	'flyout_display': 'attached'
 }
 
 #Adds logo as favicon to tab
@@ -96,6 +101,12 @@ master_doc = 'index'
 # -- Autodoc -----------------------------------------------------------------
 
 autodoc_preserve_defaults = True
+autodoc_default_options = {
+    'exclude-members': '''
+    __init__, __abstractmethods__, ABC, __module__, _abc_impl, __annotations__, 
+    __dict__, __weakref__
+    '''
+}
 
 # we need those to display the code comments otherwise the functions cannot be imported
 # autodoc_mock_imports = ["psycopg2", 
