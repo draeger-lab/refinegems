@@ -3,6 +3,11 @@ refineGEMs package
 
 Here is an overview on all functions. All imports are mocked in ``autodoc_mock_imports`` in the ``conf.py`` file to enable automatic building.
 
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | Due to massive restructuring and extension, all functions have been moved into new modules.
+    | If you used any functions from refineGEMs until now and want to use version 2.0.0 in the future, make sure to check your code after the version change.
+
 refineGEMs.biomass module
 -------------------------
 
@@ -106,3 +111,4 @@ refineGEMs.sboann module
    :members:
    :undoc-members:
    :show-inheritance:
+

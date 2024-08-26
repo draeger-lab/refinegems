@@ -1,5 +1,11 @@
 From laboratory to *in silico* medium
-==========================================
+======================================
+
+.. warning:: 
+    | *Will be deprecated from version 2.0.0 onwards.*
+    | Using the new setup, the generation of *in silico* media changed slightly. 
+    | Please refer to the newer documentation page after the version change or when using `SPECIMEN <https://github.com/draeger-lab/SPECIMEN>`__.
+
 
 .. hint:: 
    If you want to use the medium with ``refineGEMs.growth`` add the definition to the database schema ``sbo_media_db.sql`` 
