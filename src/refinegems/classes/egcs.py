@@ -16,7 +16,6 @@ import pandas as pd
 import warnings
 
 from functools import partial
-from itertools import product
 from multiprocess import Pool
 from tqdm import tqdm
 from typing import Literal
@@ -43,7 +42,7 @@ DISSIPATION_RXNS = {
     "PROTON": {"Hydrogen [H(+)]": 1, "Hydrogen [H(+)] transported": -1}
 } #: :meta: 
 
-ECG_SCORING_MATRIX = {'MR':1, 'RB':3, 'RF':3,'RM':6} #: :meta: 
+EGC_SCORING_MATRIX = {'MR':1, 'RB':3, 'RF':3,'RM':6} #: :meta: 
 
 ################################################################################
 # classes
@@ -51,7 +50,7 @@ ECG_SCORING_MATRIX = {'MR':1, 'RB':3, 'RF':3,'RM':6} #: :meta:
 
 class EGCSolver():
     """Parent class for the EGC solvers with generally useful functions and 
-    attributes. Can only be used to find, not solve ECGs directly.
+    attributes. Can only be used to find, not solve EGCs directly.
 
     Attributes:
         - theshold: Float describing the cutoff, under which the model
@@ -371,7 +370,7 @@ class GreedyEGCSolver(EGCSolver):
             Integers describing the penalty scores.
     """
 
-    def __init__(self, scoring_matrix:dict = ECG_SCORING_MATRIX) -> None:
+    def __init__(self, scoring_matrix:dict = EGC_SCORING_MATRIX) -> None:
         super().__init__()
         self.scoring_matrix = scoring_matrix
         
