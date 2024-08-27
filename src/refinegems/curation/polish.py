@@ -1,7 +1,30 @@
 #!/usr/bin/env python
-"""Can be used to polish a model (created with CarveMe v.1.5.1)
+"""General functions to polish a model
 
-The newer version of CarveMe leads to some irritations in the model, these scripts enable for example the addition of BiGG Ids to the annotations as well as a correct formatting of the annotations.
+This module provides functionalities for an initial clean-up of models, including special functions for CarveMe models.
+
+Since CarveMe version 1.5.1, the draft models from CarveMe contain pieces of information that are not correctly added to the 
+annotations. To address this, this module includes the following functionalities:
+
+    - Add URIs from the entity IDs to the annotation field for metabolites & reactions
+    - Transfer URIs from the notes field to the annotations for metabolites & reactions
+    - Add URIs from the GeneProduct IDs to the annotations
+
+The functionalities for CarveMe models, along with the following further functionalities, are gathered in the main 
+function :py:func:`~refinegems.curation.polish.polish`.
+
+Further functionalities:
+
+        - Setting boundary condition & constant for metabolites & reactions
+        - Unit handling to add units & UnitDefinitions & to set units from parameters
+        - Addition of default settings for compartments & metabolites
+        - Addition of URIs to GeneProducts
+
+            - via the RefSeq GFF from NCBI
+            - via the KEGG API
+            
+        - Changing the CURIE pattern/CVTerm qualifier & qualifier type
+        - Directionality control
 """
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
@@ -465,7 +488,7 @@ def set_default_units(model: libModel):
             model.setVolumeUnits(unit_id)
 
 
-#--------------------------------------- Function to set units fro parameters -----------------------------------------#
+#--------------------------------------- Function to set units from parameters ----------------------------------------#
 def set_units(model: libModel):
     """Sets units of parameters in model
 

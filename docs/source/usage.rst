@@ -2,7 +2,7 @@
 Usage
 =====
 
-This page shows how to quickly access the ``refinegems`` toolbox. More more detailed examples see :ref:`About different applications`.
+This page shows how to quickly access the ``refinegems`` toolbox. For more detailed examples see :ref:`About different applications`.
 
 ----
 
@@ -14,7 +14,7 @@ via command line/terminal
 
 The main functionalities of refineGEMs can be accessed directly from the command line after a successfull installation.
 
-For more information, call the following in your command line or terminal
+For more information, call the following in your command line or terminal:
 
 .. code-block:: bash
 

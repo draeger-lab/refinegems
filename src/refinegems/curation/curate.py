@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""General functions for curating a model.
+"""General functions for curating a model
 
 Includes functions for adding annotations from manual tables, annotations synchronisation, 
 handling duplicates and more."""

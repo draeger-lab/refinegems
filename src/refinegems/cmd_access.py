@@ -199,7 +199,7 @@ def gaps():
 
 @gaps.command(show_constraints=True)
 @cloup.argument('alg', type=click.Choice(['KEGG','BioCyc','Gene']),
-                help='Type of automated gap filling algorithm, that shall be used.')
+                help='Type of automated gap-gapfilling algorithm, that shall be used.')
 @cloup.argument('modelpath', type=click.Path(exists=True, dir_okay=False), 
                 help='Path to the model.')
 @cloup.option_group(
@@ -223,14 +223,14 @@ def gaps():
 )
 @cloup.option_group(
    "KEGG required parameters",
-   "Parameters required when running the KEGG gap filling algorithmn",
+   "Parameters required when running the KEGG gap-gapfilling algorithmn",
    cloup.option('--orgid', type=str, help='KEGG organism ID'),
    constraint = cloup.constraints.If(cloup.constraints.Equal('alg','KEGG'), 
                                      then=cloup.constraints.require_all)
 )
 @cloup.option_group(
    "BioCyc required parameters",
-   "Parameters required when running the KEGG gap filling algorithmn",
+   "Parameters required when running the KEGG gap-gapfilling algorithmn",
    cloup.option('--gt','--genetable', type=click.Path(exists=True, dir_okay=False),
                 help='Path to the BioCyc gene smart table.'),
    cloup.option('--rt','--reactable', type=click.Path(exists=True, dir_okay=False),
@@ -250,7 +250,7 @@ def gaps():
 )
 @cloup.option_group(
    "Gene optional parameters",
-   "Optional / conditionally interdependant parameters for the gene gap filling algorithm",
+   "Optional / conditionally interdependant parameters for the gene gap-gapfilling algorithm",
    cloup.option('--prot-prefix', type=str, default='refineGEMs',
                 show_default = True,
                 help='Prefix for pseudo-protein IDs.'),
@@ -268,7 +268,7 @@ def gaps():
                 help='Sensitivity mode for running DIAMOND.'),
    cloup.option('--cov', type=float, default=90.0, show_default=True,
                 help='Coverage value (passed to DIAMOND)'),
-   cloup.option('--pid', type=float, default=95.0, show_default=False,
+   cloup.option('--pid', type=float, default=95.0, show_default=True,
                 help='Percentage identity threshold value for filtering DIAMOND results.'),
    cloup.option('-t','--threads',type=int, default=2, show_default=True, 
                 help='Number of threads to be used by DIAMOND.'), 
@@ -296,27 +296,24 @@ def automated_gapfill(alg,modelpath,outdir,fill,
       case 'KEGG':
          gapfiller = rg.classes.gapfill.KEGGapFiller(orgid)
          # find gaps
-         gapfiller.missing_genes(model)
-         gapfiller.missing_reacs(cmodel)
+         gapfiller.find_missing_genes(model)
+         gapfiller.find_missing_reactions(cmodel)
       case 'BioCyc':
          gapfiller = rg.classes.gapfill.BioCycGapFiller(genetable,
                                                         reactable,
                                                         gff_bc)
          # find gaps
-         gapfiller.missing_genes(model)
-         gapfiller.missing_reacs(cmodel)
+         gapfiller.find_missing_genes(model)
+         gapfiller.find_missing_reactions(cmodel)
       case 'Gene':
          gapfiller = rg.classes.gapfill.GeneGapFiller()
          # find gaps
-         gapfiller.missing_genes(gff_g,model)
-         gapfiller.missing_reacs(cmodel, prot_prefix, mail, ncbi, fasta, dmnd_db, sp_map,
+         gapfiller.find_missing_genes(gff_g,model)
+         gapfiller.find_missing_reactions(cmodel, prot_prefix, mail, ncbi, fasta, dmnd_db, sp_map,
                                  sensitivity, cov, pid, threads)
       case _:
          mes = f'Unknown option for algorthmn type: {alg}'
          raise ValueError(mes)
-   # find gaps
-   gapfiller.missing_genes(model)
-   gapfiller.missing_reacs(cmodel)
    # fill gaps
    if fill:
       model = gapfiller.fill_model(model, 

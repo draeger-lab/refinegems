@@ -103,7 +103,7 @@ master_doc = 'index'
 autodoc_preserve_defaults = True
 autodoc_default_options = {
     'exclude-members': '''
-    __init__, __abstractmethods__, ABC, __module__, _abc_impl, __annotations__, 
+    __abstractmethods__, ABC, __module__, _abc_impl, __annotations__, 
     __dict__, __weakref__
     '''
 }
