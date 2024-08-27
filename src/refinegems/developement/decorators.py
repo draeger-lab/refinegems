@@ -19,6 +19,7 @@ from functools import wraps
 # functions
 ################################################################################
 
+# @TODO: Add note message for docs
 def template(func):
     """A decorator for template functions.
     
@@ -50,7 +51,6 @@ def implement(func):
     
 
 # @TODO add an option for alternative / new function
-# @DISCUSSION or use the sphinx deprecation package?
 def deprecate(func):
     """A decorator to tell the user, that the function will soon be deprecated.
     

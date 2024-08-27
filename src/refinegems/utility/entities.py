@@ -412,7 +412,7 @@ def build_metabolite_xxx(id:str, model:cobra.Model,
     
     .. note::
     
-        This is a template function for developers. It is cannot be executed.
+        This is a template function for developers. It cannot be executed.
 
     Args:
         - id (str): 
@@ -983,6 +983,7 @@ def build_reaction_xxx():
 
 
 # @TEST (more) - tries some cases, in which it seems to work
+# @TODO: Add if to extend notes if found missing by BioCyc
 # @TODO
 def build_reaction_mnx(model:cobra.Model, id:str,
                       reac_str:str = None,
@@ -1303,6 +1304,7 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
 
 
 # @TEST
+# @TODO: Add if to extend notes if found missing by BioCyc
 # @TODO some things still open (for discussion)
 # @TODO implement reac_str usage
 def build_reaction_bigg(model:cobra.Model, id:str, 
