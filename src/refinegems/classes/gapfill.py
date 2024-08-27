@@ -252,11 +252,11 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
             # Specify origin of identified missing reactions & 
             # Move BioCyc ID, origin & ec-code to reference
             mnx_reacs['origin'] = 'BioCyc'
-            mnx_reacs['reference'] = mnx_reacs[['metacyc.reaction', 'origin', 'ec-code']].to_dict('records')
+            mnx_reacs['reference'] = mnx_reacs[['metacyc.reaction', 'origin']].to_dict('records')
 
             # Drop all unnecessary columns
             mnx_reacs.drop(
-                ['origin', 'metacyc.reaction', 'ec-code_x', 'ec-code_y', 'ec-code', 'equation'], 
+                ['origin', 'metacyc.reaction', 'ec-code_x', 'ec-code_y', 'equation'], 
                 axis=1, inplace=True
                 )
 
@@ -275,8 +275,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
             
             # Clean-up ec-code column
             unmapped_reacs.rename({'ec-code_y': 'ec-code'}, axis=1, inplace=True)
-            unmapped_reacs['reference'] = unmapped_reacs[['ec-code']].to_dict('records')
-            unmapped_reacs.drop('ec-code', axis=1, inplace=True)
 
         # Step 3: Get result(s)
         # ---------------------
@@ -359,14 +357,14 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
             # Move BioCyc ID & origin to reference
             bigg_reacs['origin'] = 'BioCyc'
             bigg_reacs['reference'] = bigg_reacs[
-                ['metacyc.reaction', 'origin', 'alias', 'ec-code']
+                ['metacyc.reaction', 'origin', 'alias']
                 ].to_dict('records')
 
             # Drop all unnecessary columns
             bigg_reacs.drop(
                 [
                     'origin', 'metacyc.reaction', 'equation', 
-                    'BiGG', 'alias', 'ec-code'
+                    'BiGG', 'alias'
                     ], axis=1, inplace=True
                 )
 
@@ -590,9 +588,11 @@ class GapFiller(ABC):
         - full_gene_list (list): 
             List of all the genes.
         - missing_genes:
-            DataFrame containing all genes found as missing with additional information
+            DataFrame containing all genes found as missing with additional information. <br>
+            ``ncbiprotein | locus_tag | <optional columns>``
         - missing_reactions: 
-            DataFrame containing all reactions found as missing with additional information
+            DataFrame containing all reactions found as missing with additional information.<br>
+            ``ec-code | ncbiprotein | id | equation | reference | <is_transport> | via | add_to_GPR``
         - geneid_type (str):
             What type of gene ID the model contains. 
             Defaults to 'ncbi'.
@@ -638,7 +638,7 @@ class GapFiller(ABC):
         
         Needs to save a table in the format 
         
-        ``ncbiprotein | locus_tag | ec-code | <optional columns>``
+        ``ncbiprotein | locus_tag | <optional columns>``
         
         to the attribute missing_genes.
     
@@ -651,7 +651,7 @@ class GapFiller(ABC):
         
         Needs to save a table of the format
         
-        ``ec-code | ncbiprotein | id | equation | reference | is_transport | via | add_to_GPR``
+        ``ec-code | ncbiprotein | id | equation | reference | <is_transport> | via | add_to_GPR``
         
         to the attribute missing_reactions.
         
@@ -809,6 +809,7 @@ class GapFiller(ABC):
     
 
     # @TEST BioCyc
+    # @TODO Add handling of BioCyc-Output
     # @TODO logging, save stuff for manual curation etc. -> started a bit
     # @TEST - somewhat seems to work - for now
     def add_reactions_from_table(self, model:cobra.Model,
@@ -857,6 +858,24 @@ class GapFiller(ABC):
         for idx,row in tqdm(missing_reac_table.iterrows(), 
                             desc='Trying to add missing reacs',
                             total=missing_reac_table.shape[0]):
+
+            # add EC number to references
+            if row['reference']:
+                refs = row['reference']
+            else:
+                refs = {}
+            if row['ec-code']:
+                if 'ec-code' in refs.keys():
+                    if not isinstance(refs['ec-code'],list):
+                        refs['ec-code'] = list(refs['ec-code'])
+                    if isinstance(row['ec-code'],list):
+                        refs['ec-code'] = list(set(refs['ec-code'] + row['ec-code']))
+                    elif isinstance(row['ec-code'],str):
+                        refs['ec-code'] = list(set(refs['ec-code'].append(row['ec-code'])))
+                else:
+                    refs['ec-code'] = row['ec-code'] if isinstance(row['ec-code'],list) else [row['ec-code']]
+
+            # @TODO: Logging for failed to build reactions
             # build reaction
             reac = None
             match row['via']:
@@ -864,7 +883,7 @@ class GapFiller(ABC):
                 case 'MetaNetX':
                     reac = build_reaction_mnx(model,row['id'],
                                             reac_str=row['equation'],
-                                            references={'ec-code':[row['ec-code']]},
+                                            references=refs,
                                             idprefix=idprefix,
                                             namespace=namespace)      
                 # KEGG
@@ -879,7 +898,7 @@ class GapFiller(ABC):
                 # BiGG
                 case 'BiGG':
                     reac = build_reaction_bigg(model,row['id'],
-                                            references={'ec-code':[row['ec-code']]},
+                                            references=refs,
                                             idprefix=idprefix,
                                             namespace=namespace)
                     
@@ -1210,6 +1229,7 @@ class KEGGapFiller(GapFiller):
 # @TODO: Possibility to add KEGG Reaction & MetaNetX IDs to SmartTable 
 #       -> So far these are empty for my test cases
 #       -> Could be added in a future update
+# @TODO: Add handling of empyt reference column?
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with 
@@ -1227,12 +1247,6 @@ class BioCycGapFiller(GapFiller):
     Attributes:
         - GapFiller Attributes:
             All attributes of the parent class :py:class:`~refinegems.classes.gapfill.GapFiller`
-                        - missing_genes (pd.DataFrame):
-                            DataFrame containing the missing genes with the columns 
-                            ``locus_tag | id | ncbiprotein | name``
-                        - missing_reactions (pd.DataFrame):
-                            DataFrame containing the missing reactions with the columns 
-                            ``id | ncbiprotein | equation | ec-code | via | add_to_GPR``
         - biocyc_gene_tbl_path (str, required): 
             Path to organism-specific SmartTable for genes from BioCyc;
             Should contain the columns: ``Accession-2 | Reactions of gene``
@@ -1486,7 +1500,7 @@ class BioCycGapFiller(GapFiller):
         # Filter reacs for already in model
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(
             lambda x: 
-                self._find_reac_in_model(model,x['reference'],x['id'],x['via']), axis=1
+                self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1
             )
 
         # Merge self.missing_reactions with add_to_gpr with the mapped_reacs
