@@ -612,6 +612,11 @@ class GapFiller(ABC):
         self.geneid_type = 'ncbi' # @TODO more options?
         
         # collect stats & Co, can be extended by subclasses
+        # @DISCUSSION
+        # @TODO
+        # possible problem with the current stats: some stuff might be counted twice or more, since the
+        # current implementation depends on the tables (esp. reactions, since ID depends on NCBI 
+        # protein accession number and not the uniqueness of the ID)
         self._statistics = {  
                 'genes':{
                     'missing (before)': 0,
@@ -799,13 +804,14 @@ class GapFiller(ABC):
             # check, if G_+ncbiprotein in model
             # if yes, add gpr
             geneid = 'G_'+row['ncbiprotein'].replace('.','_')
-            reacid = 'R_'+row['add_to_GPR']
-            if geneid in model_gene_ids:
-                create_gpr(model.getReaction(reacid),geneid)
-            # else, print warning
-            else:
-                mes = f'Cannot find {geneid} in model. Should be added to {reacid}'
-                warnings.warn(mes,UserWarning)
+            for reacid in row['add_to_GPR']:
+                current_reacid = 'R_'+reacid
+                if geneid in model_gene_ids:
+                    create_gpr(model.getReaction(current_reacid),geneid)
+                # else, print warning
+                else:
+                    mes = f'Cannot find {geneid} in model. Should be added to {current_reacid}'
+                    warnings.warn(mes,UserWarning)
     
 
     # @TEST BioCyc
@@ -867,7 +873,7 @@ class GapFiller(ABC):
             if row['ec-code']:
                 if 'ec-code' in refs.keys():
                     if not isinstance(refs['ec-code'],list):
-                        refs['ec-code'] = list(refs['ec-code'])
+                        refs['ec-code'] = [refs['ec-code']]
                     if isinstance(row['ec-code'],list):
                         refs['ec-code'] = list(set(refs['ec-code'] + row['ec-code']))
                     elif isinstance(row['ec-code'],str):
@@ -888,8 +894,6 @@ class GapFiller(ABC):
                                             namespace=namespace)      
                 # KEGG
                 case 'KEGG':
-                    refs = row['reference']
-                    refs['ec-code'] = row['ec-code']
                     reac = build_reaction_kegg(model,row['id'],
                                             reac_str=row['equation'],
                                             references=refs,

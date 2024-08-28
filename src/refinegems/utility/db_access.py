@@ -637,7 +637,7 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
     
     # extract orthology and ec-code
     if len(gene_entry.orthology) > 0:
-        # gett KEGG orthology ID
+        # get KEGG orthology ID
         kegg_orthology = [_[0] for _ in gene_entry.orthology]
         gene_info['kegg.orthology'] = kegg_orthology
         # get EC number
