@@ -1,9 +1,6 @@
 Welcome to refineGEMs!
 ======================================
-``refineGEMs`` is a Python package intended
-to help with the curation of genome-scale metabolic models (GEMS).
-
-.. hint:: For bug reports please write issues on the `GitHub page <https://github.com/draeger-lab/refinegems/issues>`__ or open a discussion `here <https://github.com/draeger-lab/refinegems/discussions>`__.
+``refineGEMs`` is a Python-based toolbox for the curation and analysis of genome-scale metabolic models (GEMS).
 
 .. warning:: 
     | *Will be deprecated from version 2.0.0 onwards.*
@@ -15,32 +12,68 @@ to help with the curation of genome-scale metabolic models (GEMS).
 Overview
 --------
 
-Currently ``refineGEMs`` can be used for the investigation of a GEM, it can complete the following tasks:
+This documentation provides information on how to install the toolbox, how to use it - either via 
+command line or code - and provides different examples of use cases. Furthermore, it provides detailed 
+information about the in-build media database and the code behind the modules.
 
-* loading GEMs with ``COBRApy`` and ``libSBML``
-* report number of metabolites, reactions and genes
-* report orphaned, deadends and disconnected metabolites
-* report mass and charge unbalanced reactions
-* report `Memote <https://memote.readthedocs.io/en/latest/index.html>`__ score
-* compare the genes present in the model to the genes found in:
-  * the `KEGG <https://www.genome.jp/kegg/kegg1.html>`__ Database (Note: This requires the GFF file and the KEGG identifier of your organism.)
-  * Or the `BioCyc <https://biocyc.org/>`__ Database (Note: This requires that a database entry for your organism exists in BioCyc.)
-* compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the `ModelSEED <https://modelseed.org/>`__ Database.
+Quick access to main sites
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Other applications of ``refineGEMs`` to curate a given model include: 
+.. image:: images/buttons/Install.png
+  :height: 0px
+  :width: 0px
 
-* The correction of a model created with `CarveMe <https://github.com/cdanielmachado/carveme>`__ v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers),
-* The addition of `KEGG <https://www.genome.jp/kegg/kegg1.html>`__ Pathways as Groups (using the `libSBML <https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html>`__ Groups Plugin),
-* Updating the SBO-Term annotations based on SBOannotator\ :footcite:p:`Leonidou2023_sboann`,
-* Updating the annotation of metabolites and extending the model with reactions (for the purpose of filling gaps) based on a table filled by the user ``data/manual_annotations.xlsx`` (Note: This only works when the structure of the `example Excel file <https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/manual_curation.xlsx>`__ is used.),
-* And extending the model with all information surrounding reactions including the corresponding GeneProducts and metabolites by filling in the table ``data/modelName_gapfill_analysis_date_example.xlsx`` (Note: This also only works when the structure of the `example Excel file <https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/modelName_gapfill_analysis_date_example.xlsx>`__ is used).
+.. raw:: html
+
+  <a class="reference external image-reference" href="installation.html">
+    <img src='_images/Install.png' alt='Installation' title='Installation' style="width: 20%;">
+  </a>
+
+.. image:: images/buttons/Usage.png
+  :height: 0px
+  :width: 0px
+
+.. raw:: html
+
+  <a class="reference external image-reference" href="main-modules.html">
+    <img src='_images/Usage.png' alt='Applications' title='Applications' style="width: 20%;">
+  </a>
+
+.. image:: images/buttons/Media.png
+  :height: 0px
+  :width: 0px
+
+.. raw:: html
+
+  <a class="reference external image-reference" href="database/intro.html">
+    <img src='_images/Media.png' alt='Media database' title='Media Database' style="width: 20%;">
+  </a>
+
+.. image:: images/buttons/Code.png
+  :height: 0px
+  :width: 0px
+
+.. raw:: html
+
+  <a class="reference external image-reference" href="api.html">
+    <img src='_images/Code.png' alt='Code' title='Code' style="width: 20%;">
+  </a>
+
+Connections to other tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+``refineGEMs`` also provides access points for other tools:
+
+* Reporting the `MEMOTE <https://memote.readthedocs.io/en/latest/index.html>`__ score or generating a complete MEMOTE report
+* Updating the SBO-Term annotations based on `SBOannotator <https://github.com/draeger-lab/SBOannotator>`__\ :footcite:p:`Leonidou2023_sboann`
+* Balancing the masses and charges with `MassChargeCuration (MCC) <https://github.com/Biomathsys/MassChargeCuration>`__\ :footcite:p:`Finnem2023_mcc`
+* Correcting a biomass objective function with `BOFdat <https://github.com/jclachance/BOFdat>`__
 
 How to cite
 -----------
 
-When using refineGEMs, please cite the latest publication:
+When using ``refineGEMs``, please cite the latest publication:
 
-  Famke Bäuerle, Gwendolyn O. Döbel, Laura Camus, Simon Heilbronner, and Andreas Dräger. 
+  Famke Bäuerle, Gwendolyn O. Döbel, Laura Camus, Simon Heilbronner, and Andreas Dräger.
   Genome-scale metabolic models consistently predict in vitro characteristics of Corynebacterium
   striatum. Front. Bioinform., oct 2023. `doi:10.3389/fbinf.2023.1214074 <https://doi.org/10.3389/fbinf.2023.1214074>`__.
 
@@ -53,12 +86,9 @@ When using refineGEMs, please cite the latest publication:
    installation
    usage
    main-modules
-   in_silico_media_generation
-   API access <api>
-   pipeline
+   database/intro
+   Content of refineGEMs <api>
+   Help and FAQ <help>
    Notes for developers <development>
-
-* :ref:`genindex`
-* :ref:`search`
 
 .. footbibliography::

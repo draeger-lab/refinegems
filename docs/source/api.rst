@@ -1,114 +1,36 @@
 refineGEMs package
 ==================
 
-Here is an overview on all functions. All imports are mocked in ``autodoc_mock_imports`` in the ``conf.py`` file to enable automatic building.
+Here is an overview on all functions. 
 
-.. warning:: 
-    | *Will be deprecated from version 2.0.0 onwards.*
-    | Due to massive restructuring and extension, all functions have been moved into new modules.
-    | If you used any functions from refineGEMs until now and want to use version 2.0.0 in the future, make sure to check your code after the version change.
+For an alphabetically ordered list, see the :ref:`genindex`.
 
-refineGEMs.biomass module
--------------------------
+Subpackages
+-----------
 
-.. automodule:: refinegems.biomass
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 3
 
-refineGEMs.charges module
--------------------------
+   analysis <modules/analysis>
+   classes <modules/classes>
+   curation <modules/curation>
+   developement <modules/developement>
+   utility <modules/utility>
 
-.. automodule:: refinegems.charges
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-refineGEMs.comparison module
+refineGEMs.cmd_access module
 ----------------------------
 
-.. automodule:: refinegems.comparison
+.. automodule:: refinegems.cmd_access
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
-refineGEMs.curate module
-------------------------
+More information: 
 
-.. automodule:: refinegems.curate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.cvterms module
--------------------------
-
-.. automodule:: refinegems.cvterms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.gapfill module
--------------------------
-
-.. automodule:: refinegems.gapfill
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.growth module
-------------------------
-
-.. automodule:: refinegems.growth
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.investigate module
------------------------------
-
-.. automodule:: refinegems.investigate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.io module
---------------------
-
-.. automodule:: refinegems.io
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.modelseed module
----------------------------
-
-.. automodule:: refinegems.modelseed
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.pathways module
---------------------------
-
-.. automodule:: refinegems.pathways
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.polish module
-------------------------
-
-.. automodule:: refinegems.polish
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.sboann module
-------------------------
-
-.. automodule:: refinegems.sboann
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+.. toctree::
+   :maxdepth: 3
+   
+   Command line access points <cmd_desc>

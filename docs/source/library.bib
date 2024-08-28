@@ -220,7 +220,7 @@
   keywords = {biphasic growth,Corynebacterium glutamicum,growth rate,microfluidics,protocatechuic acid,single cell growth}
 }
 
-% Reference for LB
+% References for LB
 @article{bertaniSTUDIESLYSOGENESIS1951,
   title = {{{STUDIES ON LYSOGENESIS I}}.},
   author = {Bertani, G.},
@@ -237,7 +237,51 @@
   pmid = {14888646}
 }
 
-% Reference for CasA
+@article{Oh2007,
+title = {Genome-scale Reconstruction of Metabolic Network in Bacillus subtilis Based on High-throughput Phenotyping and Gene Essentiality Data*},
+journal = {Journal of Biological Chemistry},
+volume = {282},
+number = {39},
+pages = {28791-28799},
+year = {2007},
+issn = {0021-9258},
+doi = {https://doi.org/10.1074/jbc.M703759200},
+url = {https://www.sciencedirect.com/science/article/pii/S0021925820586110},
+author = {You-Kwan Oh and Bernhard O. Palsson and Sung M. Park and Christophe H. Schilling and Radhakrishnan Mahadevan},
+abstract = {In this report, a genome-scale reconstruction of Bacillus subtilis metabolism and its iterative development based on the combination of genomic, biochemical, and physiological information and high-throughput phenotyping experiments is presented. The initial reconstruction was converted into an in silico model and expanded in a four-step iterative fashion. First, network gap analysis was used to identify 48 missing reactions that are needed for growth but were not found in the genome annotation. Second, the computed growth rates under aerobic conditions were compared with high-throughput phenotypic screen data, and the initial in silico model could predict the outcomes qualitatively in 140 of 271 cases considered. Detailed analysis of the incorrect predictions resulted in the addition of 75 reactions to the initial reconstruction, and 200 of 271 cases were correctly computed. Third, in silico computations of the growth phenotypes of knock-out strains were found to be consistent with experimental observations in 720 of 766 cases evaluated. Fourth, the integrated analysis of the large-scale substrate utilization and gene essentiality data with the genome-scale metabolic model revealed the requirement of 80 specific enzymes (transport, 53; intracellular reactions, 27) that were not in the genome annotation. Subsequent sequence analysis resulted in the identification of genes that could be putatively assigned to 13 intracellular enzymes. The final reconstruction accounted for 844 open reading frames and consisted of 1020 metabolic reactions and 988 metabolites. Hence, the in silico model can be used to obtain experimentally verifiable hypothesis on the metabolic functions of various genes.}
+}
+
+@article{machado2018fast,
+  title={Fast automated reconstruction of genome-scale metabolic models for microbial species and communities},
+  author={Machado, Daniel and Andrejev, Sergej and Tramontano, Melanie and Patil, Kiran Raosaheb},
+  journal={Nucleic acids research},
+  volume={46},
+  number={15},
+  pages={7542--7553},
+  year={2018},
+  publisher={Oxford University Press}
+}
+
+@online{WHOSeinDrinkingWater2003,
+  author = {World Health Organization},
+  title = {Selenium in Drinking-water},
+  year = 2003,
+  url = {https://www.who.int/docs/default-source/wash-documents/wash-chemicals/selenium-2003-background-document.pdf?sfvrsn=624fa2c0_4},
+  urldate = {2024-02-19}
+}
+
+@article{Rayman2004, 
+  title={The use of high-selenium yeast to raise selenium status: how does it measure up?}, 
+  volume={92}, 
+  DOI={10.1079/BJN20041251}, 
+  number={4}, 
+  journal={British Journal of Nutrition}, 
+  author={Rayman, Margaret P.}, 
+  year={2004}, 
+  pages={557–573}
+}
+
+% References for CasA medium & subset
 @article{nolanAminoAcidsGrowth1971,
   title = {Amino {{Acids}} and {{Growth Factors}} in {{Vitamin-Free Casamino Acids}}},
   author = {Nolan, Richard A.},
@@ -253,6 +297,28 @@
   urldate = {2023-05-04}
 }
 
+@online{USBiologicalCasA,
+  author = {USBiological - life Sciences},
+  title = {C2080 Casamino Acids},
+  url = {https://www.usbio.net/media/C2080/casamino-acids#:~:text=Casamino%2520Acids%2520is%2520a%2520hydrochloric,destroyed%2520by%2520the%2520acid%2520treatment},
+  urldate = {2024-02-20},
+  langid = {english}
+}
+
+Reference for artSw, artSe & BMS23
+@article{Swaney2023, 
+author = {Mary Hannah Swaney and Amanda Nelsen and Shelby Sandstrom and Lindsay R. Kalan},
+title = {Sweat and Sebum Preferences of the Human Skin Microbiota},
+journal = {Microbiology Spectrum},
+volume = {11},
+number = {1},
+pages = {e04180-22},
+year = {2023},
+doi = {10.1128/spectrum.04180-22},
+URL = {https://journals.asm.org/doi/abs/10.1128/spectrum.04180-22}, 
+eprint = {https://journals.asm.org/doi/pdf/10.1128/spectrum.04180-22}
+}
+
 Reference for SBOannotator
 @article{Leonidou2023_sboann,
 	doi = {10.20944/preprints202302.0317.v1},
@@ -263,4 +329,29 @@ Reference for SBOannotator
 	publisher = {Preprints.org},
 	author = {Nantia Leonidou and Elisabeth Fritze and Alina Renz and Andreas Dräger},
 	title = {SBOannotator: a Python Tool for the Automated Assignment of Systems Biology Ontology Terms}
+}
+
+Reference for MCC
+@misc{Finnem2023_mcc,
+  author       = {Finnem and
+                  Reihaneh Mostolizadeh},
+  title        = {Biomathsys/MassChargeCuration: V0.1},
+  month        = jan,
+  year         = 2023,
+  publisher    = {Zenodo},
+  version      = {V0.1},
+  doi          = {10.5281/zenodo.7525185},
+  url          = {https://doi.org/10.5281/zenodo.7525185}
+}
+
+# EGCs : how to find and ModelFit variant
+@article{fritzemeier2017erroneous,
+  title={Erroneous energy-generating cycles in published genome scale metabolic networks: Identification and removal},
+  author={Fritzemeier, Claus Jonathan and Hartleb, Daniel and Szappanos, Bal{\'a}zs and Papp, Bal{\'a}zs and Lercher, Martin J},
+  journal={PLoS computational biology},
+  volume={13},
+  number={4},
+  pages={e1005494},
+  year={2017},
+  publisher={Public Library of Science San Francisco, CA USA}
 }
