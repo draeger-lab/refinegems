@@ -57,7 +57,7 @@ class EGCSolver():
             will no longer considered to be growing.
             Defaults to the MIN_GROWTH_THRESHOLD set in the growth module.
         - limit: Sets the maximal number of cores to be used.
-            Defaults to 8.
+            Defaults to 2.
         - chunksize: Chunksize to use for multiprocessing.
             Defaults to 12.
     """
@@ -365,13 +365,14 @@ class GreedyEGCSolver(EGCSolver):
     - report remaining EGCs, score and reactions used for solution
 
     Attributes:
+        - all attributes of the base class :py:class:`refinegems.classes.egcs.EGCSolver`
         - scoring_matrix: 
             Dictionary of the changes (RM, MR, RF, RB) against
             Integers describing the penalty scores.
     """
 
-    def __init__(self, scoring_matrix:dict = EGC_SCORING_MATRIX) -> None:
-        super().__init__()
+    def __init__(self, scoring_matrix:dict = EGC_SCORING_MATRIX, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.scoring_matrix = scoring_matrix
         
 
