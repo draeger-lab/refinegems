@@ -2,15 +2,7 @@
 """Helper module to work with annotations (CVTerms)
 
 Stores dictionaries which hold information the identifiers.org syntax, has functions to add CVTerms to different entities and parse CVTerms.
-
-.. warning:: 
-    *Deprecated as of version 2.0.0*: The functionalities have been moved to refinegems.utility.cvterms
 """
-
-import warnings
-mes = 'The refinegems.growcvtermsth module will be deprecated from version 2.0.0 onwards. The functionalities can be found in the refinegems.utility.cvterms module from 2.0.0 onwards.'
-warnings.warn(mes,DeprecationWarning)
-warnings.warn(mes,FutureWarning)
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
