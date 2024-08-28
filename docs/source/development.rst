@@ -13,6 +13,22 @@ To maintain or extend the toolbox ``refineGEMs`` please install the package via 
 Installation for developers
 ---------------------------
 
+``refineGEMs`` depends on the tools `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and 
+`BOFdat <https://github.com/draeger-lab/BOFdat>`__ which cannot directly be installed via 
+`PyPI <https://pypi.org/project/refineGEMs/>`__ or the `pyproject.toml`. Please install both tools before using 
+``refineGEMs`` into the corresponding environment:
+
+.. code:: console
+    :class: copyable
+
+    pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix"
+
+.. code:: console
+    :class: copyable
+
+    pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
+
+
 Into a Conda environment
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
