@@ -74,15 +74,12 @@ docs = ["accessible-pygments",
        "sphinxcontrib-bibtex",
        "sphinx_copybutton",
        "pip-tools"]
-extern = [
-        "bofdat@git+https://github.com/draeger-lab/BOFdat", # our fork with hot fix(es)
-        "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix", # @NOTE wait for pull request
-]
 
 [project.urls]
 # homepage
 repository = 'https://github.com/draeger-lab/refinegems'
 documentation = 'https://refinegems.readthedocs.io/en/latest/'
+"Bug Tracker" = "https://github.com/draeger-lab/refinegems/issues"
 
 [project.scripts]
 refinegems = "refinegems.cmd_access:cli"
