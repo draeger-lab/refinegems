@@ -9,8 +9,8 @@ version = "2.0.0-alpha.0"
 requires-python = ">=3.10, <3.12"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
-    {name = "Gwendolyn O. Döbel"},
-    {name = "Carolin Brune"}
+    {name = "Gwendolyn O. Döbel", email = "gwendolyn.o.gusak@gmail.com"},
+    {name = "Carolin Brune", email = "carolin.brune@informatik.uni-halle.de"}
 ]
 maintainers = [
     {name = "Tobias Fehrenbach"},
