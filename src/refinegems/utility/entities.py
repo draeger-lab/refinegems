@@ -1025,6 +1025,9 @@ def build_reaction_mnx(model:cobra.Model, id:str,
                 list: 
                     List of matching reaction IDs (in model).
     """
+
+    # Get origin if not reaction was found missing with MetaNetX
+    origin = references.pop('origin') if 'origin' in references.keys() else None
     
     # ---------------------
     # check, if ID in model
@@ -1121,6 +1124,12 @@ def build_reaction_mnx(model:cobra.Model, id:str,
             # update reactions direction, if MetaCyc has better information
             if db == 'metacyc.reaction' and len(db_matches[db_matches['source'].str.contains('-->')]):
                 new_reac.bounds = (0.0,cobra.Configuration().upper_bound)
+    # get alias annotations for MetaNetX if available
+    if 'alias' in references.keys(): 
+        if references['alias'] != None:
+            references['metanetx.reaction'] = list(references['alias'])
+        del references['alias']
+        
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references,new_reac)
     
@@ -1130,6 +1139,7 @@ def build_reaction_mnx(model:cobra.Model, id:str,
 
     # add notes
     # ---------
+    if origin: new_reac.notes['found with'] = f'refineGEMs GapFiller, {origin}'
     new_reac.notes['created with'] = 'refineGEMs GapFiller, MetaNetX'
     
     # match ID to namespace
@@ -1348,6 +1358,9 @@ def build_reaction_bigg(model:cobra.Model, id:str,
                 list: 
                     List of matching reaction IDs (in model).
     """
+
+    # Get origin if not reaction was found missing with MetaNetX
+    origin = references.pop('origin') if 'origin' in references.keys() else None
     
     # ---------------------
     # check, if ID in model
@@ -1413,11 +1426,17 @@ def build_reaction_bigg(model:cobra.Model, id:str,
     # add infos from BiGG
     new_reac.annotation['bigg.reaction'] = [id]
     _add_annotations_from_bigg_reac_row(bigg_reac_info, new_reac)
+    # get alias annotations for MetaNetX if available
+    if 'alias' in references.keys(): 
+        if references['alias'] != None:
+            references['metanetx.reaction'] = list(references['alias'])
+        del references['alias']
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references,new_reac)
     
     # add notes
     # ---------
+    if origin: new_reac.notes['found with'] = f'refineGEMs GapFiller, {origin}'
     new_reac.notes['created with'] = 'refineGEMs GapFiller, BiGG'
     
     # match ID to namespace
@@ -1596,6 +1615,7 @@ def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, pro
 # @NEW - substitues the one above 
 # --> WARNING: Output is different now
 # @TODO generalise addition of references -> maybe kwargs
+# @TODO: Check if ncbiprotein leads to valid ID -> Otherwise, replace invalid chars with '_'
 def create_gp(model:libModel, protein_id:str, 
               model_id:str=None,
               name:str=None, locus_tag:str=None,
@@ -1634,6 +1654,7 @@ def create_gp(model:libModel, protein_id:str,
     gp.setSBOTerm('SBO:0000243')            # SBOterm
     gp.setMetaId(f'meta_G_{protein_id}')    # Meta ID
     # test for NCBI/RefSeq
+    id_db = None
     if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
         id_db = 'REFSEQ'
     elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
