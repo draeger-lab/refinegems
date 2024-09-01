@@ -213,7 +213,7 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
         # Transform id column to only contain BioCyc/MetaCyc IDs
         mnx2biocyc_reacs['id'] = mnx2biocyc_reacs['id'].str.split(':', n=1).str[-1]
 
-        # Crop table to contain BiGG IDs set per BioCyc ID
+        # Crop table to contain MetaNetX IDs set per BioCyc ID
         mnx_as_list = mnx2biocyc_reacs.groupby('id')['MetaNetX'].apply(set).reset_index(name='MetaNetX')
         mnx2biocyc_reacs.drop('MetaNetX', axis=1, inplace=True)
         mnx2biocyc_reacs = mnx_as_list.merge(mnx2biocyc_reacs, on='id')
@@ -235,11 +235,24 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
         # Step 2.1: Clean-up of table containing MetaNetX IDs
         # ---------------------------------------------------
         if not mnx_reacs.empty:
-            # Replace id with MetaNetX ID
-            mnx_reacs.rename(
-                {'id': 'metacyc.reaction', 'MetaNetX': 'id'}, 
-                axis=1, inplace=True
-                )
+            # Rename id to metacyc.reaction for simpler addition to column reference
+            mnx_reacs.rename({'id': 'metacyc.reaction'}, axis=1, inplace=True)
+
+            # Turn MetaNetX column in single value, rename column to id 
+            # & if multiple MetaNetX IDs exist add to column alias
+            mnx_reacs['id'] = mnx_reacs['MetaNetX'].map(list).str.get(0)
+            mnx_reacs['alias'] = mnx_reacs.apply(
+                lambda x: 
+                    x['MetaNetX'].remove(x['id']) if len(x['MetaNetX']) != 1 else None, 
+                    axis=1
+            )
+
+            # Specify origin of identified missing reactions & 
+            # Move BioCyc ID & origin to reference
+            mnx_reacs['origin'] = 'BioCyc'
+            mnx_reacs['reference'] = mnx_reacs[
+                ['metacyc.reaction', 'origin', 'alias']
+                ].to_dict('records')
 
             # Create list of EC codes in column ec-code_x, 
             # Join both ec-code columns into one & Create a set of ec-codes
@@ -249,15 +262,12 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
                 ).map(set).map(list)
             mnx_reacs['ec-code'] = (mnx_reacs['ec-code_x'] + mnx_reacs['ec-code_y']).map(set).map(list)
 
-            # Specify origin of identified missing reactions & 
-            # Move BioCyc ID, origin & ec-code to reference
-            mnx_reacs['origin'] = 'BioCyc'
-            mnx_reacs['reference'] = mnx_reacs[['metacyc.reaction', 'origin']].to_dict('records')
-
             # Drop all unnecessary columns
             mnx_reacs.drop(
-                ['origin', 'metacyc.reaction', 'ec-code_x', 'ec-code_y', 'equation'], 
-                axis=1, inplace=True
+                [
+                    'origin', 'metacyc.reaction', 'MetaNetX', 'alias', 'ec-code_x',
+                    'ec-code_y', 'equation'
+                 ], axis=1, inplace=True
                 )
 
             # Replace equation with mnx_equation
@@ -796,8 +806,8 @@ class GapFiller(ABC):
         
         # get each unique ncbiprotein vs reaction mapping
         reac_table = reac_table[['ncbiprotein','add_to_GPR']]
-        reac_table = reac_table.explode('ncbiprotein').explode('add_to_GPR')
-        reac_table.drop_duplicates(inplace=True)
+        reac_table = reac_table.explode('ncbiprotein')
+        reac_table.drop_duplicates(subset='ncbiprotein', inplace=True)
         
         # add the genes to the corresponding GPRs
         for idx,row in reac_table.iterrows():
@@ -985,6 +995,13 @@ class GapFiller(ABC):
             libModel: 
                 The gap-filled model.
         """
+        
+        # Filter out reactions without ncbiprotein
+        # @DISCUSSION
+        # @TODO Add also reactions without GPR to model
+        self.manual_curation['Reactions no GPR'] = self.missing_reactions[self.missing_reactions['ncbiprotein'].isnull()]
+        self.missing_reactions = self.missing_reactions[~self.missing_reactions['ncbiprotein'].isnull()]
+        
         # filter out duplicates genes to avoid duplicates IDs in the model
         # @TODO: Better idea to add duplicate genes
         if len(self.missing_genes) != len(self.missing_genes['ncbiprotein'].unique()):
@@ -1014,6 +1031,7 @@ class GapFiller(ABC):
         genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
         self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
         if len(genes_with_reacs_in_model) > 0:
+            
             # add genes as gene products to model
             self.add_genes_from_table(model, genes_with_reacs_in_model)
         

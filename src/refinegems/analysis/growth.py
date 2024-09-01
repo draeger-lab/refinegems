@@ -805,7 +805,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
                 if len(entry) == 0:
                     warn_str = f'Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one.'
                     warnings.warn(warn_str)
-                    auxotrophies[a] = m.optimize().objective_value
+                    growth_res = m.optimize()
+                    auxotrophies[a] = growth_res.objective_value if growth_res.status == 'optimal' else 0.0
                 else:
                     
                     # create and check IDs for the chosen namespace
@@ -834,7 +835,8 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
                             m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
                             m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
                     # and calculate the new objective
-                    auxotrophies[a] = m.optimize().objective_value
+                    growth_res = m.optimize()
+                    auxotrophies[a] = growth_res.objective_value if growth_res.status == 'optimal' else 0.0
 
             # add the current test results to the list of all results
             results[med.name] = auxotrophies
