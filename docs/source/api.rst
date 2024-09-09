@@ -1,108 +1,36 @@
 refineGEMs package
 ==================
 
-Here is an overview on all functions. All imports are mocked in ``autodoc_mock_imports`` in the ``conf.py`` file to enable automatic building.
+Here is an overview on all functions. 
 
-refineGEMs.biomass module
--------------------------
+For an alphabetically ordered list, see the :ref:`genindex`.
 
-.. automodule:: refinegems.biomass
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Subpackages
+-----------
 
-refineGEMs.charges module
--------------------------
+.. toctree::
+   :maxdepth: 3
 
-.. automodule:: refinegems.charges
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   analysis <modules/analysis>
+   classes <modules/classes>
+   curation <modules/curation>
+   developement <modules/developement>
+   utility <modules/utility>
 
-refineGEMs.comparison module
+
+refineGEMs.cmd_access module
 ----------------------------
 
-.. automodule:: refinegems.comparison
+.. automodule:: refinegems.cmd_access
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members: 
+   :special-members:
 
-refineGEMs.curate module
-------------------------
+More information: 
 
-.. automodule:: refinegems.curate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.cvterms module
--------------------------
-
-.. automodule:: refinegems.cvterms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.gapfill module
--------------------------
-
-.. automodule:: refinegems.gapfill
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.growth module
-------------------------
-
-.. automodule:: refinegems.growth
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.investigate module
------------------------------
-
-.. automodule:: refinegems.investigate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.io module
---------------------
-
-.. automodule:: refinegems.io
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.modelseed module
----------------------------
-
-.. automodule:: refinegems.modelseed
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.pathways module
---------------------------
-
-.. automodule:: refinegems.pathways
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.polish module
-------------------------
-
-.. automodule:: refinegems.polish
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-refineGEMs.sboann module
-------------------------
-
-.. automodule:: refinegems.sboann
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 3
+   
+   Command line access points <cmd_desc>

@@ -5,15 +5,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "1.4.2"
-requires-python = ">=3.9, <3.11"
+version = "2.0.0-alpha.1"  
+requires-python = ">=3.10, <3.12"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
-    {name = "Gwendolyn O. Döbel"},
+    {name = "Gwendolyn O. Döbel", email = "gwendolyn.o.gusak@gmail.com"},
+    {name = "Carolin Brune", email = "carolin.brune@informatik.uni-halle.de"}
 ]
 maintainers = [
     {name = "Tobias Fehrenbach"},
-    {name = "Carolin Brune"}
+    {name = "Nina Roßbach"},
 ]
 
 description='refineGEMs: a python package intended to help with the curation of genome-scale metabolic models (GEMS)'
@@ -33,39 +34,55 @@ classifiers = [
 
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
-    "cobra>=0.26.0, <0.28.0",
-    # COBRApy > 0.28.0 -> depinfo >=2.0.0
     "biopython>=1.79",
-    "bioregistry",
-    "bioservices",
-    "importlib-resources<=5.13.0",
-    # MEMOTE > 0.14.0 -> depinfo >=2.0.0
-    "memote>=0.13.0, <2.0.0",
-    "pandas>=1.2.4",
-    "numpy>=1.20.3",
-    "gffutils>=0.10.1",
-    "markupsafe>=2.0.1",
-    "depinfo>=1.7.0",
-    "sortedcontainers>=2.4.0",
-    "sqlite_dump",
-    "libchebipy>=1.0.10",
-    "ratelimit>=2.2.1",
-    "sqlalchemy>=2.0.0",
-    "venn>=0.1.3",
-    "ols-client>=0.1.3",
-    "seaborn>=0.12.2",
+    "bioregistry>=0.10.132",
+    "bioservices>=1.11.2",
     "click>=8.1.3",
+    "cloup>=3.0.5",
+    "cobra>=0.28.0", 
+    "depinfo>=1.7.0",
+    "gffutils>=0.10.1",
+    "libchebipy>=1.0.10",
+    "markupsafe>=2.0.1",
+    'matplotlib >= 3.8.2',
+    "memote>=0.17.0", 
+    "multiprocess>=0.70.16",
+    "numpy>=1.20.3,<2.0.0",  # @TODO wait for update? >2.0.0 not working properly
+    "ols-client>=0.1.3",
+    "pandas>=1.2.4",
+    'pyyaml>=6.0.1',
+    "ratelimit>=2.2.1",
+    'requests>=2.32.2',
+    "sboannotator>=3.0.2",
+    "seaborn>=0.12.2",
+    "sortedcontainers>=2.4.0",
+    "sqlalchemy>=2.0.0",
+    "sqlite_dump>=0.1.1",
+    'tqdm>=4.66.1',
+    "venn>=0.1.3",
+    "z3-solver>=4.13.0.0",
 ]
 
-[project.urls]
-homepage = 'https://github.com/draeger-lab/refinegems'
-documentation = 'https://refinegems.readthedocs.io/en/latest/'
+[project.optional-dependencies]
+# developer/docs installation dependancies
+docs = ["accessible-pygments",
+       "sphinx", 
+       "nbsphinx",
+       "sphinx_rtd_theme",
+       "pandoc",
+       "ipython",
+       "sphinxcontrib-bibtex",
+       "sphinx_copybutton",
+       "pip-tools"]
 
-# [project.scripts]
-# data = 'refinegems.databases:main'
-# curate = 'refinegems.curate:main'
-# investigate = 'refinegems.investigate:main'
-# refine = 'refinegems.refine:main'
+[project.urls]
+# homepage
+repository = 'https://github.com/draeger-lab/refinegems'
+documentation = 'https://refinegems.readthedocs.io/en/latest/'
+"Bug Tracker" = "https://github.com/draeger-lab/refinegems/issues"
+
+[project.scripts]
+refinegems = "refinegems.cmd_access:cli"
 
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
@@ -76,5 +93,5 @@ where = ['src']
 [tool.setuptools.package-data]
 "refinegems.example.example_inputs" = ['*.xlsx','*.csv']
 "refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
-"refinegems.data.config" = ['*.yaml']
+"refinegems.data.config" = ['*.yaml','*.yml']
 "refinegems.data.pathway" = ['*.csv']

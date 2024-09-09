@@ -56,14 +56,14 @@ pip install refineGEMs
 
 ```
 
-or to a local conda environment where `refineGEMs` is distributed via this GitHub repository and all dependencies are denoted in the `setup.py` file:
+or to a local conda environment where `refineGEMs` is distributed via this GitHub repository and all dependencies are denoted in the `pyproject.toml` file:
 
 ```bash
 # clone or pull the latest source code
 git clone https://github.com/draeger-lab/refinegems.git
 cd refinegems
 
-conda create -n <EnvName> python=3.9
+conda create -n <EnvName> python=3.10 (or higher)
 
 conda activate <EnvName>
 
@@ -71,6 +71,19 @@ conda activate <EnvName>
 which pip
 
 pip install .
+
+```
+
+``refineGEMs`` depends on the tools [MCC](https://github.com/Biomathsys/MassChargeCuration) and 
+[BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
+Please install both tools before using ``refineGEMs``:
+
+```bash
+# For MCC, until hot fix is merged into main:
+pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix"
+
+# For BOFdat, our fork with hot fix(es):
+pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
 
 ```
 

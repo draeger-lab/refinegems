@@ -1,24 +1,8 @@
-# declares public API for this module
-# loads functions from subscripts which are needed in main.py
-import refinegems.databases
-import refinegems.biomass
-import refinegems.growth
-import refinegems.modelseed
-import refinegems.sboann
-import refinegems.charges
-import refinegems.pathways
-import refinegems.curate
-import refinegems.polish
-import refinegems.cvterms
-import refinegems.analysis_db
-import refinegems.analysis_biocyc
-import refinegems.analysis_kegg
-import refinegems.entities
-import refinegems.gapfill
-import refinegems.comparison
-import refinegems.investigate
-import refinegems.io
-import refinegems.core_pan
-import refinegems.util
+__all__ = ['analysis','classes','curation','developement','utility', 'cmd_access']
 
-__author__ = "Famke Baeuerle"
+from . import analysis
+from . import classes
+from . import curation
+from . import developement
+from . import utility
+from . import cmd_access

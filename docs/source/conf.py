@@ -12,18 +12,23 @@
 #
 import os
 import sys
-import sphinx_rtd_theme
-sys.path.insert(0, os.path.abspath('../..'))
+from pathlib import Path
+sys.path.insert(0, os.path.abspath(Path('..','..','src')))
 
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
 
 # -- Project information -----------------------------------------------------
 
 project = 'refineGEMs'
-project_copyright = '2023, Famke Bäuerle and Gwendolyn O. Döbel'
-author = 'Famke Bäuerle and Gwendolyn O. Döbel'
+project_copyright = '2024, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
+author = 'Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 
 # The full version, including alpha/beta/rc tags
-release = '1.4.1'
+release = '2.0.0-alpha.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,7 +44,8 @@ extensions = [
     'nbsphinx',
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
-    'sphinxcontrib.bibtex'
+    'sphinxcontrib.bibtex',
+    'sphinx.ext.viewcode'
 ]
 
 # For copy buttons in code blocks
@@ -73,14 +79,15 @@ html_static_path = ['_static']
 html_css_files = ['custom_theme.css']
 
 # Adds logo to documentation page
-html_logo = 'images/refineGEMs_logo.png'
+html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
-    'display_version': False
+    'display_version': False,
+	'flyout_display': 'attached'
 }
 
 #Adds logo as favicon to tab
-html_favicon = 'images/refineGEMs_logo.png'
+html_favicon = str(Path('images','refineGEMs_logo.png'))
 
 # Changes code highlighting
 pygments_style = 'blinds-light'
@@ -93,7 +100,16 @@ master_doc = 'index'
 
 # -- Autodoc -----------------------------------------------------------------
 
+autodoc_preserve_defaults = True
+autodoc_default_options = {
+    'exclude-members': '''
+    __abstractmethods__, ABC, __module__, _abc_impl, __annotations__, 
+    __dict__, __weakref__
+    '''
+}
+
 # we need those to display the code comments otherwise the functions cannot be imported
+'''
 autodoc_mock_imports = ["psycopg2", 
                         "gffutils",
                         "cplex.exceptions",
@@ -115,6 +131,7 @@ autodoc_mock_imports = ["psycopg2",
                         "ols_client",
                         "charges",
                         "click",
+                        "databases",
                         "yaml",
                         "sortedcontainers",
                         "colorama",
@@ -122,3 +139,4 @@ autodoc_mock_imports = ["psycopg2",
                         "seaborn",
                         "venn"
                         ]
+'''

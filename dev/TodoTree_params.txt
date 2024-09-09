@@ -1,0 +1,88 @@
+    "todo-tree.general.statusBar": "tags",
+    "todo-tree.general.tags": [
+            "@BUG",
+            "@HACK",
+            "@FIXME",
+            "@TODO",
+            "XXX",
+            "[ ]",
+            "[x]",
+            "@TEST",
+            "@DEPRECATE",
+            "@NOTE",
+            "@DISCUSSION",
+            "@DEBUG"
+        ],
+    "todo-tree.highlights.backgroundColourScheme": [
+        "red",
+        "orange",
+        "yellow",
+        "cyan",
+        "blue",
+        "indigo",
+        "violet",
+        "#ff43a4",
+        "#c0c0c0",
+        "#f5bd02",
+        "violet",
+        "#329542"
+    ],
+    "todo-tree.highlights.foregroundColourScheme": [
+        "white",
+        "black",
+        "black",
+        "black",
+        "white",
+        "white",
+        "black",
+        "black",
+        "black",
+        "black",
+        "black",
+        "white"
+    ],
+    "todo-tree.highlights.useColourScheme": true,
+    "todo-tree.tree.showCountsInTree": true,
+    "todo-tree.general.showActivityBarBadge": true,
+    "todo-tree.general.showIconsInsteadOfTagsInStatusBar": true,
+    "todo-tree.highlights.customHighlight":{
+        "@TODO": {
+            "icon": "check-circle"
+        },
+        "@BUG": {
+            "icon": "bug"
+        },
+        "@HACK": {
+            "icon": "tools"
+        },
+        "@FIXME": {
+            "icon": "flame"
+        },
+        "XXX": {
+            "icon": "x"
+        },
+        "[ ]": {
+            "icon": "issue-draft"
+        },
+        "[x]": {
+            "icon": "issue-closed"
+        },
+        "@TEST": {
+            "icon": "beaker"
+        },
+        "@DEPRECATE": {
+            "icon": "trash"
+        },
+        "@NOTE": {
+            "icon": "note"
+        },
+        "@DISCUSSION": {
+            "icon": "comment-discussion"
+        },
+        "@DEBUG": {
+            "icon": "bug"
+        }
+    },
+    "todo-tree.general.tagGroups": {
+
+    },
