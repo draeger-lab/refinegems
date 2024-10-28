@@ -360,6 +360,8 @@ def isreaction_complete(reac:cobra.Reaction,
         if reac.id == '' or pd.isnull(reac.name):
             return False
     # check for RNA/DNA
+    # @TODO: Check again if RNA/DNA check actually works; 
+    # maybe add braces to if-statement
     if exclude_dna and 'DNA' in reac.name:
         return False
     if exclude_rna and 'RNA' in reac.name:
@@ -1048,7 +1050,9 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     
     # create reaction object
     new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
-    
+
+    # @TODO
+    # @DISCUSSION: Add exclude_rna & exclude_dna filters also here! 
     # set name of reaction
     name = ''
     for desc in mnx_reac_refs['description']:

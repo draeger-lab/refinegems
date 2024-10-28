@@ -880,6 +880,8 @@ class GapFiller(ABC):
                 refs = row['reference']
             else:
                 refs = {}
+            # @TODO: Change code here? to:
+            # refs = row['reference'] if isinstance(row['reference'], dict) else {}
             if row['ec-code']:
                 if 'ec-code' in refs.keys():
                     if not isinstance(refs['ec-code'],list):
@@ -1252,6 +1254,7 @@ class KEGGapFiller(GapFiller):
 #       -> So far these are empty for my test cases
 #       -> Could be added in a future update
 # @TODO: Add handling of empyt reference column?
+# @TODO: Add how to get tables to documentation!!!
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with 

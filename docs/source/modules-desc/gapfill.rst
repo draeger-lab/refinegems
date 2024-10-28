@@ -87,7 +87,8 @@ Gap filling with BioCyc
 | **Class:** :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`
 | **Runtime estimation:** *to be determined*
 
-TODO this fine?
+@TODO this fine?
+@TODO Add description on how to get the tables!!!
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
