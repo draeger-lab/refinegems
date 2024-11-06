@@ -190,7 +190,7 @@ def run_DIAMOND_blastp(fasta:str, db:str,
         logfile = Path('log_DIAMOND_blastp.txt')
       
     # @TODO: test, if it works with different paths and their problems  
-    subprocess.run([F'diamond blastp -d {db} -q {fasta} --{sensitivity} --query-cover {coverage} -p {int(threads)} -o {outname} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore 2> {logfile}'], shell=True)
+    subprocess.run(['diamond', 'blastp', '-d', db, '-q', fasta, '--'+sensitivity, '--query-cover', str(coverage), '-p', str(threads), '-o', outname, '--outfmt', str(6), 'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', '2>', logfile], shell=True)
 
     return outname
 

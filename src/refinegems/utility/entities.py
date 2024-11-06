@@ -1651,7 +1651,7 @@ def create_gp(model:libModel, protein_id:str,
     if model_id:                            # ID 
         gp.setIdAttribute(model_id)
     else:
-        geneid = f'G_{protein_id}'.replace('.','_') # remove problematic signs
+        geneid = f'G_{protein_id}'.replace('.','_').replace(':','_') # remove problematic signs
         gp.setIdAttribute(geneid)               
     if name: gp.setName(name)               # Name  
     if locus_tag: gp.setLabel(locus_tag)    # Label
@@ -1668,7 +1668,7 @@ def create_gp(model:libModel, protein_id:str,
     if uniprot:
         for uniprotid in uniprot[0]:
             add_cv_term_genes(uniprotid, 'UNIPROT', gp, uniprot[1]) # UniProt
-      
+
 
 def create_species(
     model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
