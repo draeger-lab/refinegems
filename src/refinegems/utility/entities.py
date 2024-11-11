@@ -1609,9 +1609,9 @@ def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, pro
     gp.setLabel(locus_tag)
     gp.setSBOTerm('SBO:0000243')
     gp.setMetaId(f'meta_{model_id}')
-    if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
+    if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
         id_db = 'REFSEQ'
-    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
+    elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
     if id_db: add_cv_term_genes(protein_id, id_db, gp)
     return gp, model
 
@@ -1659,9 +1659,9 @@ def create_gp(model:libModel, protein_id:str,
     gp.setMetaId(f'meta_G_{protein_id}')    # Meta ID
     # test for NCBI/RefSeq
     id_db = None
-    if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
+    if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
         id_db = 'REFSEQ'
-    elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
+    elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
     if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
     # add further references
     # @TODO extend or generalise

@@ -318,9 +318,9 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
         for record in SeqIO.parse(handle, 'fasta'):
             header = record.description
             protein_id = record.id.split('|')[1].split('prot_')[1].split('.')[0].strip()
-            descriptors = re.findall('\[+(.*?)\]', header)
+            descriptors = re.findall(r'\[+(.*?)\]', header)
             if id_for_model:
-                model_id = re.sub("\||\.", "_", record.id)
+                model_id = re.sub(r"\||\.", "_", record.id)
                 model_id = f'G_{model_id}'
          
             descriptors.insert(0, protein_id)
