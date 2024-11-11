@@ -360,6 +360,8 @@ def isreaction_complete(reac:cobra.Reaction,
         if reac.id == '' or pd.isnull(reac.name):
             return False
     # check for RNA/DNA
+    # @TODO: Check again if RNA/DNA check actually works; 
+    # maybe add braces to if-statement
     if exclude_dna and 'DNA' in reac.name:
         return False
     if exclude_rna and 'RNA' in reac.name:
@@ -1048,7 +1050,9 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     
     # create reaction object
     new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
-    
+
+    # @TODO
+    # @DISCUSSION: Add exclude_rna & exclude_dna filters also here! 
     # set name of reaction
     name = ''
     for desc in mnx_reac_refs['description']:
@@ -1647,7 +1651,7 @@ def create_gp(model:libModel, protein_id:str,
     if model_id:                            # ID 
         gp.setIdAttribute(model_id)
     else:
-        geneid = f'G_{protein_id}'.replace('.','_') # remove problematic signs
+        geneid = f'G_{protein_id}'.replace('.','_').replace(':','_') # remove problematic signs
         gp.setIdAttribute(geneid)               
     if name: gp.setName(name)               # Name  
     if locus_tag: gp.setLabel(locus_tag)    # Label
@@ -1664,7 +1668,7 @@ def create_gp(model:libModel, protein_id:str,
     if uniprot:
         for uniprotid in uniprot[0]:
             add_cv_term_genes(uniprotid, 'UNIPROT', gp, uniprot[1]) # UniProt
-      
+
 
 def create_species(
     model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
