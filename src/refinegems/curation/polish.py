@@ -1514,7 +1514,7 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
 # extract annotations fron a libsbml model
 # @NOTE takes much longer than it would in a cobra model
 #       -> currently not in usage
-def getAnnotationDict_libsbml(entity: Union[Reaction,Species]) -> dict|None:
+def getAnnotationDict_libsbml(entity: Union[Reaction,Species]) -> Union[dict,None]:
     """Try to extract the annotations from a libSBML entity as a dictionary.
 
     Args:
