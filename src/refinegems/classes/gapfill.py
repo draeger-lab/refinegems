@@ -1193,7 +1193,7 @@ class KEGGapFiller(GapFiller):
                         for idx in range(cv_term.getNumResources()):
                             uri = cv_term.getResourceURI(idx)
                             if 'kegg.genes' in uri: 
-                                genes_in_model.append(re.split('kegg.genes:|kegg.genes/',uri)[1]) # work with old/new pattern
+                                genes_in_model.append(re.split(r'kegg.genes:|kegg.genes/',uri)[1]) # work with old/new pattern
 
             return pd.DataFrame(genes_in_model, columns=['orgid:locus'])
         

@@ -41,7 +41,7 @@ from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
 
 ALLOWED_DATABASE_LINKS = ['BiGG', 'MetaNetX', 'SEED', 'VMH', 'ChEBI', 'KEGG'] #: :meta: 
 REQUIRED_SUBSTANCE_ATTRIBUTES = ['name', 'formula', 'flux', 'source'] #: :meta: 
-INTEGER_REGEX = re.compile('^[-+]?([1-9]\d*|0)$') #: :meta: 
+INTEGER_REGEX = re.compile(r'^[-+]?([1-9]\d*|0)$') #: :meta: 
 FLOAT_REGEX = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?') #: :meta:  
 
 ############################################################################

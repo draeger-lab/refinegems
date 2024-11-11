@@ -143,4 +143,5 @@ autodoc_mock_imports = ['Bio',
                         'sqlite_dump',
                         'tqdm',
                         'venn',
+                        'xmltodict',
                         'z3-solver']

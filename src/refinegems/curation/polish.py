@@ -85,7 +85,7 @@ def add_metab(entity_list: list[Species], id_db: str):
         - id_db (str): 
             Name of the database of the IDs contained in a model.
     """
-    vmh_cut_pattern = '__\d+_' # To extract BiGG identifier
+    vmh_cut_pattern = r'__\d+_' # To extract BiGG identifier
     
     if id_db == 'VMH':
         bigg_metabs_ids = load_a_table_from_database('SELECT universal_bigg_id FROM bigg_metabolites')
@@ -138,7 +138,7 @@ def add_reac(entity_list: list[Reaction], id_db: str):
        bigg_reacs_ids = bigg_reacs_ids['bigg_id'].tolist()
 
     # Use regex to generalise check for growth/biomass reaction
-    regex = 'growth|_*biomass\d*_*'
+    regex = r'growth|_*biomass\d*_*'
     
     for entity in entity_list:
         
@@ -186,14 +186,14 @@ def cv_notes_metab(species_list: list[Species]):
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
-                    fill_in = re.split(':\s*', elem.strip()[:-4])[1]
-                    if (';') in fill_in and not re.search('inchi', db, re.IGNORECASE):
+                    fill_in = re.split(r':\s*', elem.strip()[:-4])[1]
+                    if (';') in fill_in and not re.search(r'inchi', db, re.IGNORECASE):
                         entries = fill_in.split(';')
                         for entry in entries:
-                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                            if not re.fullmatch(r'^nan$', entry.strip(), re.IGNORECASE):
                                 add_cv_term_metabolites(entry.strip(), db, species)
                     else:
-                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                        if not re.fullmatch(r'^nan$', fill_in, re.IGNORECASE):
                             add_cv_term_metabolites(fill_in, db, species)
 
         for elem in notes_string:
@@ -228,14 +228,14 @@ def cv_notes_reac(reaction_list: list[Reaction]):
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     #print(elem.strip()[:-4].split(': ')[1])
-                    fill_in = re.split(':\s*', elem.strip()[:-4])[1]
+                    fill_in = re.split(r':\s*', elem.strip()[:-4])[1]
                     if (';') in fill_in:
                         entries = fill_in.split(';')
                         for entry in entries:
-                            if not re.fullmatch('^nan$', entry.strip(), re.IGNORECASE):
+                            if not re.fullmatch(r'^nan$', entry.strip(), re.IGNORECASE):
                                 add_cv_term_reactions(entry.strip(), db, reaction)
                     else:
-                        if not re.fullmatch('^nan$', fill_in, re.IGNORECASE):
+                        if not re.fullmatch(r'^nan$', fill_in, re.IGNORECASE):
                             add_cv_term_reactions(fill_in, db, reaction)
 
         for elem in notes_string:
@@ -473,7 +473,7 @@ def set_default_units(model: libModel):
       
         unit_id = unit.getId()
       
-        if re.fullmatch('mmol_per_gDW', unit_id, re.IGNORECASE):
+        if re.fullmatch(r'mmol_per_gDW', unit_id, re.IGNORECASE):
          
             if not (model.isSetExtentUnits() and model.getExtentUnits() == unit_id):
                 model.setExtentUnits(unit_id)
@@ -481,10 +481,10 @@ def set_default_units(model: libModel):
             if not (model.isSetSubstanceUnits() and model.getSubstanceUnits() == unit_id):
                 model.setSubstanceUnits(unit_id)
          
-        if not (model.isSetTimeUnits() and model.getTimeUnits() == unit_id) and re.fullmatch('hr?', unit_id, re.IGNORECASE):
+        if not (model.isSetTimeUnits() and model.getTimeUnits() == unit_id) and re.fullmatch(r'hr?', unit_id, re.IGNORECASE):
             model.setTimeUnits(unit_id)
          
-        if not (model.isSetVolumeUnits() and model.getVolumeUnits() == unit_id) and re.fullmatch('fL', unit_id, re.IGNORECASE):
+        if not (model.isSetVolumeUnits() and model.getVolumeUnits() == unit_id) and re.fullmatch(r'fL', unit_id, re.IGNORECASE):
             model.setVolumeUnits(unit_id)
 
 
@@ -498,7 +498,7 @@ def set_units(model: libModel):
     """
     for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
         if any(
-            (unit_id := re.fullmatch('mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) 
+            (unit_id := re.fullmatch(r'mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) 
             for unit in model.getListOfUnitDefinitions()
             ):
             if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
@@ -523,7 +523,7 @@ def add_compartment_structure_specs(model: libModel):
             compartment.setSpatialDimensions(3)
          
         if any(
-            (unit_id := re.fullmatch('fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()
+            (unit_id := re.fullmatch(r'fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()
             ):
             if not (compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)):
                 compartment.setUnits(unit_id.group(0))
@@ -604,11 +604,11 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             if (len(id_string) > 2):  # Identifier contains '_'
             # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
             # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
-                if re.fullmatch('^\d+\d+$', id_string[1], re.IGNORECASE):
+                if re.fullmatch(r'^\d+\d+$', id_string[1], re.IGNORECASE):
                     ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
            
             # If identifier matches RefSeq ID pattern   
-            if re.fullmatch('^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
+            if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
                 add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
@@ -619,14 +619,14 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
 
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
-            elif re.fullmatch('^\d+$', ncbi_id, re.IGNORECASE):
+            elif re.fullmatch(r'^\d+$', ncbi_id, re.IGNORECASE):
                 if id2locus_name is not None:
                     name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
                 else: 
                     genes_missing_annotation.append(ncbi_id)
         
             # If identifier matches ncbiprotein ID pattern
-            elif re.fullmatch('^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
+            elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
             
@@ -727,7 +727,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
         curie = list(curie) # Turn tuple into list to allow item assignment
         
         if curie[0]: # Prefix is valid but to have same result for same databases need to do a bit of own parsing
-            if re.fullmatch('^biocyc$', curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+            if re.fullmatch(r'^biocyc$', curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
                 # Always add META if BioCyc sub-datbase prefixes are missing
                 curie = curie if curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else [curie[0], f'META:{curie[1]}']
 
@@ -743,7 +743,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add the MetaCyc identifier additionally
                     curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
-                    if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                    if re.search(r'^rxn-|-rxn$', curie[1], re.IGNORECASE):
                         curie[0] = 'metacyc.reaction'
                     else:
                         curie[0] = 'metacyc.compound'
@@ -759,7 +759,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                 # Add the BioCyc identifier additionally
                 curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-            elif re.fullmatch('^brenda$', curie[0], re.IGNORECASE): # Brenda & EC code is the same
+            elif re.fullmatch(r'^brenda$', curie[0], re.IGNORECASE): # Brenda & EC code is the same
                 curie[0] = 'eccode'
         
         elif not curie[0]: # Need to do own parsing if prefix is not valid
@@ -768,23 +768,23 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 extracted_curie = extracted_curie.split('/')
 
                 # Check for NaN identifiers
-                if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                if re.fullmatch(r'^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch(r'^nan$', extracted_curie[1], re.IGNORECASE):
                     # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
-                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                    if re.fullmatch(r'^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch(r'^nan$', extracted_curie[1], re.IGNORECASE): 
                         invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
                 # Check for certain special cases
-                if re.search('inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
-                    if re.fullmatch('^inchi$', extracted_curie[0], re.IGNORECASE):
+                if re.search(r'inchi', extracted_curie[0], re.IGNORECASE):  # Check for inchi as splitting by '/' splits too much
+                    if re.fullmatch(r'^inchi$', extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), '/'.join(extracted_curie[1:len(extracted_curie)]))
-                    elif re.fullmatch('^inchikey$', extracted_curie[0], re.IGNORECASE):
+                    elif re.fullmatch(r'^inchikey$', extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), extracted_curie[1])
                     else:
                         wrong_prefix = extracted_curie[0].split(':')
                         curie = (wrong_prefix[0], f'{wrong_prefix[1]}/{"/".join(extracted_curie[1:len(extracted_curie)])}')
-                elif re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE): # Brenda & EC code is the same
+                elif re.fullmatch(r'^brenda$', extracted_curie[0], re.IGNORECASE): # Brenda & EC code is the same
                     curie = ('eccode', extracted_curie[1])
-                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                elif re.fullmatch(r'^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
                     # Always add META if BioCyc sub-datbase prefixes are missing
                     extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
                     curie = ['biocyc', extracted_curie[1]]
@@ -801,7 +801,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                         # Add additionallly the MetaCyc identifier 
                         curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                        if re.search(r'^rxn-|-rxn$', curie[1], re.IGNORECASE):
                             curie[0] = 'metacyc.reaction'
                         else:
                             curie[0] = 'metacyc.compound'
@@ -818,13 +818,13 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch('^chebi$', extracted_curie[0], re.IGNORECASE):
+                elif re.fullmatch(r'^chebi$', extracted_curie[0], re.IGNORECASE):
                     new_curie = extracted_curie[1].split(':')
                     curie = (new_curie[0].lower(), new_curie[1])
-                elif re.search('^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
+                elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
                     curie = [extracted_curie[0], extracted_curie[1].split(':')[1]]
                 else:
-                    if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
+                    if re.fullmatch(r'^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch(r'^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
                         curie[0] = 'eccode'
                     else:
                         curie[0] = extracted_curie[0]
@@ -835,12 +835,12 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 extracted_curie = extracted_curie.split(':')
                 
                 # Check for NaN identifiers
-                if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE):
+                if re.fullmatch(r'^nan$', extracted_curie[0], re.IGNORECASE) or re.fullmatch(r'^nan$', extracted_curie[1], re.IGNORECASE):
                     # Only return strings where the database prefix is 'NaN' but a possible identifier could be contained
-                    if re.fullmatch('^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch('^nan$', extracted_curie[1], re.IGNORECASE): 
+                    if re.fullmatch(r'^nan$', extracted_curie[0], re.IGNORECASE) and not re.fullmatch(r'^nan$', extracted_curie[1], re.IGNORECASE): 
                         invalid_curies.append(f'{extracted_curie[0]}:{extracted_curie[1]}')
                     continue
-                elif re.fullmatch('^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
+                elif re.fullmatch(r'^biocyc$', extracted_curie[0], re.IGNORECASE):  # Check for biocyc to also add metacyc if possible
                     # Always add META if BioCyc sub-datbase prefixes are missing
                     extracted_curie[1] = extracted_curie[1] if extracted_curie[1].split(':')[0] in BIOCYC_TIER1_DATABASES_PREFIXES else f'META:{extracted_curie[1]}'
                     curie = ['biocyc', extracted_curie[1]]
@@ -857,7 +857,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                         # Add MetaCyc identifier additionally
                         curie[1] = curie[1].split('META:')[1] # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search('^rxn-|-rxn$', curie[1], re.IGNORECASE):
+                        if re.search(r'^rxn-|-rxn$', curie[1], re.IGNORECASE):
                             curie[0] = 'metacyc.reaction'
                         else:
                             curie[0] = 'metacyc.compound'
@@ -875,12 +875,12 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                     # Add BioCyc identifier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
                 else:
-                    if re.fullmatch('^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch('^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
+                    if re.fullmatch(r'^brenda$', extracted_curie[0], re.IGNORECASE) or re.fullmatch(r'^ec-code$', extracted_curie[0], re.IGNORECASE): # Brenda equals EC code, EC code in URI = ec-code
                         curie[0] = 'eccode'
                     else:
                         curie[0] = extracted_curie[0]
 
-                    if re.fullmatch('^kegg.genes$', extracted_curie[0], re.IGNORECASE):
+                    if re.fullmatch(r'^kegg.genes$', extracted_curie[0], re.IGNORECASE):
                         curie[1] = ':'.join(extracted_curie[1:len(extracted_curie)])
                     else:
                         curie[1] = extracted_curie[1]
@@ -937,15 +937,15 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
         for identifier in prefix2id.get(prefix):
             separator = SEPARATOR
 
-            if re.search('o$', prefix, re.IGNORECASE):  # Ontologies seem only to work with new pattern!
+            if re.search(r'o$', prefix, re.IGNORECASE):  # Ontologies seem only to work with new pattern!
                 separator = ':'
                 prefix = prefix.upper()
             
-            elif re.fullmatch('^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
+            elif re.fullmatch(r'^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
                 prefix = f'chebi/{current_prefix}'
                 separator = ':'
                 
-            elif re.fullmatch('^biocyc$', prefix, re.IGNORECASE):  # Get identifier for biocyc
+            elif re.fullmatch(r'^biocyc$', prefix, re.IGNORECASE):  # Get identifier for biocyc
                 prefix = f'biocyc' # META
                 # separator = ':'
 
@@ -1017,7 +1017,7 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
     """
     not_miriam_compliant = []
     collected_invalid_curies = []
-    pattern = f'{MIRIAM}|{OLD_MIRIAM}'
+    pattern = fr'{MIRIAM}|{OLD_MIRIAM}'
     cvterms = entity.getCVTerms()
     
     for cvterm in cvterms:
@@ -1218,7 +1218,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
                     current_curie = cc
                     
                 if (current_curie) and re.match(pattern, current_curie, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept
-                    if re.search('sbo:', current_curie, re.IGNORECASE): sbo_set.add(current_curie)
+                    if re.search(r'sbo:', current_curie, re.IGNORECASE): sbo_set.add(current_curie)
                     else: tmp_set.add(current_curie)
                     cvterm.removeResource(current_curie)
                 else:
