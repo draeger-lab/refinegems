@@ -82,7 +82,6 @@ html_css_files = ['custom_theme.css']
 html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
-    'display_version': False,
 	'flyout_display': 'attached'
 }
 
