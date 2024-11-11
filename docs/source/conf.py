@@ -109,7 +109,8 @@ autodoc_default_options = {
 }
 
 # we need those to display the code comments otherwise the functions cannot be imported
-autodoc_mock_imports = ['biopython',
+autodoc_mock_imports = ['Bio',
+                        'biopython',
                         'bioregistry',
                         'bioservices',
                         'BOFdat',
