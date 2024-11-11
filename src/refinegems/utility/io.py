@@ -96,9 +96,19 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
                 The loaded model object
         """
 
-        reader = SBMLReader()
-        read = reader.readSBMLFromFile(modelpath)  # read from file
-        mod = read.getModel()
+        
+        extension = os.path.splitext(modelpath)[1].replace('.','')
+
+        match extension:
+            case 'xml' | 'sbml':
+                reader = SBMLReader()
+                read = reader.readSBMLFromFile(modelpath)  # read from file
+                mod = read.getModel()
+            case 'json'|'yml'|'mat':
+                data = load_cobra_model(modelpath)
+                mod = cobra.io.sbml._model_to_sbml(data).getModel()
+            case _:
+                raise ValueError('Unknown file extension for model: ', extension)
 
         return mod
 
@@ -152,9 +162,20 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
         - ValueError: Unknown file extension for model
         - TypeError: Unknown model type
     """
+    
+    def _write_cobra_model_to_file(model:cobra.Model, filename:str):
+        """Helper function of :py:func:`~refingems.utility.io.write_model_to_file`.
+        Write a model loaded with COBRApy to a file.
 
-    # save cobra model
-    if isinstance(model, cobra.core.model.Model):
+        Args:
+            - model (cobra.Model): 
+                The COBRApy model.
+            - filename (str): 
+                The filename/path to save the model to. Extensions sets the file format.
+
+        Raises:
+            - ValueError: Unknown file extension for model
+        """
         try:
             extension = os.path.splitext(filename)[1].replace('.','')
             match extension:
@@ -172,11 +193,23 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
 
+    # save cobra model
+    if isinstance(model, cobra.core.model.Model):
+        _write_cobra_model_to_file(model,filename)
+
     # save libsbml model
     elif isinstance(model, libModel):
         try:
-            new_document = model.getSBMLDocument()
-            writeSBMLToFile(new_document, filename)
+            extension = os.path.splitext(filename)[1].replace('.','')
+            match extension:
+                case 'xml':
+                    new_document = model.getSBMLDocument()
+                    writeSBMLToFile(new_document, filename)
+                case 'json'|'yml'|'mat':
+                    data = cobra.io.sbml._sbml_to_model(model)
+                    _write_cobra_model_to_file(data,filename)
+                case _:
+                    raise ValueError('Unknown file extension for model: ', extension)
             logging.info("Modified model written to " + filename)
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
