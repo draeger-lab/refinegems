@@ -148,6 +148,14 @@ and use the following command to automatically generate the new `requirements.tx
     
     python3 -m piptools compile --strip-extras --output-file=requirements.txt requirements.in
 
+To bump to the newest versions possible, use the following command in the `docs` directory:
+
+.. code-block:: console
+    :class: copyable
+
+    pip-compile --upgrade
+
+
 Debugging switches
 ------------------
 
