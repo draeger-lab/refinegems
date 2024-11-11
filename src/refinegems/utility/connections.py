@@ -29,7 +29,7 @@ from MCC import MassChargeCuration
 from pathlib import Path
 from libsbml import readSBML
 from sboannotator.SBOannotator import sbo_annotator
-from typing import Literal
+from typing import Literal, Union
 
 from memote.support import consistency
 # needed by memote.support.consistency
@@ -276,7 +276,7 @@ def perform_mcc(model: cobra.Model, dir: str, apply:bool = True) -> cobra.Model:
 # -------
 
 def run_memote(model: cobra.Model, type:Literal['json','html']='html', 
-               return_res:bool=False, save_res:str|None=None, verbose:bool=False) -> dict|str|None:
+               return_res:bool=False, save_res:Union[str,None]=None, verbose:bool=False) -> Union[dict,str,None]:
     """Run the memote snapshot function on a given model loaded with COBRApy.
 
     Args:

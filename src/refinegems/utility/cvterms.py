@@ -13,6 +13,7 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 import cobra
 import logging
 from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
+from typing import Union
 
 ################################################################################
 # variables
@@ -84,7 +85,7 @@ OLD_MIRIAM = 'http://identifiers.org/' #: :meta hide-value:
 # cobra
 # -----
 
-def _add_annotations_from_dict_cobra(references:dict, entity:cobra.Reaction|cobra.Metabolite|cobra.Model) -> None:
+def _add_annotations_from_dict_cobra(references:dict, entity:Union[cobra.Reaction,cobra.Metabolite,cobra.Model]) -> None:
     """Given a dictionary and a cobra object, add the former as annotations to the latter.
     The keys of the dictionary are used as the annotation labels, the values as the values.
     If the keys are already in the entity, the values will be combined (union).

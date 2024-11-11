@@ -1630,12 +1630,12 @@ class GeneGapFiller(GapFiller):
         super().__init__()
         
     # @TODO logging
-    def find_missing_genes(self,gffpath:Union[str|Path],model:libModel):
+    def find_missing_genes(self,gffpath:Union[str,Path],model:libModel):
         """Find missing genes by comparing the CDS regions written in the GFF
         with the GeneProduct entities in the model.
 
         Args:
-            - gffpath (Union[str | Path]): 
+            - gffpath (Union[str, Path]): 
                 Path to a GFF file (corresponding to the model).
             - model (libModel): 
                 The model loaded with libSBML.

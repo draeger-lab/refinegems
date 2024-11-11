@@ -503,7 +503,7 @@ def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
    
 
 # @TEST
-def reset_database(database:Path|str=PATH_TO_DB):
+def reset_database(database:Union[Path,str]=PATH_TO_DB):
     """Remove tables for certain databases to allow pushing of the database
     to GitHub (reduce size).
 

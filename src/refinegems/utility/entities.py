@@ -448,7 +448,7 @@ def build_metabolite_xxx(id:str, model:cobra.Model,
 def build_metabolite_mnx(id: str, model:cobra.Model, 
                          namespace:str='BiGG',
                          compartment:str='c',
-                         idprefix:str='refineGEMs') -> cobra.Metabolite | None:
+                         idprefix:str='refineGEMs') -> Union[cobra.Metabolite,None]:
     """Build a cobra.Metabolite object from a MetaNetX ID. 
     This function will NOT directly add the metabolite to the model, 
     if the contruction is successful.
@@ -568,7 +568,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
 def build_metabolite_kegg(kegg_id:str, model:cobra.Model, 
                           namespace:Literal['BiGG']='BiGG', 
                           compartment:str='c',
-                          idprefix='refineGEMs') -> cobra.Metabolite | None:
+                          idprefix='refineGEMs') -> Union[cobra.Metabolite,None]:
     """Build a cobra.Metabolite object from a KEGG ID. 
     This function will NOT directly add the metabolite to the model, 
     if the contruction is successful.
@@ -738,7 +738,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
 #       at the end) -> change behaviour or keep it?
 def build_metabolite_bigg(id:str, model:cobra.Model, 
                          namespace:Literal['BiGG']='BiGG',
-                         idprefix:str='refineGEMs') -> cobra.Metabolite | None: 
+                         idprefix:str='refineGEMs') -> Union[cobra.Metabolite,None]: 
     """Build a cobra.Metabolite object from a BiGG ID. 
     This function will NOT directly add the metabolite to the model, 
     if the contruction is successful.
@@ -1783,7 +1783,7 @@ def create_reaction(
 
 # @TODO : does it cover indeed all cases (for adding GPR together) ?
 # @TODO : only support OR connection
-def create_gpr(reaction:Reaction,gene:str|list[str]) -> None:
+def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
     """For a given libSBML Reaction and a gene ID or a list of gene IDs, 
     create a gene production rule inside the reaction.
     

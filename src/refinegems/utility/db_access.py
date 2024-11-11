@@ -37,7 +37,7 @@ from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
 from multiprocessing import Pool
 from ratelimit import limits, sleep_and_retry
-from typing import Literal
+from typing import Literal, Union
 from tqdm import tqdm
 
 tqdm.pandas()
@@ -1054,7 +1054,7 @@ def search_ncbi_for_gpr(locus: str) -> str:
 # fetching the EC number (if possible) from NCBI 
 # based on an NCBI protein ID (accession version number)
 # @TODO logging
-def get_ec_from_ncbi(mail:str,ncbiprot:str) -> str|None:
+def get_ec_from_ncbi(mail:str,ncbiprot:str) -> Union[str,None]:
     """Based on a NCBI protein accession number, try and fetch the 
     EC number from NCBI.
 
