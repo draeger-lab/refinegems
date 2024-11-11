@@ -183,11 +183,11 @@ def run_DIAMOND_blastp(fasta:str, db:str,
     """
     
     if outdir:
-        outname = Path(outdir,'DIAMOND_blastp_res.tsv')
-        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
+        outname = str(Path(outdir,'DIAMOND_blastp_res.tsv'))
+        logfile = str(Path(outdir,'log_DIAMOND_blastp.txt'))
     else:
-        outname = Path(outname)
-        logfile = Path('log_DIAMOND_blastp.txt')
+        outname = str(Path(outname))
+        logfile = str(Path('log_DIAMOND_blastp.txt'))
       
     # @TODO: test, if it works with different paths and their problems  
     subprocess.run(['diamond', 'blastp', '-d', db, '-q', fasta, '--'+sensitivity, '--query-cover', str(coverage), '-p', str(threads), '-o', outname, '--outfmt', str(6), 'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', '2>', logfile], shell=True)

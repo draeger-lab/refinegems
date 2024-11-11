@@ -1808,7 +1808,7 @@ class GeneGapFiller(GapFiller):
         self.missing_genes = updated_missing_genes
         self.missing_reactions = mapped_reacs
 
-        self._statistics['reactions']['missing (before)'] = len(self.missing_reactions)
+        self._statistics['reactions']['missing (before)'] = len(self.missing_reactions) + self._statistics['reactions']['missing information']
     
     
     
