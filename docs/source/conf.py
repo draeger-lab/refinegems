@@ -109,7 +109,6 @@ autodoc_default_options = {
 }
 
 # we need those to display the code comments otherwise the functions cannot be imported
-'''
 autodoc_mock_imports = ["psycopg2", 
                         "gffutils",
                         "cplex.exceptions",
@@ -139,4 +138,3 @@ autodoc_mock_imports = ["psycopg2",
                         "seaborn",
                         "venn"
                         ]
-'''
