@@ -18,7 +18,7 @@ import warnings
 from functools import partial
 from multiprocess import Pool
 from tqdm import tqdm
-from typing import Literal
+from typing import Literal, Union
 
 ################################################################################
 # variables
@@ -76,7 +76,7 @@ class EGCSolver():
     # -----------------
     def check_metab_integration(self, metabolites: dict[str: int], model: cobra.Model,
                                  metab_info:Medium, namespace:Literal['BiGG']='BiGG',
-                                 compartment:list=['c','p']) -> None|dict:
+                                 compartment:list=['c','p']) -> Union[None,dict]:
             """Check if the metabolites of a reactions are in the model.
             If yes, return the dictionary of metabolites (their IDs in the model) to the factors.
             If no, return None
@@ -223,7 +223,7 @@ class EGCSolver():
 
     def find_egcs(self, model:cobra.Model, with_reacs:bool=False,
                   namespace:Literal['BiGG']='BiGG',
-                  compartment:list=['c','p']) -> list|tuple:
+                  compartment:list=['c','p']) -> Union[list,tuple]:
         """Find the EGCs in a model - if exsistend.
 
         Args:
@@ -382,7 +382,7 @@ class GreedyEGCSolver(EGCSolver):
     def check_egc_growth(self, reac: cobra.Reaction, model: cobra.Model, 
                 bounds:tuple, starting_egcs:dict,
                 namespace:Literal['BiGG']='BiGG',
-                compartment:list=['c','p']) -> list|None:
+                compartment:list=['c','p']) -> Union[list,None]:
         """Check EGC removal and growth of a model when chaning the bounds
         of a single reaction.
 
@@ -727,7 +727,7 @@ class GreedyEGCSolver(EGCSolver):
     # run the complete solving process
     # --------------------------------
     def solve_egcs(self, model:cobra.Model, namespace:Literal['BiGG']='BiGG',
-                   compartment:list=['c','p']) -> dict|None:
+                   compartment:list=['c','p']) -> Union[dict,None]:
         """Run the complete greedy EGC solving process.
 
         Note: The input model gets changed, if EGCs can be solved.

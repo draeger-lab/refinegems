@@ -259,7 +259,7 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
 
             # Create list of EC codes in column ec-code_x, 
             # Join both ec-code columns into one & Create a set of ec-codes
-            mnx_reacs['ec-code_x'] = mnx_reacs['ec-code_x'].str.split('\s*;\s*')
+            mnx_reacs['ec-code_x'] = mnx_reacs['ec-code_x'].str.split(r'\s*;\s*')
             mnx_reacs['ec-code_x'] = mnx_reacs['ec-code_x'].fillna(
                 {i: [] for i in mnx_reacs.index}
                 ).map(set).map(list)
@@ -479,7 +479,7 @@ def map_ec_to_reac(table:pd.DataFrame,
         mnx_reac_prop = load_a_table_from_database('mnx_reac_prop',False)
         # convert table into one EC-number per row
         mnx_reac_prop.drop('is_balanced', inplace=True, axis=1)
-        mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(';') if isinstance(x,str) else None)
+        mnx_reac_prop['ec-code'] = mnx_reac_prop['ec-code'].apply(lambda x: x.split(r';') if isinstance(x,str) else None)
         # exclude entries without EC-number
         mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
         # merge with unmapped reactions
@@ -507,7 +507,7 @@ def map_ec_to_reac(table:pd.DataFrame,
         bigg_reacs = load_a_table_from_database('bigg_reactions',False)
         bigg_reacs.dropna(subset='EC Number', inplace=True)
         bigg_reacs = bigg_reacs[['id','reaction_string','EC Number']].rename({'reaction_string':'equation','EC Number':'ec-code'}, inplace=False, axis=1)
-        bigg_reacs['ec-code'] = bigg_reacs['ec-code'].apply(lambda x: x.split(',') if isinstance(x,str) else None)
+        bigg_reacs['ec-code'] = bigg_reacs['ec-code'].apply(lambda x: x.split(r',') if isinstance(x,str) else None)
         bigg_reacs = bigg_reacs.explode('ec-code')
         # merge with unmapped reactions
         bigg_mapping = unmapped_reacs.merge(bigg_reacs, on=['ec-code'], how='left')
@@ -827,7 +827,7 @@ class GapFiller(ABC):
         for idx,row in reac_table.iterrows():
             # check, if G_+ncbiprotein in model
             # if yes, add gpr
-            geneid = 'G_'+row['ncbiprotein'].replace('.','_').replace(':','_')
+            geneid = 'G_'+row['ncbiprotein'].replace(r'.',r'_').replace(r':',r'_')
             for reacid in row['add_to_GPR']:
                 current_reacid = 'R_'+reacid
                 if geneid in model_gene_ids:
@@ -894,10 +894,10 @@ class GapFiller(ABC):
                 if isinstance(refs, dict):
                     continue
                 elif refs[0] == "{":
-                    refs = refs.replace("'", "\"")
+                    refs = refs.replace(r"'", r"\"")
                     refs = json.loads(refs)
                 else: 
-                    refs = refs.split(":")
+                    refs = refs.split(r":")
                     refs = {refs[0]:refs[1]}
             else:
                 refs = {}
@@ -1193,7 +1193,7 @@ class KEGGapFiller(GapFiller):
                         for idx in range(cv_term.getNumResources()):
                             uri = cv_term.getResourceURI(idx)
                             if 'kegg.genes' in uri: 
-                                genes_in_model.append(re.split('kegg.genes:|kegg.genes/',uri)[1]) # work with old/new pattern
+                                genes_in_model.append(re.split(r'kegg.genes:|kegg.genes/',uri)[1]) # work with old/new pattern
 
             return pd.DataFrame(genes_in_model, columns=['orgid:locus'])
         
@@ -1216,7 +1216,7 @@ class KEGGapFiller(GapFiller):
         
         # Step 4: extract locus tag
         # -------------------------
-        genes_not_in_model['locus_tag'] = genes_not_in_model['orgid:locus'].str.split(':').str[1]
+        genes_not_in_model['locus_tag'] = genes_not_in_model['orgid:locus'].str.split(r':').str[1]
         
         # Step 5: map to EC via KEGG
         # --------------------------
@@ -1358,7 +1358,7 @@ class BioCycGapFiller(GapFiller):
             inplace=True)
 
         # Turn empty strings into NaNs
-        self._biocyc_gene_tbl.replace('', np.nan, inplace=True)
+        self._biocyc_gene_tbl.replace(r'', np.nan, inplace=True)
 
         # Drop only complete empty rows
         self._biocyc_gene_tbl.dropna(how='all', inplace=True)
@@ -1405,11 +1405,11 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Turn empty strings into NaNs
-        self._biocyc_rxn_tbl.replace('', np.nan, inplace=True)
+        self._biocyc_rxn_tbl.replace(r'', np.nan, inplace=True)
 
         # Set entries in is_spontaneous to booleans &
         # specify empty entries in 'is_spontaneous' as False
-        self._biocyc_rxn_tbl['is_spontaneous'].replace({'T': True, 'F': False}, inplace=True)
+        self._biocyc_rxn_tbl['is_spontaneous'].replace({r'T': True, r'F': False}, inplace=True)
         self._biocyc_rxn_tbl['is_spontaneous'] = self._biocyc_rxn_tbl['is_spontaneous'].fillna(False)
 
     def find_missing_genes(self, model: libModel):
@@ -1476,7 +1476,7 @@ class BioCycGapFiller(GapFiller):
         
         # Expand missing genes result table to merge with Biocyc reactions table
         missing_genes = pd.DataFrame(
-           missing_genes['id'].str.split('//').tolist(), 
+           missing_genes['id'].str.split(r'//').tolist(), 
            index=missing_genes['ncbiprotein']
            ).stack()
         missing_genes = missing_genes.reset_index(
@@ -1503,7 +1503,7 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Turn ec-code entries with '//' into lists, remove prefix 'EC-' & get unique ec=-odes
-        self.missing_reactions['ec-code'] = self.missing_reactions['ec-code'].str.replace('EC-', '').str.split('\s*//\s*')
+        self.missing_reactions['ec-code'] = self.missing_reactions['ec-code'].str.replace(r'EC-', r'').str.split(r'\s*//\s*')
         self.missing_reactions['ec-code'] = self.missing_reactions['ec-code'].fillna(
             {i: [] for i in self.missing_reactions.index}
             ).map(set).map(list)
@@ -1630,12 +1630,12 @@ class GeneGapFiller(GapFiller):
         super().__init__()
         
     # @TODO logging
-    def find_missing_genes(self,gffpath:Union[str|Path],model:libModel):
+    def find_missing_genes(self,gffpath:Union[str,Path],model:libModel):
         """Find missing genes by comparing the CDS regions written in the GFF
         with the GeneProduct entities in the model.
 
         Args:
-            - gffpath (Union[str | Path]): 
+            - gffpath (Union[str, Path]): 
                 Path to a GFF file (corresponding to the model).
             - model (libModel): 
                 The model loaded with libSBML.
