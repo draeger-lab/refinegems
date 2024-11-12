@@ -87,7 +87,7 @@ Gap filling with BioCyc
 | **Class:** :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`
 | **Runtime estimation:** *to be determined*
 
-TODO this fine?
+@TODO this fine?
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
@@ -97,7 +97,53 @@ These two tables, together with the GFF file are the required input for this gap
 The missing genes are identfied by comparing the gene table ``Accession-2`` column to the model.
 Subsequently, the missing genes are mapped back to the reactions to identify missing reactions.
 The reactions are further mapped to MetaNetX and BiGG to obtain more reaction equations and 
-information, since especially the metabolites are easier to construct using the other databases. 
+information, since especially the metabolites are easier to construct using the other databases.
+
+@TODO Improve description on how to get the tables!!!
+Data acquisition from BioCyc
+""""""""""""""""""""""""""""
+
+1. If you have no BioCyc account you will need to create one. See `BioCyc /> Create Free Account <https://biocyc.org/new-account.shtml>` to create an account. 
+2. Then you need to search for the strain of your organism.
+3. Within the database of your organism you need to click on `Tools` in the menu bar and select `Special SmartTables` under `SmartTables`.
+   There you need to make an adjustable copy of each of the tables "All genes of <organism>" and "All reactions of <organism>".   
+4. **For the gene to reaction mapping table:**
+
+        i. Remove all columns except 'Gene Name' from the "All genes of <organism>" table,
+        ii. then click `choose a transform` and select 'Reactions of gene', 
+        iii. then add the `property` 'Accession-2'
+        iv. and delete the 'Gene Name' column.
+        v. After that select the column 'Accession-2' and use the filter function in the box on the right side of the page to delete all empty rows.
+        vi. Finally, click `Export to Spreadsheet File` from the box on the right side and choose `Frame IDs`.
+        
+5. **For the reactions table:** 
+
+    i. Remove all columns except 'Reaction' from the "All reactions of <organism>" table,
+    ii. then click `choose a transform`: 
+    
+        a. select 'Reactants of reaction',
+        b. then select 'Products of reaction'
+        
+    iii. and then choose the `property`: 
+    
+        a. 'EC-Number',
+        b. then 'Reaction-Direction',
+        c. and then 'Spontaneous?'.
+        
+    iv. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `Frame IDs`.
+    
+6. **For the metabolites table:** 
+
+    i. Use the MetaCyc database to get the table "All compounds of MetaCyc".
+    ii. Remove all columns except 'Compound',
+    iii. then choose the `property`:
+    
+        a. 'Object ID',
+        b. then 'Chemical Formula',
+        c. then 'InChI-Key',
+        d. and then 'database links' > 'ChEBI'.
+        
+    iv. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `common names`.
 
 
 Gap filling with a GFF (and SwissProt)

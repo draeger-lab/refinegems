@@ -37,7 +37,7 @@ from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
 from multiprocessing import Pool
 from ratelimit import limits, sleep_and_retry
-from typing import Literal
+from typing import Literal, Union
 from tqdm import tqdm
 
 tqdm.pandas()
@@ -245,7 +245,7 @@ def keep_only_bigg_reactions_in_certain_compartments(complete_df: pd.DataFrame) 
     # (1) Find all occurrencs of a BiGG reaction ID in bigg_reactions table in database
     def get_all_similar_bigg_ids(bigg_id_in: str) -> list[str]:
         
-        if '_' in bigg_id_in: bigg_id = re.split('_([a-zA-Z]|[0-9])$', bigg_id_in)[0]
+        if '_' in bigg_id_in: bigg_id = re.split(r'_([a-zA-Z]|[0-9])$', bigg_id_in)[0]
         elif bigg_id_in.endswith(ALL_BIGG_COMPARTMENTS_ONE_LETTER): bigg_id = bigg_id_in[:-1]
         elif bigg_id_in.endswith(ALL_BIGG_COMPARTMENTS_TWO_LETTER): bigg_id = bigg_id_in[:-2]
         else: bigg_id = bigg_id_in
@@ -322,8 +322,8 @@ def compare_bigg_ids(id1: str, id2: str) -> bool:
     """
     id1_split, id2_split, id1_single_comp, id2_single_comp, id1_comp, id2_comp = None, None, None, None, None, None
     
-    if '_' in id1: id1_split = re.split('_([a-zA-Z]|[0-9])$', id1)[0]
-    if '_' in id2: id2_split = re.split('_([a-zA-Z]|[0-9])$', id2)[0]
+    if '_' in id1: id1_split = re.split(r'_([a-zA-Z]|[0-9])$', id1)[0]
+    if '_' in id2: id2_split = re.split(r'_([a-zA-Z]|[0-9])$', id2)[0]
     if id1.endswith(ALL_BIGG_COMPARTMENTS_ONE_LETTER): id1_single_comp = id1[:-1]
     if id2.endswith(ALL_BIGG_COMPARTMENTS_ONE_LETTER): id2_single_comp = id2[:-1]
     if id1.endswith(ALL_BIGG_COMPARTMENTS_TWO_LETTER): id1_comp = id1[:-2]
@@ -641,7 +641,7 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
         kegg_orthology = [_[0] for _ in gene_entry.orthology]
         gene_info['kegg.orthology'] = kegg_orthology
         # get EC number
-        ec_numbers = [re.search('(?<=EC:).*(?=\])',orth[1]).group(0) for orth in gene_entry.orthology if re.search('(?<=EC:).*(?=\])',orth[1])]
+        ec_numbers = [re.search(r'(?<=EC:).*(?=\])',orth[1]).group(0) for orth in gene_entry.orthology if re.search(r'(?<=EC:).*(?=\])',orth[1])]
         if isinstance(ec_numbers,list) and len(ec_numbers) > 0:
             gene_info['ec-code'] = [ec for ec_str in ec_numbers for ec in ec_str.split(' ')]
             
@@ -651,8 +651,8 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
     # get more information about connections to other databases
     if len(gene_entry.dblinks) > 0:
         for dbname,ids in gene_entry.dblinks:
-            conform_dbname = re.sub(pattern='(NCBI)(.*)(ID$)', repl='\\1\\2',string=dbname) # Remove ID if NCBI in name
-            conform_dbname = re.sub('[^\w]','',conform_dbname) # remove special signs except underscore
+            conform_dbname = re.sub(pattern=r'(NCBI)(.*)(ID$)', repl='\\1\\2',string=dbname) # Remove ID if NCBI in name
+            conform_dbname = re.sub(r'[^\w]','',conform_dbname) # remove special signs except underscore
             conform_dbname = conform_dbname.lower() # make lower case
             gene_info[conform_dbname] = ids
             
@@ -694,7 +694,7 @@ def parse_KEGG_ec(ec:str) -> dict:
         return ec_info
     
     # retrieve reaction information from entry 
-    rn_numbers = [re.search('(?<=RN:).*(?=\])',reac).group(0) for reac in ec_entry.reaction if re.search('(?<=RN:).*(?=\])',reac)]
+    rn_numbers = [re.search(r'(?<=RN:).*(?=\])',reac).group(0) for reac in ec_entry.reaction if re.search(r'(?<=RN:).*(?=\])',reac)]
     if len(rn_numbers) > 0:
         ec_info['id'] = [_.split(' ') for _ in rn_numbers]
         ec_info['equation'] = None
@@ -818,7 +818,7 @@ def get_modelseed_compounds() -> pd.DataFrame:
     def get_bigg_ids(aliases):
         try:
             aliases_list = aliases.split('|')
-            bigg = [x[6:] for x in aliases_list if re.search('BiGG: .*', x)]
+            bigg = [x[6:] for x in aliases_list if re.search(r'BiGG: .*', x)]
             return bigg[0]
         except (IndexError, AttributeError):
             return None
@@ -948,9 +948,9 @@ def get_compared_formulae(formula_mismatch: pd.DataFrame) -> pd.DataFrame:
 
     def formula_comparison(f1, f2):
         # from Jan Leusch
-        formula_pattern = "[A-Z][a-z]?\\d*"
-        atom_pattern = '[A-Z][a-z]?'
-        atom_number_pattern = '\\d+'
+        formula_pattern = r"[A-Z][a-z]?\\d*"
+        atom_pattern = r'[A-Z][a-z]?'
+        atom_number_pattern = r'\\d+'
         difference = {}
         f1_dict = {}
         f2_dict = {}
@@ -1054,7 +1054,7 @@ def search_ncbi_for_gpr(locus: str) -> str:
 # fetching the EC number (if possible) from NCBI 
 # based on an NCBI protein ID (accession version number)
 # @TODO logging
-def get_ec_from_ncbi(mail:str,ncbiprot:str) -> str|None:
+def get_ec_from_ncbi(mail:str,ncbiprot:str) -> Union[str,None]:
     """Based on a NCBI protein accession number, try and fetch the 
     EC number from NCBI.
 

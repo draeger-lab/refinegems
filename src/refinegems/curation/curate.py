@@ -26,7 +26,7 @@ from ..utility.util import test_biomass_presence
 # variables
 ################################################################################
 
-NH_PATTERN = re.compile('nh[3-4]') #: :meta: 
+NH_PATTERN = re.compile(r'nh[3-4]') #: :meta: 
 
 ################################################################################
 # functions

@@ -29,7 +29,7 @@ from MCC import MassChargeCuration
 from pathlib import Path
 from libsbml import readSBML
 from sboannotator.SBOannotator import sbo_annotator
-from typing import Literal
+from typing import Literal, Union
 
 from memote.support import consistency
 # needed by memote.support.consistency
@@ -183,14 +183,14 @@ def run_DIAMOND_blastp(fasta:str, db:str,
     """
     
     if outdir:
-        outname = Path(outdir,'DIAMOND_blastp_res.tsv')
-        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
+        outname = str(Path(outdir,'DIAMOND_blastp_res.tsv'))
+        logfile = str(Path(outdir,'log_DIAMOND_blastp.txt'))
     else:
-        outname = Path(outname)
-        logfile = Path('log_DIAMOND_blastp.txt')
+        outname = str(Path(outname))
+        logfile = str(Path('log_DIAMOND_blastp.txt'))
       
     # @TODO: test, if it works with different paths and their problems  
-    subprocess.run([F'diamond blastp -d {db} -q {fasta} --{sensitivity} --query-cover {coverage} -p {int(threads)} -o {outname} --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore 2> {logfile}'], shell=True)
+    subprocess.run(['diamond', 'blastp', '-d', db, '-q', fasta, '--'+sensitivity, '--query-cover', str(coverage), '-p', str(threads), '-o', outname, '--outfmt', str(6), 'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', '2>', logfile], shell=True)
 
     return outname
 
@@ -276,7 +276,7 @@ def perform_mcc(model: cobra.Model, dir: str, apply:bool = True) -> cobra.Model:
 # -------
 
 def run_memote(model: cobra.Model, type:Literal['json','html']='html', 
-               return_res:bool=False, save_res:str|None=None, verbose:bool=False) -> dict|str|None:
+               return_res:bool=False, save_res:Union[str,None]=None, verbose:bool=False) -> Union[dict,str,None]:
     """Run the memote snapshot function on a given model loaded with COBRApy.
 
     Args:

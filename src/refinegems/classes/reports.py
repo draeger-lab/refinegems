@@ -790,7 +790,7 @@ class SourceTestReport(Report):
 
 
     def visualise(self, width:int=12, color_palette:str='YlGn') -> tuple[matplotlib.figure.Figure, pd.DataFrame]:
-        """Visuale the results of the source test as a heatmap
+        """Visualise the results of the source test as a heatmap
 
         Args:
             - width (int, optional): 
@@ -1383,11 +1383,88 @@ class MultiModelInfoReport(Report):
 
 
 # @TODO
-@implement
 class GapFillerReport(Report):
+    """Report for the gapfilling of the model.
     
-    @implement
-    def __init__(self) -> None:
-        super().__init__()
+    Attributes:
+        - statistics:
+            List of different counts for reactions, genes and metabolites.
+        - manual_curation:
+            List of IDs for manual curation.
+    """
+    
+    def __init__(self, statistics: dict, manual_curation: dict) -> None:
+        self.statistics = statistics
+        self.manual_curation = manual_curation
+
+    def visualise(self, color_palette:str='YlGn') -> matplotlib.figure.Figure:
+        """Visualise the basic information of the report.
+
+        Args:
+            - color_palette (str, optional): 
+                Colour palette to use for the plots. 
+                Defaults to 'YlGn'.
+
+        Returns:
+            matplotlib.figure.Figure: 
+                The visualisation as a single figure.
+        """
+
+        # basic settings
+        # --------------
+
+        # create colour gradient
+        try:
+            cmap = matplotlib.colormaps[color_palette]
+        except ValueError:
+            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            cmap = matplotlib.colormaps['YlGn']
         
-    
+        fig = plt.figure()
+        fig.suptitle('Statistics for Gapfilling', fontsize=16)
+        grid = gspec.GridSpec(2,1,hspace=0.6)
+
+        # plot statistics about reactions
+        # -------------------------------
+        reactions = list(self.statistics['reactions'].keys())
+        reactions = reactions[::-1]
+        values = list(self.statistics['reactions'].values())
+        values = values[::-1]
+
+        ax1 = fig.add_subplot(grid[0,0])
+        p = ax1.barh(reactions, values, color=[cmap(0.2),cmap(0.4),cmap(0.6), cmap(0.8), cmap(1.0)])
+        ax1.bar_label(p, values)
+        ax1.set_xlabel('count')
+        ax1.tick_params(axis='x', which='major', labelsize=7, labelrotation=90)
+        ax1.set_title('A) Reactions')
+
+        # plot statistics about genes
+        # ---------------------------
+        genes = list(self.statistics['genes'].keys())
+        genes = genes[::-1]
+        values = list(self.statistics['genes'].values())
+        values = values[::-1]
+
+        ax2 = fig.add_subplot(grid[1,0])
+        p = ax2.barh(genes, values, color=[cmap(0.2),cmap(0.4),cmap(0.6), cmap(0.8), cmap(1.0)])
+        ax2.bar_label(p, values)
+        ax2.set_xlabel('count')
+        ax2.tick_params(axis='x', which='major', labelsize=7, labelrotation=90)
+        ax2.set_title('B) Genes')
+
+        return fig
+
+    def save(self, dir=str, color_palette:str='YlGn') -> None:
+        dir_path = Path(dir, 'GapFillerReport')
+        dir_path.mkdir(parents=True)
+
+        # save the visualisation
+        fig = self.visualise(color_palette)
+        fig.savefig(Path(dir_path,'gapfill_statistics_visual.png'), bbox_inches='tight', dpi=400)
+        pd.DataFrame(self.statistics).to_csv(Path(dir_path,'gapfill_statistics.csv'), sep=';', header=True)
+
+        # save the manual curation lists
+        for category in self.manual_curation['reactions']:
+            pd.DataFrame(self.manual_curation['reactions'][category]).to_csv(Path(dir_path,f'reactions_{category}.csv'), sep=';', header=True)
+        for category in self.manual_curation['genes']:
+            pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True)

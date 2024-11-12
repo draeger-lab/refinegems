@@ -82,7 +82,6 @@ html_css_files = ['custom_theme.css']
 html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
-    'display_version': False,
 	'flyout_display': 'attached'
 }
 
@@ -109,34 +108,39 @@ autodoc_default_options = {
 }
 
 # we need those to display the code comments otherwise the functions cannot be imported
-'''
-autodoc_mock_imports = ["psycopg2", 
-                        "gffutils",
-                        "cplex.exceptions",
-                        "cplex",
-                        "cobra",
-                        "pandas",
-                        "libsbml",
-                        "numpy",
-                        "bioservices",
-                        "bioregistry",
-                        "bs4",
-                        "memote",
-                        "tqdm",
-                        "psycopg2",
-                        "Bio",
-                        "sqlalchemy",
-                        "ratelimit",
-                        "libchebipy",
-                        "ols_client",
-                        "charges",
-                        "click",
-                        "databases",
-                        "yaml",
-                        "sortedcontainers",
-                        "colorama",
-                        "matplotlib",
-                        "seaborn",
-                        "venn"
-                        ]
-'''
+autodoc_mock_imports = ['Bio',
+                        'biopython',
+                        'bioregistry',
+                        'bioservices',
+                        'BOFdat',
+                        'charges',
+                        'click',
+                        'cloup',
+                        'cobra', 
+                        'colorama',
+                        'cplex',
+                        'cplex.exceptions',
+                        'databases',
+                        'depinfo',
+                        'gffutils',
+                        'libchebipy',
+                        'libsbml',
+                        'matplotlib',
+                        'MCC',
+                        'memote',
+                        'multiprocess',
+                        'numpy',
+                        'ols_client',
+                        'pandas',
+                        'pyyaml',
+                        'ratelimit',
+                        'requests',
+                        'sboannotator',
+                        'seaborn',
+                        'sortedcontainers',
+                        'sqlalchemy',
+                        'sqlite_dump',
+                        'tqdm',
+                        'venn',
+                        'xmltodict',
+                        'z3-solver']

@@ -83,7 +83,7 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:Union[None,str,tuple[fl
             reaction.bounds = reac_bounds
 
 
-def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[str]:
+def get_uptake(model: cobraModel, type: str, exchange_regex:str=r'^EX') -> list[str]:
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
     Args:
@@ -93,7 +93,7 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str='^EX') -> list[s
             Type of uptake, can be 'minimal'/'min' or 'standard'/'std'.
         - exchange_regex (str, optional): 
             Regex-compatible string to determine exchange reactions. 
-            Defaults to '^EX'.
+            Defaults to r'^EX'.
 
     Raises:
         - ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
@@ -168,7 +168,7 @@ def get_production(model: cobraModel) -> list[str]:
 
 
 # @WARNING 
-def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, standard_uptake: list[str]|None) -> list[str]:
+def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, standard_uptake: Union[list[str],None]) -> list[str]:
     """Find exchanges in a medium (with or without supplements) essential for the growth.
     @WARNING only tests single deletions currently
 
@@ -211,7 +211,7 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
     return essential
 
 
-def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False) -> list[str]|dict:
+def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, standard_uptake: list[str], combine:bool=False) -> Union[list[str],dict]:
     """Based on a new medium for growth and a standard one the model already growths on, find additives from the standard, 
     which can be added to the new one to enable growths.
 
@@ -851,7 +851,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
 # @TODO : set new default for substances - ideally a subset or so
 # @TODO : Allow incomplete substance names to be valid, example: 'Glucose' instead of 'D-Glucose'
 # @TODO : more namespace options, currently only BiGG available
-def test_growth_with_source(model:cobra.Model, element:str, substances:None|str|list[str]=None, medium:None|str|Medium=None, namespace:Literal['BiGG']='BiGG') -> SourceTestReport:
+def test_growth_with_source(model:cobra.Model, element:str, substances:Union[None,str,list[str]]=None, medium:Union[None,str,Medium]=None, namespace:Literal['BiGG']='BiGG') -> SourceTestReport:
     """Test the growth of a model when switching out the source of a given chemical element for
     a set medium.
 

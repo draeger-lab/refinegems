@@ -114,9 +114,9 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
    db_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
    tables = [string[0] for string in db_cursor.fetchall()]
    
-   bigg_tables_contained = len([s for s in tables if re.match('^bigg_(?!to)(.*?)', s, re.IGNORECASE)]) == 2
-   sbo_tables_contained = len([s for s in tables if re.match('(.*?)_sbo$', s, re.IGNORECASE)]) == 2
-   media_tables_contained = len([s for s in tables if re.match('^medium(.*?)|^substance(.*?)|^subset(.*?)', s, re.IGNORECASE)]) == 6
+   bigg_tables_contained = len([s for s in tables if re.match(r'^bigg_(?!to)(.*?)', s, re.IGNORECASE)]) == 2
+   sbo_tables_contained = len([s for s in tables if re.match(r'(.*?)_sbo$', s, re.IGNORECASE)]) == 2
+   media_tables_contained = len([s for s in tables if re.match(r'^medium(.*?)|^substance(.*?)|^subset(.*?)', s, re.IGNORECASE)]) == 6
    sbo_media_tables_contained = sbo_tables_contained and media_tables_contained  # These can only occur together
    modelseed_cmpd_tbl_contained = len([s for s in tables if s == 'modelseed_compounds']) == 1
    
@@ -503,7 +503,7 @@ def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
    
 
 # @TEST
-def reset_database(database:Path|str=PATH_TO_DB):
+def reset_database(database:Union[Path,str]=PATH_TO_DB):
     """Remove tables for certain databases to allow pushing of the database
     to GitHub (reduce size).
 
