@@ -1630,6 +1630,7 @@ class GeneGapFiller(GapFiller):
         super().__init__()
         
     # @TODO logging
+    # @DISCUSSION Option for if model has no label -> Call function from polish to get labels?
     def find_missing_genes(self,gffpath:Union[str,Path],model:libModel):
         """Find missing genes by comparing the CDS regions written in the GFF
         with the GeneProduct entities in the model.
