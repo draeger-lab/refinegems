@@ -55,7 +55,7 @@ from typing import Union, Literal
 
 from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
 from ..utility.db_access import search_ncbi_for_gpr
-from ..utility.io import parse_gff_for_refseq_info, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
+from ..utility.io import parse_gff_for_cds, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 
 ################################################################################
 # variables
@@ -543,6 +543,11 @@ def set_initial_amount(model: libModel):
          
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
+# @DISCUSSION Extract label part?
+# @TODO Possibility of non-unique RefSeq (and potentially NCBI Protein) IDs
+# -> Map via RefSeq locus tag? Requires however protein_fasta
+# -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
+# If ambigous locus tags are found this can be fixed by using the fasta to map RefSeq locus tags to the NCBI locus tags
 def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
@@ -552,7 +557,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         - email (str): 
             User Email to access the Entrez database
         - locus2id (pd.DataFrame): 
-            Table mapping locus tags to their corresponding RefSeq identifiers
+            Table mapping locus tags to their corresponding RefSeq/NCBI Protein identifiers
         - protein_fasta (str): 
             The path to the CarveMe protein.fasta input file
         - lab_strain (bool): 
@@ -561,7 +566,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
     """
     Entrez.email = email
     if locus2id is not None:
-        locus2id = locus2id.set_index('ProteinID')
+        locus2id = locus2id.groupby('ProteinID').agg(list)
                     
     id2locus_name = None  # Needs to be initialised, otherwise UnboundLocalError: local variable 'id2locus_name' referenced before assignment
     entry = None # Needs to be initialised, otherwise UnboundLocalError: local variable 'entry' referenced before assignment
@@ -586,7 +591,8 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             gene.setName(name)
             if (locus2id is not None) and (entry in locus2id.index):
                 locus = locus2id.loc[entry, 'LocusTag']
-            gene.setLabel(locus)
+            if len(locus) == 1: gene.setLabel(locus[0])
+            else: genes_missing_annotation.append(entry)
         
         elif (gene.getId() != 'G_spontaneous') and (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
             if 'prot_' in gene.getId():
@@ -605,17 +611,17 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
             # (Needs to be changed if there are other gene idenitfiers used that could contain '_' & need to be handled differently)
                 if re.fullmatch(r'^\d+\d+$', id_string[1], re.IGNORECASE):
-                    ncbi_id = '_'.join(id_string[:2])  # Merge the first two parts with '_' as this is complete identifier
-           
+                    # Merge the first two parts with '_' as this is complete identifier
+                    # Merge the resulting string with the third string in i_string to get complete identifier with version spec
+                    ncbi_id = f'{"_".join(id_string[:2])}.{id_string[2]}'
+
             # If identifier matches RefSeq ID pattern   
             if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
                 add_cv_term_genes(ncbi_id, 'REFSEQ', gene, lab_strain)
                 add_cv_term_genes(ncbi_id, 'NCBI', gene, lab_strain)
                 name, locus = search_ncbi_for_gpr(ncbi_id)
-                # @TODO: Where does the "entry" below come from? 
-                # #      Is the variable name even correct?
-                if (locus2id is not None) and (entry in locus2id.index):
-                    locus = locus2id.loc[entry, 'LocusTag']
+                if (locus2id is not None) and (ncbi_id in locus2id.index):
+                    locus = locus2id.loc[ncbi_id, 'LocusTag']
 
             # If identifier only contains numbers 
             # -> Get the corresponding data from the CarveMe input file
@@ -640,7 +646,9 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         
             if ncbi_id not in genes_missing_annotation:
                 gene.setName(name)
-                gene.setLabel(locus)
+                print(locus)
+                if len(locus) == 1: gene.setLabel(locus[0])
+                else: genes_missing_annotation.append(ncbi_id)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
@@ -662,7 +670,7 @@ def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
         locus = gp.getLabel()
 
         if locus in locus2id.index:
-            add_cv_term_genes(locus2id.loc[locus, 'ProteinID'].split(r'.')[0], 'REFSEQ', gp)
+            add_cv_term_genes(locus2id.loc[locus, 'ProteinID'][0].split(r'.')[0], 'REFSEQ', gp)
 
           
 def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
@@ -1326,8 +1334,9 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
 
-def polish(model: libModel, email: str, id_db: str, refseq_gff: str, 
-           protein_fasta: str, lab_strain: bool, kegg_organism_id: str, path: str) -> libModel: 
+#@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors
+def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
+           kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
     
     (Tested for models having either BiGG or VMH identifiers.)
@@ -1339,8 +1348,8 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
             E-mail for Entrez
         - id_db (str):
             Main database where identifiers in model come from
-        - refseq_gff (str): 
-            Path to RefSeq GFF file of organism
+        - gff (str): 
+            Path to RefSeq/Genbank GFF file of organism
         - protein_fasta (str): 
             File used as input for CarveMe
         - lab_strain (bool): 
@@ -1370,7 +1379,11 @@ def polish(model: libModel, email: str, id_db: str, refseq_gff: str,
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-    locus2id = parse_gff_for_refseq_info(refseq_gff) if refseq_gff else None
+    if gff:
+        locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
+        locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
+        locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
+    else: locus2id = None
 
     ### unit definition ###
     add_fba_units(model)
