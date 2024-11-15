@@ -82,7 +82,7 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    """Build a pan-core model.
    """
    pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
-   rg.utility.io.write_model_to_file(pancore_mod,Path(dir,name +'.xml'))
+   rg.utility.io.write_model_to_file(pancore_mod,str(Path(dir,name +'.xml')))
 
 # ------------
 # get examples
@@ -175,17 +175,22 @@ def polish():
 @click.argument('model', type=str)
 @click.argument('email', type=str)
 @click.argument('path', type=str)
+@click.option('-o','--outdir', required=False, 
+              type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path), 
+              default=Path(''), show_default=True, help='Path to a directory to write the output to.')
 @click.option('-i','--id-db', show_default=True, default='BiGG', type=str, help='Main database where identifiers in model come from')
-@click.option('-r', '--refseq-gff', show_default=True, default=None, type=str, help='Path to RefSeq GFF file of organism') # @DISCUSSION only RefSeq or does GenBank work as well?
+@click.option('-g', '--gff', show_default=True, default=None, type=str, help='Path to RefSeq/Genbank GFF file of organism')
 @click.option('-p', '--protein-fasta', show_default=True, default=None, type=str, help='File used as input for CarveMe')
 @click.option('-l', '--lab-strain', show_default=True, default=False, type=bool, help='True if the strain was sequenced in a local lab')
 @click.option('-k', '--kegg-organism-id', show_default=True, default=None, type=str, help='KEGG organism identifier')
-def run(model,email,path,id_db,refseq_gff,protein_fasta,lab_strain,kegg_organism_id):
+def run(model,email,path,outdir,id_db,gff,protein_fasta,lab_strain,kegg_organism_id):
    """Completes all steps to polish a model
 
    (Tested for models having either BiGG or VMH identifiers.)
    """
-   rg.curation.polish.polish(model, email, id_db, refseq_gff, protein_fasta, lab_strain, kegg_organism_id, path)
+   model = rg.utility.io.load_model(model, 'libsbml')
+   model = rg.curation.polish.polish(model, email, id_db, gff, protein_fasta, lab_strain, kegg_organism_id, path)
+   rg.utility.io.write_model_to_file(model, str(Path(outdir,f'{model.getId()}_after_cm_correction.xml')))
 
 
 # ----------------------------------------------------------------------------------
@@ -321,7 +326,7 @@ def automated_gapfill(alg,modelpath,outdir,fill,
                                    exclude_dnae=no_dna, exclude_rna=no_rna,
                                    idprefix=idprefix, namespace=namespace)
       # save model
-      write_model_to_file(model, Path(outdir, 'gapfilled_model.xml'))
+      write_model_to_file(model, str(Path(outdir, 'gapfilled_model.xml')))
       
    # @TODO report stats
    # @TODO report manual curation
@@ -360,9 +365,9 @@ def charges(modelpath,dir):
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
    corr,charg = rg.curation.charges.correct_charges_modelseed(model)
-   rg.utility.io.write_model_to_file(corr,Path(dir,'corrected_model.xml'))
+   rg.utility.io.write_model_to_file(corr,str(Path(dir,'corrected_model.xml')))
    charg_tab = pd.DataFrame(charg)
-   charg_tab.to_csv(Path(dir,'multiple_charges.csv',sep=';'))
+   charg_tab.to_csv(Path(dir,'multiple_charges.csv'),sep=';')
        
 
 # @TODO function unfinished
@@ -423,7 +428,7 @@ def sboterms(modelpath):
 
 @annot.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-@click.option('-d','--dir', required=False, default='./', help='Path to the output dorectory')
+@click.option('-d','--dir', required=False, default='', help='Path to the output directory')
 def pathways(modelpath):
    """Add KEGG pathways as groups to a model
    """
@@ -433,7 +438,7 @@ def pathways(modelpath):
       for line in missing:
             outfile.write(f'{line}\n')
    # save model 
-   write_model_to_file(Path(dir,'model_with_added_KeggPathwayGroups.xml'))
+   write_model_to_file(str(Path(dir,'model_with_added_KeggPathwayGroups.xml')))
 
 
 # -----------------------------------------------
