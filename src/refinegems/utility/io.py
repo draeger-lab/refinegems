@@ -20,6 +20,7 @@ import gffutils
 import sqlalchemy
 import logging
 import pandas as pd
+import numpy as np
 
 from ols_client import EBIClient
 from Bio import SeqIO
@@ -148,7 +149,7 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     return read
 
-
+# @DISCUSSION Rewrite for pathlib.Path?
 def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
     """Save a model into a file.
 
@@ -415,7 +416,7 @@ def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
 
 # GFF
 # ---
-
+# @DEPRECATE
 def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
 
@@ -429,8 +430,14 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """
 
     locus_tag2id = {}
+    locus_tag2id['RSLocusTag'] = []
     locus_tag2id['LocusTag'] = []
     locus_tag2id['ProteinID'] = []
+    
+    i = 0
+    current_locus_tag = np.nan
+    locus_tag = np.nan
+    protein_id = np.nan
       
     gff_db = gffutils.create_db(gff_file, ':memory:', merge_strategy='create_unique')
 
@@ -438,18 +445,27 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
         
         if (feature.featuretype == 'gene') and ('old_locus_tag' in feature.attributes):  # Get locus_tag & old_locus_tag
             current_locus_tag = feature.attributes['locus_tag']
-            locus_tag2id['LocusTag'].append(feature.attributes['old_locus_tag'][0])
+            locus_tag = feature.attributes['old_locus_tag'][0]
         elif (feature.featuretype == 'gene') and ('locus_tag' in feature.attributes):
             current_locus_tag = feature.attributes['locus_tag']
-            locus_tag2id['LocusTag'].append(feature.attributes['locus_tag'][0])
+            locus_tag = feature.attributes['locus_tag'][0]
             
         if (feature.featuretype == 'CDS') and ('protein_id' in feature.attributes): # Check if CDS has protein_id
             if feature.attributes['locus_tag'] == current_locus_tag:# Get protein_id if locus_tag the same
-                locus_tag2id['ProteinID'].append(feature.attributes['protein_id'][0])
+                protein_id = feature.attributes['protein_id'][0]
 
-    locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
+        # Collect all data in second iteration
+        if i % 2 == 0:
+            rs_locus_tag = current_locus_tag[0] if type(current_locus_tag) == list else current_locus_tag
+            locus_tag2id['RSLocusTag'].append(rs_locus_tag)
+            locus_tag2id['LocusTag'].append(locus_tag)
+            locus_tag2id['ProteinID'].append(protein_id)
 
-    return pd.DataFrame(locus_tag2id)
+        i += 1
+
+    #locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
+
+    return pd.DataFrame.from_dict(locus_tag2id, orient='index').T.dropna() #pd.DataFrame(locus_tag2id)
 
 
 def parse_gff_for_cds(gffpath, keep_attributes=None):
