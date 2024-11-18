@@ -379,6 +379,7 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     return pd.DataFrame(locus2ids)
 
 
+# @TODO Specify that input Protein FASTA has to be from Genbank otherwise code won't work!!!
 def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
     
     # format the missing genes' locus tags
