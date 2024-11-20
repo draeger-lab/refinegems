@@ -1455,6 +1455,15 @@ class GapFillerReport(Report):
         return fig
 
     def save(self, dir=str, color_palette:str='YlGn') -> None:
+        """Save the report.
+        
+        Args:
+            - dir (str):
+                Path to a directory to save the report to.
+            - color_palette (str, optional):
+                A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to ‘YlGn’.    
+        """
+
         dir_path = Path(dir, 'GapFillerReport')
         dir_path.mkdir(parents=True)
 

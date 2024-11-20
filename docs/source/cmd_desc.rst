@@ -185,7 +185,7 @@ refinegems gaps
 
 .. code:: bash 
   
-  refinegems gaps find [ALG] [MODELPATH] [OPTIONS]
+  refinegems gaps automated_gapfill [ALG] [MODELPATH] [OPTIONS]
 
 Find gaps in a model and optionally try to fill them.
 Algorithm for the gap-filling is chosen by the first argument.
@@ -194,7 +194,7 @@ General Options
 
 - ``-o``, ``--outdir``: Path to a directory to write the output to.  [default: ``./``]
 - ``-f``, ``--fill``: If True, tries to fill the gaps in the model.
-- ``--fc``, ``--formula-check``: [none,existence,wildcard,strict] Set the filter for which metabolite formulas are valid to be added to the model. [default: existence]
+- ``-fc``, ``--formula-check``: [none,existence,wildcard,strict] Set the filter for which metabolite formulas are valid to be added to the model. [default: existence]
 - ``--no-dna``: Exclude DNA reactions (name-based) from being added to the model.
 - ``--no-rna``: Exclude RNA reactions (name-based) from being added to the model.
 - ``-p``, ``--idprefix``: Prefix for the pseudo-IDs, if an ID does not exists for the given namespace. [default: refineGEMs]
@@ -208,8 +208,8 @@ General Options
 | BioCyc required parameters: [all required if ``ALG="BioCyc"``]
 | Parameters required when running the BioCycGapFiller algorithm
 
-- ``--gt``, ``--genetable``: Path to the BioCyc gene SmartTable.
-- ``--rt``, ``--reactable``: Path to the BioCyc reaction SmartTable.
+- ``-gt``, ``--genetable``: Path to the BioCyc gene SmartTable.
+- ``-rt``, ``--reactable``: Path to the BioCyc reaction SmartTable.
 - ``--gff-bc``: Path to the GFF.
 
 | Gene required parameters: [all required if ``ALG="Gene"``]
@@ -225,7 +225,7 @@ General Options
 - ``--ncbi``, ``--check-ncbi``: Enable searching protein IDs in NCBI. This increases the runtime significantly.
 - ``--fasta``: Path to the protein FASTA of the model.
 - ``--dmnd-db``: Path to the SwissProt DIAMOND database.
-- ``--sp-map``, ``--swissprot-mapping``: Path to the SwissProt mapping file (ID against EC and BRENDA)
+- ``-sp-map``, ``--swissprot-mapping``: Path to the SwissProt mapping file (ID against EC and BRENDA)
 - ``-s``, ``--sensitivity``: [sensitive,more-sensitive,very-sensitive,ultra-sensitive] Sensitivity mode for running DIAMOND.  [default: more-sensitive]
 - ``--cov``: Coverage value (passed to DIAMOND)  [default: 90.0]
 - ``--pid``: Percentage identity threshold value for filtering DIAMOND results. [default: 95.0]

@@ -5,11 +5,11 @@ Finding and filling gaps in a genome-scale metabolic model is a frequently discu
 time-consuming part of the modelling process.
 
 The :py:mod:`~refinegems.classes.gapfill` module of ``refineGEMs`` provides different 
-flavors of :ref:`(Semi-)automated gap-filling algorithmns`.
+flavors of :ref:`(Semi-)automated gap-filling algorithms`.
 
 .. warning:: 
 
-    The gap-filling has undergone major restructering. Gap-filling of version 
+    The gap-filling has undergone major restructuring. Gap-filling of version 
     > *2.0.0* behaves fundamentally different than the implementations in older versions. 
 
 Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
@@ -21,22 +21,22 @@ Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
   | If the organism to be modelled has an *entry in BioCyc*, this information can be compared to the model to add missing genes, reactions and more.
 
 - | :ref:`Gap-filling with a GFF (and SwissProt)`:
-  | This algorithmn takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt database to find homolgs, that can then be added to the model.
+  | This algorithm takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt database to find homologs, that can then be added to the model.
 
 ----
 
-(Semi-)automated gap-filling algorithmns
+(Semi-)automated gap-filling algorithms
 ----------------------------------------
 
-The idea behind these algorithmns is to reduce the amount of manual curation as much as 
-possible without losing information along the way. Which algorithmn to choose mainly 
-depends on the available information. Running multiple algorithmns subsequently is also 
+The idea behind these algorithms is to reduce the amount of manual curation as much as 
+possible without losing information along the way. Which algorithm to choose mainly 
+depends on the available information. Running multiple algorithms subsequently is also 
 possible.
 
-The algorithmns have the same basic architecture:
+The algorithms have the same basic architecture:
 
 1. Based on the available information, identify missing genes in the model (locus tag and protein (NCBI) accession number).
-2. Map the missing genes to more information, e.g. the EC number, to identfy missing reactions corresponding to the gene products.
+2. Map the missing genes to more information, e.g. the EC number, to identify missing reactions corresponding to the gene products.
 3. Use the collected information to try and fill the gaps in the model. 
 
     a. Add genes to gene production rules (GPRs) that have been mapped to existing reactions.
@@ -46,13 +46,13 @@ The algorithmns have the same basic architecture:
 During the steps above, if the information content if insufficient or the constructions of a model entity fails, 
 the corresponding part is collected and saved for the user to enable faster manual curation afterwards (if desired).
 
-All algorthmns have similar table outputs for the finding part, the filling part is therefore
+All algorithms have similar table outputs for the finding part, the filling part is therefore
 same for all (see :py:meth:`~refinegems.classes.gapfill.GapFiller.fill_model`). 
 Before adding any reactions to the model, it is checked, if it already exists to
 reduce the possibility of duplicates being added.
 
 Additionally, the following parameters allow the user to set up restrictions on 
-which reactions and metabolites that should added to the model:
+which reactions and metabolites should be added to the model:
 
 - ``exclude_dna``: If set to True, reactions containing the keyword ``DNA`` in their name are not added.
 - ``exclude_rna``: If set to True, reactions containing the keyword ``RNA`` in their name are not added.
@@ -62,6 +62,10 @@ which reactions and metabolites that should added to the model:
     b. ``"existence"``: Formula exists (exludes empty string and None/NaN values)
     c. ``"wildcard"``: Formula exists and does not contain the wildcard symbol ``"*"``
     d. ``"strict"``: Extends the previous option to also exclude formulas with a rest, denoted as ``"R"``
+
+After the gap-filling is done, statistics and information about remaining missing genes and reactions can be saved in a :py:mod:`~refinegems.classes.reports.GapFillerReport`.
+Firstly, the quantities of added genes and reactions and of those which could not be added are saved in both a table and as a visualization.
+Secondly, the remaining missing genes and reactions are saved separately in tables named after the missing information due to which they could not be added.
 
 Gap-filling with KEGG
 ^^^^^^^^^^^^^^^^^^^^^
@@ -91,13 +95,14 @@ If an organism has an entry for its metabolism in BioCyc, one can download two s
 containing the available information about the genes (at least the columns ``Accession-2`` and 
 ``Reactions of gene``) and the reactions (at least the columns ``Reaction | Object ID | EC-Number | Spontanous?``).
 
-These two tables, together with the GFF file are the required input for this gap-filling algorithmn.
+These two tables, together with the GFF file are the required input for this gap-filling algorithm.
 The missing genes are identfied by comparing the gene table ``Accession-2`` column to the model.
 Subsequently, the missing genes are mapped back to the reactions to identify missing reactions.
 The reactions are further mapped to MetaNetX and BiGG to obtain more reaction equations and 
 information, since especially the metabolites are easier to construct using the other databases.
 
 @DISCUSSION Can we leave it like that or is still something missing?
+
 Data acquisition from BioCyc
 """"""""""""""""""""""""""""
 
@@ -132,6 +137,7 @@ Data acquisition from BioCyc
 
 
 @TODO Are these really all requirements?
+
 Gap-filling with a GFF (and SwissProt)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -140,18 +146,18 @@ Gap-filling with a GFF (and SwissProt)
 | **Runtime estimation:** *to be determined*
 
 In contrast to the other gap-filling options, this one can be applied, if the organism has no database entry. 
-Therefore, this gap-filling algorithmn also works with newly discovered strains.
+Therefore, this gap-filling algorithm also works with newly discovered strains.
 
 The idea is to extract the coding sequences of the organism from the GFF and map the corresponding
-locus tags to the ones found in the model to identfy missing genes. Subsequently, the sequences of the 
-missing genes are blasted against the SwissProt database to identfy homologs. The homologs are then mapped to
+locus tags to the ones found in the model to identify missing genes. Subsequently, the sequences of the 
+missing genes are blasted against the SwissProt database to identify homologs. The homologs are then mapped to
 EC numbers (if possible). If the GFF already contains EC number information, these are extracted beforehand
-to reduce the number of sequences, that need to be blasted. Additionally, the (NCBI) protein IDs 
+to reduce the number of sequences that need to be blasted. Additionally, the (NCBI) protein IDs 
 can be searched in NCBI to extract information from there. This behaviour can be useful, if 
 the input is a RefSeq GFF. It can be enabled by passing an e-mail address to the parameter :code:`mail` and 
-setting :code:`check_NCBI` to `True` when running :py:meth:`~refinegems.classes.gapfill.GeneGapFiller.find_missing_reacs`. 
+setting :code:`check_NCBI` to `True` when running :py:meth:`~refinegems.classes.gapfill.GeneGapFiller.find_missing_reactions`. 
 Finally, the EC numbers are mapped to different databases to find the
-reactions, that should be added to the model. 
+reactions that should be added to the model. 
 
 .. note:: 
 
@@ -163,12 +169,12 @@ reactions, that should be added to the model.
 How to run a GapFiller
 ----------------------
 
-Due to the gap-filling algorithmns having the same architecture, the function calls
+Due to the gap-filling algorithms having the same architecture, the function calls
 for running them are basically the same, save for some parameters (will be denoted as ``<params>`` 
-in the folowing code snippets.)
+in the following code snippets.)
 
 Firstly, the class instance for the chosen gapfiller, denoted by the place holder 
-``<CHOSEN_GAPFILLER>``, must be initialed.
+``<CHOSEN_GAPFILLER>``, must be initialised.
 
 .. code-block:: python 
     :class: copyable
@@ -177,7 +183,7 @@ Firstly, the class instance for the chosen gapfiller, denoted by the place holde
 
     gapfiller = <CHOSEN_GAPFILLER>(<params>) 
 
-The next step is to identfy the missing genes. Depending on the algorithm, some
+The next step is to identify the missing genes. Depending on the algorithm, some
 additional parameters need to be added.
 
 .. code-block:: python 
@@ -186,17 +192,17 @@ additional parameters need to be added.
     # model = model loaded with libsbml
     gapfiller.find_missing_genes(model, <params>)    
 
-Then, the missing reactions are identfied in a similar matter. The biggest differences
-is, that this part relies on the model loaded with COBRApy, while the gene-finding part 
+Then, the missing reactions are identified in a similar matter. The biggest differences
+is that this part relies on the model loaded with COBRApy, while the gene-finding part 
 relies on the model loaded with libSBML. 
 
 .. code-block:: python
     :class: copyable
 
     # cobramodel = model loaded with cobrapy
-    gapfiller.find_missing_reacs(cobramodel, <params>)
+    gapfiller.find_missing_reactions(cobramodel, <params>)
 
-Finally, the model can be extended with the collected information - as much as is automatic possible.
+Finally, the model can be extended with the collected information - as much as is automatically possible.
 
 .. code-block:: python 
     :class: copyable
@@ -207,8 +213,16 @@ Finally, the model can be extended with the collected information - as much as i
 To access information between steps or afterwards, the following attributes can be of interest:
 
     - :code:`gapfiller.missing_genes`: Table of currently missing and not further categorised genes.
-    - :code:`gapfiller.missing_reacs`: Table of currently missing and not further categorised reactions.
+    - :code:`gapfiller.missing_reactions`: Table of currently missing and not further categorised reactions.
     - :code:`gapfiller._statistics`: Dictionary of statistical values, e.g. number of added genes.
-    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information, that cannot be added automatically due to different reasons. Reason is denoted in the key.
+    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information that cannot be added automatically due to different reasons. Reason is denoted in the key.
 
     Some GapFillers also provide additional, for the corresponding algorithm specific, attributes.
+
+    Additionally, the statistics and information for manual curation can be saved in a :py:mod:`~refinegems.classes.reports.GapFillerReport`.
+
+.. code-block:: python 
+    :class: copyable
+
+    # dir = path to a directory to save the report to
+    gapfiller.report(dir)

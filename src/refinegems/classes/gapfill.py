@@ -1125,6 +1125,13 @@ class GapFiller(ABC):
         return model
 
     def report(self, dir=str):
+        """Based on the previous gap-filling, save statistics and missing genes/reactions for manual curation.
+
+        Args:
+            - dir (str): 
+                Path to a directory to save the report to.
+        """
+
         statistics_report = GapFillerReport(self._statistics, self.manual_curation)
         statistics_report.save(Path(dir))
 
