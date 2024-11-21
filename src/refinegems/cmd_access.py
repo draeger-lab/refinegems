@@ -81,6 +81,7 @@ def data(downloadtype, dir, chunksize):
 def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    """Build a pan-core model.
    """
+   models = list(models)
    pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
    rg.utility.io.write_model_to_file(pancore_mod,str(Path(dir,name +'.xml')))
 
@@ -116,8 +117,7 @@ def add_namespace(databasename, chunksize):
          rg.utility.databases.update_mnx_namespaces(chunksize=chunksize)
       case _:
          mes = f'Unknown database name: {databasename}'
-         raise ValueError(mes)
-         
+         raise ValueError(mes)  
    
 @database.command()
 def reset():
@@ -165,7 +165,7 @@ def info(list): #,copy
 # --------------
 @cli.group()
 def polish():
-	"""Polish a model created by an automatic reconstruction pipeline. CLeans up the notes fields, changes qualifiers and 
+	"""Polish a model created by an automatic reconstruction pipeline. Cleans up the notes fields, changes qualifiers and 
  	annotations to be MIRIAM-compliant and fixes the initial biomass equation to add up to 1mmol/gDW/h.
 	"""
 
@@ -204,7 +204,7 @@ def gaps():
 
 @gaps.command(show_constraints=True)
 @cloup.argument('alg', type=click.Choice(['KEGG','BioCyc','Gene']),
-                help='Type of automated gap-gapfilling algorithm, that shall be used.')
+                help='Type of automated gapfilling algorithm, that shall be used.')
 @cloup.argument('modelpath', type=click.Path(exists=True, dir_okay=False), 
                 help='Path to the model.')
 @cloup.option_group(
@@ -214,7 +214,7 @@ def gaps():
                 help='Path to a directory to write the output to.'),
    cloup.option('-f','--fill', is_flag=True, type=bool, default=False,
                 help='If True, tries to fill the gaps in the model.'),
-   cloup.option('--fc','--formula-check', type=click.Choice(['none','existence','wildcard','strict']),
+   cloup.option('-fc','--formula-check', type=click.Choice(['none','existence','wildcard','strict']),
                 default='existence', show_choices=True, show_default=True,
                 help='Set the filter for which metabolite formulas are valid to be added to the model.'),
    cloup.option('--no-dna', is_flag=True, type=bool, default=False, 
@@ -224,21 +224,23 @@ def gaps():
    cloup.option('-p','--idprefix', type=str, default='refineGEMs', show_default=True,
                 help='Prefix for the random IDs, if an ID does not exists for the given namespace.'),
    cloup.option('-n','--namespace', type=click.Choice(['BiGG']), default='BiGG',
-                show_default=True, help='Namespace used in the model.')
+                show_default=True, help='Namespace used in the model.'),
+   cloup.option('-r','--report', is_flag=True, type=bool, default=False,
+                help='If True, saves statistics and genes/reactions for manual curation.')
 )
 @cloup.option_group(
    "KEGG required parameters",
-   "Parameters required when running the KEGG gap-gapfilling algorithmn",
+   "Parameters required when running the KEGG gapfilling algorithmn",
    cloup.option('--orgid', type=str, help='KEGG organism ID'),
    constraint = cloup.constraints.If(cloup.constraints.Equal('alg','KEGG'), 
                                      then=cloup.constraints.require_all)
 )
 @cloup.option_group(
    "BioCyc required parameters",
-   "Parameters required when running the KEGG gap-gapfilling algorithmn",
-   cloup.option('--gt','--genetable', type=click.Path(exists=True, dir_okay=False),
+   "Parameters required when running the BioCyc gapfilling algorithmn",
+   cloup.option('-gt','--genetable', type=click.Path(exists=True, dir_okay=False),
                 help='Path to the BioCyc gene smart table.'),
-   cloup.option('--rt','--reactable', type=click.Path(exists=True, dir_okay=False),
+   cloup.option('-rt','--reactable', type=click.Path(exists=True, dir_okay=False),
                 help='Path to the BioCyc gene smart table.'),
    cloup.option('--gff-bc', type=click.Path(exists=True, dir_okay=False),
                 help='Path to the GFF.'),
@@ -260,13 +262,13 @@ def gaps():
                 show_default = True,
                 help='Prefix for pseudo-protein IDs.'),
    cloup.option('--mail', type=str, default=None, help='Mail address for NCBI requests.'),
-   cloup.option('--ncbi','--check-ncbi', is_flag=True, default=False,
+   cloup.option('-ncbi','--check-ncbi', is_flag=True, default=False,
                 help='Enable searching protein IDs in NCBI. This increases the runtime significantly.'),
    cloup.option('--fasta', type=click.Path(exists=True, dir_okay=False), default=None,
                 help='Path to the protein FASTA of the model.'),
    cloup.option('--dmnd-db', type=click.Path(exists=True, dir_okay=False), default=None,
-                 help = 'Path to the SwissProt DIAMOND database.'),
-   cloup.option('--sp-map','--swissprot-mapping', type=click.Path(exists=True, dir_okay=False),
+                help='Path to the SwissProt DIAMOND database.'),
+   cloup.option('-sp-map','--swissprot-mapping', type=click.Path(exists=True, dir_okay=False),
                 default=None, help='Path to the SwissProt mapping file (ID against EC and BRENDA)'),
    cloup.option('-s','--sensitivity', type=click.Choice(['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']),
                 default='more-sensitive', show_default=True, show_choices=True,
@@ -276,22 +278,20 @@ def gaps():
    cloup.option('--pid', type=float, default=95.0, show_default=True,
                 help='Percentage identity threshold value for filtering DIAMOND results.'),
    cloup.option('-t','--threads',type=int, default=2, show_default=True, 
-                help='Number of threads to be used by DIAMOND.'), 
+                help='Number of threads to be used by DIAMOND.')
 )
-@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.IsSet('ncbi'), then=cloup.constraints.require_all), ['mail'])
-@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','sp_map'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
-@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('sensitivity','cov','pid','threads'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.IsSet('check_ncbi'), then=cloup.constraints.require_all), ['mail'])
+@cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','swissprot_mapping'),then=cloup.constraints.require_all), ['fasta','dmnd_db','swissprot_mapping'])
+# @DISCUSSION not None as default, is not needed
+# @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('sensitivity','cov','pid','threads'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
 def automated_gapfill(alg,modelpath,outdir,fill,
                       formula_check, no_dna, no_rna,
-                      idprefix, namespace,
+                      idprefix, namespace,report,
                       orgid,
                       genetable,reactable,gff_bc,
                       gff_g,
-                      prot_prefix, mail, ncbi, 
-                      fasta, dmnd_db, sp_map, sensitivity, cov, pid, threads):
-   
-   # @TODO incomplete 
-   pass 
+                      prot_prefix, mail, check_ncbi, 
+                      fasta, dmnd_db, swissprot_mapping, sensitivity, cov, pid, threads):
    
    cmodel = rg.utility.io.load_model(modelpath, 'cobra')
    model = rg.utility.io.load_model(modelpath, 'libsbml')
@@ -314,24 +314,26 @@ def automated_gapfill(alg,modelpath,outdir,fill,
          gapfiller = rg.classes.gapfill.GeneGapFiller()
          # find gaps
          gapfiller.find_missing_genes(gff_g,model)
-         gapfiller.find_missing_reactions(cmodel, prot_prefix, mail, ncbi, fasta, dmnd_db, sp_map,
-                                 sensitivity, cov, pid, threads)
+         kwargs = {'outdir':outdir,
+          'sens':sensitivity,
+          'cov':cov,
+          't':threads,
+          'pid':pid}
+         gapfiller.find_missing_reactions(cmodel, prot_prefix, mail, check_ncbi, fasta, dmnd_db, swissprot_mapping,**kwargs)
       case _:
-         mes = f'Unknown option for algorthmn type: {alg}'
+         mes = f'Unknown option for algorithm type: {alg}'
          raise ValueError(mes)
    # fill gaps
    if fill:
       model = gapfiller.fill_model(model, 
                                    formula_check=formula_check,
-                                   exclude_dnae=no_dna, exclude_rna=no_rna,
+                                   exclude_dna=no_dna, exclude_rna=no_rna,
                                    idprefix=idprefix, namespace=namespace)
       # save model
       write_model_to_file(model, str(Path(outdir, 'gapfilled_model.xml')))
-      
-   # @TODO report stats
-   # @TODO report manual curation
-   
-   
+   # report statistics
+   if report:
+      gapfiller.report(outdir)
 
 
 # --------------
@@ -354,7 +356,6 @@ def biomass(modelpath,cycles,outfile):
    corrected = rg.curation.biomass.check_normalise_biomass(model, cycles)
    if corrected:
       rg.utility.io.write_model_to_file(model,outfile)
-   
 
 # @TEST
 @refine.command()
@@ -366,18 +367,21 @@ def charges(modelpath,dir):
    model = rg.utility.io.load_model(modelpath, 'libsbml')
    corr,charg = rg.curation.charges.correct_charges_modelseed(model)
    rg.utility.io.write_model_to_file(corr,str(Path(dir,'corrected_model.xml')))
-   charg_tab = pd.DataFrame(charg)
+   charg_tab = pd.DataFrame.from_dict({k: pd.Series(v) for k, v in charg.items()})
    charg_tab.to_csv(Path(dir,'multiple_charges.csv'),sep=';')
        
 
 # @TODO function unfinished
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-def direction(modelpath,data):
+@click.argument('data', type=click.Path(exists=True))
+@click.option('--dir','-d',required=False, type=click.Path(), show_default=True, default='', help='Directory to save the output to.')
+def direction(modelpath,data,dir):
    """Checks & if necessary, corrects the direction for each reaction in a model
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
-   rg.curation.polish.check_direction(model, data)
+   corr = rg.curation.polish.check_direction(model, data)
+   rg.utility.io.write_model_to_file(corr,str(Path(dir,'corrected_model.xml')))
    warnings.warn('Function not yet fully implemented - please contact developers.')
    pass
 
@@ -398,9 +402,10 @@ def egcs(modelpath, solver, namespace, compartment, outfile):
       case 'greedy':
             solver = rg.classes.egcs.GreedyEGCSolver()
             solution = solver.solve_egcs(model,namespace,compartment)
-            for k,v in solution.items():
-               print(k + ': ' + v)
-            rg.utility.io.write_model_to_file(model,outfile)
+            if solution:
+               for k,v in solution.items():
+                  print(k + ': ' + v)
+               rg.utility.io.write_model_to_file(model,outfile)
       case _:
            solver = rg.classes.egcs.EGCSolver()
            egcs,vals = solver.find_egcs(model,True,namespace,compartment)
@@ -419,17 +424,19 @@ def annot():
  
 @annot.command()
 @click.argument('modelpath', type=click.Path(exists=True))
-def sboterms(modelpath):
+@click.option('--dir','-d',required=False, type=click.Path(), show_default=True, default='', help='Directory to save the output to.')
+def sboterms(modelpath,dir):
    """Calls SBOannotator to enhance the SBO terms in a model
    """
    model = rg.utility.io.load_model(modelpath, 'libsbml')
-   rg.utility.connections.run_SBOannotator(model)
+   SBOannotated = rg.utility.connections.run_SBOannotator(model)
+   rg.utility.io.write_model_to_file(SBOannotated,str(Path(dir,"SBOannotated_model.xml")))
 
 
 @annot.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-d','--dir', required=False, default='', help='Path to the output directory')
-def pathways(modelpath):
+def pathways(modelpath,dir):
    """Add KEGG pathways as groups to a model
    """
    model, missing = rg.curation.pathways.kegg_pathways(modelpath) 
@@ -438,7 +445,7 @@ def pathways(modelpath):
       for line in missing:
             outfile.write(f'{line}\n')
    # save model 
-   write_model_to_file(str(Path(dir,'model_with_added_KeggPathwayGroups.xml')))
+   write_model_to_file(model,str(Path(dir,'model_with_added_KeggPathwayGroups.xml')))
 
 
 # -----------------------------------------------
@@ -459,21 +466,22 @@ def memote(modelpath,score_only,file):
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    if score_only:
-      rg.analysis.investigate.get_memote_score(rg.analysis.investigate.run_memote(model,type='json',return_res=True))
+      score = rg.utility.connections.get_memote_score(rg.utility.connections.run_memote(model,type='json',return_res=True))
+      print(f"The Memote score is {score}.")
    else:
-      rg.analysis.investigate.run_memote(model,save_res=file)
+      rg.utility.connections.run_memote(model,save_res=file)
  
 
- # @TODO add colour option
 @analyse.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
-def pathways(modelpath,dir):
+@click.option('-c', '--colors', required=False, type=str, show_default=True, default='YlGn', help='Abbreviation of a matplotlib colour palette.')
+def pathways(modelpath,dir,colors):
    """Analysis of pathways contained in a model
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    report = rg.curation.pathways.kegg_pathway_analysis(model)
-   report.save(dir)
+   report.save(dir,colors)
 
 
 # @TODO: accept multiple models
@@ -531,7 +539,6 @@ def compare(modelpaths,type,all,dir,colour):
 def growth():
    """Analyse the growth under different conditions."""
 
-# @TEST
 # -> does it need to run without a media config as well?
 @growth.command()
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
@@ -542,11 +549,10 @@ def growth():
 def simulate(modelpaths,media,namespace,dir,colors):
    """Simulate the growth of the given model vs. media.
    """
+   modelpaths = list(modelpaths)
    report = rg.analysis.growth.growth_analysis(modelpaths, media, namespace,retrieve='report')
    report.save(to=dir, color_palette=colors)
 
-
-# @TEST
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-m','--media',required=True,type=click.Path(exists=True), help='Path to a media config file.')
@@ -576,7 +582,6 @@ def sources(modelpath, element, substances, medium, namespace, dir, colors):
    model = rg.utility.io.load_model(modelpath,'cobra')
    report = rg.analysis.growth.test_growth_with_source(model,element,substances,medium,namespace)
    report.save(dir,color_palette=colors)
-
 
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))

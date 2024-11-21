@@ -334,10 +334,10 @@ def run_memote(model: cobra.Model, type:Literal['json','html']='html',
         case _:
             message = f'Unknown input for parameter type: {type} '
             raise ValueError(message)
-        
+    
     # option to save report
     if save_res:
-        with open(save_res, 'w') as f:
+        with open(save_res, 'w', encoding='utf-8') as f:
             f.write(result)
 
     # verbose output II

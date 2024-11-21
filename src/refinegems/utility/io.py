@@ -404,12 +404,12 @@ def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
         # Case _: locus tag either in model or errounous
         else:
             pass
-        
+    
     # save the collected sequences in a new file
     if outdir:
-        outfile = Path(outdir,'missing_genes.fasta')
+        outfile = str(Path(outdir,'missing_genes.fasta'))
     else:
-        outfile = Path('missing_genes.fasta')
+        outfile = str(Path('missing_genes.fasta'))
     SeqIO.write(missing_seqs, outfile, 'fasta')
     
     return outfile
