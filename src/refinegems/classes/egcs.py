@@ -299,7 +299,7 @@ class EGCSolver():
                                 if  (flux > MIN_GROWTH_THRESHOLD or flux < -1.0 * MIN_GROWTH_THRESHOLD) and not rea.startswith("DISSI"):
                                     egc_reactions[name][rea] = flux
 
-                return (egc_reactions, obj_vals)
+                return (obj_vals, egc_reactions)
 
     # Helper functions for testing during solving process
     # ---------------------------------------------------
