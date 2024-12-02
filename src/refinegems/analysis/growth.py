@@ -652,7 +652,7 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
         case 'plot':
             return report.plot_growth()
         case 'both':
-            return (report, report.plot_growth)
+            return (report, report.plot_growth())
         case _:
             raise ValueError(f'Unknown input for retrieve: {retrieve}')
 
@@ -959,7 +959,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:Union[Non
 # --------------
 
 # ......
-#@ TODO:
+# @TODO:
 #    see function body
 # ......
 def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> Medium:
