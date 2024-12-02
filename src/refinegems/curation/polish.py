@@ -543,7 +543,7 @@ def set_initial_amount(model: libModel):
          
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
-# @DISCUSSION Extract label part?
+# @DISCUSSION Extract label part? -> Might be good for GapFiller
 # @TODO Possibility of non-unique RefSeq (and potentially NCBI Protein) IDs
 # -> Map via RefSeq locus tag? Requires however protein_fasta
 # -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
@@ -646,7 +646,6 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         
             if ncbi_id not in genes_missing_annotation:
                 gene.setName(name)
-                print(locus)
                 if len(locus) == 1: gene.setLabel(locus[0])
                 else: genes_missing_annotation.append(ncbi_id)
             
