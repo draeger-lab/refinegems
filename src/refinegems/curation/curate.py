@@ -287,6 +287,7 @@ def resolve_duplicate_metabolites(model:cobra.Model, based_on:str='metanetx.chem
     for c in df_meta.groupby('compartment'):
         # note: using groupby drops nans
         # note: mnx as starting point was choosen, as it seems to have the most annotations (easy to get)
+        c[1][based_on] = c[1][based_on].apply(lambda x: tuple(x) if isinstance(x, list) else x)
         for mnx in c[1].groupby(based_on):
 
             # find possible duplicates

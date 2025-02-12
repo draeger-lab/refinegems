@@ -484,6 +484,9 @@ def map_ec_to_reac(table:pd.DataFrame,
         mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
         # merge with unmapped reactions
         reacs_mapped = unmapped_reacs.merge(mnx_reac_prop, on='ec-code', how='left')
+
+        # @TODO: hotfix to reduce the amount of reactions (maximum of 5 reactions per ec-code, otherwise will be removed)
+        reacs_mapped = reacs_mapped[reacs_mapped['ec-code'].map(reacs_mapped['ec-code'].value_counts()) <= 5]       
         reacs_mapped.rename({'mnx_equation':'equation'}, inplace=True, axis=1)
         reacs_mapped['via'] = reacs_mapped['id'].apply(lambda x: 'MetaNetX' if x else None)
         
@@ -554,7 +557,6 @@ def map_ec_to_reac(table:pd.DataFrame,
     # map to MetaNetX
     if use_MNX:
         table = _map_ec_to_reac_mnx(table)
-    
     # map to BiGG
     if use_BiGG:
         if 'id' in table.columns:
@@ -564,7 +566,6 @@ def map_ec_to_reac(table:pd.DataFrame,
                 table = pd.concat([to_map,table[~table['id'].isna()]])
         else:
             table = _map_ec_to_reac_bigg(table)
-            
     
     # map to KEGG
     if use_KEGG: 
@@ -575,7 +576,6 @@ def map_ec_to_reac(table:pd.DataFrame,
                 table = pd.concat([to_map,table[~table['id'].isna()]])
         else:
             table = _map_ec_to_reac_kegg(table)
-    
     # explode
     table = table.explode('id', ignore_index=True).explode('id', ignore_index=True)
         
@@ -1271,6 +1271,7 @@ class KEGGapFiller(GapFiller):
         # -----------------------------------------
         # via MNX, BiGG, KEGG
         reacs_mapped = map_ec_to_reac(self.missing_reactions)
+        
         # Step 3: clean and map to model reactions
         # ----------------------------------------
         # need manual curation
