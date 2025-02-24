@@ -54,8 +54,6 @@ from .util import VALID_COMPARTMENTS
 
 # database urls
 # -------------
-
-BIGG_REACTIONS_URL = 'http://bigg.ucsd.edu/api/v2/universal/reactions/' #: :meta: 
 BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :meta: 
 
 # Compartments in BiGG namespace
@@ -72,81 +70,6 @@ ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm') #: :meta:
 # ----
 """Map an ID to information in BiGG or compare model entities to BiGG.
 """
-
-# @NOTE: Add to reaction handling for `build_reac_bigg`?
-def add_stoichiometric_values_to_reacs_from_bigg(missing_reacs: pd.DataFrame) -> pd.DataFrame:
-    """Adds for each reaction a dictionary containing the reactants & products as dictionaries with the BiGG Metabolite 
-    ID as key & the respective absolute stoichiometric value as value
-        
-    Args:
-        - missing_reacs (pd.DataFrame): 
-            Table containing missing reactions (Only requires a column containing BiGG IDs)
-            
-    Returns:
-        pd.DataFrame: 
-            Table where for each BiGG reaction ID a dictionary containing reactants & products exists 
-    """
-    
-    def get_reactants_and_products_dicts(reaction_id: str) -> list[dict]:
-        reactants = {}
-        products = {}
-        
-        metabs_from_reac = requests.get(BIGG_REACTIONS_URL + reaction_id).json()['metabolites']
-
-        for compound_dict in metabs_from_reac:
-            complete_bigg_id = None
-            if compound_dict.get('compartment_bigg_id'):
-                complete_bigg_id = f"{compound_dict.get('bigg_id')}_{compound_dict.get('compartment_bigg_id')}"
-            else:
-                complete_bigg_id = compound_dict.get('bigg_id')
-            if compound_dict.get('stoichiometry') < 0:
-                reactants[complete_bigg_id] = abs(compound_dict.get('stoichiometry'))
-            elif compound_dict.get('stoichiometry') > 0:
-                products[complete_bigg_id] = abs(compound_dict.get('stoichiometry'))
-                
-        return str({'reactants': reactants, 'products': products})
-                
-    missing_reacs['bigg_reaction']= missing_reacs.apply(
-        lambda row: get_reactants_and_products_dicts(str(row['bigg_id'])), axis=1)  #, missing_reacs['bigg_products'], result_type='expand'
-      
-    return missing_reacs
-
-
-# @NOTE: Add to reaction handling for `build_reac_bigg`?
-@sleep_and_retry
-@limits(calls=10, period=1)
-def get_reaction_compartment_from_bigg(bigg_id: str) -> str:
-    """Retrieves the compatment(s) a reaction is hapening in from the BiGG reaction identifier via the metabolites
-
-    Args:
-        - bigg_id (str): 
-            BiGG reaction identifier
-
-    Returns:
-
-        (1) Case ``compartment in VALID_COMPARTMENTS.keys()``
-                str: 
-                    Either 
-                    
-                    - Compartment of the provided reaction if reaction in single compartment
-                    - 'exchange' if reaction in multiple compartments
-
-        (2) Case not a valid compartment:
-                np.nan: 
-                    'NaN' if one of the found compartments is not in :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`
-    """
-    
-    metabs_from_reac = requests.get(BIGG_REACTIONS_URL + bigg_id, allow_redirects=False).json()['metabolites']
-            
-    comps = [comp_dict.get('compartment_bigg_id') for comp_dict in metabs_from_reac]  # Get all compartments for reaction
-    contained_in_compartments = [(comp in VALID_COMPARTMENTS.keys()) for comp in comps]  # Get True for correct compartment        
-    if not all(contained_in_compartments):  # At least one compartment not correct
-        return np.nan
-    else:  # All compartments correct
-        if len(set(comps)) == 1:  # Set of found compartments of reaction = 1: Reaction happens in one compartment
-            return comps[0]
-        else:  # Not so important but do not remove reaction as reaction in correct compartments
-            return 'exchange'  # Probably exchange reaction
 
 def get_BiGG_metabs_annot_via_dbid(metabolite:cobra.Metabolite, 
                                         id:str, dbcol:str, 
