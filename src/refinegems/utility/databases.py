@@ -416,7 +416,7 @@ def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
                                     names=colnames, 
                                     chunksize=chunksize*1024), 
                                     desc=f'Downloading {name}',
-                                    unit='B'):# progress bar will not work -> no totel length info
+                                    unit='B'):# @BUG progress bar not working correctly -> no total length info
          mnx_table.append(chunk) 
 
       match name:

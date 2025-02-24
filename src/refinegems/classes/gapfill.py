@@ -432,7 +432,8 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
 
 def map_ec_to_reac(table:pd.DataFrame, 
                    use_MNX:bool=True, use_BiGG:bool=True, 
-                   use_KEGG:bool=True) -> pd.DataFrame:
+                   use_KEGG:bool=True,
+                   threshold_add_reacs:int=5) -> pd.DataFrame:
     """Based on a table of NCBI protein IDs and EC numbers, 
     map them to reactions via different databases 
     (if a mapping is possible).
@@ -455,19 +456,27 @@ def map_ec_to_reac(table:pd.DataFrame,
         - use_KEGG (bool, optional): 
             Try mapping using the KEGG database. 
             Defaults to True.
+        - threshold_add_reacs (int, optional):
+            Maximum number of reactions allowed per EC number per ncbiprotein ID 
+            to be added. Otherwise skip addition of reactions due to insufficient evidence
+            Defaults to 5.
 
     Returns:
         pd.DataFrame: 
             The extended table.
     """
     
-    def _map_ec_to_reac_mnx(unmapped_reacs:pd.DataFrame) -> pd.DataFrame:
+    def _map_ec_to_reac_mnx(unmapped_reacs:pd.DataFrame, threshold_add_reacs:int=5) -> pd.DataFrame:
         """Helper function of :py:func:`~refinegems.classes.gapfill.map_ec_to_reac`
         for the mapping using the MetaNetX database.
 
         Args:
             - unmapped_reacs (pd.DataFrame): 
                 The input table (ec-code and ncbiprotein columns)
+            - threshold_add_reacs (int, optional):
+                Maximum number of reactions allowed per EC number per ncbiprotein ID 
+                to be added. Otherwise skip addition of reactions due to insufficient evidence
+                Defaults to 5.
 
         Returns:
             pd.DataFrame: 
@@ -484,10 +493,16 @@ def map_ec_to_reac(table:pd.DataFrame,
         mnx_reac_prop = mnx_reac_prop.explode('ec-code').dropna(subset='ec-code')
         # merge with unmapped reactions
         reacs_mapped = unmapped_reacs.merge(mnx_reac_prop, on='ec-code', how='left')
-
-        # @TODO: hotfix to reduce the amount of reactions (maximum of 5 reactions per ec-code, otherwise will be removed)
-        reacs_mapped = reacs_mapped[reacs_mapped['ec-code'].map(reacs_mapped['ec-code'].value_counts()) <= 5]       
+        # filter out mappings with more than x merged reactions, to ensure quality
+        reacs_mapped = reacs_mapped.explode('ncbiprotein')
+        reacs_mapped = reacs_mapped.groupby(['ncbiprotein', 'ec-code']).filter(lambda x: len(x) < threshold_add_reacs)
+        reacs_mapped = reacs_mapped.merge(unmapped_reacs.explode('ncbiprotein'), on=['ec-code','ncbiprotein'], how='outer')
+        # rename columns and cleanup
         reacs_mapped.rename({'mnx_equation':'equation'}, inplace=True, axis=1)
+        reacs_mapped = (reacs_mapped.groupby(['ec-code','id'])
+                        .agg({'ncbiprotein': lambda x: x.tolist(), 'equation': 'first', 'reference': 'first', 'is_transport': 'first'})
+                        .reset_index())
+        reacs_mapped = reacs_mapped.reindex(columns=['ec-code','ncbiprotein','id','equation','reference','is_transport'])
         reacs_mapped['via'] = reacs_mapped['id'].apply(lambda x: 'MetaNetX' if x else None)
         
         return reacs_mapped      
@@ -556,7 +571,7 @@ def map_ec_to_reac(table:pd.DataFrame,
     
     # map to MetaNetX
     if use_MNX:
-        table = _map_ec_to_reac_mnx(table)
+        table = _map_ec_to_reac_mnx(table, threshold_add_reacs)
     # map to BiGG
     if use_BiGG:
         if 'id' in table.columns:
@@ -1245,7 +1260,7 @@ class KEGGapFiller(GapFiller):
     # @TODO : paralellising possibilities?
     # @TODO : progress bar
     # @TODO : self._statistics for reactions
-    def find_missing_reactions(self,model:cobra.Model):
+    def find_missing_reactions(self,model:cobra.Model, threshold_add_reacs:int=5):
  
         # Step 1: filter missing gene list + extract ECs
         # ----------------------------------------------
@@ -1270,7 +1285,7 @@ class KEGGapFiller(GapFiller):
         # Step 2: map EC to reaction(s) if possible
         # -----------------------------------------
         # via MNX, BiGG, KEGG
-        reacs_mapped = map_ec_to_reac(self.missing_reactions)
+        reacs_mapped = map_ec_to_reac(self.missing_reactions, threshold_add_reacs)
         
         # Step 3: clean and map to model reactions
         # ----------------------------------------
@@ -1686,6 +1701,9 @@ class GeneGapFiller(GapFiller):
                           fasta:str=None, 
                           dmnd_db:str=None, 
                           swissprot_map:str=None,
+                          # other params
+                          threshold_add_reacs:int=5,
+                          # further optional params for the mapping
                           **kwargs) -> None:
         """Find missing reactions in the model by blasting the missing genes
         against the SwissProt database and mapping the results to EC/BRENDA.
@@ -1723,6 +1741,11 @@ class GeneGapFiller(GapFiller):
                 Path to the SwissProt mapping file. 
                 Required for the searchh against SwissProt.
                 Defaults to None.
+            - threshold_add_reacs (int, optional):
+                Threshold for the amount of reactions to add to the model.
+                Defaults to 5.
+            - **kwargs:
+                Further optional parameters for the mapping.
         """
         
         # Case 1:  no EC
@@ -1803,7 +1826,7 @@ class GeneGapFiller(GapFiller):
         mapped_reacs = mapped_reacs.groupby(mapped_reacs['ec-code']).aggregate({'ncbiprotein':'unique'}).reset_index()
         
         # map EC to reactions
-        mapped_reacs = map_ec_to_reac(mapped_reacs[['ec-code','ncbiprotein']])
+        mapped_reacs = map_ec_to_reac(mapped_reacs[['ec-code','ncbiprotein']], threshold_add_reacs)
         
         # @TODO the stuff below also appear multiple times
         # save for manual curation
