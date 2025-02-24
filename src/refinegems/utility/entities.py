@@ -9,7 +9,6 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
-import ast
 import cobra 
 import json
 import pandas as pd
@@ -228,36 +227,6 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
                 return label
             
         j = j + 1
-
-
-# @NOTE: Add to reaction handling for `build_reac_bigg`?
-def extract_metabolites_from_reactions(missing_reactions: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-   """Extracts a set of all reactants & products from the missing reactions
-   
-   Args:
-      - missing_reactions (pd.DataFrame): 
-         Table containing all missing reactions found through the 
-         missing genes
-                                          
-   Returns:
-      tuple: 
-         Two tables (1) & (2) 
-
-         (1) pd.DataFrame: Table with the column Compound containing all compounds required for the missing BioCyc reactions
-         (2) pd.DataFrame: Table with the column bigg_id containing all compounds required for the missing BiGG reactions
-   """
-   # Get all BioCyc metabolites necessary for the BioCyc reactions
-   biocyc_reactants = [r for row in missing_reactions['Reactants'] for r in row]
-   biocyc_products = [p for row in missing_reactions['Products'] for p in row]
-   biocyc_metabolites = list(set([*biocyc_reactants, *biocyc_products]))
-   
-   # Get all BiGG metabolites necessary for the BiGG reactions
-   bigg_reactions = [ast.literal_eval(str(reac_dict)) for reac_dict in missing_reactions['bigg_reaction']]
-   bigg_reactants = [r for reac_dict in bigg_reactions for r in reac_dict.get('reactants')]
-   bigg_products = [p for reac_dict in bigg_reactions for p in reac_dict.get('products')]
-   bigg_metabolites = list(set([*bigg_reactants, *bigg_products]))
-   
-   return (pd.DataFrame(biocyc_metabolites, columns=['Compound']), pd.DataFrame(bigg_metabolites, columns=['bigg_id']))
 
 
 # @TODO: 
@@ -965,6 +934,38 @@ def parse_reac_str(equation:str,
                     factor = 1.0
                   
     return (reactants,products,compartments,reversible)
+
+
+# @NOTE: Add to reaction handling for `build_reac_bigg`?
+def validate_reaction_compartment_bigg(comps: list) -> Union[bool, Literal['exchange']]:
+    """Retrieves and validates the compatment(s) of a reaction from the BiGG namespace
+
+    Args:
+        - comps (list): 
+            List containing compartments from a BiGG reaction
+
+    Returns:
+
+        (1) Case ``compartment in VALID_COMPARTMENTS.keys()``
+                bool|'exchange': 
+                    Either 
+                    
+                    - True if the provided compartments are valid
+                    - 'exchange' if reaction in multiple compartments
+
+        (2) Case not a valid compartment:
+                bool: 
+                    'False' if one of the found compartments is not in :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`
+    """
+    
+    contained_in_compartments = [(comp in VALID_COMPARTMENTS.keys()) for comp in comps]  # Get True for correct compartment        
+    if not all(contained_in_compartments):  # At least one compartment not correct
+        return False
+    else:  # All compartments correct
+        if len(set(comps)) == 1:  # Set of found compartments of reaction = 1: Reaction happens in one valid compartment
+            return True
+        else:  # Probably exchange reaction
+            return 'exchange'
         
         
 # @TODO
@@ -1286,18 +1287,21 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     bigg_res = load_a_table_from_database(
             f'SELECT * FROM bigg_reactions WHERE \"KEGG Reaction\" = \'{id}\'',
             query=True)
+    is_exchange = 0 # check for exchange reactions
     for idx,row in bigg_res.iterrows():
         r,p,compartments,r = parse_reac_str(row['reaction_string'],'BiGG')
-        # .........................................
-        # @TODO part 2 of compartment issue
-        # find the reaction with 'c' as compartment
-        if len(set(compartments)) == 1 and compartments[0] == 'c':
+        valid_comp = validate_reaction_compartment_bigg(compartments)
+        
+        # @TEST
+        if valid_comp:
             new_reac.annotation['bigg.reaction'] = row['id']
             # @TODO add more information, exclude None entries
             _add_annotations_from_bigg_reac_row(row, new_reac)
-            break
-        # .........................................
-
+            if valid_comp == 'exchange':
+                is_exchange += 1
+            #break -> Should work without, but let´s see
+    new_reac.name = f'EX_{new_reac.name}' if is_exchange > 0 else new_reac.name
+            
     # @IDEA / @TODO get more information from MetaNetX
     
     # add additional references from the parameter
@@ -1384,11 +1388,22 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             f'SELECT * FROM bigg_reactions WHERE id = \'{id}\'',
             query=True).iloc[0,:]
     new_reac.name = bigg_reac_info['name']
+
+    # get information from the reaction string
+    reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
+
+    # @TEST
+    # validate & add compartment information
+    # --------------------------------------
+    valid_comp = validate_reaction_compartment_bigg(comparts)
+    if valid_comp:
+        if valid_comp == 'exchange':
+            new_reac.name = f'EX_{new_reac.name}'
+    else:
+        return None
     
     # add metabolites
     # ---------------
-    reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
-    
     metabolites = {}
     meta_counter = 0
     # reconstruct reactants

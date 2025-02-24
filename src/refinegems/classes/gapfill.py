@@ -50,9 +50,9 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from ..utility.databases import PATH_TO_DB
-from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec, add_stoichiometric_values_to_reacs_from_bigg
+from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
-from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, extract_metabolites_from_reactions
+from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete
 from ..utility.util import VALID_COMPARTMENTS
 from ..developement.decorators import *
 from .reports import GapFillerReport
