@@ -83,7 +83,8 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:Union[None,str,tuple[fl
             reaction.bounds = reac_bounds
 
 
-def get_uptake(model: cobraModel, type: str, exchange_regex:str=r'^EX') -> list[str]:
+# @TEST : does it still work after the last changes? 
+def get_uptake(model: cobraModel, type: str) -> list[str]:
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
     Args:
@@ -91,9 +92,6 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str=r'^EX') -> list[
             A cobra Model to be tested.
         - type (str): 
             Type of uptake, can be 'minimal'/'min' or 'standard'/'std'.
-        - exchange_regex (str, optional): 
-            Regex-compatible string to determine exchange reactions. 
-            Defaults to r'^EX'.
 
     Raises:
         - ValueError: Unknown type for uptake, if type not in ['minimal','min','standard','std']
@@ -116,9 +114,8 @@ def get_uptake(model: cobraModel, type: str, exchange_regex:str=r'^EX') -> list[
                 sol = model.optimize()
                 fluxes = sol.fluxes
                 uptake = []
-                regexp = re.compile(exchange_regex)
                 for index, value in fluxes.items():
-                    if regexp.search(index):
+                    if index in model.exchanges:
                         if value < 0:
                             uptake.append(index)
             return uptake
