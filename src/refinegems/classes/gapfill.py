@@ -279,7 +279,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
             # Replace BioCyc in via column with MetaNetX
             mnx_reacs['via'] = 'MetaNetX'
 
-        # @DISCUSSION: Map remaining via ec-code to MetaNetX before BiGG?
         # Step 2.2: Clean-up of table containing unmapped IDs
         # ---------------------------------------------------
         if not unmapped_reacs.empty:
@@ -336,9 +335,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
 
         # Drop duplicates to get the unique BioCyc IDs
         bigg2biocyc_reacs.drop_duplicates(subset='id', inplace=True)
-
-        # @TODO
-        # Remove BiGG IDs for reactions in wrong compartments
 
         # Merge bigg2biocyc_reacs with biocyc_reacs to get new information
         biocyc_reacs = bigg2biocyc_reacs.merge(biocyc_reacs, on='id', how='right')

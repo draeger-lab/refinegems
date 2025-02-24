@@ -233,7 +233,7 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
 #     more namespace options
 #     Maybe bioregistry for mapping of id to namespace?
 def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
-    """Based on a given namespace, change the ID of a given model entity to it the set namespace.
+    """Based on a given namespace, change the ID of a given model entity to the set namespace.
 
     Currently working namespaces:
 
@@ -260,7 +260,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
 
                 case 'BiGG':
                     if 'bigg.reaction' in model_entity.annotation.keys():
-                        # @TODO : currently takes first entry is annotation is list
+                        # @NOTE : currently takes first entry if annotation is list
                         model_entity.id = model_entity.annotation['bigg.reaction'] if isinstance(model_entity.annotation['bigg.reaction'],str) else model_entity.annotation['bigg.reaction'][0]
 
                 case _:
@@ -830,8 +830,6 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
     
     # step 6: re-check existence of ID in model
     # -----------------------------------------
-    # @TODO : check complete annotations? 
-    #        - or let those be covered by the duplicate check later on?
     if new_metabolite.id in [_.id for _ in model.metabolites]:
         return model.metabolites.get_by_id(new_metabolite.id)
     
