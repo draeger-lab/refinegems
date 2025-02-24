@@ -102,7 +102,6 @@ def get_orphans_deadends_disconnected(model: cobraModel) -> tuple[list[str], lis
     return orphan_list, deadend_list, disconnected_list
 
 
-# @TODO: what about exchange reactions not starting with an EX - as usually the case within the BiGG namespace? 
 def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]:
     """Creates lists of mass and charge unbalanced reactions, without exchange reactions since they are unbalanced per definition
 
@@ -126,13 +125,13 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
     mass_list = []
     if len(mass_unbalanced) > 0:
         for reac in mass_unbalanced:
-            if (reac.id[:2] != 'EX'):
+            if reac.id not in model.exchanges:
                 mass_list.append(reac.id)
 
     charge_list = []
     if len(charge_unbalanced) > 0:
         for reac in charge_unbalanced:
-            if (reac.id[:2] != 'EX'):
+            if reac.id not in model.exchanges:
                 charge_list.append(reac.id)
 
     return mass_list, charge_list
