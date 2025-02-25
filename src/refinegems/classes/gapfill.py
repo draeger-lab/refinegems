@@ -1806,7 +1806,6 @@ class GeneGapFiller(GapFiller):
         mapped_reacs.drop(['UniProt','locus_tag'], inplace=True, axis=1)
         
         # transform table into EC-number vs. list of NCBI protein IDs
-        # @TODO make a func out of this - occurs on multiple occasions
         eccode = mapped_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
         ncbiprot = mapped_reacs['ncbiprotein'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
         mapped_reacs = pd.merge(eccode,ncbiprot,left_index=True, right_index=True).rename(columns={'value_x':'ec-code','value_y':'ncbiprotein'})
@@ -1815,7 +1814,6 @@ class GeneGapFiller(GapFiller):
         # map EC to reactions
         mapped_reacs = map_ec_to_reac(mapped_reacs[['ec-code','ncbiprotein']], threshold_add_reacs)
         
-        # @TODO the stuff below also appear multiple times
         # save for manual curation
         self.manual_curation['reactions']['no mapping'] = mapped_reacs[mapped_reacs['id'].isnull()]
         self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no mapping'])
