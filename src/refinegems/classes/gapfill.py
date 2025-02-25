@@ -637,6 +637,7 @@ class GapFiller(ABC):
         
         # general information
         self.geneid_type = 'ncbi' # @TODO more options?
+        self._variety = None # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'Gene'
         
         # collect stats & Co, can be extended by subclasses
         # @DISCUSSION
@@ -1172,6 +1173,7 @@ class KEGGapFiller(GapFiller):
     def __init__(self, organismid) -> None:
         super().__init__()
         self.organismid = organismid
+        self._variety = 'KEGG'
         
         
     # @TODO: parallelising
@@ -1341,6 +1343,7 @@ class BioCycGapFiller(GapFiller):
         # @TODO: This is actually self.full_gene_list of GapFiller!
         self.biocyc_rxn_tbl = biocyc_reacs_tbl_path
         self._gff = gff
+        self._variety = 'BioCyc'
 
     @property
     def biocyc_gene_tbl(self):
@@ -1647,7 +1650,8 @@ class GeneGapFiller(GapFiller):
     
     def __init__(self) -> None:
         super().__init__()
-        
+        self._variety = 'GFF + SwissProt' # @DISCUSSION: Or change to 'Gene'? # @TODO
+       
     # @TODO logging
     # @DISCUSSION Option for if model has no label -> Call function from polish to get labels?
     def find_missing_genes(self,gffpath:Union[str,Path],model:libModel):
