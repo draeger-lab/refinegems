@@ -487,7 +487,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
 
         # step 3: add notes
         # -----------------
-        new_metabolite.notes['created with'] = 'refineGEMs GapFiller, metanetx.chemical'
+        new_metabolite.notes['created with'] = 'refineGEMs based on metanetx.chemical'
 
         # step 4: add annotations
         # -----------------------
@@ -626,7 +626,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
 
     # step 4: add notes
     # -----------------
-    new_metabolite.notes['created with'] = 'refineGEMs GapFiller, KEGG.compound'
+    new_metabolite.notes['created with'] = 'refineGEMs based on KEGG.compound'
 
     # step 5: add annotations
     # -----------------------
@@ -808,7 +808,7 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
     
     # step 3: add notes
     # -----------------
-    new_metabolite.notes['created with'] = 'refineGEMs GapFiller, BiGG'
+    new_metabolite.notes['created with'] = 'refineGEMs based on BiGG'
 
     # step 4: add annotations
     # -----------------------
@@ -1026,9 +1026,6 @@ def build_reaction_mnx(model:cobra.Model, id:str,
                 list: 
                     List of matching reaction IDs (in model).
     """
-
-    # Get origin if not reaction was found missing with MetaNetX
-    origin = references.pop('origin') if 'origin' in references.keys() else None
     
     # ---------------------
     # check, if ID in model
@@ -1142,8 +1139,7 @@ def build_reaction_mnx(model:cobra.Model, id:str,
 
     # add notes
     # ---------
-    if origin: new_reac.notes['found with'] = f'refineGEMs GapFiller, {origin}'
-    new_reac.notes['created with'] = 'refineGEMs GapFiller, MetaNetX'
+    new_reac.notes['created with'] = 'refineGEMs based on MetaNetX'
     
     # match ID to namespace
     # ---------------------
@@ -1307,7 +1303,7 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     
     # add notes
     # ---------
-    new_reac.notes['created with'] = 'refineGEMs GapFiller, KEGG'
+    new_reac.notes['created with'] = 'refineGEMs based on KEGG'
     
     # match ID to namespace
     # ---------------------
@@ -1364,9 +1360,6 @@ def build_reaction_bigg(model:cobra.Model, id:str,
                 list: 
                     List of matching reaction IDs (in model).
     """
-
-    # Get origin if not reaction was found missing with MetaNetX
-    origin = references.pop('origin') if 'origin' in references.keys() else None
     
     # ---------------------
     # check, if ID in model
@@ -1453,8 +1446,7 @@ def build_reaction_bigg(model:cobra.Model, id:str,
     
     # add notes
     # ---------
-    if origin: new_reac.notes['found with'] = f'refineGEMs GapFiller, {origin}'
-    new_reac.notes['created with'] = 'refineGEMs GapFiller, BiGG'
+    new_reac.notes['created with'] = 'refineGEMs based on BiGG'
     
     # match ID to namespace
     # ---------------------
