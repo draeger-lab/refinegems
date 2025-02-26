@@ -73,6 +73,22 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
     # @TODO: add transport reactions?
 
 
+# handling stoichiometric factors
+# -------------------------------
+def is_stoichiometric_factor(s:str) -> bool:
+        """"Check if a string could be used as a stoichiometric factor.
+        
+        Args:
+            - s (str): 
+                The string to check.
+        """
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
+
 # handling biomass reaction
 # -------------------------
 def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:

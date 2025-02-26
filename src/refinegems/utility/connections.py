@@ -35,7 +35,7 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
-from .util import test_biomass_presence
+from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
 # note:
@@ -74,19 +74,6 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
         str: 
             The updated BOF reaction as a reaction string.
     """
-    
-    def is_stoichiometric_factor(s):
-        """"Check if a string can be a stoichiometric factor.
-        
-        Args:
-            - s (str): 
-                The string to check.
-        """
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
 
     # BOFdat step 1:
     # --------------
