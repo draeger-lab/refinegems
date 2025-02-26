@@ -75,6 +75,18 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
             The updated BOF reaction as a reaction string.
     """
     
+    def is_stoichiometric_factor(s):
+        """"Check if a string can be a stoichiometric factor.
+        
+        Args:
+            - s (str): 
+                The string to check.
+        """
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
 
     # BOFdat step 1:
     # --------------
@@ -119,7 +131,7 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
             continue
         elif '>' in s:
             product = True
-        elif '.' in s:
+        elif is_stoichiometric_factor(s): 
             factor = s
         else:
             if product:
