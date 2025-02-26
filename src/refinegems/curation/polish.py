@@ -918,14 +918,13 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
     return curie_dict, invalid_curies
 
-def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[str]], new_pattern: bool) -> SortedSet[str]: 
-    """Generate a set of complete URIs from the provided prefix to identifier mapping
+def generate_uri_set_with_old_pattern(prefix2id: SortedDict[str: SortedSet[str]]) -> SortedSet[str]: 
+    """Generate a set of complete URIs from the provided prefix to identifier mapping with the old 
+    MIRIAM pattern.
         
     Args:
         - prefix2id (SortedDict[str: SortedSet[str]]): 
             Dictionary containing a mapping from database prefixes to their respective identifier sets 
-        - new_pattern (bool): 
-            True if new pattern is wanted, otherwise False
             
     Returns:
         SortedSet: 
@@ -933,10 +932,7 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
     """
     uri_set = SortedSet()
     
-    if new_pattern:
-        SEPARATOR = ':'
-    else:
-        SEPARATOR = '/'
+    SEPARATOR = '/'
     
     for prefix in prefix2id:
         current_prefix = prefix   
@@ -948,7 +944,7 @@ def generate_uri_set_with_specific_pattern(prefix2id: SortedDict[str: SortedSet[
                 separator = ':'
                 prefix = prefix.upper()
             
-            elif re.fullmatch(r'^chebi$', current_prefix, re.IGNORECASE) and not new_pattern:  # The old pattern for chebi is different: Just adding '/' das NOT work!
+            elif re.fullmatch(r'^chebi$', current_prefix, re.IGNORECASE):  # The old pattern for chebi is different: Just adding '/' das NOT work!
                 prefix = f'chebi/{current_prefix}'
                 separator = ':'
                 
@@ -1004,14 +1000,12 @@ def add_uri_set(entity: SBase, qt, b_m_qt, uri_set: SortedSet[str]) -> list[str]
             
     entity.addCVTerm(new_cvterm)
 
-def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) -> tuple[list[str], list[str]]:
+def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str], list[str]]:
     """Helper function: Removes duplicates & changes pattern according to new_pattern
 
     Args:
         - entity (SBase): 
             A libSBML SBase object, either a model or an entity
-        - bioregistry (bool):
-            Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
         - new_pattern (bool): 
             True if new pattern is wanted, otherwise False
         
@@ -1060,13 +1054,13 @@ def improve_uri_per_entity(entity: SBase, bioregistry: bool, new_pattern: bool) 
             
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
-        if bioregistry: uri_set = generate_miriam_compliant_uri_set(prefix2id)
-        else: uri_set = generate_uri_set_with_specific_pattern(prefix2id, new_pattern)
+        if new_pattern: uri_set = generate_miriam_compliant_uri_set(prefix2id)
+        else: uri_set = generate_uri_set_with_old_pattern(prefix2id)
         add_uri_set(entity, current_qt, current_b_m_qt, uri_set)
     
     return not_miriam_compliant, collected_invalid_curies
 
-def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple[dict[str:list[str]], dict[str:list[str]]]:
+def improve_uris(entities: SBase, new_pattern: bool) -> tuple[dict[str:list[str]], dict[str:list[str]]]:
     """Removes duplicates & changes pattern according to bioregistry or new_pattern
     
     Args:
@@ -1088,34 +1082,32 @@ def improve_uris(entities: SBase, bioregistry: bool, new_pattern: bool) -> tuple
     entity2invalid_curies = {}
 
     if type(entities) == libModel:  # Model needs to be handled like entity!
-        not_miriam_compliant, invalid_curies = improve_uri_per_entity(entities, bioregistry, new_pattern)
+        not_miriam_compliant, invalid_curies = improve_uri_per_entity(entities, new_pattern)
         if not_miriam_compliant: entity2not_miriam[entities.getId()] = not_miriam_compliant
         if invalid_curies: entity2invalid_curies[entities.getId()] = invalid_curies
     
     else: 
         for entity in tqdm(entities):
-            not_miriam_compliant, invalid_curies = improve_uri_per_entity(entity, bioregistry, new_pattern)
+            not_miriam_compliant, invalid_curies = improve_uri_per_entity(entity, new_pattern)
             if not_miriam_compliant: entity2not_miriam[entity.getId()] = not_miriam_compliant
             if invalid_curies: entity2invalid_curies[entity.getId()] = invalid_curies
             
             if type(entity) == UnitDefinition:
                 for unit in entity.getListOfUnits():  # Unit needs to be handled within ListOfUnitDefinition
-                    not_miriam_compliant, invalid_curies = improve_uri_per_entity(unit, bioregistry, new_pattern)
+                    not_miriam_compliant, invalid_curies = improve_uri_per_entity(unit, new_pattern)
                     if not_miriam_compliant: entity2not_miriam[unit.getId()] = not_miriam_compliant
                     if invalid_curies: entity2invalid_curies[unit.getId()] = invalid_curies
                     
     return entity2not_miriam, entity2invalid_curies
 
 
-def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, filename: str) -> libModel:
+def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> libModel:
     """Polishes all annotations in a model such that no duplicates are present 
     & the same pattern is used for all CURIEs
         
     Args:
         - model (libModel): 
             Model loaded with libSBML
-        - bioregistry (bool):
-            Specifies whether the URIs should be changed with the help of bioregistry to be MIRIAM compliant or changed according to new or old pattern
         - new_pattern (bool):
             True if new pattern is wanted, otherwise False.
             Note that bioregistry internally only uses the new patter.
@@ -1145,7 +1137,7 @@ def polish_annotations(model: libModel, bioregistry: bool, new_pattern: bool, fi
     # Adjust annotations in model
     for listOf in listOf_dict:
         print(f'Polish {listOf} annotations...')
-        entity2not_miriam, entity2invalid_curies = improve_uris(listOf_dict[listOf], bioregistry, new_pattern)
+        entity2not_miriam, entity2invalid_curies = improve_uris(listOf_dict[listOf], new_pattern)
         list_of_entity2not_miriam.append(entity2not_miriam)
         list_of_entity2invalid_curies.append(entity2invalid_curies)
         
@@ -1410,7 +1402,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
     filename = f'{path}{model.getId()}'
-    polish_annotations(model, True, True, filename)
+    polish_annotations(model, True, filename)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)
     
