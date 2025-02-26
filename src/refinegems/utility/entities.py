@@ -33,7 +33,7 @@ pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCop
 from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, _add_annotations_from_dict_cobra
 from .db_access import search_ncbi_for_gpr, kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
 from .io import load_a_table_from_database
-from .util import COMP_MAPPING, VALID_COMPARTMENTS
+from .util import COMP_MAPPING, VALID_COMPARTMENTS, is_stoichiometric_factor
 from ..developement.decorators import *
 
 ################################################################################
@@ -141,7 +141,7 @@ def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
 
 
 def get_reaction_annotation_dict(model:cobra.Model, db:Literal['KEGG','BiGG']) -> dict:
-    """Create a dictionary of a model's reaction IDs and a choosen database ID as
+    """Create a dictionary of a model's reaction IDs and a chosen database ID as
     saved in the annotations of the model.
 
     The database ID can be choosen based on the strings for the namespace options
@@ -894,7 +894,7 @@ def parse_reac_str(equation:str,
             factor = 1.0 # BiGG does not use factor 1 in the equations
             for s in equation.split(' '):
                 # found factor
-                if s.replace('.','').isdigit():
+                if is_stoichiometric_factor(s):
                     factor = float(s)
                 # switch from reactants to products
                 elif s == '-->' :
@@ -907,11 +907,12 @@ def parse_reac_str(equation:str,
                     continue
                 # found metabolite
                 else:
-                    compartments.append(s.rsplit('_',1)[1])
-                    if is_product:
-                        products[s] = factor
-                    else:
-                        reactants[s] = factor
+                    if s:
+                        compartments.append(s.rsplit('_',1)[1])
+                        if is_product:
+                            products[s] = factor
+                        else:
+                            reactants[s] = factor
                     factor = 1.0
               
         case 'KEGG':
@@ -1669,6 +1670,7 @@ def create_gp(model:libModel, protein_id:str,
     elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
     if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
     # add further references
+    # @IDEA: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
     # @TODO extend or generalise
     if uniprot:
         for uniprotid in uniprot[0]:
