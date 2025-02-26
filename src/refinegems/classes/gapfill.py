@@ -52,7 +52,7 @@ tqdm.pandas()
 from ..utility.databases import PATH_TO_DB
 from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
-from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete
+from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, parse_reac_str, validate_reaction_compartment_bigg
 from ..utility.util import VALID_COMPARTMENTS
 from ..developement.decorators import *
 from .reports import GapFillerReport
@@ -323,6 +323,15 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         # Mapping to BiGG + addition of more information on BiGG Reactions
         # Get BiGG BioCyc
         bigg2biocyc_reacs = load_a_table_from_database('SELECT id, BioCyc, name, reaction_string from bigg_reactions')
+
+        # Filter BiGG table to contain only reaction IDs with valid compartments
+        mask = bigg2biocyc_reacs.apply(
+            lambda x:
+                validate_reaction_compartment_bigg(parse_reac_str(x['reaction_string'], 'BiGG')[2]),
+                axis=1
+                )
+        mask.replace('exchange', True, inplace=True)
+        bigg2biocyc_reacs = bigg2biocyc_reacs[mask]
 
         # Change column names to fit input table
         bigg2biocyc_reacs.rename({'id': 'BiGG', 'BioCyc': 'id'}, axis=1, inplace=True)
@@ -634,7 +643,7 @@ class GapFiller(ABC):
         
         # general information
         self.geneid_type = 'ncbi' # @DISCUSSION more options?
-        self._variety = None # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'Gene'
+        self._variety = None # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'GFF + SwissProt'
         
         # collect stats & Co, can be extended by subclasses
         # @DISCUSSION
@@ -731,7 +740,7 @@ class GapFiller(ABC):
                     None:
                         Nothing found.
         """
-        # @NOTE mapping quite hardcoded, should worl in most cases, but can lead 
+        # @NOTE mapping quite hardcoded, should work in most cases, but can lead 
         # to inaccuracies, if BioCyc identifiers are not used correctly
         # Possible fix might be running polish_annotations beforehand
 
@@ -792,7 +801,9 @@ class GapFiller(ABC):
         # work on a copy to ensure input stays the same
         gene_table = gene_table.copy()
         # gene_table.drop(columns=['ec-code'],inplace=True)
-        
+
+        # @IDEA: Could we adjust create_gp to get a table row so that it does not matter if uniprot is contained or not?
+        #           Like for the database input substance table... :thinking:
         # create gps from the table and add them to the model
         if 'UniProt' in gene_table.columns:
             for idx,x in tqdm(gene_table.iterrows(), 
@@ -826,6 +837,7 @@ class GapFiller(ABC):
         """
         
         model_gene_ids = [_.getId() for _ in model.getPlugin(0).getListOfGeneProducts()]
+        print(model_gene_ids)
         
         # get each unique ncbiprotein vs reaction mapping
         reac_table = reac_table[['ncbiprotein','add_to_GPR']]
@@ -836,10 +848,10 @@ class GapFiller(ABC):
         for idx,row in reac_table.iterrows():
             # check, if G_+ncbiprotein in model
             # if yes, add gpr
-            geneid = 'G_'+row['ncbiprotein'].replace(r'.',r'_').replace(r':',r'_')
+            geneid = row['ncbiprotein'].replace(r'.',r'_').replace(r':',r'_')
             for reacid in row['add_to_GPR']:
                 current_reacid = 'R_'+reacid
-                if geneid in model_gene_ids:
+                if any(geneid in mgids for mgids in model_gene_ids):
                     create_gpr(model.getReaction(current_reacid),geneid)
                 # else, print warning
                 else:
@@ -1005,6 +1017,8 @@ class GapFiller(ABC):
 
 
     # @TODO : logging + save stuff for report / manual curation
+    # @TODO: If missing_reactions is empty error is thrown -> Try to inform user after calling find_missing_reactions
+    #           to not use fill_model; disable functionality? :thinking:
     # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
     def fill_model(self, model:Union[cobra.Model,libModel], 
                    **kwargs) -> libModel:
@@ -1513,7 +1527,7 @@ class BioCycGapFiller(GapFiller):
             self.biocyc_rxn_tbl, on='id'
             )
 
-        # Turn ec-code entries with '//' into lists, remove prefix 'EC-' & get unique ec=-odes
+        # Turn ec-code entries with '//' into lists, remove prefix 'EC-' & get unique ec-codes
         self.missing_reactions['ec-code'] = self.missing_reactions['ec-code'].str.replace(r'EC-', r'').str.split(r'\s*//\s*')
         self.missing_reactions['ec-code'] = self.missing_reactions['ec-code'].fillna(
             {i: [] for i in self.missing_reactions.index}
