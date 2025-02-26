@@ -183,13 +183,16 @@ def run_DIAMOND_blastp(fasta:str, db:str,
     
     if outdir:
         outname = str(Path(outdir,'DIAMOND_blastp_res.tsv'))
-        logfile = str(Path(outdir,'log_DIAMOND_blastp.txt'))
+        logfile = Path(outdir,'log_DIAMOND_blastp.txt')
     else:
         outname = str(Path(outname))
-        logfile = str(Path('log_DIAMOND_blastp.txt'))
+        logfile = Path('log_DIAMOND_blastp.txt')
       
     # @TODO: test, if it works with different paths and their problems  
-    subprocess.run(['diamond', 'blastp', '-d', db, '-q', fasta, '--'+sensitivity, '--query-cover', str(coverage), '-p', str(threads), '-o', outname, '--outfmt', str(6), 'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', '2>', logfile], shell=True)
+    completed_blast = subprocess.run(['diamond', 'blastp', '-d', db, '-q', fasta, '--'+sensitivity, '--query-cover', str(coverage), '-p', str(threads), '-o', outname, '--outfmt', str(6), 'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore'], 
+                                     shell=False, stderr=subprocess.PIPE, text=True)
+    with open(logfile, 'a') as f:
+        f.write(completed_blast.stderr)
 
     return outname
 
