@@ -1135,10 +1135,11 @@ class GapFiller(ABC):
                     # add genes as gene products to model
                     self.add_genes_from_table(model, genes_with_reacs_in_model)
                     # extend gene production rules 
+                    reacs_in_model = self.missing_reactions[~(self.missing_reactions['add_to_GPR'].isnull())]
                     self.add_gene_reac_associations_from_table(model,reacs_in_model)
 
                     self.missing_genes = self.missing_genes[~(self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]
-        except NameError: pass
+        except NameError: warnings.warn('Something went wrong. Contact the developers (gapfillmodel)')
         
         # collect stats and stuff for manual curation
         self.manual_curation['genes']['missing (after)'] = self.missing_genes
