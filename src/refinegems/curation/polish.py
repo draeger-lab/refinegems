@@ -548,7 +548,7 @@ def set_initial_amount(model: libModel):
 # -> Map via RefSeq locus tag? Requires however protein_fasta
 # -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
 # If ambigous locus tags are found this can be fixed by using the fasta to map RefSeq locus tags to the NCBI locus tags
-def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, lab_strain: bool=False):
+def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False, ):
     """Adds NCBI Id to genes as annotation
 
     Args:
@@ -560,6 +560,8 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             Table mapping locus tags to their corresponding RefSeq/NCBI Protein identifiers
         - protein_fasta (str): 
             The path to the CarveMe protein.fasta input file
+        - filename (str):
+            Path to output file for genes where no annotation could be added
         - lab_strain (bool): 
             Needs to be set to True if strain was self-annotated
             and/or the locus tags in the CarveMe input file should be kept   
@@ -645,13 +647,22 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                 locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['locus_tag']].values[0][0]
         
             if ncbi_id not in genes_missing_annotation:
-                gene.setName(name)
-                if len(locus) == 1: gene.setLabel(locus[0])
-                else: genes_missing_annotation.append(ncbi_id)
+                if name and locus:
+                    gene.setName(name)
+                    if len(locus) == 1: gene.setLabel(locus[0])
+                    else: genes_missing_annotation.append(ncbi_id)
+                else:
+                    genes_missing_annotation.append(ncbi_id)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
-        logging.warning(f'The following {len(genes_missing_annotation)} genes have no annotation, name & label (locus tag): {genes_missing_annotation}')
+        genes_filename = f'{filename}_genes_missing_annotations_{str(date.today().strftime("%Y%m%d"))}.txt'
+        logging.warning(f'''
+                        For the following {len(genes_missing_annotation)} NCBI Protein IDs no annotation, name & label (locus tag) were found: {genes_missing_annotation}.
+                        These IDs are saved to {genes_filename}
+                        ''')
+        with open(genes_filename, "w") as file:
+             file.write(str(genes_missing_annotation))
 
 #----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
 def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
@@ -1299,20 +1310,28 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
         libModel: 
             Model with all qualifiers updated to be MIRIAM compliant
     """
-    
+    # Change all model entities to have the correct model qualifier
     entity_list_mod = ['model',
                     'unit definition',
                     'unit']
     for entity in entity_list_mod:
         print(f'Change {str(entity)} qualifiers...')
         model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
+
+    # Change all remaining entities to have the correct biological qualifier
+    entity_list = [
+        'compartment',
+        'metabolite',
+        'parameter',
+        'reaction',
+    ]
+
+    if model.isPackageEnabled('fbc'):
+        entity_list.append('gene product')
     
-    entity_list = ['compartment',
-                   'metabolite',
-                   'parameter',
-                   'reaction',
-                   'gene product',
-                   'group']
+    if model.isPackageEnabled('groups'):
+        entity_list.append('group')
+
     for entity in entity_list:
         print(f'Change {str(entity)} qualifiers...')
         if lab_strain and entity == 'gene product':
@@ -1325,7 +1344,9 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
 
-#@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors
+#@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
+#@NOTE: Find out all HTTP connections to get where error occurred
+#@TEST: Test with different models to also maybe recreate @TODO issue
 def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
            kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
@@ -1354,8 +1375,14 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
         libModel: 
             Polished libSBML model
     """
+    ### Set-up
+    # Initialisation of colorama
     colorama_init(autoreset=True)
     
+    # Filename for files tracking manual curation outcomes
+    filename = f'{path}{model.getId()}'
+
+    # Error/ invalid input handling
     if lab_strain and not protein_fasta:
         logging.error(Fore.LIGHTRED_EX + '''
                 Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
@@ -1366,10 +1393,13 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
                 >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
                 ''')
         return
-    
+
+    # Get ListOf objects
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+
+    # Read GFF if provided
     if gff:
         locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
         locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
@@ -1388,20 +1418,18 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, lab_strain)
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
 
     ### add additional URIs to GeneProducts ###
     if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
     if kegg_organism_id: add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
     
-    ### set boundaries and constant ###
+    ### set boundaries and constants ###
     polish_entities(metab_list, metabolite=True)
     polish_entities(reac_list, metabolite=False)
-
     
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    filename = f'{path}{model.getId()}'
     polish_annotations(model, True, filename)
     print('Changing all qualifiers to be MIRIAM compliant:')
     change_all_qualifiers(model, lab_strain)

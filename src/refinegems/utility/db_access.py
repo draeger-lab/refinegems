@@ -151,6 +151,7 @@ def _add_annotations_from_bigg_reac_row(row:pd.Series, reac:cobra.Reaction) -> N
 
 # @TEST
 # @NOTE : A lot of warnings
+# @DEPRECATE: Nice function but not used anymore & might have issues running
 def keep_only_bigg_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments 
     & returns table containing only reactions which happen in one of the provided compartments
@@ -282,6 +283,7 @@ def compare_bigg_ids(id1: str, id2: str) -> bool:
 
 
 # @TEST
+# @DEPRECATE: Nice function but not used anymore & might have issues running
 def get_bigg_db_mapping(map_to:str='BioCyc', metabolites:bool=True) -> pd.DataFrame:
     """Download a mapping of BiGG IDs to a specified database.
 
@@ -958,20 +960,25 @@ def search_ncbi_for_gpr(locus: str) -> str:
         str: 
             Protein name|description
     """
-    handle = Entrez.efetch(
-        db="protein",
-        id=locus,
-        rettype="gbwithparts",
-        retmode='text')
-    records = SeqIO.parse(handle, "gb")
+    try:
+        handle = Entrez.efetch(
+            db="protein",
+            id=locus,
+            rettype="gbwithparts",
+            retmode='text')
+        records = SeqIO.parse(handle, "gb")
 
-    for i, record in enumerate(records):
-        if (locus[0] == 'W'):
-            return record.description, locus
-        else:
-            for feature in record.features:
-                if feature.type == "CDS":
-                    return record.description, feature.qualifiers["locus_tag"][0]
+        for i, record in enumerate(records):
+            if (locus[0] == 'W'):
+                return record.description, locus
+            else:
+                for feature in record.features:
+                    if feature.type == "CDS":
+                        return record.description, feature.qualifiers["locus_tag"][0]
+    except Exception as e:
+        print(f'{e} with NCBI Protein ID {locus}')
+        return None, None
+        
 
 
 # fetching the EC number (if possible) from NCBI 
