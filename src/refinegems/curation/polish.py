@@ -724,7 +724,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
             
     Returns:
         tuple: 
-            Two dictionaries (1) & (2)
+            A sorted dictionary (1) & a list (2)
 
             (1) SortedDict: Sorted dictionary mapping database prefixes from the provided CURIEs to their respective identifier sets also provided by the CURIEs
             (2) list: List of CURIEs that are invalid according to bioregistry
@@ -836,7 +836,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch(r'^chebi$', extracted_curie[0], re.IGNORECASE):
+                elif re.fullmatch(r'^chebi$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
                     new_curie = extracted_curie[1].split(r':')
                     curie = (new_curie[0].lower(), new_curie[1])
                 elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
@@ -1065,9 +1065,14 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str],
             
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
-        if new_pattern: uri_set = generate_miriam_compliant_uri_set(prefix2id)
-        else: uri_set = generate_uri_set_with_old_pattern(prefix2id)
-        add_uri_set(entity, current_qt, current_b_m_qt, uri_set)
+        if prefix2id:
+            if new_pattern: uri_set = generate_miriam_compliant_uri_set(prefix2id)
+            else: uri_set = generate_uri_set_with_old_pattern(prefix2id)
+            add_uri_set(entity, current_qt, current_b_m_qt, uri_set)
+        else:
+            logging.warning(f'No valid CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs.')
+            # @TODO: Remove complete annotation or add invalid annotation back into the model?
+            # @DISCUSSION: If invalid CURIEs are removed, the model might be incomplete
     
     return not_miriam_compliant, collected_invalid_curies
 
@@ -1169,7 +1174,7 @@ def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> lib
                      f'These invalid CURIEs are saved to {curies_filename}')      
         invalid_curies_df = parse_dict_to_dataframe(all_entity2invalid_curies)
         invalid_curies_df.columns = ['entity', 'invalid_curie']
-        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(r':', n=1, expand = True) # Required for identifiers that aso contain a ':'
+        invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(r':', n=1, expand = True) # Required for identifiers that also contain a ':'
         invalid_curies_df = invalid_curies_df.drop('invalid_curie', axis=1)
         invalid_curies_df.to_csv(curies_filename, sep='\t')
     
@@ -1343,7 +1348,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-
+# @TODO: Save model in between steps as for large models running all steps does not seem to work properly
 #@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
 #@NOTE: Find out all HTTP connections to get where error occurred
 #@TEST: Test with different models to also maybe recreate @TODO issue
@@ -1418,7 +1423,8 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
+    #cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
+    
 
     ### add additional URIs to GeneProducts ###
     if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
@@ -1430,9 +1436,13 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    polish_annotations(model, True, filename)
-    print('Changing all qualifiers to be MIRIAM compliant:')
-    change_all_qualifiers(model, lab_strain)
+    model = polish_annotations(model, True, filename) 
+    # @BUG: Hier schmiert der Kernel immer ab! Segmentation fault: 11 
+    # /Users/doebel/miniconda3/envs/rgsp/lib/python3.11/multiprocessing/resource_tracker.py:254: 
+    # UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+    # warnings.warn('resource_tracker: There appear to be %d '
+    #print('Changing all qualifiers to be MIRIAM compliant:')
+    #model = change_all_qualifiers(model, lab_strain)
     
     return model
 
