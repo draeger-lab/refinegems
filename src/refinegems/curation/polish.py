@@ -33,6 +33,7 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
+from sys import prefix
 import cobra
 import logging
 import pandas as pd
@@ -1011,7 +1012,7 @@ def add_uri_set(entity: SBase, qt, b_m_qt, uri_set: SortedSet[str]) -> list[str]
             
     entity.addCVTerm(new_cvterm)
 
-def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str], list[str]]:
+def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
     """Helper function: Removes duplicates & changes pattern according to new_pattern
 
     Args:
@@ -1021,18 +1022,15 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str],
             True if new pattern is wanted, otherwise False
         
     Returns:
-        tuple: 
-            Two lists (1) & (2)
-
-            (1) list: List of all collected invalid annotations of one entity
-            (2) list: List of all collected invalid CURIEs of one entity
+        list:
+            List of all collected invalid CURIEs of one entity
     """
-    not_miriam_compliant = []
     collected_invalid_curies = []
     pattern = fr'{MIRIAM}|{OLD_MIRIAM}'
     cvterms = entity.getCVTerms()
+    del_cvterms_counter = 0
     
-    for cvterm in cvterms:
+    for idx, cvterm in enumerate(cvterms):
         tmp_list = []
         current_b_m_qt = None # Needs to be initialised, otherwise UnboundLocalError: local variable 'current_b_m_qt' referenced before assignment
 
@@ -1053,15 +1051,26 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str],
 
 
         current_uris = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
-    
+
+        # Remove all URIs/CURIEs from model & collect invalid/not miriam compliant URIs
         for cu in current_uris:
-            if re.match(pattern, cu, re.IGNORECASE):  # If model contains identifiers without MIRIAM/OLD_MIRIAM these are kept 
-                tmp_list.append(cu)
-                # Remove all valid URIs to add these back later again
+            current_uri = cu
+            cvterm.removeResource(cu)
+            if re.match(pattern, current_uri, re.IGNORECASE):
+                # For Rhea entries if version is specified with '#' remove the version
+                if re.search(r'rhea', current_uri, re.IGNORECASE) and re.search(r'#', current_uri):
+                    current_uri = current_uri.split(r'#')[0]
+
+                # Collect all URIs to be adjusted/newly added
+                tmp_list.append(current_uri)
+
+
                 # In case of EC numbers, remove all EC number URIs as EC numbers not containing four numbers are sometimes invalid and sometimes not
-                if is_valid_identifier(*manager.parse_uri(cu)) or (manager.parse_uri(cu)[0] == 'eccode'): cvterm.removeResource(cu)
+                #if not (is_valid_identifier(*manager.parse_uri(current_uri)) or (manager.parse_uri(current_uri)[0] == 'eccode')):
+                #    collected_invalid_curies.append(current_uri)
             else:
-                not_miriam_compliant.append(cu)
+                collected_invalid_curies.append(current_uri)
+                
             
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
@@ -1070,13 +1079,23 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> tuple[list[str],
             else: uri_set = generate_uri_set_with_old_pattern(prefix2id)
             add_uri_set(entity, current_qt, current_b_m_qt, uri_set)
         else:
-            logging.warning(f'No valid CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs.')
-            # @TODO: Remove complete annotation or add invalid annotation back into the model?
-            # @DISCUSSION: If invalid CURIEs are removed, the model might be incomplete
+            # Remove annotations if no valid URIs/CURIEs were found
+            if cvterm.getNumResources() < 1:
+                logging.warning(f'No valid URIs/CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs.')
+                print(cvterm)
+                local_cv = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
+                print(local_cv)
+                print(entity.getCVTerm(idx-del_cvterms_counter))
+                print(cvterm.getBiologicalQualifierType())
+                global_cv = [entity.getCVTerm(idx-del_cvterms_counter).getResourceURI(i) for i in range(entity.getCVTerm(idx-del_cvterms_counter).getNumResources())]
+                print(global_cv)
+                print(entity.getCVTerm(idx-del_cvterms_counter).getBiologicalQualifierType())
+                entity.getCVTerms().remove(idx-del_cvterms_counter)
+                del_cvterms_counter += 1
     
-    return not_miriam_compliant, collected_invalid_curies
+    return collected_invalid_curies
 
-def improve_uris(entities: SBase, new_pattern: bool) -> tuple[dict[str:list[str]], dict[str:list[str]]]:
+def improve_uris(entities: SBase, new_pattern: bool) -> dict[str:list[str]]:
     """Removes duplicates & changes pattern according to bioregistry or new_pattern
     
     Args:
@@ -1088,33 +1107,26 @@ def improve_uris(entities: SBase, new_pattern: bool) -> tuple[dict[str:list[str]
             True if new pattern is wanted, otherwise False
 
     Returns:
-        tuple: 
-            Two dictionnaries (1) & (2)
-
-            (1) dictionary: Mapping of entity identifier to list of corresponding not MIRIAM compliant annotations 
-            (2) dictionary: Mapping of entity identifier to list of corresponding invalid CURIEs
+        dict: 
+            Mapping of entity identifier to list of corresponding invalid CURIEs
     """
-    entity2not_miriam = {}
     entity2invalid_curies = {}
 
     if type(entities) == libModel:  # Model needs to be handled like entity!
-        not_miriam_compliant, invalid_curies = improve_uri_per_entity(entities, new_pattern)
-        if not_miriam_compliant: entity2not_miriam[entities.getId()] = not_miriam_compliant
+        invalid_curies = improve_uri_per_entity(entities, new_pattern)
         if invalid_curies: entity2invalid_curies[entities.getId()] = invalid_curies
     
     else: 
         for entity in tqdm(entities):
-            not_miriam_compliant, invalid_curies = improve_uri_per_entity(entity, new_pattern)
-            if not_miriam_compliant: entity2not_miriam[entity.getId()] = not_miriam_compliant
+            invalid_curies = improve_uri_per_entity(entity, new_pattern)
             if invalid_curies: entity2invalid_curies[entity.getId()] = invalid_curies
             
             if type(entity) == UnitDefinition:
                 for unit in entity.getListOfUnits():  # Unit needs to be handled within ListOfUnitDefinition
-                    not_miriam_compliant, invalid_curies = improve_uri_per_entity(unit, new_pattern)
-                    if not_miriam_compliant: entity2not_miriam[unit.getId()] = not_miriam_compliant
+                    invalid_curies = improve_uri_per_entity(unit, new_pattern)
                     if invalid_curies: entity2invalid_curies[unit.getId()] = invalid_curies
                     
-    return entity2not_miriam, entity2invalid_curies
+    return entity2invalid_curies
 
 
 def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> libModel:
@@ -1134,7 +1146,7 @@ def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> lib
         libModel: 
             libSBML model with polished annotations
     """
-    list_of_entity2not_miriam, list_of_entity2invalid_curies = [], []
+    list_of_entity2invalid_curies = []
     listOf_dict = {
         'model': model,
         'compartment': model.getListOfCompartments(),
@@ -1153,20 +1165,10 @@ def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> lib
     # Adjust annotations in model
     for listOf in listOf_dict:
         print(f'Polish {listOf} annotations...')
-        entity2not_miriam, entity2invalid_curies = improve_uris(listOf_dict[listOf], new_pattern)
-        list_of_entity2not_miriam.append(entity2not_miriam)
+        entity2invalid_curies = improve_uris(listOf_dict[listOf], new_pattern)
         list_of_entity2invalid_curies.append(entity2invalid_curies)
         
-    all_entity2not_miriam = reduce(lambda d1, d2: {**d1, **d2}, list_of_entity2not_miriam)
     all_entity2invalid_curies = reduce(lambda d1, d2: {**d1, **d2}, list_of_entity2invalid_curies)
-        
-    if all_entity2not_miriam:
-        miriam_filename = f'{filename}_invalid_annotations_{str(date.today().strftime("%Y%m%d"))}.tsv'
-        logging.warning(f'In the provided model {model.getId()} for {len(all_entity2not_miriam)} entities invalid annotations were detected. ' +
-                     f'These invalid annotations are saved to {miriam_filename}')
-        not_miriam_compliant_df = parse_dict_to_dataframe(all_entity2not_miriam)
-        not_miriam_compliant_df.columns = ['entity', 'not_miriam']
-        not_miriam_compliant_df.to_csv(miriam_filename, sep='\t')
     
     if all_entity2invalid_curies: 
         curies_filename = f'{filename}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.tsv'      
