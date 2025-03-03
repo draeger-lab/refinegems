@@ -40,7 +40,7 @@ import pandas as pd
 import re
 
 from Bio import Entrez
-from bioregistry import is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
+from bioregistry import is_valid_curie, is_valid_identifier, manager, normalize_parsed_curie, get_identifiers_org_iri
 from bioservices.kegg import KEGG
 from colorama import init as colorama_init
 from colorama import Fore, Style
@@ -739,8 +739,10 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
         # Extracts the CURIE part from the URI/IRI
         if MIRIAM in uri:
             extracted_curie = uri.split(MIRIAM)[1]
-        else:
+        elif OLD_MIRIAM in uri:
             extracted_curie = uri.split(OLD_MIRIAM)[1]
+        else:
+            extracted_curie = uri
 
         curie = manager.parse_curie(extracted_curie) # Contains valid db prefix to identifiers pairs
         curie = list(curie) # Turn tuple into list to allow item assignment
@@ -837,7 +839,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch(r'^chebi$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
+                elif re.fullmatch(r'^chebi|^eco$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
                     new_curie = extracted_curie[1].split(r':')
                     curie = (new_curie[0].lower(), new_curie[1])
                 elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
@@ -913,11 +915,10 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
                 while len(correct_id.split(r'.')) < 4:
                     correct_id = f'{correct_id}.-'
                 prefix, identifier = normalize_parsed_curie(curie[0], correct_id)
-                # Add too long EC codes back in model BUT report as invalid CURIEs!
-                if (len(correct_id.split(r'.')) > 4): invalid_curies.append(f'{prefix}:{identifier}')
-            # Rhea identifier should only contain 5 numbers but added by CarveMe the Rhea identifier contains '#1'
-            elif (curie[0] == 'rhea') and ('#' in curie[1]):
-                prefix, identifier = normalize_parsed_curie(curie[0], curie[1].split(r'#')[0])
+                # Report too long EC codes as invalid CURIEs!
+                if (len(correct_id.split(r'.')) > 4): 
+                    invalid_curies.append(f'{prefix}:{identifier}')
+                    continue
             else:
                 invalid_curies.append(f'{curie[0]}:{curie[1]}')
                 
@@ -956,7 +957,7 @@ def generate_uri_set_with_old_pattern(prefix2id: SortedDict[str: SortedSet[str]]
                 separator = ':'
                 prefix = prefix.upper()
             
-            elif re.fullmatch(r'^chebi$', current_prefix, re.IGNORECASE):  # The old pattern for chebi is different: Just adding '/' das NOT work!
+            elif re.fullmatch(r'^chebi$', current_prefix, re.IGNORECASE):  # The old pattern for chebi is different: Just adding '/' does NOT work!
                 prefix = f'chebi/{current_prefix}'
                 separator = ':'
                 
@@ -1028,9 +1029,10 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
     collected_invalid_curies = []
     pattern = fr'{MIRIAM}|{OLD_MIRIAM}'
     cvterms = entity.getCVTerms()
-    del_cvterms_counter = 0
+    cvterms = [cvterm.clone() for cvterm in cvterms]
+    entity.unsetCVTerms()
     
-    for idx, cvterm in enumerate(cvterms):
+    for cvterm in cvterms:
         tmp_list = []
         current_b_m_qt = None # Needs to be initialised, otherwise UnboundLocalError: local variable 'current_b_m_qt' referenced before assignment
 
@@ -1056,22 +1058,24 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         for cu in current_uris:
             current_uri = cu
             cvterm.removeResource(cu)
-            if re.match(pattern, current_uri, re.IGNORECASE):
+            if entity.getId() == 'R_Growth':
+                print(current_uri)
+                print(is_valid_identifier(*manager.parse_uri(current_uri)))
+                print(is_valid_curie(current_uri))
+                print(re.match(pattern, current_uri, re.IGNORECASE)) 
+            if is_valid_identifier(*manager.parse_uri(current_uri)) or is_valid_curie(current_uri.lower()) or re.match(pattern, current_uri, re.IGNORECASE):
                 # For Rhea entries if version is specified with '#' remove the version
                 if re.search(r'rhea', current_uri, re.IGNORECASE) and re.search(r'#', current_uri):
                     current_uri = current_uri.split(r'#')[0]
 
                 # Collect all URIs to be adjusted/newly added
                 tmp_list.append(current_uri)
-
-
-                # In case of EC numbers, remove all EC number URIs as EC numbers not containing four numbers are sometimes invalid and sometimes not
-                #if not (is_valid_identifier(*manager.parse_uri(current_uri)) or (manager.parse_uri(current_uri)[0] == 'eccode')):
-                #    collected_invalid_curies.append(current_uri)
+                
             else:
                 collected_invalid_curies.append(current_uri)
                 
-            
+        if entity.getId() == 'R_Growth':
+            print(tmp_list)
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
         if prefix2id:
@@ -1082,16 +1086,6 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
             # Remove annotations if no valid URIs/CURIEs were found
             if cvterm.getNumResources() < 1:
                 logging.warning(f'No valid URIs/CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs.')
-                print(cvterm)
-                local_cv = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
-                print(local_cv)
-                print(entity.getCVTerm(idx-del_cvterms_counter))
-                print(cvterm.getBiologicalQualifierType())
-                global_cv = [entity.getCVTerm(idx-del_cvterms_counter).getResourceURI(i) for i in range(entity.getCVTerm(idx-del_cvterms_counter).getNumResources())]
-                print(global_cv)
-                print(entity.getCVTerm(idx-del_cvterms_counter).getBiologicalQualifierType())
-                entity.getCVTerms().remove(idx-del_cvterms_counter)
-                del_cvterms_counter += 1
     
     return collected_invalid_curies
 
