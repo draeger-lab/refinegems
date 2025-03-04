@@ -101,26 +101,24 @@ def add_metab(entity_list: list[Species], id_db: str):
         # Unset annotations if no CV terms exist
         if entity.getNumCVTerms() == 0:
             entity.unsetAnnotation()
+
+        # Use current_id as metaid if no metaid is present   
+        if not entity.isSetMetaId():
+            entity.setMetaId(f'meta_M_{current_id}')
         
         # If database 'VMH' was specified, extract BiGG ID with vmh_cut_pattern
         if id_db == 'VMH':
             current_id_cut = re.split(vmh_cut_pattern, current_id)
             current_id = ''.join(current_id_cut[:2])
-
-        # Use current_id as metaid if no metaid is present   
-        if not entity.isSetMetaId():
-            entity.setMetaId(f'meta_M_{current_id}')
         
         # Remove compartment specifier from ID for annotation   
         id_for_anno = current_id[:-2]
 
 		# Add ID as URI to annotation
         add_cv_term_metabolites(id_for_anno, id_db, entity)
-        
-        if id_db == 'VMH':
-            # Check if valid BiGG ID
-            if id_for_anno in bigg_metabs_ids:
-                # Add BiGG ID to annotation, additionally
+
+        # Add BiGG ID to annotation, additionally, if valid BiGG ID
+        if (id_db == 'VMH') and (id_for_anno in bigg_metabs_ids):
                 add_cv_term_metabolites(id_for_anno, 'BIGG', entity)
             
            
@@ -161,7 +159,7 @@ def add_reac(entity_list: list[Reaction], id_db: str):
             # Add ID as URI to annotation   
             add_cv_term_reactions(current_id, id_db, entity)
 
-            # If VMH ID == BiGG ID, add BiGG ID as well
+            # Add BiGG ID to annotation, additionally, if valid BiGG ID
             if (id_db == 'VMH') and (current_id in bigg_reacs_ids):
                 add_cv_term_reactions(current_id, 'BIGG', entity)
 
@@ -587,6 +585,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()
+            # @DISCUSSION Is there a better way of handling this?
             entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
             add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
