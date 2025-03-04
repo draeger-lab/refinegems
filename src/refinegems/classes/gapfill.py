@@ -30,6 +30,7 @@ from abc import ABC, abstractmethod
 from operator import index
 
 import cobra
+from cobra.io.sbml import _f_gene
 import io
 import json
 import numpy as np
@@ -1672,7 +1673,7 @@ class GeneGapFiller(GapFiller):
         # get all CDS from gff
         all_genes = parse_gff_for_cds(gffpath,self.GFF_COLS)
         # get all genes from model by locus tag
-        model_locustags = [g.getLabel() for g in model.getPlugin(0).getListOfGeneProducts()]
+        model_locustags = [_f_gene(g.getLabel()) for g in model.getPlugin(0).getListOfGeneProducts()]
         # filter
         self.missing_genes = all_genes.loc[~all_genes['locus_tag'].isin(model_locustags)]
         # formatting
@@ -1684,7 +1685,10 @@ class GeneGapFiller(GapFiller):
         self._statistics['genes']['missing (before)'] = len(self.missing_genes)
                 
         # save genes with no locus tag for manual curation
-        self.manual_curation['genes']['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
+        if 'ncbiprotein' in self.missing_genes.columns:
+            self.manual_curation['genes']['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
+        else: 
+            self.missing_genes['ncbiprotein'] = None
         self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['gff no locus tag'])  # no locus tag
         
         # formatting

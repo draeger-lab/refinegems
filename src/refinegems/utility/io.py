@@ -474,9 +474,11 @@ def parse_gff_for_cds(gffpath, keep_attributes=None):
     gff = gffutils.create_db(gffpath, ':memory:', merge_strategy="create_unique")
     # extract the attributes of the CDS 
     cds = pd.DataFrame.from_dict([_.attributes for _ in gff.features_of_type('CDS')])
-    cds = cds.explode('locus_tag')
+    if 'locus_tag' in cds.columns:
+        cds = cds.explode('locus_tag')
     genes = pd.DataFrame.from_dict([_.attributes for _ in gff.features_of_type('gene')])
-    genes = genes.explode('locus_tag')
+    if 'locus_tag' in genes.columns:
+        genes = genes.explode('locus_tag')
     if 'old_locus_tag' in genes.columns and 'locus_tag' in genes.columns:
         cds = cds.merge(genes[['locus_tag','old_locus_tag']], how='left', 
                         on='locus_tag')
