@@ -186,7 +186,7 @@ def cv_notes_metab(species_list: list[Species]):
             for db in metabol_db_dict.keys():
                 if '<p>' + db in elem:
                     elem_used.append(elem)
-                    #print(elem.strip()[:-4].split(r': ')[1])
+                    # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
                     fill_in = re.split(r':\s*', elem.strip()[:-4])[1]
                     if (';') in fill_in and not re.search(r'inchi', db, re.IGNORECASE):
                         entries = fill_in.split(r';')
@@ -205,7 +205,7 @@ def cv_notes_metab(species_list: list[Species]):
         new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
         species.unsetNotes()
         species.setNotes(new_notes)
-        #print(species.getAnnotationString())
+        # @DEBUG print(species.getAnnotationString())
 
 
 def cv_notes_reac(reaction_list: list[Reaction]):
@@ -228,7 +228,7 @@ def cv_notes_reac(reaction_list: list[Reaction]):
             for db in reaction_db_dict.keys():
                 if '<p>' + db in elem:
                     elem_used.append(elem)
-                    #print(elem.strip()[:-4].split(r': ')[1])
+                    # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
                     fill_in = re.split(r':\s*', elem.strip()[:-4])[1]
                     if (';') in fill_in:
                         entries = fill_in.split(r';')
@@ -1058,11 +1058,7 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         for cu in current_uris:
             current_uri = cu
             cvterm.removeResource(cu)
-            if entity.getId() == 'R_Growth':
-                print(current_uri)
-                print(is_valid_identifier(*manager.parse_uri(current_uri)))
-                print(is_valid_curie(current_uri))
-                print(re.match(pattern, current_uri, re.IGNORECASE)) 
+            
             if is_valid_identifier(*manager.parse_uri(current_uri)) or is_valid_curie(current_uri.lower()) or re.match(pattern, current_uri, re.IGNORECASE):
                 # For Rhea entries if version is specified with '#' remove the version
                 if re.search(r'rhea', current_uri, re.IGNORECASE) and re.search(r'#', current_uri):
@@ -1074,8 +1070,6 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
             else:
                 collected_invalid_curies.append(current_uri)
                 
-        if entity.getId() == 'R_Growth':
-            print(tmp_list)
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
         if prefix2id:
@@ -1203,7 +1197,8 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
         tmp_set = SortedSet()
         sbo_set = SortedSet()
         #cvterm = cvterms.get(i)
-        
+        # @NOTE: GOD cannot remember what this was for, but it seems to be unnecessary
+        # Probably # @DEBUG?
         # include check for reaction and unit definition
         # if entity == Reaction or entity == UnitDefinition:
         # print(cvterm.getBiologicalQualifierType())
@@ -1344,7 +1339,6 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-# @TODO: Save model in between steps as for large models running all steps does not seem to work properly
 #@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
 #@NOTE: Find out all HTTP connections to get where error occurred
 #@TEST: Test with different models to also maybe recreate @TODO issue
@@ -1419,7 +1413,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    #cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
     
 
     ### add additional URIs to GeneProducts ###
@@ -1432,13 +1426,9 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    model = polish_annotations(model, True, filename) 
-    # @BUG: Hier schmiert der Kernel immer ab! Segmentation fault: 11 
-    # /Users/doebel/miniconda3/envs/rgsp/lib/python3.11/multiprocessing/resource_tracker.py:254: 
-    # UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
-    # warnings.warn('resource_tracker: There appear to be %d '
-    #print('Changing all qualifiers to be MIRIAM compliant:')
-    #model = change_all_qualifiers(model, lab_strain)
+    model = polish_annotations(model, True, filename)
+    print('Changing all qualifiers to be MIRIAM compliant:')
+    model = change_all_qualifiers(model, lab_strain)
     
     return model
 
