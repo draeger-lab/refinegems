@@ -837,7 +837,6 @@ class GapFiller(ABC):
         """
         
         model_gene_ids = [_.getId() for _ in model.getPlugin(0).getListOfGeneProducts()]
-        print(model_gene_ids)
         
         # get each unique ncbiprotein vs reaction mapping
         reac_table = reac_table[['ncbiprotein','add_to_GPR']]
@@ -851,11 +850,15 @@ class GapFiller(ABC):
             geneid = row['ncbiprotein'].replace(r'.',r'_').replace(r':',r'_')
             for reacid in row['add_to_GPR']:
                 current_reacid = 'R_'+reacid
-                if any(geneid in mgids for mgids in model_gene_ids):
-                    create_gpr(model.getReaction(current_reacid),geneid)
+                current_mgids = [mgid for mgid in model_gene_ids if geneid in mgid]
+                if current_mgids:
+                    if len(current_mgids) == 1: create_gpr(model.getReaction(current_reacid), current_mgids[0])
+                    else: 
+                        mes = f'Found multiple matches for {geneid} in model: {current_mgids}. Belongs to reaction {current_reacid}.'
+                        warnings.warn(mes,UserWarning)
                 # else, print warning
                 else:
-                    mes = f'Cannot find {geneid} in model. Should be added to {current_reacid}'
+                    mes = f'Cannot find {geneid} in model. Should be added to {current_reacid}.'
                     warnings.warn(mes,UserWarning)
     
 
