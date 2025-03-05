@@ -29,6 +29,7 @@ import pandas as pd
 import re
 import requests
 import sqlite3
+import warnings
 import xmltodict
 
 from Bio import Entrez, SeqIO
@@ -151,7 +152,7 @@ def _add_annotations_from_bigg_reac_row(row:pd.Series, reac:cobra.Reaction) -> N
 
 # @TEST
 # @NOTE : A lot of warnings
-# @DEPRECATE: Nice function but not used anymore & might have issues running
+# @DEPRECATE: Nice function but not used anymore & will have issues running
 def keep_only_bigg_reactions_in_certain_compartments(complete_df: pd.DataFrame) -> pd.DataFrame:
     """Extracts all possible BiGG ID variations from database for a BiGG reaction ID, gets the metabolite compartments 
     & returns table containing only reactions which happen in one of the provided compartments
@@ -1146,3 +1147,70 @@ def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame,
 
     return mapped_res
 
+
+# DIAMOND database 
+# ----------------
+"""Handle and retrieve information from DIAMOND databases"""
+
+# @TODO logging
+def map_to_homologs(fasta:str, db:str, missing_genes:pd.DataFrame, 
+                    mapping_file:str,
+                         outdir:str=None,
+                         sens:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
+                         cov:float=95.0,
+                         t:int=2, pid:float=90.0,
+                         email=None) -> pd.DataFrame:
+    
+    # Step 1: Make a FASTA out of the missing genes
+    miss_fasta = create_missing_genes_protein_fasta(fasta,outdir,missing_genes)
+    
+    # Step 2: Run DIAMOND
+    #         blastp mode against SwissProt DB
+    blast_path = run_DIAMOND_blastp(miss_fasta, db, 
+                                    sensitivity=sens,
+                                    coverage=cov,
+                                    threads=t,
+                                    outdir=outdir)
+    # Step 3: filter DIAMOND hits
+    dmnd_res = filter_DIAMOND_blastp_results(blast_path, pid)
+    dmnd_res.rename(columns={'query_ID':'locus_tag', 'subject_ID':'ncbiprotein'}, inplace=True)
+    
+    # Step 4: map to NCBI information
+    # if a precomputet mapping exists 
+    if mapping_file:
+        # load pre-compiles ncbi mapping
+        ncbi_mapping = pd.read_csv(mapping_file, dtype='str')
+
+        # merge with input info table:
+        table = pd.merge(dmnd_res, ncbi_mapping, left_on='ncbiprotein' ,right_on='ncbi_accession_version')
+        table.replace({'-': None}, inplace=True)
+        table.drop(columns=['ncbi_accession_version'], inplace=True, axis=1)
+        # @DISCUSSION : delete, if table for mapping gets new column names?
+        table.rename(columns={'EC number':'ec-code'}, inplace=True)
+        
+        # aggregate to reduce redundant information
+        table = table.groupby(['locus_tag','ec-code'],dropna=False).agg({'ncbiprotein':'first', # lambda x: [_ for _ in x if not pd.isna(_)]
+                                                'locus_tag_ref': 'first', # lambda x: [_ for _ in x if not pd.isna(_)]
+                                                'old_locus_tag': 'first', # lambda x: [_ for _ in x if not pd.isna(_)]
+                                                'GeneID': 'first' # lambda x: [_ for _ in x if not pd.isna(_)]
+                                                }).reset_index()
+        # locus_tag ncbiprotein locus_tag_ref old_locus_tag GeneID EC number
+        
+    # no mapping file
+    else:
+        if email:
+            print('\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while.')
+            table['locus_tag_ref'] = pd.Series(dtype='str')
+            table['old_locus_tag'] = pd.Series(dtype='str')
+            table['GeneID'] = pd.Series(dtype='str')
+            # .......................
+            # @DEBUG
+            # if len(table) > 10:
+            #     table = table.sample(10)
+            #     print('Running in debugging mode')
+            # .......................
+            table['ec-code'] = table['ncbiprotein'].progress_apply(lambda x: get_ec_from_ncbi(x, email), axis=1)
+        else:
+            warnings.warn('No email provided for NCBI quieries. Skipping mapping to EC numbers.')
+
+    return table 

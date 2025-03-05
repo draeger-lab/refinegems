@@ -69,6 +69,7 @@ reaction_db_dict = {
 gene_db_dict = {
                 'KEGG': 'kegg.genes:',
                 'NCBI': 'ncbiprotein:',
+                'NCBIGENE': 'ncbigene:',
                 'REFSEQ': 'refseq:',
                 'UNIPROT': 'uniprot:'
                } #: :meta hide-value: 

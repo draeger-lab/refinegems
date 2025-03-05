@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from operator import index
 
 import cobra
-from cobra.io.sbml import _f_gene
+from cobra.io.sbml import _f_gene, _f_gene_rev
 import io
 import json
 import numpy as np
@@ -51,9 +51,9 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from ..utility.databases import PATH_TO_DB
-from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec
+from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec, map_to_homologs
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
-from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, parse_reac_str, validate_reaction_compartment_bigg
+from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, parse_reac_str, validate_reaction_compartment_bigg, REF_COL_GF_GENE_MAP
 from ..utility.util import VALID_COMPARTMENTS
 from ..developement.decorators import *
 from .reports import GapFillerReport
@@ -803,22 +803,20 @@ class GapFiller(ABC):
         gene_table = gene_table.copy()
         # gene_table.drop(columns=['ec-code'],inplace=True)
 
-        # @IDEA: Could we adjust create_gp to get a table row so that it does not matter if uniprot is contained or not?
-        #           Like for the database input substance table... :thinking:
         # create gps from the table and add them to the model
-        if 'UniProt' in gene_table.columns:
-            for idx,x in tqdm(gene_table.iterrows(), 
-                              total=len(gene_table),
-                              desc='Adding genes to model'):
-                create_gp(model, x['ncbiprotein'], 
-                        locus_tag=x['locus_tag'],
-                        uniprot=(x['UniProt'],True))
-        else:
-            for idx,x in tqdm(gene_table.iterrows(), 
-                              total=len(gene_table),
-                              desc='Adding genes to model'):
-                create_gp(model, x['ncbiprotein'], 
-                        locus_tag=x['locus_tag'])
+        cols_for_refs = [_ for _ in REF_COL_GF_GENE_MAP.keys() if _ in gene_table.columns]
+            
+        # create gp
+        for idx,x in tqdm(gene_table.iterrows(), 
+                            total=len(gene_table),
+                            desc='Adding genes to model'):
+            # get additional references
+            references = dict()
+            for dbname in cols_for_refs:
+                references[dbname] = (x[dbname], True)
+            create_gp(model, x['ncbiprotein'], 
+                    locus_tag=x['locus_tag'], 
+                    reference=references)
                 
 
     # @DISCUSSION seems very rigid, better ways to find the ids?
@@ -848,7 +846,7 @@ class GapFiller(ABC):
         for idx,row in reac_table.iterrows():
             # check, if G_+ncbiprotein in model
             # if yes, add gpr
-            geneid = row['ncbiprotein'].replace(r'.',r'_').replace(r':',r'_')
+            geneid = _f_gene_rev(row['ncbiprotein'])
             for reacid in row['add_to_GPR']:
                 current_reacid = 'R_'+reacid
                 current_mgids = [mgid for mgid in model_gene_ids if geneid in mgid]
@@ -1703,13 +1701,14 @@ class GeneGapFiller(GapFiller):
     def find_missing_reactions(self, model:cobra.Model,  
                           # prefix for pseudo ncbiprotein ids
                           prefix:str='refinegems',
-                          # NCBI params
-                          mail:str=None, 
-                          check_NCBI:bool=False,
-                          # SwissProt
+                          type_db:Literal['swissprot','user'] = 'swissprot',
+                          # database information
                           fasta:str=None, 
                           dmnd_db:str=None, 
-                          swissprot_map:str=None,
+                          map_db:str=None,
+                          # SwissProt - NCBI params
+                          mail:str=None, 
+                          check_NCBI:bool=False,
                           # other params
                           threshold_add_reacs:int=5,
                           # further optional params for the mapping
@@ -1733,78 +1732,105 @@ class GeneGapFiller(GapFiller):
                 randomly, as no ID from the chosen namespace (usually NCBI protein)
                 has been found. Defaults to 'refinegems'.
             - mail (str, optional): 
-                Mail address for the query against NCBI. Defaults to None.
+                Mail address for the query against NCBI. 
+                If not set, skips the mapping.
+                Defaults to None.
             - check_NCBI (bool, optional): 
                 If set to True, checking the gene IDs / NCBI protein IDs against the 
                 NCBI database is enabled. Else, this step is skipped to reduce runtime.
+                Only usable with SwissProt as database.
                 Defaults to False.
             - fasta (str, optional): 
                 The protein FASTA file of the organism the model was build on. 
                 Required for the searchh against SwissProt.
                 Defaults to None.
+            - type_db (Literal['swissprot','user'], optional):
+                Database to search against. 
+                Choose 'swissprot' for SwissProt or 'user' for a user defined database.
+                Defaults to 'swissprot'.
             - dmnd_db (str, optional): 
                 Path to the DIAMOND database containing the protein sequences of SwissProt. 
-                Required for the searchh against SwissProt.
+                Required for the search against SwissProt or rhe users own DIAMOND dn.
                 Defaults to None.
-            - swissprot_map (str, optional): 
+            - map_db (str, optional): 
                 Path to the SwissProt mapping file. 
-                Required for the searchh against SwissProt.
+                Required for the search against SwissProt.
+                Greatly decreases runtime for running the DIAMOND search.
+                
+                ..note::
+                    The mapping depends on the chosen database.
+                
                 Defaults to None.
             - threshold_add_reacs (int, optional):
                 Threshold for the amount of reactions to add to the model.
                 Defaults to 5.
             - **kwargs:
-                Further optional parameters for the mapping.
+                Further optional parameters for the mapping, 
+                e.g. outdir, sens, cov, t, pid, etc.
+                For more information see :py:func:`refinegems.utility.db_access.map_to_homologs`
+                in case of type_db = 'user' or :py:func:`refinegems.utility.db_access.get_ec_via_swissprot`
+                in case of type_db = 'swissprot'. 
         """
         
-        # Case 1:  no EC
-        # --------------
+        # try to identfy missing ECs
+        # --------------------------
         case_1 = self.missing_genes[self.missing_genes['ec-code'].isna()]
         not_case_1 = self.missing_genes[~self.missing_genes['ec-code'].isna()]
         if len(case_1) > 0:
             
-            # Option 1: BLAST against SwissProt
-            # +++++++++++++++++++++++++++++++++    
-            # -> BLAST (DIAMOND) against SwissProt to get EC/BRENDA 
-            if fasta and dmnd_db and swissprot_map:
-                case_1_mapped = get_ec_via_swissprot(fasta,dmnd_db,
-                                            case_1,
-                                            swissprot_map,
-                                            **kwargs) # further optional params for the mapping
-                case_1.drop('ec-code', inplace=True, axis=1)
-                case_1 = case_1.merge(case_1_mapped, on='locus_tag', how='left')
-                not_case_1['UniProt'] = None
+            # BLAST against a dmnd to retireve EC numbers
+            # +++++++++++++++++++++++++++++++++++++++++++    
+            
+            match type_db:
+                # type_db = swissprot: BLAST against SwissProt
+                # -> BLAST (DIAMOND) against SwissProt to get EC/BRENDA 
+                case 'swissprot': 
+                    if fasta and dmnd_db and map_db:
+                        case_1_mapped = get_ec_via_swissprot(fasta,dmnd_db,
+                                                    case_1,
+                                                    map_db,
+                                                    **kwargs) # further optional params for the mapping
+                        case_1.drop('ec-code', inplace=True, axis=1)
+                        case_1 = case_1.merge(case_1_mapped, on='locus_tag', how='left')
+                        not_case_1['UniProt'] = None
+                        # still no EC but ncbiprotein
+                        #       -> access ncbi for ec (optional) 
+                        # @DEBUG .......................
+                        # mapped_reacs = mapped_reacs.iloc[300:350,:]
+                        # print(UserWarning('Running in debugging mode.'))
+                        # ..............................
+                        if check_NCBI and mail:
+                            mapped_reacs['ec-code'] = mapped_reacs.progress_apply(lambda x: get_ec_from_ncbi(mail,x['ncbiprotein']) if not x['ec-code'] and not x['ncbiprotein'].isna() else x['ec-code'], axis=1)
+        
+                # type_db = user: BLAST against user defined database
+                case 'user': 
+                    if fasta and dmnd_db: 
+                        case_1 = map_to_homologs(fasta, dmnd_db, case_1, map_db, email=mail, **kwargs)
                 
-            # Option 2: Use ML to predict EC
-            # ++++++++++++++++++++++++++++++
-            # @TODO
+                case _:
+                    raise ValueError('Please choose a valid database type for the GeneGapFiller.')
+                
+            # # @TODO Option to use ML to predict EC
+            # ++++++++++++++++++++++++++++++++++++++
             # -> sth like DeepECTransformer (tools either not good, 
             #    not installable or no license)
             # -> use ECRECer Web service output as input 
             #    (whole protein fasta -> wait for Gwendolyn's results) -> does not work / not return
             # -> use CLEAN webservice
-            #    same problem as above with the web tool
+            #    same problem as above with the web tools
 
+        # no ncbiprotein, no EC
         self.manual_curation['reactions']['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()]
         self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no ncbiprotein, no EC'])
         self.manual_curation['genes']['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()]
         self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['no ncbiprotein, no EC'])
         
+        # combine with the rest
         mapped_reacs = pd.concat([case_1[~(case_1['ncbiprotein'].isna() & case_1['ec-code'].isna())],not_case_1])
 
         # convert NaNs to None
         mapped_reacs.mask(mapped_reacs.isna(), other=None, inplace=True)
 
-        # Case 2: still no EC but ncbiprotein
-        # -----------------------------------
-        #       -> access ncbi for ec (optional) 
-        # @DEBUG .......................
-        # mapped_reacs = mapped_reacs.iloc[300:350,:]
-        # print(UserWarning('Running in debugging mode.'))
-        # ..............................
-        if check_NCBI and mail:
-            mapped_reacs['ec-code'] = mapped_reacs.progress_apply(lambda x: get_ec_from_ncbi(mail,x['ncbiprotein']) if not x['ec-code'] and not x['ncbiprotein'].isna() else x['ec-code'], axis=1)
-        
         # save entries with no EC for manual curation
         self.manual_curation['reactions']['no EC'] = mapped_reacs[mapped_reacs['ec-code'].isna()]
         self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no EC'])
@@ -1819,13 +1845,14 @@ class GeneGapFiller(GapFiller):
         # create pseudoids for entries with no ncbiprotein id
         mapped_reacs['ncbiprotein'] = mapped_reacs.apply(lambda x: f'{prefix}_{x["locus_tag"]}' if not x['ncbiprotein'] else x['ncbiprotein'], axis=1)
 
-        # Case 3: EC found
-        # ----------------
+        # EC found
+        # ---------
         # update the gene information
         updated_missing_genes = mapped_reacs.copy()
         
         # reformat missing reacs 
-        mapped_reacs.drop(['UniProt','locus_tag'], inplace=True, axis=1)
+        if type_db == 'swissprot':
+            mapped_reacs.drop(['locus_tag'], inplace=True, axis=1)
         
         # transform table into EC-number vs. list of NCBI protein IDs
         eccode = mapped_reacs['ec-code'].apply(pd.Series).reset_index().melt(id_vars='index').dropna()[['index', 'value']].set_index('index')
@@ -1844,6 +1871,8 @@ class GeneGapFiller(GapFiller):
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
         
         # update attributes
+        if type_db == 'user':
+            updated_missing_genes = updated_missing_genes.drop(columns=['locus_tag_ref','old_locus_tag'], axis=1)
         self.missing_genes = updated_missing_genes
         self.missing_reactions = mapped_reacs
 

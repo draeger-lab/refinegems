@@ -10,6 +10,7 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 ################################################################################
 
 import cobra 
+from cobra.io.sbml import _f_gene_rev
 import json
 import pandas as pd
 import re
@@ -40,6 +41,10 @@ from ..developement.decorators import *
 # variables
 ################################################################################
 
+REF_COL_GF_GENE_MAP = {
+    'UniProt':'UNIPROT',
+    'GeneID':'NCBIGENE'
+} #: :meta: 
 
 ################################################################################
 # functions
@@ -1629,7 +1634,7 @@ def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, pro
 def create_gp(model:libModel, protein_id:str, 
               model_id:str=None,
               name:str=None, locus_tag:str=None,
-              uniprot:tuple[list,bool]=None) -> None:
+              reference:dict[str:tuple[Union[list,str],bool]]=dict()) -> None:
     """Creates GeneProduct in the given libSBML model.
 
     Args:
@@ -1646,9 +1651,11 @@ def create_gp(model:libModel, protein_id:str,
         - locus_tag (str, optional): 
             Genome-specific locus tag. Will be used as label in the model. 
             Defaults to None.
-        - uniprot (tuple[list,bool], optional): 
-            Tuple of a list of UniProt IDs and a boolean for whether the strain is from the lab or
-            a database. Defaults to None.
+        - reference (dict, optional):
+            Dictionary containing references for the gene product.
+            The key is the database name, the value is a tuple with the first element being the ID(s)
+            and the second element being a boolean indicating if the strain is a lab strain or not.
+            Defaults to an empty dictionary.
     """
     
     # create gene product object
@@ -1656,9 +1663,15 @@ def create_gp(model:libModel, protein_id:str,
     # set basic attributes
     if model_id:                            # ID 
         gp.setIdAttribute(model_id)
-    else:
-        geneid = f'G_{protein_id}'.replace('.','_').replace(':','_') # remove problematic signs
-        gp.setIdAttribute(geneid)               
+    elif protein_id:
+        geneid = _f_gene_rev(protein_id)
+        gp.setIdAttribute(geneid)  
+    elif locus_tag: 
+        geneid = _f_gene_rev(locus_tag)
+        gp.setIdAttribute(geneid)              
+    else: 
+        raise ValueError('No valid ID found for gene product. Specify at least the locus tag.')
+    
     if name: gp.setName(name)               # Name  
     if locus_tag: gp.setLabel(locus_tag)    # Label
     gp.setSBOTerm('SBO:0000243')            # SBOterm
@@ -1669,13 +1682,23 @@ def create_gp(model:libModel, protein_id:str,
         id_db = 'REFSEQ'
     elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
     if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
+    
     # add further references
-    # @IDEA: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
-    # @TODO extend or generalise
-    if uniprot:
-        for uniprotid in uniprot[0]:
-            add_cv_term_genes(uniprotid, 'UNIPROT', gp, uniprot[1]) # UniProt
-
+    # @DISCUSSION: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
+    # references {'dbname':(list_or_str_of_id,lab_train_bool)}
+    if reference and len(reference) > 0:
+        for dbname,specs in reference.items():
+            match specs[0]:
+                case list():
+                    for s in specs[0]:
+                        add_cv_term_genes(s, REF_COL_GF_GENE_MAP[dbname], gp, specs[1])
+                case str():
+                    add_cv_term_genes(specs[0], REF_COL_GF_GENE_MAP[dbname], gp, specs[1])
+                case None:
+                    pass
+                case _:
+                    raise ValueError(f'Unexpected type for reference value: {specs[0]}')
+    
 
 def create_species(
     model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
