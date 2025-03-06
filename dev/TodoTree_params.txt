@@ -1,18 +1,21 @@
     "todo-tree.general.statusBar": "tags",
     "todo-tree.general.tags": [
-            "@BUG",
-            "@HACK",
-            "@FIXME",
-            "@TODO",
-            "XXX",
-            "[ ]",
-            "[x]",
-            "@TEST",
-            "@DEPRECATE",
-            "@NOTE",
-            "@DISCUSSION",
-            "@DEBUG"
-        ],
+        "@BUG",
+        "@HACK",
+        "@FIXME",
+        "@TODO",
+        "XXX",
+        "[ ]",
+        "[x]",
+        "@TEST",
+        "@DEPRECATE",
+        "@NOTE",
+        "@DISCUSSION",
+        "@DEBUG",
+        "@ASK",
+        "@IDEA",
+        "@WARNING"
+    ],
     "todo-tree.highlights.backgroundColourScheme": [
         "red",
         "orange",
@@ -25,7 +28,10 @@
         "#c0c0c0",
         "#f5bd02",
         "violet",
-        "#329542"
+        "#329542",
+        "#39FF14",
+        "#fffba0",
+        "#ff9d00"
     ],
     "todo-tree.highlights.foregroundColourScheme": [
         "white",
@@ -39,7 +45,10 @@
         "black",
         "black",
         "black",
-        "white"
+        "white",
+        "black",
+        "black",
+        "black"
     ],
     "todo-tree.highlights.useColourScheme": true,
     "todo-tree.tree.showCountsInTree": true,
@@ -81,8 +90,14 @@
         },
         "@DEBUG": {
             "icon": "bug"
+        },
+        "@ASK": {
+            "icon": "question"
+        },
+        "@IDEA": {
+            "icon": "light-bulb"
+        },
+        "@WARNING": {
+            "icon": "alert"
         }
-    },
-    "todo-tree.general.tagGroups": {
-
     },
