@@ -665,6 +665,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
              file.write(str(genes_missing_annotation))
 
 #----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
+# @DISCUSSION: Direction for GFF from RefSeq to NCBI Protein should also be possible with this set-up
 def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
     """Adds URIs to GeneProducts based on locus tag to indentifier mapping
 
