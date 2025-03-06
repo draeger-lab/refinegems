@@ -1631,6 +1631,7 @@ def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, pro
 # --> WARNING: Output is different now
 # @TODO generalise addition of references -> maybe kwargs
 # @TODO: Check if ncbiprotein leads to valid ID -> Otherwise, replace invalid chars with '_'
+# @DISCUSSION: Add functionality to check if locus tag already in model as sanity check if someone only uses create_gp?
 def create_gp(model:libModel, protein_id:str, 
               model_id:str=None,
               name:str=None, locus_tag:str=None,
