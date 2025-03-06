@@ -33,6 +33,7 @@ import cobra
 from cobra.io.sbml import _f_gene, _f_gene_rev
 import io
 import json
+import math
 import numpy as np
 import os
 import pandas as pd
@@ -50,12 +51,13 @@ from typing import Literal, Union
 from tqdm import tqdm
 tqdm.pandas()
 
+from ..developement.decorators import *
 from ..utility.databases import PATH_TO_DB
 from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec, map_to_homologs
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
 from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, parse_reac_str, validate_reaction_compartment_bigg, REF_COL_GF_GENE_MAP
 from ..utility.util import VALID_COMPARTMENTS
-from ..developement.decorators import *
+from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
 
 # @Note:
@@ -819,7 +821,7 @@ class GapFiller(ABC):
                     reference=references)
                 
 
-    # @DISCUSSION seems very rigid, better ways to find the ids?
+    # @DISCUSSION seems very rigid, better ways to find the ids? -> Via locus tags?
     def add_gene_reac_associations_from_table(self,model:libModel,
                                               reac_table:pd.DataFrame) -> None:
         """Using a table with at least the columns 'ncbiprotein' 
@@ -1402,6 +1404,7 @@ class BioCycGapFiller(GapFiller):
         # Remove all rows where 'id' NaNs
         self._biocyc_gene_tbl.dropna(subset='id', inplace=True)
 
+    # @DISCUSSION: Should other columns for references to other databases be allowed?
     @property
     def biocyc_rxn_tbl(self):
         """
@@ -1624,7 +1627,8 @@ class BioCycGapFiller(GapFiller):
 # 
 # def gff_gene_comp():
 #     pass
-# 
+#
+# @IDEA: Extend KEGGapFiller/BioCycGapFiller to allow for blasting against another organism if strain not available in database
 #
 
 # @DISCUSSION Either here or with the one above allow gap filling with
@@ -1928,3 +1932,175 @@ def replace_reaction_direction_with_fluxes(missing_reactions: pd.DataFrame) -> p
    missing_reactions.drop('Reaction-Direction', axis=1, inplace=True)
    
    return missing_reactions
+
+# Gap-filling via medium/media
+# ----------------------------
+def single_cobra_gapfill(model:cobra.Model, 
+                         universal:cobra.Model, medium:Medium, 
+                         namespace:Literal['BiGG']='BiGG', 
+                         growth_threshold:float = 0.05) -> Union[list[str],bool]:
+    """Attempt gapfilling (with COBRApy) for a given model to allow growth on a given
+    medium.
+
+    Args:
+        - model (cobra.Model): 
+            The model to perform gapfilling on.
+        - universal (cobra.Model):  
+            A model with reactions to be potentially used for the gapfilling.
+        - medium (Medium): 
+            A medium the model should grow on.
+        - namespace (Literal['BiGG'], optional): Namespace to use for the model. 
+            Defaults to 'BiGG'.
+        - growth_threshold (float, optional):  Minimal rate for the model to be considered growing.
+            Defaults to 0.05.
+
+    Returns:
+        Union[list[str],True]: 
+            List of reactions to be added to the model to allow growth
+            or True, if the model already grows.
+    """
+    
+    # perform the gapfilling
+    solution = []
+    with model as model_copy:
+        # set medium model should grow on
+        medium_to_model(model_copy, medium, namespace, double_o2=False) 
+        # if model does not show growth (depending on threshold), perform gapfilling
+        if model_copy.optimize().objective_value < growth_threshold:
+            try:
+                solution = cobra.flux_analysis.gapfill(model_copy, universal,
+                                                       lower_bound = growth_threshold,
+                                                       demand_reactions=False)
+            except cobra.exceptions.Infeasible:
+                warnings.warn(F'Gapfilling for medium {medium.name} failed. Manual curation required.')
+        else:
+            print(F'Model already grows on medium {medium.name} with objective value of {model_copy.optimize().objective_value}')
+            return True
+
+    return solution
+
+
+def cobra_gapfill_wrapper(model:cobra.Model, universal:cobra.Model, 
+                          medium:Medium, namespace:Literal['BiGG']='BiGG',
+                          growth_threshold:float = 0.05,
+                          iterations:int=3, chunk_size:int=10000) -> cobra.Model:
+    """Wrapper for :py:func:`~specimen.core.refinement.cleanup.single_cobra_gapfill`.
+
+    Either use the full set of reactions in universal model by setting iteration to
+    0 or None or use them in randomized chunks for faster runtime (useful
+    on laptops). Note: when using the second option, be aware that this does not
+    test all reaction combinations exhaustively (heuristic approach!!!).
+
+    Args:
+        - model (cobra.Model): 
+            The model to perform gapfilling on.
+        - universal (cobra.Model): 
+            A model with reactions to be potentially used for the gapfilling.
+        - medium (Medium): 
+            A medium the model should grow on.
+        - namespace (Literal['BiGG'], optional): 
+            Namespace to use for the model. 
+            Options include 'BiGG'.
+            Defaults to 'BiGG'.
+        - growth_threshold (float, optional): 
+            Growth threshold for the gapfilling. 
+            Defaults to 0.05.
+        - iterations (int, optional): 
+            Number of iterations for the heuristic version of the gapfilling.
+            If 0 or None is given, uses full set of reactions.
+            Defaults to 3. 
+        - chunk_size (int, optional): 
+            Number of reactions to be used for gapfilling at the same time. 
+            If None or 0 is given, use full set, not heuristic.
+            Defaults to 10000.
+
+    Returns:
+        cobra.Model: 
+            The gapfilled model, if a solution was found.
+    """
+
+    solution = []
+
+    # run a heuristic approach:
+    #     for a given number of iterations, use a subset (chunk_size) of
+    #     reactions for the gapfilling
+    if (iterations and iterations > 0) and (chunk_size and chunk_size > 0):
+
+        num_reac = len(model.reactions)
+        # for each iteration
+        for i in range(iterations):
+            not_used = [_ for _ in range(0,num_reac)]
+
+            # divide reactions in random subsets
+            for chunk in range(math.ceil(num_reac/chunk_size)):
+                if len(not_used) > chunk_size:
+                    rng = np.random.default_rng()
+                    reac_set = rng.choice(not_used, size=chunk_size, replace=False, shuffle=False)
+                    not_used = [_ for _ in not_used if _ not in reac_set]
+                else:
+                    reac_set = not_used
+
+                # get subset of reactions
+                subset_reac = cobra.Model('subset_reac')
+                for n in reac_set:
+                    subset_reac.add_reactions([universal.reactions[n].copy()])
+
+                # gapfilling
+                solution = single_cobra_gapfill(model, subset_reac, medium, namespace, growth_threshold)
+
+                if (isinstance(solution,bool) and solution) or (isinstance(solution, list) and len(solution) > 0):
+                    break
+
+            if (isinstance(solution,bool) and solution) or (isinstance(solution, list) and len(solution) > 0):
+                break
+
+    # use the whole reactions content of the universal model at once
+    #     not advised for Laptops and PCs with small computing power
+    #     may take a long time
+    else:
+        solution = single_cobra_gapfill(model, universal, medium, namespace, growth_threshold)
+
+    # if solution is found add new reactions to model
+    if isinstance(solution, list) and len(solution) > 0:
+        for reac in solution[0]:
+            reac.notes['creation'] = 'via gapfilling'
+        print(F'Adding {len(solution[0])} reactions to model to ensure growth on medium {medium.name}.')
+        model.add_reactions(solution[0])
+
+    return model
+
+
+def multiple_cobra_gapfill(model: cobra.Model, universal:cobra.Model, 
+                           media_list:list[Medium], 
+                           namespace:Literal['BiGG']='BiGG', 
+                           growth_threshold:float = 0.05, iterations:int=3, chunk_size:int=10000) -> cobra.Model:
+    """Perform :py:func:`~specimen.core.refinement.cleanup.single_cobra_gapfill` on a list of media.
+
+    Args:
+        - model (cobra.Model): 
+            The model to be gapfilled.
+        - universal (cobra.Model): 
+            The model to use reactions for gapfilling from.
+        - media_list (list[Medium]): 
+            List ofmedia the model is supposed to grow on.
+        - growth_threshold (float, optional): 
+            Growth threshold for the gapfilling. 
+            Defaults to 0.05.
+        - iterations (int, optional): 
+            Number of iterations for the heuristic version of the gapfilling.
+            If 0 or None is given, uses full set of reactions.
+            Defaults to 3. 
+        - chunk_size (int, optional): 
+            Number of reactions to be used for gapfilling at the same time. 
+            If None or 0 is given, use full set, not heuristic.
+            Defaults to 10000.
+    Returns:
+        cobra.Model: 
+            The gapfilled model, if a solution was found.
+    """
+    
+
+    for medium in media_list:
+        model = cobra_gapfill_wrapper(model,universal,medium, namespace, iterations, chunk_size, growth_threshold)
+
+    return model
