@@ -123,6 +123,9 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
                     loaded_models.append(load_cobra_model(m))
                 elif package == 'libsbml':
                     loaded_models.append(load_libsbml_model(m))
+                else:
+                    mes = f'Unknown type for package. Unable to load model.'
+                    raise ValueError(mes)
             return loaded_models
         
         # read in a single model
@@ -132,6 +135,24 @@ def load_model(modelpath: Union[str,list[str]], package:Literal['cobra','libsbml
                     return load_cobra_model(modelpath)
                 elif package == 'libsbml':
                     return load_libsbml_model(modelpath)
+                else:
+                    mes = f'Unknown type for package. Unable to load model.'
+                    raise ValueError(mes)
+                
+        case Path():
+            
+            modelpath = str(modelpath)
+            if package == 'cobra':
+                    return load_cobra_model(modelpath)
+            elif package == 'libsbml':
+                return load_libsbml_model(modelpath)
+            else:
+                    mes = f'Unknown type for package. Unable to load model.'
+                    raise ValueError(mes)
+                
+        case _:
+            mes = f'Unkown type for modelpath: {modelpath}'
+            raise TypeError(mes)
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
@@ -149,7 +170,7 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     read = reader.readSBMLFromFile(modelpath)  # read from file
     return read
 
-# @DISCUSSION Rewrite for pathlib.Path?
+
 def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
     """Save a model into a file.
 
@@ -194,6 +215,11 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
 
+
+    # @DISCUSSION Rewrite pathlib.Path handling? - bit crude currently
+    if isinstance(filename, Path):
+        filename = str(filename)
+    
     # save cobra model
     if isinstance(model, cobra.core.model.Model):
         _write_cobra_model_to_file(model,filename)
