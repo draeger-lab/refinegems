@@ -520,6 +520,44 @@ def parse_gff_for_cds(gffpath, keep_attributes=None):
 
     return cds
 
+# GBFF
+# ----
+
+def parse_gbff_for_cds(file_path:str) -> pd.DataFrame:
+    """Retrieves a table containg information about the following qualifiers from a
+    Genbank file: ['protein_id','locus_tag','db_xref','old_locus_tag','EC_number'].
+
+    Args:
+        - file_path (str): 
+            Path to the Genbank (.gbff) file.
+
+    Returns:
+        pd.DataFrame: 
+            A table containing the information above.
+            Has the following  columns= ['ncbi_accession_version', 'locus_tag_ref','old_locus_tag','GeneID','EC number'].
+    """
+
+    temp_table = pd.DataFrame(columns=['ncbi_accession_version', 'locus_tag_ref','old_locus_tag','GeneID','EC number'])
+    attributes = ['protein_id','locus_tag','old_locus_tag','db_xref','EC_number']
+
+    for record in SeqIO.parse(file_path,"genbank"):
+        if record.features:
+            for feature in record.features:
+                if feature.type == 'CDS':
+                    temp_list = []
+                    for a in attributes:
+                        if a in feature.qualifiers.keys():
+                            temp_list.append(feature.qualifiers[a][0])
+                        else:
+                            temp_list.append('-')
+                    temp_table.loc[len(temp_table)] = temp_list
+
+    # reformat
+    pat = re.compile(r'\D')
+    temp_table['GeneID'] = [pat.sub('', x) for x in temp_table['GeneID']]
+
+    return temp_table
+
 
 # else:
 # -----
