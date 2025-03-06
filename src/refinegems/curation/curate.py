@@ -60,7 +60,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model               
 
-
+# @DEPRECATE Functionality is already part of ..curation.polish.polish_annotations (Through the get_uri_set function)
 def complete_BioMetaCyc(model:cobra.Model) -> cobra.Model:
     """Check for existing MetaCyc and BioCyc annotations for metabolites and
     reactions and generate them from the other if one of the two is missing.
