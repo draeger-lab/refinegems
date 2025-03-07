@@ -1984,7 +1984,7 @@ def cobra_gapfill_wrapper(model:cobra.Model, universal:cobra.Model,
                           medium:Medium, namespace:Literal['BiGG']='BiGG',
                           growth_threshold:float = 0.05,
                           iterations:int=3, chunk_size:int=10000) -> cobra.Model:
-    """Wrapper for :py:func:`~specimen.core.refinement.cleanup.single_cobra_gapfill`.
+    """Wrapper for :py:func:`~refinegems.classes.gapfill.single_cobra_gapfill`.
 
     Either use the full set of reactions in universal model by setting iteration to
     0 or None or use them in randomized chunks for faster runtime (useful
@@ -2074,7 +2074,7 @@ def multiple_cobra_gapfill(model: cobra.Model, universal:cobra.Model,
                            media_list:list[Medium], 
                            namespace:Literal['BiGG']='BiGG', 
                            growth_threshold:float = 0.05, iterations:int=3, chunk_size:int=10000) -> cobra.Model:
-    """Perform :py:func:`~specimen.core.refinement.cleanup.single_cobra_gapfill` on a list of media.
+    """Perform :py:func:`~refinegems.classes.gapfill.cleanup.single_cobra_gapfill` on a list of media.
 
     Args:
         - model (cobra.Model): 
