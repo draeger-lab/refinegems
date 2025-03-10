@@ -143,7 +143,9 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     
     return entities_missing_in_model
 
-
+# @DISCUSSION 
+# -> Return only one table like for map_ec_to_reac?
+# -> Could be possible to merge with map_ec_to_reac?
 # Mapping for BioCyc Reactions
 # ----------------------------
 def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -164,12 +166,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
             (2) A table of unmappable reactions for manual curation.
 
     """
-
-    # statistics = {
-    #     'mapped2MNX': 0, 
-    #     'mapped2BiGG': 0, 
-    #     'remaining_unmapped': 0
-    # }
 
     # Drop NaNs in relevant columns
     biocyc_reacs.dropna(subset=['id', 'ec-code'], inplace=True)
@@ -235,9 +231,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         mask = biocyc_reacs['MetaNetX'].notna()
         mnx_reacs = biocyc_reacs[mask]
         unmapped_reacs = biocyc_reacs[~mask]
-
-        # Get amount of missing reactions that have a MetaNetX ID
-        #statistics['mapped2MNX'] = len(mnx_reacs['id'].unique().tolist())
 
         # Step 2.1: Clean-up of table containing MetaNetX IDs
         # ---------------------------------------------------
@@ -355,9 +348,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         bigg_reacs = biocyc_reacs[mask]
         unmapped_reacs = biocyc_reacs[~mask]
 
-        # Get amount of missing reactions that have a BiGG ID
-        #statistics['mapped2BiGG'] = len(bigg_reacs['id'].unique().tolist())
-
         # Step 2.1: Clean-up of table containing BiGG IDs
         # -----------------------------------------------
         if not bigg_reacs.empty:
@@ -423,10 +413,6 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         pd.concat([mapped2MNX, mapped2BiGG], sort=True, ignore_index=True) if not unmapped_reacs.empty
         else mapped2MNX
     )
-
-    # Get amount of unmapped BioCyc IDs
-
-    #statistics['remaining_unmapped'] = len(unmapped_reacs['id'].unique().tolist())
 
     # Return results
     return missing_bc_reacs, unmapped_reacs
@@ -600,7 +586,7 @@ def map_ec_to_reac(table:pd.DataFrame,
     table = table.explode('id', ignore_index=True).explode('id', ignore_index=True)
         
     # output:   ec-code ncbiprotein	id	equation	reference	is_transport	via
-    return table 
+    return table
 
 
 ############################################################################
@@ -646,7 +632,7 @@ class GapFiller(ABC):
         
         # general information
         self.geneid_type = 'ncbi' # @DISCUSSION more options?
-        self._variety = None # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'GFF + SwissProt'
+        self._variety = 'Undefined' # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'GFF + SwissProt'
         
         # collect stats & Co, can be extended by subclasses
         # @DISCUSSION
@@ -655,18 +641,24 @@ class GapFiller(ABC):
         # protein accession number and not the uniqueness of the ID)
         self._statistics = {  
                 'genes':{
-                    'missing (before)': 0,
-                    'missing information': 0,
-                    'duplicates': 0,
-                    'added': 0,
-                    'missing (after)': 0
-                },
-                'reactions':{
-                    'missing (before)': 0,
-                    'missing information': 0,
+                    'missing (total)': 0,
+                    'unmappable': 0,
+                    'duplicated': 0,
                     'added': 0,
                     'building failed': 0,
-                    'missing (after)': 0
+                    'missing (remaining)': 0
+                },
+                'reactions':{
+                    'missing (based on genes)': 0,
+                    'already in model': 0,
+                    'missing (total)': 0,
+                    'mapped to MNX': 0,
+                    'mapped to BiGG': 0,
+                    'mapped to KEGG': 0,
+                    'unmappable': 0,
+                    'added': 0,
+                    'building failed': 0,
+                    'missing (remaining)': 0
                 }
             }
         self.manual_curation = {
@@ -819,6 +811,7 @@ class GapFiller(ABC):
             create_gp(model, x['ncbiprotein'], 
                     locus_tag=x['locus_tag'], 
                     reference=references)
+            self._statistics['genes']['added'] += 1
                 
 
     # @DISCUSSION seems very rigid, better ways to find the ids? -> Via locus tags?
@@ -985,7 +978,7 @@ class GapFiller(ABC):
                     missing_reac_table.at[idx,'add_to_GPR'] = reac
                 else:
                     missing_reac_table.at[idx,'add_to_GPR'] = list(set(reac + current_gpr))
-                self._statistics['reactions']['added'] = self._statistics['reactions']['added'] + 1
+                self._statistics['reactions']['already in model'] += 1
             # case 3: new reaction was generated
             elif isinstance(reac,cobra.Reaction):
                 # validate reaction
@@ -996,7 +989,7 @@ class GapFiller(ABC):
                     reac.notes['found with'] = f'refineGEMs GapFiller, {self._variety}'
                     # add reaction to model (if validation successful)
                     model.add_reactions([reac])
-                    self._statistics['reactions']['added'] = self._statistics['reactions']['added'] + 1
+                    self._statistics['reactions']['added'] += 1
                     # add reaction ID to table under add_to_GPR
                     current_gpr = missing_reac_table.loc[idx,'add_to_GPR']
                     if not current_gpr:
@@ -1013,7 +1006,7 @@ class GapFiller(ABC):
         # save reactions, that could not be recontructed, for manual curation
         manual_curation_reacs = missing_reac_table[missing_reac_table['add_to_GPR'].isnull()]
         self.manual_curation['reactions']['building failed'] = manual_curation_reacs
-        self._statistics['reactions']['building failed'] = len(manual_curation_reacs)
+        self._statistics['reactions']['building failed'] = manual_curation_reacs['id'].nunique()
         # return the updated table with successfully reconstructed reaction ids 
         # to enable adding the genes
         missing_gprs = missing_reac_table[~missing_reac_table['add_to_GPR'].isnull()]
@@ -1052,19 +1045,19 @@ class GapFiller(ABC):
         # Filter out reactions without ncbiprotein
         # @DISCUSSION Add also reactions without GPR to model?
         self.manual_curation['reactions']['no GPR'] = self.missing_reactions[self.missing_reactions['ncbiprotein'].isnull()]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no GPR'])
+        self._statistics['reactions']['umappable'] += self.manual_curation['reactions']['no GPR']['id'].nunique()
         self.missing_reactions = self.missing_reactions[~self.missing_reactions['ncbiprotein'].isnull()]
         
         # Filter out genes without ncbiprotein
         self.manual_curation['genes']['no ncbiprotein'] = self.missing_genes[self.missing_genes['ncbiprotein'].isnull()]
-        self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['no ncbiprotein'])
+        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no ncbiprotein']['locus_tag'].nunique()
         self.missing_genes = self.missing_genes[~self.missing_genes['ncbiprotein'].isnull()]
 
-        # filter out duplicates genes to avoid duplicates IDs in the model
+        # filter out duplicated genes to avoid duplicated IDs in the model
         # @DISCUSSION: Is there a possibility, that gene copies / homologs might be lost?
         if len(self.missing_genes) != len(self.missing_genes['ncbiprotein'].unique()):
-            self.manual_curation['genes']['duplicates (not added)'] = self.missing_genes[self.missing_genes.duplicated(subset=['ncbiprotein'])]
-            self._statistics['genes']['duplicates'] = self._statistics['genes']['duplicates'] + len(self.manual_curation['genes']['duplicates (not added)'])
+            self.manual_curation['genes']['duplicated (not added)'] = self.missing_genes[self.missing_genes.duplicated(subset=['ncbiprotein'])]
+            self._statistics['genes']['duplicated'] += self.manual_curation['genes']['duplicated (not added)']['locus_tag'].nunique()
             self.missing_genes = self.missing_genes[~self.missing_genes.duplicated(subset=['ncbiprotein'])]
         
         # load the correct type of model for the first step
@@ -1086,7 +1079,6 @@ class GapFiller(ABC):
         reacs_in_model = self.missing_reactions[~(self.missing_reactions['add_to_GPR'].isnull())]
         ncbiprot_with_reacs_in_model = [*chain(*list(reacs_in_model['ncbiprotein']))]
         genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
-        self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
         if len(genes_with_reacs_in_model) > 0:
             
             # add genes as gene products to model
@@ -1097,7 +1089,7 @@ class GapFiller(ABC):
             
             # what remains:
             self.missing_reactions = self.missing_reactions[self.missing_reactions['add_to_GPR'].isnull()]
-            self._statistics['reactions']['added'] = self._statistics['reactions']['added'] + len(reacs_in_model)
+            self._statistics['reactions']['already in model'] += reacs_in_model['id'].nunique()
             self.missing_genes = self.missing_genes[~(self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]#
 
         # Step 2: Add reactions to model, if reconstruction successful
@@ -1134,7 +1126,6 @@ class GapFiller(ABC):
                 # filter for genes for GPRs but not yet in model
                 ncbiprot_with_reacs_in_model = [*chain(*list(missing_gprs['ncbiprotein']))]
                 genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
-                self._statistics['genes']['added'] = self._statistics['genes']['added'] + len(genes_with_reacs_in_model)
                 if len(genes_with_reacs_in_model) > 0:
                     # add genes as gene products to model
                     self.add_genes_from_table(model, genes_with_reacs_in_model)
@@ -1146,9 +1137,12 @@ class GapFiller(ABC):
         except NameError: warnings.warn('Something went wrong. Contact the developers (gapfillmodel)')
         
         # collect stats and stuff for manual curation
-        self.manual_curation['genes']['missing (after)'] = self.missing_genes
-        self._statistics['genes']['missing (after)'] = len(self.missing_genes) + self._statistics['genes']['missing information']
-        self._statistics['reactions']['missing (after)'] = self._statistics['reactions']['missing information'] + self._statistics['reactions']['building failed']
+        self.manual_curation['genes']['building failed'] = self.missing_genes
+        self._statistics['genes']['building failed'] += self.missing_genes['locus_tag'].nunique()
+        
+        # calculate remaining statistics
+        self._statistics['reactions']['missing (remaining)'] += self._statistics['reactions']['building failed']
+        self._statistics['genes']['missing (remaining)'] += self._statistics['genes']['building failed']
 
         return model
 
@@ -1160,7 +1154,7 @@ class GapFiller(ABC):
                 Path to a directory to save the report to.
         """
 
-        statistics_report = GapFillerReport(self._statistics, self.manual_curation)
+        statistics_report = GapFillerReport(self.variety, self._statistics, self.manual_curation)
         statistics_report.save(Path(dir))
 
 # --------------------
@@ -1263,9 +1257,9 @@ class KEGGapFiller(GapFiller):
         genes_not_in_model = genes_not_in_model.explode('ncbiprotein')
         
         # collect stats
-        self._statistics['genes']['missing (before)'] = len(genes_not_in_model)
+        self._statistics['genes']['missing (total)'] = genes_not_in_model['locus_tag'].nunique()
         
-        self.missing_genes = genes_not_in_model 
+        self.missing_genes = genes_not_in_model
     
     
     # @TODO : logging
@@ -1277,8 +1271,9 @@ class KEGGapFiller(GapFiller):
         # ----------------------------------------------
         reac_options = self.missing_genes[['ec-code','ncbiprotein']]        # get relevant infos for reacs
         self.missing_reactions = reac_options[['ec-code','ncbiprotein']].dropna()    # drop nas
+        self._statistics['reactions']['missing (based on genes)'] = self.missing_reactions['id'].nunique()
         self.manual_curation['reactions']['no ncbiprotein, no EC'] = reac_options.loc[~reac_options.index.isin(self.missing_reactions.index)]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no ncbiprotein, no EC'])
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no ncbiprotein, no EC']['id'].nunique()
         # check, if any automatic gapfilling is possible
         if len(self.missing_reactions) == 0:
             return None
@@ -1297,12 +1292,13 @@ class KEGGapFiller(GapFiller):
         # -----------------------------------------
         # via MNX, BiGG, KEGG
         reacs_mapped = map_ec_to_reac(self.missing_reactions, threshold_add_reacs)
-        
+
+        # @TODO: Recheck tracking of statistics on unmappable!
         # Step 3: clean and map to model reactions
         # ----------------------------------------
         # need manual curation
         self.manual_curation['reactions']['no ID'] = reacs_mapped[reacs_mapped['id'].isnull()]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no ID'])
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no ID'].nunique().max()
         # map to model reactions
         reacs_mapped = reacs_mapped[~reacs_mapped['id'].isnull()]
         gpr = reacs_mapped.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
@@ -1310,7 +1306,20 @@ class KEGGapFiller(GapFiller):
             reacs_mapped['add_to_GPR'] = gpr
         else: reacs_mapped['add_to_GPR'] = None
 
-        self._statistics['reactions']['missing (before)'] = len(reacs_mapped) + self._statistics['reactions']['missing information']
+        # statistics on reactions already in model
+        self._statistics['reactions']['already in model'] = reacs_mapped[~reacs_mapped['add_to_GPR'].isna()]['id'].nunique()
+
+        # statistics on mapped & unmapped reactions
+        self._statistics['reactions']['mapped to MNX'] = reacs_mapped[reacs_mapped['via'] == 'MetaNetX']['id'].nunique()
+        self._statistics['reactions']['mapped to BiGG'] = reacs_mapped[reacs_mapped['via'] == 'BiGG']['id'].nunique()
+        self._statistics['reactions']['mapped to KEGG'] = reacs_mapped[reacs_mapped['via'] == 'KEGG']['id'].nunique()
+        self._statistics['reactions']['unmappable'] += reacs_mapped[isinstance(reacs_mapped['via'])]['id'].nunique()
+
+        # calculate remaining statistics
+        self._statistics['reactions']['missing (total)'] = self._statistics['reactions']['missing (based on genes)'] - self._statistics['reactions']['already in model']
+        self._statistics['reactions']['missing (remaining)'] = self._statistics['reactions']['unmappable']
+
+        # return missing_reactions
         self.missing_reactions = reacs_mapped
     
 # ----------------------
@@ -1393,13 +1402,11 @@ class BioCycGapFiller(GapFiller):
         # Drop only complete empty rows
         self._biocyc_gene_tbl.dropna(how='all', inplace=True)
 
-        # Save not mappable genes
-        self.manual_curation['genes']['no ID (unmappable)'] = self._biocyc_gene_tbl[self._biocyc_gene_tbl['id'].isna()]
+        # Save not mappable genes due to no reaction ID
+        self.manual_curation['genes']['no reaction ID'] = self._biocyc_gene_tbl[self._biocyc_gene_tbl['id'].isna()]
 
         # Add amount of unmappable genes to statistics
-        self._statistics['genes']['missing information'] = len(
-            self.manual_curation['genes']['no ID (unmappable)']['locus_tag'].unique().tolist()
-        )
+        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no reaction ID']['locus_tag'].nunique()
 
         # Remove all rows where 'id' NaNs
         self._biocyc_gene_tbl.dropna(subset='id', inplace=True)
@@ -1445,7 +1452,7 @@ class BioCycGapFiller(GapFiller):
 
     def find_missing_genes(self, model: libModel):
         """Retrieves the missing genes and reactions from the BioCyc table 
-        according to the 'Accession-2' identifiers
+        according to the 'Accession-2' identifiers (locus_tags)
 
         Args:
             - model (libModel): 
@@ -1461,7 +1468,7 @@ class BioCycGapFiller(GapFiller):
 
         # Step 2: Get genes of organism from BioCyc
         # -----------------------------------------
-        # See setter: BioCyc_gene_tbl
+        # See self._biocyc_gene_tbl
         
         # Step 3: BioCyc vs. model genes -> get missing genes for model
         # -------------------------------------------------------------
@@ -1489,7 +1496,7 @@ class BioCycGapFiller(GapFiller):
 
         # Step 5: Get amount of missing genes from BioCyc for statistics
         # --------------------------------------------------------------
-        self._statistics['genes']['missing (before)'] = len(self.missing_genes)
+        self._statistics['genes']['missing (total)'] = self.missing_genes['locus_tag'].nunique()
 
     def find_missing_reactions(self, model: cobra.Model):
         """Retrieves the missing reactions with more information like the 
@@ -1550,9 +1557,7 @@ class BioCycGapFiller(GapFiller):
 
         # Step 2: Get amount of missing reactions from BioCyc for statistics
         # ------------------------------------------------------------------
-        self._statistics['reactions']['missing (before)'] = len(
-            self.missing_reactions['id'].unique().tolist()
-        )
+        self._statistics['reactions']['missing (based on genes)'] = self.missing_reactions['id'].nunique()
 
         # Step 3: Map BioCyc to model reactions & cleanup
         # -----------------------------------------------
@@ -1568,7 +1573,6 @@ class BioCycGapFiller(GapFiller):
         # Add column 'reference'
         self.missing_reactions['reference'] = None
 
-        # @TODO statistics?
         # Step 4: Map missing reactions without entries in column 'add_to_GPR' 
         #         to other databases to get a parsable reaction equation
         # --------------------------------------------------------------------
@@ -1576,33 +1580,45 @@ class BioCycGapFiller(GapFiller):
         mask = self.missing_reactions['add_to_GPR'].isna()
         mapped_reacs, unmapped_reacs = map_biocyc_to_reac(self.missing_reactions[mask])
 
-        # Get statistics from mapping
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(unmapped_reacs)
-        self.manual_curation['reactions']['remaining unmapped'] = unmapped_reacs
+        # @TODO: Recheck unmappable reacs filterings
+        # Are two really necessary?
+        # Get unmappable reactions for manual curation
+        self.manual_curation['reactions']['no mapping'] = unmapped_reacs
+        self._statistics['reactions']['unmappable'] += unmapped_reacs['id'].nunique()
 
-        # Get amount of missing_reactions with add_to_GPR
-        add_to_GPR_before_mapping = self.missing_reactions[~mask]
-        #self._statistics['reactions']['add to GPR (BioCyc)'] = len(add_to_GPR_before_mapping['id'].unique().tolist())
-
-        # Get statistics from mapping
-        #self._statistics['reactions'].update(statistics)
-        
         # Filter reacs for already in model
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(
             lambda x: 
                 self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1
             )
 
+        # Get missing_reactions with add_to_GPR
+        add_to_GPR_before_mapping = self.missing_reactions[~mask]
+
         # Merge self.missing_reactions with add_to_gpr with the mapped_reacs
         self.missing_reactions = pd.concat([add_to_GPR_before_mapping, mapped_reacs], sort=True, ignore_index=True)
 
         # Step 5: Get results
         # -------------------
+        # statistics on reactions already in model
+        self._statistics['reactions']['already in model'] = self.missing_reactions[~self.missing_reactions['add_to_GPR'].isna()]['id'].nunique()
+
+        # statistics on mapped reactions
+        self._statistics['reactions']['mapped to MNX'] = self.missing_reactions[self.missing_reactions['via'] == 'MetaNetX']['id'].nunique()
+        self._statistics['reactions']['mapped to BiGG'] = self.missing_reactions[self.missing_reactions['via'] == 'BiGG']['id'].nunique()
+        self._statistics['reactions']['mapped to KEGG'] = self.missing_reactions[self.missing_reactions['via'] == 'KEGG']['id'].nunique()
+        
         # Split missing reactios based on entries in 'via' & 'add_to_GPR'
         mask = (self.missing_reactions['via'] == 'BioCyc') & (self.missing_reactions['add_to_GPR'].isna())
-        
+
+        # @TODO: Is filtering here not enough?
         # DataFrame with unmappable BioCyc IDs & No entries in 'add_to_GPR'
-        self.manual_curation['reactions']['unmappable (BioCyc)'] = self.missing_reactions[mask]
+        self.manual_curation['reactions']['no mapping, no GPR'] = self.missing_reactions[mask]
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no mapping to MNX, Bigg, no GPR']['id'].nunique()
+
+        # calculate remaining statistics
+        self._statistics['reactions']['missing (total)'] = self._statistics['reactions']['missing (based on genes)'] - self._statistics['reactions']['already in model']
+        self._statistics['reactions']['missing (remaining)'] = self._statistics['reactions']['unmappable']
 
         # DataFrame with either mapped BioCyc IDs or Entries in 'add_to_GPR'
         self.missing_reactions = self.missing_reactions[~mask]
@@ -1659,7 +1675,7 @@ class GeneGapFiller(GapFiller):
     
     def __init__(self) -> None:
         super().__init__()
-        self._variety = 'GFF + SwissProt' # @DISCUSSION: Or change to 'Gene'? 
+        self._variety = 'GFF + SwissProt'
        
     # @TODO logging
     # @DISCUSSION Option for if model has no label -> Call function from polish to get labels?
@@ -1687,14 +1703,14 @@ class GeneGapFiller(GapFiller):
                 self.missing_genes[col] = None
 
         # collect stats
-        self._statistics['genes']['missing (before)'] = len(self.missing_genes)
+        self._statistics['genes']['missing (total)'] = self.missing_genes['locus_tag'].nunique()
                 
         # save genes with no locus tag for manual curation
         if 'ncbiprotein' in self.missing_genes.columns:
             self.manual_curation['genes']['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
         else: 
             self.missing_genes['ncbiprotein'] = None
-        self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['gff no locus tag'])  # no locus tag
+        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['gff no locus tag'].nunique().max()  # no locus tag
         
         # formatting
         # ncbiprotein | locus_tag | ec-code
@@ -1782,7 +1798,7 @@ class GeneGapFiller(GapFiller):
         not_case_1 = self.missing_genes[~self.missing_genes['ec-code'].isna()]
         if len(case_1) > 0:
             
-            # BLAST against a dmnd to retireve EC numbers
+            # BLAST against a dmnd to retrieve EC numbers
             # +++++++++++++++++++++++++++++++++++++++++++    
             
             match type_db:
@@ -1812,7 +1828,7 @@ class GeneGapFiller(GapFiller):
                         case_1 = map_to_homologs(fasta, dmnd_db, case_1, map_db, email=mail, **kwargs)
                 
                 case _:
-                    raise ValueError('Please choose a valid database type for the GeneGapFiller.')
+                    raise ValueError('Please choose one of the valid database types \'swissprot\' or \'user\' for the GeneGapFiller.')
                 
             # # @TODO Option to use ML to predict EC
             # ++++++++++++++++++++++++++++++++++++++
@@ -1825,9 +1841,9 @@ class GeneGapFiller(GapFiller):
 
         # no ncbiprotein, no EC
         self.manual_curation['reactions']['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no ncbiprotein, no EC'])
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no ncbiprotein, no EC']['id'].nunique()
         self.manual_curation['genes']['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isna() & case_1['ec-code'].isna()]
-        self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['no ncbiprotein, no EC'])
+        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no ncbiprotein, no EC']['locus_tag'].nunique()
         
         # combine with the rest
         mapped_reacs = pd.concat([case_1[~(case_1['ncbiprotein'].isna() & case_1['ec-code'].isna())],not_case_1])
@@ -1837,11 +1853,12 @@ class GeneGapFiller(GapFiller):
 
         # save entries with no EC for manual curation
         self.manual_curation['reactions']['no EC'] = mapped_reacs[mapped_reacs['ec-code'].isna()]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no EC'])
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no EC']['id'].nunique()
         self.manual_curation['genes']['no EC'] = mapped_reacs[mapped_reacs['ec-code'].isna()]
-        self._statistics['genes']['missing information'] = self._statistics['genes']['missing information'] + len(self.manual_curation['genes']['no EC'])
+        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no EC']['locus_tag'].nunique()
         mapped_reacs = mapped_reacs[~mapped_reacs['ec-code'].isna()]
-        
+
+        # @TODO: What actually happens if we return None here? Should there also be some printout for the user here?
         # check, if any automatic gapfilling is still possible
         if len(mapped_reacs) == 0:
             return None
@@ -1866,22 +1883,36 @@ class GeneGapFiller(GapFiller):
         
         # map EC to reactions
         mapped_reacs = map_ec_to_reac(mapped_reacs[['ec-code','ncbiprotein']], threshold_add_reacs)
+
+        # @DISCUSSION: Weren't quiet sure where to put this
+        self._statistics['reactions']['missing (based on genes)'] = mapped_reacs['id'].nunique()
         
         # save for manual curation
         self.manual_curation['reactions']['no mapping'] = mapped_reacs[mapped_reacs['id'].isnull()]
-        self._statistics['reactions']['missing information'] = self._statistics['reactions']['missing information'] + len(self.manual_curation['reactions']['no mapping'])
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no mapping']['id'].nunique()
         # map to model
         mapped_reacs = mapped_reacs[~mapped_reacs['id'].isnull()]
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
-        
+
+        # Track all remaining statistics
+        # statistics on reactions already in model
+        self._statistics['reactions']['already in model'] = mapped_reacs[~mapped_reacs['add_to_GPR'].isna()]['id'].nunique()
+
+        # statistics on mapped & unmapped reactions
+        self._statistics['reactions']['mapped to MNX'] = mapped_reacs[mapped_reacs['via'] == 'MetaNetX']['id'].nunique()
+        self._statistics['reactions']['mapped to BiGG'] = mapped_reacs[mapped_reacs['via'] == 'BiGG']['id'].nunique()
+        self._statistics['reactions']['mapped to KEGG'] = mapped_reacs[mapped_reacs['via'] == 'KEGG']['id'].nunique()
+
+        # calculate remaining statistics
+        self._statistics['reactions']['missing (total)'] = self._statistics['reactions']['missing (based on genes)'] - self._statistics['reactions']['already in model']
+        self._statistics['reactions']['missing (remaining)'] = self._statistics['reactions']['unmappable']
+
+        # @TODO: what/ How should statistics be tracked for the 'user' case? Is there a special requirement?
         # update attributes
         if type_db == 'user':
             updated_missing_genes = updated_missing_genes.drop(columns=['locus_tag_ref','old_locus_tag'], axis=1)
         self.missing_genes = updated_missing_genes
         self.missing_reactions = mapped_reacs
-
-        self._statistics['reactions']['missing (before)'] = len(self.missing_reactions) + self._statistics['reactions']['missing information']
-    
     
     
 ############################################################################

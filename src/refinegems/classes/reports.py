@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
 import numpy as np
 import pandas as pd
+import re
 import seaborn as sns
 import warnings
 
@@ -1393,9 +1394,32 @@ class GapFillerReport(Report):
             List of IDs for manual curation.
     """
     
-    def __init__(self, statistics: dict, manual_curation: dict) -> None:
+    def __init__(self, variety: str, statistics: dict, manual_curation: dict) -> None:
+        self.variety = variety
         self.statistics = statistics
         self.manual_curation = manual_curation
+
+    @property
+    def statistics(self):
+        """
+        | Get or set the current statistics dictionary.
+        | While setting the provided all zeros are removed from the dictionary
+        | and if the values behind the keys 'unmappable' and 'missing (remaining)' 
+        | are the same only 'missing (remaining)' is kept.
+        """
+        return self._statistics
+
+    @statistics.setter
+    def statistics(self, stats_dict: dict):
+        for k in stats_dict.keys():
+            # remove unmappable if same as missing
+            if stats_dict[k]['unmappable'] == stats_dict[k]['missing (remaining)']:
+                stats_dict[k].pop('unmappable')
+
+            # remove all zeros
+            stats_dict[k] = {k: v for k, v in stats_dict[k].items() if v}
+
+        self._statistics = stats_dict
 
     def visualise(self, color_palette:str='YlGn') -> matplotlib.figure.Figure:
         """Visualise the basic information of the report.
@@ -1421,7 +1445,7 @@ class GapFillerReport(Report):
             cmap = matplotlib.colormaps['YlGn']
         
         fig = plt.figure()
-        fig.suptitle('Statistics for Gapfilling', fontsize=16)
+        fig.suptitle(f'Statistics for Gapfilling via {self.variety}', fontsize=16)
         grid = gspec.GridSpec(2,1,hspace=0.6)
 
         # plot statistics about reactions
@@ -1461,10 +1485,10 @@ class GapFillerReport(Report):
             - dir (str):
                 Path to a directory to save the report to.
             - color_palette (str, optional):
-                A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to ‘YlGn’.    
+                A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to `YlGn`.    
         """
 
-        dir_path = Path(dir, 'GapFillerReport')
+        dir_path = Path(dir, f'GapFillerReport/{re.sub(r'[^a-zA-Z0-9]', '_', self.variety)}')
         dir_path.mkdir(parents=True)
 
         # save the visualisation
