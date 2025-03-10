@@ -31,6 +31,7 @@ from operator import index
 
 import cobra
 from cobra.io.sbml import _f_gene, _f_gene_rev
+from copy import deepcopy
 import io
 import json
 import math
@@ -135,7 +136,7 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     if metabolites:
         def get_compartment_from_id(bigg_id: str):
             compartment = bigg_id[-1]
-            return compartment if compartment in VALID_COMPARTMENTS.keys() else np.nan  # To filter the incorrect compartments out
+            return compartment if compartment in VALID_COMPARTMENTS.keys() else None  # To filter the incorrect compartments out
         
         entities_missing_in_model['compartment'] = entities_missing_in_model.apply(
             lambda row: get_compartment_from_id(row['bigg_id']), axis=1)
@@ -143,53 +144,86 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     
     return entities_missing_in_model
 
-# @DISCUSSION 
-# -> Return only one table like for map_ec_to_reac?
+
+# @DISCUSSION
 # -> Could be possible to merge with map_ec_to_reac?
 # Mapping for BioCyc Reactions
 # ----------------------------
-def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Map BioCyc reactions against other databases (MetaNetX and BiGG) to
-    retrieve information neccessary to build the reaction later on.
-    
+def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame, use_MNX: bool=True, use_BiGG: bool=True) -> pd.DataFrame:
+    """Based on a table containing BioCyc reactions, 
+    map them to reactions in other databases (if a mapping is possible) 
+
     Args:
-        - biocyc_reacs (pd.DataFrame):
+        - biocyc_reacs (pd.DataFrame): 
             Table containing BioCyc reactions information.
             Should contain the columns: Reaction | Object ID | EC-Number | Spontaneous?
             Can be doenloaded as a SmartTable from BioCyc.
+        - use_MNX (bool, optional): 
+            Try mapping using the MetaNetX database. 
+            Defaults to True.
+        - use_BiGG (bool, optional): 
+            Try mapping using the BiGG database. 
+            Defaults to True.
 
     Returns:
-        tuple: 
-            Tuple of a (1) pd.DataFrame & a (2) dict:
-            
-            (1) The table containing the mapped reactions.
-            (2) A table of unmappable reactions for manual curation.
-
+        pd.DataFrame: 
+            The extended table.
     """
 
-    # Drop NaNs in relevant columns
-    biocyc_reacs.dropna(subset=['id', 'ec-code'], inplace=True)
+    def _clean_res_row(res_row: pd.Series, mapped2db: Literal['BiGG', 'MetaNetX']) -> pd.Series:
+        """Clean a row of a table containing mapping results from BioCyc to another database
 
-    def _map_to_mnx(biocyc_reacs: pd.DataFrame) -> Union[tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+        Args:
+            - res_row (pd.Series): 
+                Row containing a mapping from BioCyc to another database
+            - mapped2db (Literal['BiGG', 'MetaNetX']): 
+                Database where Biocyc entries where mapped to. One of 'BiGG', 'MetaNetX'.
+
+        Returns:
+            pd.Series: 
+                The cleaned row.
+        """
+        # Mapping for equation column name for other databases
+        dbeq2eq = {'BiGG': 'reaction_string', 'MetaNetX': 'mnx_equation'}
+        
+        # Get list of mapped to database IDs in row if available
+        id_list = list(res_row[mapped2db]) if res_row[mapped2db] else None
+        if id_list:
+            # Move BioCyc IDs to references
+            biocyc_reac_id = res_row['id']
+            res_row['id'] = str(id_list[0]) # Ensure ID is a string
+
+            # Remove ID from column 'id' from list in column 'alias'
+            if len(id_list) != 1:
+                id_list.remove(res_row['id'])
+                alias = id_list
+            else:
+                alias = None
+
+            # Move BioCyc IDs and alias to references
+            res_row['reference'] = {'metacyc.reaction': biocyc_reac_id, 'alias': alias}
+
+            # Move equation from other database to equation column
+            res_row['equation'] = res_row[dbeq2eq.get(mapped2db)]
+
+            # Replace BioCyc in via column with mapped to database
+            res_row['via'] = mapped2db
+
+        return res_row
+
+    def _map_biocyc_to_mnx(unmapped_reacs: pd.DataFrame) -> pd.DataFrame:
         """
         | Helper function for :py:func:`~refinegems.classes.gapfill.map_biocyc_to_reac` 
         | Maps Biocyc IDs in a table to the corresponding MetaNetX IDs & 
         | Adds information obtained via the MetaNetX IDs to the resulting table
 
         Args:
-            - biocyc_reacs (pd.DataFrame): 
+            - unmapped_reacs (pd.DataFrame): 
                 Table containing BioCyc IDs
 
         Returns:
-            (1) Case incomplete mapping:
-                    tuple: 
-                        pd.DataFrame (1) & pd.DataFrame (2)
-                            (1) Table with BioCyc IDs mapped to MetaNetX IDs & more information obtained from MetaNetX
-                            (2) Table with BioCyc IDs without mapping to MNX
-
-            (2) Case complete/no mapping:
-                    pd.DataFrame:
-                        Table (1)/ Table (2) from case incomplete mapping
+            pd.DataFrame:
+                The extended table.
         """
 
         # Step 1: Mapping & Obtain information
@@ -224,94 +258,46 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         # Drop duplicates to get the unique BioCyc IDs
         mnx2biocyc_reacs.drop_duplicates(subset='id', inplace=True)
 
-        # Merge mnx2biocyc_reacs with biocyc_reacs to get new information
-        biocyc_reacs = mnx2biocyc_reacs.merge(biocyc_reacs, on='id', how='right')
+        # Merge mnx2biocyc_reacs with unmapped_reacs to get new information
+        reacs_mapped = mnx2biocyc_reacs.merge(unmapped_reacs, on='id', how='right')
 
-        # Split biocyc_reacs into MNX part & non-mapped part
-        mask = biocyc_reacs['MetaNetX'].notna()
-        mnx_reacs = biocyc_reacs[mask]
-        unmapped_reacs = biocyc_reacs[~mask]
+        # Step 2: Clean-up
+        # ----------------
+        # Remove all NaNs from DataFrame
+        reacs_mapped.replace(np.nan, None, inplace=True)
 
-        # Step 2.1: Clean-up of table containing MetaNetX IDs
-        # ---------------------------------------------------
-        if not mnx_reacs.empty:
-            # Rename id to metacyc.reaction for simpler addition to column reference
-            mnx_reacs.rename({'id': 'metacyc.reaction'}, axis=1, inplace=True)
+        # Turn MetaNetX column in single value, rename column to id 
+        # & if multiple MetaNetX IDs exist add to column alias
+        reacs_mapped = reacs_mapped.apply(_clean_res_row, args=('MetaNetX',), axis=1)
 
-            # Turn MetaNetX column in single value, rename column to id 
-            # & if multiple MetaNetX IDs exist add to column alias
-            mnx_reacs['id'] = mnx_reacs['MetaNetX'].map(list).str.get(0)
-            mnx_reacs['alias'] = mnx_reacs.apply(
-                lambda x: 
-                    x['MetaNetX'].remove(x['id']) if len(x['MetaNetX']) != 1 else None, 
-                    axis=1
-            )
+        # Create list of EC codes in column ec-code_x, 
+        # Join both ec-code columns into one & Create a set of ec-codes
+        reacs_mapped['ec-code_x'] = reacs_mapped['ec-code_x'].str.split(r'\s*;\s*')
+        reacs_mapped['ec-code_x'] = reacs_mapped['ec-code_x'].fillna(
+            {i: [] for i in reacs_mapped.index}
+            ).map(set).map(list)
+        reacs_mapped['ec-code'] = (reacs_mapped['ec-code_x'] + reacs_mapped['ec-code_y']).map(set).map(list)
 
-            # Move BioCyc ID & alias to reference
-            mnx_reacs['reference'] = mnx_reacs[
-                ['metacyc.reaction', 'alias']
-                ].to_dict('records')
+        # Drop all unnecessary columns
+        reacs_mapped.drop(['MetaNetX', 'mnx_equation', 'ec-code_x', 'ec-code_y'], axis=1, inplace=True)
 
-            # Create list of EC codes in column ec-code_x, 
-            # Join both ec-code columns into one & Create a set of ec-codes
-            mnx_reacs['ec-code_x'] = mnx_reacs['ec-code_x'].str.split(r'\s*;\s*')
-            mnx_reacs['ec-code_x'] = mnx_reacs['ec-code_x'].fillna(
-                {i: [] for i in mnx_reacs.index}
-                ).map(set).map(list)
-            mnx_reacs['ec-code'] = (mnx_reacs['ec-code_x'] + mnx_reacs['ec-code_y']).map(set).map(list)
-
-            # Drop all unnecessary columns
-            mnx_reacs.drop(
-                [
-                    'metacyc.reaction', 'MetaNetX', 'alias', 'ec-code_x',
-                    'ec-code_y', 'equation'
-                 ], axis=1, inplace=True
-                )
-
-            # Replace equation with mnx_equation
-            mnx_reacs.rename({'mnx_equation': 'equation'}, axis=1, inplace=True)
-
-            # Replace BioCyc in via column with MetaNetX
-            mnx_reacs['via'] = 'MetaNetX'
-
-        # Step 2.2: Clean-up of table containing unmapped IDs
-        # ---------------------------------------------------
-        if not unmapped_reacs.empty:
-            # Remove unnecessary columns
-            unmapped_reacs.dropna(axis=1, how='all', inplace=True)
-            
-            # Clean-up ec-code column
-            unmapped_reacs.rename({'ec-code_y': 'ec-code'}, axis=1, inplace=True)
-
-        # Step 3: Get result(s)
+        # Step 3: Return result
         # ---------------------
-        if not mnx_reacs.empty and not unmapped_reacs.empty:
-            return (mnx_reacs, unmapped_reacs)
-        elif not mnx_reacs.empty and unmapped_reacs.empty:
-            return mnx_reacs
-        else:
-            return unmapped_reacs
+        return reacs_mapped
 
-    def _map_to_bigg(biocyc_reacs: pd.DataFrame) -> pd.DataFrame:
+    def _map_biocyc_to_bigg(unmapped_reacs: pd.DataFrame) -> pd.DataFrame:
         """
         | Helper function for :py:func:`~refinegems.classes.gapfill.map_biocyc_to_reac` 
         | Maps Biocyc IDs in a table to the corresponding BiGG IDs & 
         | Adds information obtained via the BiGG IDs to the resulting table
 
         Args:
-            - biocyc_reacs (pd.DataFrame): 
+            - unmapped_reacs (pd.DataFrame): 
                 Table containing BioCyc IDs
 
         Returns:
             pd.DataFrame:
-                (1) Case complete mapping:
-                        Table with BioCyc IDs mapped to BiGG IDs & more information 
-                        obtained from BiGG
-                (2) Case no mapping:
-                        Table with unmapped BioCyc IDs
-                (3) Case incomplete mapping:
-                        Combined table containing BioCyc IDs mapped to BiGG IDs with 
-                        more information obtained from BiGG & unmapped BioCyc IDs
+                The extended table.
         """
 
         # Step 1: Mapping & Obtain information
@@ -340,82 +326,50 @@ def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         # Drop duplicates to get the unique BioCyc IDs
         bigg2biocyc_reacs.drop_duplicates(subset='id', inplace=True)
 
-        # Merge bigg2biocyc_reacs with biocyc_reacs to get new information
-        biocyc_reacs = bigg2biocyc_reacs.merge(biocyc_reacs, on='id', how='right')
+        # Merge bigg2biocyc_reacs with unmapped_reacs to get new information
+        reacs_mapped = bigg2biocyc_reacs.merge(unmapped_reacs, on='id', how='right')
 
-        # Split biocyc_reacs into MNX part & non-mapped part
-        mask = biocyc_reacs['BiGG'].notna()
-        bigg_reacs = biocyc_reacs[mask]
-        unmapped_reacs = biocyc_reacs[~mask]
+        # Step 2: Clean-up
+        # ----------------
+        # Remove all NaNs from DataFrame
+        reacs_mapped.replace(np.nan, None, inplace=True)
 
-        # Step 2.1: Clean-up of table containing BiGG IDs
-        # -----------------------------------------------
-        if not bigg_reacs.empty:
-            # Rename id to metacyc.reaction for simpler addition to column reference
-            bigg_reacs.rename({'id': 'metacyc.reaction'}, axis=1, inplace=True)
+        # Turn BiGG column in single value, rename column to id 
+        # & if multiple BiGG IDs exist add to column alias
+        reacs_mapped = reacs_mapped.apply(_clean_res_row, args=('BiGG',), axis=1)
 
-            # Turn BiGG column in single value, rename column to id 
-            # & if multiple BiGG IDs exist add to column alias
-            bigg_reacs['id'] = bigg_reacs['BiGG'].map(list).str.get(0)
-            bigg_reacs['alias'] = bigg_reacs.apply(
-                lambda x: 
-                    x['BiGG'].remove(x['id']) if len(x['BiGG']) != 1 else None, 
-                    axis=1
-            )
+        # Drop all unnecessary columns
+        reacs_mapped.drop(['BiGG', 'reaction_string', 'name'], axis=1, inplace=True)
 
-            # Move BioCyc ID & alias to reference
-            bigg_reacs['reference'] = bigg_reacs[
-                ['metacyc.reaction', 'alias']
-                ].to_dict('records')
-
-            # Drop all unnecessary columns
-            bigg_reacs.drop(
-                [
-                    'metacyc.reaction', 'equation', 
-                    'BiGG', 'alias'
-                    ], axis=1, inplace=True
-                )
-
-            # Replace equation with reaction_string if BioCyc could be mapped to BiGG
-            bigg_reacs.rename({'reaction_string': 'equation'}, axis=1, inplace=True)
-
-            # Replace BioCyc in via column with BiGG
-            bigg_reacs['via'] = 'BiGG'
-
-        # Step 2.2: Clean-up of table containing unmapped IDs
-        # ---------------------------------------------------
-        if not unmapped_reacs.empty:
-            # Remove unnecessary columns
-            unmapped_reacs.dropna(axis=1, how='all', inplace=True)
-
-        # Step 3: Get result(s)
+        # Step 3: Return result
         # ---------------------
-        if not bigg_reacs.empty and not unmapped_reacs.empty:
-            return pd.concat([bigg_reacs, unmapped_reacs], sort=True, ignore_index=True)
-        elif not bigg_reacs.empty and unmapped_reacs.empty:
-            return bigg_reacs
-        else:
-            return unmapped_reacs
+        return reacs_mapped
 
-    # Step 1: Map to MetaNetX
-    # -----------------------
-    mapped2MNX, unmapped_reacs = _map_to_mnx(biocyc_reacs)
+    # Step 1: Get missing reactions without GPR
+    # -----------------------------------------
+    mask = biocyc_reacs['add_to_GPR'].isna()
+    biocyc_reacs_to_map = biocyc_reacs[mask]
 
-    # Step 2.1: Map to BiGG
-    # ---------------------
-    if not unmapped_reacs.empty:
-        mapped2BiGG = _map_to_bigg(unmapped_reacs)
+    # Step 2: Mapping
+    # ---------------
+    # Map to MetaNetX
+    if use_MNX:
+        biocyc_reacs_to_map = _map_biocyc_to_mnx(biocyc_reacs_to_map)
+
+    # Map to BiGG
+    if use_BiGG:
+        to_map = biocyc_reacs_to_map[biocyc_reacs_to_map['via'] == 'BioCyc']
+        if len(to_map) > 0:
+            to_map = _map_biocyc_to_bigg(to_map)
+            biocyc_reacs_to_map = pd.concat([to_map, biocyc_reacs_to_map[~(biocyc_reacs_to_map['via'] == 'BioCyc')]])
 
     # Step 3: Gather result(s)
     # ------------------------
     # Merge all tables if necessary
-    missing_bc_reacs = (
-        pd.concat([mapped2MNX, mapped2BiGG], sort=True, ignore_index=True) if not unmapped_reacs.empty
-        else mapped2MNX
-    )
+    biocyc_reacs = pd.concat([biocyc_reacs_to_map, biocyc_reacs[~biocyc_reacs['add_to_GPR'].isna()]], sort=True, ignore_index=True)
 
     # Return results
-    return missing_bc_reacs, unmapped_reacs
+    return biocyc_reacs
 
 
 # Mapping of EC numbers
@@ -978,7 +932,6 @@ class GapFiller(ABC):
                     missing_reac_table.at[idx,'add_to_GPR'] = reac
                 else:
                     missing_reac_table.at[idx,'add_to_GPR'] = list(set(reac + current_gpr))
-                self._statistics['reactions']['already in model'] += 1
             # case 3: new reaction was generated
             elif isinstance(reac,cobra.Reaction):
                 # validate reaction
@@ -1041,20 +994,20 @@ class GapFiller(ABC):
             libModel: 
                 The gap-filled model.
         """
-
+        # @DISCUSSION: Move to find_missing_reactions?
+        # Step 0: Preparations
+        # --------------------
         # Filter out reactions without ncbiprotein
-        # @DISCUSSION Add also reactions without GPR to model?
         self.manual_curation['reactions']['no GPR'] = self.missing_reactions[self.missing_reactions['ncbiprotein'].isnull()]
-        self._statistics['reactions']['umappable'] += self.manual_curation['reactions']['no GPR']['id'].nunique()
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no GPR']['id'].nunique()
         self.missing_reactions = self.missing_reactions[~self.missing_reactions['ncbiprotein'].isnull()]
-        
+
         # Filter out genes without ncbiprotein
         self.manual_curation['genes']['no ncbiprotein'] = self.missing_genes[self.missing_genes['ncbiprotein'].isnull()]
         self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no ncbiprotein']['locus_tag'].nunique()
         self.missing_genes = self.missing_genes[~self.missing_genes['ncbiprotein'].isnull()]
 
         # filter out duplicated genes to avoid duplicated IDs in the model
-        # @DISCUSSION: Is there a possibility, that gene copies / homologs might be lost?
         if len(self.missing_genes) != len(self.missing_genes['ncbiprotein'].unique()):
             self.manual_curation['genes']['duplicated (not added)'] = self.missing_genes[self.missing_genes.duplicated(subset=['ncbiprotein'])]
             self._statistics['genes']['duplicated'] += self.manual_curation['genes']['duplicated (not added)']['locus_tag'].nunique()
@@ -1089,7 +1042,6 @@ class GapFiller(ABC):
             
             # what remains:
             self.missing_reactions = self.missing_reactions[self.missing_reactions['add_to_GPR'].isnull()]
-            self._statistics['reactions']['already in model'] += reacs_in_model['id'].nunique()
             self.missing_genes = self.missing_genes[~(self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model))]#
 
         # Step 2: Add reactions to model, if reconstruction successful
@@ -1138,7 +1090,7 @@ class GapFiller(ABC):
         
         # collect stats and stuff for manual curation
         self.manual_curation['genes']['building failed'] = self.missing_genes
-        self._statistics['genes']['building failed'] += self.missing_genes['locus_tag'].nunique()
+        self._statistics['genes']['building failed'] = self.missing_genes['locus_tag'].nunique()
         
         # calculate remaining statistics
         self._statistics['reactions']['missing (remaining)'] += self._statistics['reactions']['building failed']
@@ -1146,15 +1098,17 @@ class GapFiller(ABC):
 
         return model
 
-    def report(self, dir=str):
+    def report(self, dir:str, hide_zeros:bool=False) -> None:
         """Based on the previous gap-filling, save statistics and missing genes/reactions for manual curation.
 
         Args:
             - dir (str): 
                 Path to a directory to save the report to.
+            - hide_zeros (bool, optional):
+                Option to hide statistics with zero counts. Defaults to False.
         """
 
-        statistics_report = GapFillerReport(self.variety, self._statistics, self.manual_curation)
+        statistics_report = GapFillerReport(self._variety, deepcopy(self._statistics), self.manual_curation, hide_zeros)
         statistics_report.save(Path(dir))
 
 # --------------------
@@ -1298,7 +1252,8 @@ class KEGGapFiller(GapFiller):
         # ----------------------------------------
         # need manual curation
         self.manual_curation['reactions']['no ID'] = reacs_mapped[reacs_mapped['id'].isnull()]
-        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no ID'].nunique().max()
+        num_reacs_unmappable = self.manual_curation['reactions']['no ID'].value_counts().max()
+        self._statistics['reactions']['unmappable'] += num_reacs_unmappable if not pd.isna(num_reacs_unmappable) else 0
         # map to model reactions
         reacs_mapped = reacs_mapped[~reacs_mapped['id'].isnull()]
         gpr = reacs_mapped.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
@@ -1396,8 +1351,8 @@ class BioCycGapFiller(GapFiller):
                 }, 
             inplace=True)
 
-        # Turn empty strings into NaNs
-        self._biocyc_gene_tbl.replace(r'', np.nan, inplace=True)
+        # Turn empty strings into None
+        self._biocyc_gene_tbl.replace(r'', None, inplace=True)
 
         # Drop only complete empty rows
         self._biocyc_gene_tbl.dropna(how='all', inplace=True)
@@ -1408,7 +1363,7 @@ class BioCycGapFiller(GapFiller):
         # Add amount of unmappable genes to statistics
         self._statistics['genes']['unmappable'] += self.manual_curation['genes']['no reaction ID']['locus_tag'].nunique()
 
-        # Remove all rows where 'id' NaNs
+        # Remove all rows where 'id' is None
         self._biocyc_gene_tbl.dropna(subset='id', inplace=True)
 
     # @DISCUSSION: Should other columns for references to other databases be allowed?
@@ -1443,7 +1398,7 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Turn empty strings into NaNs
-        self._biocyc_rxn_tbl.replace(r'', np.nan, inplace=True)
+        self._biocyc_rxn_tbl.replace(r'', None, inplace=True)
 
         # Set entries in is_spontaneous to booleans &
         # specify empty entries in 'is_spontaneous' as False
@@ -1573,18 +1528,23 @@ class BioCycGapFiller(GapFiller):
         # Add column 'reference'
         self.missing_reactions['reference'] = None
 
+        # Drop rows if 'id' is NaN
+        self.manual_curation['reactions']['no id'] = self.missing_reactions[self.missing_reactions['id'].isna()]
+        
+        num_reacs_no_id = self.manual_curation['reactions']['no id'].value_counts().max()
+        self._statistics['reactions']['unmappable'] += num_reacs_no_id if not pd.isna(num_reacs_no_id) else 0
+        self.missing_reactions = self.missing_reactions[~self.missing_reactions['id'].isna()]
+
+        # @TODO see comment for this in KEGGapFiller
+        # check, if any automatic gapfilling is possible
+        if len(self.missing_reactions) == 0:
+            return None
+
         # Step 4: Map missing reactions without entries in column 'add_to_GPR' 
         #         to other databases to get a parsable reaction equation
         # --------------------------------------------------------------------
-        # Map to MetaNetX, then to BiGG & Merge all results tables into one
-        mask = self.missing_reactions['add_to_GPR'].isna()
-        mapped_reacs, unmapped_reacs = map_biocyc_to_reac(self.missing_reactions[mask])
-
-        # @TODO: Recheck unmappable reacs filterings
-        # Are two really necessary?
-        # Get unmappable reactions for manual curation
-        self.manual_curation['reactions']['no mapping'] = unmapped_reacs
-        self._statistics['reactions']['unmappable'] += unmapped_reacs['id'].nunique()
+        # Map to MetaNetX/BiGG
+        mapped_reacs = map_biocyc_to_reac(self.missing_reactions)
 
         # Filter reacs for already in model
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(
@@ -1592,36 +1552,29 @@ class BioCycGapFiller(GapFiller):
                 self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1
             )
 
-        # Get missing_reactions with add_to_GPR
-        add_to_GPR_before_mapping = self.missing_reactions[~mask]
-
-        # Merge self.missing_reactions with add_to_gpr with the mapped_reacs
-        self.missing_reactions = pd.concat([add_to_GPR_before_mapping, mapped_reacs], sort=True, ignore_index=True)
-
         # Step 5: Get results
         # -------------------
         # statistics on reactions already in model
-        self._statistics['reactions']['already in model'] = self.missing_reactions[~self.missing_reactions['add_to_GPR'].isna()]['id'].nunique()
+        self._statistics['reactions']['already in model'] = mapped_reacs[~mapped_reacs['add_to_GPR'].isna()]['id'].nunique()
 
         # statistics on mapped reactions
-        self._statistics['reactions']['mapped to MNX'] = self.missing_reactions[self.missing_reactions['via'] == 'MetaNetX']['id'].nunique()
-        self._statistics['reactions']['mapped to BiGG'] = self.missing_reactions[self.missing_reactions['via'] == 'BiGG']['id'].nunique()
-        self._statistics['reactions']['mapped to KEGG'] = self.missing_reactions[self.missing_reactions['via'] == 'KEGG']['id'].nunique()
-        
-        # Split missing reactios based on entries in 'via' & 'add_to_GPR'
-        mask = (self.missing_reactions['via'] == 'BioCyc') & (self.missing_reactions['add_to_GPR'].isna())
+        self._statistics['reactions']['mapped to MNX'] = mapped_reacs[mapped_reacs['via'] == 'MetaNetX']['id'].nunique()
+        self._statistics['reactions']['mapped to BiGG'] = mapped_reacs[mapped_reacs['via'] == 'BiGG']['id'].nunique()
+        self._statistics['reactions']['mapped to KEGG'] = mapped_reacs[mapped_reacs['via'] == 'KEGG']['id'].nunique()
 
-        # @TODO: Is filtering here not enough?
+        # Split missing reactios based on entries in 'via' & 'add_to_GPR'
+        mask = (mapped_reacs['via'] == 'BioCyc') & (mapped_reacs['add_to_GPR'].isna())
+
         # DataFrame with unmappable BioCyc IDs & No entries in 'add_to_GPR'
-        self.manual_curation['reactions']['no mapping, no GPR'] = self.missing_reactions[mask]
-        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no mapping to MNX, Bigg, no GPR']['id'].nunique()
+        self.manual_curation['reactions']['no mapping'] = mapped_reacs[mask]
+        self._statistics['reactions']['unmappable'] += self.manual_curation['reactions']['no mapping']['id'].nunique()
 
         # calculate remaining statistics
         self._statistics['reactions']['missing (total)'] = self._statistics['reactions']['missing (based on genes)'] - self._statistics['reactions']['already in model']
         self._statistics['reactions']['missing (remaining)'] = self._statistics['reactions']['unmappable']
 
-        # DataFrame with either mapped BioCyc IDs or Entries in 'add_to_GPR'
-        self.missing_reactions = self.missing_reactions[~mask]
+        # Mapped reactions
+        self.missing_reactions = mapped_reacs[~mask]
     
 # ----------------
 # Gapfilling no DB
@@ -1710,7 +1663,8 @@ class GeneGapFiller(GapFiller):
             self.manual_curation['genes']['gff no locus tag'] = self.missing_genes[self.missing_genes['locus_tag'].isna()]['ncbiprotein']
         else: 
             self.missing_genes['ncbiprotein'] = None
-        self._statistics['genes']['unmappable'] += self.manual_curation['genes']['gff no locus tag'].nunique().max()  # no locus tag
+        num_genes_unmappable = self.manual_curation['genes']['gff no locus tag'].value_counts().max()
+        self._statistics['genes']['unmappable'] += num_genes_unmappable if not pd.isna(num_genes_unmappable) else 0  # no locus tag
         
         # formatting
         # ncbiprotein | locus_tag | ec-code
@@ -1898,7 +1852,7 @@ class GeneGapFiller(GapFiller):
         # statistics on reactions already in model
         self._statistics['reactions']['already in model'] = mapped_reacs[~mapped_reacs['add_to_GPR'].isna()]['id'].nunique()
 
-        # statistics on mapped & unmapped reactions
+        # statistics on mapped reactions
         self._statistics['reactions']['mapped to MNX'] = mapped_reacs[mapped_reacs['via'] == 'MetaNetX']['id'].nunique()
         self._statistics['reactions']['mapped to BiGG'] = mapped_reacs[mapped_reacs['via'] == 'BiGG']['id'].nunique()
         self._statistics['reactions']['mapped to KEGG'] = mapped_reacs[mapped_reacs['via'] == 'KEGG']['id'].nunique()

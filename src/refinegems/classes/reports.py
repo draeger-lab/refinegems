@@ -1385,19 +1385,24 @@ class MultiModelInfoReport(Report):
 
 # @TODO
 class GapFillerReport(Report):
-    """Report for the gapfilling of the model.
+    """Report for the gap-filling of the model.
     
     Attributes:
+        - variety:
+            The variety of the gap-filling method used.
         - statistics:
             List of different counts for reactions, genes and metabolites.
         - manual_curation:
             List of IDs for manual curation.
+        - hide_zeros:
+            Option to hide all zero values in the statistics. Defaults to False.
     """
     
-    def __init__(self, variety: str, statistics: dict, manual_curation: dict) -> None:
+    def __init__(self, variety: str, statistics: dict, manual_curation: dict, hide_zeros:bool=False) -> None:
         self.variety = variety
-        self.statistics = statistics
         self.manual_curation = manual_curation
+        self.hide_zeros = hide_zeros
+        self.statistics = statistics
 
     @property
     def statistics(self):
@@ -1412,12 +1417,14 @@ class GapFillerReport(Report):
     @statistics.setter
     def statistics(self, stats_dict: dict):
         for k in stats_dict.keys():
-            # remove unmappable if same as missing
-            if stats_dict[k]['unmappable'] == stats_dict[k]['missing (remaining)']:
-                stats_dict[k].pop('unmappable')
+            # if 'unmappable' and 'missing (remaining)' exist & are the same, remove 'unmappable'
+            if 'unmappable' in stats_dict[k] and 'missing (remaining)' in stats_dict[k]:
+                if stats_dict[k]['unmappable'] == stats_dict[k]['missing (remaining)']:
+                    stats_dict[k].pop('unmappable')
 
             # remove all zeros
-            stats_dict[k] = {k: v for k, v in stats_dict[k].items() if v}
+            if self.hide_zeros:
+                stats_dict[k] = {k: v for k, v in stats_dict[k].items() if v}
 
         self._statistics = stats_dict
 
@@ -1444,23 +1451,9 @@ class GapFillerReport(Report):
             warnings.warn('Unknown color palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps['YlGn']
         
-        fig = plt.figure()
+        fig = plt.figure(tight_layout=True)
         fig.suptitle(f'Statistics for Gapfilling via {self.variety}', fontsize=16)
         grid = gspec.GridSpec(2,1,hspace=0.6)
-
-        # plot statistics about reactions
-        # -------------------------------
-        reactions = list(self.statistics['reactions'].keys())
-        reactions = reactions[::-1]
-        values = list(self.statistics['reactions'].values())
-        values = values[::-1]
-
-        ax1 = fig.add_subplot(grid[0,0])
-        p = ax1.barh(reactions, values, color=[cmap(0.2),cmap(0.4),cmap(0.6), cmap(0.8), cmap(1.0)])
-        ax1.bar_label(p, values)
-        ax1.set_xlabel('count')
-        ax1.tick_params(axis='x', which='major', labelsize=7, labelrotation=90)
-        ax1.set_title('A) Reactions')
 
         # plot statistics about genes
         # ---------------------------
@@ -1469,12 +1462,26 @@ class GapFillerReport(Report):
         values = list(self.statistics['genes'].values())
         values = values[::-1]
 
-        ax2 = fig.add_subplot(grid[1,0])
+        ax2 = fig.add_subplot(grid[0,0])
         p = ax2.barh(genes, values, color=[cmap(0.2),cmap(0.4),cmap(0.6), cmap(0.8), cmap(1.0)])
         ax2.bar_label(p, values)
         ax2.set_xlabel('count')
         ax2.tick_params(axis='x', which='major', labelsize=7, labelrotation=90)
-        ax2.set_title('B) Genes')
+        ax2.set_title('A) Genes')
+
+        # plot statistics about reactions
+        # -------------------------------
+        reactions = list(self.statistics['reactions'].keys())
+        reactions = reactions[::-1]
+        values = list(self.statistics['reactions'].values())
+        values = values[::-1]
+
+        ax1 = fig.add_subplot(grid[1,0])
+        p = ax1.barh(reactions, values, color=[cmap(0.2),cmap(0.4),cmap(0.6), cmap(0.8), cmap(1.0)])
+        ax1.bar_label(p, values)
+        ax1.set_xlabel('count')
+        ax1.tick_params(axis='x', which='major', labelsize=7, labelrotation=90)
+        ax1.set_title('B) Reactions')
 
         return fig
 
@@ -1488,8 +1495,8 @@ class GapFillerReport(Report):
                 A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to `YlGn`.    
         """
 
-        dir_path = Path(dir, f'GapFillerReport/{re.sub(r'[^a-zA-Z0-9]', '_', self.variety)}')
-        dir_path.mkdir(parents=True)
+        dir_path = Path(dir, f'GapFillerReport/{re.sub(r"[^a-zA-Z0-9]", "_", self.variety)}')
+        dir_path.mkdir(parents=True, exist_ok=True)
 
         # save the visualisation
         fig = self.visualise(color_palette)
@@ -1498,6 +1505,6 @@ class GapFillerReport(Report):
 
         # save the manual curation lists
         for category in self.manual_curation['reactions']:
-            pd.DataFrame(self.manual_curation['reactions'][category]).to_csv(Path(dir_path,f'reactions_{category}.csv'), sep=';', header=True)
+            pd.DataFrame(self.manual_curation['reactions'][category]).to_csv(Path(dir_path,f'reactions_{category}.csv'), sep=';', header=True, index=False)
         for category in self.manual_curation['genes']:
-            pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True)
+            pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True, index=False)
