@@ -10,6 +10,7 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 # requirements
 ################################################################################
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import cobra
 
@@ -201,4 +202,5 @@ def plot_rea_sbo_single(model: libModel):
     ax.set_xlabel('number of reactions', fontsize=16)
     ax.legend(loc='lower right')
     fig = ax.get_figure()
+    plt.tight_layout()
     return fig
