@@ -156,6 +156,49 @@ To bump to the newest versions possible, use the following command in the `docs`
     pip-compile --upgrade
 
 
+Todo Tree extension
+-------------------
+
+If you are working with VS Code or similar, you can install the ``Todo Tree`` extension and copy the 
+content of the ``TodoTree_params.txt`` file in the ``dev`` folder into the corresponding place in your setting 
+to enable highlighting and tracing of the ``@KEYWORD`` laabel for bugs, discussions and more.
+
+The usage of these keywords strongly recommended, as it make communication between the developers and tracing of 
+issues and ideas much easier. The following label are currently suppored:
+
+.. list-table:: Label supported with the refineGEMs Todo Tree file
+    :header-rows: 1
+    :widths: 25 75 
+
+    * - label 
+      - usage
+    * - @TODO
+      - something needs to be implemented or changed
+    * - @BUG 
+      - something is not working as expected, the cause has yet to be determined
+    * - @FIXME 
+      - known error or issue that needs attention
+    * - @TEST 
+      - the following code needs to be tested 
+    * - @DEPRECATE 
+      - the following code can be removed in the future
+    * - @NOTE 
+      - notes from one dev to another or just a reminder 
+    * - @DISCUSSION 
+      - an issue, idea or feature, that requires discussion
+    * - @DEBUG 
+      - label for a debugging switch or similar, see next section
+    * - @ASK 
+      - when something requires research or further input, before it can be discussed
+    * - @IDEA
+      - write down ideas for new features, better implementations and more
+    * - @WARNING
+      - if something needs to be kept in mind or can easily break down, without being a bug
+
+.. note:: 
+
+    For the label to be recognised correctly, the following format is required: ``# @KEYWORD``.
+
 Debugging switches
 ------------------
 
