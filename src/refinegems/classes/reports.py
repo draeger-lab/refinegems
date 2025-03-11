@@ -1398,11 +1398,12 @@ class GapFillerReport(Report):
             Option to hide all zero values in the statistics. Defaults to False.
     """
     
-    def __init__(self, variety: str, statistics: dict, manual_curation: dict, hide_zeros:bool=False) -> None:
+    def __init__(self, variety: str, statistics: dict, manual_curation: dict, hide_zeros:bool=False, no_title:bool=False) -> None:
         self.variety = variety
         self.manual_curation = manual_curation
         self.hide_zeros = hide_zeros
         self.statistics = statistics
+        self.no_title = no_title
 
     @property
     def statistics(self):
@@ -1416,14 +1417,8 @@ class GapFillerReport(Report):
 
     @statistics.setter
     def statistics(self, stats_dict: dict):
-        for k in stats_dict.keys():
-            # if 'unmappable' and 'missing (remaining)' exist & are the same, remove 'unmappable'
-            if 'unmappable' in stats_dict[k] and 'missing (remaining)' in stats_dict[k]:
-                if stats_dict[k]['unmappable'] == stats_dict[k]['missing (remaining)']:
-                    stats_dict[k].pop('unmappable')
-
-            # remove all zeros
-            if self.hide_zeros:
+        if self.hide_zeros:
+            for k in stats_dict.keys():
                 stats_dict[k] = {k: v for k, v in stats_dict[k].items() if v}
 
         self._statistics = stats_dict
@@ -1452,7 +1447,8 @@ class GapFillerReport(Report):
             cmap = matplotlib.colormaps['YlGn']
         
         fig = plt.figure(tight_layout=True)
-        fig.suptitle(f'Statistics for Gapfilling via {self.variety}', fontsize=16)
+        if not self.no_title:
+            fig.suptitle(f'Statistics for Gapfilling via {self.variety}', fontsize=16)
         grid = gspec.GridSpec(2,1,hspace=0.6)
 
         # plot statistics about genes
@@ -1505,6 +1501,8 @@ class GapFillerReport(Report):
 
         # save the manual curation lists
         for category in self.manual_curation['reactions']:
-            pd.DataFrame(self.manual_curation['reactions'][category]).to_csv(Path(dir_path,f'reactions_{category}.csv'), sep=';', header=True, index=False)
+            if not self.manual_curation['reactions'][category].empty:
+                pd.DataFrame(self.manual_curation['reactions'][category]).to_csv(Path(dir_path,f'reactions_{category}.csv'), sep=';', header=True, index=False)
         for category in self.manual_curation['genes']:
-            pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True, index=False)
+            if not self.manual_curation['genes'][category].empty:
+                pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True, index=False)
