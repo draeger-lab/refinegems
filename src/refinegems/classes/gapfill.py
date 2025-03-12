@@ -973,6 +973,7 @@ class GapFiller(ABC):
     # @TODO: If missing_reactions is empty error is thrown -> Try to inform user after calling find_missing_reactions
     #           to not use fill_model; disable functionality? :thinking:
     # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
+    # @IDEA/ @DISCUSSION: Use ..curation.curate.update_annotations_from_others & ..curation.curate.resolve_duplicates here?
     def fill_model(self, model:Union[cobra.Model,libModel], 
                    **kwargs) -> libModel:
         """Based on a table of missing genes and missing reactions, 

@@ -63,7 +63,7 @@ from ..utility.io import parse_gff_for_cds, parse_fasta_headers, parse_dict_to_d
 ################################################################################
 
 #------------------------------------------------ Constant variables --------------------------------------------------#
-BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta: 
+BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta: # @DISCUSSION: Move to entities/util?
     
 ################################################################################
 # functions
