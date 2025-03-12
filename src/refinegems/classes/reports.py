@@ -1490,8 +1490,7 @@ class GapFillerReport(Report):
             - color_palette (str, optional):
                 A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to `YlGn`.    
         """
-
-        dir_path = Path(dir, f'GapFillerReport/{re.sub(r"[^a-zA-Z0-9]", "_", self.variety)}')
+        dir_path = Path(dir, 'GapFillerReport', f'{re.sub(r"[^a-zA-Z0-9]+", "_", self.variety).lower()}')
         dir_path.mkdir(parents=True, exist_ok=True)
 
         # save the visualisation

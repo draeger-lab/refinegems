@@ -1666,7 +1666,7 @@ class GeneGapFiller(GapFiller):
     
     def __init__(self) -> None:
         super().__init__()
-        self._variety = 'GFF + SwissProt'
+        self._variety = 'GFF'
        
     # @TODO logging
     # @DISCUSSION Option for if model has no label -> Call function from polish to get labels?
@@ -1784,6 +1784,7 @@ class GeneGapFiller(GapFiller):
                 in case of type_db = 'user' or :py:func:`refinegems.utility.db_access.get_ec_via_swissprot`
                 in case of type_db = 'swissprot'. 
         """
+        self._variety = f'{self._variety} + {type_db}'
         
         # try to identfy missing ECs
         # --------------------------
