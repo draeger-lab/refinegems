@@ -34,6 +34,7 @@ from cobra.io.sbml import _f_gene, _f_gene_rev
 from copy import deepcopy
 import io
 import json
+import logging
 import math
 import numpy as np
 import os
@@ -1112,6 +1113,10 @@ class GapFiller(ABC):
             - with_title (bool, optional):
                 Option to get figure without title. Defaults to False.
         """
+        logging.warning(
+            'Please keep in mind that all statistical values are determined while running the tool '
+            + 'and only unique values are tracked.'
+            )
 
         statistics_report = GapFillerReport(
             self._variety, deepcopy(self._statistics), self.manual_curation, hide_zeros, no_title
@@ -1270,13 +1275,13 @@ class KEGGapFiller(GapFiller):
         reacs_mapped = map_ec_to_reac(self.missing_reactions, threshold_add_reacs)
 
         # Statistics on missing based on genes
-        self._statistics['reactions']['missing (based on genes)'] = reacs_mapped['id'].nunique() + reacs_mapped['id'].isna().sum()
+        self._statistics['reactions']['missing (based on genes)'] = reacs_mapped['id'].nunique() + int(reacs_mapped['id'].isna().sum())
 
         # Step 3: clean and map to model reactions
         # ----------------------------------------
         # need manual curation
         self.manual_curation['reactions']['no ID'] = reacs_mapped[reacs_mapped['id'].isnull()]
-        self._statistics['reactions']['unmappable'] = self.manual_curation['reactions']['no ID']['id'].isna().sum()
+        self._statistics['reactions']['unmappable'] = int(self.manual_curation['reactions']['no ID']['id'].isna().sum())
         
         # map to model reactions
         reacs_mapped = reacs_mapped[~reacs_mapped['id'].isnull()]
@@ -1361,24 +1366,26 @@ class BioCycGapFiller(GapFiller):
     # Label in model == Locus tag from GenBank GFF file == BioCyc Accession-2
     def biocyc_gene_tbl(self, biocyc_gene_tbl_path: str):
         # Read table
-        self._biocyc_gene_tbl = pd.read_table(
+        biocyc_genes = pd.read_table(
             biocyc_gene_tbl_path, 
             usecols=['Accession-2', 'Reactions of gene'], 
             dtype=str
             )
 
         # Rename columns for further use
-        self._biocyc_gene_tbl.rename(
+        biocyc_genes.rename(
             columns={
                 'Accession-2': 'locus_tag', 'Reactions of gene': 'id'
                 }, 
             inplace=True)
 
         # Turn empty strings into None
-        self._biocyc_gene_tbl.replace(r'', None, inplace=True)
+        biocyc_genes.replace(r'', None, inplace=True)
 
         # Drop only complete empty rows
-        self._biocyc_gene_tbl.dropna(how='all', inplace=True)
+        biocyc_genes.dropna(how='all', inplace=True)
+
+        self._biocyc_gene_tbl = biocyc_genes
 
     # @DISCUSSION: Should other columns for references to other databases be allowed?
     @property
@@ -1394,7 +1401,7 @@ class BioCycGapFiller(GapFiller):
     @biocyc_rxn_tbl.setter
     def biocyc_rxn_tbl(self, biocyc_reacs_tbl_path: str) -> pd.DataFrame:
         # Read table
-        self._biocyc_rxn_tbl = pd.read_table(
+        biocyc_rxns = pd.read_table(
             biocyc_reacs_tbl_path, 
             usecols=[
                 'Reaction', 'Object ID', 'EC-Number', 'Spontaneous?'
@@ -1403,7 +1410,7 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Rename columns for further use
-        self._biocyc_rxn_tbl.rename(
+        biocyc_rxns.rename(
             columns={
                 'Reaction': 'equation', 'Object ID': 'id',
                 'EC-Number': 'ec-code', 'Spontaneous?': 'is_spontaneous'
@@ -1412,12 +1419,14 @@ class BioCycGapFiller(GapFiller):
             )
 
         # Turn empty strings into NaNs
-        self._biocyc_rxn_tbl.replace(r'', None, inplace=True)
+        biocyc_rxns.replace(r'', None, inplace=True)
 
         # Set entries in is_spontaneous to booleans &
         # specify empty entries in 'is_spontaneous' as False
-        self._biocyc_rxn_tbl['is_spontaneous'].replace({r'T': True, r'F': False}, inplace=True)
-        self._biocyc_rxn_tbl['is_spontaneous'] = self._biocyc_rxn_tbl['is_spontaneous'].fillna(False)
+        biocyc_rxns['is_spontaneous'].replace({r'T': True, r'F': False}, inplace=True)
+        biocyc_rxns['is_spontaneous'] = biocyc_rxns['is_spontaneous'].fillna(False)
+
+        self._biocyc_rxn_tbl = biocyc_rxns
 
     def find_missing_genes(self, model: libModel):
         """Retrieves the missing genes and reactions from the BioCyc table 
@@ -1561,7 +1570,7 @@ class BioCycGapFiller(GapFiller):
         # Drop rows if 'id' is NaN
         self.manual_curation['reactions']['no ID'] = self.missing_reactions[self.missing_reactions['id'].isnull()]
         
-        self._statistics['reactions']['unmappable'] = self.manual_curation['reactions']['no ID']['id'].isna().sum()
+        self._statistics['reactions']['unmappable'] = int(self.manual_curation['reactions']['no ID']['id'].isna().sum())
         self.missing_reactions = self.missing_reactions[~self.missing_reactions['id'].isnull()]
 
         # @TODO see comment for this in KEGGapFiller
@@ -1685,7 +1694,7 @@ class GeneGapFiller(GapFiller):
                 self.missing_genes[col] = None
 
         # collect stats
-        self._statistics['genes']['missing (total)'] = self.missing_genes['locus_tag'].nunique() + self.missing_genes['locus_tag'].isna().sum()
+        self._statistics['genes']['missing (total)'] = self.missing_genes['locus_tag'].nunique() + int(self.missing_genes['locus_tag'].isna().sum())
                 
         # save genes with no locus tag for manual curation
         if 'ncbiprotein' in self.missing_genes.columns:
@@ -1694,7 +1703,7 @@ class GeneGapFiller(GapFiller):
             self.missing_genes['ncbiprotein'] = None
 
         # Statistics on unmappable genes
-        self._statistics['genes']['unmappable'] = self.missing_genes['locus_tag'].isna().sum()  # no locus tag
+        self._statistics['genes']['unmappable'] = int(self.missing_genes['locus_tag'].isna().sum())  # no locus tag
         
         # formatting
         # ncbiprotein | locus_tag | ec-code
@@ -1872,7 +1881,7 @@ class GeneGapFiller(GapFiller):
         
         # save for manual curation
         self.manual_curation['reactions']['no mapping'] = mapped_reacs[mapped_reacs['id'].isnull()]
-        self._statistics['reactions']['unmappable'] = self.manual_curation['reactions']['no mapping']['id'].isna().sum()
+        self._statistics['reactions']['unmappable'] = int(self.manual_curation['reactions']['no mapping']['id'].isna().sum())
         # map to model
         mapped_reacs = mapped_reacs[~mapped_reacs['id'].isnull()]
         mapped_reacs['add_to_GPR'] = mapped_reacs.apply(lambda x: self._find_reac_in_model(model,x['ec-code'],x['id'],x['via']), axis=1)
