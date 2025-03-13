@@ -57,6 +57,7 @@ class Report():
     # @IDEA 
     # colour palette for visulisation
     # date/time of creation?
+    # @ASK: Future?/ Feature request issue?
     pass
 
 
@@ -169,7 +170,8 @@ class GrowthSimulationReport(Report):
     
 
     # @TODO
-    # @NOTE: clean up for unrealistically high and minicules values to 0 - anyone a better idea?  
+    # @NOTE: clean up for unrealistically high and minicules values to 0 - anyone a better idea? -> Nope, so far not.
+    # @ASK: Comments/tasks can be removed?
     def plot_growth(self, unit:Literal['h','dt']='dt', color_palette:str='YlGn') -> matplotlib.figure.Figure:
         """Visualise the contents of the report.
 
@@ -226,6 +228,7 @@ class GrowthSimulationReport(Report):
 
             # clean-up data
             # @TODO / @NOTE
+            # @ASK Still todo?
             ydata = [_ if _ > 0.0 else 0.0 for _ in ydata]
             ydata = [_ if _ < 1000.0 else 0.0 for _ in ydata]
 
@@ -272,7 +275,7 @@ class GrowthSimulationReport(Report):
             growth.index = growth.index.get_level_values(1)
 
             # over / under (meaningful) values
-            # @TODO: are these values meaningful???
+            # @ASK: are these values meaningful???
             growth[growth > 1000] = 0   
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
@@ -404,6 +407,7 @@ class GrowthSimulationReport(Report):
         
     # @TEST    
     # @EXTEND : more options for saving the report e.g. html or pdf
+    # @ASK Future?/Feature request issue?
     def save(self, to:str, how:Literal['dir']='dir', check_overwrite:bool=True, color_palette:str='YlGn'):
         """Save the report. 
         
@@ -1035,6 +1039,7 @@ class CorePanAnalysisReport(Report):
         #@TODO
         #    - an easily human readable overview file?
         #    - smth about metabolites?
+        # @ASK Future?/ Feature request issue?
         # ..........................................................
 
         # collect all produced file in one directory
@@ -1057,9 +1062,11 @@ class CorePanAnalysisReport(Report):
 
 
 # @TODO
+# @ASK What remains?
 class ModelInfoReport(Report):
     """Report about the basic information of a given model.
 
+    @TODO Create note for docs
     Note: currently requires the input model to be a COBRApy model object.
 
     Attributes:
@@ -1145,6 +1152,7 @@ class ModelInfoReport(Report):
         return pd.DataFrame(data)
 
     # @TODO
+    # @ASK See above; Future?/Feature request issue?
     def make_html():
         pass
 
@@ -1301,6 +1309,7 @@ class ModelInfoReport(Report):
 
     # @TODO: match case for different output?
     #        -> only needed when html options available
+    # @ASK See above; Future?/ Feature request issue?
     def save(self, dir:str, color_palette:str='YlGn') -> None:
         """Save the report.
 
@@ -1383,7 +1392,6 @@ class MultiModelInfoReport(Report):
         pass
 
 
-# @TODO
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
     

@@ -231,6 +231,7 @@ def keep_only_bigg_reactions_in_certain_compartments(complete_df: pd.DataFrame) 
 
 
 # @DISCUSSION
+# @ASK Still required? Useful for something?
 # -----------
 def compare_bigg_ids(id1: str, id2: str) -> bool:
     """Compares two BiGG strings/IDs & Returns True if one BiGG ID matches most of the other
@@ -554,6 +555,7 @@ def parse_KEGG_gene(locus_tag:str) -> dict:
         gene_entry = list(Gene.parse(REST.kegg_get(locus_tag)))[0]
     except Exception as e:
         # @TODO : warning / logging
+        # @ASK Future?/Feature Request issue?
         gene_entry = None
     
     # skip, if no entry found
@@ -613,6 +615,7 @@ def parse_KEGG_ec(ec:str) -> dict:
         ec_entry = list(Enzyme.parse(REST.kegg_get(ec)))[0]
     except Exception as e:
         # @TODO logging / warning
+        # @ASK See above; Future?/Feature request issue?
         ec_entry = None
         ec_info['id'] = None
         ec_info['equation'] = None
@@ -634,6 +637,7 @@ def parse_KEGG_ec(ec:str) -> dict:
     if len(ec_entry.pathway) > 0:
         refs['kegg.pathway'] = [_[1] for _ in ec_entry.pathway]
     # @TODO extend as needed
+    # @ASK Future?/ Feature request issue?
     if len(ec_entry.dblinks) > 0:
         for dbname, ids in ec_entry.dblinks:
             if 'BRENDA' in dbname:
@@ -985,6 +989,7 @@ def search_ncbi_for_gpr(locus: str) -> str:
 # fetching the EC number (if possible) from NCBI 
 # based on an NCBI protein ID (accession version number)
 # @TODO logging
+# @ASK See above; Future?/ Feature request issue?
 def get_ec_from_ncbi(mail:str,ncbiprot:str) -> Union[str,None]:
     """Based on a NCBI protein accession number, try and fetch the 
     EC number from NCBI.
@@ -1014,6 +1019,7 @@ def get_ec_from_ncbi(mail:str,ncbiprot:str) -> Union[str,None]:
                         return qual['INSDQualifier_value']
     except Exception as e:
         # @TODO : logging / warning etc. ?
+        # @ASK See above; Future?/ Feature request issue?
         return None
   
   
@@ -1153,6 +1159,7 @@ def get_ec_via_swissprot(fasta:str, db:str, missing_genes:pd.DataFrame,
 """Handle and retrieve information from DIAMOND databases"""
 
 # @TODO logging
+# @ASK See above; Future?/ Feature request issue?
 def map_to_homologs(fasta:str, db:str, missing_genes:pd.DataFrame, 
                     mapping_file:str,
                          outdir:str=None,

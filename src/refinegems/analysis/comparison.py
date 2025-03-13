@@ -83,11 +83,10 @@ def plot_rea_sbo_multiple(models: list[libModel], rename:dict=None,
             except ValueError:
                 warnings.warn('Unknown color palette, setting it to "Paired"')
                 cmap = matplotlib.colormaps['Paired']
-            #@TODO : make sure all types of colourmaps work
+            #@TODO/@TEST : make sure all types of colourmaps work
             if isinstance(cmap,matplotlib.colors.ListedColormap):
                 cmap = cmap.colors[0:len(models)]
-                # @TODO
-                #    alternative, if colour list shorter than model list
+                # @TODO alternative, if colour list shorter than model list
             else:
                 cmap = cmap(np.linspace(0,1,len(models)))
         case list():

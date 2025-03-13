@@ -543,10 +543,11 @@ def set_initial_amount(model: libModel):
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
 # @DISCUSSION Extract label part? -> Might be good for GapFiller
-# @TODO Possibility of non-unique RefSeq (and potentially NCBI Protein) IDs
+# @DISCUSSION Possibility of non-unique RefSeq (and potentially NCBI Protein) IDs
 # -> Map via RefSeq locus tag? Requires however protein_fasta
 # -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
 # If ambigous locus tags are found this can be fixed by using the fasta to map RefSeq locus tags to the NCBI locus tags
+# @ASK Feature request/bug issue?
 def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False, ):
     """Adds NCBI Id to genes as annotation
 
@@ -586,6 +587,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()
             # @DISCUSSION Is there a better way of handling this?
+            # @ASK Maybe handle like Carolin did for gapfiller?
             entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
             add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
@@ -666,6 +668,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
 
 #----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
 # @DISCUSSION: Direction for GFF from RefSeq to NCBI Protein should also be possible with this set-up
+# @ASK Feature request issue?
 def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
     """Adds URIs to GeneProducts based on locus tag to indentifier mapping
 
@@ -839,7 +842,7 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch(r'^chebi|^eco$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
+                elif re.fullmatch(r'^chebi|^eco$', extracted_curie[0], re.IGNORECASE):
                     new_curie = extracted_curie[1].split(r':')
                     curie = (new_curie[0].lower(), new_curie[1])
                 elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
@@ -1341,7 +1344,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 #--------------------------------------------------- Main function ----------------------------------------------------#
 #@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
 #@NOTE: Find out all HTTP connections to get where error occurred
-#@TEST: Test with different models to also maybe recreate @TODO issue
+#@TEST/@ASK: Test with different models to also maybe recreate @TODO issue
 def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
            kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
@@ -1413,7 +1416,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
     
 
     ### add additional URIs to GeneProducts ###
@@ -1441,6 +1444,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
 # @TODO
 # @NOTE add a control to check if changing the reaction direction leads to EGC or so
 #   or is this unnessesary here
+# @ASK Future?/ Feature request issue?
 def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
@@ -1542,6 +1546,7 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
 # extract annotations fron a libsbml model
 # @NOTE takes much longer than it would in a cobra model
 #       -> currently not in usage
+# @ASK Do we need that at all?
 def getAnnotationDict_libsbml(entity: Union[Reaction,Species]) -> Union[dict,None]:
     """Try to extract the annotations from a libSBML entity as a dictionary.
 

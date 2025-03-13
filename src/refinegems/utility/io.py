@@ -216,7 +216,7 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
             print("Could not write to file. Wrong path?")
 
 
-    # @DISCUSSION Rewrite pathlib.Path handling? - bit crude currently
+    # @IDEA/ @TODO Rewrite pathlib.Path handling? - bit crude currently
     if isinstance(filename, Path):
         filename = str(filename)
     
@@ -339,7 +339,7 @@ def validate_libsbml_model(model: libModel) -> int:
 # FASTA
 # -----
 # @DEPRECATE: This function could maybe be deprecated in a future update.
-# @TODO: Check usage!
+# @NOTE: Check usage! -> Used in: ..curation.polish.cv_ncbiprotein
 def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame:
     """Parses FASTA file headers to obtain:
     
@@ -405,7 +405,7 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     return pd.DataFrame(locus2ids)
 
 
-# @TODO Specify that input Protein FASTA has to be from Genbank otherwise code won't work!!!
+# @WARNING Specify that input Protein FASTA has to be from Genbank otherwise code won't work!!!
 def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
     
     # format the missing genes' locus tags
@@ -443,7 +443,7 @@ def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
 
 # GFF
 # ---
-# @DEPRECATE
+# @DEPRECATE -> Nowhere used!
 def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
 

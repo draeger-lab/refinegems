@@ -389,9 +389,9 @@ def growth_sim_multi(models: Union[cobraModel,list[cobraModel]], media: Union[Me
 
 
 # @IDEA: more options for fluxes
-# @TODO/@IDEA: validity check nefore parsing
-# @ASK: maybe something for the io module or does it fit here?
-# @TEST: extensive testing that everythin works fine
+# @TODO: validity check before parsing
+# @IDEA: maybe something for the io module or does it fit here? -> Eher io + Würde es dann zu parse_media_config umbenennen
+# @TEST: extensive testing that everything works fine
 def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
     """Read the information from a media configuration file.
 
@@ -415,7 +415,7 @@ def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
         loaded = yaml.safe_load(stream)
 
         # ........................
-        # @TODO / MAYBE
+        # @TODO
         # check validity of input?
         # ........................
 
@@ -600,8 +600,8 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
                 # if list entries are already cobra.Models
                 elif all(isinstance(_, cobra.Model) for _ in models):
                     mod_list = models
-                # @TODO
-                # option for mixed list?
+                # @DISCUSSION option for mixed list?
+                # @ASK Really necessary? Is there any user that would really use this case?
                 else:
                     raise TypeError('Unknown or mixed types in model list.')
             else:
@@ -845,6 +845,7 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
 # source test
 # -----------
 
+# @ASK: Put this in a feature request issue? Or as an idea in a discussion?
 # @TODO : set new default for substances - ideally a subset or so
 # @TODO : Allow incomplete substance names to be valid, example: 'Glucose' instead of 'D-Glucose'
 # @TODO : more namespace options, currently only BiGG available
@@ -919,6 +920,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:Union[Non
         # use the user given list - account for errors
         case list():
             # @TODO validate, if all are part of the database or is this over the top?
+            # @DISCUSSION I think this is only necessary if for the substances no ID is provided.
             source_list = substances
 
         # case 3:
@@ -957,7 +959,7 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:Union[Non
 
 # ......
 # @TODO:
-#    see function body
+#    see bug label in function body
 # ......
 def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> Medium:
     """Get the minimal medium based on different objectives:
@@ -979,7 +981,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
             Defaults to 0.5. Only needed for objectives medium and exchanges.
         - open_exchanges (bool, optional): 
             If set to True assigns large upper bound to all import reactions. 
-            @TODO: running this on True can lead to infeasible runtimes, re-check usage in cobra.
+            @BUG: running this on True can lead to infeasible runtimes, re-check usage in cobra.
             Defaults to False.
 
     Raises:
@@ -992,6 +994,7 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
 
 
     # ...............................
+    # @ASK Could we put that into a feature request issue?/ as an idea in a discussion?
     # @TODO:
     #    make running multiple iterations possible
     # set iterations to True if no concrete number is given

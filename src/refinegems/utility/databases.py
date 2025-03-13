@@ -396,6 +396,8 @@ def initialise_database():
 #           Nucleic Acids Research (2021), 49(D1):D570-D574
 
 # @TODO time warning + progress bar (waiting w/o info is tedious)
+# @ASK Leave as is? Seems fine for now to me.
+# @BUG progress bar not working correctly -> no total length info -> API from MetaNetX needs update for this!
 def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
    """Add or update the MetaNetX namespace to/in a database. 
    
@@ -416,7 +418,7 @@ def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
                                     names=colnames, 
                                     chunksize=chunksize*1024), 
                                     desc=f'Downloading {name}',
-                                    unit='B'):# @BUG progress bar not working correctly -> no total length info
+                                    unit='B'):
          mnx_table.append(chunk) 
 
       match name:
@@ -500,9 +502,8 @@ def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
                            )
                      pbar.update(len(chunk))
    con.close()
-   
 
-# @TEST
+
 def reset_database(database:Union[Path,str]=PATH_TO_DB):
     """Remove tables for certain databases to allow pushing of the database
     to GitHub (reduce size).

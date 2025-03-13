@@ -114,6 +114,7 @@ class Medium:
 
     # @TEST
     # @IDEA : more options, e.g. allow different conditions for removal (flux, formula, db_id or multi)
+    # @ASK Feature request issue?
     def remove_substance(self, name: str):
         """Remove a substance from the medium based on its name
 
@@ -144,7 +145,8 @@ class Medium:
 
 
     # @TEST
-    # @ASK : is deleting ALL other sources to rigid?
+    # @ASK : is deleting ALL other sources too rigid?
+    # @ASK: Move this into a feature request issue/discussion on github?
     def set_source(self, element:str, new_source:str):
         """Set the source for a given element to a specific substance by deleting all
         other sources of said element before adding the new source.
@@ -208,6 +210,7 @@ class Medium:
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
 
     # @IDEA: provide dict with names and fluxes to set some of them separatly if user wishes to do so - or separate function?
+    # @ASK: I would suggest another function for that or renaming the function if it is extended. Should we move this into a feature request issue/github discussion?
     def set_default_flux(self,flux:float =10.0, replace:bool =False, double_o2:bool =True):
         """Set a default flux for the model.
 
@@ -414,6 +417,7 @@ class Medium:
     # --------------------------
 
     # @TODO
+    # @ASK Do we really need that?
     def format_substance_table(self, format:str) -> pd.DataFrame:
         """Produce a reformatted version of the substance table for different purposes.
 
@@ -441,7 +445,7 @@ class Medium:
                 formatted_table.rename(columns={'db_id':'BiGG'})
 
                 # ..............................................................
-                # TODO / WARNING
+                # @TODO / @WARNING
                 # currently only substances WITH a BiGG ID are kept in this step
                 # ..............................................................
                 
@@ -579,9 +583,10 @@ class Medium:
     # @TODO
     #    extend namespace options
     #        maybe a warning or something similar, if compounds do not have an ID corresponding to the namespace
+    # @ASK Future? Feature request issue?
     # @TEST
     #    name option for namespace
-    # @DEV : extent literals in all related functions after extension of namespace options
+    # @TODO : extend literals in all related functions after extension of namespace options -> belongs to ASK
     def export_to_cobra(self, namespace:Literal['Name', 'BiGG']='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True) -> dict[str,float]:
         """Export a medium to the COBRApy format for a medium.
 
@@ -634,6 +639,7 @@ class Medium:
 
 # @TODO also used in Medium class, but put in there as a subfunction
     # - solution?
+# @IDEA/ @ASK: Keep the one in Medium class & write wrapper for user access?
 def produce_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
 
         list = row.to_list()
@@ -872,6 +878,7 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
     return substance_table
 
 # @TEST file flag for how
+# @ASK? Was tested? What does this mean here?
 def read_external_medium(how:Literal['file','console'], **kwargs) -> Medium:
     """Read in an external medium. 
 
@@ -1353,6 +1360,7 @@ def add_subset_to_db(name:str, desc:str, subs_dict:dict,
 # @CURRENTLY COMPLETELY UNTESTED, just ideas, but feel free to use 'em
 
 # @TEST
+# @ASK We still need to clean up all functions like this, right?
 def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict, database:str = PATH_TO_DB):
     """Update a single database entry.
 
@@ -1386,6 +1394,7 @@ def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict
 
 # @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
 # @TEST
+# @ASK Also belongs to aforementioned clean up
 def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
     """Enter a single entry into a database.
 
@@ -1456,6 +1465,7 @@ def generate_update_query(row: pd.Series) -> str:
     return update_query
 
 # @TEST
+# @ASK Also belongs to aforementioned clean up
 def generate_insert_query(row: pd.Series, cursor) -> str:
     """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
@@ -1548,6 +1558,7 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
 
 
 # @TEST
+# @ASK Also belongs to aforementioned clean up
 def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH_TO_DB):
     """Updates/Inserts multiple entries in a table from the specified database.
     Given table should have the format:
@@ -1697,6 +1708,7 @@ def updated_db_to_schema(directory: str = '../data/database', inplace:bool=False
 # @TODO more entry points and where to put them? -> cmd_access?
 # @RENAME
 # @TEST : is this even valid???  
+# @ASK: What's with this here?
 # def add_medium(database:str):
     
 #     # get external medium

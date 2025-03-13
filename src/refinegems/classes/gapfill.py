@@ -77,6 +77,7 @@ from .reports import GapFillerReport
 ############################################################################
 
 # @DISCUSSION: Keep for end user? Use somewhere else? Or deprecate?
+# @DEPRECATE
 # Function originally from refineGEMs.genecomp/refineGEMs.KEGG_analysis --- Modified
 def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, metabolites: bool=False) -> pd.DataFrame:
     """Compares missing entities obtained through genes extracted via KEGG/BioCyc to entities in the model
@@ -146,8 +147,6 @@ def compare_bigg_model(complete_df: pd.DataFrame, model_entities: pd.DataFrame, 
     return entities_missing_in_model
 
 
-# @DISCUSSION
-# -> Could be possible to merge with map_ec_to_reac?
 # Mapping for BioCyc Reactions
 # ----------------------------
 def map_biocyc_to_reac(biocyc_reacs: pd.DataFrame, use_MNX: bool=True, use_BiGG: bool=True) -> pd.DataFrame:
@@ -586,7 +585,10 @@ class GapFiller(ABC):
         self.missing_reactions = None   # missing reacs, that have not yet been sorted into any category
         
         # general information
-        self.geneid_type = 'ncbi' # @DISCUSSION more options?
+        self.geneid_type = 'ncbi' # @DISCUSSION more options? 
+        # IDs could also be from KEGG (which would only make a slight difference)
+        # I've never seen a model with UniProt IDs so far. VMH uses RAST/KBASE IDs but that would probably be a pain to handle.
+        # @ASK -> Transfer discussion to discussion on github?
         self._variety = 'Undefined' # Specifies the variety of the gapfiller, e.g. 'BioCyc', 'KEGG', 'GFF + SwissProt'
         
         # collect stats & Co, can be extended by subclasses
@@ -594,6 +596,7 @@ class GapFiller(ABC):
         # possible problem with the current stats: some stuff might be counted twice or more, since the
         # current implementation depends on the tables (esp. reactions, since ID depends on NCBI 
         # protein accession number and not the uniqueness of the ID)
+        # @ASK We use now unique entries for the numbers. Could that still be an issue?
         self._statistics = {  
                 'genes':{
                     'missing (total)': 0,
@@ -661,6 +664,7 @@ class GapFiller(ABC):
     # finding the gaps
     # ----------------
     # @TODO: Add handling of ec-code as list & ec-code as entry in reference dict
+    # @ASK: Didn't we already implement this?
     def _find_reac_in_model(self, model: cobra.Model, eccode:str, id:str, 
                idtype:Literal['MetaNetX','KEGG','BiGG', 'BioCyc'], 
                include_ec_match:bool=False) -> Union[None, list]:
@@ -694,6 +698,7 @@ class GapFiller(ABC):
         # @NOTE mapping quite hardcoded, should work in most cases, but can lead 
         # to inaccuracies, if BioCyc identifiers are not used correctly
         # Possible fix might be running polish_annotations beforehand
+        # @ASK: Transfer this into a feature request issue?
 
         MAPPING = {
             'MetaNetX':'metanetx.reaction', 
@@ -731,6 +736,7 @@ class GapFiller(ABC):
     # ---------------------
     
     # @TODO logging
+    # @ASK Future? Move into issue?
     def add_genes_from_table(self,model:libModel, gene_table:pd.DataFrame) -> None:
         """Create new GeneProduct for a table of genes in the format:
         
@@ -771,6 +777,7 @@ class GapFiller(ABC):
                 
 
     # @DISCUSSION seems very rigid, better ways to find the ids? -> Via locus tags?
+    # @ASK: Move to discussion on github? Create issue for this?
     def add_gene_reac_associations_from_table(self,model:libModel,
                                               reac_table:pd.DataFrame) -> None:
         """Using a table with at least the columns 'ncbiprotein' 
@@ -812,8 +819,8 @@ class GapFiller(ABC):
                     warnings.warn(mes,UserWarning)
     
 
-    # @DISCUSSION Check handling of BioCyc-Output
     # @TODO logging, save stuff for manual curation etc. -> started a bit
+    # @ASK Future? Move into issue?
     def add_reactions_from_table(self, model:cobra.Model,
                                  missing_reac_table:pd.DataFrame,
                                  formula_check:Literal['none','existence','wildcard','strict']='existence',
@@ -884,11 +891,13 @@ class GapFiller(ABC):
                         refs['ec-code'] = list(set(refs['ec-code'].append(row['ec-code'])))
                     else:
                         # @TODO: Logging
+                        # @ASK Future? Move into issue?
                         warnings.warn(f'Unknown type for ec-code: {type(row["ec-code"])}',UserWarning)
                 else:
                     refs['ec-code'] = row['ec-code'] if isinstance(row['ec-code'],list) else [row['ec-code']]
 
             # @TODO: Logging for failed to build reactions
+            # @ASK Future? Move into issue?
             # build reaction
             reac = None
             match row['via']:
@@ -969,11 +978,13 @@ class GapFiller(ABC):
         return missing_gprs
 
 
-    # @TODO : logging + save stuff for report / manual curation
+    # @TODO : logging
+    # @ASK Future? Move into issue?
     # @TODO: If missing_reactions is empty error is thrown -> Try to inform user after calling find_missing_reactions
     #           to not use fill_model; disable functionality? :thinking:
     # @DISCUSSION: Check for futile cycles after each addition of a new reaction?
     # @IDEA/ @DISCUSSION: Use ..curation.curate.update_annotations_from_others & ..curation.curate.resolve_duplicates here?
+    # @ASK Both discussions could be moved to a feature request issue
     def fill_model(self, model:Union[cobra.Model,libModel], 
                    **kwargs) -> libModel:
         """Based on a table of missing genes and missing reactions, 
@@ -1154,6 +1165,7 @@ class KEGGapFiller(GapFiller):
         
     # @TODO: parallelising
     # @TODO: logging
+    # @ASK Both future? Move into issues?
     def find_missing_genes(self, model:libModel):
         """Get the missing genes in model in comparison to the KEGG entry of the 
         organism. Saves a table containing the missing genes 
@@ -1233,6 +1245,7 @@ class KEGGapFiller(GapFiller):
     # @TODO : logging
     # @TODO : paralellising possibilities?
     # @TODO : progress bar
+    # @ASK All future? Move into issues?
     def find_missing_reactions(self,model:cobra.Model, threshold_add_reacs:int=5):
  
         # Step 1: filter missing gene list + extract ECs
@@ -1312,7 +1325,7 @@ class KEGGapFiller(GapFiller):
 # @NOTE: Possibility to add KEGG Reaction & MetaNetX IDs to SmartTable 
 #       -> So far these are empty for my test cases
 #       -> Could be added in a future update
-# @TODO: Add handling of empty reference column?
+# @ASK Move to discussion on github
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with 
@@ -1342,6 +1355,7 @@ class BioCycGapFiller(GapFiller):
         super().__init__()
         self.biocyc_gene_tbl = biocyc_gene_tbl_path
         # @TODO: This is actually self.full_gene_list of GapFiller!
+        # @ASK: Move to an issue on github!
         self.biocyc_rxn_tbl = biocyc_reacs_tbl_path
         self._gff = gff
         self._variety = 'BioCyc'
@@ -1365,6 +1379,7 @@ class BioCycGapFiller(GapFiller):
     # RefSeq GFF file
     # Locus tags in RefSeq GFF file == BioCyc Accession-1
     # Label in model == Locus tag from GenBank GFF file == BioCyc Accession-2
+    # @ASK Issue here is that checking this case differently is quiet infeasible.
     def biocyc_gene_tbl(self, biocyc_gene_tbl_path: str):
         # Read table
         biocyc_genes = pd.read_table(
@@ -1389,6 +1404,7 @@ class BioCycGapFiller(GapFiller):
         self._biocyc_gene_tbl = biocyc_genes
 
     # @DISCUSSION: Should other columns for references to other databases be allowed?
+    # @ASK Could be added as feature request issue for the future/ in a discussion on github
     @property
     def biocyc_rxn_tbl(self):
         """
@@ -1614,30 +1630,9 @@ class BioCycGapFiller(GapFiller):
 
         # Mapped reactions
         self.missing_reactions = mapped_reacs[~mask]
-    
-# ----------------
-# Gapfilling no DB
-# ----------------
-# @NOTE: Ideas from Gwendolyn O. Döbel for lab strains
-# Get all  possible genes by filtering .gff according to 'bio_type=protein_coding' & 'product=hypothetical protein'
-# Compare the list of genes with the ones already in the model & add all missing genes
-# Before adding to model check if for all genes that are missing for IMITSC147 identifiers exist
-# -> Create tables mapping locus tag to old ID, locus tag to new ID & merge 
-# -> Specify user input locus_tag start from NCBI PGAP
-# # Skeleton for functions that could be used for a lab strain/organism which is in no database contained
-# def get_genes_from_gff():
-#     pass
-# 
-# 
-# def get_related_metabs_reactions_blast():
-#     pass
-# 
-# 
-# def gff_gene_comp():
-#     pass
-#
+
 # @IDEA: Extend KEGGapFiller/BioCycGapFiller to allow for blasting against another organism if strain not available in database
-#
+# @ASK Keep for future as feature request/discussion on github?
 
 # @DISCUSSION Either here or with the one above allow gap filling with
 # another db than SwissProt
@@ -1670,7 +1665,9 @@ class GeneGapFiller(GapFiller):
         self._variety = 'GFF'
        
     # @TODO logging
+    # @ASK Future? Move into issue?
     # @DISCUSSION Option for if model has no label -> Call function from polish to get labels?
+    # @ASK Should we just state this in the docs? And have it within the pipelines? We could warn the user that it might take a while & measure run times...
     def find_missing_genes(self,gffpath:Union[str,Path],model:libModel):
         """Find missing genes by comparing the CDS regions written in the GFF
         with the GeneProduct entities in the model.
@@ -1837,6 +1834,7 @@ class GeneGapFiller(GapFiller):
             #    (whole protein fasta -> wait for Gwendolyn's results) -> does not work / not return
             # -> use CLEAN webservice
             #    same problem as above with the web tools
+            # @ASK Should we move that into a feature request issue?
 
         # no ncbiprotein, no EC
         self.manual_curation['genes']['no ncbiprotein, no EC'] = case_1[case_1['ncbiprotein'].isnull() & case_1['ec-code'].isnull()]
@@ -1916,7 +1914,7 @@ class GeneGapFiller(GapFiller):
 
 # For filtering
 # -------------
-# @DISCUSSION what to do with this?
+# @DISCUSSION/@ASK what to do with this? Seems to not be used anywhere
 # Inspired by Dr. Reihaneh Mostolizadeh's function to add BioCyc reactions to a model
 def replace_reaction_direction_with_fluxes(missing_reactions: pd.DataFrame) -> pd.DataFrame:
    """Extracts the flux lower & upper bounds for each reaction through the entries in column 'Reaction-Direction'
@@ -1937,6 +1935,7 @@ def replace_reaction_direction_with_fluxes(missing_reactions: pd.DataFrame) -> p
       
       if type(direction) == float:
          # Use default bounds as described in readthedocs from COBRApy
+         # This probably checks the NaN case
          fluxes['lower_bound'] = 'cobra_0_bound'
          fluxes['upper_bound'] = 'cobra_default_ub'
       elif 'RIGHT-TO-LEFT' in direction:
@@ -1949,7 +1948,9 @@ def replace_reaction_direction_with_fluxes(missing_reactions: pd.DataFrame) -> p
          fluxes['lower_bound'] = 'cobra_default_lb'
          fluxes['upper_bound'] = 'cobra_default_ub'
       else:
-         #@TODO LOGGING.WARNING + Set to reversible
+         logging.warning('No valid type for direction found. Setting reaction direction to reversible.')
+         fluxes['lower_bound'] = 'cobra_default_lb'
+         fluxes['upper_bound'] = 'cobra_default_ub'
          pass
       
       return str(fluxes)
