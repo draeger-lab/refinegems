@@ -14,13 +14,14 @@ __author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. 
 
 
 import cobra
-import os
-import re
 import gffutils
-import sqlalchemy
 import logging
-import pandas as pd
 import numpy as np
+import os
+import pandas as pd
+import re
+import sqlalchemy
+import sqlite3
 
 from ols_client import EBIClient
 from Bio import SeqIO
@@ -244,11 +245,110 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
     else:
         message = f'Unknown model type {type(model)}. Cannot save.'
         raise TypeError(message)
+
+
+# media
+# -----
+
+def load_substance_table_from_db(mediumname: str, database:str, 
+                                 type:Literal['testing','standard']='standard') -> pd.DataFrame:
+    """Load a substance table from a database.
+
+    Currently available types:
+
+    - 'testing': for debugging
+    - 'standard': The standard format containing all information in long format.
+
+    Note: 'documentation' currently object to change
+
+    Args:
+        - name (str): 
+            The name (or identifier) of the medium.
+        - database (str): 
+            Path to the database.
+        - type (Literal['testing','standard'], optional):
+            How to load the table. Defaults to 'standard'.
+
+    Raises:
+        - ValueError: Unknown type for loading the substance table.
+
+    Returns:
+        pd.DataFrame: 
+            The substance table in the specified type retrieved from the database.
+    """
     
+    # build connection to DB
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+
+    match type:
+        # use this for debugging
+        case 'testing':
+            result = cursor.execute("""SELECT substance.id, substance.name, substance.formula, medium2substance.flux 
+                                    FROM medium, medium2substance, substance
+                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id
+                                    """, (mediumname,)) 
+            substance_table = result.fetchall()
+            substance_table = pd.DataFrame(substance_table, columns=['id','name','formula','flux'])
+
+        # create table with all information, standard for generating the Medium table
+        case 'standard':
+            result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
+                                    FROM medium, medium2substance, substance, substance2db
+                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
+                                    """, (mediumname,)) 
+            substance_table = result.fetchall()
+            substance_table = pd.DataFrame(substance_table, columns=['name','formula','flux','source','db_id','db_type'])
+
+        # default: throw error
+        case _:
+            connection.close()
+            raise ValueError(f"Unknown type for loading the substance table: {type}")
+
+    # close connection
+    connection.close()
+
+    return substance_table
+
+
+def load_subset_from_db(subset_name:str) -> tuple[str,str,pd.DataFrame]:
+    """Load a subset from the database.
+    
+    Args:
+        - subset_name(str): 
+            Name of the subset to be loaded.
+    
+    Returns:
+        tuple of (1) str, (2) str and (3) pd.DataFrame
+            (1) name of the subset
+            (2) description of the subset
+            (3) substance table for the subset
+    """
+    
+    # open connection to database
+    connection = sqlite3.connect(PATH_TO_DB)
+    cursor = connection.cursor()
+
+    # check if subset name is valid
+    result = cursor.execute("""SELECT * FROM subset WHERE subset.name = ?""",(subset_name,))
+    check = result.fetchone()
+    if check:
+        # set name 
+        name = subset_name
+        # set description
+        description = check[2]
+        # retrieve subset from database
+        db_res = cursor.execute("""SELECT substance.name, subset2substance.percent
+                                FROM substance, subset, subset2substance
+                                WHERE subset.name = ? AND subset.id = subset2substance.subset_id AND subset2substance.substance_id = substance.id
+                                """,(subset_name,))
+        substance_table = pd.DataFrame(db_res.fetchall(), columns=['name','percent'])
+
+    return (name, description, substance_table)
+
 
 # other
 # -----
-
 
 def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd.DataFrame:
     """| Loads the table for which the name is provided or a table containing all rows for which the query evaluates to 

@@ -21,14 +21,13 @@ from ..utility.entities import resolve_compartment_names
 
 # core-pan modelling
 # ------------------
-# @IDEA: 
+# @IDEA:
 #    add more options to create and compare core-pan models
 #    currently available:
 #       - id
 #    further ideas:
 #       - based on specific database IDs
 #       - based on a general search for highly similar reactions (multi-db comparison)
-# @ASK: -> Write an issue/discussion?
 
 def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list[str]:
     """Extract reactions identifiers from a model.

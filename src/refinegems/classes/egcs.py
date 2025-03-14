@@ -59,11 +59,11 @@ class EGCSolver():
         - limit: Sets the maximal number of cores to be used.
             Defaults to 2.
         - chunksize: Chunksize to use for multiprocessing.
-            Defaults to 12.
+            Defaults to 1.
     """
 
     def __init__(self, threshold:float = MIN_GROWTH_THRESHOLD, 
-                 limit:int=8, chunksize:int=12) -> None:
+                 limit:int=2, chunksize:int=1) -> None:
         
         # 'biological' attributes
         self.threshold = threshold
@@ -533,9 +533,6 @@ class GreedyEGCSolver(EGCSolver):
         return results
 
 
-
-    # @TEST good default for limit and chunksize
-    # params not optimal and runtime options need rechecking
     def find_mods_resolve_egcs_greedy(self, model: cobra.Model, 
                                       present_egcs: dict,
                                       namespace:Literal['BiGG']='BiGG',
@@ -589,27 +586,26 @@ class GreedyEGCSolver(EGCSolver):
 
                 # might limit processes with Pool(process=limit) -> otherwise it consumes all cores
                 # limit to half of machine cores -> at least for me no speed increment with more cores
-                
-                pool = Pool(processes=self.limit) 
-                            
-                # partial -> creates function with fixed variables to call with each iteration
-                # needed since pool.imap cannot do that
-                part_test_mods = partial(self.test_modifications,
-                                        model=m,
-                                        present_egc=present_egcs,
-                                        namespace=namespace,
-                                        compartment=compartment)
-                # increment in chunksize will reduce computation time -> but progressbar update also...
-                for res in list(tqdm(pool.imap_unordered(func=part_test_mods, iterable=m.reactions, 
-                                                        chunksize=self.chunksize),
-                                total=len(m.reactions),
-                                desc="Resolve EGCs")):
-                    if res:
-                        output_list.append(res)
+                try:
+                    pool = Pool(processes=self.limit) 
 
-                # @TODO : make sure this is run, even if program is discarded
-                pool.close()
-                pool.join()
+                    # partial -> creates function with fixed variables to call with each iteration
+                    # needed since pool.imap cannot do that
+                    part_test_mods = partial(self.test_modifications,
+                                            model=m,
+                                            present_egc=present_egcs,
+                                            namespace=namespace,
+                                            compartment=compartment)
+                    # increment in chunksize will reduce computation time -> but progressbar update also...
+                    for res in list(tqdm(pool.imap_unordered(func=part_test_mods, iterable=m.reactions, 
+                                                            chunksize=self.chunksize),
+                                    total=len(m.reactions),
+                                    desc="Resolve EGCs")):
+                        if res:
+                            output_list.append(res)
+                finally:
+                    pool.close()
+                    pool.join()
                 
             # merge output_list to the final results
             results = {}

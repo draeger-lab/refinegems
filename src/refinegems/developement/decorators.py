@@ -19,7 +19,6 @@ from functools import wraps
 # functions
 ################################################################################
 
-# @TODO: Add note message for docs
 def template(func):
     """A decorator for template functions.
     

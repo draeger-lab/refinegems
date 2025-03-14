@@ -568,7 +568,7 @@ def simulate(modelpaths,media,namespace,dir,colors):
 def auxotrophies(modelpath,media,namespace,dir,colors):
    """Test for auxotrophies for the 20 proteinogenic amino acids.
    """
-   medialist, supps = rg.analysis.growth.read_media_config(media)
+   medialist, supps = rg.classes.medium.load_media(media)
    model = rg.utility.io.load_model(modelpath, 'cobra')
    report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
    report.save(dir,colors)

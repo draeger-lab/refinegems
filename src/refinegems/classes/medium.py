@@ -26,6 +26,7 @@ import sqlite3
 import string
 import sys
 import warnings
+import yaml
 
 from colorama import init as colorama_init
 from colorama import Fore
@@ -33,7 +34,8 @@ from pathlib import Path
 from sqlite_dump import iterdump
 from typing import Literal, Union, Any
 
-from ..utility.databases import PATH_TO_DB, PATH_TO_DB_FOLDER
+from ..utility.databases import PATH_TO_DB
+from ..utility.io import load_substance_table_from_db, load_subset_from_db
 
 ############################################################################
 # variables
@@ -112,9 +114,7 @@ class Medium:
         substance_table.insert(3,'source',None)
         self.substance_table = pd.concat([self.substance_table, substance_table], ignore_index=True)
 
-    # @TEST
-    # @IDEA : more options, e.g. allow different conditions for removal (flux, formula, db_id or multi)
-    # @ASK Feature request issue?
+
     def remove_substance(self, name: str):
         """Remove a substance from the medium based on its name
 
@@ -144,9 +144,6 @@ class Medium:
         return list(set(self.substance_table[self.substance_table['formula'].str.contains(element + '(?![a-z])', case=True, regex=True).fillna(False)]['name']))
 
 
-    # @TEST
-    # @ASK : is deleting ALL other sources too rigid?
-    # @ASK: Move this into a feature request issue/discussion on github?
     def set_source(self, element:str, new_source:str):
         """Set the source for a given element to a specific substance by deleting all
         other sources of said element before adding the new source.
@@ -209,8 +206,7 @@ class Medium:
             # remove dioxygen // O2 from the substance table
             self.substance_table.drop(self.substance_table[(self.substance_table['name']=='Dioxygen [O2]') & (self.substance_table['formula']=='O2')].index, inplace=True)
 
-    # @IDEA: provide dict with names and fluxes to set some of them separatly if user wishes to do so - or separate function?
-    # @ASK: I would suggest another function for that or renaming the function if it is extended. Should we move this into a feature request issue/github discussion?
+
     def set_default_flux(self,flux:float =10.0, replace:bool =False, double_o2:bool =True):
         """Set a default flux for the model.
 
@@ -416,48 +412,6 @@ class Medium:
     # functions for export table
     # --------------------------
 
-    # @TODO
-    # @ASK Do we really need that?
-    def format_substance_table(self, format:str) -> pd.DataFrame:
-        """Produce a reformatted version of the substance table for different purposes.
-
-        Possible formats
-
-        - 'growth_old': for working with the old version of the growth module.
-
-        Args:
-            - format (str): 
-                Specifies the output format type.
-
-        Raises:
-            - ValueError: Unknown format type for table.
-
-        Returns:
-            pd.DataFrame: 
-                The reformatted substance table (copy).
-        """
-
-        match format:
-            # for enabling usage of this new medium class with the old growth functions
-            case 'growth_old':
-
-                formatted_table = self.substance_table.loc[self.substance_table['db_type']=='BiGG'][['name','flux','db_id']]
-                formatted_table.rename(columns={'db_id':'BiGG'})
-
-                # ..............................................................
-                # @TODO / @WARNING
-                # currently only substances WITH a BiGG ID are kept in this step
-                # ..............................................................
-                
-                formatted_table['mediumname'] = self.name
-
-            # raise error for unknow input
-            case _:
-                raise ValueError(f'Unknown format type for table: {format}')
-            
-        return formatted_table
-    
-
     def produce_medium_docs_table(self, folder: str = './', max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
@@ -580,13 +534,6 @@ class Medium:
 
     # functions for conversion
     # ------------------------
-    # @TODO
-    #    extend namespace options
-    #        maybe a warning or something similar, if compounds do not have an ID corresponding to the namespace
-    # @ASK Future? Feature request issue?
-    # @TEST
-    #    name option for namespace
-    # @TODO : extend literals in all related functions after extension of namespace options -> belongs to ASK
     def export_to_cobra(self, namespace:Literal['Name', 'BiGG']='BiGG', default_flux:float=10.0, replace:bool=False, double_o2:bool=True) -> dict[str,float]:
         """Export a medium to the COBRApy format for a medium.
 
@@ -621,12 +568,7 @@ class Medium:
                 
                 biggs = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')][['name','db_id','flux']]
                 biggs['db_id_EX'] = 'EX_' + biggs['db_id'] + '_e'
-                cobra_medium = pd.Series(biggs.flux.values,index=biggs.db_id_EX).to_dict()       
-
-                # .....................................
-                # TODO
-                #    more options
-                # .....................................       
+                cobra_medium = pd.Series(biggs.flux.values,index=biggs.db_id_EX).to_dict()
 
             case _:
                 raise ValueError(f'Unknown namespace: {namespace}')
@@ -636,78 +578,6 @@ class Medium:
 ############################################################################
 # functions for loading and writing from DB
 ############################################################################
-
-# @TODO also used in Medium class, but put in there as a subfunction
-    # - solution?
-# @IDEA/ @ASK: Keep the one in Medium class & write wrapper for user access?
-def produce_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
-
-        list = row.to_list()
-        file.write(f"  * - {list[0]}\n")
-        for l in list[1:]:
-            file.write(f"    - {l}\n")
-
-
-def load_substance_table_from_db(mediumname: str, database:str, 
-                                 type:Literal['testing','standard']='standard') -> pd.DataFrame:
-    """Load a substance table from a database.
-
-    Currently available types:
-
-    - 'testing': for debugging
-    - 'standard': The standard format containing all information in long format.
-
-    Note: 'documentation' currently object to change
-
-    Args:
-        - name (str): 
-            The name (or identifier) of the medium.
-        - database (str): 
-            Path to the database.
-        - type (Literal['testing','standard'], optional):
-            How to load the table. Defaults to 'standard'.
-
-    Raises:
-        - ValueError: Unknown type for loading the substance table.
-
-    Returns:
-        pd.DataFrame: 
-            The substance table in the specified type retrieved from the database.
-    """
-    
-    # build connection to DB
-    connection = sqlite3.connect(database)
-    cursor = connection.cursor()
-
-    match type:
-        # use this for debugging
-        case 'testing':
-            result = cursor.execute("""SELECT substance.id, substance.name, substance.formula, medium2substance.flux 
-                                    FROM medium, medium2substance, substance
-                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id
-                                    """, (mediumname,)) 
-            substance_table = result.fetchall()
-            substance_table = pd.DataFrame(substance_table, columns=['id','name','formula','flux'])
-
-        # create table with all information, standard for generating the Medium table
-        case 'standard':
-            result = cursor.execute("""SELECT substance.name, substance.formula, medium2substance.flux , medium2substance.source, substance2db.db_id, substance2db.db_type
-                                    FROM medium, medium2substance, substance, substance2db
-                                    WHERE medium.name = ? AND medium.id = medium2substance.medium_id AND medium2substance.substance_id = substance.id AND substance2db.substance_id = substance.id
-                                    """, (mediumname,)) 
-            substance_table = result.fetchall()
-            substance_table = pd.DataFrame(substance_table, columns=['name','formula','flux','source','db_id','db_type'])
-
-        # default: throw error
-        case _:
-            connection.close()
-            raise ValueError(f"Unknown type for loading the substance table: {type}")
-
-    # close connection
-    connection.close()
-
-    return substance_table
-
 
 def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') -> Medium:
     """Load a medium from a database.
@@ -724,7 +594,7 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
         - ValueError: Unknown medium name.
 
     Returns:
-        Medium: 
+        Medium:
             The medium retrieved from the database.
     """
     
@@ -750,42 +620,6 @@ def load_medium_from_db(name:str, database:str=PATH_TO_DB, type:str='standard') 
     substance = load_substance_table_from_db(name, database, type)
 
     return Medium(name=name, substance_table=substance, description=description, doi=doi)
-
-
-def load_subset_from_db(subset_name:str) -> tuple[str,str,pd.DataFrame]:
-    """Load a subset from the database.
-    
-    Args:
-        - subset_name(str): 
-            Name of the subset to be loaded.
-    
-    Returns:
-        tuple of (1) str, (2) str and (3) pd.DataFrame
-            (1) name of the subset
-            (2) description of the subset
-            (3) substance table for the subset
-    """
-    
-    # open connection to database
-    connection = sqlite3.connect(PATH_TO_DB)
-    cursor = connection.cursor()
-
-    # check if subset name is valid
-    result = cursor.execute("""SELECT * FROM subset WHERE subset.name = ?""",(subset_name,))
-    check = result.fetchone()
-    if check:
-        # set name 
-        name = subset_name
-        # set description
-        description = check[2]
-        # retrieve subset from database
-        db_res = cursor.execute("""SELECT substance.name, subset2substance.percent
-                                FROM substance, subset, subset2substance
-                                WHERE subset.name = ? AND subset.id = subset2substance.subset_id AND subset2substance.substance_id = substance.id
-                                """,(subset_name,))
-        substance_table = pd.DataFrame(db_res.fetchall(), columns=['name','percent'])
-
-    return (name, description, substance_table)
 
 
 def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80):
@@ -837,6 +671,144 @@ def generate_docs_for_subset(subset_name:str, folder:str='./', max_width:int=80)
 # functions for reading media from extern
 ############################################################################
 
+def load_media(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
+    """Load the information from a media configuration file.
+
+    Args:
+        - yaml_path (str): 
+            The path to a media configuration file in YAML-format.
+
+    Returns:
+        tuple[list[Medium],list[str,None]]: 
+            Tuple of two lists (1) & (2)
+
+            (1) list: list of the loaded media and 
+            (2) list: list of supplement modes
+    """
+
+    media_list = []
+    supplement_list = []
+
+    with open(yaml_path, 'r') as stream:
+
+        loaded = yaml.safe_load(stream)
+        params = loaded['params'] if 'params' in loaded.keys() else None
+        media = loaded['media'] if 'media' in loaded.keys() else None
+
+        # handle internal/in-build media compositions
+        if media:
+
+            for name,p in media.items():
+
+                # load base medium from either  
+                # base
+                if p and 'base' in p.keys():
+                    m_name = p['base'].split(' ')
+                    if len(m_name) > 1:
+                        new_medium = load_medium_from_db(m_name[1])
+                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
+                    else:
+                        new_medium = load_medium_from_db(p['base'])
+                    new_medium.name = name
+                # extern
+                elif p and 'external_base' in p.keys():
+                    m_name = p['external_base'].split(' ')
+                    if len(m_name) > 1:
+                        new_medium = load_external_medium(m_name[1])
+                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
+                    else:
+                        new_medium = load_external_medium(p['external_base'])
+                    new_medium.name = name
+                # default name
+                else:
+                    new_medium = load_medium_from_db(name)
+                
+                # add subsets from DB
+                if p and 'add_subset' in p.keys():
+                    # interate over all subsets to add
+                    for subset,dflux in p['add_subset'].items():
+                        new_medium = new_medium.add_subset(subset, default_flux=dflux)
+
+                # add media from DB
+                if p and 'add_medium' in p.keys():
+                    # interate over all media to add
+                    for medium,perc in p['add_medium'].items():
+                        new_medium = new_medium.combine(load_medium_from_db(medium), how=perc)
+
+                # from external
+                if p and 'add_external' in p.keys():
+                    for a,perc in p['add_external'].items():
+                        new_medium = new_medium.combine(load_external_medium(a), how=perc)
+                
+                # check anaerobic / aerobic settings
+                if p and 'aerobic' in p.keys():
+                    if p['aerobic']:
+                        new_medium.make_aerobic()
+                    else:
+                        new_medium.make_anaerobic()
+                else:
+                    if params and 'aerobic' in params.keys():
+                        if params['aerobic']:
+                            new_medium.make_aerobic()
+                        else:
+                            new_medium.make_anaerobic()
+
+                # set default flux
+                if p and 'default_flux' in p.keys():
+                    new_medium.set_default_flux(p['default_flux'], replace=True)
+                elif params and 'default_flux' in params.keys():
+                    new_medium.set_default_flux(params['default_flux'], replace=True)
+
+                # set o2_percentage
+                if p and 'o2_percent' in p.keys():
+                    new_medium.set_oxygen_percentage(p['o2_percent'])
+                elif params and 'o2_percent' in params.keys():
+                    new_medium.set_oxygen_percentage(params['o2_percent'])
+
+                # add additional substances from DB
+                if p and 'add_substance' in p.keys():
+                    for s,f in p['add_substance'].items():
+                        # read in flux 
+                        if not f:
+                            if p and 'default_flux' in p.keys():
+                                f = p['default_flux']
+                            elif params and 'default_flux' in params.keys():
+                                f = params['default_flux']
+                        elif isinstance(f,str):
+                            if '%' in f:
+                                f = float(f[:f.index('%')])/100
+                                if p and 'default_flux' in p.keys():
+                                    f = f * p['default_flux']
+                                elif params and 'default_flux' in params.keys():
+                                    f = f * params['default_flux']
+                                else:
+                                    f = f * 10.0
+                            else:
+                                warn_string = f'Could not read in flux for {s}: {f}. \nWill be using default 10.0 instead.'
+                                warnings.warn(warn_string)
+                                f = 10.0
+                        # change medium
+                        if s in new_medium.substance_table['name'].tolist():
+                            # change fluxes only
+                            new_medium.substance_table.loc[new_medium.substance_table['name']==s,'flux'] = f
+                        else:
+                            # add substance to medium 
+                            new_medium.add_substance_from_db(s,f)
+
+                # supplement settings
+                if p and 'supplement' in p.keys():
+                    supplement_list.append(p['supplement'])
+                elif params and 'supplement' in params:
+                    supplement_list.append(params['supplement'])
+                else:
+                    supplement_list.append(None)
+                    
+                # append medium to list
+                media_list.append(new_medium)
+
+    return (media_list,supplement_list)
+
+
 def read_substances_from_file(path: str) -> pd.DataFrame: 
     """Read in a TSV with substance information into a table.
 
@@ -877,9 +849,8 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 
     return substance_table
 
-# @TEST file flag for how
-# @ASK? Was tested? What does this mean here?
-def read_external_medium(how:Literal['file','console'], **kwargs) -> Medium:
+
+def load_external_medium(how:Literal['file','console'], **kwargs) -> Medium:
     """Read in an external medium. 
 
     Currently available options for how
@@ -1359,8 +1330,7 @@ def add_subset_to_db(name:str, desc:str, subs_dict:dict,
 # -------------------------
 # @CURRENTLY COMPLETELY UNTESTED, just ideas, but feel free to use 'em
 
-# @TEST
-# @ASK We still need to clean up all functions like this, right?
+# @TODO Clean-up! 
 def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict, database:str = PATH_TO_DB):
     """Update a single database entry.
 
@@ -1393,8 +1363,7 @@ def update_db_entry_single(table:str, column:str, new_value:Any, conditions:dict
 
 
 # @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
-# @TEST
-# @ASK Also belongs to aforementioned clean up
+# @TODO Clean-up!
 def enter_db_single_entry(table:str, columns:list[str], values:list[Any], database:str = PATH_TO_DB):
     """Enter a single entry into a database.
 
@@ -1464,8 +1433,8 @@ def generate_update_query(row: pd.Series) -> str:
     
     return update_query
 
-# @TEST
-# @ASK Also belongs to aforementioned clean up
+
+# @TODO Clean-up!
 def generate_insert_query(row: pd.Series, cursor) -> str:
     """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
@@ -1557,8 +1526,7 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
     return insert_query
 
 
-# @TEST
-# @ASK Also belongs to aforementioned clean up
+# @TODO Clean-up!
 def update_db_multi(data:pd.DataFrame, update_entries: bool, database:str = PATH_TO_DB):
     """Updates/Inserts multiple entries in a table from the specified database.
     Given table should have the format:
@@ -1702,17 +1670,13 @@ def updated_db_to_schema(directory: str = '../data/database', inplace:bool=False
     conn.close()
 
 
-# ..................................................................
-# entry point for entering a medium using the command line
-# @TODO since database is part of package, direct accessing possible
-# @TODO more entry points and where to put them? -> cmd_access?
-# @RENAME
-# @TEST : is this even valid???  
-# @ASK: What's with this here?
+# ......................................................................
+# @IDEA
+# Entry point for adding a medium to the database using the command line
 # def add_medium(database:str):
     
 #     # get external medium
-#     medium = read_external_medium('console')
+#     medium = load_external_medium('console')
 
 #     # add to database
 #     enter_medium_into_db(medium, database)

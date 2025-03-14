@@ -55,16 +55,9 @@ from tqdm.auto import tqdm
 from typing import Union, Literal
 
 from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, generate_cvterm, metabol_db_dict, reaction_db_dict, MIRIAM, OLD_MIRIAM
-from ..utility.db_access import search_ncbi_for_gpr
+from ..utility.db_access import search_ncbi_for_gpr, BIOCYC_TIER1_DATABASES_PREFIXES
 from ..utility.io import parse_gff_for_cds, parse_fasta_headers, parse_dict_to_dataframe, load_a_table_from_database
 
-################################################################################
-# variables
-################################################################################
-
-#------------------------------------------------ Constant variables --------------------------------------------------#
-BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta: # @DISCUSSION: Move to entities/util?
-    
 ################################################################################
 # functions
 ################################################################################
@@ -541,14 +534,8 @@ def set_initial_amount(model: libModel):
          species.setInitialAmount(float('NaN'))
          
 
-#--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------# 
-# @DISCUSSION Extract label part? -> Might be good for GapFiller
-# @DISCUSSION Possibility of non-unique RefSeq (and potentially NCBI Protein) IDs
-# -> Map via RefSeq locus tag? Requires however protein_fasta
-# -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
-# If ambigous locus tags are found this can be fixed by using the fasta to map RefSeq locus tags to the NCBI locus tags
-# @ASK Feature request/bug issue?
-def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False, ):
+#--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------#
+def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
     Args:
@@ -586,8 +573,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         
         if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
             entry = gene.getId()
-            # @DISCUSSION Is there a better way of handling this?
-            # @ASK Maybe handle like Carolin did for gapfiller?
+            # @TODO Implement better way of handling this -> Handle with COBRApy
             entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
             add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
@@ -666,9 +652,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         with open(genes_filename, "w") as file:
              file.write(str(genes_missing_annotation))
 
-#----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------# 
-# @DISCUSSION: Direction for GFF from RefSeq to NCBI Protein should also be possible with this set-up
-# @ASK Feature request issue?
+#----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------#
 def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
     """Adds URIs to GeneProducts based on locus tag to indentifier mapping
 
@@ -1199,12 +1183,7 @@ def change_qualifier_per_entity(entity: SBase, new_qt, new_b_m_qt, specific_db_p
     for cvterm in cvterms:
         tmp_set = SortedSet()
         sbo_set = SortedSet()
-        #cvterm = cvterms.get(i)
-        # @NOTE: GOD cannot remember what this was for, but it seems to be unnecessary
-        # Probably # @DEBUG?
-        # include check for reaction and unit definition
-        # if entity == Reaction or entity == UnitDefinition:
-        # print(cvterm.getBiologicalQualifierType())
+
         if cvterm.getBiologicalQualifierType() == 9:  # 9 = BQB_OCCURS_IN (Reaction), Check for reactions with occursIn
             logging.info(f'CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}' +
                   f' is left as {Fore.LIGHTYELLOW_EX}{BiolQualifierType_toString(cvterm.getBiologicalQualifierType())}{Style.RESET_ALL}')
@@ -1342,9 +1321,6 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-#@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
-#@NOTE: Find out all HTTP connections to get where error occurred
-#@TEST/@ASK: Test with different models to also maybe recreate @TODO issue
 def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
            kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
@@ -1441,10 +1417,6 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
 # Directionality Control
 # ----------------------
 
-# @TODO
-# @NOTE add a control to check if changing the reaction direction leads to EGC or so
-#   or is this unnessesary here
-# @ASK Future?/ Feature request issue?
 def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
@@ -1536,75 +1508,8 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
                 r.lower_bound = 0.0
                 r.upper_bound = cobra.Configuration().upper_bound
             else:
-                # left to right case is the standart for adding reactions
+                # left to right case is the standard for adding reactions
                 # = nothing left to do
                 continue
 
     return model
-
-
-# extract annotations fron a libsbml model
-# @NOTE takes much longer than it would in a cobra model
-#       -> currently not in usage
-# @ASK Do we need that at all?
-def getAnnotationDict_libsbml(entity: Union[Reaction,Species]) -> Union[dict,None]:
-    """Try to extract the annotations from a libSBML entity as a dictionary.
-
-    Args:
-        - entity (Union[Reaction,Species]): 
-            The SBML entity.
-
-    Returns:
-        1. Case: retrieval successful
-                dict:
-                    The annotations.
-        2. Case: not successful
-                None: 
-                    Nothing to return
-    """
-    try: 
-        for cvterm in entity.getCVTerms():
-            current_uris = [cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())]
-            return get_set_of_curies(current_uris)[0]
-    except Exception as e:
-        return None
-    
-def hasAnnotation_libmodel(id:str, idtype:str, 
-                           entitytype:Literal['species','reaction'], 
-                           libmodel:libModel) -> list:
-    """Check a libSBML models reactions or species for a certain annotation
-    id.
-
-    Args:
-        - id (str): 
-            The ID to search for.
-        - idtype (str): 
-            Type of ID given e.g. metanetx.reaction.
-        - entitytype (Literal['species','reaction']): 
-            Entitytype to search. Can be 'reaction' or 'species'.
-        - libmodel (libModel): 
-            The libSBML model to perform the search on.
-
-    Raises:
-        - ValueError: Unknown entity type
-
-    Returns:
-        list: 
-            List of IDs of model entities of the given type, that have the ID 
-            in their annotations under the given idtype.
-    """
-    match entitytype:
-        case 'reaction':
-            entitylist = libmodel.getListOfReactions()
-        case 'species':
-            entitylist = libmodel.getListOfSpecies()
-        case _:
-            mes = f'Unknown entity type: {entitytype}'
-            raise ValueError(mes)
-        
-    found = []
-    for r in entitylist:
-        annots = getAnnotationDict_libsbml(r)
-        if annots and idtype in annots.keys() and id in annots[idtype]:
-            found.append(r.getId())
-    return found 

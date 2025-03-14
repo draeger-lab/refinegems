@@ -59,9 +59,12 @@ BIGG_METABOLITES_URL = 'http://bigg.ucsd.edu/api/v2/universal/metabolites/' #: :
 
 # Compartments in BiGG namespace
 # ------------------------------
-
 ALL_BIGG_COMPARTMENTS_ONE_LETTER = ('c', 'e', 'p', 'm', 'x', 'r', 'v', 'n', 'g', 'u', 'l', 'h', 'f', 's', 'i', 'w', 'y') #: :meta: 
 ALL_BIGG_COMPARTMENTS_TWO_LETTER = ('im', 'cx', 'um', 'cm', 'mm') #: :meta: 
+
+# BioCyc databases prefixes
+# -------------------------
+BIOCYC_TIER1_DATABASES_PREFIXES = ['META', 'ECO', 'ECOLI', 'HUMAN'] #: :meta: 
 
 ############################################################################
 # functions
