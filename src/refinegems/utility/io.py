@@ -212,7 +212,7 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:Union[str,Pa
                     cobra.io.save_matlab_model(model, filepath)
                 case _:
                     raise ValueError('Unknown file extension for model: ', extension)
-            logging.info("Modified model written to " + filepath)
+            logging.info("Modified model written to " + str(filepath))
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
 
