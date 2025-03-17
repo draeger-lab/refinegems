@@ -172,54 +172,55 @@ def load_document_libsbml(modelpath: str) -> SBMLDocument:
     return read
 
 
-def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
+def write_model_to_file(model:Union[libModel,cobra.Model], filename:Union[str,Path]):
     """Save a model into a file.
 
     Args:
         - model (libModel|cobra.Model): 
             The model to be saved
-        - filename (str): 
-            The filename to save the model to.
+        - filename (str|Path): 
+            The filename/path to save the model to.
 
     Raises:
         - ValueError: Unknown file extension for model
         - TypeError: Unknown model type
     """
     
-    def _write_cobra_model_to_file(model:cobra.Model, filename:str):
+    def _write_cobra_model_to_file(model:cobra.Model, filepath:Path):
         """Helper function of :py:func:`~refingems.utility.io.write_model_to_file`.
         Write a model loaded with COBRApy to a file.
 
         Args:
             - model (cobra.Model): 
                 The COBRApy model.
-            - filename (str): 
-                The filename/path to save the model to. Extensions sets the file format.
+            - filepath (Path): 
+                The file path to save the model to. Extensions sets the file format.
 
         Raises:
             - ValueError: Unknown file extension for model
         """
         try:
-            extension = os.path.splitext(filename)[1].replace('.','')
+            extension = filepath.suffix.replace('.','')
             match extension:
                 case 'xml':
-                    cobra.io.write_sbml_model(model, filename)
+                    cobra.io.write_sbml_model(model, filepath)
                 case 'json':
-                    cobra.io.save_json_model(model, filename)
+                    cobra.io.save_json_model(model, filepath)
                 case 'yml':
-                    cobra.io.save_yaml_model(model, filename)
+                    cobra.io.save_yaml_model(model,str(filepath))
                 case 'mat':
-                    cobra.io.save_matlab_model(model, filename)
+                    cobra.io.save_matlab_model(model, filepath)
                 case _:
                     raise ValueError('Unknown file extension for model: ', extension)
-            logging.info("Modified model written to " + filename)
+            logging.info("Modified model written to " + filepath)
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
 
 
     # @IDEA/ @TODO Rewrite pathlib.Path handling? - bit crude currently
-    if isinstance(filename, Path):
-        filename = str(filename)
+    # Cast filename to Path object if string is provided
+    if isinstance(filename, str):
+        filename = Path(filename)
     
     # save cobra model
     if isinstance(model, cobra.core.model.Model):
@@ -228,17 +229,17 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:str):
     # save libsbml model
     elif isinstance(model, libModel):
         try:
-            extension = os.path.splitext(filename)[1].replace('.','')
+            extension = filename.suffix.replace('.','')
             match extension:
                 case 'xml':
                     new_document = model.getSBMLDocument()
-                    writeSBMLToFile(new_document, filename)
+                    writeSBMLToFile(new_document, str(filename))
                 case 'json'|'yml'|'mat':
                     data = cobra.io.sbml._sbml_to_model(model)
                     _write_cobra_model_to_file(data,filename)
                 case _:
                     raise ValueError('Unknown file extension for model: ', extension)
-            logging.info("Modified model written to " + filename)
+            logging.info("Modified model written to " + str(filename))
         except (OSError) as e:
             print("Could not write to file. Wrong path?")
     # unknown model type or no model        
@@ -374,7 +375,7 @@ def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd
     open_con.close()
     return db_table
 
-
+# @ASK: The XLSX is incorrect. Should we add already a valid file/valid files? Or what do we do with that?
 def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
     """Loads gapfill sheet from manual curation table
 
@@ -505,8 +506,26 @@ def parse_fasta_headers(filepath: str, id_for_model: bool=False) -> pd.DataFrame
     return pd.DataFrame(locus2ids)
 
 
-# @WARNING Specify that input Protein FASTA has to be from Genbank otherwise code won't work!!!
-def create_missing_genes_protein_fasta(fasta,outdir, missing_genes):
+def create_missing_genes_protein_fasta(fasta: str, missing_genes: pd.DataFrame, outdir: str=None, ) -> str:
+    """Creates a FASTA file containing proteins for missing_genes
+
+    .. note::
+
+        Please keep in mind that the input FASTA file has to have Genbank format.
+
+    Args:
+        - fasta (str): 
+            Path to the FASTA protein file.
+        - missing_genes (pd.DataFrame): 
+            The table of missing genes.
+        - outdir (str, optional): 
+            Path to a directory to write the output to. 
+            Defaults to None.
+
+    Returns:
+        str: 
+            Path to the FASTA protein file for the missing genes.
+    """
     
     # format the missing genes' locus tags
     locus_tags_dict = {_:'[locus_tag='+_+']' for _ in list(missing_genes['locus_tag'])}
@@ -595,7 +614,21 @@ def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
     return pd.DataFrame.from_dict(locus_tag2id, orient='index').T.dropna() #pd.DataFrame(locus_tag2id)
 
 
-def parse_gff_for_cds(gffpath, keep_attributes=None):
+def parse_gff_for_cds(gffpath: str, keep_attributes: dict[str: str]=None) -> pd.DataFrame:
+    """Parses a GFF file to obtain a mapping for the corresponding attributes listed in keep_attributes
+
+    Args:
+        - gffpath (str): 
+            Path to the GFF file.
+        - keep_attributes (dict, optional): 
+            Dictionary of attributes to be kept and the corresponding column for the table. 
+            Defaults to None.
+
+    Returns:
+        pd.DataFrame: 
+            Dataframe containing a mapping for the corresponding attributes listed in keep_attributes
+    """
+    
     # load the gff
     gff = gffutils.create_db(gffpath, ':memory:', merge_strategy="create_unique")
     # extract the attributes of the CDS 

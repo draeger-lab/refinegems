@@ -163,6 +163,9 @@ def get_metabs_with_one_cvterm(model: libModel) -> list[str]:
                 
     return only_one
 
+# SBO terms
+# ---------
+
 def get_reactions_per_sbo(model: libModel) -> dict:
     """Counts number of reactions of all SBO Terms present
 
@@ -183,6 +186,7 @@ def get_reactions_per_sbo(model: libModel) -> dict:
             sbos_dict[sbo] = 1
     return sbos_dict
 
+# @TODO Move to reports?
 def plot_rea_sbo_single(model: libModel):
     """Plots reactions per SBO Term in horizontal bar chart
 

@@ -28,7 +28,7 @@ from ..utility.util import test_biomass_consistency, test_biomass_presence
 ############################################################################
 
 
-# @DELETE - one the function below works?
+# @DEPRECATE - one the function below works?
 def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     """Normalises the coefficients according to current biomass weight to one g[CDW]
 
@@ -51,6 +51,7 @@ def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
     
     return biomass
 
+# @TODO Move to somewhere else
 def check_normalise_biomass(model: cobraModel, cycles:int=10) -> Union[cobraModel, None]:
     """
        1. Checks if at least one biomass reaction is present

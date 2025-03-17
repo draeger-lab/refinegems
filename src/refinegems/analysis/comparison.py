@@ -7,7 +7,7 @@ All other stats are shown in the memote report.
 
 __author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Carolin Brune"
 
-# @TODO Maybe move everything to Reports?
+# @TODO Clean-up this module! Maybe move everything to Reports?
 ################################################################################
 # requirements
 ################################################################################
