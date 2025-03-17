@@ -826,9 +826,12 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch(r'^chebi|^eco$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
-                    new_curie = extracted_curie[1].split(r':')
-                    curie = (new_curie[0].lower(), new_curie[1])
+                elif re.fullmatch(r'^eco|chebi$', extracted_curie[0], re.IGNORECASE): 
+                    if ':' in extracted_curie[1]:
+                        new_curie = extracted_curie[1].split(r':')
+                        curie = (new_curie[0].lower(), new_curie[1])
+                    else:
+                        curie = tuple(extracted_curie)
                 elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
                     curie = [extracted_curie[0], extracted_curie[1].split(r':')[1]]
                 else:
@@ -1321,9 +1324,6 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 
 
 #--------------------------------------------------- Main function ----------------------------------------------------#
-#@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
-#@NOTE: Find out all HTTP connections to get where error occurred
-#@TEST: Test with different models to also maybe recreate @TODO issue
 def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
            kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
@@ -1400,7 +1400,8 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
+    # @DEBUG : comment out when fixing stuff in pollish_annotations (improves runtime) 
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) 
     
 
     ### add additional URIs to GeneProducts ###
