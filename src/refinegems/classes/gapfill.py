@@ -1037,11 +1037,10 @@ class GapFiller(ABC):
         reacs_in_model = self.missing_reactions[~(self.missing_reactions['add_to_GPR'].isnull())]
         ncbiprot_with_reacs_in_model = [*chain(*list(reacs_in_model['ncbiprotein']))]
         genes_with_reacs_in_model = self.missing_genes[self.missing_genes['ncbiprotein'].isin(ncbiprot_with_reacs_in_model)]
+
         if len(genes_with_reacs_in_model) > 0:
-            
             # add genes as gene products to model
             self.add_genes_from_table(model, genes_with_reacs_in_model)
-
             # extend gene production rules 
             self.add_gene_reac_associations_from_table(model,reacs_in_model)
             
@@ -1859,7 +1858,7 @@ class GeneGapFiller(GapFiller):
             return None
         
         # create pseudoids for entries with no ncbiprotein id
-        mapped_reacs['ncbiprotein'] = mapped_reacs.apply(lambda x: f'{prefix}_{x["locus_tag"]}' if not x['ncbiprotein'] else x['ncbiprotein'], axis=1)
+        mapped_reacs['ncbiprotein'] = mapped_reacs.apply(lambda x: f'{x["locus_tag"]}' if not x['ncbiprotein'] else x['ncbiprotein'], axis=1)
 
         # EC found
         # ---------

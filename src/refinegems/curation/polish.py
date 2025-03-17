@@ -547,7 +547,7 @@ def set_initial_amount(model: libModel):
 # -> Map via RefSeq locus tag? Requires however protein_fasta
 # -> Rename 'lab_strain' to 'with_fasta'? Or make protein_fasta optional and if provided use?
 # If ambigous locus tags are found this can be fixed by using the fasta to map RefSeq locus tags to the NCBI locus tags
-def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False, ):
+def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str, filename: str, lab_strain: bool=False):
     """Adds NCBI Id to genes as annotation
 
     Args:
@@ -839,9 +839,12 @@ def get_set_of_curies(uri_list: list[str]) -> tuple[SortedDict[str: SortedSet[st
 
                     # Add BioCyc identfier additionally
                     curie = ['biocyc', f'META:{curie[1]}'] # Metacyc identifier comes after 'META:' in biocyc identifier
-                elif re.fullmatch(r'^chebi|^eco$', extracted_curie[0], re.IGNORECASE): # @TODO: Also handle eco case here as similar problem
-                    new_curie = extracted_curie[1].split(r':')
-                    curie = (new_curie[0].lower(), new_curie[1])
+                elif re.fullmatch(r'^eco|chebi$', extracted_curie[0], re.IGNORECASE): 
+                    if ':' in extracted_curie[1]:
+                        new_curie = extracted_curie[1].split(r':')
+                        curie = (new_curie[0].lower(), new_curie[1])
+                    else:
+                        curie = tuple(extracted_curie)
                 elif re.search(r'^sbo:', extracted_curie[1], re.IGNORECASE): # Checks for old pattern of SBO term URIs ('MIRIAM/sbo/SBO:identifier')
                     curie = [extracted_curie[0], extracted_curie[1].split(r':')[1]]
                 else:
@@ -1342,8 +1345,9 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
 #@TODO Catch http.client.RemoteDisconnected: Remote end closed connection without response errors 
 #@NOTE: Find out all HTTP connections to get where error occurred
 #@TEST: Test with different models to also maybe recreate @TODO issue
-def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
-           kegg_organism_id: str, path: str) -> libModel: 
+def polish(model: libModel, email: str, id_db: str, gff: str, 
+           protein_fasta: str= None, lab_strain: bool = False, 
+           kegg_organism_id: str = None, path: str= '.') -> libModel: 
     """Completes all steps to polish a model
     
     (Tested for models having either BiGG or VMH identifiers.)
@@ -1397,8 +1401,13 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     # Read GFF if provided
     if gff:
         locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
-        locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
-        locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
+        try: 
+            locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
+            locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
+        except:
+            mes = f'GFF does not contain the necessary information. Cannot be used.'
+            logging.warning(mes)
+            locus2id = None
     else: locus2id = None
 
     ### unit definition ###
@@ -1413,6 +1422,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
     add_reac(reac_list, id_db)
     cv_notes_metab(metab_list)
     cv_notes_reac(reac_list)
+    # @DEBUG : comment out when fixing stuff in pollish_annotations (improves runtime) 
     cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) # @WARNING: Temporary fix
     
 

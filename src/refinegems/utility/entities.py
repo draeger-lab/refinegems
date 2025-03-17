@@ -1674,9 +1674,9 @@ def create_gp(model:libModel, protein_id:str,
         raise ValueError('No valid ID found for gene product. Specify at least the locus tag.')
     
     if name: gp.setName(name)               # Name  
-    if locus_tag: gp.setLabel(locus_tag)    # Label
+    if locus_tag: gp.setLabel(_f_gene_rev(locus_tag,''))    # Label
     gp.setSBOTerm('SBO:0000243')            # SBOterm
-    gp.setMetaId(f'meta_G_{protein_id}')    # Meta ID
+    gp.setMetaId(f'meta_{_f_gene_rev(protein_id)}')    # Meta ID
     # test for NCBI/RefSeq
     id_db = None
     if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
