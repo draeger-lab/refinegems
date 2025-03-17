@@ -46,6 +46,7 @@ COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
 #     print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
 #       'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
 #       'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
+# @ASK Future?/ Feature request issue?
 
 # SBO
 # ---
@@ -70,7 +71,8 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
          if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
             r.annotation['sbo'] = "SBO:0000176"
 
-    # @TODO: add transport reactions?
+    # @IDEA: add transport reactions? -> Good idea. I had issues with them and MEMOTE.
+    # @ASK Future?/ Feature request issue?
 
 
 # handling stoichiometric factors

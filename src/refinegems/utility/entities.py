@@ -78,11 +78,12 @@ def are_compartment_names_valid(model:cobra.Model) -> bool:
 
 
 # @TODO extend + change else case?
+# @ASK Future?/Feature request issues?
 def resolve_compartment_names(model:cobra.Model):
     """Resolves compartment naming problems.
 
     Args:
-        - model (cobra.Model): 
+        - model (cobra.Model):
             A COBRApy model object.
 
     Raises:
@@ -237,6 +238,7 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
 # @TODO: 
 #     more namespace options
 #     Maybe bioregistry for mapping of id to namespace?
+# @ASK Future?/ Feature request issue?
 def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
     """Based on a given namespace, change the ID of a given model entity to the set namespace.
 
@@ -266,6 +268,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
                 case 'BiGG':
                     if 'bigg.reaction' in model_entity.annotation.keys():
                         # @NOTE : currently takes first entry if annotation is list
+                        # @ASK Future feature to use more? Add user warning/hint?
                         model_entity.id = model_entity.annotation['bigg.reaction'] if isinstance(model_entity.annotation['bigg.reaction'],str) else model_entity.annotation['bigg.reaction'][0]
 
                 case _:
@@ -463,6 +466,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
             # ................
             # @TODO what to do
             # currently, just the first one is taken
+            # @ASK Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
             # ................
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
@@ -513,6 +517,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
         # Cleanup BiGG annotations (MetaNetX only saves universal)
         # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
         # @TODO : save ID in the correct way
+        # @ASK For the annotation only the universial ID is valid. So this should be fine.
         if 'bigg.metabolite' in new_metabolite.annotation.keys():
             new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
         else:
@@ -530,6 +535,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
         # -----------------------------------------
         # @TODO : check complete annotations? 
         #        - or let those be covered by the duplicate check later on?
+        # @ASK Future? Feature request issue? I think for now this should be fine.
         if new_metabolite.id in [_.id for _ in model.metabolites]:
             return model.metabolites.get_by_id(new_metabolite.id)
            
@@ -582,6 +588,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
         if len(matches) > 1:
             # .......
             # @TODO
+            # @ASK Same argument as for build_metabolite_mnx; Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
             # .......
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
@@ -619,11 +626,12 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     # set name from KEGG and additionally use it as ID if there is none yet
     if isinstance(kegg_record.name, list) and len(kegg_record.name) > 0:
         # @DISCUSSION : better way to choose a name than to just take the first entry???
+        # @ASK I don't think so.
         new_metabolite.name = kegg_record.name[0]
     elif isinstance(kegg_record.name, str) and len(kegg_record.name) > 0:
         new_metabolite.name = kegg_record.name
     else:
-        new_metabolite.name = '' # @DISCUSSION any ideas for good default values?
+        new_metabolite.name = '' # @ASK any ideas for good default values? -> Not really. Where should this come from? Mapping to CHEBI/other databases for this possible?
     # set compartment
     new_metabolite.compartment = compartment
     # set formula
@@ -680,9 +688,11 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
         else:
             pass
             # @TODO : how to handle multiple matches, e.g. getting charge will be complicated
+            # @ASK Get first entry?
         
     # Cleanup BiGG annotations (MetaNetX only saves universal)
     # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
+    # @ASK As stated before; Only universal ID is valid in URI
     if 'bigg.metabolite' in new_metabolite.annotation.keys():
         new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
     
@@ -700,6 +710,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     # -----------------------------------------
     # @TODO : check complete annotations? 
     #        - or let those be covered by the duplicate check later on?
+    # @ASK As stated above handling via duplicate check should be enough for now.
     if new_metabolite.id in [_.id for _ in model.metabolites]:
         return model.metabolites.get_by_id(new_metabolite.id)
 
@@ -710,6 +721,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
 # @TODO some comments inside
 # @NOTE expects the non-universal BiGG ID (meaning the one with the compartment abbreviation
 #       at the end) -> change behaviour or keep it?
+# @ASK Why change behaviour?
 def build_metabolite_bigg(id:str, model:cobra.Model, 
                          namespace:Literal['BiGG']='BiGG',
                          idprefix:str='refineGEMs') -> Union[cobra.Metabolite,None]: 
@@ -755,6 +767,7 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
             # ................
             # @TODO what to do
             # currently, just the first one is taken
+            # @ASK Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
             # ................
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
@@ -820,7 +833,7 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
     # add SBOTerm
     new_metabolite.annotation['sbo'] = 'SBO:0000247'
     # add infos from BiGG
-    new_metabolite.annotation['bigg.metabolite'] = [id]  # @TODO or use the universal id?
+    new_metabolite.annotation['bigg.metabolite'] = [id]  # @ASK or use the universal id? -> Only with universal is valid URI
     add_annotations_from_BiGG_metabs(new_metabolite)
     # add annotations from MNX
     if mnx_res is not None:
@@ -928,7 +941,7 @@ def parse_reac_str(equation:str,
                     factor = float(s)
                 elif s == '+':
                     continue
-                elif s == '<=>': # @TODO are there more options?
+                elif s == '<=>': # @TODO are there more options? #@ASK Future?
                     is_product = True
                 else:
                     if is_product:
@@ -940,7 +953,6 @@ def parse_reac_str(equation:str,
     return (reactants,products,compartments,reversible)
 
 
-# @NOTE: Add to reaction handling for `build_reac_bigg`?
 def validate_reaction_compartment_bigg(comps: list) -> Union[bool, Literal['exchange']]:
     """Retrieves and validates the compatment(s) of a reaction from the BiGG namespace
 
@@ -975,9 +987,11 @@ def validate_reaction_compartment_bigg(comps: list) -> Union[bool, Literal['exch
 # @TODO
 #   extend the build function so, that all of them can take either the id or an equation 
 #   as input for rebuilding the reaction (would also be beneficial for semi-manual curation)
+# @ASK Future?/ Feature request issue?
 
 @template
 # @TODO complete it
+# @ASK Future?
 def build_reaction_xxx():
     '''
     model:cobra.Model, id:str=None,
@@ -989,8 +1003,7 @@ def build_reaction_xxx():
     pass
 
 
-# @TEST (more) - tries some cases, in which it seems to work
-# @TODO: Add if to extend notes if found missing by BioCyc
+# @TEST (more) - tried some cases, in which it seems to work
 # @TODO
 def build_reaction_mnx(model:cobra.Model, id:str,
                       reac_str:str = None,
@@ -1078,10 +1091,11 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     else:
         return None
     # ............................................................
-    # @TODO / Issue
+    # @TODO / @BUG
     #    reac_prop / mnx equation only saves generic compartments 1 and 2 (MNXD1 / MNXD2)
     #    how to get the (correct) compartment?
     #    current solution 1 -> c, 2 -> e
+    # @ASK Map to BiGG and get from there, otherwise keep current default?
     comparts = ['c' if _ == 'MNXD1' else 'e' for _ in comparts ]
     # ............................................................
     metabolites = {}
@@ -1157,7 +1171,7 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     return new_reac
 
 
-# @TEST (more) - tries some cases, in which it seems to work
+# @TEST (more) - tried some cases, in which it seems to work
 # @TODO some things still open (for discussion)
 def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
                         references:dict={},
@@ -1242,6 +1256,7 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     # @TODO
     # KEGG has no information about compartments !!!
     # current solution: always use c
+    # @ASK Map to BiGG and use compartments from there? Otherwise set to c as default/ if exchange info set to c and e as default?
     compartment = 'c'
     # ..............................................
     metabolites = {}
@@ -1299,10 +1314,10 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
             _add_annotations_from_bigg_reac_row(row, new_reac)
             if valid_comp == 'exchange':
                 is_exchange += 1
-            #break -> Should work without, but let´s see
     new_reac.name = f'EX_{new_reac.name}' if is_exchange > 0 else new_reac.name
             
     # @IDEA / @TODO get more information from MetaNetX
+    # @ASK Future?/ Feature request issue?
     
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references,new_reac)
@@ -1322,7 +1337,6 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
 
 
 # @TEST
-# @TODO: Add if to extend notes if found missing by BioCyc
 # @TODO some things still open (for discussion)
 # @TODO implement reac_str usage
 def build_reaction_bigg(model:cobra.Model, id:str, 
@@ -1553,6 +1567,7 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
 # -----------------------------------
 
 # @TODO check for new-ish functionalities / merge with create_gp and delete
+# @DEPRECATE
 def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
     """Creates GeneProduct in the given model
 
@@ -1631,7 +1646,8 @@ def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, pro
 # --> WARNING: Output is different now
 # @TODO generalise addition of references -> maybe kwargs
 # @TODO: Check if ncbiprotein leads to valid ID -> Otherwise, replace invalid chars with '_'
-# @DISCUSSION: Add functionality to check if locus tag already in model as sanity check if someone only uses create_gp?
+# @ASK Use the functionality with ASCII parsing?
+# @ASK: Add functionality to check if locus tag already in model as sanity check if someone only uses create_gp? -> Would be good
 def create_gp(model:libModel, protein_id:str, 
               model_id:str=None,
               name:str=None, locus_tag:str=None,
@@ -1685,7 +1701,7 @@ def create_gp(model:libModel, protein_id:str,
     if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
     
     # add further references
-    # @DISCUSSION: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
+    # @ASK: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
     # references {'dbname':(list_or_str_of_id,lab_train_bool)}
     if reference and len(reference) > 0:
         for dbname,specs in reference.items():
@@ -1812,8 +1828,9 @@ def create_reaction(
     return reaction, model
  
 
-# @TODO : does it cover indeed all cases (for adding GPR together) ?
+# @ASK : does it cover indeed all cases (for adding GPR together) ?
 # @TODO : only support OR connection
+# @ASK Future?/ Feature request issue?
 def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
     """For a given libSBML Reaction and a gene ID or a list of gene IDs, 
     create a gene production rule inside the reaction.
@@ -1860,6 +1877,7 @@ def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
 
     # add the remaining genes 
     # @TODO currently, only connection possible is 'OR'
+    # @ASK Future?/ Feature request issue?
     if isinstance(gene,str):
         new_association.createGeneProductRef().setGeneProduct(gene)
     elif isinstance(gene,list) and len(gene) == 1:

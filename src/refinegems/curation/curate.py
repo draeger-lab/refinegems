@@ -138,7 +138,7 @@ def resolve_duplicate_reactions(model:cobra.Model, based_on:str='reaction', remo
                                     keep_reac.gene_reaction_rule = gpr_to_add # add the one existing the other 
                             else:
                                 pass # nothing to add
-                            model.reactions.get_by_id(r_id).remove_from_model() # @NOTE throws warning, but seems to be a cobra-internal issue
+                            model.reactions.get_by_id(r_id).remove_from_model()
                             print(F'\tDuplicate reaction {r_id} found. Combined to {keep_reac.id} and deleted.')
                     else:
                         print(f'\tDuplicate reactions {", ".join(mnx[1]["id"].tolist())} found.')

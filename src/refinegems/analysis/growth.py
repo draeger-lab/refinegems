@@ -13,15 +13,13 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import re
 import warnings
-import yaml
 
 from cobra import Model as cobraModel
 from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import SingleGrowthSimulationReport, GrowthSimulationReport, AuxotrophySimulationReport, SourceTestReport
-from ..classes.medium import Medium, medium_to_model, read_from_cobra_model, load_medium_from_db, read_external_medium
+from ..classes.medium import Medium, medium_to_model, read_from_cobra_model, load_medium_from_db, load_media
 from typing import Literal,Union
 
 ############################################################################
@@ -83,7 +81,6 @@ def set_bounds_to_default(model: cobraModel, reac_bounds:Union[None,str,tuple[fl
             reaction.bounds = reac_bounds
 
 
-# @TEST : does it still work after the last changes? 
 def get_uptake(model: cobraModel, type: str) -> list[str]:
     """Compute the list of exchange reactions that have fluxes > 0 under certain conditions.
 
@@ -164,10 +161,12 @@ def get_production(model: cobraModel) -> list[str]:
     return production
 
 
-# @WARNING 
 def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, standard_uptake: Union[list[str],None]) -> list[str]:
     """Find exchanges in a medium (with or without supplements) essential for the growth.
-    @WARNING only tests single deletions currently
+
+    .. note::
+    
+        This function currently only tests single deletions.
 
     Args:
         - model (cobraModel): 
@@ -195,8 +194,7 @@ def find_growth_essential_exchanges(model: cobraModel, growth_medium: dict, stan
             logging.info('Change upper bounds to COBRApy defaults to make model simulatable.')
             set_bounds_to_default(model)
             model.medium = new_medium
-        # find essentials 
-        # @WARNING: only single deletions are tested
+        # find essentials
         essential = []
         for metab in new_medium.keys():
             with model:
@@ -257,7 +255,6 @@ def find_additives_to_enable_growth(model: cobraModel, growth_medium: dict, stan
         return additives
 
 
-# @TEST
 def get_metabs_essential_for_growth_wrapper(model: cobraModel, media: list[Medium], only_additives:bool=True) -> dict:
     """
     Returns metabolites necessary for growth and not in media
@@ -385,159 +382,9 @@ def growth_sim_multi(models: Union[cobraModel,list[cobraModel]], media: Union[Me
             r = growth_sim_single(mod, med, namespace=namespace, supplement=supp)
             report.add_sim_results(r)
 
-    return report     
+    return report
 
 
-# @IDEA: more options for fluxes
-# @TODO/@IDEA: validity check nefore parsing
-# @ASK: maybe something for the io module or does it fit here?
-# @TEST: extensive testing that everythin works fine
-def read_media_config(yaml_path:str) -> tuple[list[Medium],list[str,None]]:
-    """Read the information from a media configuration file.
-
-    Args:
-        - yaml_path (str): 
-            The path to a media configuration file in YAML-format.
-
-    Returns:
-        tuple[list[Medium],list[str,None]]: 
-            Tuple of two lists (1) & (2)
-
-            (1) list: list of the loaded media and 
-            (2) list: list of supplement modes
-    """
-
-    media_list = []
-    supplement_list = []
-
-    with open(yaml_path, 'r') as stream:
-
-        loaded = yaml.safe_load(stream)
-
-        # ........................
-        # @TODO / MAYBE
-        # check validity of input?
-        # ........................
-
-        params = loaded['params'] if 'params' in loaded.keys() else None
-        media = loaded['media'] if 'media' in loaded.keys() else None
-
-        # handle internal/in-build media compositions
-        if media:
-
-            for name,p in media.items():
-
-                # load base medium from either  
-                # base
-                if p and 'base' in p.keys():
-                    m_name = p['base'].split(' ')
-                    if len(m_name) > 1:
-                        new_medium = load_medium_from_db(m_name[1])
-                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
-                    else:
-                        new_medium = load_medium_from_db(p['base'])
-                    new_medium.name = name
-                # extern
-                elif p and 'external_base' in p.keys():
-                    m_name = p['external_base'].split(' ')
-                    if len(m_name) > 1:
-                        new_medium = read_external_medium(m_name[1])
-                        new_medium.substance_table['flux'] = new_medium.substance_table['flux'].apply(lambda x: x*float(m_name[0]) if type(x) == float else x)
-                    else:
-                        new_medium = read_external_medium(p['external_base'])
-                    new_medium.name = name
-                # default name
-                else:
-                    new_medium = load_medium_from_db(name)
-                
-                # add subsets from DB
-                if p and 'add_subset' in p.keys():
-                    # interate over all subsets to add
-                    for subset,dflux in p['add_subset'].items():
-                        new_medium = new_medium.add_subset(subset, default_flux=dflux)
-
-                # add media from DB
-                if p and 'add_medium' in p.keys():
-                    # interate over all media to add
-                    for medium,perc in p['add_medium'].items():
-                        new_medium = new_medium.combine(load_medium_from_db(medium), how=perc)
-
-                # from external
-                if p and 'add_external' in p.keys():
-                    for a,perc in p['add_external'].items():
-                        new_medium = new_medium.combine(read_external_medium(a), how=perc)
-                
-                # check anaerobic / aerobic settings
-                if p and 'aerobic' in p.keys():
-                    if p['aerobic']:
-                        new_medium.make_aerobic()
-                    else:
-                        new_medium.make_anaerobic()
-                else:
-                    if params and 'aerobic' in params.keys():
-                        if params['aerobic']:
-                            new_medium.make_aerobic()
-                        else:
-                            new_medium.make_anaerobic()
-
-                # set default flux
-                if p and 'default_flux' in p.keys():
-                    new_medium.set_default_flux(p['default_flux'], replace=True)
-                elif params and 'default_flux' in params.keys():
-                    new_medium.set_default_flux(params['default_flux'], replace=True)
-
-                # set o2_percentage
-                if p and 'o2_percent' in p.keys():
-                    new_medium.set_oxygen_percentage(p['o2_percent'])
-                elif params and 'o2_percent' in params.keys():
-                    new_medium.set_oxygen_percentage(params['o2_percent'])
-
-                # add additional substances from DB
-                if p and 'add_substance' in p.keys():
-                    for s,f in p['add_substance'].items():
-                        # read in flux 
-                        if not f:
-                            if p and 'default_flux' in p.keys():
-                                f = p['default_flux']
-                            elif params and 'default_flux' in params.keys():
-                                f = params['default_flux']
-                        elif isinstance(f,str):
-                            if '%' in f:
-                                f = float(f[:f.index('%')])/100
-                                if p and 'default_flux' in p.keys():
-                                    f = f * p['default_flux']
-                                elif params and 'default_flux' in params.keys():
-                                    f = f * params['default_flux']
-                                else:
-                                    f = f * 10.0
-                            else:
-                                warn_string = f'Could not read in flux for {s}: {f}. \nWill be using default 10.0 instead.'
-                                warnings.warn(warn_string)
-                                f = 10.0
-                        # change medium
-                        if s in new_medium.substance_table['name'].tolist():
-                            # change fluxes only
-                            new_medium.substance_table.loc[new_medium.substance_table['name']==s,'flux'] = f
-                        else:
-                            # add substance to medium 
-                            new_medium.add_substance_from_db(s,f)
-
-                # supplement settings
-                if p and 'supplement' in p.keys():
-                    supplement_list.append(p['supplement'])
-                elif params and 'supplement' in params:
-                    supplement_list.append(params['supplement'])
-                else:
-                    supplement_list.append(None)
-                    
-                # append medium to list
-                media_list.append(new_medium)
-
-    return (media_list,supplement_list)
-
-
-# @IDEA : choose different namespaces for the media
-# @TEST : namespace implementation. Are connections correct?
 def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
                     media:Union[Medium,list[Medium],str],
                     namespace:Literal["BiGG"]='BiGG',
@@ -600,8 +447,6 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
                 # if list entries are already cobra.Models
                 elif all(isinstance(_, cobra.Model) for _ in models):
                     mod_list = models
-                # @TODO
-                # option for mixed list?
                 else:
                     raise TypeError('Unknown or mixed types in model list.')
             else:
@@ -632,7 +477,7 @@ def growth_analysis(models:Union[cobra.Model,str,list[str],list[cobra.Model]],
                 raise TypeError('Unknown type found in media, should be list fo Medium.')
         # string - connection to YAML config file
         case str():
-            media, supplements = read_media_config(media)
+            media, supplements = load_media(media)
         # unknown input
         case _:
             raise ValueError(f'Unknown input for media: {media}')
@@ -845,9 +690,6 @@ def test_auxotrophies(model:cobraModel, media_list:list[Medium], supplement_list
 # source test
 # -----------
 
-# @TODO : set new default for substances - ideally a subset or so
-# @TODO : Allow incomplete substance names to be valid, example: 'Glucose' instead of 'D-Glucose'
-# @TODO : more namespace options, currently only BiGG available
 def test_growth_with_source(model:cobra.Model, element:str, substances:Union[None,str,list[str]]=None, medium:Union[None,str,Medium]=None, namespace:Literal['BiGG']='BiGG') -> SourceTestReport:
     """Test the growth of a model when switching out the source of a given chemical element for
     a set medium.
@@ -918,7 +760,6 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:Union[Non
         # case 2: 
         # use the user given list - account for errors
         case list():
-            # @TODO validate, if all are part of the database or is this over the top?
             source_list = substances
 
         # case 3:
@@ -955,10 +796,6 @@ def test_growth_with_source(model:cobra.Model, element:str, substances:Union[Non
 # minimal medium
 # --------------
 
-# ......
-# @TODO:
-#    see function body
-# ......
 def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','exchanges']='flux', growth_rate:float=0.5, open_exchanges:bool=False) -> Medium:
     """Get the minimal medium based on different objectives:
 
@@ -966,7 +803,9 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
     - 'medium':    find the minimal number of compounds for the current medium.
     - 'exchanges': find the minimal number of compounds in a medium based on all avaiblae exchange reactions in the model.
     
-    Note: there may be multiple solution for the minimisation, but only 1 will be returned
+    .. note::
+    
+        There may be multiple solutions for the minimisation, but only 1 will be returned.
 
     Args:
         - model (cobraModel): 
@@ -978,9 +817,12 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
             Minimum growth rate the model has to archieve. 
             Defaults to 0.5. Only needed for objectives medium and exchanges.
         - open_exchanges (bool, optional): 
-            If set to True assigns large upper bound to all import reactions. 
-            @TODO: running this on True can lead to infeasible runtimes, re-check usage in cobra.
+            If set to True assigns large upper bound to all import reactions.
             Defaults to False.
+
+            .. warning::
+            
+                Running `open_exchanges` on `True` can lead to infeasible runtimes.
 
     Raises:
         - ValueError: unknown objective.
@@ -989,17 +831,6 @@ def model_minimal_medium(model:cobraModel, objective:Literal['flux','medium','ex
         Medium: 
             The medium that is a solution for the minimisation task.
     """
-
-
-    # ...............................
-    # @TODO:
-    #    make running multiple iterations possible
-    # set iterations to True if no concrete number is given
-    # PROBLEM: will leads to a different output
-    #if not iterations:
-    #    iterations = True
-    # minimize_components = iteration
-    # ...............................
 
     # minimise the fluxes of the current medium
     if objective == 'flux':

@@ -88,7 +88,8 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
 # ------------
 # get examples
 # ------------
-# @DISCUSSION explain how to do manual gapfilling
+# @DISCUSSION explain how to do manual gapfilling 
+# @ASK -> Already or only after we have a ManualGapFiller?
 
 
 # --------------------
@@ -129,6 +130,7 @@ def reset():
 # all about the media 
 # -------------------
 # @TODO more functionalities / entry points
+# @ASK Future?/ Feature request issue?
 
 @cli.group()
 def media():
@@ -136,6 +138,7 @@ def media():
    """
 
 # @TODO: Download a file with all media for a specific database?
+# @ASK Future?/ Feature request issue?
 # Handle medium / media database
 # ------------------------------
 @media.command()
@@ -148,6 +151,7 @@ def info(list): #,copy
     Can be used to either check 
     - the available media 
     -  @TODO to make a copy for further use.
+    @ASK Future?/ Feature request issue?
     """
     if list:
         possible_media = rg.utility.io.load_a_table_from_database('medium', False)['name'].to_list()
@@ -197,6 +201,7 @@ def run(model,email,path,outdir,id_db,gff,protein_fasta,lab_strain,kegg_organism
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
 # @TODO gaps group still for the old gapfill - rewrite or delete
+# @TODO Recheck if everything is as it should be & works!
 # @TEST help is displayed alright but untested
 @cli.group()
 def gaps():
@@ -387,7 +392,7 @@ def direction(modelpath,data,dir):
 
 
 # egcs
-#@TODO: Default for compartments -> Why c,p and not c,e,p?
+#@ASK: Default for compartments -> Why c,p and not c,e,p?
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('--solver', '-s',required=False,type=click.Choice(['greedy']), show_default=True, default=None, multiple=False, help='Type of solver for the EGCs.')
@@ -516,6 +521,7 @@ def pancore(modelpath, pcpath, based_on,dir):
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
 # @TODO 
 #    extend / add different comparison options
+# @ASK Future?/ Feature request issue?
 @click.option('--type','-t',required=False,type=click.Choice(['sboterm']), multiple=True,
               show_default=True,  default=[], help='Type of comparison to be performed.')
 @click.option('--all',required=False, is_flag=True, show_default=True, default=False, 
@@ -562,7 +568,7 @@ def simulate(modelpaths,media,namespace,dir,colors):
 def auxotrophies(modelpath,media,namespace,dir,colors):
    """Test for auxotrophies for the 20 proteinogenic amino acids.
    """
-   medialist, supps = rg.analysis.growth.read_media_config(media)
+   medialist, supps = rg.classes.medium.load_media(media)
    model = rg.utility.io.load_model(modelpath, 'cobra')
    report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
    report.save(dir,colors)
@@ -571,7 +577,7 @@ def auxotrophies(modelpath,media,namespace,dir,colors):
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-e','--element', type=str, required=True, help='Element to perform the source test with. Needs to be a valid chemical, elemental Symbol.')
-@click.option('-s','--substances', type=str, required=False, show_default=True, default=None, multiple=True, help='Add substances from the database to test against. If none are given, resrs against the while database.')
+@click.option('-s','--substances', type=str, required=False, show_default=True, default=None, multiple=True, help='Add substances from the database to test against. If none are given, tests against the whole database.')
 @click.option('-m', '--medium', required=False, type=str, show_default=True, default=None, help='Name of a medium from the database to use for the testing. If not given, uses the one from the model.')
 @click.option('-n', '--namespace', required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG', help='Namespace to use for the model.')
 @click.option('-d', '--dir', required=False, type=click.Path(), default='', help='Path to the output dir.')

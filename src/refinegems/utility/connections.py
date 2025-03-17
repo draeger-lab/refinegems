@@ -86,6 +86,7 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
     # ...........................
     # @TODO
     #    if time permits or needed, options for more coefficients can be added
+    # @ASK Future?/ Feature request issue?
     # ...........................
 
     # BOFdat step 2:
@@ -144,8 +145,6 @@ def adjust_BOF(genome:str, model_file:str, model:cobra.Model, dna_weight_fractio
 # DIAMOND
 # -------
 
-# @ISSUE / @NOTE / @TODO
-#   is this the right place to put these functions?
 def run_DIAMOND_blastp(fasta:str, db:str, 
                        sensitivity:Literal['sensitive', 'more-sensitive', 'very-sensitive','ultra-sensitive']='more-sensitive',
                        coverage:float=95.0,

@@ -54,9 +54,6 @@ KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023" #: :meta:
 ################################################################################
 
 class Report():
-    # @IDEA 
-    # colour palette for visulisation
-    # date/time of creation?
     pass
 
 
@@ -166,21 +163,25 @@ class GrowthSimulationReport(Report):
         for report in self.reports:
             l.append(report.to_dict())
         return pd.DataFrame(l)
-    
 
-    # @TODO
-    # @NOTE: clean up for unrealistically high and minicules values to 0 - anyone a better idea?  
+
     def plot_growth(self, unit:Literal['h','dt']='dt', color_palette:str='YlGn') -> matplotlib.figure.Figure:
         """Visualise the contents of the report.
 
+        .. note::
+
+            Please keep in mind that the figure does not show unrealistically high and minicules values to zero.
+            However, all values are contained within the table one can get via 
+            :py:func:`~refinegems.classes.reports.GrowthSimulationReport.to_table`.
+
         Args:
-            - unit (Literal['h','dt'], optional): 
-                Set the unit to plot. 
-                Can be doubling time in minutes ('dt') or growth rates in mmol/gDWh ('h'). 
+            - unit (Literal['h','dt'], optional):
+                Set the unit to plot.
+                Can be doubling time in minutes ('dt') or growth rates in mmol/gDWh ('h').
                 Defaults to 'dt'.
             - color_palette (str, optional):
                 A colour gradient from the matplotlib library.
-                If the name does not exist, uses the default. 
+                If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
 
         Returns:
@@ -225,7 +226,6 @@ class GrowthSimulationReport(Report):
             ax = fig.add_axes([0,0,1,1])
 
             # clean-up data
-            # @TODO / @NOTE
             ydata = [_ if _ > 0.0 else 0.0 for _ in ydata]
             ydata = [_ if _ < 1000.0 else 0.0 for _ in ydata]
 
@@ -272,7 +272,6 @@ class GrowthSimulationReport(Report):
             growth.index = growth.index.get_level_values(1)
 
             # over / under (meaningful) values
-            # @TODO: are these values meaningful???
             growth[growth > 1000] = 0   
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
@@ -401,16 +400,13 @@ class GrowthSimulationReport(Report):
         else:
             raise IndexError('Can only plot growth if at least one model and one medium are present.')
 
-        
-    # @TEST    
-    # @EXTEND : more options for saving the report e.g. html or pdf
+
     def save(self, to:str, how:Literal['dir']='dir', check_overwrite:bool=True, color_palette:str='YlGn'):
         """Save the report. 
         
         Current options include:
         
         - 'dir': save the report to a directory, including a txt and two graphics
-        - .... see future updates .....
 
         Args:
             - to (str): 
@@ -738,7 +734,6 @@ class AuxotrophySimulationReport(Report):
         ax = fig.add_axes([0,0,1,1])
 
         # create heatmap
-        # @TODO: colour no-growth-values differently
         sns.heatmap(self.simulation_results, ax=ax, cmap=cmap, cbar_kws={'label': 'flux'}, annot = True, fmt='.2f')
 
         # add labels
@@ -934,7 +929,6 @@ class CorePanAnalysisReport(Report):
         return counts
 
 
-    #@TODO
     def isValid(self,check='reaction-count') -> bool:
         """Check if a certain part of the analysis is valid.
 
@@ -943,10 +937,6 @@ class CorePanAnalysisReport(Report):
         - reaction-count : 
             check if the number of reactions in the model
             equal the sum of the novel, pan and core reactions
-
-        @TODO
-        
-        - implements more checks
 
         Args:
             - check (str, optional): 
@@ -1016,7 +1006,6 @@ class CorePanAnalysisReport(Report):
         return fig
 
 
-    #@TODO
     def save(self, dir:str):
         """Save the results inside a PanCoreAnalysisReport object.
 
@@ -1030,12 +1019,6 @@ class CorePanAnalysisReport(Report):
             - dir (str): 
                 Path to a directory to save the output to.
         """
-        
-        # ..........................................................
-        #@TODO
-        #    - an easily human readable overview file?
-        #    - smth about metabolites?
-        # ..........................................................
 
         # collect all produced file in one directory
         try:
@@ -1056,11 +1039,8 @@ class CorePanAnalysisReport(Report):
         reac_tab.to_csv(Path(dir,'pan-core-analysis/table_reactions.tsv'), sep='\t', index=False)
 
 
-# @TODO
 class ModelInfoReport(Report):
     """Report about the basic information of a given model.
-
-    Note: currently requires the input model to be a COBRApy model object.
 
     Attributes:
         - name: 
@@ -1091,7 +1071,7 @@ class ModelInfoReport(Report):
             List of reactions IDs that are pseudoreactions with gpr.
     """
     
-    def __init__(self, model) -> None:
+    def __init__(self, model:cobra.Model) -> None:
         
         # cobra version
         # basics
@@ -1144,7 +1124,8 @@ class ModelInfoReport(Report):
                 } 
         return pd.DataFrame(data)
 
-    # @TODO
+
+    @implement
     def make_html():
         pass
 
@@ -1299,8 +1280,6 @@ class ModelInfoReport(Report):
         return fig
 
 
-    # @TODO: match case for different output?
-    #        -> only needed when html options available
     def save(self, dir:str, color_palette:str='YlGn') -> None:
         """Save the report.
 
@@ -1356,7 +1335,7 @@ class ModelInfoReport(Report):
                 ordedi.append((metabolite.id, 'rest'))
         pd.DataFrame(ordedi).to_csv(Path(dir,f'{self.name}_id_ordedi.csv'), sep=';', header=False)
 
-# @TODO
+
 class MultiModelInfoReport(Report):
 
     def __init__(self) -> None:
@@ -1364,26 +1343,26 @@ class MultiModelInfoReport(Report):
         self.table = pd.DataFrame('model','#reactions','#metabolites',
                 '#genes','orphans','dead-ends','disconnects','mass unbalanced',
                 'charge unbalanced','#reactions with gpr')
-        
+
 
     def add_single_report(self, report:ModelInfoReport) -> None:
         self.table = pd.concat([self.table,report], ignore_index=True)
 
+
     def __add__(self,other):
         self.table = pd.concat(self.table, other.table)
 
-    # @TODO
+
     @implement
     def visualise(self):
         pass
 
+
     @implement
-    # @TODO
     def save(self):
         pass
 
 
-# @TODO
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
     
