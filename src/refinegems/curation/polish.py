@@ -28,7 +28,7 @@ Further functionalities:
 """
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
-
+# @TODO Clean-up this module!
 ################################################################################
 # requirements
 ################################################################################
@@ -568,13 +568,18 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
 
     print('Setting CVTerms and removing notes for all genes:')
     for gene in tqdm(gene_list):
-        if not gene.isSetMetaId():
-            gene.setMetaId('meta_' + gene.getId())
+        # Get current gene_id
+        gene_id = gene.getId()
         
-        if (gene.getId()[2] == 'W'): #addition to work with KC-Na-01
-            entry = gene.getId()
+        if not gene.isSetMetaId():
+            gene.setMetaId('meta_' + gene_id)
+
+        # Remove 'G_' prefix as for further handling unnecessary
+        gene_id = gene_id.removeprefix('G_')
+        
+        if (gene_id[0] == 'W'): #addition to work with KC-Na-01
             # @TODO Implement better way of handling this -> Handle with COBRApy
-            entry = entry[2:-7] if '__46__' in entry else entry[2:-2] # Required for VMH models
+            entry = gene_id[:-7] if '__46__' in gene_id else gene_id[:-2] # Required for VMH models
             add_cv_term_genes(entry, 'REFSEQ', gene)
             add_cv_term_genes(entry, 'NCBI', gene, lab_strain)
             name, locus = search_ncbi_for_gpr(entry)
@@ -582,20 +587,20 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             if (locus2id is not None) and (entry in locus2id.index):
                 locus = locus2id.loc[entry, 'LocusTag']
             if len(locus) == 1: gene.setLabel(locus[0])
-            else: genes_missing_annotation.append(entry)
+            else: genes_missing_annotation.append(gene_id)
         
-        elif (gene.getId() != 'G_spontaneous') and (gene.getId() != 'G_Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
-            if 'prot_' in gene.getId():
-                id_string = gene.getId().split(r'prot_')[1].split(r'_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
+        elif (gene_id != 'spontaneous') and (gene_id != 'Unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+            if 'prot_' in gene_id:
+                id_string = gene_id.split(r'prot_')[1].split(r'_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
                 ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
             else:
-                id_string = gene.getId().removeprefix('G_').split(r'_')
+                id_string = gene_id.split(r'_')
                 if 'peg' in id_string: 
-                    genes_missing_annotation.append('_'.join(id_string))
+                    genes_missing_annotation.append(gene_id)
                     continue
               
             if len(id_string) == 2: # Can be the case if ID is locus tag, for example
-                genes_missing_annotation.append('_'.join(id_string))
+                genes_missing_annotation.append(gene_id)
                 continue # Ignore locus tags as no valid identifiers
             if (len(id_string) > 2):  # Identifier contains '_'
             # Check that the second entry consists of a sequence of numbers -> Valid RefSeq identifier! 
@@ -604,6 +609,9 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                     # Merge the first two parts with '_' as this is complete identifier
                     # Merge the resulting string with the third string in i_string to get complete identifier with version spec
                     ncbi_id = f'{"_".join(id_string[:2])}.{id_string[2]}'
+                else: # Can be the case if locus tag is part of the ID
+                    genes_missing_annotation.append(gene_id)
+                    continue # Ignore locus tags as no valid identifiers
 
             # If identifier matches RefSeq ID pattern   
             if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', ncbi_id, re.IGNORECASE):
@@ -619,7 +627,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                 if id2locus_name is not None:
                     name, locus = id2locus_name[id2locus_name['protein_id']==ncbi_id][['name', 'locus_tag']].values[0]
                 else: 
-                    genes_missing_annotation.append(ncbi_id)
+                    genes_missing_annotation.append(gene_id)
         
             # If identifier matches ncbiprotein ID pattern
             elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', ncbi_id, re.IGNORECASE):
@@ -628,7 +636,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
             
             # Catch all remaining cases that have no valid ID   
             else: 
-                genes_missing_annotation.append(ncbi_id)
+                genes_missing_annotation.append(gene_id)
         
             # For lab strains use the locus tag from the annotation file   
             if lab_strain and id2locus_name is not None:
@@ -638,9 +646,9 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
                 if name and locus:
                     gene.setName(name)
                     if len(locus) == 1: gene.setLabel(locus[0])
-                    else: genes_missing_annotation.append(ncbi_id)
+                    else: genes_missing_annotation.append(gene_id)
                 else:
-                    genes_missing_annotation.append(ncbi_id)
+                    genes_missing_annotation.append(gene_id)
             
         gene.unsetNotes()
     if genes_missing_annotation:    
@@ -1328,7 +1336,7 @@ def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str
            kegg_organism_id: str, path: str) -> libModel: 
     """Completes all steps to polish a model
     
-    (Tested for models having either BiGG or VMH identifiers.)
+    .. note:: So far only tested for models having either BiGG or VMH identifiers.
 
     Args:
         - model (libModel): 
@@ -1448,7 +1456,7 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
     """
     
     match data:
-        # aleady a DataFrame
+        # already a DataFrame
         case pd.DataFrame():
             pass
         case str():
