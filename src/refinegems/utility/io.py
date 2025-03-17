@@ -217,7 +217,6 @@ def write_model_to_file(model:Union[libModel,cobra.Model], filename:Union[str,Pa
             print("Could not write to file. Wrong path?")
 
 
-    # @IDEA/ @TODO Rewrite pathlib.Path handling? - bit crude currently
     # Cast filename to Path object if string is provided
     if isinstance(filename, str):
         filename = Path(filename)
@@ -374,23 +373,6 @@ def load_a_table_from_database(table_name_or_query: str, query: bool=True) -> pd
 
     open_con.close()
     return db_table
-
-# @ASK: The XLSX is incorrect. Should we add already a valid file/valid files? Or what do we do with that?
-def load_manual_gapfill(tablepath: str='data/manual_curation.xlsx' , sheet_name: str='gapfill') -> pd.DataFrame:
-    """Loads gapfill sheet from manual curation table
-
-    Args:
-        - tablepath (str): 
-            Path to manual curation table. Defaults to 'data/manual_curation.xlsx'.
-        - sheet_name (str): 
-            Sheet name for reaction gapfilling. Defaults to 'gapfill'.
-
-    Returns:
-        pd.DataFrame: 
-            Table from Excel file sheet with name 'gapfill'/ specified sheet_name
-    """
-    man_gapf = pd.read_excel(tablepath, sheet_name)
-    return man_gapf
 
 
 def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
@@ -562,57 +544,6 @@ def create_missing_genes_protein_fasta(fasta: str, missing_genes: pd.DataFrame, 
 
 # GFF
 # ---
-# @DEPRECATE -> Nowhere used!
-def parse_gff_for_refseq_info(gff_file: str) -> pd.DataFrame:
-    """Parses the RefSeq GFF file to obtain a mapping from the locus tag to the corresponding RefSeq identifier
-
-    Args:
-        - gff_file (str): 
-            RefSeq GFF file of the input organism
-
-    Returns:
-        - pd.DataFrame: 
-            Table mapping locus tags to their respective RefSeq identifiers
-    """
-
-    locus_tag2id = {}
-    locus_tag2id['RSLocusTag'] = []
-    locus_tag2id['LocusTag'] = []
-    locus_tag2id['ProteinID'] = []
-    
-    i = 0
-    current_locus_tag = np.nan
-    locus_tag = np.nan
-    protein_id = np.nan
-      
-    gff_db = gffutils.create_db(gff_file, ':memory:', merge_strategy='create_unique')
-
-    for feature in gff_db.all_features():
-        
-        if (feature.featuretype == 'gene') and ('old_locus_tag' in feature.attributes):  # Get locus_tag & old_locus_tag
-            current_locus_tag = feature.attributes['locus_tag']
-            locus_tag = feature.attributes['old_locus_tag'][0]
-        elif (feature.featuretype == 'gene') and ('locus_tag' in feature.attributes):
-            current_locus_tag = feature.attributes['locus_tag']
-            locus_tag = feature.attributes['locus_tag'][0]
-            
-        if (feature.featuretype == 'CDS') and ('protein_id' in feature.attributes): # Check if CDS has protein_id
-            if feature.attributes['locus_tag'] == current_locus_tag:# Get protein_id if locus_tag the same
-                protein_id = feature.attributes['protein_id'][0]
-
-        # Collect all data in second iteration
-        if i % 2 == 0:
-            rs_locus_tag = current_locus_tag[0] if type(current_locus_tag) == list else current_locus_tag
-            locus_tag2id['RSLocusTag'].append(rs_locus_tag)
-            locus_tag2id['LocusTag'].append(locus_tag)
-            locus_tag2id['ProteinID'].append(protein_id)
-
-        i += 1
-
-    #locus_tag2id['LocusTag'] = locus_tag2id.get('LocusTag')[:len(locus_tag2id.get('ProteinID'))]
-
-    return pd.DataFrame.from_dict(locus_tag2id, orient='index').T.dropna() #pd.DataFrame(locus_tag2id)
-
 
 def parse_gff_for_cds(gffpath: str, keep_attributes: dict[str: str]=None) -> pd.DataFrame:
     """Parses a GFF file to obtain a mapping for the corresponding attributes listed in keep_attributes

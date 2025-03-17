@@ -76,7 +76,7 @@ class EGCSolver():
     # -----------------
     def check_metab_integration(self, metabolites: dict[str: int], model: cobra.Model,
                                  metab_info:Medium, namespace:Literal['BiGG']='BiGG',
-                                 compartment:list=['c','p']) -> Union[None,dict]:
+                                 compartment:list=['c','e']) -> Union[None,dict]:
             """Check if the metabolites of a reactions are in the model.
             If yes, return the dictionary of metabolites (their IDs in the model) to the factors.
             If no, return None
@@ -96,7 +96,7 @@ class EGCSolver():
                 - compartment (list, optional): 
                     List of length 2 with the names of the 
                     compartments for the dissipations reactions. 
-                    Defaults to ['c','p'].
+                    Defaults to ['c','e'].
 
             Returns:
                 (1) Case: metabolites not found
@@ -153,7 +153,7 @@ class EGCSolver():
 
     def add_DISSIPATIONRXNS(self, model: cobra.Model,
                         namespace:Literal['BiGG']='BiGG',
-                        compartment:list=['c','p']) -> cobra.Model:
+                        compartment:list=['c','e']) -> cobra.Model:
         """Add the dissipation reactions a model.
 
         Args:
@@ -163,7 +163,7 @@ class EGCSolver():
                 Defaults to 'BiGG'.
             - compartment (list, optional): 
                 List of length 2 with the names of the compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             cobra.Model: 
@@ -223,7 +223,7 @@ class EGCSolver():
 
     def find_egcs(self, model:cobra.Model, with_reacs:bool=False,
                   namespace:Literal['BiGG']='BiGG',
-                  compartment:list=['c','p']) -> Union[list,tuple]:
+                  compartment:list=['c','e']) -> Union[list,tuple]:
         """Find the EGCs in a model - if exsistend.
 
         Args:
@@ -241,7 +241,7 @@ class EGCSolver():
             - compartment (list, optional): 
                 List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             (1) Case: ``with_reacs = False``
@@ -306,7 +306,7 @@ class EGCSolver():
 
     def egcs_removed(self, model: cobra.Model, starting_egcs: dict,
                      namespace:Literal['BiGG']='BiGG', 
-                     compartment:list=['c','p']) -> list:
+                     compartment:list=['c','e']) -> list:
         """Compare a list of previously found EGCs to the current 
         EGCs in the model.
 
@@ -322,7 +322,7 @@ class EGCSolver():
                 Defaults to 'BiGG'.
             - compartment (list, optional): 
                 List of length 2 with the names of the compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             list: 
@@ -382,7 +382,7 @@ class GreedyEGCSolver(EGCSolver):
     def check_egc_growth(self, reac: cobra.Reaction, model: cobra.Model, 
                 bounds:tuple, starting_egcs:dict,
                 namespace:Literal['BiGG']='BiGG',
-                compartment:list=['c','p']) -> Union[list,None]:
+                compartment:list=['c','e']) -> Union[list,None]:
         """Check EGC removal and growth of a model when chaning the bounds
         of a single reaction.
 
@@ -401,7 +401,7 @@ class GreedyEGCSolver(EGCSolver):
                 Defaults to 'BiGG'.
             - compartment (list, optional): List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             (1) Case if EGCs removed  
@@ -427,7 +427,7 @@ class GreedyEGCSolver(EGCSolver):
 
     def test_modifications(self,reaction: cobra.Reaction, model: cobra.Model, 
                         present_egc: dict, namespace:Literal['BiGG']='BiGG',
-                        compartment:list=['c','p']) -> dict:
+                        compartment:list=['c','e']) -> dict:
         """Tries four cases for a Reaction
 
         1. if reaction is not reversible -> make reaction reversible (MR)
@@ -456,7 +456,7 @@ class GreedyEGCSolver(EGCSolver):
             - compartment (list, optional): 
                 List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             dict: 
@@ -536,7 +536,7 @@ class GreedyEGCSolver(EGCSolver):
     def find_mods_resolve_egcs_greedy(self, model: cobra.Model, 
                                       present_egcs: dict,
                                       namespace:Literal['BiGG']='BiGG',
-                                      compartment:list=['c','p']) -> dict:
+                                      compartment:list=['c','e']) -> dict:
         """Find the (single) modifications to reactions in a cobra.Model and returns these in a dictionary.
         Splits the modification check in multiple processes.
         
@@ -552,7 +552,7 @@ class GreedyEGCSolver(EGCSolver):
             - compartment (list, optional): 
                 List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             dict: 
@@ -723,7 +723,7 @@ class GreedyEGCSolver(EGCSolver):
     # run the complete solving process
     # --------------------------------
     def solve_egcs(self, model:cobra.Model, namespace:Literal['BiGG']='BiGG',
-                   compartment:list=['c','p']) -> Union[dict,None]:
+                   compartment:list=['c','e']) -> Union[dict,None]:
         """Run the complete greedy EGC solving process.
 
         Note: The input model gets changed, if EGCs can be solved.
@@ -738,7 +738,7 @@ class GreedyEGCSolver(EGCSolver):
             - compartment (list, optional): 
                 List of length 2 with the names of the 
                 compartments for the dissipations reactions. 
-                Defaults to ['c','p'].
+                Defaults to ['c','e'].
 
         Returns:
             dict: 

@@ -36,22 +36,9 @@ COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
 # functions
 ################################################################################
 
-# @DISCUSSION: Might be useful for logging?
-##### Coloured text:
-# from colorama import init as colorama_init
-# from colorama import Fore
-# 
-# def coloured_example_text():
-#     colorama_init(autoreset=True)
-#     print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
-#       'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
-#       'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
-# @ASK Future?/ Feature request issue?
-
 # SBO
 # ---
 
-# @TODO extend to cover more reactions
 def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
    """Reannotate the SBO annotations (e.g. from SBOannotator) of a model 
    into the SBO scheme accessible by memote.
@@ -71,8 +58,7 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
          if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
             r.annotation['sbo'] = "SBO:0000176"
 
-    # @IDEA: add transport reactions? -> Good idea. I had issues with them and MEMOTE.
-    # @ASK Future?/ Feature request issue?
+    # @TODO: add transport reactions? -> Good idea. I had issues with them and MEMOTE.
 
 
 # handling stoichiometric factors

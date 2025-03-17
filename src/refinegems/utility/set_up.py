@@ -27,7 +27,7 @@ PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yml')
 # --------------------------
 # download databases / files
 # --------------------------
-# @TODO
+
 def download_url(download_type:Literal['SwissProt gapfill'],
                  directory:str=None,k:int=10):
     """Download files necessary for certain functionalities of the toolbox from 
@@ -58,10 +58,9 @@ def download_url(download_type:Literal['SwissProt gapfill'],
             swissprot_api = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
             swissprot_mapping_api = 'https://rest.uniprot.org/uniprotkb/stream?fields=accession%2Cxref_brenda%2Cec&format=tsv&query=%28*%29+AND+%28reviewed%3Atrue%29'
             urls = {'SwissProt.fasta':swissprot_api, 'SwissProt_mapping.tsv':swissprot_mapping_api}
-            # @TODO warning / prompt about size 
             #   1.: TSV with UniprotID, BRENDA and EC -7.7MB (26.07.2024)
             #   2.: FASTA with sequences ~280MB (26.07.2024)
-            # @IDEA/ @TODO construct DIAMOND database in this step as well? ->  Good idea!
+            # @TODO construct DIAMOND database in this step as well? ->  Good idea!
         case _:
             mes = f'Unknown database or file: {name}'
             raise ValueError(mes)
@@ -75,8 +74,6 @@ def download_url(download_type:Literal['SwissProt gapfill'],
         total_length = r.headers.get('Content-Length') # Make the progress bar
         if total_length is None:
             # Content-Length is missing, so we download without a progress bar
-            # @TODO logging
-            # @ASK Future?/ Feature request issue?
             with open(filename, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=k * 1024):
                     if chunk:

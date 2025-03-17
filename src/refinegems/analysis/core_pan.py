@@ -150,8 +150,7 @@ def collect_reacs_from_model(model:cobra.Model, reac_id_list:list[str],
 
 
 def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id', 
-                            name:str='core_pan_model', remove_genes:bool=True, 
-                            resolve_compartments:bool=True) -> cobra.Model:
+                            name:str='core_pan_model', remove_genes:bool=True) -> cobra.Model:
     """Generate a core-pan model from a set of models.
 
     Generation id based on:
@@ -170,9 +169,6 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
         - remove_genes (bool, optional): 
             Flag to remove all genes from the model. 
             Defaults to True.
-        - resolve_compartments (bool, optional): 
-            Remaps compartment names to the single letter "c,p,e"-scheme,
-            if set. Default to True. 
 
     Returns:
         cobra.Model: 
@@ -184,7 +180,7 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
 
     # resolve compartment issue
     for model in all_models:
-       resolve_compartment_names(model)
+       resolve_compartment_names(model) # @TODO Re-check if causes issue if no invalid compartments are found
 
     # extract reactions
     all_reactions = {model.id: extract_reactions_ids(model, based_on) for model in all_models}

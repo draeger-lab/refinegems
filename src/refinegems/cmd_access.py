@@ -85,12 +85,6 @@ def build_pancore(models, based_on, name, keep_genes, rcomp,dir):
    pancore_mod = rg.analysis.core_pan.generate_core_pan_model(models, based_on, name, not keep_genes, rcomp)
    rg.utility.io.write_model_to_file(pancore_mod,str(Path(dir,name +'.xml')))
 
-# ------------
-# get examples
-# ------------
-# @DISCUSSION explain how to do manual gapfilling 
-# @ASK -> Already or only after we have a ManualGapFiller?
-
 
 # --------------------
 # work on the database
@@ -129,16 +123,12 @@ def reset():
 # -------------------
 # all about the media 
 # -------------------
-# @TODO more functionalities / entry points
-# @ASK Future?/ Feature request issue?
 
 @cli.group()
 def media():
    """Access the media part of the database.
    """
 
-# @TODO: Download a file with all media for a specific database?
-# @ASK Future?/ Feature request issue?
 # Handle medium / media database
 # ------------------------------
 @media.command()
@@ -148,10 +138,7 @@ def media():
 def info(list): #,copy
     """Access information about the in-build media database.
 
-    Can be used to either check 
-    - the available media 
-    -  @TODO to make a copy for further use.
-    @ASK Future?/ Feature request issue?
+    Can be used to check the available media
     """
     if list:
         possible_media = rg.utility.io.load_a_table_from_database('medium', False)['name'].to_list()
@@ -285,9 +272,9 @@ def gaps():
    cloup.option('-t','--threads',type=int, default=2, show_default=True, 
                 help='Number of threads to be used by DIAMOND.')
 )
+# @TODO Should be reworked
 @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.IsSet('check_ncbi'), then=cloup.constraints.require_all), ['mail'])
 @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('fasta','dmnd_db','swissprot_mapping'),then=cloup.constraints.require_all), ['fasta','dmnd_db','swissprot_mapping'])
-# @DISCUSSION not None as default, is not needed
 # @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('sensitivity','cov','pid','threads'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
 def automated_gapfill(alg,modelpath,outdir,fill,
                       formula_check, no_dna, no_rna,
@@ -376,7 +363,6 @@ def charges(modelpath,dir):
    charg_tab.to_csv(Path(dir,'multiple_charges.csv'),sep=';')
        
 
-# @TODO function unfinished
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.argument('data', type=click.Path(exists=True))
@@ -386,23 +372,21 @@ def direction(modelpath,data,dir):
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
    corr = rg.curation.polish.check_direction(model, data)
-   rg.utility.io.write_model_to_file(corr,str(Path(dir,'corrected_model.xml')))
-   warnings.warn('Function not yet fully implemented - please contact developers.')
-   pass
+   rg.utility.io.write_model_to_file(corr,str(Path(dir,f'{model.id}_corrected_model.xml')))
 
 
 # egcs
-#@ASK: Default for compartments -> Why c,p and not c,e,p?
 @refine.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('--solver', '-s',required=False,type=click.Choice(['greedy']), show_default=True, default=None, multiple=False, help='Type of solver for the EGCs.')
 @click.option('--namespace','-n',required=False, type=click.Choice(['BiGG']), show_default=True, default='BiGG',multiple=False, help='Namespace of the model.')
-@click.option('--compartment','-c', required=False, type=str, show_default=True, default='c,p', help='Compartments to check, separated by comma only.')
+@click.option('--compartment','-c', required=False, type=str, show_default=True, default='c,e', help='Compartments to check, separated by comma only.')
 @click.option('--outfile','-o', required=False, type=click.Path(), show_default=True, default='fixed_egcs.xml',help='Path to save edited model to, if solver has been set.')
 def egcs(modelpath, solver, namespace, compartment, outfile):
    """Identify and optionally solve EGCs.
    """
    model = rg.utility.io.load_model(modelpath, 'cobra')
+   compartment = compartment.split(',')
    match solver:
       case 'greedy':
             solver = rg.classes.egcs.GreedyEGCSolver()
@@ -489,7 +473,6 @@ def pathways(modelpath,dir,colors):
    report.save(dir,colors)
 
 
-# @TODO: accept multiple models
 @analyse.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-d', '--dir', required=False, type=click.Path(), show_default=True, default='', help='Path to the output dir.')
@@ -519,9 +502,6 @@ def pancore(modelpath, pcpath, based_on,dir):
 
 @analyse.command()
 @click.argument('modelpaths', nargs=-1, type=click.Path(exists=True))
-# @TODO 
-#    extend / add different comparison options
-# @ASK Future?/ Feature request issue?
 @click.option('--type','-t',required=False,type=click.Choice(['sboterm']), multiple=True,
               show_default=True,  default=[], help='Type of comparison to be performed.')
 @click.option('--all',required=False, is_flag=True, show_default=True, default=False, 
@@ -573,7 +553,7 @@ def auxotrophies(modelpath,media,namespace,dir,colors):
    report = rg.analysis.growth.test_auxotrophies(model,medialist,namespace)
    report.save(dir,colors)
 
-#@TODO --substances
+
 @growth.command()
 @click.argument('modelpath', type=click.Path(exists=True))
 @click.option('-e','--element', type=str, required=True, help='Element to perform the source test with. Needs to be a valid chemical, elemental Symbol.')

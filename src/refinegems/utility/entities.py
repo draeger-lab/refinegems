@@ -77,8 +77,6 @@ def are_compartment_names_valid(model:cobra.Model) -> bool:
     return True
 
 
-# @TODO extend + change else case?
-# @ASK Future?/Feature request issues?
 def resolve_compartment_names(model:cobra.Model):
     """Resolves compartment naming problems.
 
@@ -104,12 +102,12 @@ def resolve_compartment_names(model:cobra.Model):
             model.compartments = VALID_COMPARTMENTS
 
         else:
-            raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Cannot resolve problem.')
+            raise KeyError(F'Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Please contact developers or change compartment names manually.')
 
 
 # handling cobra entities (features)
 # ----------------------------------
-        
+
 def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
     """Parses a reaction equation string to dictionary 
 
@@ -235,10 +233,6 @@ def create_random_id(model:cobra.Model, entity_type:Literal['reac','meta']='reac
         j = j + 1
 
 
-# @TODO: 
-#     more namespace options
-#     Maybe bioregistry for mapping of id to namespace?
-# @ASK Future?/ Feature request issue?
 def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], namespace:Literal['BiGG']) -> None:
     """Based on a given namespace, change the ID of a given model entity to the set namespace.
 
@@ -267,8 +261,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
 
                 case 'BiGG':
                     if 'bigg.reaction' in model_entity.annotation.keys():
-                        # @NOTE : currently takes first entry if annotation is list
-                        # @ASK Future feature to use more? Add user warning/hint?
+                        # currently takes first entry if annotation is list
                         model_entity.id = model_entity.annotation['bigg.reaction'] if isinstance(model_entity.annotation['bigg.reaction'],str) else model_entity.annotation['bigg.reaction'][0]
 
                 case _:
@@ -282,6 +275,7 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
 
                 case 'BiGG':
                     if 'bigg.metabolite' in model_entity.annotation.keys():
+                        # currently takes first entry if annotation is list
                         model_entity.id = model_entity.annotation['bigg.metabolite'] + '_' + model_entity.compartment if isinstance(model_entity.annotation['bigg.metabolite'],str) else model_entity.annotation['bigg.metabolite'][0]
 
                 case _:
@@ -292,10 +286,8 @@ def match_id_to_namespace(model_entity:Union[cobra.Reaction, cobra.Metabolite], 
         case _:
             mes = f'Unknown type for model_entity: {type(model_entity)}'
             raise TypeError(mes)
-        
 
-# originally from SPECIMEN HQTB --- changed / extended
-# @TODO - are all needed checks covered? any more needed?
+
 def isreaction_complete(reac:cobra.Reaction, 
                         name_check:bool=False,
                         formula_check:Literal['none','existence','wildcard','strict']='existence',
@@ -337,8 +329,6 @@ def isreaction_complete(reac:cobra.Reaction,
         if reac.id == '' or pd.isnull(reac.name):
             return False
     # check for RNA/DNA
-    # @TODO: Check again if RNA/DNA check actually works; 
-    # maybe add braces to if-statement
     if exclude_dna and 'DNA' in reac.name:
         return False
     if exclude_rna and 'RNA' in reac.name:
@@ -420,8 +410,6 @@ def build_metabolite_xxx(id:str, model:cobra.Model,
 
 
 # originally from SPECIMEN
-# @TODO some issues left
-# current version works on a couple of examples 
 def build_metabolite_mnx(id: str, model:cobra.Model, 
                          namespace:str='BiGG',
                          compartment:str='c',
@@ -463,11 +451,7 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
         # case 1: multiple matches found
     if len(matches) > 0:
         if len(matches) > 1:
-            # ................
-            # @TODO what to do
-            # currently, just the first one is taken
-            # @ASK Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
-            # ................
+            # currently, just the first match is taken
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
         else:
@@ -514,18 +498,13 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
             if len(db_matches) > 0:
                 new_metabolite.annotation[db] = [m.split(':',1)[1] for m in db_matches['source'].tolist()]
 
-        # Cleanup BiGG annotations (MetaNetX only saves universal)
-        # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
-        # @TODO : save ID in the correct way
-        # @ASK For the annotation only the universial ID is valid. So this should be fine.
-        if 'bigg.metabolite' in new_metabolite.annotation.keys():
-            new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
-        else:
+        # Cleanup BiGG annotations
+        if not 'bigg.metabolite' in new_metabolite.annotation.keys():
             # if no BiGG was found in MetaNetX, try reverse search in BiGG
             get_BiGG_metabs_annot_via_dbid(new_metabolite, id, 'MetaNetX (MNX) Chemical', compartment)
-                
-        # add additional information from BiGG (if ID found)    
-        add_annotations_from_BiGG_metabs(new_metabolite)
+
+            # add additional information from BiGG (if ID found)    
+            add_annotations_from_BiGG_metabs(new_metabolite)
 
         # step 5: change ID according to namespace
         # ----------------------------------------
@@ -533,9 +512,6 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
        
         # step 6: re-check existence of ID in model
         # -----------------------------------------
-        # @TODO : check complete annotations? 
-        #        - or let those be covered by the duplicate check later on?
-        # @ASK Future? Feature request issue? I think for now this should be fine.
         if new_metabolite.id in [_.id for _ in model.metabolites]:
             return model.metabolites.get_by_id(new_metabolite.id)
            
@@ -543,8 +519,6 @@ def build_metabolite_mnx(id: str, model:cobra.Model,
 
 
 # originally from SPECIMEN
-# @TODO some issues left
-# current version works on a couple of examples 
 def build_metabolite_kegg(kegg_id:str, model:cobra.Model, 
                           namespace:Literal['BiGG']='BiGG', 
                           compartment:str='c',
@@ -586,10 +560,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
         # step 2: model id --> metabolite object
         #  case 1: multiple matches found
         if len(matches) > 1:
-            # .......
-            # @TODO
-            # @ASK Same argument as for build_metabolite_mnx; Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
-            # .......
+            # Currently takes only the first match
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
         else:
@@ -625,13 +596,11 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     # --------------------
     # set name from KEGG and additionally use it as ID if there is none yet
     if isinstance(kegg_record.name, list) and len(kegg_record.name) > 0:
-        # @DISCUSSION : better way to choose a name than to just take the first entry???
-        # @ASK I don't think so.
         new_metabolite.name = kegg_record.name[0]
     elif isinstance(kegg_record.name, str) and len(kegg_record.name) > 0:
         new_metabolite.name = kegg_record.name
     else:
-        new_metabolite.name = '' # @ASK any ideas for good default values? -> Not really. Where should this come from? Mapping to CHEBI/other databases for this possible?
+        new_metabolite.name = ''
     # set compartment
     new_metabolite.compartment = compartment
     # set formula
@@ -659,6 +628,7 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
         query=True
     )
     # if matches have been found
+    # @TODO : Handle multiple matches, Get first entry; Log warning for user
     if len(mnx_info) > 0:
         mnx_ids = list(set(mnx_info['id']))
         # mapping is unambiguously
@@ -687,20 +657,14 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
 
         else:
             pass
-            # @TODO : how to handle multiple matches, e.g. getting charge will be complicated
-            # @ASK Get first entry?
-        
-    # Cleanup BiGG annotations (MetaNetX only saves universal)
-    # @TODO : there is no guarantee, that the id with the specific compartment actually exists -> still do it? // kepp the universal id?
-    # @ASK As stated before; Only universal ID is valid in URI
-    if 'bigg.metabolite' in new_metabolite.annotation.keys():
-        new_metabolite.annotation['bigg.metabolite'] = [_+'_'+compartment for _ in new_metabolite.annotation['bigg.metabolite']]
-    
-    # if no BiGG ID, try reverse search
-    get_BiGG_metabs_annot_via_dbid(new_metabolite, id, 'KEGG Compound', compartment)
-    
-    # search for annotations in BiGG
-    add_annotations_from_BiGG_metabs(new_metabolite)
+
+    # Cleanup BiGG annotations
+    if not 'bigg.metabolite' in new_metabolite.annotation.keys():
+        # if no BiGG was found in KEGG, try reverse search in BiGG
+        get_BiGG_metabs_annot_via_dbid(new_metabolite, id, 'KEGG Compound', compartment)
+
+        # add additional information from BiGG (if ID found)    
+        add_annotations_from_BiGG_metabs(new_metabolite)
 
     # step 6: change ID according to namespace
     # ----------------------------------------
@@ -708,20 +672,12 @@ def build_metabolite_kegg(kegg_id:str, model:cobra.Model,
     
     # step 7: re-check existence of ID in model
     # -----------------------------------------
-    # @TODO : check complete annotations? 
-    #        - or let those be covered by the duplicate check later on?
-    # @ASK As stated above handling via duplicate check should be enough for now.
     if new_metabolite.id in [_.id for _ in model.metabolites]:
         return model.metabolites.get_by_id(new_metabolite.id)
 
     return new_metabolite
 
 
-# @TEST some more, somewhat works, but who knows...
-# @TODO some comments inside
-# @NOTE expects the non-universal BiGG ID (meaning the one with the compartment abbreviation
-#       at the end) -> change behaviour or keep it?
-# @ASK Why change behaviour?
 def build_metabolite_bigg(id:str, model:cobra.Model, 
                          namespace:Literal['BiGG']='BiGG',
                          idprefix:str='refineGEMs') -> Union[cobra.Metabolite,None]: 
@@ -764,11 +720,7 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
         # case 1: multiple matches found
     if len(matches) > 0:
         if len(matches) > 1:
-            # ................
-            # @TODO what to do
             # currently, just the first one is taken
-            # @ASK Is there really a better way? Otherwise user needs to run resolve_duplicates before & after, I think.
-            # ................
             match = model.metabolites.get_by_id(matches[0])
         #  case 2: only one match found
         else:
@@ -821,7 +773,6 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
             if 'charges' in bigg_fetch.keys() and new_metabolite.charge:   
                 new_metabolite.charge = bigg_fetch['charges'][0]
         except Exception as e:
-            # @TODO
             pass
     
     # step 3: add notes
@@ -833,7 +784,7 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
     # add SBOTerm
     new_metabolite.annotation['sbo'] = 'SBO:0000247'
     # add infos from BiGG
-    new_metabolite.annotation['bigg.metabolite'] = [id]  # @ASK or use the universal id? -> Only with universal is valid URI
+    new_metabolite.annotation['bigg.metabolite'] = [id.removesuffix(f'_{compartment}')]
     add_annotations_from_BiGG_metabs(new_metabolite)
     # add annotations from MNX
     if mnx_res is not None:

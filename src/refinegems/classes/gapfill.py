@@ -27,7 +27,6 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune, Finn Mier and 
 ############################################################################
 
 from abc import ABC, abstractmethod
-from operator import index
 
 import cobra
 from cobra.io.sbml import _f_gene, _f_gene_rev
@@ -40,7 +39,6 @@ import numpy as np
 import os
 import pandas as pd
 import re
-import sqlite3
 import warnings
 
 from bioservices.kegg import KEGG
@@ -54,11 +52,9 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from ..developement.decorators import *
-from ..utility.databases import PATH_TO_DB
 from ..utility.db_access import get_ec_from_ncbi, get_ec_via_swissprot, parse_KEGG_gene, parse_KEGG_ec, map_to_homologs
 from ..utility.io import load_a_table_from_database, parse_gff_for_cds, load_model, write_model_to_file
 from ..utility.entities import create_gp, create_gpr, build_reaction_bigg, build_reaction_kegg, build_reaction_mnx, isreaction_complete, parse_reac_str, validate_reaction_compartment_bigg, REF_COL_GF_GENE_MAP
-from ..utility.util import VALID_COMPARTMENTS
 from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
 
