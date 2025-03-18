@@ -203,9 +203,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     return model
 
-# @TODO merge with SPECIMEN.hqtb.refinement.annotation.kegg_reaction_to_kegg_pathway
-# @IDEA Move reactome annotations to occursIn as these are pathways
-# -> Could also try to use ComPath to map reactome pathways to the KEGG pathways
+# @TODO merge with SPECIMEN.hqtb.refinement.annotation.kegg_reaction_to_kegg_pathway (see below)
 def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
 
@@ -231,6 +229,118 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
         model_pathways, pathway_groups)
     
     return model_pathway_groups, non_kegg_reactions
+
+
+# @TODO merge with refineGEMs.curation.pathways.kegg_pathways (see above)
+def kegg_reaction_to_kegg_pathway(model:cobra.Model, viaEC:bool=False, viaRC:bool=False):
+    """Retrieve the KEGG pathways for existing KEGG reaction IDs, if
+    they have yet to be added. Depending on the given options, only the
+    reactions is searched or additional searches are started using the
+    EC number and reactions class if the first search was unsuccesful.
+
+    Args:
+        - model (cobra.Model): 
+            The model - loaded with COBRApy - to be annotated.
+        - viaEC (bool, optional): 
+            Option to search for KEGG pathway ID 
+            using the EC number if previous searches were unsuccesful. 
+            Defaults to False.
+        - viaRC (bool, optional): 
+            Option to search for KEGG pathway ID 
+            using the reaction class if previous searches were unsuccesful. 
+            Defaults to False.
+    """
+
+    # identify reaction with KEGG reaction annotation
+    # but no KEGG pathway
+    for reac in tqdm(model.reactions):
+        if 'kegg.reaction' in reac.annotation and 'kegg.pathway' not in reac.annotation:
+
+            pathways = []
+            reaction = None
+
+            # via reaction
+            try:
+                if isinstance(reac.annotation['kegg.reaction'],list):
+                    for annotation in reac.annotation['kegg.reaction']:
+                        reaction = kegg_reaction_parser(annotation)
+                        if reaction is not None and 'db' in reaction and 'kegg.pathway' in reaction['db']:
+                            if isinstance(reaction['db']['kegg.pathway'],list):
+                                pathways.extend(reaction['db']['kegg.pathway'])
+                            else:
+                                pathways.append(reaction['db']['kegg.pathway'])
+                else:
+                    reaction = kegg_reaction_parser(reac.annotation['kegg.reaction'])
+                    if reaction is not None and 'db' in reaction and 'kegg.pathway' in reaction['db']:
+                        if isinstance(reaction['db']['kegg.pathway'],list):
+                                pathways.extend(reaction['db']['kegg.pathway'])
+                        else:
+                            pathways.append(reaction['db']['kegg.pathway'])
+            except urllib.error.HTTPError:
+                print(F'HTTPError: {reac.id}, {reac.annotation["kegg.reaction"]}')
+            except ConnectionResetError:
+                print(F'ConnectionResetError: {reac.id}, {reac.annotation["kegg.reaction"]}')
+            except urllib.error.URLError:
+                print(F'URLError: {reac.id}, {reac.annotation["kegg.reaction"]}')
+
+            # via reaction class
+            # can lead to some additional classes, as the RC are not as strictly defined as
+            # the reactions themselves
+            if viaRC and len(pathways) == 0 and not pd.isnull(reaction) and 'rc' in reaction:
+                try:
+                    collect = False
+                    for kegg_rc in reaction['rc']:
+                        kegg_rc = REST.kegg_get(kegg_rc)
+                        kegg_rc = kegg_rc.read()
+                        for line in kegg_rc.split('\n'):
+                            if line:
+                                if line.startswith('PATHWAY'):
+                                    collect = True
+                                    pathways.append(line.replace('PATHWAY','',1).strip().split(' ')[0])
+                                elif collect == True and line[0] != '/':
+                                    if line[0].isupper():
+                                        collect = False
+                                    else:
+                                        pathways.append(line.strip().split(' ')[0])
+                except urllib.error.HTTPError:
+                    print(F'HTTPError: {reac.id}, {reaction["rc"]}')
+                except ConnectionResetError:
+                    print(F'ConnectionResetError: {reac.id}, {reaction["rc"]}')
+                except urllib.error.URLError:
+                    print(F'URLError: {reac.id}, {reaction["rc"]}')
+
+            # via EC
+            # seems really sketchy to do it this way, as ONE EC number
+            # can include MANY reactions for different pathways
+            if viaEC and len(pathways) == 0:
+                if 'ec-code' in reac.annotation:
+                    ec_code = reac.annotation['ec-code']
+                elif pd.isnull(reaction) and 'db' in reaction and 'ec-code' in reaction['db']:
+                    ec_code = reaction['db']['ec-code']
+                else:
+                    ec_code = '-'
+                if ec_code != '-' and isinstance(ec_code,str):
+                    try:
+                        kegg_ec = REST.kegg_get(F'ec:{ec_code}')
+                        kegg_ec = Enzyme.read(kegg_ec)
+                        if len(kegg_ec.pathway) == 0 or kegg_ec.pathway == None:
+                            pass
+                        else:
+                            for i in kegg_ec.pathway:
+                                pathways.append(i[1])
+                    except urllib.error.HTTPError:
+                        print(F'HTTPError: {reac.id}, {ec_code}')
+                    except ConnectionResetError:
+                        print(F'ConnectionResetError: {reac.id}, {ec_code}')
+                    except urllib.error.URLError:
+                        print(F'URLError: {reac.id}, {ec_code}')
+                else:
+                    print(F'No EC number: {reac.id}')
+
+            # add pathway annotation to reaction if found
+            if len(pathways) != 0:
+                reac.annotation['kegg.pathway'] = pathways
+
 
 
 # analyse the pathways in a model
