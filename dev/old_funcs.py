@@ -1,3 +1,78 @@
+# @TODO check for new-ish functionalities / merge with create_gp and delete
+# @DEPRECATE
+def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
+    """Creates GeneProduct in the given model
+
+    **Deprecation warning**: will be deprecated in a future update.
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+        - locus_tag (str): 
+            NCBI compatible locus_tag
+        - email (str): 
+            User Email to access the NCBI Entrez database
+
+    Returns:
+        tuple: 
+            libSBML GeneProduct (1) & libSBML model (2)
+
+            (1) GeneProduct: Created gene product
+            (2) libModel: Model containing the created gene product
+    """
+    mes = f'create_gpr_from_locus_tag will be deprecated in a future update.'
+    warnings.warn(mes,type=FutureWarning)
+
+    Entrez.email = email
+    name, locus = search_ncbi_for_gpr(locus_tag)
+    gpr = model.getPlugin(0).createGeneProduct()
+    gpr.setName(name)
+    gpr.setId(locus_tag)
+    gpr.setMetaId('meta_' + locus_tag)
+    gpr.setLabel(locus_tag)
+    gpr.setSBOTerm("SBO:0000243")
+    add_cv_term_genes(locus_tag, 'NCBI', gpr)
+    return gpr, model
+
+# @TODO : check, if the function (in ths way), is still used anywhere and adjust to the 
+# new one
+# @DEPRECATE
+def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, libModel]:
+    """Creates GeneProduct in the given model
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+        - model_id (str): 
+            ID identical to ID that CarveMe adds from the NCBI FASTA input file
+        - name (str): 
+            Name of the GeneProduct
+        - locus_tag (str): 
+            Genome-specific locus tag used as label in the model
+        - protein_id (str): 
+            NCBI Protein/RefSeq ID
+
+    Returns:
+        tuple: 
+            libSBML GeneProduct (1) & libSBML model (2)
+
+            (1) GeneProduct: Created gene product
+            (2) libModel: Model containing the created gene product
+    """
+    id_db = None
+    gp = model.getPlugin(0).createGeneProduct()
+    gp.setId(model_id) # libsbml advised to use set/getIdAttribute
+    gp.setName(name)
+    gp.setLabel(locus_tag)
+    gp.setSBOTerm('SBO:0000243')
+    gp.setMetaId(f'meta_{model_id}')
+    if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
+        id_db = 'REFSEQ'
+    elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
+    if id_db: add_cv_term_genes(protein_id, id_db, gp)
+    return gp, model
+
+
 # @DISCUSSION: Add to metabolite handling for `.entities.build_metabolite_bigg`?
 def add_charges_chemical_formulae_to_metabs(missing_metabs: pd.DataFrame) -> pd.DataFrame:
    """Adds charges & chemical formulae from CHEBI/BiGG to the provided dataframe

@@ -15,7 +15,6 @@ the in-build database.
 
 __author__ = 'Gwendolyn O. Döbel und Carolin Brune'
 # @TODO Clean-up this module!
-# @ASK  Rename to rg_database/database?
 ################################################################################
 # requirements
 ################################################################################
@@ -160,7 +159,7 @@ def create_sbo_media_database(db_cursor: sqlite3.Cursor):
    with open(files('refinegems.data.database').joinpath('media_db.sql')) as schema:
       db_cursor.executescript(schema.read())
 
-# @ASK Actually db_access?
+
 def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> dict:
     """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
@@ -291,8 +290,8 @@ def get_latest_bigg_databases(db_connection: sqlite3.Connection, is_missing: boo
          
       if version != LATEST_VERSION:
          update_bigg_db(LATEST_VERSION, db_connection)
- 
-# @ASK Actually db_access?
+
+
 def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
    """Retrieves the compounds table from ModelSEED from the respective GitHub repository
 
@@ -395,7 +394,6 @@ def initialise_database():
 # Citation: MetaNetX/MNXref: unified namespace for metabolites and biochemical reactions in the context of metabolic models
 #           Sébastien Moretti, Van Du T Tran, Florence Mehl, Mark Ibberson, Marco Pagni
 #           Nucleic Acids Research (2021), 49(D1):D570-D574
-# @ASK Actually db_access?
 def update_mnx_namespaces(db:Union[Path,str]=PATH_TO_DB, chunksize:int=1):
    """Add or update the MetaNetX namespace to/in a database. 
    

@@ -204,6 +204,8 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     return model
 
 # @TODO merge with SPECIMEN.hqtb.refinement.annotation.kegg_reaction_to_kegg_pathway
+# @IDEA Move reactome annotations to occursIn as these are pathways
+# -> Could also try to use ComPath to map reactome pathways to the KEGG pathways
 def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
 

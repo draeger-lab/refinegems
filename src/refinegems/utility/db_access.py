@@ -120,7 +120,10 @@ def add_annotations_from_BiGG_metabs(metabolite:cobra.Metabolite) -> None:
         bigg_information = load_a_table_from_database(
             'SELECT * FROM bigg_metabolites WHERE id = \'' + f'\' OR id = \''.join(metabolite.annotation['bigg.metabolite']) + '\'',
             query=True)
-        db_id_bigg = {'BioCyc':'biocyc', 'MetaNetX (MNX) Chemical':'metanetx.chemical','SEED Compound':'seed.compound','CHEBI':'chebi', 'KEGG Compound':'kegg.compound'}
+        db_id_bigg = {
+            'BioCyc': 'biocyc', 'MetaNetX (MNX) Chemical': 'metanetx.chemical','SEED Compound': 'seed.compound',
+            'CHEBI': 'chebi', 'KEGG Compound': 'kegg.compound', 'InChI Key': 'inchikey'
+            }
         for db in db_id_bigg:
             info = list(set(bigg_information[db].dropna().to_list()))
             if len(info) > 0:
@@ -143,10 +146,13 @@ def _add_annotations_from_bigg_reac_row(row:pd.Series, reac:cobra.Reaction) -> N
             The reaction object.
     """
     
-    dbnames = {'RHEA':'rhea','BioCyc':'biocyc','MetaNetX (MNX) Equation':'metanetx.reaction','EC Number':'ec-code'}
+    dbnames = {
+        'RHEA': 'rhea', 'BioCyc': 'biocyc', 'MetaNetX (MNX) Equation': 'metanetx.reaction', 'EC Number': 'ec-code',
+        'SEED Reaction': 'seed.reaction', 'Reactome Reaction': 'reactome', 'KEGG Reaction': 'kegg.reaction'
+        }
     for dbname,dbprefix in dbnames.items():
         if row[dbname]:
-            ids_to_add = row[dbname].split(',')
+            ids_to_add = row[dbname].strip().split(',')     
             if dbprefix in reac.annotation.keys():
                 reac.annotation[dbprefix] = list(set(reac.annotation[dbprefix]).union(set(ids_to_add)))
             else:

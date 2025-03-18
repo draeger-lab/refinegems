@@ -8,7 +8,6 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 ################################################################################
 # requirements
 ################################################################################
-
 import cobra 
 from cobra.io.sbml import _f_gene_rev
 import json
@@ -892,7 +891,7 @@ def parse_reac_str(equation:str,
                     factor = float(s)
                 elif s == '+':
                     continue
-                elif s == '<=>': # @TODO are there more options? #@ASK Future?
+                elif s == '<=>':
                     is_product = True
                 else:
                     if is_product:
@@ -933,29 +932,23 @@ def validate_reaction_compartment_bigg(comps: list) -> Union[bool, Literal['exch
             return True
         else:  # Probably exchange reaction
             return 'exchange'
-        
-        
-# @TODO
-#   extend the build function so, that all of them can take either the id or an equation 
-#   as input for rebuilding the reaction (would also be beneficial for semi-manual curation)
-# @ASK Future?/ Feature request issue?
+
 
 @template
-# @TODO complete it
-# @ASK Future?
 def build_reaction_xxx():
     '''
+    Extend the build function so, that all of them can take either the id or an equation 
+    as input for rebuilding the reaction (would also be beneficial for semi-manual curation)
+    
     model:cobra.Model, id:str=None,
                        reac_str:str=None,
                        references:dict={},
                        idprefix:str='refineGEMs',
                        namespace:Literal['BiGG']='BiGG') -> Union[cobra.Reaction, None, list]:
-    ''' 
+    '''
     pass
 
 
-# @TEST (more) - tried some cases, in which it seems to work
-# @TODO
 def build_reaction_mnx(model:cobra.Model, id:str,
                       reac_str:str = None,
                       references:dict={},
@@ -1017,16 +1010,26 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     # create reaction object
     new_reac = cobra.Reaction(create_random_id(model,'reac',idprefix))
 
-    # @TODO
-    # @DISCUSSION: Add exclude_rna & exclude_dna filters also here! 
-    # set name of reaction
-    name = ''
+    # Get names for reaction
+    names = []
+    reaceqsyms = ['=','+','<','>','_']
+    important_keywords = ['rna','dna']
     for desc in mnx_reac_refs['description']:
-        if '|' in desc: # entry has a name and an equation string
-            name = desc.split('|')[0]
-            break # one name is enough
-    new_reac.name = name 
+        splitted_descs = re.split(r'|+', desc)
+        
+        # Exclude reaction equations
+        names.extend([_ for _ in splitted_descs if not any(s in _ for s in reaceqsyms)])
+
+    # Set name for reaction if possible
+    kw_matches = [n for n in names if any(kw in n.lower() for kw in important_keywords)]
     
+    if len(kw_matches) > 0:
+        new_reac.name = kw_matches[0] # Take first entry containing keyword
+    elif len(names) > 0:
+        new_reac.name = min(names, key=len) # Take shortest entry
+    else:
+        new_reac.name = ''
+
     # get metabolites
     # ---------------
     if not reac_str:
@@ -1041,14 +1044,10 @@ def build_reaction_mnx(model:cobra.Model, id:str,
         reactants,products,comparts,rev = parse_reac_str(reac_str,'MetaNetX')
     else:
         return None
-    # ............................................................
-    # @TODO / @BUG
-    #    reac_prop / mnx equation only saves generic compartments 1 and 2 (MNXD1 / MNXD2)
-    #    how to get the (correct) compartment?
-    #    current solution 1 -> c, 2 -> e
-    # @ASK Map to BiGG and get from there, otherwise keep current default?
+
+    # reac_prop / mnx equation only saves generic compartments 1 and 2 (MNXD1 / MNXD2)
+    # current solution for the compartments: 1 -> c, 2 -> e
     comparts = ['c' if _ == 'MNXD1' else 'e' for _ in comparts ]
-    # ............................................................
     metabolites = {}
     meta_counter = 0
     
@@ -1075,7 +1074,6 @@ def build_reaction_mnx(model:cobra.Model, id:str,
             return None # not able to build reaction successfully
         
     # add metabolites to reaction
-    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
     new_reac.add_metabolites(metabolites)
     
     # set reversibility
@@ -1122,8 +1120,6 @@ def build_reaction_mnx(model:cobra.Model, id:str,
     return new_reac
 
 
-# @TEST (more) - tried some cases, in which it seems to work
-# @TODO some things still open (for discussion)
 def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
                         references:dict={},
                         idprefix:str='refineGEMs',
@@ -1200,16 +1196,11 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
         return None # reconstruction not possible
     
     # parse reaction string
-    # @TODO filter out not useable reaction strings
     reactants,products,comparts,rev = parse_reac_str(reac_str,'KEGG')
-        
-    # ..............................................
-    # @TODO
+
     # KEGG has no information about compartments !!!
-    # current solution: always use c
-    # @ASK Map to BiGG and use compartments from there? Otherwise set to c as default/ if exchange info set to c and e as default?
+    # current solution for the compartments: always use c
     compartment = 'c'
-    # ..............................................
     metabolites = {}
     meta_counter = 0
     
@@ -1236,7 +1227,6 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
             return None # not able to build reaction successfully
     
     # add metabolites to reaction
-    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
     new_reac.add_metabolites(metabolites)
     
     # set reversibility
@@ -1258,17 +1248,12 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
         r,p,compartments,r = parse_reac_str(row['reaction_string'],'BiGG')
         valid_comp = validate_reaction_compartment_bigg(compartments)
         
-        # @TEST
         if valid_comp:
             new_reac.annotation['bigg.reaction'] = row['id']
-            # @TODO add more information, exclude None entries
             _add_annotations_from_bigg_reac_row(row, new_reac)
             if valid_comp == 'exchange':
                 is_exchange += 1
     new_reac.name = f'EX_{new_reac.name}' if is_exchange > 0 else new_reac.name
-            
-    # @IDEA / @TODO get more information from MetaNetX
-    # @ASK Future?/ Feature request issue?
     
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references,new_reac)
@@ -1287,9 +1272,6 @@ def build_reaction_kegg(model:cobra.Model, id:str=None, reac_str:str=None,
     return new_reac
 
 
-# @TEST
-# @TODO some things still open (for discussion)
-# @TODO implement reac_str usage
 def build_reaction_bigg(model:cobra.Model, id:str, 
                         reac_str:str = None, 
                         references:dict={},
@@ -1354,7 +1336,6 @@ def build_reaction_bigg(model:cobra.Model, id:str,
     # get information from the reaction string
     reactants,products,comparts,rev = parse_reac_str(bigg_reac_info['reaction_string'],'BiGG')
 
-    # @TEST
     # validate & add compartment information
     # --------------------------------------
     valid_comp = validate_reaction_compartment_bigg(comparts)
@@ -1391,7 +1372,6 @@ def build_reaction_bigg(model:cobra.Model, id:str,
             return None # not able to build reaction successfully
         
     # add metabolites to reaction
-    # @TODO: does it need some kind of try and error, if - for some highly unlikely reason - two newly generated ids are the same
     new_reac.add_metabolites(metabolites)
     
     # set reversibility
@@ -1517,88 +1497,12 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
 # create model entities using libSBML
 # -----------------------------------
 
-# @TODO check for new-ish functionalities / merge with create_gp and delete
-# @DEPRECATE
-def create_gpr_from_locus_tag(model: libModel, locus_tag: str, email: str) -> tuple[GeneProduct, libModel]:
-    """Creates GeneProduct in the given model
-
-    **Deprecation warning**: will be deprecated in a future update.
-
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-        - locus_tag (str): 
-            NCBI compatible locus_tag
-        - email (str): 
-            User Email to access the NCBI Entrez database
-
-    Returns:
-        tuple: 
-            libSBML GeneProduct (1) & libSBML model (2)
-
-            (1) GeneProduct: Created gene product
-            (2) libModel: Model containing the created gene product
-    """
-    mes = f'create_gpr_from_locus_tag will be deprecated in a future update.'
-    warnings.warn(mes,type=FutureWarning)
-
-    Entrez.email = email
-    name, locus = search_ncbi_for_gpr(locus_tag)
-    gpr = model.getPlugin(0).createGeneProduct()
-    gpr.setName(name)
-    gpr.setId(locus_tag)
-    gpr.setMetaId('meta_' + locus_tag)
-    gpr.setLabel(locus_tag)
-    gpr.setSBOTerm("SBO:0000243")
-    add_cv_term_genes(locus_tag, 'NCBI', gpr)
-    return gpr, model
-
-
-# @TODO : check, if the function (in ths way), is still used anywhere and adjust to the 
-# new one
-# @DEPRECATE
-def old_create_gp(model: libModel, model_id: str, name: str, locus_tag: str, protein_id: str) -> tuple[GeneProduct, libModel]:
-    """Creates GeneProduct in the given model
-
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-        - model_id (str): 
-            ID identical to ID that CarveMe adds from the NCBI FASTA input file
-        - name (str): 
-            Name of the GeneProduct
-        - locus_tag (str): 
-            Genome-specific locus tag used as label in the model
-        - protein_id (str): 
-            NCBI Protein/RefSeq ID
-
-    Returns:
-        tuple: 
-            libSBML GeneProduct (1) & libSBML model (2)
-
-            (1) GeneProduct: Created gene product
-            (2) libModel: Model containing the created gene product
-    """
-    id_db = None
-    gp = model.getPlugin(0).createGeneProduct()
-    gp.setId(model_id) # libsbml advised to use set/getIdAttribute
-    gp.setName(name)
-    gp.setLabel(locus_tag)
-    gp.setSBOTerm('SBO:0000243')
-    gp.setMetaId(f'meta_{model_id}')
-    if re.fullmatch(r'^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$', protein_id, re.IGNORECASE):
-        id_db = 'REFSEQ'
-    elif re.fullmatch(r'^(\w+\d+(\.\d+)?)|(NP_\d+)$', protein_id, re.IGNORECASE): id_db = 'NCBI'
-    if id_db: add_cv_term_genes(protein_id, id_db, gp)
-    return gp, model
-
-
-# @NEW - substitues the one above 
 # --> WARNING: Output is different now
-# @TODO generalise addition of references -> maybe kwargs
-# @TODO: Check if ncbiprotein leads to valid ID -> Otherwise, replace invalid chars with '_'
-# @ASK Use the functionality with ASCII parsing?
-# @ASK: Add functionality to check if locus tag already in model as sanity check if someone only uses create_gp? -> Would be good
+# @TODO: Add functionality to check if 
+# - locus tag (label) already in model
+# - new id already in model
+# as sanity check if someone only uses create_gp 
+# + logging.warning
 def create_gp(model:libModel, protein_id:str, 
               model_id:str=None,
               name:str=None, locus_tag:str=None,
@@ -1652,8 +1556,7 @@ def create_gp(model:libModel, protein_id:str,
     if id_db: add_cv_term_genes(protein_id, id_db, gp)           # NCBI protein
     
     # add further references
-    # @ASK: In polish is functionality to obtain refseq IDs from ncbiprotein ids -> Add this here also?
-    # references {'dbname':(list_or_str_of_id,lab_train_bool)}
+    # references {'dbname':(list_or_str_of_id,lab_strain_bool)}
     if reference and len(reference) > 0:
         for dbname,specs in reference.items():
             match specs[0]:
@@ -1779,9 +1682,6 @@ def create_reaction(
     return reaction, model
  
 
-# @ASK : does it cover indeed all cases (for adding GPR together) ?
-# @TODO : only support OR connection
-# @ASK Future?/ Feature request issue?
 def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
     """For a given libSBML Reaction and a gene ID or a list of gene IDs, 
     create a gene production rule inside the reaction.
@@ -1813,7 +1713,6 @@ def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
                     
     # Step 2: create new gene product association 
     # -------------------------------------------
-
     if old_association_str and isinstance(gene,str):
         gene = [old_association_str,gene]
     elif old_association_str  and isinstance(gene,list):
@@ -1826,9 +1725,7 @@ def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
         new_association = reaction.getPlugin(0).createGeneProductAssociation().createOr()
         new_association.addAssociation(old_association_fbc)
 
-    # add the remaining genes 
-    # @TODO currently, only connection possible is 'OR'
-    # @ASK Future?/ Feature request issue?
+    # add the remaining genes
     if isinstance(gene,str):
         new_association.createGeneProductRef().setGeneProduct(gene)
     elif isinstance(gene,list) and len(gene) == 1:
@@ -1837,5 +1734,3 @@ def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
         gpa_or =  new_association.createOr()
         for i in gene:
             gpa_or.createGeneProductRef().setGeneProduct(i)
-
-            
