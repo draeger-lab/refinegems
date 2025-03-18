@@ -422,11 +422,7 @@ def kegg_reaction_parser(rn_id:str) -> dict:
         return None
 
     # parse the entry for necessary information
-    features = {}
-    db_entries = []
-    pathways = []
-    rc = []
-    references = {'kegg.reaction':rn_id}
+    features = {'db': []}
     collect = False
     for line in kegg_reac.split('\n'):
         if line:
@@ -435,46 +431,54 @@ def kegg_reaction_parser(rn_id:str) -> dict:
             elif line.startswith('EQUATION'):
                 features['equation'] = line.replace('EQUATION','',1).strip()
             elif line.startswith('ENZYME'):
-                references['ec-code'] = line.replace('ENZYME','',1).strip()
+                features['ec-code'] = re.split(r'\s+', line.replace('ENZYME','',1).strip())
+                collect = 'ec-code'
             elif line.startswith('RCLASS'):
-                rc.append(line.replace('RCLASS','',1).strip().split(' ')[0])
-                collect = True
+                features['kegg.rclass'] = line.replace('RCLASS','',1).strip().split(' ')[0]
+                collect = 'kegg.rclass'
             elif line.startswith('PATHWAY'):
-                pathways.append(line.replace('PATHWAY','',1).strip().split(' ')[0])
-                collect = True
+                features['kegg.pathway'] = line.replace('PATHWAY','',1).strip().split(' ')[0]
+                collect = 'kegg.pathway'
             elif line.startswith('DBLINKS'):
-                db_entries.append(line.replace('DBLINKS','',1).strip())
-                collect = True
-            elif collect == True and line[0] != '/':
-                if len(db_entries) == 0:
+                features['db'] = [line.replace('DBLINKS','',1).strip()]
+                collect = 'db'
+            elif collect and line[0] != '/':
+                if len(features['db']) == 0:
                     if line[0].isupper():
-                        collect = False
+                        collect = None
                     else:
                         line = line.strip()
-                        if line.startswith('RC'):
-                            rc.append(line.split(' ')[0])
-                        else:
-                            pathways.append(line.split(' ')[0])
+                        match collect:
+                            case 'ec-code':
+                                features[collect].append(line)
+                            case _:
+                                features[collect].append(line.split(' ')[0])
                 else:
-                    db_entries.append(line.strip())
+                    features['db'].append(line.strip())
             else:
                 continue
 
     # parse references
+    db_entries = features['db']
+    features['db'] = {'kegg.reaction':rn_id}
     for entry in db_entries:
         db, identifier = entry.split(':')
         db = db.strip().lower()
-        if db in references:
-            references[db] = references[db].append(identifier)
+        if db in features['db']:
+            features['db'][db] = features['db'][db].append(identifier)
         else:
-            references[db] = [identifier.strip()]
-    if len(pathways) > 0:
-        references['kegg.pathway'] = pathways
-    if len(rc) > 0:
-        references['kegg.rclass'] = rc
-    if len(references) > 0:
-        features['db'] = references
+            features['db'][db] = [identifier.strip()]
 
+    if 'ec-code' in features:
+        features['db']['ec-code'] = features['ec-code']
+        del features['ec-code']
+    if 'kegg.rclass' in features:
+        features['db']['kegg.rclass'] = features['kegg.rclass']
+        del features['kegg.rclass']
+    if 'kegg.pathway' in features:
+        features['db']['kegg.pathway'] = features['kegg.pathway']
+        del features['kegg.pathway']
+        
     return features
 
 
