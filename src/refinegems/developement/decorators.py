@@ -47,6 +47,17 @@ def implement(func):
     else:
         wrapper.__doc__ = doc_extension
     return wrapper
+
+
+def debug(func):
+    """A decorator for debug functions.
+    
+    Debug functions are for giving developers detailed output for debugging the code.
+    """
+    @wraps(func)
+    def wrapper():
+        raise RuntimeError('This function is for debugging for the developers.')
+    return wrapper
     
 
 # @TODO add an option for alternative / new function

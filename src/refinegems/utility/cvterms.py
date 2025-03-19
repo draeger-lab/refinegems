@@ -12,14 +12,17 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 import cobra
 import logging
+from bioregistry import get_identifiers_org_iri, parse_iri
 from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 from typing import Union
+
+from ..developement.decorators import debug
 
 ################################################################################
 # variables
 ################################################################################
 
-metabol_db_dict = {
+DB2PREFIX_METABS = {
                    'BIGG': 'bigg.metabolite:',
                    'BiGG': 'bigg.metabolite:',
                    'BIOCYC': 'biocyc:META:',
@@ -46,7 +49,9 @@ metabol_db_dict = {
                    'VMH': 'vmhmetabolite:'
                   } #: :meta hide-value: 
 
-reaction_db_dict = {
+PREFIX2DB_METABS = {v:k for (k,v) in DB2PREFIX_METABS.items()} #: :meta hide-value: 
+
+DB2PREFIX_REACS = {
                     'BIGG': 'bigg.reaction:',
                     'BiGG': 'bigg.metabolite:',
                     'BioCyc': 'biocyc:META:',
@@ -66,7 +71,9 @@ reaction_db_dict = {
                     'VMH': 'vmhreaction:'
                    } #: :meta hide-value: 
 
-gene_db_dict = {
+PREFIX2DB_REACS = {v:k for (k,v) in DB2PREFIX_REACS.items()} #: :meta hide-value: 
+
+DB2PREFIX_GENES = {
                 'KEGG': 'kegg.genes:',
                 'NCBI': 'ncbiprotein:',
                 'NCBIGENE': 'ncbigene:',
@@ -74,7 +81,11 @@ gene_db_dict = {
                 'UNIPROT': 'uniprot:'
                } #: :meta hide-value: 
 
-pathway_db_dict = {'KEGG': 'kegg.pathway:'} #: :meta hide-value: 
+PREFIX2DB_GENES = {v:k for (k,v) in DB2PREFIX_GENES.items()} #: :meta hide-value: 
+
+DB2PREFIX_PATHWAYS = {'KEGG': 'kegg.pathway:'} #: :meta hide-value: 
+
+PREFIX2DB_PATHWAYS = {v:k for (k,v) in DB2PREFIX_PATHWAYS.items()} #: :meta hide-value: 
 
 MIRIAM = 'https://identifiers.org/' #: :meta hide-value: 
 OLD_MIRIAM = 'http://identifiers.org/' #: :meta hide-value: 
@@ -125,15 +136,16 @@ def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
         - relation (int): 
             Provides model qualifier to be added
     """
-    cv = CVTerm()
-    cv.setQualifierType(MODEL_QUALIFIER)
-    cv.setModelQualifierType(relation)
-    
-    if relation == BQM_IS_DESCRIBED_BY:
-        cv.addResource(f'https://identifiers.org/{unit_id}')
+    db_id = 'pubmed' if relation == BQM_IS_DESCRIBED_BY else 'uo'
+    resource = get_identifiers_org_iri(db_id, unit_id)
+    if resource:
+        cv = CVTerm()
+        cv.setQualifierType(MODEL_QUALIFIER)
+        cv.setModelQualifierType(relation)
+        cv.addResource(resource)
+        unit.addCVTerm(cv)
     else:
-        cv.addResource(f'https://identifiers.org/UO:{unit_id}')
-    unit.addCVTerm(cv)
+        logging.warning(f'No valid IRI could be formed for {unit} with relation {relation} and {db_id}:{unit_id}.')
 
 
 def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
@@ -143,19 +155,22 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
         - entry (str): 
             Id to add as annotation
         - db_id (str): 
-            Database to which entry belongs. Must be in metabol_db_dict.keys().
+            Database to which entry belongs. Must be in DB2PREFIX_METABS.keys().
         - metab (Species): 
             Metabolite to add CVTerm to
     """
-    if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
-        if entry[:4] == 'HMDB':
-            entry = entry[4:]
-    cv = CVTerm()
-    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_IS)
-    cv.addResource('https://identifiers.org/' + metabol_db_dict[db_id] + entry)
-    metab.addCVTerm(cv)
-    metab.addCVTerm(cv)
+    resource = get_identifiers_org_iri(DB2PREFIX_METABS.get(db_id), entry)
+    if resource:
+        if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
+            if entry[:4] == 'HMDB':
+                entry = entry[4:]
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        cv.setBiologicalQualifierType(BQB_IS)
+        cv.addResource(resource)
+        metab.addCVTerm(cv)
+    else:
+        logging.warning(f'No valid IRI could be formed for {metab} with {db_id} and {DB2PREFIX_METABS.get(db_id)}:{entry}.')
 
 
 def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
@@ -165,21 +180,22 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
         - entry (str): 
             Id to add as annotation
         - db_id (str): 
-            Database to which entry belongs. Must be in reaction_db_dict.keys().
+            Database to which entry belongs. Must be in DB2PREFIX_REACS.keys().
         - reac (Reaction): 
             Reaction to add CVTerm to
     """
-    if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
-        if entry[:4] == 'HMDB':
-            entry = entry[4:]
-    cv = CVTerm()
-    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_IS)
-    cv.addResource(
-        'https://identifiers.org/' +
-        reaction_db_dict[db_id] +
-        entry)
-    reac.addCVTerm(cv)
+    resource = get_identifiers_org_iri(DB2PREFIX_REACS.get(db_id), entry)
+    if resource:
+        if db_id == 'HMDB' or db_id == 'Human Metabolome Database':
+            if entry[:4] == 'HMDB':
+                entry = entry[4:]
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        cv.setBiologicalQualifierType(BQB_IS)
+        cv.addResource(resource)
+        reac.addCVTerm(cv)
+    else:
+        logging.warning(f'No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_REACS.get(db_id)}:{entry}.')
 
 
 def add_cv_term_genes(entry: str, db_id: str, gene: GeneProduct, lab_strain: bool=False):
@@ -189,20 +205,24 @@ def add_cv_term_genes(entry: str, db_id: str, gene: GeneProduct, lab_strain: boo
         - entry (str): 
             Id to add as annotation.
         - db_id (str): 
-            Database to which entry belongs. Must be in gene_db_dict.keys().
+            Database to which entry belongs. Must be in DB2PREFIX_GENES.keys().
         - gene (GeneProduct): 
             Gene to add CVTerm to.
         - lab_strain (bool, optional): 
             For locally sequenced strains the qualifiers are always HOMOLOG_TO. Defaults to False.
     """
-    cv = CVTerm()
-    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    if lab_strain:
-        cv.setBiologicalQualifierType(BQB_IS_HOMOLOG_TO)
+    resource = get_identifiers_org_iri(DB2PREFIX_GENES.get(db_id), entry)
+    if resource:
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        if lab_strain:
+            cv.setBiologicalQualifierType(BQB_IS_HOMOLOG_TO)
+        else:
+            cv.setBiologicalQualifierType(BQB_IS)
+        cv.addResource(resource)
+        gene.addCVTerm(cv)
     else:
-        cv.setBiologicalQualifierType(BQB_IS)
-    cv.addResource('https://identifiers.org/' + gene_db_dict[db_id] + entry)
-    gene.addCVTerm(cv)
+        logging.warning(f'No valid IRI could be formed for {gene} with {db_id} and {DB2PREFIX_GENES.get(db_id)}:{entry}.')
 
 
 def add_cv_term_pathways(entry: str, db_id: str, path: Group):
@@ -212,16 +232,20 @@ def add_cv_term_pathways(entry: str, db_id: str, path: Group):
         - entry (str): 
             Id to add as annotation
         - db_id (str): 
-            Database to which entry belongs. Must be in pathway_db_dict.keys().
+            Database to which entry belongs. Must be in DB2PREFIX_PATHWAYS.keys().
         - path (Group): 
             Pathway to add CVTerm to
     """
-    cv = CVTerm()
-    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_IS)
-    cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
-    path.addCVTerm(cv)
-    
+    resource = get_identifiers_org_iri(DB2PREFIX_PATHWAYS.get(db_id), entry)
+    if resource:
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        cv.setBiologicalQualifierType(BQB_IS)
+        cv.addResource(resource)
+        path.addCVTerm(cv)
+    else:
+        logging.warning(f'No valid IRI could be formed for {path} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}.')
+
 
 def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
     """Add CVTerm to a reaction as OCCURS IN pathway
@@ -234,11 +258,15 @@ def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
         - reac (Reaction): 
             Reaction to add CVTerm to
     """
-    cv = CVTerm()
-    cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-    cv.setBiologicalQualifierType(BQB_OCCURS_IN)
-    cv.addResource('https://identifiers.org/' + pathway_db_dict[db_id] + entry)
-    reac.addCVTerm(cv)
+    resource = get_identifiers_org_iri(DB2PREFIX_PATHWAYS.get(db_id), entry)
+    if resource:
+        cv = CVTerm()
+        cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+        cv.setBiologicalQualifierType(BQB_OCCURS_IN)
+        cv.addResource(resource)
+        reac.addCVTerm(cv)
+    else:
+        logging.warning(f'No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}.')
 
 
 def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
@@ -259,9 +287,8 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     for i in range(0, num_cvs):
         ann_string = entity.getCVTerm(i)
         num_res = ann_string.getNumResources()
-        ids = [ann_string.getResourceURI(r).split(
-            '/')[-1] for r in range(0, num_res) if str(db_id) in ann_string.getResourceURI(r)]
-        ids = [id_string.split(':')[-1] for id_string in ids if ':' in  id_string]
+        # @DISCUSSION Would give a None if IRI cannot be read
+        ids = [parse_iri(ann_string.getResourceURI(r))[1] for r in range(0, num_res) if str(db_id) in ann_string.getResourceURI(r)]
         all_ids.extend(ids)
 
     return all_ids
@@ -291,6 +318,7 @@ def generate_cvterm(qt, b_m_qt) -> CVTerm:
     return cvterm 
 
 
+@debug
 def print_cvterm(cvterm: CVTerm):
     """Debug function: Prints the URIs contained in the provided CVTerm along with the provided qualifier & biological/model qualifier types
 

@@ -1,5 +1,6 @@
 """Collection of utility functions."""
 
+import bioregistry
 import cobra
 import logging
 
@@ -23,6 +24,10 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
                    "SBO:0000215", "SBO:0000217", "SBO:0000218", "SBO:0000219",
                    "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
                    "SBO:0000376", "SBO:0000401"] #: :meta: 
+
+# Database local identifier regex patterns
+# ----------------------------------------
+DB2REGEX = bioregistry.get_pattern_map()
 
 # compartments
 # ------------
