@@ -11,12 +11,15 @@ __author__ = "Famke Baeuerle and Carolin Brune"
 
 import cobra
 import re
+import urllib
 
-from tqdm.auto import tqdm
+from Bio.KEGG import REST, Enzyme
+from tqdm.auto import tqdm # @TODO does this truely work this way?
 from libsbml import SBMLReader, GroupsExtension
 from libsbml import Model as libModel
 from bioservices import KEGG
 from ..utility.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
+from ..utility.db_access import kegg_reaction_parser
 from ..classes.reports import KEGGPathwayAnalysisReport
 
 ############################################################################
@@ -54,59 +57,156 @@ def load_model_enable_groups(modelpath: str) -> libModel:
     return model
 
 
-def extract_kegg_reactions(model: libModel) -> tuple[dict, list]:
-    """Extract KEGG Ids from reactions
-
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
-
-    Returns:
-        tuple: 
-            Dictionary 'reaction_id': 'KEGG_id' (1) & List of reactions without KEGG Id (2)
-            
-            (1) dict: Reaction Id as key and KEGG Id as value
-            (2) list: Ids of reactions without KEGG annotation
-    """
+def _extract_kegg_ec_from_reac(model: libModel) -> tuple[dict, list]:
+    # @TODO docs
+ 
     list_reac = model.getListOfReactions()
-    kegg_reactions = {}
-    non_kegg_reac = []
+    mapped = {}
+    non_mapped = []
     
     for reaction in list_reac:
+        ecs = get_id_from_cv_term(reaction, 'ec-code')
         kegg_ids = get_id_from_cv_term(reaction, 'kegg.reaction')
+        mappings = dict()
         if len(kegg_ids) > 0:
-            kegg_reactions[reaction.getId()] = kegg_ids[0]
+            mappings['kegg.reaction'] = kegg_ids
+        if len(ecs) > 0:
+            mappings['eccode'] = ecs
+        if len(mappings) == 0:
+            non_mapped.append(reaction.getId())
         else:
-            non_kegg_reac.append(reaction.getId())
+            mapped[reaction.getId()] = mappings
+        
+    # mapped : dict = {'reac_id': {kegg: [], ec-code:[]}}
+    return mapped, non_mapped
 
-    return kegg_reactions, non_kegg_reac
 
+def find_kegg_pathways(mapped_reacs: dict, viaEC:bool=False, viaRC:bool=False) -> dict:
+    #@TODO docs 
+    # kegg_pathways : dict = {'reac_id': []}
+    
+    def _get_pathway_via_rc(rc_list:list[str]) -> list[str]:
+        # @TODO docs
+        
+        pathway_ids = []
+        collect = False
+        for kegg_rc in rc_list:
+            kegg_rc = REST.kegg_get(kegg_rc)
+            kegg_rc = kegg_rc.read()
+            for line in kegg_rc.split('\n'):
+                if line:
+                    if line.startswith('PATHWAY'):
+                        collect = True
+                        pathway_ids.append(line.replace('PATHWAY','',1).strip().split(' ')[0])
+                    elif collect == True and line[0] != '/':
+                        if line[0].isupper():
+                            collect = False
+                        else:
+                            pathway_ids.append(line.strip().split(' ')[0])
+        
+        return pathway_ids
 
-def extract_kegg_pathways(kegg_reactions: dict) -> dict:
-    """Finds pathway for reactions in model with KEGG Ids, accesses KEGG API, uses tqdm to report progres to user
-
-    Args:
-        - kegg_reactions (dict): 
-            Reaction Id as key and KEGG Id as value. Output[0] from :py:func:`~refinegems.curation.pathways.extract_kegg_reactions`.
-
-    Returns:
-        dict: 
-            Reaction Id as key and KEGG Pathway Id as value
-    """
-    k = KEGG()
     kegg_pathways = {}
 
     print('Extracting pathway Id for each reaction:')
-    for reaction in tqdm(kegg_reactions.keys()):
-        kegg_reaction = k.get(kegg_reactions[reaction])
-        dbentry = k.parse(kegg_reaction)
-        # sometimes parse does not work -> try and except
-        try:
-            pathways = [x for x in dbentry['PATHWAY']]
-        except BaseException:
-            pathways = []
-        kegg_pathways[reaction] = pathways
+    for reac_id in tqdm(mapped_reacs.keys(), unit='reaction'):
+        
+        kegg_reaction = None
+        pathways = []
+        
+        # via reaction
+        if 'kegg.reaction' in mapped_reacs[reac_id].keys():
+            for kegg_id in mapped_reacs[reac_id]['kegg.reaction']:
+                try:
+                    kegg_reaction = kegg_reaction_parser(kegg_id)
+                    if isinstance(kegg_reaction['db']['kegg.pathway'],list):
+                        pathways.extend(kegg_reaction['db']['kegg.pathway'])
+                    else:
+                        pathways.append(kegg_reaction['db']['kegg.pathway'])
 
+                # exception handling
+                except urllib.error.HTTPError:
+                    print(F'HTTPError: {reac_id} on {kegg_id}')
+                except ConnectionResetError:
+                    print(F'ConnectionResetError: {reac_id} on {kegg_id}')
+                except urllib.error.URLError:
+                    print(F'URLError: {reac_id} on {kegg_id}')
+                except KeyError:
+                    # no pathway found
+                    pass
+                # except Exception as e:
+                #     print(F'Something unexpected happened: {reac_id} on {kegg_id}')
+                #     print(repr(e))
+                    
+        # via RC
+        # via reaction class
+        # can lead to some additional classes, as the RC are not as strictly defined as
+        # the reactions themselves
+        
+        if viaRC and kegg_reaction and len(pathways) == 0:
+            
+            try: 
+                rc_results = _get_pathway_via_rc(kegg_reaction['db']['kegg.rclass'])
+                if len(rc_results) > 0:
+                    pathways.extend(rc_results)
+            # exception handling
+            except urllib.error.HTTPError:
+                print(F'HTTPError: {reac_id} on RCLASS')
+            except ConnectionResetError:
+                print(F'ConnectionResetError: {reac_id} on RCLASS')
+            except urllib.error.URLError:
+                print(F'URLError: {reac_id} on RCLASS')
+            except KeyError:
+                # no pathway found
+                pass
+            except Exception as e:
+                print(F'Something unexpected happened: {reac_id} on RCLASS')
+            
+        
+        # via EC 
+        # seems really sketchy to do it this way, as ONE EC number
+        # can include MANY reactions for different pathways
+        
+        if viaEC and len(pathways) == 0:
+            ec = None
+            # tests, if reaction already has an annotated EC number
+            if 'eccode' in mapped_reacs[reac_id].keys():
+                ec = mapped_reacs[reac_id]['eccode']
+            # try to get via kegg reaction
+            elif kegg_reaction and 'db' in kegg_reaction.keys() and 'ec-code' in kegg_reaction['db']:
+                ec = kegg_reaction['db']['ec-code']
+                
+            # if EC number found, 
+            # get pathways information using the EC number
+            if ec: 
+                ecnum = None
+                try:
+                    for ecnum in ec:
+                        kegg_ec = REST.kegg_get(F'ec:{ecnum}')
+                        kegg_ec = Enzyme.read(kegg_ec)
+                        # no pathway found
+                        if len(kegg_ec.pathway) == 0 or kegg_ec.pathway == None:
+                            pass
+                        # pathway found
+                        else:
+                            for i in kegg_ec.pathway:
+                                pathways.append(i[1])
+                # exception handling
+                except urllib.error.HTTPError:
+                    print(F'HTTPError: {reac_id} on {ecnum}')
+                except ConnectionResetError:
+                    print(F'ConnectionResetError: {reac_id} on {ecnum}')
+                except urllib.error.URLError:
+                    print(F'URLError: {reac_id} on {ecnum}')
+                except KeyError:
+                    # no pathway found
+                    pass
+                except Exception as e:
+                    print(F'Something unexpected happened: {reac_id} on {ecnum}')
+            
+        # store the pathways 
+        kegg_pathways[reac_id] = list(set(pathways))
+        
     return kegg_pathways
 
 
@@ -117,7 +217,7 @@ def add_kegg_pathways(model, kegg_pathways) -> libModel:
         - model (libModel): 
             Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
         - kegg_pathways (dict): 
-            Reaction Id as key and KEGG Pathway Id as value. Output of :py:func:`~refinegems.curation.pathways.extract_kegg_pathways`.
+            Reaction Id as key and KEGG Pathway Id as value, e.g. see output of :py:func:`~refinegems.curation.pathways.find_kegg_pathways`.
 
     Returns:
         libModel: 
@@ -133,27 +233,6 @@ def add_kegg_pathways(model, kegg_pathways) -> libModel:
     return model
 
 
-def get_pathway_groups(kegg_pathways) -> dict:
-    """Group reaction into pathways.
-
-    Args:
-        - kegg_pathways (dict): 
-            Reaction Id as key and KEGG Pathway Id as value. Output of :py:func:`~refinegems.curation.pathways.extract_kegg_pathways`.
-
-    Returns:
-        dict: 
-            KEGG Pathway Id as key and reactions Ids as values.
-    """
-    pathway_groups = {}
-    for reaction in kegg_pathways.keys():
-        for path in kegg_pathways[reaction]:
-            if path not in pathway_groups.keys():
-                pathway_groups[path] = [reaction]
-            else:
-                pathway_groups[path].append(reaction)
-    return pathway_groups
-
-
 def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     """Use group module to add reactions to KEGG pathway.
 
@@ -161,7 +240,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
         - model (libModel): 
             Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
         - pathway_groups (dict): 
-            KEGG Pathway Id as key and reactions Ids as values. Output of :py:func:`~refinegmes.curation.pathways.get_pathway_groups`.
+            KEGG Pathway Id as key and reactions Ids as values, e.g. see output of :py:func:`~refinegmes.curation.pathways.set_kegg_pathways._invert_reac_pathway_dict`.
 
     Returns:
         libModel: 
@@ -171,7 +250,6 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     groups = model.getPlugin('groups')
     group_list = groups.getListOfGroups()
     keys = list(pathway_groups.keys())
-    num_reactions = [len(sub) for sub in list(pathway_groups.values())]
 
     print('Adding pathways as groups to the model:')
     for i in tqdm(range(len(pathway_groups))):
@@ -203,8 +281,8 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     return model
 
-# @TODO merge with SPECIMEN.hqtb.refinement.annotation.kegg_reaction_to_kegg_pathway (see below)
-def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
+
+def set_kegg_pathways(modelpath: str, viaEC:bool=False, viaRC:bool=False) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
 
     Args:
@@ -218,129 +296,47 @@ def kegg_pathways(modelpath: str) -> tuple[libModel, list[str]]:
             (1) libModel: Modified model with Pathways as groups
             (2) list: Ids of reactions without KEGG annotation
     """
+    
+    def _invert_reac_patway_dict(kegg_pathways) -> dict:
+        """Group reaction into pathways.
+    
+        Args:
+            - kegg_pathways (dict): 
+                Reaction Id as key and KEGG Pathway Id as value. Output of :py:func:`~refinegems.curation.pathways.find_kegg_pathways`.
+    
+        Returns:
+            dict: 
+                KEGG Pathway Id as key and reactions Ids as values.
+        """
+        pathway_groups = {}
+        for reaction in kegg_pathways.keys():
+            for path in kegg_pathways[reaction]:
+                if path not in pathway_groups.keys():
+                    pathway_groups[path] = [reaction]
+                else:
+                    pathway_groups[path].append(reaction)
+        return pathway_groups
+    
+    # load model with groups enabled 
     model = load_model_enable_groups(modelpath)
 
-    reactions, non_kegg_reactions = extract_kegg_reactions(model)
-    pathways = extract_kegg_pathways(reactions)
-    pathway_groups = get_pathway_groups(pathways)
-
+    # extract information about KEGG and EC numbers from model reactions
+    reactions, non_kegg_reactions = _extract_kegg_ec_from_reac(model)
+    
+    # @DEBUG .................
+    # reactions = {k:reactions[k] for idx,k in enumerate(reactions) if idx < 5}
+    # ........................
+    
+    # add kegg pathways
+    pathways = find_kegg_pathways(reactions, viaEC=viaEC, viaRC=viaRC)
     model_pathways = add_kegg_pathways(model, pathways)
+    
+    # add corresponding groups 
+    pathway_groups = _invert_reac_patway_dict(pathways)
     model_pathway_groups = create_pathway_groups(
         model_pathways, pathway_groups)
     
     return model_pathway_groups, non_kegg_reactions
-
-
-# @TODO merge with refineGEMs.curation.pathways.kegg_pathways (see above)
-def kegg_reaction_to_kegg_pathway(model:cobra.Model, viaEC:bool=False, viaRC:bool=False):
-    """Retrieve the KEGG pathways for existing KEGG reaction IDs, if
-    they have yet to be added. Depending on the given options, only the
-    reactions is searched or additional searches are started using the
-    EC number and reactions class if the first search was unsuccesful.
-
-    Args:
-        - model (cobra.Model): 
-            The model - loaded with COBRApy - to be annotated.
-        - viaEC (bool, optional): 
-            Option to search for KEGG pathway ID 
-            using the EC number if previous searches were unsuccesful. 
-            Defaults to False.
-        - viaRC (bool, optional): 
-            Option to search for KEGG pathway ID 
-            using the reaction class if previous searches were unsuccesful. 
-            Defaults to False.
-    """
-
-    # identify reaction with KEGG reaction annotation
-    # but no KEGG pathway
-    for reac in tqdm(model.reactions):
-        if 'kegg.reaction' in reac.annotation and 'kegg.pathway' not in reac.annotation:
-
-            pathways = []
-            reaction = None
-
-            # via reaction
-            try:
-                if isinstance(reac.annotation['kegg.reaction'],list):
-                    for annotation in reac.annotation['kegg.reaction']:
-                        reaction = kegg_reaction_parser(annotation)
-                        if reaction is not None and 'db' in reaction and 'kegg.pathway' in reaction['db']:
-                            if isinstance(reaction['db']['kegg.pathway'],list):
-                                pathways.extend(reaction['db']['kegg.pathway'])
-                            else:
-                                pathways.append(reaction['db']['kegg.pathway'])
-                else:
-                    reaction = kegg_reaction_parser(reac.annotation['kegg.reaction'])
-                    if reaction is not None and 'db' in reaction and 'kegg.pathway' in reaction['db']:
-                        if isinstance(reaction['db']['kegg.pathway'],list):
-                                pathways.extend(reaction['db']['kegg.pathway'])
-                        else:
-                            pathways.append(reaction['db']['kegg.pathway'])
-            except urllib.error.HTTPError:
-                print(F'HTTPError: {reac.id}, {reac.annotation["kegg.reaction"]}')
-            except ConnectionResetError:
-                print(F'ConnectionResetError: {reac.id}, {reac.annotation["kegg.reaction"]}')
-            except urllib.error.URLError:
-                print(F'URLError: {reac.id}, {reac.annotation["kegg.reaction"]}')
-
-            # via reaction class
-            # can lead to some additional classes, as the RC are not as strictly defined as
-            # the reactions themselves
-            if viaRC and len(pathways) == 0 and not pd.isnull(reaction) and 'rc' in reaction:
-                try:
-                    collect = False
-                    for kegg_rc in reaction['rc']:
-                        kegg_rc = REST.kegg_get(kegg_rc)
-                        kegg_rc = kegg_rc.read()
-                        for line in kegg_rc.split('\n'):
-                            if line:
-                                if line.startswith('PATHWAY'):
-                                    collect = True
-                                    pathways.append(line.replace('PATHWAY','',1).strip().split(' ')[0])
-                                elif collect == True and line[0] != '/':
-                                    if line[0].isupper():
-                                        collect = False
-                                    else:
-                                        pathways.append(line.strip().split(' ')[0])
-                except urllib.error.HTTPError:
-                    print(F'HTTPError: {reac.id}, {reaction["rc"]}')
-                except ConnectionResetError:
-                    print(F'ConnectionResetError: {reac.id}, {reaction["rc"]}')
-                except urllib.error.URLError:
-                    print(F'URLError: {reac.id}, {reaction["rc"]}')
-
-            # via EC
-            # seems really sketchy to do it this way, as ONE EC number
-            # can include MANY reactions for different pathways
-            if viaEC and len(pathways) == 0:
-                if 'ec-code' in reac.annotation:
-                    ec_code = reac.annotation['ec-code']
-                elif pd.isnull(reaction) and 'db' in reaction and 'ec-code' in reaction['db']:
-                    ec_code = reaction['db']['ec-code']
-                else:
-                    ec_code = '-'
-                if ec_code != '-' and isinstance(ec_code,str):
-                    try:
-                        kegg_ec = REST.kegg_get(F'ec:{ec_code}')
-                        kegg_ec = Enzyme.read(kegg_ec)
-                        if len(kegg_ec.pathway) == 0 or kegg_ec.pathway == None:
-                            pass
-                        else:
-                            for i in kegg_ec.pathway:
-                                pathways.append(i[1])
-                    except urllib.error.HTTPError:
-                        print(F'HTTPError: {reac.id}, {ec_code}')
-                    except ConnectionResetError:
-                        print(F'ConnectionResetError: {reac.id}, {ec_code}')
-                    except urllib.error.URLError:
-                        print(F'URLError: {reac.id}, {ec_code}')
-                else:
-                    print(F'No EC number: {reac.id}')
-
-            # add pathway annotation to reaction if found
-            if len(pathways) != 0:
-                reac.annotation['kegg.pathway'] = pathways
-
 
 
 # analyse the pathways in a model

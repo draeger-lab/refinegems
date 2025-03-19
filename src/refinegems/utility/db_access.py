@@ -434,10 +434,10 @@ def kegg_reaction_parser(rn_id:str) -> dict:
                 features['ec-code'] = re.split(r'\s+', line.replace('ENZYME','',1).strip())
                 collect = 'ec-code'
             elif line.startswith('RCLASS'):
-                features['kegg.rclass'] = line.replace('RCLASS','',1).strip().split(' ')[0]
+                features['kegg.rclass'] = [line.replace('RCLASS','',1).strip().split(' ')[0]]
                 collect = 'kegg.rclass'
             elif line.startswith('PATHWAY'):
-                features['kegg.pathway'] = line.replace('PATHWAY','',1).strip().split(' ')[0]
+                features['kegg.pathway'] = [line.replace('PATHWAY','',1).strip().split(' ')[0]]
                 collect = 'kegg.pathway'
             elif line.startswith('DBLINKS'):
                 features['db'] = [line.replace('DBLINKS','',1).strip()]
