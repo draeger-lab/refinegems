@@ -1,30 +1,5 @@
 #!/usr/bin/env python
 """General functions to polish a model
-
-This module provides functionalities for an initial clean-up of models, including special functions for CarveMe models.
-
-Since CarveMe version 1.5.1, the draft models from CarveMe contain pieces of information that are not correctly added to the 
-annotations. To address this, this module includes the following functionalities:
-
-    - Add URIs from the entity IDs to the annotation field for metabolites & reactions
-    - Transfer URIs from the notes field to the annotations for metabolites & reactions
-    - Add URIs from the GeneProduct IDs to the annotations
-
-The functionalities for CarveMe models, along with the following further functionalities, are gathered in the main 
-function :py:func:`~refinegems.curation.polish.polish`.
-
-Further functionalities:
-
-        - Setting boundary condition & constant for metabolites & reactions
-        - Unit handling to add units & UnitDefinitions & to set units from parameters
-        - Addition of default settings for compartments & metabolites
-        - Addition of URIs to GeneProducts
-
-            - via the RefSeq GFF from NCBI
-            - via the KEGG API
-            
-        - Changing the CURIE pattern/CVTerm qualifier & qualifier type
-        - Directionality control
 """
 
 __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
@@ -33,37 +8,26 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
-import cobra
 import logging
 import pandas as pd
 import re
 
 from Bio import Entrez
-from bioservices.kegg import KEGG
-from colorama import init as colorama_init
-from colorama import Fore
+
 from datetime import date
 from libsbml import Model as libModel
-from libsbml import ListOfSpecies, ListOfReactions
-from libsbml import GeneProduct, Species, Reaction, Unit, UnitDefinition
-from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
-from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
+from libsbml import GeneProduct, Species, Reaction
 
 from tqdm.auto import tqdm
-from typing import Union
 
-from .miriam import polish_annotations, change_all_qualifiers
-from ..utility.cvterms import add_cv_term_units, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, metabol_db_dict, reaction_db_dict
+from ..utility.cvterms import add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_genes, DB2PREFIX_METABS, DB2PREFIX_REACS
 from ..utility.db_access import search_ncbi_for_gpr
-from ..utility.io import parse_gff_for_cds, parse_fasta_headers, load_a_table_from_database
+from ..utility.entities import create_fba_units, print_remaining_UnitDefinitions
+from ..utility.io import parse_fasta_headers, load_a_table_from_database
 
 ################################################################################
 # functions
 ################################################################################
-
-# ------------------
-# Polish - Main part
-# ------------------
  
 #----------- Functions to add URIs from the entity IDs to the annotation field for metabolites & reactions ------------#       
 def add_metab(entity_list: list[Species], id_db: str):
@@ -177,7 +141,7 @@ def cv_notes_metab(species_list: list[Species]):
         elem_used = []
         notes_string = species.getNotesString().split(r'\n')
         for elem in notes_string:
-            for db in metabol_db_dict.keys():
+            for db in DB2PREFIX_METABS.keys():
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
@@ -219,7 +183,7 @@ def cv_notes_reac(reaction_list: list[Reaction]):
         notes_string = reaction.getNotesString().split(r'\n')
 
         for elem in notes_string:
-            for db in reaction_db_dict.keys():
+            for db in DB2PREFIX_REACS.keys():
                 if '<p>' + db in elem:
                     elem_used.append(elem)
                     # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
@@ -241,199 +205,6 @@ def cv_notes_reac(reaction_list: list[Reaction]):
         new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
         reaction.unsetNotes()
         reaction.setNotes(new_notes)
-
-
-#--------------- Function to set boundary condition & constant for metabolites & reactions ----------------------------# 
-def polish_metab_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
-    """Sets boundary condition and constant if not set for a metabolite
-
-    Args:
-        - entity_list (Union[ListOfSpecies, ListOfReactions]): 
-            libSBML ListOfSpecies or ListOfReactions
-    """
-    match entity_list:
-        case ListOfSpecies():
-            for entity in entity_list:
-                if not entity.getBoundaryCondition():
-                    entity.setBoundaryCondition(False)
-                if not entity.getConstant():
-                    entity.setConstant(False)
-        case ListOfReactions():
-            pass
-        case _:
-            logging.warning(
-                f'Unsupported entity_list type {type(entity_list)}. Please use only objects of type ListOfSpecies or ListOfReactions.'
-                )
-
-
-#------------------------------------ Functions to create units & UnitDefinitions -------------------------------------# 
-def create_unit(
-    model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int, s: int, uri_is: str='', uri_idf: str=''
-    ) -> Unit:
-    """Creates unit for SBML model according to arguments
-
-    Args:
-        - model_specs (tuple):
-            Level & Version of SBML model
-        - meta_id (str): 
-            Meta ID for unit (Neccessary for URI)
-        - kind (str):
-            Unit kind constant (see libSBML for available constants)
-        - e (int): 
-            Exponent of unit
-        - m (int): 
-            Multiplier of unit
-        - s (int): 
-            Scale of unit 
-        - uri_is (str): 
-            URI supporting the specified unit
-        - uri_idf (str):
-            URI supporting the derived from unit
-      
-    Returns:
-        Unit: 
-            libSBML unit object
-    """
-    unit = Unit(*model_specs)
-    unit.setKind(kind)
-    unit.setMetaId(f'meta_{meta_id}_{unit.getKind()}')
-    unit.setExponent(e)
-    unit.setMultiplier(m)
-    unit.setScale(s)
-    if uri_is:
-        add_cv_term_units(uri_is, unit, BQM_IS)
-    if uri_idf:
-        add_cv_term_units(uri_idf, unit, BQM_IS_DERIVED_FROM)
-    return unit
-
-
-def create_unit_definition(model_specs: tuple[int], identifier: str, name: str, 
-                           units: list[Unit]) -> UnitDefinition:
-    """Creates unit definition for SBML model according to arguments
-   
-    Args:
-        - model_specs (tuple): 
-            Level & Version of SBML model
-        - identifier (str):
-            Identifier for the defined unit
-        - name (str): 
-            Full name of the defined unit
-        - units (list): 
-            All units the defined unit consists of
-         
-    Returns:
-        UnitDefinition: 
-            libSBML unit definition object
-    """
-    unit_definition = UnitDefinition(*model_specs)
-    unit_definition.setId(identifier)
-    unit_definition.setMetaId(f'meta_{identifier}')
-    unit_definition.setName(name)
-      
-    # Iterate over all units provided for the unit definition & add the units
-    for unit in units:
-        unit_definition.addUnit(unit)
-   
-    return unit_definition
-
-
-#----------------------------------- Function to create FBA unit & UnitDefinitions ------------------------------------#
-def create_fba_units(model: libModel) -> list[UnitDefinition]:
-    """Creates all fba units required for a constraint-based model
-   
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-         
-    Returns:
-        list: 
-            List of libSBML UnitDefinitions
-    """
-    # Get model level & version for unit & unit definition
-    model_specs = model.getLevel(), model.getVersion()
-    
-    # Create required units
-    litre = create_unit(model_specs, 'litre', UNIT_KIND_LITRE, e=1, m=1, s=-3, uri_is='0000104', uri_idf='0000099')
-    mole = create_unit(model_specs, 'mole_0', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
-    gram = create_unit(model_specs, 'per_gram_0', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
-    second = create_unit(model_specs, 'second_0', UNIT_KIND_SECOND, e=1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
-    
-    # Create unit definitions for hour & femto litre
-    hour = create_unit_definition(
-        model_specs, identifier='h', name='Hour', 
-        units=[second]
-    )
-    femto_litre = create_unit_definition(
-        model_specs, identifier='fL', name='Femto litres', 
-        units=[litre]
-    )
-    
-    # Create unit definitions for millimoles per gram dry weight (mmgdw) & mmgdw per hour
-    mmgdw = create_unit_definition(
-        model_specs, identifier='mmol_per_gDW', name='Millimoles per gram (dry weight)',
-        units=[mole, gram]
-    )
-
-    # Create new units mole & gram to get new meta IDs 
-    mole = create_unit(model_specs, 'mole_1', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
-    gram = create_unit(model_specs, 'per_gram_1', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
-    # Create new unit second to fit to per hour & get new meta ID
-    second = create_unit(model_specs, 'second_1', UNIT_KIND_SECOND, e=-1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
-
-    mmgdwh = create_unit_definition(
-        model_specs, identifier='mmol_per_gDW_per_h', name='Millimoles per gram (dry weight) per hour',
-        units=[mole, gram, second]
-    )
-    add_cv_term_units('pubmed:7986045', mmgdwh, BQM_IS_DESCRIBED_BY)
-
-    return [mmgdwh, mmgdw, hour, femto_litre]
-
-
-#--------------------------- Functions to print UnitDefinitions with the respective units -----------------------------#
-def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
-    """Prints a list of libSBML UnitDefinitions as XMLNodes
-   
-    Args:
-        - contained_unit_defs (list): 
-            List of libSBML UnitDefinition objects
-    """
-    for unit_def in contained_unit_defs:
-        logging.info(unit_def.toXMLNode())
-
-
-def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[UnitDefinition]):
-    """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
-
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-        - list_of_fba_units (list):  
-            List of libSBML UnitDefinitions  
-    """
-       
-    # Get all units already present in the model
-    contained_unit_defs = [unit for unit in model.getListOfUnitDefinitions()]
-         
-    # Check if contained unit fits to one of the created fba units
-    for unit_def in list_of_fba_units:
-        for contained_unit_def in contained_unit_defs:
-         
-            current_id = contained_unit_def.getId()
-               
-            if UnitDefinition.areIdentical(unit_def, contained_unit_def):
-                contained_unit_defs.remove(contained_unit_def)
-                model.removeUnitDefinition(current_id)
-   
-    # Only print list if it contains UnitDefinitions         
-    if contained_unit_defs:
-        logging.info('''
-        The following UnitDefinition objects were removed. 
-        The reasoning is that
-        \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
-        \t(b) the UnitDefinitions defined within this program are handled as ground truth.
-        Thus, the following UnitDefinitions are not seen as relevant for the model.
-        ''')
-        print_UnitDefinitions(contained_unit_defs)
 
 
 #-------------------------------------- Function to add units & UnitDefinitions ---------------------------------------#
@@ -465,7 +236,7 @@ def add_fba_units(model: libModel):
     
     for unit_def in list_of_fba_units:
         model.getListOfUnitDefinitions().append(unit_def)
-          
+
 
 def set_default_units(model: libModel):
     """Sets default units of model
@@ -508,43 +279,6 @@ def set_units(model: libModel):
             ):
             if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
                 param.setUnits(unit_id.group(0))
-            
-
-#-------------------------- Functions to add default settings for compartments & metabolites --------------------------#            
-def add_compartment_structure_specs(model: libModel):
-    """| Adds the required specifications for the compartment structure
-    | if not set (size & spatial dimension)
-        
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-    """ 
-    for compartment in model.getListOfCompartments():
-      
-        if not compartment.isSetSize():
-            compartment.setSize(float('NaN'))
-         
-        if not compartment.isSetSpatialDimensions():
-            compartment.setSpatialDimensions(3)
-         
-        if any(
-            (unit_id := re.fullmatch(r'fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()
-            ):
-            if not (compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)):
-                compartment.setUnits(unit_id.group(0))
-         
-         
-def set_initial_amount(model: libModel):
-    """Sets initial amount to all metabolites if not already set or if initial concentration is not set
-    
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-    """
-    for species in model.getListOfSpecies():
-      
-      if not (species.isSetInitialAmount() or species.isSetInitialConcentration()):
-         species.setInitialAmount(float('NaN'))
 
 
 #--------------------------------- Function to add URIs from the IDs for GeneProducts ---------------------------------#
@@ -673,6 +407,7 @@ def cv_ncbiprotein(gene_list, email, locus2id: pd.DataFrame, protein_fasta: str,
         with open(genes_filename, "w") as file:
              file.write(str(genes_missing_annotation))
 
+
 #----------------------------  Functions to add additional URIs to GeneProducts ---------------------------------------#
 def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
     """Adds URIs to GeneProducts based on locus tag to indentifier mapping
@@ -690,234 +425,3 @@ def add_gp_id_from_gff(locus2id: pd.DataFrame, gene_list: list[GeneProduct]):
 
         if locus in locus2id.index:
             add_cv_term_genes(locus2id.loc[locus, 'ProteinID'][0].split(r'.')[0], 'REFSEQ', gp)
-
-          
-def add_gp_ids_from_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
-    """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
-
-    Args:
-        gene_list (list[GeneProduct]): 
-            libSBML ListOfGenes
-        kegg_organism_id (str): 
-            Organism identifier in the KEGG database
-    """
-    k = KEGG()
-    mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
-    no_valid_kegg = []
-
-    for gp in tqdm(gene_list):
-    
-        if gp.getId() != 'G_spontaneous':
-            kegg_gene_id = f'{kegg_organism_id}:{gp.getLabel()}'
-            
-            try:
-                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
-
-                add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
-                add_cv_term_genes(uniprot_id.split(r'up:')[1], 'UNIPROT', gp)
-                
-            except KeyError:
-                no_valid_kegg.append(gp.getLabel())
-    
-    if no_valid_kegg:      
-        logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
-
-#--------------------------------------------------- Main function ----------------------------------------------------#
-def polish(model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, lab_strain: bool, 
-           kegg_organism_id: str, path: str) -> libModel: 
-    """Completes all steps to polish a model
-    
-    .. note:: So far only tested for models having either BiGG or VMH identifiers.
-
-    Args:
-        - model (libModel): 
-            model loaded with libSBML
-        - email (str): 
-            E-mail for Entrez
-        - id_db (str):
-            Main database where identifiers in model come from
-        - gff (str): 
-            Path to RefSeq/Genbank GFF file of organism
-        - protein_fasta (str): 
-            File used as input for CarveMe
-        - lab_strain (bool): 
-            True if the strain was sequenced in a local lab
-        - kegg_organism_id (str): 
-            KEGG organism identifier
-        - path (str): 
-            Output path for incorrect annotations file(s)
-    
-    Returns:
-        libModel: 
-            Polished libSBML model
-    """
-    ### Set-up
-    # Initialisation of colorama
-    colorama_init(autoreset=True)
-    
-    # Filename for files tracking manual curation outcomes
-    filename = f'{path}{model.getId()}'
-
-    # Error/ invalid input handling
-    if lab_strain and not protein_fasta:
-        logging.error(Fore.LIGHTRED_EX + '''
-                Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
-                Otherwise, polish will not change anything for the GeneProducts.
-                The header lines should look similar to the following line:
-                >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-                It would also be a valid input if the header lines looked similar to the following line:
-                >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
-                ''')
-        return
-
-    # Get ListOf objects
-    metab_list = model.getListOfSpecies()
-    reac_list = model.getListOfReactions()
-    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-
-    # Read GFF if provided
-    if gff:
-        locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
-        try: 
-            locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
-            locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
-        except:
-            mes = f'GFF does not contain the necessary information. Cannot be used.'
-            logging.warning(mes)
-            locus2id = None
-    else: locus2id = None
-
-    ### unit definition ###
-    add_fba_units(model)
-    set_default_units(model)
-    set_units(model)
-    add_compartment_structure_specs(model)
-    set_initial_amount(model)
-    
-    ### improve metabolite, reaction and gene annotations ###
-    add_metab(metab_list, id_db)
-    add_reac(reac_list, id_db)
-    cv_notes_metab(metab_list)
-    cv_notes_reac(reac_list)
-    # @DEBUG : comment out when fixing stuff in pollish_annotations (improves runtime) 
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain) 
-    
-
-    ### add additional URIs to GeneProducts ###
-    if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
-    if kegg_organism_id: add_gp_ids_from_KEGG(gene_list, kegg_organism_id)
-    
-    ### set boundaries and constants ###
-    polish_metab_conditions(metab_list)
-    polish_metab_conditions(reac_list)
-    
-    ### MIRIAM compliance of CVTerms ###
-    print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    model = polish_annotations(model, True, filename)
-    print('Changing all qualifiers to be MIRIAM compliant:')
-    model = change_all_qualifiers(model, lab_strain)
-    
-    return model
-
-
-
-# ----------------------
-# Directionality Control
-# ----------------------
-
-def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Model:
-    """Check the direction of reactions by searching for matching MetaCyc,
-    KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
-    database table or dataFrame (need to contain at least the following columns:
-    Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
-
-    Args:
-        model (cobra.Model): 
-            The model loaded with COBRApy.
-        data (pd.DataFrame | str): 
-            Either a pandas DataFrame or a path to a CSV file
-            containing the BioCyc smart table.
-
-    Raises:
-        - TypeError: Unknown data type for parameter data
-
-    Returns:
-        cobra.Model: 
-            The edited model.
-    """
-    
-    match data:
-        # already a DataFrame
-        case pd.DataFrame():
-            pass
-        case str():
-            # load from a table
-            data = pd.read_csv(data, sep='\t')
-            # rewrite the columns into a better comparable/searchable format
-            data['KEGG reaction'] = data['KEGG reaction'].str.extract(r'.*>(R\d*)<.*')
-            data['METANETX']      = data['METANETX'].str.extract(r'.*>(MNXR\d*)<.*')
-            data['EC-Number']     = data['EC-Number'].str.extract(r'EC-(.*)')
-        case _:
-            mes = f'Unknown data type for parameter data: {type(data)}'
-            raise TypeError(mes)
-
-    # check direction
-    # --------------------
-    for r in model.reactions:
-
-        direction = None
-        # easy case: metacyc is already (corretly) annotated
-        if 'metacyc.reaction' in r.annotation and len(data[data['Reactions'] == r.annotation['metacyc.reaction']]) != 0:
-            direction = data[data['Reactions'] == r.annotation['metacyc.reaction']]['Reaction-Direction'].iloc[0]
-            r.notes['BioCyc direction check'] = F'found {direction}'
-        # complicated case: no metacyc annotation
-        else:
-            annotations = []
-
-            # collect matches
-            if 'kegg.reaction' in r.annotation and r.annotation['kegg.reaction'] in data['KEGG reaction'].tolist():
-                annotations.append(data[data['KEGG reaction'] == r.annotation['kegg.reaction']]['Reactions'].tolist())
-            if 'metanetx.reaction' in r.annotation and r.annotation['metanetx.reaction'] in data['METANETX'].tolist():
-                annotations.append(data[data['METANETX'] == r.annotation['metanetx.reaction']]['Reactions'].tolist())
-            if 'ec-code' in r.annotation and r.annotation['ec-code'] in data['EC-Number'].tolist():
-                annotations.append(data[data['EC-Number'] == r.annotation['ec-code']]['Reactions'].tolist())
-
-            # check results
-            # no matches
-            if len(annotations) == 0:
-                r.notes['BioCyc direction check'] = 'not found'
-
-            # matches found
-            else:
-                # built intersection
-                intersec = set(annotations[0]).intersection(*annotations)
-                # case 1: exactly one match remains
-                if len(intersec) == 1:
-                    entry = intersec.pop()
-                    direction = data[data['Reactions'] == entry]['Reaction-Direction'].iloc[0]
-                    r.annotation['metacyc.reaction'] = entry
-                    r.notes['BioCyc direction check'] = F'found {direction}'
-
-                # case 2: multiple matches found -> inconclusive
-                else:
-                    r.notes['BioCyc direction check'] = F'found, but inconclusive'
-
-        # update direction if possible and needed
-        if not pd.isnull(direction):
-            if 'REVERSIBLE' in direction:
-                # set reaction as reversible by setting default values for upper and lower bounds
-                r.lower_bound = cobra.Configuration().lower_bound
-            elif 'RIGHT-TO-LEFT' in direction:
-                # invert the default values for the boundaries
-                r.lower_bound = cobra.Configuration().lower_bound
-                r.upper_bound = 0.0
-            elif 'LEFT-To-RIGHT' in direction:
-                # In case direction was already wrong
-                r.lower_bound = 0.0
-                r.upper_bound = cobra.Configuration().upper_bound
-            else:
-                # left to right case is the standard for adding reactions
-                # = nothing left to do
-                continue
-
-    return model

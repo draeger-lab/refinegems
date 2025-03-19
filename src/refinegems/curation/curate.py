@@ -1,25 +1,56 @@
 #!/usr/bin/env python
 """General functions for curating a model
 
-Includes functions for adding annotations from manual tables, annotations synchronisation, 
-handling duplicates and more."""
+This module provides functionalities for an initial clean-up of models, including special functions for CarveMe models.
 
-__author__ = "Famke Baeuerle und Carolin Brune"
+Since CarveMe version 1.5.1, the draft models from CarveMe contain pieces of information that are not correctly added to the 
+annotations. To address this, this module includes the following functionalities:
+
+    - Add URIs from the entity IDs to the annotation field for metabolites & reactions
+    - Transfer URIs from the notes field to the annotations for metabolites & reactions
+    - Add URIs from the GeneProduct IDs to the annotations
+
+The functionalities for CarveMe models, along with the following further functionalities, are gathered in the main 
+function :py:func:`~refinegems.curation.polish.polish`.
+
+Further functionalities:
+
+        - Setting boundary condition & constant for metabolites & reactions
+        - Unit handling to add units & UnitDefinitions & to set units from parameters
+        - Addition of default settings for compartments & metabolites
+        - Addition of URIs to GeneProducts
+
+            - via the RefSeq GFF from NCBI
+            - via the KEGG API
+            
+        - Changing the CURIE pattern/CVTerm qualifier & qualifier type
+        - Directionality control
+"""
+# @TODO Rework description!
+__author__ = "Famke Baeuerle and Carolin Brune and Gwendolyn O. Döbel"
 
 ################################################################################
 # requirements
 ################################################################################
 
 import cobra
+import logging
 import pandas as pd
 import re
 import warnings
 
-from libsbml import Model as libModel
+from bioservices.kegg import KEGG
+from colorama import init as colorama_init
+from colorama import Fore
+from libsbml import Model as libModel, GeneProduct, ListOfSpecies, ListOfReactions
 from tqdm.auto import tqdm
-from typing import Literal
+from typing import Literal, Union
 
-from ..utility.cvterms import add_cv_term_metabolites, metabol_db_dict, get_id_from_cv_term
+from .miriam import polish_annotations, change_all_qualifiers
+from .polish import *
+
+from ..utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, DB2PREFIX_METABS, get_id_from_cv_term
+from ..utility.io import parse_gff_for_cds
 from ..utility.util import test_biomass_presence
 
 ################################################################################
@@ -53,12 +84,104 @@ def update_annotations_from_others(model: libModel) -> libModel:
             if other_metab is not None:
                 if not other_metab.isSetMetaId():
                     other_metab.setMetaId('meta_' + other_metab.getId())
-                for db_id, code in metabol_db_dict.items():
+                for db_id, code in DB2PREFIX_METABS.items():
                     id = get_id_from_cv_term(metab, code)
                     for entry in id:
                         if entry is not None:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model
+
+
+def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
+    """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
+
+    Args:
+        gene_list (list[GeneProduct]): 
+            libSBML ListOfGenes
+        kegg_organism_id (str): 
+            Organism identifier in the KEGG database
+    """
+    k = KEGG()
+    mapping_kegg_uniprot = k.conv('uniprot', kegg_organism_id)
+    no_valid_kegg = []
+
+    for gp in tqdm(gene_list):
+    
+        if gp.getId() != 'G_spontaneous':
+            kegg_gene_id = f'{kegg_organism_id}:{gp.getLabel()}'
+            
+            try:
+                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+
+                add_cv_term_genes(kegg_gene_id, 'KEGG', gp)
+                add_cv_term_genes(uniprot_id.split(r'up:')[1], 'UNIPROT', gp)
+                
+            except KeyError:
+                no_valid_kegg.append(gp.getLabel())
+    
+    if no_valid_kegg:      
+        logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
+
+
+# correct basic model set-up
+#---------------------------
+
+def add_compartment_structure_specs(model: libModel):
+    """| Adds the required specifications for the compartment structure
+    | if not set (size & spatial dimension)
+        
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+    """ 
+    for compartment in model.getListOfCompartments():
+      
+        if not compartment.isSetSize():
+            compartment.setSize(float('NaN'))
+         
+        if not compartment.isSetSpatialDimensions():
+            compartment.setSpatialDimensions(3)
+         
+        if any(
+            (unit_id := re.fullmatch(r'fL', unit.getId(), re.IGNORECASE)) for unit in model.getListOfUnitDefinitions()
+            ):
+            if not (compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)):
+                compartment.setUnits(unit_id.group(0))
+
+
+def set_initial_amount_metabs(model: libModel):
+    """Sets initial amount to all metabolites if not already set or if initial concentration is not set
+    
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+    """
+    for species in model.getListOfSpecies():
+      
+      if not (species.isSetInitialAmount() or species.isSetInitialConcentration()):
+         species.setInitialAmount(float('NaN'))
+
+
+def polish_metab_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
+    """Sets boundary condition and constant if not set for a metabolite
+
+    Args:
+        - entity_list (Union[ListOfSpecies, ListOfReactions]): 
+            libSBML ListOfSpecies or ListOfReactions
+    """
+    match entity_list:
+        case ListOfSpecies():
+            for entity in entity_list:
+                if not entity.getBoundaryCondition():
+                    entity.setBoundaryCondition(False)
+                if not entity.getConstant():
+                    entity.setConstant(False)
+        case ListOfReactions():
+            pass
+        case _:
+            logging.warning(
+                f'Unsupported type for entity_list {type(entity_list)}. Must be ListOfSpecies or ListOfReactions.'
+                )
 
 
 # duplicates
@@ -394,3 +517,205 @@ def resolve_duplicates(model:cobra.Model, check_reac:bool=True,
     return model
 
 
+# Directionality Control
+# ----------------------
+
+def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Model:
+    """Check the direction of reactions by searching for matching MetaCyc,
+    KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
+    database table or dataFrame (need to contain at least the following columns:
+    Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
+
+    Args:
+        model (cobra.Model): 
+            The model loaded with COBRApy.
+        data (pd.DataFrame | str): 
+            Either a pandas DataFrame or a path to a CSV file
+            containing the BioCyc smart table.
+
+    Raises:
+        - TypeError: Unknown data type for parameter data
+
+    Returns:
+        cobra.Model: 
+            The edited model.
+    """
+    
+    match data:
+        # already a DataFrame
+        case pd.DataFrame():
+            pass
+        case str():
+            # load from a table
+            data = pd.read_csv(data, sep='\t')
+            # rewrite the columns into a better comparable/searchable format
+            data['KEGG reaction'] = data['KEGG reaction'].str.extract(r'.*>(R\d*)<.*')
+            data['METANETX']      = data['METANETX'].str.extract(r'.*>(MNXR\d*)<.*')
+            data['EC-Number']     = data['EC-Number'].str.extract(r'EC-(.*)')
+        case _:
+            mes = f'Unknown data type for parameter data: {type(data)}'
+            raise TypeError(mes)
+
+    # check direction
+    # --------------------
+    for r in model.reactions:
+
+        direction = None
+        # easy case: metacyc is already (corretly) annotated
+        if 'metacyc.reaction' in r.annotation and len(data[data['Reactions'] == r.annotation['metacyc.reaction']]) != 0:
+            direction = data[data['Reactions'] == r.annotation['metacyc.reaction']]['Reaction-Direction'].iloc[0]
+            r.notes['BioCyc direction check'] = F'found {direction}'
+        # complicated case: no metacyc annotation
+        else:
+            annotations = []
+
+            # collect matches
+            if 'kegg.reaction' in r.annotation and r.annotation['kegg.reaction'] in data['KEGG reaction'].tolist():
+                annotations.append(data[data['KEGG reaction'] == r.annotation['kegg.reaction']]['Reactions'].tolist())
+            if 'metanetx.reaction' in r.annotation and r.annotation['metanetx.reaction'] in data['METANETX'].tolist():
+                annotations.append(data[data['METANETX'] == r.annotation['metanetx.reaction']]['Reactions'].tolist())
+            if 'ec-code' in r.annotation and r.annotation['ec-code'] in data['EC-Number'].tolist():
+                annotations.append(data[data['EC-Number'] == r.annotation['ec-code']]['Reactions'].tolist())
+
+            # check results
+            # no matches
+            if len(annotations) == 0:
+                r.notes['BioCyc direction check'] = 'not found'
+
+            # matches found
+            else:
+                # built intersection
+                intersec = set(annotations[0]).intersection(*annotations)
+                # case 1: exactly one match remains
+                if len(intersec) == 1:
+                    entry = intersec.pop()
+                    direction = data[data['Reactions'] == entry]['Reaction-Direction'].iloc[0]
+                    r.annotation['metacyc.reaction'] = entry
+                    r.notes['BioCyc direction check'] = F'found {direction}'
+
+                # case 2: multiple matches found -> inconclusive
+                else:
+                    r.notes['BioCyc direction check'] = F'found, but inconclusive'
+
+        # update direction if possible and needed
+        if not pd.isnull(direction):
+            if 'REVERSIBLE' in direction:
+                # set reaction as reversible by setting default values for upper and lower bounds
+                r.lower_bound = cobra.Configuration().lower_bound
+            elif 'RIGHT-TO-LEFT' in direction:
+                # invert the default values for the boundaries
+                r.lower_bound = cobra.Configuration().lower_bound
+                r.upper_bound = 0.0
+            elif 'LEFT-To-RIGHT' in direction:
+                # In case direction was already wrong
+                r.lower_bound = 0.0
+                r.upper_bound = cobra.Configuration().upper_bound
+            else:
+                # left to right case is the standard for adding reactions
+                # = nothing left to do
+                continue
+
+    return model
+
+# Perform all clean-up steps
+# --------------------------
+
+def polish_model(
+    model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, 
+    lab_strain: bool, kegg_organism_id: str, reaction_direction: str, path: str) -> libModel: 
+    """Completes all steps to polish a model
+    
+    .. note:: So far only tested for models having either BiGG or VMH identifiers.
+
+    Args:
+        - model (libModel): 
+            model loaded with libSBML
+        - email (str): 
+            E-mail for Entrez
+        - id_db (str):
+            Main database where identifiers in model come from
+        - gff (str): 
+            Path to RefSeq/Genbank GFF file of organism
+        - protein_fasta (str): 
+            File used as input for CarveMe
+        - lab_strain (bool): 
+            True if the strain was sequenced in a local lab
+        - kegg_organism_id (str): 
+            KEGG organism identifier
+        - path (str): 
+            Output path for incorrect annotations file(s)
+    
+    Returns:
+        libModel: 
+            Polished libSBML model
+    """
+    ### Set-up
+    # Initialisation of colorama
+    colorama_init(autoreset=True)
+    
+    # Filename for files tracking manual curation outcomes
+    filename = f'{path}{model.getId()}'
+
+    # Error/ invalid input handling
+    if lab_strain and not protein_fasta:
+        logging.error(Fore.LIGHTRED_EX + '''
+                Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
+                Otherwise, polish will not change anything for the GeneProducts.
+                The header lines should look similar to the following line:
+                >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+                It would also be a valid input if the header lines looked similar to the following line:
+                >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
+                ''')
+        return
+
+    # Get ListOf objects
+    metab_list = model.getListOfSpecies()
+    reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+
+    # Read GFF if provided
+    if gff:
+        locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
+        try: 
+            locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
+            locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
+        except:
+            mes = f'GFF does not contain the necessary information. Cannot be used.'
+            logging.warning(mes)
+            locus2id = None
+    else: locus2id = None
+
+    ### unit definition ###
+    add_fba_units(model)
+    set_default_units(model)
+    set_units(model)
+    add_compartment_structure_specs(model)
+    set_initial_amount_metabs(model)
+    
+    ### improve metabolite, reaction and gene annotations ###
+    add_metab(metab_list, id_db)
+    add_reac(reac_list, id_db)
+    cv_notes_metab(metab_list)
+    cv_notes_reac(reac_list)
+    model = update_annotations_from_others(model)
+    # @DEBUG : comment out when fixing stuff in pollish_annotations (improves runtime) 
+    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
+
+    ### add additional URIs to GeneProducts ###
+    if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
+    if kegg_organism_id: extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
+
+    ### Check reaction direction ###
+    check_direction(model, reaction_direction)
+    
+    ### set boundaries and constants ###
+    polish_metab_conditions(metab_list)
+    polish_metab_conditions(reac_list)
+    
+    ### MIRIAM compliance of CVTerms ###
+    print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
+    model = polish_annotations(model, True, filename)
+    print('Changing all qualifiers to be MIRIAM compliant:')
+    model = change_all_qualifiers(model, lab_strain)
+    
+    return model

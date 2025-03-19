@@ -8,19 +8,21 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel and Carolin Brune"
 ################################################################################
 # requirements
 ################################################################################
-import cobra 
+import cobra
 from cobra.io.sbml import _f_gene_rev
 import json
+import logging
 import pandas as pd
 import re
 import requests
 import urllib
 import warnings
 
-from Bio import Entrez
 from Bio.KEGG import REST, Compound
 from libsbml import Model as libModel
-from libsbml import GeneProduct, Species, Reaction, FbcOr, FbcAnd, GeneProductRef
+from libsbml import Species, Reaction, FbcOr, FbcAnd, GeneProductRef, Unit, UnitDefinition
+from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
+from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
 
 from random import choice
 from string import ascii_uppercase, digits
@@ -30,7 +32,7 @@ from tqdm import tqdm
 tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
-from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, _add_annotations_from_dict_cobra
+from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_units, _add_annotations_from_dict_cobra
 from .db_access import kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
 from .io import load_a_table_from_database
 from .util import COMP_MAPPING, VALID_COMPARTMENTS, MIN_GROWTH_THRESHOLD, is_stoichiometric_factor
@@ -53,7 +55,7 @@ REF_COL_GF_GENE_MAP = {
 # COBRApy - models
 # ++++++++++++++++++++++++++++++++++++++++
 
-# handling compartments 
+# handling compartments
 # ---------------------
 
 def are_compartment_names_valid(model:cobra.Model) -> bool:
@@ -804,8 +806,8 @@ def build_metabolite_bigg(id:str, model:cobra.Model,
     return new_metabolite
 
 
-# adding reactions cobra models
-# -----------------------------
+# adding reactions to cobra models
+# --------------------------------
 
 def parse_reac_str(equation:str, 
                    type:Literal['BiGG','BioCyc','MetaNetX','KEGG']='MetaNetX') -> tuple[dict,dict,list,bool]:
@@ -1478,8 +1480,6 @@ def remove_non_essential_genes(model:cobra.Model,
             remove = False
             
     return (to_delete,essential_counter)
-    
-    
 
 
 # ++++++++++++++++++++++++++++++++++++++++
@@ -1633,7 +1633,7 @@ def create_gp(model:libModel, protein_id:str,
                     pass
                 case _:
                     raise ValueError(f'Unexpected type for reference value: {specs[0]}')
-    
+
 
 def create_species(
     model: libModel, metabolite_id: str, name: str, compartment_id: str, charge: int, chem_formula: str
@@ -1798,3 +1798,177 @@ def create_gpr(reaction:Reaction,gene:Union[str,list[str]]) -> None:
         gpa_or =  new_association.createOr()
         for i in gene:
             gpa_or.createGeneProductRef().setGeneProduct(i)
+
+
+def create_unit(
+    model_specs: tuple[int], meta_id: str, kind: str, e: int, m: int, s: int, uri_is: str='', uri_idf: str=''
+    ) -> Unit:
+    """Creates unit for SBML model according to arguments
+
+    Args:
+        - model_specs (tuple):
+            Level & Version of SBML model
+        - meta_id (str): 
+            Meta ID for unit (Neccessary for URI)
+        - kind (str):
+            Unit kind constant (see libSBML for available constants)
+        - e (int): 
+            Exponent of unit
+        - m (int): 
+            Multiplier of unit
+        - s (int): 
+            Scale of unit 
+        - uri_is (str): 
+            URI supporting the specified unit
+        - uri_idf (str):
+            URI supporting the derived from unit
+      
+    Returns:
+        Unit: 
+            libSBML unit object
+    """
+    unit = Unit(*model_specs)
+    unit.setKind(kind)
+    unit.setMetaId(f'meta_{meta_id}_{unit.getKind()}')
+    unit.setExponent(e)
+    unit.setMultiplier(m)
+    unit.setScale(s)
+    if uri_is:
+        add_cv_term_units(uri_is, unit, BQM_IS)
+    if uri_idf:
+        add_cv_term_units(uri_idf, unit, BQM_IS_DERIVED_FROM)
+    return unit
+
+
+def create_unit_definition(model_specs: tuple[int], identifier: str, name: str, 
+                           units: list[Unit]) -> UnitDefinition:
+    """Creates unit definition for SBML model according to arguments
+   
+    Args:
+        - model_specs (tuple): 
+            Level & Version of SBML model
+        - identifier (str):
+            Identifier for the defined unit
+        - name (str): 
+            Full name of the defined unit
+        - units (list): 
+            All units the defined unit consists of
+         
+    Returns:
+        UnitDefinition: 
+            libSBML unit definition object
+    """
+    unit_definition = UnitDefinition(*model_specs)
+    unit_definition.setId(identifier)
+    unit_definition.setMetaId(f'meta_{identifier}')
+    unit_definition.setName(name)
+      
+    # Iterate over all units provided for the unit definition & add the units
+    for unit in units:
+        unit_definition.addUnit(unit)
+   
+    return unit_definition
+
+
+# create default fba units
+# ^^^^^^^^^^^^^^^^^^^^^^^^
+
+def create_fba_units(model: libModel) -> list[UnitDefinition]:
+    """Creates all fba units required for a constraint-based model
+   
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+         
+    Returns:
+        list: 
+            List of libSBML UnitDefinitions
+    """
+    # Get model level & version for unit & unit definition
+    model_specs = model.getLevel(), model.getVersion()
+    
+    # Create required units
+    litre = create_unit(model_specs, 'litre', UNIT_KIND_LITRE, e=1, m=1, s=-3, uri_is='0000104', uri_idf='0000099')
+    mole = create_unit(model_specs, 'mole_0', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
+    gram = create_unit(model_specs, 'per_gram_0', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
+    second = create_unit(model_specs, 'second_0', UNIT_KIND_SECOND, e=1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
+    
+    # Create unit definitions for hour & femto litre
+    hour = create_unit_definition(
+        model_specs, identifier='h', name='Hour', 
+        units=[second]
+    )
+    femto_litre = create_unit_definition(
+        model_specs, identifier='fL', name='Femto litres', 
+        units=[litre]
+    )
+    
+    # Create unit definitions for millimoles per gram dry weight (mmgdw) & mmgdw per hour
+    mmgdw = create_unit_definition(
+        model_specs, identifier='mmol_per_gDW', name='Millimoles per gram (dry weight)',
+        units=[mole, gram]
+    )
+
+    # Create new units mole & gram to get new meta IDs 
+    mole = create_unit(model_specs, 'mole_1', UNIT_KIND_MOLE, e=1, m=1, s=-3, uri_is='0000040', uri_idf='0000013')
+    gram = create_unit(model_specs, 'per_gram_1', UNIT_KIND_GRAM, e=-1, m=1, s=0, uri_is='0000021')
+    # Create new unit second to fit to per hour & get new meta ID
+    second = create_unit(model_specs, 'second_1', UNIT_KIND_SECOND, e=-1, m=3600, s=0, uri_is='0000032', uri_idf='0000010')
+
+    mmgdwh = create_unit_definition(
+        model_specs, identifier='mmol_per_gDW_per_h', name='Millimoles per gram (dry weight) per hour',
+        units=[mole, gram, second]
+    )
+    add_cv_term_units('pubmed:7986045', mmgdwh, BQM_IS_DESCRIBED_BY)
+
+    return [mmgdwh, mmgdw, hour, femto_litre]
+
+
+# print model entities using libsbml
+# ----------------------------------
+
+def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
+    """Prints a list of libSBML UnitDefinitions as XMLNodes
+   
+    Args:
+        - contained_unit_defs (list): 
+            List of libSBML UnitDefinition objects
+    """
+    for unit_def in contained_unit_defs:
+        logging.info(unit_def.toXMLNode())
+
+
+def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[UnitDefinition]):
+    """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+        - list_of_fba_units (list):  
+            List of libSBML UnitDefinitions  
+    """
+       
+    # Get all units already present in the model
+    contained_unit_defs = [unit for unit in model.getListOfUnitDefinitions()]
+         
+    # Check if contained unit fits to one of the created fba units
+    for unit_def in list_of_fba_units:
+        for contained_unit_def in contained_unit_defs:
+         
+            current_id = contained_unit_def.getId()
+               
+            if UnitDefinition.areIdentical(unit_def, contained_unit_def):
+                contained_unit_defs.remove(contained_unit_def)
+                model.removeUnitDefinition(current_id)
+   
+    # Only print list if it contains UnitDefinitions         
+    if contained_unit_defs:
+        logging.info('''
+        The following UnitDefinition objects were removed. 
+        The reasoning is that
+        \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
+        \t(b) the UnitDefinitions defined within this program are handled as ground truth.
+        Thus, the following UnitDefinitions are not seen as relevant for the model.
+        ''')
+        print_UnitDefinitions(contained_unit_defs)
+
