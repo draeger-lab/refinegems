@@ -31,9 +31,9 @@ tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
 from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, _add_annotations_from_dict_cobra
-from .db_access import search_ncbi_for_gpr, kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
+from .db_access import kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
 from .io import load_a_table_from_database
-from .util import COMP_MAPPING, VALID_COMPARTMENTS, is_stoichiometric_factor
+from .util import COMP_MAPPING, VALID_COMPARTMENTS, MIN_GROWTH_THRESHOLD, is_stoichiometric_factor
 from ..developement.decorators import *
 
 ################################################################################
@@ -1416,6 +1416,70 @@ def build_reaction_bigg(model:cobra.Model, id:str,
 # reactions built with the previuous functions?
 def build_reaction():
     pass
+
+
+# remove genes from model
+# -----------------------
+
+def remove_non_essential_genes(model:cobra.Model, 
+                               genes_to_check:Union[list[cobra.Gene],None]=None,
+                               remove_reactions:bool=True,
+                               min_growth_threshold:float=MIN_GROWTH_THRESHOLD) -> tuple[int,int]:
+    """Remove non-essential genes based on gene knock-out.
+
+    Args:
+        - model (cobra.Model): 
+            The model to delete the genes from.
+        - genes_to_check (Union[list[cobra.Gene],None], optional): 
+            List of genes to check. If None, all genes of the model are checked.
+            Defaults to None.
+        - remove_reactions (bool, optional): 
+            If set to True, also remove corresponding reactions. 
+            Defaults to True.
+        - min_growth_threshold (float, optional): 
+            Minimal value for growth value. 
+            Defaults to MIN_GROWTH_THRESHOLD.
+
+    Returns:
+        tuple[int,int]: 
+            Tuple of (1) int, (2) int:
+                (1) Number of deleted genes.
+                (2) Number of essential genes.
+    """
+    
+    # initialise values
+    to_delete = 0
+    essential_counter = 0
+    remove = False
+    
+    # if no list of genes is given, take all genes of model
+    if not genes_to_check:
+        genes_to_check = model.genes
+        
+    # iterate over all genes of interest
+    for g in genes_to_check:
+        # test knock out on a model copy
+        with model as m:
+            # knock out current gene
+            g.knock_out()
+            res = model.optimize()
+            # make sure, model still reaches minimal growth 
+            if res.objective_value > min_growth_threshold:
+                # set for deletion
+                remove = True
+                to_delete += 1
+            else:
+                # keep
+                essential_counter += 1
+
+        # delete gene
+        if remove:
+            cobra.manipulation.delete.remove_genes(model, [g], remove_reactions=remove_reactions)
+            remove = False
+            
+    return (to_delete,essential_counter)
+    
+    
 
 
 # ++++++++++++++++++++++++++++++++++++++++
