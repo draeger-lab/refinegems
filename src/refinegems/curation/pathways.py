@@ -14,7 +14,7 @@ import re
 import urllib
 
 from Bio.KEGG import REST, Enzyme
-from tqdm.auto import tqdm # @TODO does this truely work this way?
+from tqdm.auto import tqdm 
 from libsbml import SBMLReader, GroupsExtension
 from libsbml import Model as libModel
 from bioservices import KEGG
@@ -58,7 +58,27 @@ def load_model_enable_groups(modelpath: str) -> libModel:
 
 
 def _extract_kegg_ec_from_reac(model: libModel) -> tuple[dict, list]:
-    # @TODO docs
+    """Given a model. extract KEGG IDs and EC numbers from all reactions.
+
+    Args:
+        - model (libModel): 
+            A model loaded with libSBML.
+
+    Returns:
+        tuple[dict, list]: 
+            Tuple with (1) a dictionary with the mappings and (2) a list of unmapped reactions.
+            
+            (1) Dictionary:
+                Reaction Id as key and dictionary as value.
+                The dictionary contains either one or both of the following 
+                keys with the corresponding values:
+                
+                - 'kegg.reaction': List of KEGG reaction Ids
+                - 'eccode': List of EC numbers
+                
+            (2) List:
+                Reaction Ids without KEGG or EC annotation.
+    """
  
     list_reac = model.getListOfReactions()
     mapped = {}
@@ -82,11 +102,39 @@ def _extract_kegg_ec_from_reac(model: libModel) -> tuple[dict, list]:
 
 
 def find_kegg_pathways(mapped_reacs: dict, viaEC:bool=False, viaRC:bool=False) -> dict:
-    #@TODO docs 
-    # kegg_pathways : dict = {'reac_id': []}
+    """Given a dictionary of reaction IDs mapped to KEGG reaction IDs and/or EC numbers,
+    extract the KEGG pathways for each reaction based on the KEGG reaction ID.
+
+    Args:
+        - mapped_reacs (dict): 
+            Dictionary containing the information about the reactions.
+            For more information see, :py:func:`~refinegems.curation.pathways._extract_kegg_ec_from_reac`.
+        - viaEC (bool, optional): 
+            If True, also tries mapping to pathways via EC number, if
+            via reaction ID is unsuccessful. 
+            Defaults to False.
+        - viaRC (bool, optional): 
+            If True, also tries mapping to pathways via reaction class, if
+            via reaction ID is unsuccessful.  
+            Defaults to False.
+
+    Returns:
+        dict: 
+            Dictionary with the reaction IDs as keys and a list of KEGG pathway IDs as values.
+    """
     
     def _get_pathway_via_rc(rc_list:list[str]) -> list[str]:
-        # @TODO docs
+        """Helper function to extract KEGG pathways IDs by a list of reaction class IDs.
+
+        Args:
+            - rc_list (list[str]): 
+                List of reaction class IDs.
+
+        Returns:
+            list[str]: 
+                List of extracted pathways. 
+                If none are found, return an empty list.
+        """
         
         pathway_ids = []
         collect = False
