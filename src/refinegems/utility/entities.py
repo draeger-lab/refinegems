@@ -20,7 +20,7 @@ import warnings
 
 from Bio.KEGG import REST, Compound
 from libsbml import Model as libModel
-from libsbml import Species, Reaction, FbcOr, FbcAnd, GeneProductRef, Unit, UnitDefinition
+from libsbml import Species, Reaction, FbcOr, FbcAnd, GeneProductRef, Unit, UnitDefinition, ListOfUnitDefinitions
 from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
 from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
 
@@ -1927,48 +1927,12 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
 # print model entities using libsbml
 # ----------------------------------
 
-def print_UnitDefinitions(contained_unit_defs: list[UnitDefinition]):
+def print_UnitDefinitions(unit_defs: ListOfUnitDefinitions):
     """Prints a list of libSBML UnitDefinitions as XMLNodes
    
     Args:
-        - contained_unit_defs (list): 
+        - unit_defs (ListOfUnitDefinitions): 
             List of libSBML UnitDefinition objects
     """
-    for unit_def in contained_unit_defs:
+    for unit_def in unit_defs:
         logging.info(unit_def.toXMLNode())
-
-
-def print_remaining_UnitDefinitions(model: libModel, list_of_fba_units: list[UnitDefinition]):
-    """Prints UnitDefinitions from the model that were removed as these were not contained in the list_of_fba_units
-
-    Args:
-        - model (libModel): 
-            Model loaded with libSBML
-        - list_of_fba_units (list):  
-            List of libSBML UnitDefinitions  
-    """
-       
-    # Get all units already present in the model
-    contained_unit_defs = [unit for unit in model.getListOfUnitDefinitions()]
-         
-    # Check if contained unit fits to one of the created fba units
-    for unit_def in list_of_fba_units:
-        for contained_unit_def in contained_unit_defs:
-         
-            current_id = contained_unit_def.getId()
-               
-            if UnitDefinition.areIdentical(unit_def, contained_unit_def):
-                contained_unit_defs.remove(contained_unit_def)
-                model.removeUnitDefinition(current_id)
-   
-    # Only print list if it contains UnitDefinitions         
-    if contained_unit_defs:
-        logging.info('''
-        The following UnitDefinition objects were removed. 
-        The reasoning is that
-        \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
-        \t(b) the UnitDefinitions defined within this program are handled as ground truth.
-        Thus, the following UnitDefinitions are not seen as relevant for the model.
-        ''')
-        print_UnitDefinitions(contained_unit_defs)
-

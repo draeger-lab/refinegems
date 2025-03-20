@@ -40,18 +40,21 @@ import re
 import warnings
 
 from bioservices.kegg import KEGG
+from cobra.io.sbml import _f_specie, _f_reaction
 from colorama import init as colorama_init
 from colorama import Fore
-from libsbml import Model as libModel, GeneProduct, ListOfSpecies, ListOfReactions
+from libsbml import Model as libModel
+from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from tqdm.auto import tqdm
 from typing import Literal, Union
 
 from .miriam import polish_annotations, change_all_qualifiers
 from .polish import *
 
-from ..utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, DB2PREFIX_METABS, get_id_from_cv_term
-from ..utility.io import parse_gff_for_cds
-from ..utility.util import test_biomass_presence
+from ..utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, DB2PREFIX_METABS, DB2PREFIX_REACS, get_id_from_cv_term
+from ..utility.entities import create_fba_units, print_UnitDefinitions
+from ..utility.io import parse_gff_for_cds, load_a_table_from_database
+from ..utility.util import DB2REGEX, test_biomass_presence
 
 ################################################################################
 # variables
@@ -123,8 +126,233 @@ def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: st
         logging.info(f'The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}')
 
 
+def extend_metab_reac_annots_via_id(entity_list: Union[ListOfSpecies, ListOfReactions], id_db:str) -> None:
+    """Extends metabolite or reaction annotations by extracting the core ID from the entity ID and adding this ID as 
+    valid annotation if possible
+
+    Args:
+        - entity_list (Union[ListOfSpecies, ListOfReactions]): 
+            List of entities, either species (metabolites, ListOfSpecies) or reactions (ListOfReactions)
+        - id_db (str): 
+            The database prefix to validate IDs against. Must correspond to a valid
+            prefix in the Bioregistry (e.g., "vmh", "bigg").
+
+    Raises:
+        - TypeError: Unsupported type for entity_list
+    """
+
+    # Set-up case-dependent variables
+    match entity_list:
+        case ListOfSpecies():
+            bigg_db = 'bigg_metabolites'
+            bigg_id_type = 'universal_bigg_id'
+            add_cv_term = add_cv_term_metabolites
+            id_handler = _f_specie
+            db2prefix = DB2PREFIX_METABS
+        case ListOfReactions():
+            bigg_db = 'bigg_reactions'
+            bigg_id_type = 'id'
+            add_cv_term = add_cv_term_reactions
+            id_handler = _f_reaction
+            db2prefix = DB2PREFIX_REACS
+        case _:
+            raise TypeError(f'Unsupported type for entity_list {type(entity_list)}. Must be ListOfSpecies or ListOfReactions.')
+
+    # Set-up default variables
+    try:
+        id_db_prefix = db2prefix[id_db]
+        db_pattern = DB2REGEX[id_db_prefix]
+    except KeyError:
+        print(f'''
+              KeyError: with id_db=\'{id_db}\' and id_db_prefix=\'{id_db_prefix}\'
+              id_db must be one of the valid database names: {db2prefix.keys()}
+              id_db_prefix must be one of the valid prefixes in https://bioregistry.io/.
+              If your id_db is not part of the list, please contact the developers.
+              ''')
+        return
+
+    # Get BiGG IDs for VMH ID == BiGG ID validation
+    if 'vmh' in id_db_prefix.lower():
+        bigg_ids = load_a_table_from_database(f'SELECT bigg_id FROM {bigg_db}')
+        bigg_ids = set(bigg_ids[bigg_id_type].tolist())
+
+    # Get ID from entity & add annotation if valid database ID
+    for entity in entity_list:
+        
+        # Get ID
+        current_id = entity.getId()
+
+        # Use current_id as metaid if no metaid is present   
+        if not entity.isSetMetaId():
+            entity.setMetaId(f'meta_{current_id}')
+
+        if re.fullmatch(db_pattern, current_id, re.IGNORECASE):
+
+            # Remove prefix
+            current_id = id_handler(current_id)
+        
+            # Unset annotations if no CV terms exist
+            if entity.getNumCVTerms() == 0:
+                entity.unsetAnnotation()
+
+            # Get ID for annotation
+            if isinstance(entity, Species): # Remove compartment suffix
+                id_for_anno = re.sub(f'(_|\[){entity.getCompartment()}\]?$', '', current_id)
+            else:
+                id_for_anno = current_id
+
+            # Add ID as URI to annotation
+            add_cv_term(id_for_anno, id_db, entity)
+
+            # Add BiGG ID to annotation, additionally, if VMH and valid BiGG ID
+            if ('vmh' in id_db_prefix.lower()) and (id_for_anno in bigg_ids):
+                    add_cv_term(id_for_anno, id_db, entity)
+
+
+def extend_metab_reac_annots_via_notes(entity_list: Union[ListOfSpecies, ListOfReactions]) -> None:
+    """Extends metabolite or reaction annotations by extracting valid URIs from the notes section of the provided 
+    entities and cleans up the notes by removing processed elements
+
+    Args:
+        - entity_list (Union[ListOfSpecies, ListOfReactions]): 
+            List of entities, either species (metabolites, ListOfSpecies) or reactions (ListOfReactions)
+    Raises:
+        - TypeError: Unsupported type for entity_list
+    """
+
+    # Set-up case-dependent variables
+    match entity_list:
+        case ListOfSpecies():
+            db2prefix = DB2PREFIX_METABS
+            add_cv_term = add_cv_term_metabolites
+        case ListOfReactions():
+            db2prefix = DB2PREFIX_REACS
+            add_cv_term = add_cv_term_reactions
+        case _:
+            raise TypeError(f'Unsupported type for entity_list {type(entity_list)}. Must be ListOfSpecies or ListOfReactions.')
+
+    # Get notes & add annotation from notes to CVTerms if valid URI
+    for entity in entity_list:
+        
+        if not entity.isSetMetaId():
+            entity.setMetaId('meta_' + entity.getId())
+        
+        notes_list = []
+        elem_used = []
+        notes_string = entity.getNotesString().split(r'\n')
+        for elem in notes_string:
+            for id_db in db2prefix.keys():
+                if '<p>' + id_db in elem:
+                    elem_used.append(elem)
+                    # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
+                    fill_in = re.split(r':\s*', elem.strip()[:-4])[1]
+                    if (';') in fill_in:
+                        if not re.search(r'inchi', id_db, re.IGNORECASE):
+                            entries = fill_in.split(r';')
+                            for entry in entries:
+                                if not re.fullmatch(r'^nan$', entry.strip(), re.IGNORECASE):
+                                    add_cv_term(entry.strip(), id_db, entity)
+                    else:
+                        if not re.fullmatch(r'^nan$', fill_in, re.IGNORECASE):
+                            add_cv_term(fill_in, id_db, entity)
+
+        for elem in notes_string:
+            if elem not in elem_used and elem not in notes_list:
+                notes_list.append(elem)
+
+        # Adding new, shortened notes
+        new_notes = ' '.join([str(elem) + '\n' for elem in notes_list])
+        entity.unsetNotes()
+        entity.setNotes(new_notes)
+        # @DEBUG print(species.getAnnotationString())
+
+
 # correct basic model set-up
 #---------------------------
+
+def polish_model_units(model: libModel) -> None:
+
+    # Get FBA unit definitions per refineGEMs definition
+    fba_unit_defs = create_fba_units(model)
+
+    # Get model unit definitions
+    model_unit_defs = model.getListOfUnitDefinitions().clone()
+
+    # If list of unit definitions is not empty, replace all units with the defined FBA units
+    # & Print the non-FBA unit definitions
+    if model_unit_defs:
+
+        # List to collect all non-FBA unit definitions
+        removed_unit_defs = []
+
+        # Check if model unit definitions fit to the fba unit definitions
+        for model_ud in model_unit_defs:
+            for fba_ud in fba_unit_defs:
+
+                # In case of identical unit definitions, remove unit definition from fba unit def list
+                if not UnitDefinition.areIdentical(fba_ud, model_ud):
+                    removed_unit_defs.append(model_ud)
+
+        # Remove all model unit definitions
+        model.getListOfUnitDefinitions().clear(doDelete=True)
+    
+        # Only print list if UnitDefinitions were removed
+        if len(removed_unit_defs) == 0:
+            logging.warning('''
+            The following UnitDefinition objects were removed. 
+            The reasoning is that
+            \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
+            \t(b) the UnitDefinitions defined within this program are handled as ground truth.
+            Thus, the following UnitDefinitions are not seen as relevant for the model.
+            ''')
+            print_UnitDefinitions(removed_unit_defs)
+
+    # Add all defined FBA units to the model
+    for unit_def in fba_unit_defs:
+        model.getListOfUnitDefinitions().append(unit_def)
+
+
+def set_model_default_units(model: libModel):
+    """Sets default units of model
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+    """ 
+    for unit in model.getListOfUnitDefinitions():
+      
+        unit_id = unit.getId()
+      
+        if re.fullmatch(r'mmol_per_gDW', unit_id, re.IGNORECASE):
+         
+            if not (model.isSetExtentUnits() and model.getExtentUnits() == unit_id):
+                model.setExtentUnits(unit_id)
+            
+            if not (model.isSetSubstanceUnits() and model.getSubstanceUnits() == unit_id):
+                model.setSubstanceUnits(unit_id)
+         
+        if not (model.isSetTimeUnits() and model.getTimeUnits() == unit_id) and re.fullmatch(r'hr?', unit_id, re.IGNORECASE):
+            model.setTimeUnits(unit_id)
+         
+        if not (model.isSetVolumeUnits() and model.getVolumeUnits() == unit_id) and re.fullmatch(r'fL', unit_id, re.IGNORECASE):
+            model.setVolumeUnits(unit_id)
+
+
+def set_units_of_parameters(model: libModel):
+    """Sets units of parameters in model
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+    """
+    for param in model.getListOfParameters(): # needs to be added to list of unit definitions aswell
+        if any(
+            (unit_id := re.fullmatch(r'mmol_per_gDW_per_hr?', unit.getId(), re.IGNORECASE)) 
+            for unit in model.getListOfUnitDefinitions()
+            ):
+            if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
+                param.setUnits(unit_id.group(0))
+
 
 def add_compartment_structure_specs(model: libModel):
     """| Adds the required specifications for the compartment structure
@@ -686,19 +914,19 @@ def polish_model(
     else: locus2id = None
 
     ### unit definition ###
-    add_fba_units(model)
-    set_default_units(model)
-    set_units(model)
+    polish_model_units(model)
+    set_model_default_units(model)
+    set_units_of_parameters(model)
     add_compartment_structure_specs(model)
     set_initial_amount_metabs(model)
     
     ### improve metabolite, reaction and gene annotations ###
-    add_metab(metab_list, id_db)
-    add_reac(reac_list, id_db)
-    cv_notes_metab(metab_list)
-    cv_notes_reac(reac_list)
+    extend_metab_reac_annots_via_id(metab_list, id_db)
+    extend_metab_reac_annots_via_id(reac_list, id_db)
+    extend_metab_reac_annots_via_notes(metab_list)
+    extend_metab_reac_annots_via_notes(reac_list)
     model = update_annotations_from_others(model)
-    # @DEBUG : comment out when fixing stuff in pollish_annotations (improves runtime) 
+    # @DEBUG : comment out when fixing stuff in polish_annotations (improves runtime) 
     cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
 
     ### add additional URIs to GeneProducts ###
