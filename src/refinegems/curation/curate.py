@@ -271,6 +271,17 @@ def extend_metab_reac_annots_via_notes(entity_list: Union[ListOfSpecies, ListOfR
 #---------------------------
 
 def polish_model_units(model: libModel) -> None:
+    """Replaces the list of unit definitions with the unit definitions needed for FBA:
+    
+       - mmol per gDW per h
+       - mmol per gDW 
+       - hour (h)
+       - femto litre (fL)
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+    """
 
     # Get FBA unit definitions per refineGEMs definition
     fba_unit_defs = create_fba_units(model)
