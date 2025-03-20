@@ -9,8 +9,10 @@ __author__ = 'Carolin Brune, Famke Baeuerle, Gwendolyn O. Döbel'
 
 import cobra
 import copy
+import logging
 import math
 import matplotlib
+import matplotlib.figure
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
@@ -22,12 +24,14 @@ import warnings
 
 from importlib.resources import files
 from itertools import chain
+from libsbml import Model as libModel
 from pathlib import Path
 from typing import Literal,Union
 
-from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_reac_with_gpr
+from ..analysis.investigate import get_mass_charge_unbalanced, get_orphans_deadends_disconnected, get_reac_with_gpr, get_reactions_per_sbo
 from ..utility.util import test_biomass_presence
 from ..developement.decorators import *
+from ..utility.io import search_sbo_label
 
 ################################################################################
 # variables
@@ -1484,3 +1488,196 @@ class GapFillerReport(Report):
         for category in self.manual_curation['genes']:
             if not self.manual_curation['genes'][category].empty:
                 pd.DataFrame(self.manual_curation['genes'][category]).to_csv(Path(dir_path,f'genes_{category}.csv'), sep=';', header=True, index=False)
+                
+
+class SBOTermReport(Report):
+    """Report of the ABO terms of a model.
+
+    Attributes:
+        - name:
+            Name (ID) of the model.
+        - sbodata:
+            Dictionary containing the SBO terms and the corresponding
+            counts of annotations found in the model.
+            Only includes SBO terms, that have at least 1 occurence in 
+            the model.
+    """
+    
+    def __init__(self, model:libModel):
+        """
+        Args:
+            - model (libModel): 
+                A model loaded with libSBML.
+        """
+        self.name = model.getId()
+        self.sbodata = get_reactions_per_sbo(model)
+        
+        
+    def visualise(self) -> matplotlib.figure.Figure:
+        """Visualise the amount of SBO terms found in the model
+        the report was created with.
+
+        Returns:
+            matplotlib.figure.Figure: 
+                The created graphic.
+        """
+        
+        df = pd.DataFrame(self.sbodata, index=[0]).T.reset_index().rename({0:self.name, 'index': 'SBO-Term'}, axis=1)
+        df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
+        ax = df.drop('SBO-Term', axis=1).sort_values(self.name).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
+        ax.set_ylabel('')
+        ax.set_xlabel('number of reactions', fontsize=16)
+        ax.legend(loc='lower right')
+        fig = ax.get_figure()
+        plt.tight_layout()
+        
+        return fig
+    
+    
+    def save(self, dir:str):
+        """Save the information inside 
+
+        Args:
+            - dir (str): 
+                String to the output directory.
+        """
+        fig = self.visualise()
+        fig.savefig(Path(dir, 'sboterms.png'), dpi=400)
+        
+    
+class MultiSBOTermReport():
+    """A collection of SBO term reports.
+    
+    Attributes:
+        - model_reports:
+            List of :py:class:`~refinegems.classes.reports.SBOTermReports`.
+    """
+    
+    def __init__(self, reports:Union[list[SBOTermReport]|SBOTermReport]):
+        """
+        Args:
+            - reports (Union[list[SBOTermReport] | SBOTermReport]): 
+                Either a single or a list of 
+                :py:class:`~refinegems.classes.reports.SBOTermReports`
+
+        Raises:
+            - ValueError: Wrong input type
+        """
+        
+        match reports:
+            case list():
+                self.model_reports = reports
+            case SBOTermReport():
+                self.model_reports = [reports]
+            case _:
+                raise ValueError('Parameter reports must be a list of SBOTermReports or a single SBOTermReport')
+        
+        
+    def add_report(self, report:SBOTermReport):
+        """Add another :py:class:`~refinegems.classes.reports.SBOTermReports` 
+        to the report collection.
+
+        Args:
+            - report (SBOTermReport): 
+                The report to add.
+        """
+        self.model_reports.append(report)
+        
+        
+    def visualise(self, rename:dict=Union[None,dict], 
+                  color_palette:Union[str,list[str]]='Paired',
+                  figsize:tuple=(10,10)) -> matplotlib.figure.Figure:
+        """Visualise the amount of SBO terms in the models.
+
+        Args:
+            - rename (Union[None,dict], optional): 
+                Takes a dictioanry of model IDs and alternative names
+                When set, uses the dictionary to rename the models. 
+                Defaults to None.
+            - color_palette (Union[str,list[str]], optional): 
+                Color palette name or list of colours for the graphic. 
+                Defaults to 'Paired'.
+            - figsize (tuple, optional): 
+                Site of the figure. Requires a tuple of two integers. 
+                Defaults to (10,10).
+
+        Raises:
+            - TypeError: Unkown type for color palette.
+
+        Returns:
+            matplotlib.figure.Figure: 
+                The generated graphic
+        """
+        
+        # data formatting
+        df = pd.DataFrame.from_dict({r.name:r.sbodata for r in self.model_reports})
+        df = df.reset_index().rename({'index': 'SBO-Term'}, axis=1)
+        df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
+        
+        # set the colours 
+        match color_palette:
+            case str():
+                try:
+                    cmap = matplotlib.colormaps[color_palette]
+                except ValueError:
+                    logging.WARN('Unknown color palette, setting it to "Paired"')
+                    cmap = matplotlib.colormaps['Paired']
+                if isinstance(cmap,matplotlib.colors.ListedColormap):
+                    cmap = cmap.colors[0:len(self.model_reports)]
+                else:
+                    cmap = cmap(np.linspace(0,1,len(self.model_reports)))
+            case list():
+                cmap = color_palette
+            case _:
+                mes = 'Unkown type for color_palette'
+                raise TypeError(mes)
+        
+        # prepare the data
+        df.drop('SBO-Term', axis=1, inplace=True)
+        df = df.set_index('SBO-Name')
+        # sort by total SBO term count
+        df['rowsum'] = df.sum(axis=1)
+        df = df.sort_values(by='rowsum', axis=0)
+        df.drop('rowsum', axis=1, inplace=True)
+    
+        # rename to custom names
+        if rename is not None:
+            df = df.rename(rename, axis=1)
+            
+        # make the figure
+        ax = df.plot.barh(stacked=True, width=.8, figsize=figsize, color=cmap)
+        for patch in ax.patches:
+            colour = patch.get_facecolor()
+            patch.set_edgecolor(colour)
+        ax.set_ylabel('')
+        ax.set_xlabel('number of reactions', fontsize=16)
+        ax.legend(loc='lower right')
+        
+        return ax.get_figure()
+    
+    
+    def save(self, dir:str, 
+             rename:dict=Union[None,dict], 
+             color_palette:Union[str,list[str]]='Paired',
+             figsize:tuple=(10,10)):
+        """Save the information of contained in the report.
+
+        Args:
+            - dir (str): 
+                String for the path of the outpt directory.
+            - rename (Union[None,dict], optional): 
+                Takes a dictioanry of model IDs and alternative names
+                When set, uses the dictionary to rename the models. 
+                Defaults to None.
+            - color_palette (Union[str,list[str]], optional): 
+                Color palette name or list of colours for the graphic. 
+                Defaults to 'Paired'.
+            - figsize (tuple, optional): 
+                Site of the figure. Requires a tuple of two integers. 
+                Defaults to (10,10).
+        """
+        fig = self.visualise(rename,color_palette,figsize)
+        fig.save(Path(dir, 'sboterms.png'), dpi=400)
+    
+    
+    
