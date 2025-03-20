@@ -21,13 +21,6 @@ from ..utility.entities import resolve_compartment_names
 
 # core-pan modelling
 # ------------------
-# @IDEA:
-#    add more options to create and compare core-pan models
-#    currently available:
-#       - id
-#    further ideas:
-#       - based on specific database IDs
-#       - based on a general search for highly similar reactions (multi-db comparison)
 
 def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list[str]:
     """Extract reactions identifiers from a model.
@@ -35,7 +28,6 @@ def extract_reactions_ids(model:cobra.Model,based_on:Literal['id']='id') -> list
     Based on:
 
     - id: extracts the actual IDs as set in the model.
-    - @IDEA
 
     Args:
         - model (cobra.Model): 
@@ -180,7 +172,7 @@ def generate_core_pan_model(model_list:list[str], based_on:Literal['id']='id',
 
     # resolve compartment issue
     for model in all_models:
-       resolve_compartment_names(model) # @TODO Re-check if causes issue if no invalid compartments are found
+       resolve_compartment_names(model) 
 
     # extract reactions
     all_reactions = {model.id: extract_reactions_ids(model, based_on) for model in all_models}
