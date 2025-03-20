@@ -18,8 +18,7 @@ from cobra import Model as cobraModel
 from libsbml import Model as libModel
 from venn import venn
 
-from ..classes.reports import MultiSBOTermReport
-from . import investigate
+from ..classes.reports import MultiSBOTermReport, SBOTermReport
 
 ################################################################################
 # functions
@@ -40,7 +39,7 @@ def sbo_terms(models: list[libModel]) -> MultiSBOTermReport:
     
     sboanalyses = []
     for m in models:
-        sboanalyses.append(investigate.sbo_terms(m))
+        sboanalyses.append(SBOTermReport(m))
     
     return MultiSBOTermReport(sboanalyses)
 

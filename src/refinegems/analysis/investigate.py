@@ -183,18 +183,3 @@ def get_reactions_per_sbo(model: libModel) -> dict:
         else: 
             sbos_dict[sbo] = 1
     return sbos_dict
-
-
-def sbo_terms(model:libModel) -> SBOTermReport:
-    """Investigate the SBO Terms of a model.
-
-    Args:
-        - model (libModel): 
-            The model to investigate, loaded with libSBML.
-
-    Returns:
-        SBOTermReport: 
-            A :py:class:`~refinegems.classes.reports.SBOTermReport` instance.
-    """
-    
-    return SBOTermReport(model)
