@@ -10,8 +10,6 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 # requirements
 ################################################################################
 
-import matplotlib.pyplot as plt
-import pandas as pd
 import cobra
 
 from libsbml import Model as libModel
@@ -21,7 +19,7 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
-from ..utility.io import search_sbo_label
+from ..classes.reports import SBOTermReport
 from ..utility.util import test_biomass_presence
 
 ################################################################################
@@ -186,25 +184,17 @@ def get_reactions_per_sbo(model: libModel) -> dict:
             sbos_dict[sbo] = 1
     return sbos_dict
 
-# @TODO Move to reports?
-def plot_rea_sbo_single(model: libModel):
-    """Plots reactions per SBO Term in horizontal bar chart
+
+def sbo_terms(model:libModel) -> SBOTermReport:
+    """Investigate the SBO Terms of a model.
 
     Args:
         - model (libModel): 
-            Model loaded with libSBML
+            The model to investigate, loaded with libSBML.
 
     Returns:
-        plot: 
-            Pandas Barchart
+        SBOTermReport: 
+            A :py:class:`~refinegems.classes.reports.SBOTermReport` instance.
     """
-    df = pd.DataFrame(get_reactions_per_sbo(model), index=[0]).T.reset_index().rename({0:model.id, 'index': 'SBO-Term'}, axis=1)
-    df = df[df[model.id]>3]
-    df['SBO-Name'] = df['SBO-Term'].apply(search_sbo_label)
-    ax = df.drop('SBO-Term', axis=1).sort_values(model.id).set_index('SBO-Name').plot.barh(width=.8, figsize=(8,10))
-    ax.set_ylabel('')
-    ax.set_xlabel('number of reactions', fontsize=16)
-    ax.legend(loc='lower right')
-    fig = ax.get_figure()
-    plt.tight_layout()
-    return fig
+    
+    return SBOTermReport(model)
