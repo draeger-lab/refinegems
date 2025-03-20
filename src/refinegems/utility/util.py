@@ -25,6 +25,9 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
                    "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
                    "SBO:0000376", "SBO:0000401"] #: :meta: 
 
+SBO_TRANSPORT_TERMS = ["SBO:0000658", "SBO:0000657", "SBO:0000654", "SBO:0000659",
+                       "SBO:0000660"] #: :meta:
+
 # Database local identifier regex patterns
 # ----------------------------------------
 DB2REGEX = bioregistry.get_pattern_map()
@@ -60,13 +63,24 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
          The reannotated model 
    """
 
-   # biochem reactions
+   # reactions
    for r in model.reactions:
       if 'sbo' in r.annotation:
-         if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
+        # biochemical 
+        if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
             r.annotation['sbo'] = "SBO:0000176"
-
-    # @TODO: add transport reactions? -> Good idea. I had issues with them and MEMOTE.
+        # transport
+        elif r.annotation['sbo'] in SBO_TRANSPORT_TERMS:
+            r.annotation['sbo'] = "SBO:0000185"
+    # no change needed, as as of now, only one term exists
+    # exchange
+    # memote: SBO:0000627 / same for SBOannotator
+    
+    # demand
+    # memote: SBO:0000628 / same for SBOannotator
+    
+    # sink
+    # memote: SBO:0000632 / same for SBOannotator
 
 
 # handling stoichiometric factors
