@@ -8,6 +8,7 @@ __author__ = 'Carolin Brune'
 ################################################################################
 
 import requests
+import subprocess
 
 from importlib.resources import files
 from pathlib import Path
@@ -29,7 +30,7 @@ PATH_MEDIA_CONFIG = files('refinegems.data.config').joinpath('media_config.yml')
 # --------------------------
 
 def download_url(download_type:Literal['SwissProt gapfill'],
-                 directory:str=None,k:int=10):
+                 directory:str=None,k:int=10, t:int=1):
     """Download files necessary for certain functionalities of the toolbox from 
     the internet. 
     
@@ -47,6 +48,10 @@ def download_url(download_type:Literal['SwissProt gapfill'],
         - k (int, optional): 
             Chunksize in kB. 
             Defaults to 10.
+        - t (int, optional):
+            Number of threads to use for some additional setups, e.g. 
+            DIAMOND database creation.
+            Defaults to 1.
 
     Raises:
         - ValueError: Unknown database or file
@@ -60,7 +65,6 @@ def download_url(download_type:Literal['SwissProt gapfill'],
             urls = {'SwissProt.fasta':swissprot_api, 'SwissProt_mapping.tsv':swissprot_mapping_api}
             #   1.: TSV with UniprotID, BRENDA and EC -7.7MB (26.07.2024)
             #   2.: FASTA with sequences ~280MB (26.07.2024)
-            # @TODO construct DIAMOND database in this step as well? ->  Good idea!
         case _:
             mes = f'Unknown database or file: {name}'
             raise ValueError(mes)
@@ -90,6 +94,18 @@ def download_url(download_type:Literal['SwissProt gapfill'],
                         pbar.update(len(chunk)) # Update progress bar
                         f.write(chunk)
                 pbar.close()
+                
+    # additional setups
+    match download_type:
+        # SwissProt gapfill
+        case 'SwissProt gapfill':
+            # create DIAMOND database
+            print(F'create DIAMOND database for {name} using:')
+            print(F'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(dir,"db",str(Path(dir,"db","SwissProt.dmnd"))))} --threads {int(t)}')
+            subprocess.run(["diamond", "makedb", "--in", str(Path(directory, "SwissProt.fasta")), "--db", str(Path(dir,"db","SwissProt.dmnd")), "--threads", str(t)])
+        # Type for which no extra setup is needed
+        case _:
+            pass
 
 # ---------------------
 # handling config files
