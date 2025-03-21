@@ -8,8 +8,9 @@ __author__ = "Carolin Brune"
 # requirements
 ################################################################################
 
-import warnings
-from functools import wraps
+import logging
+from functools import wraps, partial
+from typing import Union
 
 ################################################################################
 # variables
@@ -60,16 +61,22 @@ def debug(func):
     return wrapper
     
 
-# @TODO add an option for alternative / new function
-def deprecate(func):
+def deprecate(func=None, note:str=None):
     """A decorator to tell the user, that the function will soon be deprecated.
-    
+        
     Used to give hints to users, that their code will not work as expected, if they update 
     to a newer version.
     """
+
+    if func is None:
+         return partial(deprecate, note=note)
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         mes = f'This function will be deprecated in the next major update: {func.__name__}'
-        warnings.warn(mes, DeprecationWarning)
-        func(*args, **kwargs)
+        if note:
+            mes = mes + '\n' + f'Additional notes: {note}'
+        logging.warning(mes)
+        return func(*args, **kwargs)
     return wrapper
+    

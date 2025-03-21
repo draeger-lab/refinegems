@@ -19,7 +19,6 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
-from ..classes.reports import SBOTermReport
 from ..utility.util import test_biomass_presence
 
 ################################################################################
