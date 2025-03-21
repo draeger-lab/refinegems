@@ -1,5 +1,11 @@
 """Collection of utility functions."""
 
+__author__ = "Gwendolyn O. Döbel and Carolin Brune"
+
+################################################################################
+# requirements
+################################################################################
+
 import bioregistry
 import cobra
 import logging
@@ -10,8 +16,6 @@ from memote.utils import truncate
 from libsbml import Reaction
 from six import iteritems
 from typing import Union
-
-__author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
 ################################################################################
 # variables

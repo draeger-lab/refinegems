@@ -10,7 +10,6 @@ __author__ = "Carolin Brune"
 
 import logging
 from functools import wraps, partial
-from typing import Union
 
 ################################################################################
 # variables

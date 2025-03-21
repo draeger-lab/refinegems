@@ -13,11 +13,12 @@ import cobra
 import re
 import urllib
 
+from bioservices import KEGG
 from Bio.KEGG import REST, Enzyme
-from tqdm.auto import tqdm 
 from libsbml import SBMLReader, GroupsExtension
 from libsbml import Model as libModel
-from bioservices import KEGG
+from tqdm.auto import tqdm 
+
 from ..utility.cvterms import add_cv_term_pathways, get_id_from_cv_term, add_cv_term_pathways_to_entity
 from ..utility.db_access import kegg_reaction_parser
 from ..classes.reports import KEGGPathwayAnalysisReport

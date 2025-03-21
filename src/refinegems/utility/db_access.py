@@ -23,12 +23,10 @@ __author__ = """Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune,
 import cobra
 import io
 import libchebipy
-import math
 import numpy as np
 import pandas as pd
 import re
 import requests
-import sqlite3
 import warnings
 import xmltodict
 
@@ -36,8 +34,6 @@ from Bio import Entrez, SeqIO
 from Bio.KEGG import REST, Gene, Enzyme
 from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
-from multiprocessing import Pool
-from ratelimit import limits, sleep_and_retry
 from typing import Literal, Union
 from tqdm import tqdm
 
@@ -45,9 +41,7 @@ tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
 from .connections import run_DIAMOND_blastp, filter_DIAMOND_blastp_results
-from .databases import PATH_TO_DB
 from .io import load_a_table_from_database, create_missing_genes_protein_fasta
-from .util import VALID_COMPARTMENTS
 
 ############################################################################
 # variables

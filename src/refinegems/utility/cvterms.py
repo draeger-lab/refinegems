@@ -12,8 +12,10 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 import cobra
 import logging
+
 from bioregistry import get_identifiers_org_iri, parse_iri
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY
+from libsbml import Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 from typing import Union
 
 from ..developement.decorators import debug
@@ -23,67 +25,66 @@ from ..developement.decorators import debug
 ################################################################################
 
 DB2PREFIX_METABS = {
-                   'BIGG': 'bigg.metabolite:',
-                   'BiGG': 'bigg.metabolite:',
-                   'BIOCYC': 'biocyc:META:',
-                   'BioCyc': 'biocyc:META:',
-                   'BRENDA': 'brenda:',
-                   'CHEBI': 'CHEBI:',
-                   'ChEBI': 'CHEBI:',
-                   'HMDB': 'hmdb:HMDB',
-                   'Human Metabolome Database': 'hmdb:HMDB',
-                   'INCHI': 'inchi:',
-                   'InChI': 'inchi:',
-                   'InChI-Key': 'inchikey:',
-                   'KEGG': 'kegg.compound:',
-                   #'KEGG Compound': 'kegg.compound:',
-                   'METACYC': 'metacyc.compound:',
-                   'MXNREF': 'metanetx.chemical:',
-                   'MetaNetX': 'metanetx.chemical:',
-                   'PUBCHEM': 'pubchem.compound:',
-                   'REACTOME': 'reactome:',
-                   'Reactome': 'reactome:',
-                   'SEED': 'seed.compound:',
-                   #'UPA': 'unipathway.compound:', #closed due to financial issues
-                   #'UniPathway Compound': 'unipathway.compound:'
-                   'VMH': 'vmhmetabolite:'
+                   'BIGG': 'bigg.metabolite',
+                   'BiGG': 'bigg.metabolite',
+                   'BIOCYC': 'biocyc',
+                   'BioCyc': 'biocyc',
+                   'BRENDA': 'brenda',
+                   'CHEBI': 'chebi',
+                   'ChEBI': 'chebi',
+                   'HMDB': 'hmdb',
+                   'Human Metabolome Database': 'hmdb',
+                   'INCHI': 'inchi',
+                   'InChI': 'inchi',
+                   'InChI-Key': 'inchikey',
+                   'KEGG': 'kegg.compound',
+                   #'KEGG Compound': 'kegg.compound',
+                   'METACYC': 'metacyc.compound',
+                   'MXNREF': 'metanetx.chemical',
+                   'MetaNetX': 'metanetx.chemical',
+                   'PUBCHEM': 'pubchem.compound',
+                   'REACTOME': 'reactome',
+                   'Reactome': 'reactome',
+                   'SEED': 'seed.compound',
+                   #'UPA': 'unipathway.compound', #closed due to financial issues
+                   #'UniPathway Compound': 'unipathway.compound'
+                   'VMH': 'vmhmetabolite'
                   } #: :meta hide-value: 
 
 PREFIX2DB_METABS = {v:k for (k,v) in DB2PREFIX_METABS.items()} #: :meta hide-value: 
 
 DB2PREFIX_REACS = {
-                    'BIGG': 'bigg.reaction:',
-                    'BiGG': 'bigg.metabolite:',
-                    'BioCyc': 'biocyc:META:',
-                    'BRENDA': 'brenda:',
-                    'EC': 'ec-code:',
-                    'HMDB': 'hmdb:HMDB',
-                    'KEGG': 'kegg.reaction:',
-                    'METACYC': 'metacyc.reaction:',
-                    'MXNREF': 'metanetx.reaction:',
-                    'MetaNetX': 'metanetx.reaction:',
-                    'REACTOME': 'reactome:',
-                    'Reactome': 'reactome:',
-                    'RHEA': 'rhea:',
-                    'SEED': 'seed.reaction:',
+                    'BIGG': 'bigg.reaction',
+                    'BioCyc': 'biocyc',
+                    'BRENDA': 'brenda',
+                    'EC': 'ec',
+                    'HMDB': 'hmdb',
+                    'KEGG': 'kegg.reaction',
+                    'METACYC': 'metacyc.reaction',
+                    'MXNREF': 'metanetx.reaction',
+                    'MetaNetX': 'metanetx.reaction',
+                    'REACTOME': 'reactome',
+                    'Reactome': 'reactome',
+                    'RHEA': 'rhea',
+                    'SEED': 'seed.reaction',
                     #'UPA': 'unipathway.reaction:',
                     #'UniPathway Reaction': 'unipathway.reaction:'
-                    'VMH': 'vmhreaction:'
+                    'VMH': 'vmhreaction'
                    } #: :meta hide-value: 
 
 PREFIX2DB_REACS = {v:k for (k,v) in DB2PREFIX_REACS.items()} #: :meta hide-value: 
 
 DB2PREFIX_GENES = {
-                'KEGG': 'kegg.genes:',
-                'NCBI': 'ncbiprotein:',
-                'NCBIGENE': 'ncbigene:',
-                'REFSEQ': 'refseq:',
-                'UNIPROT': 'uniprot:'
+                'KEGG': 'kegg.genes',
+                'NCBI': 'ncbiprotein',
+                'NCBIGENE': 'ncbigene',
+                'REFSEQ': 'refseq',
+                'UNIPROT': 'uniprot'
                } #: :meta hide-value: 
 
 PREFIX2DB_GENES = {v:k for (k,v) in DB2PREFIX_GENES.items()} #: :meta hide-value: 
 
-DB2PREFIX_PATHWAYS = {'KEGG': 'kegg.pathway:'} #: :meta hide-value: 
+DB2PREFIX_PATHWAYS = {'KEGG': 'kegg.pathway'} #: :meta hide-value: 
 
 PREFIX2DB_PATHWAYS = {v:k for (k,v) in DB2PREFIX_PATHWAYS.items()} #: :meta hide-value: 
 
