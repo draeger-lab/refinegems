@@ -135,7 +135,7 @@ def extend_metab_reac_annots_via_id(entity_list: Union[ListOfSpecies, ListOfReac
             List of entities, either species (metabolites, ListOfSpecies) or reactions (ListOfReactions)
         - id_db (str): 
             The database prefix to validate IDs against. Must correspond to a valid
-            prefix in the Bioregistry (e.g., "vmh", "bigg").
+            prefix in the Bioregistry 
 
     Raises:
         - TypeError: Unsupported type for entity_list
@@ -161,15 +161,18 @@ def extend_metab_reac_annots_via_id(entity_list: Union[ListOfSpecies, ListOfReac
     # Set-up default variables
     try:
         id_db_prefix = db2prefix[id_db]
-        db_pattern = DB2REGEX[id_db_prefix]
     except KeyError:
         print(f'''
-              KeyError: with id_db=\'{id_db}\' and id_db_prefix=\'{id_db_prefix}\'
-              id_db must be one of the valid database names: {db2prefix.keys()}
-              id_db_prefix must be one of the valid prefixes in https://bioregistry.io/.
-              If your id_db is not part of the list, please contact the developers.
+KeyError: with id_db=\'{id_db}\'
+id_db must be one of the valid database names: {db2prefix.keys()}
+If your id_db is not part of the list, please contact the developers.
               ''')
         return
+    try: 
+        db_pattern = DB2REGEX[id_db_prefix]
+    except KeyError:
+        print(f'KeyError: id_db_prefix = {id_db_prefix} must be one of the valid prefixes in https://bioregistry.io/.')
+        return 
 
     # Get BiGG IDs for VMH ID == BiGG ID validation
     if 'vmh' in id_db_prefix.lower():
@@ -239,7 +242,7 @@ def extend_metab_reac_annots_via_notes(entity_list: Union[ListOfSpecies, ListOfR
         
         notes_list = []
         elem_used = []
-        notes_string = entity.getNotesString().split(r'\n')
+        notes_string = entity.getNotesString().split('\n')
         for elem in notes_string:
             for id_db in db2prefix.keys():
                 if '<p>' + id_db in elem:
@@ -254,7 +257,7 @@ def extend_metab_reac_annots_via_notes(entity_list: Union[ListOfSpecies, ListOfR
                                     add_cv_term(entry.strip(), id_db, entity)
                     else:
                         if not re.fullmatch(r'^nan$', fill_in, re.IGNORECASE):
-                            add_cv_term(fill_in, id_db, entity)
+                            add_cv_term(fill_in.strip(), id_db, entity)
 
         for elem in notes_string:
             if elem not in elem_used and elem not in notes_list:

@@ -13,8 +13,6 @@ __author__ = "MEMOTE and Gwendolyn O. Döbel"
 import logging
 
 from cobra import Model as cobraModel
-from cobra import Reaction
-from six import iteritems
 from typing import Union
 
 from ..utility.util import test_biomass_consistency, test_biomass_presence
@@ -27,31 +25,6 @@ from ..utility.util import test_biomass_consistency, test_biomass_presence
 # functions
 ############################################################################
 
-
-# @DEPRECATE - one the function below works?
-def normalise_biomass(biomass: Reaction, current_sum: float) -> Reaction:
-    """Normalises the coefficients according to current biomass weight to one g[CDW]
-
-    Args:
-        - biomass (Reaction): 
-            Biomass function/reaction
-        - current_sum (float): 
-            Biomass weight calculated with sum_biomass_weight in g/mmol
-
-    Returns:
-        Reaction: 
-            Biomass function/reaction with updated coefficients
-    """
-    metabs = biomass.metabolites # Get all metabolites
-    
-    # Normalise & update coefficients
-    for (met, coef) in iteritems(metabs):
-        metabs[met] = 1/current_sum * coef
-    biomass._metabolites = metabs
-    
-    return biomass
-
-# @TODO Move to somewhere else
 def check_normalise_biomass(model: cobraModel, cycles:int=10) -> Union[cobraModel, None]:
     """
        1. Checks if at least one biomass reaction is present
@@ -81,8 +54,7 @@ def check_normalise_biomass(model: cobraModel, cycles:int=10) -> Union[cobraMode
             else:
                 c = 0 # counter to ensure it does not run endlessly
                 while not ((1 - 1e-03) < bm_weight < (1 + 1e-06)) and c <= cycles:
-                    #normalise_biomass(model.reactions.get_by_id(bm_rxn), bm_weight)
-                    model.reactions.get_by_id(bm_rxn).__imul__(1/bm_weight) # -> Maybe add like this?
+                    model.reactions.get_by_id(bm_rxn).__imul__(1/bm_weight) 
                     bm_weight = test_biomass_consistency(model, bm_rxn)
                     logging.info(f'For reaction \'{bm_rxn}\' the coefficients changed.')
                     c += 1
