@@ -16,7 +16,6 @@ __author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. 
 import cobra
 import gffutils
 import logging
-import numpy as np
 import os
 import pandas as pd
 import re
@@ -545,7 +544,40 @@ def create_missing_genes_protein_fasta(fasta: str, missing_genes: pd.DataFrame, 
 # GFF
 # ---
 
-def parse_gff_for_cds(gffpath: str, keep_attributes: dict[str: str]=None) -> pd.DataFrame:
+def get_gff_variety(gffpath: str) -> str:
+    """Gets the GFF variety from the file header
+
+    Args:
+        - gffpath (str): 
+            Path to the GFF file.
+
+    Returns:
+        str: 
+            Found variety for provided GFF
+    """
+    
+    variety = 'prokka'
+    variety_found = False
+    counter = 0
+    with open(gffpath, "r") as f:
+        for line in f:
+            # First line and last line of NCBI GFF headers start with '##'
+            if line.startswith('##') and (counter < 2): counter += 1
+
+            # Relevant rows start with '#!'
+            elif line.startswith("#!") and not variety_found:
+                variety = 'refseq'
+
+                if line.startswith('#!annotation-source'):
+                    variety = 'genbank'
+                    variety_found = True
+            else:
+                break
+    return variety
+
+def parse_gff_for_cds(
+    gffpath: str, keep_attributes: dict[str: str]=None, return_variety: bool=False
+    ) -> Union[pd.DataFrame, tuple[pd.DataFrame, str]]:
     """Parses a GFF file to obtain a mapping for the corresponding attributes listed in keep_attributes
 
     Args:
@@ -554,12 +586,27 @@ def parse_gff_for_cds(gffpath: str, keep_attributes: dict[str: str]=None) -> pd.
         - keep_attributes (dict, optional): 
             Dictionary of attributes to be kept and the corresponding column for the table. 
             Defaults to None.
+        - return_variety (bool, optional): 
+            Specifies if GFF variety should be returned.
+            Defaults to False.
 
     Returns:
-        pd.DataFrame: 
-            Dataframe containing a mapping for the corresponding attributes listed in keep_attributes
+        (1) Case: ``return_variety = False``
+                pd.DataFrame: 
+                    Dataframe containing a mapping for the corresponding attributes listed in keep_attributes
+                    
+        
+        (2) Case: ``return_variety = True``  
+                tuple: 
+                    tuple of (1) pd.DataFrame & (2) str:
+
+                    (1) pd.DataFrame: Dataframe containing a mapping for the corresponding attributes listed in keep_attributes
+                    (2) str: Found variety for provided GFF
     """
-    
+
+    # Get variety if wanted
+    if return_variety: variety = get_gff_variety(gffpath)
+
     # load the gff
     gff = gffutils.create_db(gffpath, ':memory:', merge_strategy="create_unique")
     # extract the attributes of the CDS 
@@ -582,7 +629,7 @@ def parse_gff_for_cds(gffpath: str, keep_attributes: dict[str: str]=None) -> pd.
     if 'locus_tag' in cds.columns:
         cds = cds.explode('locus_tag')
 
-    return cds
+    return (cds, variety) if return_variety else cds
 
 # GBFF
 # ----
