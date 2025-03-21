@@ -16,7 +16,6 @@ __author__ = "Carolin Brune, Tobias Fehrenbach, Famke Baeuerle and Gwendolyn O. 
 import cobra
 import gffutils
 import logging
-import numpy as np
 import os
 import pandas as pd
 import re

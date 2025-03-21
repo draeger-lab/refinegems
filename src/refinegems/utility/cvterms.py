@@ -12,8 +12,10 @@ __author__ = "Famke Baeuerle and Gwendolyn O. Döbel"
 
 import cobra
 import logging
+
 from bioregistry import get_identifiers_org_iri, parse_iri
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY, Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_OCCURS_IN, BQB_IS_HOMOLOG_TO, MODEL_QUALIFIER, BQM_IS_DESCRIBED_BY
+from libsbml import Unit, CVTerm, Species, Reaction, GeneProduct, Group, SBase
 from typing import Union
 
 from ..developement.decorators import debug
