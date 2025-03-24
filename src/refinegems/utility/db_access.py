@@ -702,36 +702,53 @@ def compare_to_modelseed(model: cobraModel) -> tuple[pd.DataFrame, pd.DataFrame]
 like EC number of an NBCI protein accession number or information about locus tags.
 """
 
-def search_ncbi_for_gpr(locus: str) -> str:
-    """Fetches protein name from NCBI
+def _search_ncbi_for_gp(row: pd.Series, id_type: Literal['refseq', 'ncbiprotein']) -> pd.Series:
+    """Fetches protein name and locus tag from NCBI
 
     Args:
-        - locus (str): 
-            NCBI compatible locus_tag
+        - row (pd.Series): 
+            Row of a pandas DataFrame containing RefSeq/NCBI Protein IDs in columns
+        - id_type (Literal['refseq', 'ncbiprotein']): 
+            ID type of IDs in provided row. 
+            Can be one of ['refseq', 'ncbiprotein'].
 
     Returns:
-        str: 
-            Protein name|description
+        pd.Series: 
+            Modified input row
     """
+    match id_type:
+        case 'refseq':
+            ncbi_id = row['REFSEQ']
+        case 'ncbiprotein':
+            ncbi_id = row['NCBI']
+        case _:
+            raise TypeError(
+                f'Provided type for id_type {id_type} invalid. Please use one of [\'refseq\', \'ncbiprotein\'].'
+                )
+            return row
+
     try:
         handle = Entrez.efetch(
             db="protein",
-            id=locus,
+            id=ncbi_id,
             rettype="gbwithparts",
             retmode='text')
         records = SeqIO.parse(handle, "gb")
 
         for i, record in enumerate(records):
-            if (locus[0] == 'W'):
-                return record.description, locus
-            else:
-                for feature in record.features:
-                    if feature.type == "CDS":
-                        return record.description, feature.qualifiers["locus_tag"][0]
+            match id_type:
+                case 'refseq':
+                    row['name'] = record.description
+                case 'ncbiprotein':
+                    for feature in record.features:
+                        if feature.type == "CDS":
+                            row['name'] = record.description
+                            row['locus_tag'] = feature.qualifiers["locus_tag"][0]
+                    
     except Exception as e:
-        print(f'{e} with NCBI Protein ID {locus}')
-        return None, None
-        
+        print(f'{e} with {id_type} ID {ncbi_id}')
+
+    return row
 
 
 # fetching the EC number (if possible) from NCBI 

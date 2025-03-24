@@ -18,11 +18,16 @@ import requests
 import urllib
 import warnings
 
+from Bio import Entrez
 from Bio.KEGG import REST, Compound
+from cobra.io.sbml import _f_gene
+from datetime import date
+from functools import reduce
 from libsbml import Model as libModel
 from libsbml import Species, Reaction, FbcOr, FbcAnd, GeneProductRef, Unit, UnitDefinition, ListOfUnitDefinitions
 from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
 from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
+from pathlib import Path
 
 from random import choice
 from string import ascii_uppercase, digits
@@ -33,9 +38,9 @@ tqdm.pandas()
 pd.options.mode.chained_assignment = None # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
 from .cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, add_cv_term_units, _add_annotations_from_dict_cobra
-from .db_access import kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs
-from .io import load_a_table_from_database
-from .util import COMP_MAPPING, VALID_COMPARTMENTS, MIN_GROWTH_THRESHOLD, is_stoichiometric_factor
+from .db_access import kegg_reaction_parser, _add_annotations_from_bigg_reac_row, get_BiGG_metabs_annot_via_dbid, add_annotations_from_BiGG_metabs, _search_ncbi_for_gp
+from .io import load_a_table_from_database, get_gff_variety, parse_gff_for_cds
+from .util import COMP_MAPPING, DB2REGEX, VALID_COMPARTMENTS, MIN_GROWTH_THRESHOLD, is_stoichiometric_factor
 from ..developement.decorators import *
 
 ################################################################################
@@ -1556,6 +1561,159 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
             True if reversible else False
     """
     return (fluxes['lower_bound'] == 'cobra_default_lb') and (fluxes['upper_bound'] == 'cobra_default_ub')
+
+
+# map model entities via libSBML
+# ------------------------------
+# @TODO: Documentation!
+def get_gpid_mapping(
+    model: libModel, gff_paths: list[str], email: str,  
+    contains_locus_tags: bool=True, path: str=None) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        - model (libModel): 
+            _description_
+        - gff_paths (list[str]): 
+            _description_
+        - email (str): 
+            _description_
+        - contains_locus_tags (bool, optional): 
+            _description_. Defaults to True.
+        - path (str, optional): 
+            _description_. Defaults to None.
+
+    Returns:
+        pd.DataFrame: 
+            _description_
+    """
+    
+    # 1. Get model IDs & potential contained IDs
+    print('Extracting model IDs and potential valid database IDs from model...')
+    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+    modelid2potentialid = {'model_id': [], 'database_id': []}
+    
+    for gene in tqdm(gene_list):
+
+        # Get locus_tag if available
+        if contains_locus_tags:
+            modelid2potentialid['locus_tag'] = gene.getLabel() if gene.isSetLabel() else None
+        
+        # Get current gene id
+        gene_id = gene.getId()
+        modelid2potentialid['model_id'].append(gene_id)
+
+        # Get gene_id without prefix & replace ascii numbers with according characters
+        gene_id = _f_gene(gene_id)
+
+        # Extract potential database ID from gene_id
+        if (gene_id.lower() != 'spontaneous') and (gene_id.lower() != 'unknown'): # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
+            # Case 1: CarveMe version; Contains NCBI Protein ID, lcl_CP035291_1_prot_QCY37541_1_361
+            if 'prot_' in gene_id:
+                id_string = gene_id.split(r'prot_')[1].split(r'_')  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
+                ncbi_id = id_string[0]  # If identifier contains no '_', this is full identifier
+
+            # Case 2: RAST contained without any surrounding stuff, 1134914.3.1020_56.peg
+            # Case 3: RefSeq contained without any surrounding stuff, WP_011275285.1, From CarveMe: YP_005228568_1
+            # Case 4: KEGG contained without any surrounding stuff, sha:SH1836
+            # Case 5: Model ID contains locus_tag, AB-1_S128_00983
+            else:
+                ncbi_id = gene_id
+
+        # Add potential database ID to dictionary
+        modelid2potentialid['database_id'] = ncbi_id
+
+
+    # Generate table from dictionary
+    mapping_table = pd.DataFrame.from_dict(modelid2potentialid)
+
+    # Classify potential database IDs according to db specific regexes
+    def _classify_potential_db_ids(row: pd.Series) -> None:
+        # If identifier matches RefSeq ID pattern
+        if re.fullmatch(rf'{DB2REGEX['refseq']}', ncbi_id, re.IGNORECASE):
+            row['REFSEQ'] = row['database_id']
+        
+        # If identifier matches ncbiprotein ID pattern
+        elif re.fullmatch(rf'{DB2REGEX['ncbiprotein']}$', ncbi_id, re.IGNORECASE):
+            row['NCBI'] = row['database_id']
+        
+        else:
+            row['UNCLASSIFIED'] = row['database_id']
+
+        return row
+
+    # Add empty column for REFSEQ, NCBI and UNCLASSIFIED IDs
+    mapping_table['REFSEQ'] = None
+    mapping_table['NCBI'] = None
+    mapping_table['UNCLASSIFIED'] = None
+
+    # Classify potential database IDs according to db specific regexes
+    mapping_table = mapping_table.apply(_classify_potential_db_ids, axis=1)
+    mapping_table.drop('database_id', axis=1, inplace=True)
+
+    # 1.1 (Optional) Get information from GFF(s)
+    if gff_paths:
+        print('Extracting (protein id,) locus tag and name from GFF(s)...')
+        
+        # Get attributes to keep per GFF variety
+        gff_attributes = {
+            'refseq': {'locus_tag': 'locus_tag', 'protein_id': 'REFSEQ', 'product': 'name'}, 
+            'genbank': {'locus_tag': 'locus_tag', 'protein_id': 'NCBI', 'product': 'name'}, 
+            'prokka': {'locus_tag': 'locus_tag', 'product': 'name'}
+            }
+
+        # Parse & collect all provided GFFs
+        gffs = []
+        for gffp in gff_paths:
+            current_gff_variety = get_gff_variety(gffp)
+            current_gff = parse_gff_for_cds(gffp, keep_attributes=gff_attributes[current_gff_variety])
+            gffs.append(current_gff)
+
+        # Merge all GFFs on common column locus_tag
+        if len(gffs) == 1:
+            gff_mapping = gffs[0]
+        else:
+            gff_mapping = reduce(
+                lambda left, right: pd.merge(left, right, on=['locus_tag'], how='outer', sort=True), gffs
+                )
+
+        # Find identical columns in mapping_table & gff_mapping
+        identical_columns = list(set(mapping_table.columns).intersection(set(gff_mapping.columns)))
+
+        # Merge both dataframes
+        # If merge on identical columns is possible
+        if identical_columns:
+            mapping_table = pd.merge(mapping_table, gff_mapping, how='outer', on=identical_columns)
+        else: # Try merge on locus_tag & UNCLASSIFIED as UNCLASSIFIED could contain locus tags
+            mapping_table = pd.merge(mapping_table, gff_mapping, how='outer', left_on='UNCLASSIFIED', right_on='locus_tag')
+
+    # 2. Get information from NCBI
+    if email:
+        Entrez.email = email
+        print('Retrieve locus tag and name information from NCBI...')
+
+        # Add empty column for name and locus tags if not already contained
+        if not 'locus_tag' in mapping_table.columns: mapping_table['locus_tag'] = None
+        if not 'name' in mapping_table.columns: mapping_table['name'] = None
+
+        # Query NCBI based on RefSeq Protein ID
+        if 'REFSEQ' in mapping_table.columns:
+            mapping_table = mapping_table.progress_apply(_search_ncbi_for_gp, axis=1, args=('refseq',))
+
+        # Query NCBI based on NCBI Protein ID
+        if 'NCBI' in mapping_table.columns:
+            mapping_table = mapping_table.progress_apply(_search_ncbi_for_gp, axis=1, args=('refseq',))
+
+    # Write mapping information to file
+    if path: filename = Path(path, f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}')
+    else: filename = Path(f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}')
+    logging.info(
+        f'The mapping table mapping the geneProduct IDs of the provided model {model.getId()} to the names and locus ' + 
+        f'tags is saved to {filename}.csv'
+        )
+    mapping_table.to_csv(filename, index=False)
+
+    return mapping_table
 
 
 # create model entities using libSBML

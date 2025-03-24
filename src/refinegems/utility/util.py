@@ -27,14 +27,14 @@ SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
                    "SBO:0000660", "SBO:0000178", "SBO:0000200", "SBO:0000214",
                    "SBO:0000215", "SBO:0000217", "SBO:0000218", "SBO:0000219",
                    "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
-                   "SBO:0000376", "SBO:0000401"] #: :meta: 
+                   "SBO:0000376", "SBO:0000401"] #: :meta:
 
 SBO_TRANSPORT_TERMS = ["SBO:0000658", "SBO:0000657", "SBO:0000654", "SBO:0000659",
                        "SBO:0000660"] #: :meta:
 
 # Database local identifier regex patterns
 # ----------------------------------------
-DB2REGEX = bioregistry.get_pattern_map()
+DB2REGEX = bioregistry.get_pattern_map() #: :meta hide-value:
 
 # compartments
 # ------------
@@ -45,7 +45,7 @@ COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
 
 # useful defaults
 # ---------------
-MIN_GROWTH_THRESHOLD = 1.0e-5 #: :meta: 
+MIN_GROWTH_THRESHOLD = 1.0e-5 #: :meta:
 
 ################################################################################
 # functions

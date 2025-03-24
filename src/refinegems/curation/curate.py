@@ -52,7 +52,7 @@ from .miriam import polish_annotations, change_all_qualifiers
 from .polish import *
 
 from ..utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, DB2PREFIX_METABS, DB2PREFIX_REACS, get_id_from_cv_term
-from ..utility.entities import create_fba_units, print_UnitDefinitions
+from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
 from ..utility.io import parse_gff_for_cds, load_a_table_from_database
 from ..utility.util import DB2REGEX, test_biomass_presence
 
@@ -93,6 +93,59 @@ def update_annotations_from_others(model: libModel) -> libModel:
                         if entry is not None:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model
+
+# @TODO: Documentation!
+def extend_gp_annots_via_files(
+    model: libModel, mapping_tbl_file: str=None, gff_paths: list[str]=None, email: str=None, 
+    path: str=None, contains_locus_tags: bool=True, lab_strain: bool=False) -> None:
+    """_summary_
+
+    Args:
+        - model (libModel): 
+            _description_
+        - mapping_tbl_file (str, optional): 
+            _description_. Defaults to None.
+        - gff_paths (list[str], optional): 
+            _description_. Defaults to None.
+        - email (str, optional): 
+            _description_. Defaults to None.
+        - path (str, optional): 
+            _description_. Defaults to None.
+        - contains_locus_tags (bool, optional): 
+            _description_. Defaults to True.
+        - lab_strain (bool, optional): 
+            _description_. Defaults to False.
+    """
+    
+    # 1. Get mapping
+    # If no mapping table provided, get via function
+    print('Get mapping information...')
+    if not mapping_tbl_file:
+        mapping_table = get_gpid_mapping(model, gff_paths, email, contains_locus_tags, path)
+    else: # Otherwise read in table from file
+        mapping_table = pd.read_csv(mapping_tbl_file)
+
+    # Drop all rows without model_id entries
+    mapping_table.dropna(subset='model_id', inplace=True)
+    # Use model_id as index
+    mapping_table.set_index('model_id')
+
+    # 2. Use table to fill in information in model
+    # Get gene list
+    gene_list = model.getPlugin('fbc').getListOfGeneProducts()
+    
+    print('Extending GeneProduct information...')
+    for gene in tqdm(gene_list):
+        # Get row of mapping table for current model_id
+        gp_infos = mapping_table.loc[gene.getId(),:]
+
+        # Add infos to current GeneProduct
+        if gp_infos['name']: gene.setName(gp_infos['name'])
+        if gp_infos['locus_tag']: gene.setLabel(gp_infos['locus_tag'])
+        if ('REFSEQ' in gp_infos.columns) and gp_infos['REFSEQ']: 
+            add_cv_term_genes(gp_infos['REFSEQ'],'REFSEQ',gene, lab_strain)
+        if ('NCBI' in gp_infos.columns) and gp_infos['NCBI']: 
+            add_cv_term_genes(gp_infos['NCBI'], 'NCBI', gene, lab_strain)
 
 
 def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
