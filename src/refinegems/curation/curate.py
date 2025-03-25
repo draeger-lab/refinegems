@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """General functions for curating a model
 
-This module provides functionalities for an initial clean-up of models, including special functions for CarveMe models.
+This module provides functionalities for curating models, including special functions for CarveMe models.
 
 Since CarveMe version 1.5.1, the draft models from CarveMe contain pieces of information that are not correctly added to the 
 annotations. To address this, this module includes the following functionalities:
@@ -10,23 +10,23 @@ annotations. To address this, this module includes the following functionalities
     - Transfer URIs from the notes field to the annotations for metabolites & reactions
     - Add URIs from the GeneProduct IDs to the annotations
 
-The functionalities for CarveMe models, along with the following further functionalities, are gathered in the main 
-function :py:func:`~refinegems.curation.polish.polish`.
+The functionalities for CarveMe models, along with some of the following further functionalities, are gathered in the 
+main function :py:func:`~refinegems.curation.curate.polish_model`.
 
 Further functionalities:
 
         - Setting boundary condition & constant for metabolites & reactions
-        - Unit handling to add units & UnitDefinitions & to set units from parameters
+        - Unit handling to add units & UnitDefinitions & to set units for parameters
         - Addition of default settings for compartments & metabolites
         - Addition of URIs to GeneProducts
 
-            - via the RefSeq GFF from NCBI
+            - via a mapping from model IDs to valid database IDs
             - via the KEGG API
             
         - Changing the CURIE pattern/CVTerm qualifier & qualifier type
         - Directionality control
 """
-# @TODO Rework description!
+
 __author__ = "Famke Baeuerle and Carolin Brune and Gwendolyn O. Döbel"
 
 ################################################################################
@@ -49,7 +49,6 @@ from tqdm.auto import tqdm
 from typing import Literal, Union
 
 from .miriam import polish_annotations, change_all_qualifiers
-from .polish import *
 
 from ..utility.cvterms import add_cv_term_genes, add_cv_term_metabolites, add_cv_term_reactions, DB2PREFIX_METABS, DB2PREFIX_REACS, get_id_from_cv_term
 from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
@@ -94,34 +93,52 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)    
     return model
 
-# @TODO: Documentation!
-def extend_gp_annots_via_files(
+
+def extend_gp_annots_via_mapping_table(
     model: libModel, mapping_tbl_file: str=None, gff_paths: list[str]=None, email: str=None, 
-    path: str=None, contains_locus_tags: bool=True, lab_strain: bool=False) -> None:
-    """_summary_
+    contains_locus_tags: bool=False, lab_strain: bool=False, outpath: str=None) -> libModel:
+    """
+    | Extend GenePoduct annotations via mapping table.
+    | If no mapping table is provided, a mapping table will be generated.
 
     Args:
         - model (libModel): 
-            _description_
+            Model loaded with libSBML
         - mapping_tbl_file (str, optional): 
-            _description_. Defaults to None.
+            Path to a file containing a mapping table with columns ``model_id | X...`` where X can be ``REFSEQ``, 
+            ``NCBI``, ``locus_tag`` or ``UNCLASSIFIED``. 
+            The table can contain all of the ``X`` columns or at least one of them. 
+            Defaults to None.
         - gff_paths (list[str], optional): 
-            _description_. Defaults to None.
+            Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
+            This is only used when mapping_tbl_file == None.
+            Defaults to None.
         - email (str, optional): 
-            _description_. Defaults to None.
-        - path (str, optional): 
-            _description_. Defaults to None.
+            E-mail for NCBI queries.
+            This is only used when mapping_tbl_file == None. 
+            Defaults to None.
         - contains_locus_tags (bool, optional): 
-            _description_. Defaults to True.
+            Specifies if provided model has locus tags within the label tag if set to True. 
+            This is only used when mapping_tbl_file == None. 
+            Defaults to False.
         - lab_strain (bool, optional): 
-            _description_. Defaults to False.
+            Specifies if a strain from no database was provided and thus has only homolog mappings if set to True. 
+            Defaults to False.
+        - outpath (str, optional): 
+            Output path for location where the generated mapping table should be written to. 
+            This is only used when mapping_tbl_file == None. 
+            Defaults to None.
+
+    Returns:
+        libModel: 
+            Modified model with extended annotations for the GeneProducts
     """
     
     # 1. Get mapping
     # If no mapping table provided, get via function
     print('Get mapping information...')
     if not mapping_tbl_file:
-        mapping_table = get_gpid_mapping(model, gff_paths, email, contains_locus_tags, path)
+        mapping_table = get_gpid_mapping(model, gff_paths, email, contains_locus_tags, outpath)
     else: # Otherwise read in table from file
         mapping_table = pd.read_csv(mapping_tbl_file)
 
@@ -146,6 +163,8 @@ def extend_gp_annots_via_files(
             add_cv_term_genes(gp_infos['REFSEQ'],'REFSEQ',gene, lab_strain)
         if ('NCBI' in gp_infos.columns) and gp_infos['NCBI']: 
             add_cv_term_genes(gp_infos['NCBI'], 'NCBI', gene, lab_strain)
+
+    return model
 
 
 def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
@@ -914,71 +933,65 @@ def check_direction(model:cobra.Model,data:Union[pd.DataFrame,str]) -> cobra.Mod
 
 # Perform all clean-up steps
 # --------------------------
-
+# @TEST New runtimes & if works properly
 def polish_model(
-    model: libModel, email: str, id_db: str, gff: str, protein_fasta: str, 
-    lab_strain: bool, kegg_organism_id: str, reaction_direction: str, path: str) -> libModel: 
+    model: libModel, id_db: str='BiGG', mapping_tbl_file: str=None, gff_paths: list[str]=None, email: str=None, 
+    contains_locus_tags: bool=False, lab_strain: bool=False, kegg_organism_id: str=None, reaction_direction: str=None, 
+    outpath: str=None) -> libModel: 
     """Completes all steps to polish a model
-    
-    .. note:: So far only tested for models having either BiGG or VMH identifiers.
+
+    .. note:: 
+
+        So far only tested for models having either BiGG or VMH identifiers.
 
     Args:
         - model (libModel): 
-            model loaded with libSBML
-        - email (str): 
-            E-mail for Entrez
-        - id_db (str):
-            Main database where identifiers in model come from
-        - gff (str): 
-            Path to RefSeq/Genbank GFF file of organism
-        - protein_fasta (str): 
-            File used as input for CarveMe
-        - lab_strain (bool): 
-            True if the strain was sequenced in a local lab
-        - kegg_organism_id (str): 
-            KEGG organism identifier
-        - path (str): 
-            Output path for incorrect annotations file(s)
-    
+             Model loaded with libSBML
+        - id_db (str, optional): 
+            Main database where identifiers in model come from.
+            Defaults to 'BiGG'.
+        - mapping_tbl_file (str, optional): 
+            Path to a file containing a mapping table with columns ``model_id | X...`` where X can be ``REFSEQ``, 
+            ``NCBI``, ``locus_tag`` or ``UNCLASSIFIED``. 
+            The table can contain all of the ``X`` columns or at least one of them. 
+            Defaults to None.
+        - gff_paths (list[str], optional): 
+            Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
+            This is only used when mapping_tbl_file == None.
+            Defaults to None.
+        - email (str, optional): 
+            E-mail for NCBI queries.
+            This is only used when mapping_tbl_file == None. 
+            Defaults to None.
+        - contains_locus_tags (bool, optional): 
+            Specifies if provided model has locus tags within the label tag if set to True. 
+            This is only used when mapping_tbl_file == None. 
+            Defaults to False.
+        - lab_strain (bool, optional): 
+            Specifies if a strain from no database was provided and thus has only homolog mappings, if set to True. 
+            Defaults to False.
+        - kegg_organism_id (str, optional): 
+            KEGG organism identifier if available.
+            Defaults to None.
+        - reaction_direction (str, optional): 
+            Path to a CSV file containing the BioCyc smart table with the columns 
+            ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
+            For more details see :py:func:`~refinegems.curation.curate.check_direction`
+            Defaults to None.
+        - outpath (str, optional): 
+            Output path for mapping table from model ID to valid database IDs (if mapping_tbl_file == None) 
+            & incorrect annotations file(s). 
+            Defaults to None.
+
     Returns:
         libModel: 
             Polished libSBML model
     """
     ### Set-up
-    # Initialisation of colorama
-    colorama_init(autoreset=True)
-    
-    # Filename for files tracking manual curation outcomes
-    filename = f'{path}{model.getId()}'
-
-    # Error/ invalid input handling
-    if lab_strain and not protein_fasta:
-        logging.error(Fore.LIGHTRED_EX + '''
-                Setting the parameter lab_strain to True requires the provision of the protein FASTA file used as input for CarveMe.
-                Otherwise, polish will not change anything for the GeneProducts.
-                The header lines should look similar to the following line:
-                >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-                It would also be a valid input if the header lines looked similar to the following line:
-                >lcl|CP035291.1_prot_QCY37216.1_1 [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1]
-                ''')
-        return
-
     # Get ListOf objects
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin('fbc').getListOfGeneProducts()
-
-    # Read GFF if provided
-    if gff:
-        locus2id = parse_gff_for_cds(gff, {'locus_tag':'LocusTag', 'protein_id':'ProteinID'})
-        try: 
-            locus2id = locus2id.explode('LocusTag').explode('ProteinID') # Replace (potentially single-entry) lists with their content
-            locus2id.dropna(subset=['LocusTag'], axis=0, inplace=True) # If no locus tag exists, no mapping is possible
-        except:
-            mes = f'GFF does not contain the necessary information. Cannot be used.'
-            logging.warning(mes)
-            locus2id = None
-    else: locus2id = None
 
     ### unit definition ###
     polish_model_units(model)
@@ -992,16 +1005,14 @@ def polish_model(
     extend_metab_reac_annots_via_id(reac_list, id_db)
     extend_metab_reac_annots_via_notes(metab_list)
     extend_metab_reac_annots_via_notes(reac_list)
-    model = update_annotations_from_others(model)
-    # @DEBUG : comment out when fixing stuff in polish_annotations (improves runtime) 
-    cv_ncbiprotein(gene_list, email, locus2id, protein_fasta, filename, lab_strain)
+    update_annotations_from_others(model)
 
-    ### add additional URIs to GeneProducts ###
-    if locus2id is not None: add_gp_id_from_gff(locus2id, gene_list)
+    ### Extend annotations for GeneProducts ###
+    extend_gp_annots_via_mapping_table(model, mapping_tbl_file, gff_paths, email, outpath, contains_locus_tags, lab_strain)
     if kegg_organism_id: extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
 
     ### Check reaction direction ###
-    check_direction(model, reaction_direction)
+    if reaction_direction: check_direction(model, reaction_direction)
     
     ### set boundaries and constants ###
     polish_metab_conditions(metab_list)
@@ -1009,7 +1020,7 @@ def polish_model(
     
     ### MIRIAM compliance of CVTerms ###
     print('Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):')
-    model = polish_annotations(model, True, filename)
+    model = polish_annotations(model, True, outpath)
     print('Changing all qualifiers to be MIRIAM compliant:')
     model = change_all_qualifiers(model, lab_strain)
     

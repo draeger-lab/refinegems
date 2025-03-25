@@ -1565,27 +1565,40 @@ def get_reversible(fluxes: dict[str: str]) -> bool:
 
 # map model entities via libSBML
 # ------------------------------
-# @TODO: Documentation!
+
 def get_gpid_mapping(
-    model: libModel, gff_paths: list[str], email: str,  
-    contains_locus_tags: bool=True, path: str=None) -> pd.DataFrame:
-    """_summary_
+    model: libModel, gff_paths: list[str]=None, email: str=None,  
+    contains_locus_tags: bool=True, outpath: str=None) -> pd.DataFrame:
+    """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional) 
+    and NCBI requests (optional).
+
+    .. hint:
+    
+        Mappings may be incomplete and require manual adjustment.
 
     Args:
         - model (libModel): 
-            _description_
+            Model loaded with libSBML
         - gff_paths (list[str]): 
-            _description_
+            Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
+            This is only used when mapping_tbl_file == None.
+            Defaults to None.
         - email (str): 
-            _description_
+            E-mail for NCBI queries.
+            This is only used when mapping_tbl_file == None. 
+            Defaults to None.
         - contains_locus_tags (bool, optional): 
-            _description_. Defaults to True.
-        - path (str, optional): 
-            _description_. Defaults to None.
+            Specifies if provided model has locus tags within the label tag if set to True. 
+            This is only used when mapping_tbl_file == None. 
+            Defaults to False.
+        - outpath (str, optional): 
+            Output path for location where the generated mapping table should be written to. 
+            This is only used when mapping_tbl_file == None. 
+            Defaults to None.
 
     Returns:
         pd.DataFrame: 
-            _description_
+            Mapping from model IDs to valid database IDs
     """
     
     # 1. Get model IDs & potential contained IDs
@@ -1630,11 +1643,11 @@ def get_gpid_mapping(
     # Classify potential database IDs according to db specific regexes
     def _classify_potential_db_ids(row: pd.Series) -> None:
         # If identifier matches RefSeq ID pattern
-        if re.fullmatch(rf'{DB2REGEX['refseq']}', ncbi_id, re.IGNORECASE):
+        if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
             row['REFSEQ'] = row['database_id']
         
         # If identifier matches ncbiprotein ID pattern
-        elif re.fullmatch(rf'{DB2REGEX['ncbiprotein']}$', ncbi_id, re.IGNORECASE):
+        elif re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id, re.IGNORECASE):
             row['NCBI'] = row['database_id']
         
         else:
@@ -1705,11 +1718,12 @@ def get_gpid_mapping(
             mapping_table = mapping_table.progress_apply(_search_ncbi_for_gp, axis=1, args=('refseq',))
 
     # Write mapping information to file
-    if path: filename = Path(path, f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}')
-    else: filename = Path(f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}')
+    filename = f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}.csv'
+    if outpath: filename = Path(outpath, filename)
+    else: filename = Path(filename)
     logging.info(
         f'The mapping table mapping the geneProduct IDs of the provided model {model.getId()} to the names and locus ' + 
-        f'tags is saved to {filename}.csv'
+        f'tags is saved to {filename}'
         )
     mapping_table.to_csv(filename, index=False)
 

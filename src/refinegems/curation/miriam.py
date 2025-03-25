@@ -25,6 +25,7 @@ from libsbml import UnitDefinition, SBase
 from libsbml import MODEL_QUALIFIER, BQM_IS, BIOLOGICAL_QUALIFIER, BQB_IS, BQB_HAS_PROPERTY, BQB_IS_HOMOLOG_TO
 from libsbml import BiolQualifierType_toString, ModelQualifierType_toString
 
+from pathlib import Path
 from sortedcontainers import SortedDict, SortedSet
 from tqdm.auto import tqdm
 
@@ -446,7 +447,7 @@ def improve_uris(entities: SBase, new_pattern: bool) -> dict[str:list[str]]:
     return entity2invalid_curies
 
 
-def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> libModel:
+def polish_annotations(model: libModel, new_pattern: bool, outpath: str=None) -> libModel:
     """Polishes all annotations in a model such that no duplicates are present 
     & the same pattern is used for all CURIEs
         
@@ -456,8 +457,9 @@ def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> lib
         - new_pattern (bool):
             True if new pattern is wanted, otherwise False.
             Note that bioregistry internally only uses the new patter.
-        - filename (str):
+        - outpath (str, optional):
              Path to output file for invalid CURIEs detected by improve_uris
+             Defaults to None.
         
     Returns:
         libModel: 
@@ -486,16 +488,19 @@ def polish_annotations(model: libModel, new_pattern: bool, filename: str) -> lib
         list_of_entity2invalid_curies.append(entity2invalid_curies)
         
     all_entity2invalid_curies = reduce(lambda d1, d2: {**d1, **d2}, list_of_entity2invalid_curies)
-    
+
+    # Write invalid CURIEs to file if present
     if all_entity2invalid_curies: 
-        curies_filename = f'{filename}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.tsv'      
+        filename = f'{model.getId()}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.csv'
+        if outpath: filename = Path(outpath, filename)
+        else: filename = Path(filename)
         logging.warning(f'In the provided model {model.getId()} for {len(all_entity2invalid_curies)} entities invalid CURIEs were detected. ' +
-                     f'These invalid CURIEs are saved to {curies_filename}')      
+                     f'These invalid CURIEs are saved to {filename}')      
         invalid_curies_df = parse_dict_to_dataframe(all_entity2invalid_curies)
         invalid_curies_df.columns = ['entity', 'invalid_curie']
         invalid_curies_df[['prefix', 'identifier']] = invalid_curies_df.invalid_curie.str.split(r':', n=1, expand = True) # Required for identifiers that also contain a ':'
         invalid_curies_df = invalid_curies_df.drop('invalid_curie', axis=1)
-        invalid_curies_df.to_csv(curies_filename, sep='\t')
+        invalid_curies_df.to_csv(filename, index=False)
     
     return model
 

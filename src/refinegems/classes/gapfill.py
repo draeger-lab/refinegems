@@ -1044,7 +1044,8 @@ class KEGGapFiller(GapFiller):
     
         Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
         If your model does not conform to this you can use one of the functions 
-        :py:func:`~refinegems.curation.polish.polish` or :py:func:`~refinegems.curation.polish.cv_ncbiprotein`.
+        :py:func:`~refinegems.curation.curate.polish_model` or 
+        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
     
     .. hint::
     
@@ -1235,7 +1236,8 @@ class BioCycGapFiller(GapFiller):
     
         Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
         If your model does not conform to this you can use one of the functions 
-        :py:func:`~refinegems.curation.polish.polish` or :py:func:`~refinegems.curation.polish.cv_ncbiprotein`.
+        :py:func:`~refinegems.curation.curate.polish_model` or 
+        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
     
     Attributes:
         - GapFiller Attributes:
@@ -1545,7 +1547,8 @@ class GeneGapFiller(GapFiller):
     
         Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
         If your model does not conform to this you can use one of the functions 
-        :py:func:`~refinegems.curation.polish.polish` or :py:func:`~refinegems.curation.polish.cv_ncbiprotein`.
+        :py:func:`~refinegems.curation.curate.polish_model` or 
+        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
     
     .. hint::
     
