@@ -8,12 +8,10 @@ __author__ = 'Carolin Brune, Gwendolyn O. Döbel'
 ################################################################################
 
 from pathlib import Path
-from typing import Union, Literal
 
 import click
 import cloup
 import pandas as pd
-import warnings
 
 import refinegems as rg
 from refinegems.utility.io import write_model_to_file
@@ -66,7 +64,26 @@ def data(downloadtype, dir, chunksize):
    """
    dltype = downloadtype.replace('_',' ')
    rg.utility.set_up.download_url(dltype, dir,chunksize)
-   
+
+# Get ID mapping for GeneProducts
+# -------------------------------
+@setup.command()
+@click.argument('modelpath', type=str)
+@click.option('-g', '--gff-paths', required=False, show_default=True, default=None, 
+              type=click.Path(exists=True, dir_okay=False), multiple=True, 
+              help='Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka. ')
+@click.option('-e', '--email', required=False, show_default=True, default=None, type=str, 
+              help='E-mail for NCBI queries. This is only used when --mapping-tbl-file is not provided.')
+@click.option('-t', '--lt', '--contains-locus-tags', show_default=True, default=False, type=bool, 
+              help='Specifies if provided model has locus tags within the label tag if set to True.')
+@click.option('-o','--outdir', required=False, 
+              type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path), 
+              default=Path(''), show_default=True, help='Path to a directory to write the output files to.')
+def geneproduct_mapping_table(modelpath,gff_paths,email,contains_locus_tags,outdir):
+   """Generates ID mapping file for GeneProducts
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   rg.utility.entities.get_gpid_mapping(model, gff_paths, email, contains_locus_tags, outdir)
 
 # build a pan-core model
 # ----------------------
@@ -152,37 +169,75 @@ def info(list): #,copy
 
 
 # --------------
-# Polish a model
+# Curate a model
 # --------------
 @cli.group()
-def polish():
-	"""Polish a model created by an automatic reconstruction pipeline. Cleans up the notes fields, changes qualifiers and 
- 	annotations to be MIRIAM-compliant and fixes the initial biomass equation to add up to 1mmol/gDW/h.
+def curate():
+	"""Curate a model
 	"""
 
-# Polish an automatically generated reconstruction
-# ------------------------------------------------
-@polish.command()
-@click.argument('model', type=str)
-@click.argument('email', type=str)
-@click.argument('path', type=str)
-@click.option('-o','--outdir', required=False, 
+# Polish annotations
+# ------------------
+@curate.command()
+@click.argument('modelpath', type=str)
+@click.option('-n', '--new-pattern', required=False, show_default=True, default=True, type=bool, 
+              help='Specifies if new pattern `database_prefix:local_identifier` for CURIEs should be used if set to True. ')
+@click.option('-o','--outdir', required=False,
               type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path), 
-              default=Path(''), show_default=True, help='Path to a directory to write the output to.')
-@click.option('-i','--id-db', show_default=True, default='BiGG', type=str, help='Main database where identifiers in model come from')
-@click.option('-g', '--gff', show_default=True, default=None, type=str, help='Path to RefSeq/Genbank GFF file of organism')
-@click.option('-p', '--protein-fasta', show_default=True, default=None, type=str, help='File used as input for CarveMe')
-@click.option('-l', '--lab-strain', show_default=True, default=False, type=bool, help='True if the strain was sequenced in a local lab')
-@click.option('-k', '--kegg-organism-id', show_default=True, default=None, type=str, help='KEGG organism identifier')
-def run(model,email,path,outdir,id_db,gff,protein_fasta,lab_strain,kegg_organism_id):
-   """Completes all steps to polish a model
+              default=Path(''), show_default=True, help='Path to a directory to write the output files to.')
+def annotations(modelpath,new_pattern,outdir):
+   """Polishes annotations 
+
+   Changes qualifiers and annotations to be MIRIAM-compliant
+   """
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   model = rg.curation.curate.polish_annotations(model, new_pattern, outdir)
+   rg.utility.io.write_model_to_file(model, str(Path(outdir,f'{model.getId()}_after_annots_polishing.xml')))
+
+# Perform all steps to polish a model
+# -----------------------------------
+# @TEST
+@curate.command()
+@cloup.argument('modelpath', type=click.Path(exists=True, dir_okay=False), 
+                help='Path to the model.')
+@cloup.option_group(
+   "General options",
+   cloup.option('-i','--id-db', required=False, show_default=True, default='BiGG', type=str, 
+              help='Main database where identifiers in model come from'),
+   cloup.option('-m', '--mtf', '--mapping-tbl-file', required=False, show_default=True, default=None, 
+                 type=click.Path(exists=True, dir_okay=False), 
+                 help='Path to a file containing a mapping table with columns `model_id | X...` where `X` can be `REFSEQ`, `NCBI`, `locus_tag` or `UNCLASSIFIED`. The table can contain all of the ``X`` columns or at least one of them. '),
+   cloup.option('-l', '--lab-strain', required=False, show_default=True, default=False, type=bool, 
+                 help='Specifies if a strain from no database was provided and thus has only homolog mappings, if set to True. '),
+   cloup.option('-k', '--kid', '--kegg-organism-id', required=False, show_default=True, default=None, type=str, help='KEGG organism identifier if available.'),
+   cloup.option('-r', '--rd', '--reaction-direction', required=False, 
+                 type=click.Path(exists=True, dir_okay=False), 
+                 default=None, show_default=True, 
+                 help='Path to a CSV file containing the BioCyc smart table with the columns `Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction`.'),
+   cloup.option('-o','--outdir', required=False, 
+                 type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path), 
+                 default=Path(''), show_default=True, help='Path to a directory to write the output files to.')
+)
+@cloup.option_group(
+   "Parameters required when --mapping-tbl-file is not provided",
+   cloup.option('-g', '--gff-paths', required=False, show_default=True, default=None, 
+                type=click.Path(exists=True, dir_okay=False), multiple=True, 
+                help='Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.'),
+   cloup.option('-e', '--email', required=False, show_default=True, default=None, type=str, 
+                help='E-mail for NCBI queries.'),
+   cloup.option('-t', '--lt', '--contains-locus-tags', show_default=True, default=False, type=bool, 
+                help='Specifies if provided model has locus tags within the label tag if set to True.')
+)
+def model(modelpath,id_db,mapping_tbl_file,gff_paths,email,contains_locus_tags,lab_strain,kegg_organism_id,reaction_direction,outdir):
+   """Completes all steps to polish a model created by an automatic reconstruction pipeline.
+   
+   Extends annotatations, cleans up the notes fields and changes qualifiers and annotations to be MIRIAM-compliant.
 
    (Tested for models having either BiGG or VMH identifiers.)
    """
-   model = rg.utility.io.load_model(model, 'libsbml')
-   model = rg.curation.polish.polish(model, email, id_db, gff, protein_fasta, lab_strain, kegg_organism_id, path)
-   rg.utility.io.write_model_to_file(model, str(Path(outdir,f'{model.getId()}_after_cm_correction.xml')))
-
+   model = rg.utility.io.load_model(modelpath, 'libsbml')
+   model = rg.curation.curate.polish_model(model, id_db, mapping_tbl_file, gff_paths, email, contains_locus_tags, lab_strain, kegg_organism_id, reaction_direction, outdir)
+   rg.utility.io.write_model_to_file(model, str(Path(outdir,f'{model.getId()}_after_polishing.xml')))
 
 # ----------------------------------------------------------------------------------
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
