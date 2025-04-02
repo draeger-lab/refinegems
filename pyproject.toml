@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "2.0.0-alpha.2"  
+version = "2.0.0-beta"  
 requires-python = ">=3.10"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
