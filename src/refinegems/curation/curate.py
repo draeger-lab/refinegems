@@ -1107,7 +1107,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
 
 # Perform all clean-up steps
 # --------------------------
-# @TEST New runtimes & if works properly
+# @TEST if works properly
 def polish_model(
     model: libModel,
     id_db: str = "BiGG",

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# @TEST - new runtimes
 """Add reactions, genes and more to a model based on different gap-filling methods.
 All (current) algorithms are separated into three steps: finding missing genes, finding missing reactions
 and trying to add the found as missing entities to the model.
