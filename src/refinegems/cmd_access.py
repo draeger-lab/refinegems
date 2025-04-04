@@ -145,7 +145,6 @@ def geneproduct_mapping_table(modelpath, gff_paths, email, contains_locus_tags, 
 
 # build a pan-core model
 # ----------------------
-# @TEST
 @setup.command()
 @click.argument("models", nargs=-1, type=click.Path())
 @click.option(
