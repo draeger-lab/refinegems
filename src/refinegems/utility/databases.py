@@ -14,7 +14,7 @@ the in-build database.
 """
 
 __author__ = "Gwendolyn O. Döbel und Carolin Brune"
-# @TODO Clean-up this module!
+# @TODO Clean-up this module!  -> remove SBOannotator related stuff
 ################################################################################
 # requirements
 ################################################################################
@@ -89,14 +89,14 @@ class ValidationCodes(Enum):
     COMPLETE = (0,)  # All tables are in data.db
     EMPTY = (1,)  # data.db is either empty or incorrect
     BIGG = (2,)  # Only BiGG tables are in data.db
-    SBO_MEDIA = (3,)  # Only SBO & Media tables are in data.db
-    BIGG_SBO_MEDIA = (4,)  # Only BiGG, SBO and media tables are in data.db
+    SBO_MEDIA = (3,)  # Only SBO & Media tables are in data.db # @TODO
+    BIGG_SBO_MEDIA = (4,)  # Only BiGG, SBO and media tables are in data.db # @TODO
     MODELSEED_COMPOUNDS = (5,)  # Only ModelSEED compounds table is in data.db
     BIGG_MSEED_COMPOUNDS = (
         6,
     )  # Only Bigg and ModelSEED compounds tables are in data.db
     SBO_MEDIA_MSEED_COMPOUNDS = (
-        7  # Only SBO, media and ModelSEED compounds tables are in data.db
+        7  # Only SBO, media and ModelSEED compounds tables are in data.db # @TODO
     )
 
 
@@ -104,11 +104,11 @@ validation_messages = {
     ValidationCodes.COMPLETE: "All tables in data up-to-date. Initialisation complete.",
     ValidationCodes.EMPTY: "No table in data. An error must have occurred during initialisation.",
     ValidationCodes.BIGG: "Data only contains the BiGG tables. Please check the remaining tables.",
-    ValidationCodes.SBO_MEDIA: "Data only contains the SBO and media tables. Please check the BiGG and ModelSEED tables.",
-    ValidationCodes.BIGG_SBO_MEDIA: "Data only contains the BiGG, SBO and media tables. Please check the ModelSEED table.",
-    ValidationCodes.MODELSEED_COMPOUNDS: "Data only contains the ModelSEED table. Please check the BiGG, SBO and media tables.",
+    ValidationCodes.SBO_MEDIA: "Data only contains the SBO and media tables. Please check the BiGG and ModelSEED tables.", # @DEPRECATE
+    ValidationCodes.BIGG_SBO_MEDIA: "Data only contains the BiGG, SBO and media tables. Please check the ModelSEED table.", # @TODO
+    ValidationCodes.MODELSEED_COMPOUNDS: "Data only contains the ModelSEED table. Please check the BiGG, SBO and media tables.", # @TODO
     ValidationCodes.BIGG_MSEED_COMPOUNDS: "Data only contains the BiGG and ModelSEED tables. Please check the SBO and media tables.",
-    ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: "Data only contains the SBO, media and ModelSEED tables. Please check the BiGG tables.",
+    ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: "Data only contains the SBO, media and ModelSEED tables. Please check the BiGG tables.", # @TODO
 }
 
 
@@ -116,7 +116,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     """Verifies if database has:
 
        - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-       - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
+       - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo' # @DEPRECATE
        - 6 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance', 'subset' & 'subset2substance'
        - 1 table with name 'modelseed_compounds'
 
@@ -139,7 +139,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
         == 2
     )
     sbo_tables_contained = (
-        len([s for s in tables if re.match(r"(.*?)_sbo$", s, re.IGNORECASE)]) == 2
+        len([s for s in tables if re.match(r"(.*?)_sbo$", s, re.IGNORECASE)]) == 2 # @TODO
     )
     media_tables_contained = (
         len(
@@ -154,18 +154,18 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
         == 6
     )
     sbo_media_tables_contained = (
-        sbo_tables_contained and media_tables_contained
+        sbo_tables_contained and media_tables_contained  # @TODO
     )  # These can only occur together
     modelseed_cmpd_tbl_contained = (
         len([s for s in tables if s == "modelseed_compounds"]) == 1
     )
 
-    bigg_sbo_media_tbls_contained = bigg_tables_contained and sbo_media_tables_contained
+    bigg_sbo_media_tbls_contained = bigg_tables_contained and sbo_media_tables_contained # @TODO
     bigg_modelseed_cmpd_tbls_contained = (
         bigg_tables_contained and modelseed_cmpd_tbl_contained
     )
     sbo_media_modelseed_cmpd_tbls_contained = (
-        sbo_media_tables_contained and modelseed_cmpd_tbl_contained
+        sbo_media_tables_contained and modelseed_cmpd_tbl_contained # @TODO
     )
     all_tables_contained = (
         bigg_sbo_media_tbls_contained and modelseed_cmpd_tbl_contained
@@ -176,19 +176,19 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     elif bigg_modelseed_cmpd_tbls_contained:
         return ValidationCodes.BIGG_MSEED_COMPOUNDS
     elif sbo_media_modelseed_cmpd_tbls_contained:
-        return ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS
+        return ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS # @TODO
     elif bigg_sbo_media_tbls_contained:
-        return ValidationCodes.BIGG_SBO_MEDIA
+        return ValidationCodes.BIGG_SBO_MEDIA # @TODO 
     elif bigg_tables_contained:
         return ValidationCodes.BIGG
     elif sbo_media_tables_contained:
-        return ValidationCodes.SBO_MEDIA
+        return ValidationCodes.SBO_MEDIA # @TODO
     elif modelseed_cmpd_tbl_contained:
         return ValidationCodes.MODELSEED_COMPOUNDS
     else:
         return ValidationCodes.EMPTY
 
-
+#   @DEPRECATE
 def create_sbo_media_database(db_cursor: sqlite3.Cursor):
     """Creates the SBOannotator database with 2 tables ('bigg_to_sbo' & 'ec_to_sbo') from file './data/database/sbo_mapping_db.sql'
     and the media database with 4 tables ('medium', 'substance', 'substance2db', 'medium2substance') from file './data/database/media_db.sql'
@@ -395,7 +395,7 @@ def initialise_database():
     After initialisation the database contains:
 
     - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-    - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo'
+    - 2 tables with names 'bigg_to_sbo' & 'ec_to_sbo' # @DEPRECATE
     - 6 tables with names 'medium', 'substance', 'medium2substance', 'substance2db', 'subset' & 'subset2substance'
     - 1 table with name 'modelseed_compounds'
     """
@@ -416,7 +416,7 @@ def initialise_database():
             create_sbo_media_database(cursor)
             get_modelseed_compounds_database(con)
 
-        elif validity_code == ValidationCodes.SBO_MEDIA:
+        elif validity_code == ValidationCodes.SBO_MEDIA: # @DEPRECATE
             print("Only SBO and media tables contained in database.")
             get_latest_bigg_databases(con)
             get_modelseed_compounds_database(con)
@@ -426,7 +426,7 @@ def initialise_database():
             create_sbo_media_database(cursor)
             get_latest_bigg_databases(con)
 
-        elif validity_code == ValidationCodes.BIGG_SBO_MEDIA:
+        elif validity_code == ValidationCodes.BIGG_SBO_MEDIA: # @TODO
             print("Only BiGG, SBO and media tables contained in database.")
             get_modelseed_compounds_database(con)
 
@@ -434,7 +434,7 @@ def initialise_database():
             print("Only BiGG and ModelSEED compounds tables contained in database.")
             create_sbo_media_database(cursor)
 
-        elif validity_code == ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS:
+        elif validity_code == ValidationCodes.SBO_MEDIA_MSEED_COMPOUNDS: # @TODO
             print(
                 "Only SBO, media and ModelSEED compounds tables contained in database."
             )
