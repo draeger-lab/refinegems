@@ -226,7 +226,6 @@ def generate_core_pan_model(
 # core-pan comparison
 # -------------------
 
-
 def compare_to_core_pan(
     model: cobra.Model, cp_model: cobra.Model, based_on: Literal["id"] = "id"
 ) -> CorePanAnalysisReport:
@@ -235,6 +234,10 @@ def compare_to_core_pan(
     Comparison can be done based on:
 
         - id: uses the reaction IDs for a simple and direct comparison.
+        
+        .. note:: 
+            Currently, this requires the model reactions to be annotated with 'core-pan' notes.
+            This function however, is object to change and will be extended in the future.
 
     Args:
         - model (cobra.Model):
@@ -261,10 +264,10 @@ def compare_to_core_pan(
 
             # separate cp_model reactions into core and pan list
             core_reac_list = [
-                _.id for _ in cp_model.reactions if _.notes["core-pan"] == "core"
+                _.id for _ in cp_model.reactions if "core-pan" in _.notes and _.notes["core-pan"] == "core"
             ]
             pan_reac_list = [
-                _.id for _ in cp_model.reactions if _.notes["core-pan"] == "pan"
+                _.id for _ in cp_model.reactions if "core-pan" in _.notes and _.notes["core-pan"] == "pan"
             ]
 
             # compare model to the core and pan reaction list

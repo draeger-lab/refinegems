@@ -1035,7 +1035,6 @@ def stats(modelpath, dir, colors):
     report.save(dir, colors)
 
 
-# @TEST
 @analyse.command()
 @click.argument("modelpath", type=click.Path(exists=True))
 @click.argument("pcpath", type=click.Path(exists=True))
