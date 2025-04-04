@@ -1,4 +1,4 @@
-__all__ = ['medium','reports', 'egcs', 'gapfill']
+__all__ = ["medium", "reports", "egcs", "gapfill"]
 
 from . import egcs
 from . import gapfill

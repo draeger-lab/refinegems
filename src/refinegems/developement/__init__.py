@@ -1,3 +1,3 @@
-__all__ = ['decorators']
+__all__ = ["decorators"]
 
 from . import decorators

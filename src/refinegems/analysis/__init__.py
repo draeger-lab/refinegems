@@ -1,4 +1,4 @@
-__all__ = ['comparison','core_pan','growth','investigate']
+__all__ = ["comparison", "core_pan", "growth", "investigate"]
 
 from . import comparison
 from . import core_pan
