@@ -192,9 +192,14 @@ def geneproduct_mapping_table(modelpath, gff_paths, email, contains_locus_tags, 
 def build_pancore(models, based_on, name, keep_genes, rcomp, dir):
     """Build a pan-core model."""
     models = list(models)
+    # construc the core-pan model
     pancore_mod = rg.analysis.core_pan.generate_core_pan_model(
-        models, based_on, name, not keep_genes, rcomp
+        models, based_on, name, not keep_genes
     )
+    # resolve compartment names
+    if rcomp:
+        rg.analysis.core_pan.resolve_compartment_names(pancore_mod)
+    # save the model
     rg.utility.io.write_model_to_file(pancore_mod, str(Path(dir, name + ".xml")))
 
 
