@@ -41,8 +41,6 @@ import warnings
 
 from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction
-from colorama import init as colorama_init
-from colorama import Fore
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from tqdm.auto import tqdm
@@ -59,7 +57,7 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
-from ..utility.io import parse_gff_for_cds, load_a_table_from_database
+from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, test_biomass_presence
 
 ################################################################################
@@ -234,6 +232,8 @@ def extend_metab_reac_annots_via_id(
     Raises:
         - TypeError: Unsupported type for entity_list
     """
+    # Initialise id_db correctly
+    id_db = id_db.upper()
 
     # Set-up case-dependent variables
     match entity_list:
@@ -351,7 +351,7 @@ def extend_metab_reac_annots_via_notes(
         notes_string = entity.getNotesString().split("\n")
         for elem in notes_string:
             for id_db in db2prefix.keys():
-                if "<p>" + id_db in elem:
+                if "<p>" + id_db in elem.upper():
                     elem_used.append(elem)
                     # @DEBUG print(elem.strip()[:-4].split(r': ')[1])
                     fill_in = re.split(r":\s*", elem.strip()[:-4])[1]
@@ -1195,9 +1195,9 @@ def polish_model(
         mapping_tbl_file,
         gff_paths,
         email,
-        outpath,
         contains_locus_tags,
         lab_strain,
+        outpath
     )
     if kegg_organism_id:
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)

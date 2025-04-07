@@ -341,7 +341,7 @@ def annotations(modelpath, new_pattern, outdir):
         "--id-db",
         required=False,
         show_default=True,
-        default="BiGG",
+        default="BIGG",
         type=str,
         help="Main database where identifiers in model come from",
     ),
@@ -388,7 +388,7 @@ def annotations(modelpath, new_pattern, outdir):
         "-o",
         "--outdir",
         required=False,
-        type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+        type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
         default=Path(""),
         show_default=True,
         help="Path to a directory to write the output files to.",
@@ -428,13 +428,13 @@ def annotations(modelpath, new_pattern, outdir):
 def model(
     modelpath,
     id_db,
-    mapping_tbl_file,
+    mtf,
     gff_paths,
     email,
-    contains_locus_tags,
+    lt,
     lab_strain,
-    kegg_organism_id,
-    reaction_direction,
+    kid,
+    rd,
     outdir,
 ):
     """Completes all steps to polish a model created by an automatic reconstruction pipeline.
@@ -447,13 +447,13 @@ def model(
     model = rg.curation.curate.polish_model(
         model,
         id_db,
-        mapping_tbl_file,
+        mtf,
         gff_paths,
         email,
-        contains_locus_tags,
+        lt,
         lab_strain,
-        kegg_organism_id,
-        reaction_direction,
+        kid,
+        rd,
         outdir,
     )
     rg.utility.io.write_model_to_file(
@@ -533,7 +533,7 @@ def gaps():
     cloup.option(
         "-n",
         "--namespace",
-        type=click.Choice(["BiGG"]),
+        type=click.Choice(["BiGG"]), # @TODO recheck if BiGG/BIGG
         default="BiGG",
         show_default=True,
         help="Namespace used in the model.",
@@ -798,7 +798,6 @@ def biomass(modelpath, cycles, outfile):
         rg.utility.io.write_model_to_file(model, outfile)
 
 
-# @TEST
 @refine.command()
 @click.argument("modelpath", type=click.Path(exists=True))
 @click.option(
@@ -857,7 +856,7 @@ def direction(modelpath, data, dir):
     "--namespace",
     "-n",
     required=False,
-    type=click.Choice(["BiGG"]),
+    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
     show_default=True,
     default="BiGG",
     multiple=False,
@@ -1137,7 +1136,7 @@ def growth():
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),
+    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
@@ -1182,7 +1181,7 @@ def simulate(modelpaths, media, namespace, dir, colors):
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),
+    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
@@ -1245,7 +1244,7 @@ def auxotrophies(modelpath, media, namespace, dir, colors):
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),
+    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",

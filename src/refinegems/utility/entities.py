@@ -1745,7 +1745,7 @@ def get_gpid_mapping(
     model: libModel,
     gff_paths: list[str] = None,
     email: str = None,
-    contains_locus_tags: bool = True,
+    contains_locus_tags: bool = False,
     outpath: str = None,
 ) -> pd.DataFrame:
     """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional)
@@ -1779,6 +1779,41 @@ def get_gpid_mapping(
         pd.DataFrame:
             Mapping from model IDs to valid database IDs
     """
+
+    # Helper function to classify potential database IDs according to db specific regexes
+    def _classify_potential_db_ids(row: pd.Series) -> pd.Series:
+        """Calssifies potential database IDs according to db specific regexes
+
+        Args:
+            - row (pd.Series): 
+                Row of a DataFrame containing the potential database ID
+
+        Returns:
+            pd.Series: 
+                Row of the DataFrame with classified database IDs
+        """
+        # Get NCBI ID
+        ncbi_id = row["database_id"] if not pd.isnull(row["database_id"]) else ''
+
+        # Get locus_tag
+        locus_tag = row.get("locus_tag", '') if not pd.isnull(row.get("locus_tag")) else ''
+
+        # Check that potential database ID is not the locus_tag
+        if not re.fullmatch(locus_tag, ncbi_id, re.IGNORECASE):
+        
+            # If identifier matches RefSeq ID pattern
+            if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
+                row["REFSEQ"] = row["database_id"]
+
+            # If identifier matches ncbiprotein ID pattern
+            elif re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id, re.IGNORECASE):
+                row["NCBI"] = row["database_id"]
+
+            # No pattern match & no locus_tag match
+            else:
+                row["UNCLASSIFIED"] = row["database_id"]
+
+        return row
 
     # 1. Get model IDs & potential contained IDs
     print("Extracting model IDs and potential valid database IDs from model...")
@@ -1826,21 +1861,6 @@ def get_gpid_mapping(
     # Generate table from dictionary
     mapping_table = pd.DataFrame.from_dict(modelid2potentialid)
 
-    # Classify potential database IDs according to db specific regexes
-    def _classify_potential_db_ids(row: pd.Series) -> None:
-        # If identifier matches RefSeq ID pattern
-        if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
-            row["REFSEQ"] = row["database_id"]
-
-        # If identifier matches ncbiprotein ID pattern
-        elif re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id, re.IGNORECASE):
-            row["NCBI"] = row["database_id"]
-
-        else:
-            row["UNCLASSIFIED"] = row["database_id"]
-
-        return row
-
     # Add empty column for REFSEQ, NCBI and UNCLASSIFIED IDs
     mapping_table["REFSEQ"] = None
     mapping_table["NCBI"] = None
@@ -1850,20 +1870,18 @@ def get_gpid_mapping(
     mapping_table = mapping_table.apply(_classify_potential_db_ids, axis=1)
     mapping_table.drop("database_id", axis=1, inplace=True)
 
+    # Drop all columns containing only NaNs
+    mapping_table = mapping_table.dropna(axis=1, how="all")
+
     # 1.1 (Optional) Get information from GFF(s)
     if gff_paths:
         print("Extracting (protein id,) locus tag and name from GFF(s)...")
 
         # Get attributes to keep per GFF variety
         gff_attributes = {
-            "refseq": {
+            "non-prokka": {
                 "locus_tag": "locus_tag",
-                "protein_id": "REFSEQ",
-                "product": "name",
-            },
-            "genbank": {
-                "locus_tag": "locus_tag",
-                "protein_id": "NCBI",
+                "protein_id": "database_id",
                 "product": "name",
             },
             "prokka": {"locus_tag": "locus_tag", "product": "name"},
@@ -1876,6 +1894,28 @@ def get_gpid_mapping(
             current_gff = parse_gff_for_cds(
                 gffp, keep_attributes=gff_attributes[current_gff_variety]
             )
+
+            # Explode columns containing lists to get single entries per row
+            current_gff = current_gff.explode(column=current_gff.columns.to_list(),ignore_index=True)
+            current_gff = current_gff.drop_duplicates()
+            current_gff = current_gff.reset_index(drop=True)
+
+            # Get tables according to GFF = Genbank or GFF = RefSeq, respectively
+            if current_gff_variety == "non-prokka":
+
+                # Add empty column for REFSEQ, NCBI and UNCLASSIFIED IDs
+                current_gff["REFSEQ"] = None
+                current_gff["NCBI"] = None
+                current_gff["UNCLASSIFIED"] = None
+
+                # Classify potential database IDs according to db specific regexes
+                current_gff = current_gff.apply(_classify_potential_db_ids, axis=1)
+                current_gff.drop("database_id", axis=1, inplace=True)
+                
+                # Drop all columns containing only NaNs
+                current_gff = current_gff.dropna(axis=1, how="all")
+
+            # Add current_gff to GFF list
             gffs.append(current_gff)
 
         # Merge all GFFs on common column locus_tag

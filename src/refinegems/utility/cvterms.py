@@ -33,28 +33,23 @@ from ..developement.decorators import debug
 
 DB2PREFIX_METABS = {
     "BIGG": "bigg.metabolite",
-    "BiGG": "bigg.metabolite",
     "BIOCYC": "biocyc",
-    "BioCyc": "biocyc",
     "BRENDA": "brenda",
     "CHEBI": "chebi",
-    "ChEBI": "chebi",
     "HMDB": "hmdb",
-    "Human Metabolome Database": "hmdb",
+    "HUMAN METABOLOME DATABASE": "hmdb",
     "INCHI": "inchi",
-    "InChI": "inchi",
-    "InChI-Key": "inchikey",
+    "INCHI-KEY": "inchikey",
     "KEGG": "kegg.compound",
-    #'KEGG Compound': 'kegg.compound',
+    "KEGG COMPOUND": "kegg.compound",
     "METACYC": "metacyc.compound",
-    "MXNREF": "metanetx.chemical",
-    "MetaNetX": "metanetx.chemical",
+    "MNXREF": "metanetx.chemical",
+    "METANETX": "metanetx.chemical",
     "PUBCHEM": "pubchem.compound",
     "REACTOME": "reactome",
-    "Reactome": "reactome",
     "SEED": "seed.compound",
-    #'UPA': 'unipathway.compound', #closed due to financial issues
-    #'UniPathway Compound': 'unipathway.compound'
+    #"UPA": "unipathway.compound", #closed due to financial issues
+    #"UNIPATHWAY COMPOUND": "unipathway.compound"
     "VMH": "vmhmetabolite",
 }  #: :meta hide-value:
 
@@ -62,20 +57,20 @@ PREFIX2DB_METABS = {v: k for (k, v) in DB2PREFIX_METABS.items()}  #: :meta hide-
 
 DB2PREFIX_REACS = {
     "BIGG": "bigg.reaction",
-    "BioCyc": "biocyc",
+    "BIOCYC": "biocyc",
     "BRENDA": "brenda",
     "EC": "ec",
     "HMDB": "hmdb",
+    "HUMAN METABOLOME DATABASE": "hmdb",
     "KEGG": "kegg.reaction",
     "METACYC": "metacyc.reaction",
-    "MXNREF": "metanetx.reaction",
-    "MetaNetX": "metanetx.reaction",
+    "MNXREF": "metanetx.reaction",
+    "METANETX": "metanetx.reaction",
     "REACTOME": "reactome",
-    "Reactome": "reactome",
     "RHEA": "rhea",
     "SEED": "seed.reaction",
-    #'UPA': 'unipathway.reaction:',
-    #'UniPathway Reaction': 'unipathway.reaction:'
+    #"UPA": "unipathway.reaction:", #closed due to financial issues
+    #"UNIPATHWAY REACTION": "unipathway.reaction:"
     "VMH": "vmhreaction",
 }  #: :meta hide-value:
 
@@ -176,7 +171,7 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
     """
     resource = get_identifiers_org_iri(DB2PREFIX_METABS.get(db_id), entry)
     if resource:
-        if db_id == "HMDB" or db_id == "Human Metabolome Database":
+        if db_id == "HMDB" or db_id == "HUMAN METABOLOME DATABASE":
             if entry[:4] == "HMDB":
                 entry = entry[4:]
         cv = CVTerm()
@@ -203,7 +198,7 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
     """
     resource = get_identifiers_org_iri(DB2PREFIX_REACS.get(db_id), entry)
     if resource:
-        if db_id == "HMDB" or db_id == "Human Metabolome Database":
+        if db_id == "HMDB" or db_id == "HUMAN METABOLOME DATABASE":
             if entry[:4] == "HMDB":
                 entry = entry[4:]
         cv = CVTerm()

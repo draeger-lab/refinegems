@@ -533,11 +533,8 @@ def get_gff_variety(gffpath: str) -> str:
 
             # Relevant rows start with '#!'
             elif line.startswith("#!") and not variety_found:
-                variety = "refseq"
-
-                if line.startswith("#!annotation-source"):
-                    variety = "genbank"
-                    variety_found = True
+                variety = "non-prokka" # variety cannot be determined, could be genbank or refseq
+                variety_found = True
             else:
                 break
     return variety
