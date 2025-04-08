@@ -130,16 +130,16 @@ def data(downloadtype, dir, chunksize):
     "-o",
     "--outdir",
     required=False,
-    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     default=Path(""),
     show_default=True,
     help="Path to a directory to write the output files to.",
 )
-def geneproduct_mapping_table(modelpath, gff_paths, email, contains_locus_tags, outdir):
+def geneproduct_mapping_table(modelpath, gff_paths, email, lt, outdir):
     """Generates ID mapping file for GeneProducts"""
     model = rg.utility.io.load_model(modelpath, "libsbml")
     rg.utility.entities.get_gpid_mapping(
-        model, gff_paths, email, contains_locus_tags, outdir
+        model, gff_paths, email, lt, outdir
     )
 
 
@@ -310,7 +310,7 @@ def curate():
     "-o",
     "--outdir",
     required=False,
-    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     default=Path(""),
     show_default=True,
     help="Path to a directory to write the output files to.",
@@ -486,7 +486,7 @@ def gaps():
     cloup.option(
         "-o",
         "--outdir",
-        type=click.Path(exists=True, file_okay=False),
+        type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
         default="./",
         show_default=True,
         help="Path to a directory to write the output to.",

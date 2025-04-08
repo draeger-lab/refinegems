@@ -509,40 +509,9 @@ def create_missing_genes_protein_fasta(
 # GFF
 # ---
 
-
-def get_gff_variety(gffpath: str) -> str:
-    """Gets the GFF variety from the file header
-
-    Args:
-        - gffpath (str):
-            Path to the GFF file.
-
-    Returns:
-        str:
-            Found variety for provided GFF
-    """
-
-    variety = "prokka"
-    variety_found = False
-    counter = 0
-    with open(gffpath, "r") as f:
-        for line in f:
-            # First line and last line of NCBI GFF headers start with '##'
-            if line.startswith("##") and (counter < 2):
-                counter += 1
-
-            # Relevant rows start with '#!'
-            elif line.startswith("#!") and not variety_found:
-                variety = "non-prokka" # variety cannot be determined, could be genbank or refseq
-                variety_found = True
-            else:
-                break
-    return variety
-
-
 def parse_gff_for_cds(
-    gffpath: str, keep_attributes: dict[str:str] = None, return_variety: bool = False
-) -> Union[pd.DataFrame, tuple[pd.DataFrame, str]]:
+    gffpath: str, keep_attributes: dict[str:str] = None
+    ) -> Union[pd.DataFrame, tuple[pd.DataFrame, str]]:
     """Parses a GFF file to obtain a mapping for the corresponding attributes listed in keep_attributes
 
     Args:
@@ -551,9 +520,6 @@ def parse_gff_for_cds(
         - keep_attributes (dict, optional):
             Dictionary of attributes to be kept and the corresponding column for the table.
             Defaults to None.
-        - return_variety (bool, optional):
-            Specifies if GFF variety should be returned.
-            Defaults to False.
 
     Returns:
         (1) Case: ``return_variety = False``
@@ -568,10 +534,6 @@ def parse_gff_for_cds(
                     (1) pd.DataFrame: Dataframe containing a mapping for the corresponding attributes listed in keep_attributes
                     (2) str: Found variety for provided GFF
     """
-
-    # Get variety if wanted
-    if return_variety:
-        variety = get_gff_variety(gffpath)
 
     # load the gff
     gff = gffutils.create_db(gffpath, ":memory:", merge_strategy="create_unique")
@@ -599,7 +561,7 @@ def parse_gff_for_cds(
     if "locus_tag" in cds.columns:
         cds = cds.explode("locus_tag")
 
-    return (cds, variety) if return_variety else cds
+    return cds
 
 
 # GBFF

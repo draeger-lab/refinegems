@@ -814,24 +814,26 @@ def _search_ncbi_for_gp(
             )
             return row
 
-    try:
-        handle = Entrez.efetch(
-            db="protein", id=ncbi_id, rettype="gbwithparts", retmode="text"
-        )
-        records = SeqIO.parse(handle, "gb")
+    if not pd.isnull(ncbi_id):
 
-        for i, record in enumerate(records):
-            match id_type:
-                case "refseq":
-                    row["name"] = record.description
-                case "ncbiprotein":
-                    for feature in record.features:
-                        if feature.type == "CDS":
-                            row["name"] = record.description
-                            row["locus_tag"] = feature.qualifiers["locus_tag"][0]
+        try:
+            handle = Entrez.efetch(
+                db="protein", id=ncbi_id, rettype="gbwithparts", retmode="text"
+            )
+            records = SeqIO.parse(handle, "gb")
 
-    except Exception as e:
-        print(f"{e} with {id_type} ID {ncbi_id}")
+            for i, record in enumerate(records):
+                match id_type:
+                    case "refseq":
+                        row["name_refseq"] = record.description
+                    case "ncbiprotein":
+                        for feature in record.features:
+                            if feature.type == "CDS":
+                                row["name_ncbi"] = record.description
+                                row["locus_tag"] = feature.qualifiers["locus_tag"][0]
+
+        except Exception as e:
+            print(f"{e} with {id_type} ID {ncbi_id}")
 
     return row
 

@@ -60,7 +60,7 @@ from .db_access import (
     add_annotations_from_BiGG_metabs,
     _search_ncbi_for_gp,
 )
-from .io import load_a_table_from_database, get_gff_variety, parse_gff_for_cds
+from .io import load_a_table_from_database, parse_gff_for_cds
 from .util import (
     COMP_MAPPING,
     DB2REGEX,
@@ -1743,10 +1743,10 @@ def get_reversible(fluxes: dict[str:str]) -> bool:
 
 def get_gpid_mapping(
     model: libModel,
-    gff_paths: list[str] = None,
+    gff_paths: Union[str,list[str]] = None,
     email: str = None,
     contains_locus_tags: bool = False,
-    outpath: str = None,
+    outpath: str = None, # @TODO Recheck that Path and str are allowed
 ) -> pd.DataFrame:
     """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional)
     and NCBI requests (optional).
@@ -1779,6 +1779,8 @@ def get_gpid_mapping(
         pd.DataFrame:
             Mapping from model IDs to valid database IDs
     """
+    # Set-up path
+    Path(outpath).mkdir(parents=True, exist_ok=True)
 
     # Helper function to classify potential database IDs according to db specific regexes
     def _classify_potential_db_ids(row: pd.Series) -> pd.Series:
@@ -1799,7 +1801,7 @@ def get_gpid_mapping(
         locus_tag = row.get("locus_tag", '') if not pd.isnull(row.get("locus_tag")) else ''
 
         # Check that potential database ID is not the locus_tag
-        if not re.fullmatch(locus_tag, ncbi_id, re.IGNORECASE):
+        if (not re.fullmatch(locus_tag, ncbi_id, re.IGNORECASE)) or ('model_id' in row.index.to_list()):
         
             # If identifier matches RefSeq ID pattern
             if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
@@ -1841,12 +1843,10 @@ def get_gpid_mapping(
         ):  # Has to be omitted as no additional data can be retrieved neither from NCBI nor the CarveMe input file
             # Case 1: CarveMe version; Contains NCBI Protein ID, lcl_CP035291_1_prot_QCY37541_1_361
             if "prot_" in gene_id:
-                id_string = gene_id.split(r"prot_")[1].split(
-                    r"_"
-                )  # All NCBI CDS protein FASTA files have the NCBI protein identifier after 'prot_' in the FASTA identifier
-                ncbi_id = id_string[
-                    0
-                ]  # If identifier contains no '_', this is full identifier
+                 # All NCBI CDS protein FASTA files have the NCBI protein identifier + Version after 'prot_' in the FASTA identifier
+                id_string = gene_id.split(r"prot_")[1].split(r"_")
+                # If identifier contains no '_', this is full identifier + add version number
+                ncbi_id = '.'.join(id_string[0:2])
 
             # Case 2: RAST contained without any surrounding stuff, 1134914.3.1020_56.peg
             # Case 3: RefSeq contained without any surrounding stuff, WP_011275285.1, From CarveMe: YP_005228568_1
@@ -1867,7 +1867,8 @@ def get_gpid_mapping(
     mapping_table["UNCLASSIFIED"] = None
 
     # Classify potential database IDs according to db specific regexes
-    mapping_table = mapping_table.apply(_classify_potential_db_ids, axis=1)
+    print('Classifying potential database IDs according to db specific regexes...')
+    mapping_table = mapping_table.progress_apply(_classify_potential_db_ids, axis=1)
     mapping_table.drop("database_id", axis=1, inplace=True)
 
     # Drop all columns containing only NaNs
@@ -1877,31 +1878,29 @@ def get_gpid_mapping(
     if gff_paths:
         print("Extracting (protein id,) locus tag and name from GFF(s)...")
 
-        # Get attributes to keep per GFF variety
-        gff_attributes = {
-            "non-prokka": {
-                "locus_tag": "locus_tag",
-                "protein_id": "database_id",
-                "product": "name",
-            },
-            "prokka": {"locus_tag": "locus_tag", "product": "name"},
-        }
+        # Identical attributes to keep per GFF
+        to_keep = {"locus_tag": "locus_tag", "product": "name"}
 
         # Parse & collect all provided GFFs
         gffs = []
-        for gffp in gff_paths:
-            current_gff_variety = get_gff_variety(gffp)
-            current_gff = parse_gff_for_cds(
-                gffp, keep_attributes=gff_attributes[current_gff_variety]
-            )
+        if isinstance(gff_paths, str): gff_paths = [gff_paths]
+        for gffp in tqdm(gff_paths):
+            current_gff = parse_gff_for_cds(gffp)
+
+            # Check if protein_id in columns
+            if "protein_id" in current_gff.columns: to_keep.update({"protein_id": "database_id"})
+
+            # Subset dataframe to only keep relevant columns & rename them
+            current_gff = current_gff[to_keep.keys()]
+            current_gff = current_gff.rename(columns=to_keep)
 
             # Explode columns containing lists to get single entries per row
             current_gff = current_gff.explode(column=current_gff.columns.to_list(),ignore_index=True)
             current_gff = current_gff.drop_duplicates()
             current_gff = current_gff.reset_index(drop=True)
 
-            # Get tables according to GFF = Genbank or GFF = RefSeq, respectively
-            if current_gff_variety == "non-prokka":
+            # If protein_id/database_id is available, map it to according database
+            if "database_id" in current_gff.columns:
 
                 # Add empty column for REFSEQ, NCBI and UNCLASSIFIED IDs
                 current_gff["REFSEQ"] = None
@@ -1909,11 +1908,17 @@ def get_gpid_mapping(
                 current_gff["UNCLASSIFIED"] = None
 
                 # Classify potential database IDs according to db specific regexes
-                current_gff = current_gff.apply(_classify_potential_db_ids, axis=1)
+                print('Classifying potential database IDs according to db specific regexes...')
+                current_gff = current_gff.progress_apply(_classify_potential_db_ids, axis=1)
                 current_gff.drop("database_id", axis=1, inplace=True)
                 
                 # Drop all columns containing only NaNs
                 current_gff = current_gff.dropna(axis=1, how="all")
+
+                # Rename columns to avoid duplicates
+                if not ('NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
+                    if 'NCBI' in current_gff.columns: current_gff.rename(columns={"name": "name_ncbi"}, inplace=True)
+                    if 'REFSEQ' in current_gff.columns: current_gff.rename(columns={"name": "name_refseq"}, inplace=True)
 
             # Add current_gff to GFF list
             gffs.append(current_gff)
@@ -1950,28 +1955,73 @@ def get_gpid_mapping(
             )
 
     # 2. Get information from NCBI
-    if email:
+    contains_protein_ids = len({'NCBI', 'REFSEQ'}.intersection(set(mapping_table.columns))) > 0
+    if email and contains_protein_ids:
         Entrez.email = email
         print("Retrieve locus tag and name information from NCBI...")
 
-        # Add empty column for name and locus tags if not already contained
+        # Add empty columns for names and locus tags if not already contained
         if not "locus_tag" in mapping_table.columns:
             mapping_table["locus_tag"] = None
-        if not "name" in mapping_table.columns:
-            mapping_table["name"] = None
+
+        contains_only_name = ('name' in mapping_table.columns) and not ('name_refseq' in mapping_table.columns) and not ('name_ncbi' in mapping_table.columns)
+        if not any(["name" in _ for _ in mapping_table.columns]) or contains_only_name:
+            if ('NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
+                mapping_table["name_ncbi"] = None
+                mapping_table["name_refseq"] = None
+            elif 'NCBI' in current_gff.columns:
+                mapping_table["name_ncbi"] = None
+            elif 'REFSEQ' in current_gff.columns:
+                mapping_table["name_refseq"] = None
 
         # Query NCBI based on RefSeq Protein ID
+        print('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
             mapping_table = mapping_table.progress_apply(
                 _search_ncbi_for_gp, axis=1, args=("refseq",)
             )
 
         # Query NCBI based on NCBI Protein ID
+        print('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
             mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("refseq",)
+                _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
             )
 
+    # Clean-up dataframe for output
+    def _merge_name_cols(row: pd.Series) -> pd.Series:
+        """Merge all name columns into one column name
+
+        Args:
+            - row (pd.Series):
+                Row of a DataFrame
+
+        Returns:
+            pd.Series:
+                DataFrame with only one name column
+        """
+        if any(["name" in _ for _ in mapping_table.columns]):
+            if ('name' in current_gff.columns and 'NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
+                # @TODO Prefer NCBI over all -> Recheck if identical to NCBI ID
+                # @TODO Prefer REFSEQ over name -> Recheck if identical to REFSEQ ID
+                # @TODO For name -> Recheck if identical to locus_tag
+                pass
+            elif ('NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
+                # @TODO Prfer NCBI
+                pass
+            elif 'NCBI' in current_gff.columns:
+                # @TODO use available
+                pass
+            elif 'REFSEQ' in current_gff.columns:
+                # @TODO use available
+                pass
+
+        return row
+
+    print('Cleaning up dataframe for output...')
+    mapping_table = mapping_table.progress_apply(_merge_name_cols, axis=1)
+
+    
     # Write mapping information to file
     filename = (
         f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}.csv'
