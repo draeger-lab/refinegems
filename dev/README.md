@@ -21,22 +21,26 @@ More information about the different files collected here can be found below.
   Functions for adding new information to the media database. Should be added to either database or medium modules in the future.<br>
   Status: Almost complete
 - `under_construction` :<br>
-  Place to collect code snippets, ideas and more that have no playce (or not yet) anywhere else in the codespace.<br>
-  Status: Hell, but feel free to visit<br>
+  Place to collect code snippets, ideas and more that have no place (or not yet) anywhere else in the codespace.<br>
+  Status: Empty, fell free to add ideas<br>
 - `growth_curves` : <br>
   Ideas for reading in growth plate data and calculating growth curves from it.<br>
   Status: Started, but stuck
 - `gapfill_testing`:<br>
   Blocks for testing the different gap fill algorithmns<br>
   Status: Debugging  
+- `tutorial.ipynb`: <br>
+  Small notebook with short block for learning how to work with this toolbox. <br>
+  Status: Not fully finished but a good starting point
 
 ## Ideas
 
-- `idea_gapfill.png`: <br>
-  Idea of how to revamp the gap fill model. <br>
-  Statius: Implemented
+
 
 ## Removed from Package
+
+- `old_funcs.py`: <br>
+  As the name suggests, contains old functions no longer in use (pre-2.0.0)
 
 - `old_gapfill.rst`: <br>
   Old documentation of the refineGEMs pre-2.0.0 gapfill module. <br>
