@@ -778,7 +778,7 @@ def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: in
             f.write(f"    - {l}\n")
 
         # produce table body
-        subs.apply(produce_docs_table_row, file=f, axis=1)
+        subs.apply(Medium.produce_medium_docs_table.produce_medium_docs_table_row, file=f, axis=1)
 
 
 ############################################################################
@@ -1574,10 +1574,7 @@ def add_subset_to_db(
 
 # further database curation
 # -------------------------
-# @CURRENTLY COMPLETELY UNTESTED, just ideas, but feel free to use 'em
 
-
-# @TODO Clean-up!
 def update_db_entry_single(
     table: str,
     column: str,
@@ -1623,8 +1620,6 @@ def update_db_entry_single(
     connection.close()
 
 
-# @NOTE: this is only for adding SINGLE rows to a table WITHOUT connections
-# @TODO Clean-up!
 def enter_db_single_entry(
     table: str, columns: list[str], values: list[Any], database: str = PATH_TO_DB
 ):
@@ -1712,7 +1707,6 @@ def generate_update_query(row: pd.Series) -> str:
     return update_query
 
 
-# @TODO Clean-up!
 def generate_insert_query(row: pd.Series, cursor) -> str:
     """Helper function for :py:func:`~refinegems.classes.medium.update_db_multi`. Generate the SQL string
     for inserting a new line into the database based on a row of the table.
@@ -1833,7 +1827,6 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
     return insert_query
 
 
-# @TODO Clean-up!
 def update_db_multi(
     data: pd.DataFrame, update_entries: bool, database: str = PATH_TO_DB
 ):
@@ -1894,10 +1887,50 @@ def update_db_multi(
     connection.close()
 
 
+# Function to extract SQL schema with updated SBO/media tables
+def updated_db_to_schema(directory: str = "../data/database", inplace: bool = False):
+    """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
+
+    Args:
+        - directory(str,optional):
+            Path to the directory of the updated DB.
+            Defaults to '../data/database'.
+        - inplace(bool, optional):
+            If True, uses the default sql-file name, otherwise extends it with the prefix ``updated``.
+    """
+
+    # Not needed to be included in Schema
+    NOT_TO_SCHEMA = [
+        "BEGIN TRANSACTION;",
+        "COMMIT;",
+        "bigg_to_sbo",
+        "ec_to_sbo",
+        "bigg_metabolites",
+        "bigg_reactions",
+        "modelseed_compounds",
+    ]
+    counter = 0  # To count rows in newly generated file
+
+    if inplace:
+        filename = "media_db.sql"
+    else:
+        filename = "updated_media_db.sql"
+
+    conn = sqlite3.connect(PATH_TO_DB)
+    with open(Path(directory, filename), "w") as file:
+        for line in iterdump(conn):
+            if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
+                if "CREATE TABLE" in line and counter != 0:
+                    file.write(f"\n\n{line}\n")
+                else:
+                    file.write(f"{line}\n")
+                counter += 1
+    conn.close()
+
+
 ############################################################################
 # working with models
 ############################################################################
-
 
 def medium_to_model(
     model: cobra.Model,
@@ -1951,63 +1984,5 @@ def medium_to_model(
         return exported_medium
 
 
-############################################################################
-# possible entry points
-############################################################################
 
 
-# Function to extract SQL schema with updated SBO/media tables
-def updated_db_to_schema(directory: str = "../data/database", inplace: bool = False):
-    """Extracts the SQL schema from the database data.db & Transfers it into an SQL file
-
-    Args:
-        - directory(str,optional):
-            Path to the directory of the updated DB.
-            Defaults to '../data/database'.
-        - inplace(bool, optional):
-            If True, uses the default sql-file name, otherwise extends it with the prefix ``updated``.
-    """
-
-    # Not needed to be included in Schema
-    NOT_TO_SCHEMA = [
-        "BEGIN TRANSACTION;",
-        "COMMIT;",
-        "bigg_to_sbo",
-        "ec_to_sbo",
-        "bigg_metabolites",
-        "bigg_reactions",
-        "modelseed_compounds",
-    ]
-    counter = 0  # To count rows in newly generated file
-
-    if inplace:
-        filename = "media_db.sql"
-    else:
-        filename = "updated_media_db.sql"
-
-    conn = sqlite3.connect(PATH_TO_DB)
-    with open(Path(directory, filename), "w") as file:
-        for line in iterdump(conn):
-            if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
-                if "CREATE TABLE" in line and counter != 0:
-                    file.write(f"\n\n{line}\n")
-                else:
-                    file.write(f"{line}\n")
-                counter += 1
-    conn.close()
-
-
-# ......................................................................
-# @IDEA
-# Entry point for adding a medium to the database using the command line
-# def add_medium(database:str):
-
-#     # get external medium
-#     medium = load_external_medium('console')
-
-#     # add to database
-#     enter_medium_into_db(medium, database)
-
-#     # Generate updated SQl schema
-#     updated_db_to_schema()
-# ..................................................................
