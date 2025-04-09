@@ -329,7 +329,6 @@ def annotations(modelpath, new_pattern, outdir):
 
 # Perform all steps to polish a model
 # -----------------------------------
-# @TEST
 @curate.command()
 @cloup.argument(
     "modelpath", type=click.Path(exists=True, dir_okay=False), help="Path to the model."
@@ -464,8 +463,7 @@ def model(
 # ----------------------------------------------------------------------------------
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
-# @TODO gaps group still for the old gapfill - rewrite or delete
-# @TODO Recheck if everything is as it should be & works!
+# @TODO gaps group still for the old gapfill -> Put into refine group & delete gaps group
 # @TEST help is displayed alright but untested
 @cli.group()
 def gaps():
@@ -568,7 +566,7 @@ def gaps():
         "-rt",
         "--reactable",
         type=click.Path(exists=True, dir_okay=False),
-        help="Path to the BioCyc gene smart table.",
+        help="Path to the BioCyc reaction smart table.",
     ),
     cloup.option(
         "--gff-bc",

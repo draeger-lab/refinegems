@@ -43,6 +43,7 @@ from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
+from pathlib import Path
 from tqdm.auto import tqdm
 from typing import Literal, Union
 
@@ -102,7 +103,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
 
 def extend_gp_annots_via_mapping_table(
     model: libModel,
-    mapping_tbl_file: str = None,
+    mapping_tbl_file: Union[str,Path] = None,
     gff_paths: list[str] = None,
     email: str = None,
     contains_locus_tags: bool = False,
@@ -116,7 +117,7 @@ def extend_gp_annots_via_mapping_table(
     Args:
         - model (libModel):
             Model loaded with libSBML
-        - mapping_tbl_file (str, optional):
+        - mapping_tbl_file (str|Path, optional):
             Path to a file containing a mapping table with columns ``model_id | X...`` where X can be ``REFSEQ``,
             ``NCBI``, ``locus_tag`` or ``UNCLASSIFIED``.
             The table can contain all of the ``X`` columns or at least one of them.
@@ -154,12 +155,15 @@ def extend_gp_annots_via_mapping_table(
             model, gff_paths, email, contains_locus_tags, outpath
         )
     else:  # Otherwise read in table from file
+        mapping_tbl_file = mapping_tbl_file if isinstance(mapping_tbl_file, str) else str(mapping_tbl_file)
         mapping_table = pd.read_csv(mapping_tbl_file)
 
     # Drop all rows without model_id entries
     mapping_table.dropna(subset="model_id", inplace=True)
     # Use model_id as index
-    mapping_table.set_index("model_id")
+    mapping_table.set_index("model_id", inplace=True)
+    # Replace all NaN values with empty string
+    mapping_table.fillna("", inplace=True)
 
     # 2. Use table to fill in information in model
     # Get gene list
@@ -175,9 +179,9 @@ def extend_gp_annots_via_mapping_table(
             gene.setName(gp_infos["name"])
         if gp_infos["locus_tag"]:
             gene.setLabel(gp_infos["locus_tag"])
-        if ("REFSEQ" in gp_infos.columns) and gp_infos["REFSEQ"]:
+        if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
             add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
-        if ("NCBI" in gp_infos.columns) and gp_infos["NCBI"]:
+        if ("NCBI" in gp_infos.index.to_list()) and gp_infos["NCBI"]:
             add_cv_term_genes(gp_infos["NCBI"], "NCBI", gene, lab_strain)
 
     return model
@@ -212,7 +216,7 @@ def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: st
 
     if no_valid_kegg:
         logging.info(
-            f"The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg}"
+            f"The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg} with the provided KEGG Organism ID: {kegg_organism_id}."
         )
 
 
@@ -1107,7 +1111,6 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
 
 # Perform all clean-up steps
 # --------------------------
-# @TEST if works properly
 def polish_model(
     model: libModel,
     id_db: str = "BiGG",
