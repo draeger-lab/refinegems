@@ -1746,7 +1746,7 @@ def get_gpid_mapping(
     gff_paths: Union[str,list[str]] = None,
     email: str = None,
     contains_locus_tags: bool = False,
-    outpath: str = None, # @TODO Recheck that Path and str are allowed
+    outpath: Union[str, Path] = None,
 ) -> pd.DataFrame:
     """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional)
     and NCBI requests (optional).
@@ -1755,10 +1755,15 @@ def get_gpid_mapping(
 
         Mappings may be incomplete and require manual adjustment.
 
+    .. note:
+
+        Mapping currently is only implemented for NCBI Protein and RefSeq IDs.
+        Other databases may be added in the future.
+
     Args:
         - model (libModel):
             Model loaded with libSBML
-        - gff_paths (list[str]):
+        - gff_paths (str|list[str]):
             Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
             This is only used when mapping_tbl_file == None.
             Defaults to None.
@@ -1770,7 +1775,7 @@ def get_gpid_mapping(
             Specifies if provided model has locus tags within the label tag if set to True.
             This is only used when mapping_tbl_file == None.
             Defaults to False.
-        - outpath (str, optional):
+        - outpath (str|Path, optional):
             Output path for location where the generated mapping table should be written to.
             This is only used when mapping_tbl_file == None.
             Defaults to None.
@@ -1780,7 +1785,10 @@ def get_gpid_mapping(
             Mapping from model IDs to valid database IDs
     """
     # Set-up path
-    Path(outpath).mkdir(parents=True, exist_ok=True)
+    if outpath:
+        if isinstance(outpath, str):
+            outpath = Path(outpath)
+        outpath.mkdir(parents=True, exist_ok=True)
 
     # Helper function to classify potential database IDs according to db specific regexes
     def _classify_potential_db_ids(row: pd.Series) -> pd.Series:
@@ -1856,7 +1864,7 @@ def get_gpid_mapping(
                 ncbi_id = gene_id
 
         # Add potential database ID to dictionary
-        modelid2potentialid["database_id"] = ncbi_id
+        modelid2potentialid["database_id"].append(ncbi_id)
 
     # Generate table from dictionary
     mapping_table = pd.DataFrame.from_dict(modelid2potentialid)
@@ -1945,14 +1953,29 @@ def get_gpid_mapping(
             mapping_table = pd.merge(
                 mapping_table, gff_mapping, how="outer", on=identical_columns
             )
-        else:  # Try merge on locus_tag & UNCLASSIFIED as UNCLASSIFIED could contain locus tags
-            mapping_table = pd.merge(
-                mapping_table,
-                gff_mapping,
-                how="outer",
-                left_on="UNCLASSIFIED",
-                right_on="locus_tag",
-            )
+        else:  
+            # Try merge on locus_tag & UNCLASSIFIED as UNCLASSIFIED could contain locus tags
+            try:
+                mapping_table = pd.merge(
+                    mapping_table,
+                    gff_mapping,
+                    how="outer",
+                    left_on="UNCLASSIFIED",
+                    right_on="locus_tag",
+                )
+            except KeyError:
+                filename = (
+                    f'{model.getId()}_gp_id_gff_mapping_{str(date.today().strftime("%Y%m%d"))}.csv'
+                    )
+                if outpath:
+                    filename = Path(outpath, filename)
+                else:
+                    filename = Path(filename)
+                print(f'''
+No common columns found between mapping table derived from model and mapping table derived from provided GFFs. Cannot merge.
+The resulting mapping tables will be returned separately. The table for the GFF mapping is written to {filename}.
+                ''')
+                gff_mapping.to_csv(filename, index=False)
 
     # 2. Get information from NCBI
     contains_protein_ids = len({'NCBI', 'REFSEQ'}.intersection(set(mapping_table.columns))) > 0
@@ -2000,28 +2023,35 @@ def get_gpid_mapping(
             pd.Series:
                 DataFrame with only one name column
         """
-        if any(["name" in _ for _ in mapping_table.columns]):
-            if ('name' in current_gff.columns and 'NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
-                # @TODO Prefer NCBI over all -> Recheck if identical to NCBI ID
-                # @TODO Prefer REFSEQ over name -> Recheck if identical to REFSEQ ID
-                # @TODO For name -> Recheck if identical to locus_tag
-                pass
-            elif ('NCBI' in current_gff.columns and 'REFSEQ' in current_gff.columns):
-                # @TODO Prfer NCBI
-                pass
-            elif 'NCBI' in current_gff.columns:
-                # @TODO use available
-                pass
-            elif 'REFSEQ' in current_gff.columns:
-                # @TODO use available
-                pass
+        # Prefer NCBI Protein name over all other names as most specific for organism
+        if 'name_ncbi' in row.index.to_list():
+            if row['name_ncbi']:
+                row['name'] = row['name_ncbi'] if row['name_ncbi'] != row['NCBI'] else None
+            # If no 'valid' NCBI Protein name was found, use REFSEQ name
+            elif 'name_refseq' in row.index.to_list():
+                if row['name_refseq']:
+                    row['name'] = row['name_refseq'] if row['name_refseq'] != row['REFSEQ'] else None
+        # If no NCBI Protein name column exists, use REFSEQ name
+        elif 'name_refseq' in row.index.to_list():
+            if row['name_refseq']:
+                row['name'] = row['name_refseq'] if row['name_refseq'] != row['REFSEQ'] else None
 
+        # If no REFSEQ and no NCBI Protein name column exists, check name column for locus_tag
+        if row['name'] and (row['name'] == row['locus_tag']):
+            row['name'] = None
+
+        # Default name is whatever is stored in name column, if exists, or None
         return row
 
     print('Cleaning up dataframe for output...')
+    # Generate default column name to set content
+    if not 'name' in mapping_table.columns:
+        mapping_table["name"] = None
     mapping_table = mapping_table.progress_apply(_merge_name_cols, axis=1)
+    # Remove unnecessary name columns, if they exist
+    names_to_remove = [n_col for n_col in mapping_table.columns if n_col.startswith("name_")]
+    if names_to_remove: mapping_table.drop(names_to_remove, axis=1, inplace=True)
 
-    
     # Write mapping information to file
     filename = (
         f'{model.getId()}_gp_id_mapping_{str(date.today().strftime("%Y%m%d"))}.csv'

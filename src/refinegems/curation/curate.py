@@ -536,8 +536,8 @@ def set_initial_amount_metabs(model: libModel):
             species.setInitialAmount(float("NaN"))
 
 
-def polish_metab_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
-    """Sets boundary condition and constant if not set for a metabolite
+def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
+    """Sets boundary condition and constant if not set for an entity
 
     Args:
         - entity_list (Union[ListOfSpecies, ListOfReactions]):
@@ -1210,8 +1210,8 @@ def polish_model(
         check_direction(model, reaction_direction)
 
     ### set boundaries and constants ###
-    polish_metab_conditions(metab_list)
-    polish_metab_conditions(reac_list)
+    polish_entity_conditions(metab_list)
+    polish_entity_conditions(reac_list)
 
     ### MIRIAM compliance of CVTerms ###
     print(

@@ -89,9 +89,8 @@ def get_set_of_curies(
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
 
-        if curie[
-            0
-        ]:  # Prefix is valid but to have same result for same databases need to do a bit of own parsing
+        # Prefix is valid but to have same result for same databases need to do a bit of own parsing
+        if curie[0]:  
             if re.fullmatch(
                 r"^biocyc$", curie[0], re.IGNORECASE
             ):  # Check for biocyc to also add metacyc if possible
