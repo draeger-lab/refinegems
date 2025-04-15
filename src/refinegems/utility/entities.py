@@ -2073,13 +2073,6 @@ The resulting mapping tables will be returned separately. The table for the GFF 
 # create model entities using libSBML
 # -----------------------------------
 
-
-# --> WARNING: Output is different now
-# @TODO: Add functionality to check if
-# - locus tag (label) already in model
-# - new id already in model
-# as sanity check if someone only uses create_gp
-# + logging.warning
 def create_gp(
     model: libModel,
     protein_id: str,
