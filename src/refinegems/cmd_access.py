@@ -459,18 +459,21 @@ def model(
         model, str(Path(outdir, f"{model.getId()}_after_polishing.xml"))
     )
 
+# --------------
+# Refine a model
+# --------------
+@cli.group()
+def refine():
+    """Refine a model. Includes steps like biomass, charges, SBO annotation, reaction direction correction and addition
+    of Pathways and further gene product annotations.
+    """
 
-# ----------------------------------------------------------------------------------
+
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
-# @TODO gaps group still for the old gapfill -> Put into refine group & delete gaps group
 # @TEST help is displayed alright but untested
-@cli.group()
-def gaps():
-    """Find and fill gaps in a model."""
 
-
-@gaps.command(show_constraints=True)
+@refine.command(show_constraints=True)
 @cloup.argument(
     "alg",
     type=click.Choice(["KEGG", "BioCyc", "Gene"]),
@@ -531,7 +534,7 @@ def gaps():
     cloup.option(
         "-n",
         "--namespace",
-        type=click.Choice(["BiGG"]), # @TODO recheck if BiGG/BIGG
+        type=click.Choice(["BiGG"]), 
         default="BiGG",
         show_default=True,
         help="Namespace used in the model.",
@@ -598,7 +601,7 @@ def gaps():
         help="Prefix for pseudo-protein IDs.",
     ),
     cloup.option(
-        "--mail", type=str, default=None, help="Mail address for NCBI requests."
+        "--mail", type=str, default=None, help="Mail address for NCBI requests.",
     ),
     cloup.option(
         "-ncbi",
@@ -607,6 +610,14 @@ def gaps():
         default=False,
         help="Enable searching protein IDs in NCBI. This increases the runtime significantly.",
     ),
+    cloup.option(
+        "--db-type",
+        type = click.Choice(['swissprot','user']),
+        default='swissprot',
+        show_default=True,
+        show_choices=True,
+        help="Database to search against. Choose 'swissprot' for SwissProt or 'user' for a user defined database.",
+    ),  
     cloup.option(
         "--fasta",
         type=click.Path(exists=True, dir_okay=False),
@@ -620,11 +631,11 @@ def gaps():
         help="Path to the SwissProt DIAMOND database.",
     ),
     cloup.option(
-        "-sp-map",
-        "--swissprot-mapping",
+        "-db-map",
+        "--db-mapping",
         type=click.Path(exists=True, dir_okay=False),
         default=None,
-        help="Path to the SwissProt mapping file (ID against EC and BRENDA)",
+        help="Path to the SwissProt or User defined mapping file (SwissProt: ID against EC and BRENDA), User: ID against EC",
     ),
     cloup.option(
         "-s",
@@ -652,6 +663,13 @@ def gaps():
         help="Percentage identity threshold value for filtering DIAMOND results.",
     ),
     cloup.option(
+        "--threshold-add-reacs",
+        type=int,
+        default=5,
+        show_default=True,
+        help="Maximal number of reactions for one EC number mapping for it to be considered successful and to be added to the model.",
+    ),
+    cloup.option(
         "-t",
         "--threads",
         type=int,
@@ -660,7 +678,6 @@ def gaps():
         help="Number of threads to be used by DIAMOND.",
     ),
 )
-# @TODO Should be reworked
 @cloup.constraints.constraint(
     cloup.constraints.If(
         cloup.constraints.IsSet("check_ncbi"), then=cloup.constraints.require_all
@@ -669,10 +686,10 @@ def gaps():
 )
 @cloup.constraints.constraint(
     cloup.constraints.If(
-        cloup.constraints.AnySet("fasta", "dmnd_db", "swissprot_mapping"),
+        cloup.constraints.AnySet("db_type", "fasta", "dmnd_db", "db_mapping"),
         then=cloup.constraints.require_all,
     ),
-    ["fasta", "dmnd_db", "swissprot_mapping"],
+    ["db_type","fasta", "dmnd_db", "db_mapping"],
 )
 # @cloup.constraints.constraint(cloup.constraints.If(cloup.constraints.AnySet('sensitivity','cov','pid','threads'),then=cloup.constraints.require_all), ['fasta','dmnd_db','sp_map'])
 def automated_gapfill(
@@ -694,12 +711,14 @@ def automated_gapfill(
     prot_prefix,
     mail,
     check_ncbi,
+    db_type,
     fasta,
     dmnd_db,
-    swissprot_mapping,
+    db_mapping,
     sensitivity,
     cov,
     pid,
+    threshold_add_reacs,
     threads,
 ):
 
@@ -712,7 +731,7 @@ def automated_gapfill(
             gapfiller = rg.classes.gapfill.KEGGapFiller(orgid)
             # find gaps
             gapfiller.find_missing_genes(model)
-            gapfiller.find_missing_reactions(cmodel)
+            gapfiller.find_missing_reactions(cmodel, threshold_add_reacs)
         case "BioCyc":
             gapfiller = rg.classes.gapfill.BioCycGapFiller(genetable, reactable, gff_bc)
             # find gaps
@@ -730,13 +749,15 @@ def automated_gapfill(
                 "pid": pid,
             }
             gapfiller.find_missing_reactions(
-                cmodel,
-                prot_prefix,
-                mail,
-                check_ncbi,
-                fasta,
-                dmnd_db,
-                swissprot_mapping,
+                model = cmodel,
+                prefix = prot_prefix,
+                type_db = db_type,
+                fasta = fasta,
+                dmnd_db = dmnd_db,
+                map_db = db_mapping,
+                mail = mail,
+                check_NCBI = check_ncbi,
+                threshold_add_reacs = threshold_add_reacs,
                 **kwargs,
             )
         case _:
@@ -758,15 +779,6 @@ def automated_gapfill(
     if report:
         gapfiller.report(outdir)
 
-
-# --------------
-# Refine a model
-# --------------
-@cli.group()
-def refine():
-    """Refine a model. Includes steps like biomass, charges, SBO annotation, reaction direction correction and addition
-    of Pathways and further gene product annotations.
-    """
 
 
 @refine.command()
@@ -854,7 +866,7 @@ def direction(modelpath, data, dir):
     "--namespace",
     "-n",
     required=False,
-    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
+    type=click.Choice(["BiGG"]),
     show_default=True,
     default="BiGG",
     multiple=False,
@@ -1134,7 +1146,7 @@ def growth():
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
+    type=click.Choice(["BiGG"]),
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
@@ -1179,7 +1191,7 @@ def simulate(modelpaths, media, namespace, dir, colors):
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
+    type=click.Choice(["BiGG"]),
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
@@ -1242,7 +1254,7 @@ def auxotrophies(modelpath, media, namespace, dir, colors):
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),# @TODO recheck if BiGG/BIGG
+    type=click.Choice(["BiGG"]),
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
