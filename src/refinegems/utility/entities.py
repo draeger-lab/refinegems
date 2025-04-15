@@ -722,48 +722,49 @@ def build_metabolite_kegg(
         query=True,
     )
     # if matches have been found
-    # @TODO : Handle multiple matches, Get first entry; Log warning for user
     if len(mnx_info) > 0:
         mnx_ids = list(set(mnx_info["id"]))
-        # mapping is unambiguously
-        if len(mnx_ids) == 1:
-            mnx_info = load_a_table_from_database(
-                f"SELECT * FROM mnx_chem_prop WHERE id = '{mnx_ids[0]}'", query=True
+        
+        # in case of an ambiguous mapping, take first match
+        if len(mnx_ids) > 1:
+            logging.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
+            mnx_ids = [mnx_ids[0]]
+        
+        # mapping is unambiguously (or made that way)
+        mnx_info = load_a_table_from_database(
+            f"SELECT * FROM mnx_chem_prop WHERE id = '{mnx_ids[0]}'", query=True
+        )
+        # add charge
+        new_metabolite.charge = mnx_info["charge"].iloc[0]
+        # add more annotations
+        new_metabolite.annotation["metanetx.chemical"] = [mnx_info["id"].iloc[0]]
+        if not pd.isnull(mnx_info["InChIKey"].iloc[0]):
+            new_metabolite.annotation["inchikey"] = (
+                mnx_info["InChIKey"].iloc[0].split("=")[1]
             )
-            # add charge
-            new_metabolite.charge = mnx_info["charge"].iloc[0]
-            # add more annotations
-            new_metabolite.annotation["metanetx.chemical"] = [mnx_info["id"].iloc[0]]
-            if not pd.isnull(mnx_info["InChIKey"].iloc[0]):
-                new_metabolite.annotation["inchikey"] = (
-                    mnx_info["InChIKey"].iloc[0].split("=")[1]
-                )
 
-            # get more annotation from the mnx_chem_xref table
-            metabolite_anno = load_a_table_from_database(
-                f'SELECT * FROM mnx_chem_xref WHERE id = \'{mnx_info["id"]}\''
-            )
-            for db in [
-                "kegg.compound",
-                "metacyc.compound",
-                "seed.compound",
-                "bigg.metabolite",
-                "chebi",
-            ]:
-                db_matches = metabolite_anno[metabolite_anno["source"].str.contains(db)]
-                if len(db_matches) > 0:
-                    mnx_tmp = [
-                        m.split(":", 1)[1] for m in db_matches["source"].tolist()
-                    ]
-                    if db in new_metabolite.annotation.keys():
-                        new_metabolite.annotation[db] = list(
-                            set(mnx_tmp + new_metabolite.annotation[db])
-                        )
-                    else:
-                        new_metabolite.annotation[db] = mnx_tmp
-
-        else:
-            pass
+        # get more annotation from the mnx_chem_xref table
+        metabolite_anno = load_a_table_from_database(
+            f'SELECT * FROM mnx_chem_xref WHERE id = \'{mnx_info["id"]}\''
+        )
+        for db in [
+            "kegg.compound",
+            "metacyc.compound",
+            "seed.compound",
+            "bigg.metabolite",
+            "chebi",
+        ]:
+            db_matches = metabolite_anno[metabolite_anno["source"].str.contains(db)]
+            if len(db_matches) > 0:
+                mnx_tmp = [
+                    m.split(":", 1)[1] for m in db_matches["source"].tolist()
+                ]
+                if db in new_metabolite.annotation.keys():
+                    new_metabolite.annotation[db] = list(
+                        set(mnx_tmp + new_metabolite.annotation[db])
+                    )
+                else:
+                    new_metabolite.annotation[db] = mnx_tmp
 
     # Cleanup BiGG annotations
     if not "bigg.metabolite" in new_metabolite.annotation.keys():
@@ -2086,6 +2087,7 @@ def create_gp(
     name: str = None,
     locus_tag: str = None,
     reference: dict[str : tuple[Union[list, str], bool]] = dict(),
+    sanity_check: bool = False
 ) -> None:
     """Creates GeneProduct in the given libSBML model.
 
@@ -2108,28 +2110,50 @@ def create_gp(
             The key is the database name, the value is a tuple with the first element being the ID(s)
             and the second element being a boolean indicating if the strain is a lab strain or not.
             Defaults to an empty dictionary.
+        - sanity_check (bool, optional):
+            Check, whether locus tag (label) or model ID (ID) already exist in model.
+            Note, that setting this to True increases the runtime.
+            Defaults to False.
     """
 
-    # create gene product object
-    gp = model.getPlugin(0).createGeneProduct()
-    # set basic attributes
+    # check, if possible ID has been passed
     if model_id:  # ID
-        gp.setIdAttribute(model_id)
+       pass
     elif protein_id:
-        geneid = _f_gene_rev(protein_id)
-        gp.setIdAttribute(geneid)
+        model_id = _f_gene_rev(protein_id)
     elif locus_tag:
-        geneid = _f_gene_rev(locus_tag)
-        gp.setIdAttribute(geneid)
+        model_id = _f_gene_rev(locus_tag)
     else:
         raise ValueError(
             "No valid ID found for gene product. Specify at least the locus tag."
         )
-
+    
+    # construct label, if possible
+    label = None
+    if locus_tag:
+        label = _f_gene_rev(locus_tag, "")
+    
+    # sanity check
+    if sanity_check:
+        genes = model.getPlugin(0).getListOfGeneProducts()
+        for g in genes:
+            # for ID 
+            if g.isSetId() and g.getId == model_id:
+                logging.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
+                return None
+            # for locus tag as label
+            if label and g.isSetLabel() and g.getLabel() == label:
+                logging.warning(f'Cannot add gene product, as label {label} is already in the model.')
+                return None
+        
+    # create gene product object
+    gp = model.getPlugin(0).createGeneProduct()
+    # set basic attributes
+    gp.setIdAttribute(model_id)
     if name:
         gp.setName(name)  # Name
-    if locus_tag:
-        gp.setLabel(_f_gene_rev(locus_tag, ""))  # Label
+    if label:
+        gp.setLabel(label)  # Label
     gp.setSBOTerm("SBO:0000243")  # SBOterm
     gp.setMetaId(f"meta_{_f_gene_rev(protein_id)}")  # Meta ID
     # test for NCBI/RefSeq
