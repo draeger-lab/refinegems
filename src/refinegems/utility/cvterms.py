@@ -290,7 +290,6 @@ def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
             f"No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}."
         )
 
-# @TEST
 def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     """Extract Id for a specific database from CVTerm
 
@@ -343,6 +342,8 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
 
     # Clean-up: Remove all Nones
     all_ids = [_ for _ in all_ids if _ is not None]
+    if len(all_ids) == 0:
+        logging.info(f'No URIs extracted for {db_id} database from {entity.getId()}')
     
     return all_ids
 
