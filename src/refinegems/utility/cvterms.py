@@ -290,7 +290,7 @@ def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
             f"No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}."
         )
 
-
+# @TEST
 def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     """Extract Id for a specific database from CVTerm
 
@@ -304,19 +304,46 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
         list[str]:
             Ids of entity belonging to db_id
     """
+    def _extract_id_from_uri(uri: str) -> str:
+        """Extracts the ID from the URI.
+
+        Args:
+            uri (str): 
+                The URI to extract the ID from.
+
+        Returns:
+            str: 
+                The extracted ID.
+        """
+        extracted_id = parse_iri(uri)[1]
+
+        if not extracted_id:
+            logging.info(f"Could not extract ID with bioregistry from URI: {uri}")
+            extracted_id = uri.split('/')[-1]  # Fallback to splitting by "/"
+            if ':' in extracted_id:
+                extracted_id = extracted_id.split(':')[-1]
+
+            if not extracted_id:
+                logging.warning(f"Could not extract ID from URI: {uri} at all!")
+                return None
+
+        return extracted_id
+        
     num_cvs = entity.getNumCVTerms()
     all_ids = []
     for i in range(0, num_cvs):
         ann_string = entity.getCVTerm(i)
         num_res = ann_string.getNumResources()
-        # @DISCUSSION Would give a None if IRI cannot be read
         ids = [
-            parse_iri(ann_string.getResourceURI(r))[1]
+            _extract_id_from_uri(ann_string.getResourceURI(r))
             for r in range(0, num_res)
             if str(db_id) in ann_string.getResourceURI(r)
         ]
         all_ids.extend(ids)
 
+    # Clean-up: Remove all Nones
+    all_ids = [_ for _ in all_ids if _ is not None]
+    
     return all_ids
 
 
