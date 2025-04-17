@@ -68,6 +68,7 @@ COMP_MAPPING = {
     "c": "c",
     "e": "e",
     "p": "p",
+    "w": "w",# @DISCUSSION
     "C_c": "c",
     "C_e": "e",
     "C_p": "p",
