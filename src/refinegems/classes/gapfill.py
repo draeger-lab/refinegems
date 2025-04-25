@@ -987,7 +987,7 @@ class GapFiller(ABC):
                     self._statistics["reactions"]["added"] += 1
                     # add reaction ID to table under add_to_GPR
                     current_gpr = missing_reac_table.loc[idx, "add_to_GPR"]
-                    if not current_gpr:
+                    if pd.isna(current_gpr):
                         missing_reac_table.at[idx, "add_to_GPR"] = [reac.id]
                     else:
                         current_gpr.append(reac.id)
@@ -1052,7 +1052,8 @@ class GapFiller(ABC):
                 raise TypeError(mes)
 
         # Check if missing reactions found, if not return model
-        if self.missing_reactions.empty:
+        # @TODO Recheck if not GPR/genes could be added
+        if pd.isna(self.missing_reactions) or self.missing_reactions.empty:
             return model
 
         # Filter out reactions without ncbiprotein
@@ -1312,7 +1313,7 @@ class KEGGapFiller(GapFiller):
         # Statistics on full gene list based on KEGG
         self._statistics["genes"][f"total (based on {self._variety})"] = (
             self.full_gene_list["orgid:locus"].nunique()
-            + int(self.full_gene_list["locus_tag"].isna().sum())
+            + int(self.full_gene_list["orgid:locus"].isna().sum())
         )
 
         # Step 3: KEGG vs. model genes -> get missing genes for model

@@ -1156,7 +1156,7 @@ def build_reaction_mnx(
     reaceqsyms = ["=", "+", "<", ">", "_"]
     important_keywords = ["rna", "dna"]
     for desc in mnx_reac_refs["description"]:
-        splitted_descs = re.split(r"|+", desc)
+        splitted_descs = re.split(r"\|+", desc)
 
         # Exclude reaction equations
         names.extend([_ for _ in splitted_descs if not any(s in _ for s in reaceqsyms)])
