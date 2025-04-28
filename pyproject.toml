@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "refineGEMs"
 version = "2.0.0-beta"  
-requires-python = ">=3.10"
+requires-python = ">=3.10, <3.13"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel", email = "gwendolyn.o.gusak@gmail.com"},
@@ -24,10 +24,12 @@ readme = 'README.md'
 keywords = ['Systems Biology', 'GEM', 'Metabolic Modelling', 'Python Package']
 
 classifiers = [
+    'Topic :: Software Development :: Libraries :: Python Modules',
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Programming Language :: Python",
     "Programming Language :: SQL",
     "License :: OSI Approved :: MIT License",
+    'Operating System :: OS Independent'
 ]
 
 # dynamic = ['version']
