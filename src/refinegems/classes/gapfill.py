@@ -1052,7 +1052,7 @@ class GapFiller(ABC):
                 raise TypeError(mes)
 
         # Check if missing reactions found, if not return model
-        if pd.isna(self.missing_reactions) or self.missing_reactions.empty:
+        if not isinstance(self.missing_reactions, pd.DataFrame) or self.missing_reactions.empty:
             return model
 
         # Filter out reactions without ncbiprotein
