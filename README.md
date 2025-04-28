@@ -1,4 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml)
 [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square)
@@ -17,7 +18,8 @@
 
 # refineGEMs
 `refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS). </br>
-The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).
+⚠️🚧 **DISCLAIMER:** The documentation is currently under heavy-rework!
+The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
 
 ## Table of contents
 1. [Overview](#overview)

@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "2.0.0-alpha.2"  
-requires-python = ">=3.10, <3.12"
+version = "2.0.0-beta"  
+requires-python = ">=3.10, <3.13"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel", email = "gwendolyn.o.gusak@gmail.com"},
@@ -24,10 +24,12 @@ readme = 'README.md'
 keywords = ['Systems Biology', 'GEM', 'Metabolic Modelling', 'Python Package']
 
 classifiers = [
+    'Topic :: Software Development :: Libraries :: Python Modules',
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Programming Language :: Python",
     "Programming Language :: SQL",
     "License :: OSI Approved :: MIT License",
+    'Operating System :: OS Independent'
 ]
 
 # dynamic = ['version']
@@ -35,7 +37,7 @@ classifiers = [
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
     "biopython>=1.79",
-    "bioregistry>=0.10.132",
+    "bioregistry>=0.12.0",
     "bioservices>=1.11.2",
     "click>=8.1.3",
     "cloup>=3.0.5",
@@ -47,9 +49,9 @@ dependencies = [
     'matplotlib >= 3.8.2',
     "memote>=0.17.0", 
     "multiprocess>=0.70.16",
-    "numpy>=1.20.3,<2.0.0",  # @TODO wait for update? >2.0.0 not working properly
+    "numpy>=2.0.0",
     "ols-client>=0.1.3",
-    "pandas>=1.2.4",
+    "pandas>=2.2.2",
     'pyyaml>=6.0.1',
     "ratelimit>=2.2.1",
     'requests>=2.32.2',
@@ -59,6 +61,7 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "sqlite_dump>=0.1.1",
     'tqdm>=4.66.1',
+    'ipywidgets', # needed to run tqdm normally without error
     "venn>=0.1.3",
     "z3-solver>=4.13.0.0",
 ]
