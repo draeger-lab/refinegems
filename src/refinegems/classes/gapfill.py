@@ -1052,7 +1052,6 @@ class GapFiller(ABC):
                 raise TypeError(mes)
 
         # Check if missing reactions found, if not return model
-        # @TODO Recheck if not GPR/genes could be added
         if pd.isna(self.missing_reactions) or self.missing_reactions.empty:
             return model
 

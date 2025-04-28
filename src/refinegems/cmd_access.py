@@ -471,7 +471,6 @@ def refine():
 
 # Find and fill gaps in a model automatically/Fill gaps with manually created tables
 # ----------------------------------------------------------------------------------
-# @TEST help is displayed alright but untested
 
 @refine.command(show_constraints=True)
 @cloup.argument(

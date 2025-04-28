@@ -62,17 +62,20 @@ VALID_COMPARTMENTS = {
     "c": "cytosol",
     "e": "extracellular space",
     "p": "periplasm",
-    "y": "unknown compartment",
+    "uc": "unknown compartment",
 }  #: :meta:
 COMP_MAPPING = {
+    # standard names
     "c": "c",
     "e": "e",
     "p": "p",
-    "w": "w",# @DISCUSSION
+    # C_ naming
     "C_c": "c",
     "C_e": "e",
     "C_p": "p",
-    "": "y",
+    # unknown compartments
+    "": "uc", 
+    "w": "uc",
 }  #: :meta:
 
 # useful defaults

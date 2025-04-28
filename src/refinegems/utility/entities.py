@@ -131,6 +131,8 @@ def resolve_compartment_names(model: cobra.Model):
             # note:
             #    only compartments IN the model will be added
             model.compartments = VALID_COMPARTMENTS
+            if "uc" in model.compartments.keys():
+                logging.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
 
         else:
             raise KeyError(
