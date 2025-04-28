@@ -46,8 +46,7 @@ Other applications of `refineGEMs` to curate a given model include:
 - The correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers),
 - The addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin),
 - Updating the SBO-Term annotations based on [SBOannotator](https://github.com/draeger-lab/SBOannotator),
-- Updating the annotation of metabolites and extending the model with reactions (for the purpose of filling gaps) based on a table filled by the user `data/manual_annotations.xlsx` (Note: This only works when the structure of the [example Excel file](https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/manual_curation.xlsx) is used.),
-- And extending the model with all information surrounding reactions including the corresponding GeneProducts and metabolites by filling in the table `data/modelName_gapfill_analysis_date_example.xlsx` (Note: This also only works when the structure of the [example Excel file](https://github.com/draeger-lab/refinegems/blob/5eac900d9848b5ae5faf0055db72a986e7ba64e8/data/modelName_gapfill_analysis_date_example.xlsx) is used).
+
 
 ## Installation
 
@@ -65,7 +64,7 @@ or to a local conda environment where `refineGEMs` is distributed via this GitHu
 git clone https://github.com/draeger-lab/refinegems.git
 cd refinegems
 
-conda create -n <EnvName> python=3.10 (or higher)
+conda create -n <EnvName> python=3.10 (at least but < 3.13)
 
 conda activate <EnvName>
 
@@ -82,7 +81,7 @@ Please install both tools before using ``refineGEMs``:
 
 ```bash
 # For MCC, until hot fix is merged into main:
-pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix"
+pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration"
 
 # For BOFdat, our fork with hot fix(es):
 pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
