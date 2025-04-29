@@ -115,7 +115,7 @@ def download_url(
             # create DIAMOND database
             print(f"create DIAMOND database for {name} using:")
             print(
-                f'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(dir,"db",str(Path(dir,"db","SwissProt.dmnd"))))} --threads {int(t)}'
+                f'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(directory,"db",str(Path(directory,"db","SwissProt.dmnd"))))} --threads {int(t)}'
             )
             subprocess.run(
                 [
@@ -124,7 +124,7 @@ def download_url(
                     "--in",
                     str(Path(directory, "SwissProt.fasta")),
                     "--db",
-                    str(Path(dir, "db", "SwissProt.dmnd")),
+                    str(Path(directory, "db", "SwissProt.dmnd")),
                     "--threads",
                     str(t),
                 ]
