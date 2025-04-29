@@ -1005,6 +1005,7 @@ def get_ec_via_swissprot(
     blast_path = run_DIAMOND_blastp(
         miss_fasta, db, sensitivity=sens, coverage=cov, threads=t, outdir=outdir
     )
+    # @TODO What happens if no mapping is performed?
     # Step 3: filter DIAMOND hits
     dmnd_res = filter_DIAMOND_blastp_results(blast_path, pid)
     # Step 4: map to Swissprot mapping file

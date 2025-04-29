@@ -1931,6 +1931,7 @@ class GeneGapFiller(GapFiller):
         ]
         self.missing_genes = self.missing_genes.explode("ncbiprotein")
 
+# @TODO Note to user that default is None and though no mapping is performed
     def find_missing_reactions(
         self,
         model: cobra.Model,
