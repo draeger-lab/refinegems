@@ -75,7 +75,7 @@ def adjust_BOF(
         - dna_weight_fraction (float):
             DNA weight fraction for BOF step 1.
         - weight_frac (float):
-            Weight fraction for the second step of BOFdat (enzymes and ions)
+            Weight fraction for the second step of BOFdat (coenzymes and ions)
 
     Returns:
         str:
