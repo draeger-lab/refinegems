@@ -28,7 +28,7 @@ project_copyright = '2024, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune
 author = 'Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 
 # The full version, including alpha/beta/rc tags
-release = '2.0.0-beta'
+release = '2.0.0-beta.1'
 
 
 # -- General configuration ---------------------------------------------------

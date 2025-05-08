@@ -8,6 +8,7 @@ __author__ = "Carolin Brune"
 
 import requests
 import subprocess
+import warnings
 
 from importlib.resources import files
 from pathlib import Path
@@ -50,7 +51,7 @@ def download_url(
             Type of files to download.
         - directory (str, optional):
             Path to a directory to save the downloaded files to.
-            Defaults to None.
+            Defaults to None (So the current working directory is used).
         - k (int, optional):
             Chunksize in kB.
             Defaults to 10.
@@ -62,6 +63,10 @@ def download_url(
     Raises:
         - ValueError: Unknown database or file
     """
+
+    # Ensure that directory is not None
+    if directory is None:
+        directory = Path.cwd()
 
     # match URLS to type of database, that the user wants to download
     match download_type:
@@ -75,13 +80,13 @@ def download_url(
             #   1.: TSV with UniprotID, BRENDA and EC -7.7MB (26.07.2024)
             #   2.: FASTA with sequences ~280MB (26.07.2024)
         case _:
-            mes = f"Unknown database or file: {name}"
+            mes = f"Unknown database or file: {download_type}"
             raise ValueError(mes)
 
     # download each file
     for name, url in urls.items():
         r = requests.get(url, stream=True)
-        filename = Path(directory, name) if directory else Path(name)
+        filename = Path(directory, name)
 
         # Check if Content-Length is available
         total_length = r.headers.get("Content-Length")  # Make the progress bar
@@ -112,10 +117,19 @@ def download_url(
     match download_type:
         # SwissProt gapfill
         case "SwissProt gapfill":
+            # Create db folder for DIAMONd if non-existent
+            try:
+                Path(directory, "db").mkdir(parents=True, exist_ok=False)
+                print("Creating new directory " + str(Path(directory, "db")))
+            except FileExistsError:
+                warnings.warn(
+                    "Given directory already exists. High possibility of files being overwritten."
+                )
+            Path(directory, "db").mkdir(parents=True, exist_ok=True)
             # create DIAMOND database
-            print(f"create DIAMOND database for {name} using:")
+            print(f"create DIAMOND database for {download_type} using:")
             print(
-                f'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(directory,"db",str(Path(directory,"db","SwissProt.dmnd"))))} --threads {int(t)}'
+                f'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(directory,"db","SwissProt.dmnd"))} --threads {int(t)}'
             )
             subprocess.run(
                 [
