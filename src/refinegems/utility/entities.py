@@ -1589,9 +1589,10 @@ def build_reaction():
 def remove_non_essential_genes(
     model: cobra.Model,
     genes_to_check: Union[list[cobra.Gene], None] = None,
+    keep_in_complex: bool=True,
     remove_reactions: bool = True,
     min_growth_threshold: float = MIN_GROWTH_THRESHOLD,
-) -> tuple[int, int]:
+) -> tuple[int, int, int]:
     """Remove non-essential genes based on gene knock-out.
 
     Args:
@@ -1600,6 +1601,9 @@ def remove_non_essential_genes(
         - genes_to_check (Union[list[cobra.Gene],None], optional):
             List of genes to check. If None, all genes of the model are checked.
             Defaults to None.
+        - keep_in_complex (bool, optional):
+            Check, if a gene if part of a complex (GPR connection with AND).
+            If True, keep genes, even if they are non-essential.
         - remove_reactions (bool, optional):
             If set to True, also remove corresponding reactions.
             Defaults to True.
@@ -1612,11 +1616,13 @@ def remove_non_essential_genes(
             Tuple of (1) int, (2) int:
                 (1) Number of deleted genes.
                 (2) Number of essential genes.
+                (3) Number of nonessential genes in a complex 
     """
 
     # initialise values
     to_delete = 0
     essential_counter = 0
+    incomplex = 0 
     remove = False
 
     # if no list of genes is given, take all genes of model
@@ -1632,9 +1638,21 @@ def remove_non_essential_genes(
             res = model.optimize()
             # make sure, model still reaches minimal growth
             if res.objective_value > min_growth_threshold:
+                # check, if gene is part of a complex
+                complexctr = False
+                if keep_in_complex:  # kepp genes in complex (AND connection)
+                    for r in m.reactions:
+                        reac_genes = [_.id for _ in list(r.genes)]
+                        if reac_genes != 0 and ('and '+g.id in r.gene_reaction_rule or g.id+' and' in r.gene_reaction_rule):
+                            logging.info(f'Keeping gene {g.id}, as it is part of a complex. Check during manual curation.')
+                            complexctr = True 
+                            break
+                if complexctr:
+                    incomplex += 1
                 # set for deletion
-                remove = True
-                to_delete += 1
+                else:
+                    remove = True
+                    to_delete += 1
             else:
                 # keep
                 essential_counter += 1
@@ -1646,7 +1664,7 @@ def remove_non_essential_genes(
             )
             remove = False
 
-    return (to_delete, essential_counter)
+    return (to_delete, essential_counter, incomplex)
 
 
 # ++++++++++++++++++++++++++++++++++++++++
