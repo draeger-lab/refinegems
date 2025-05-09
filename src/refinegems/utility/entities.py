@@ -2095,7 +2095,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
 
 def create_gp(
     model: libModel,
-    protein_id: str,
+    protein_id: str = None,
     model_id: str = None,
     name: str = None,
     locus_tag: str = None,
@@ -2107,8 +2107,9 @@ def create_gp(
     Args:
         - model (libModel):
             The model object, loaded with libSBML.
-        - protein_id (str):
+        - protein_id (str, optional):
             (NCBI) Protein ID of the gene.
+            Defaults to None.
         - model_id (str, optional):
             If given, uses this string as the ID of the gene in the model.
             ID should be identical to ID that CarveMe adds from the NCBI FASTA input file.
@@ -2168,19 +2169,20 @@ def create_gp(
     if label:
         gp.setLabel(label)  # Label
     gp.setSBOTerm("SBO:0000243")  # SBOterm
-    gp.setMetaId(f"meta_{_f_gene_rev(protein_id)}")  # Meta ID
+    gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID
     # test for NCBI/RefSeq
     id_db = None
-    if re.fullmatch(
-        r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
-        protein_id,
-        re.IGNORECASE,
-    ):
-        id_db = "REFSEQ"
-    elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", protein_id, re.IGNORECASE):
-        id_db = "NCBI"
-    if id_db:
-        add_cv_term_genes(protein_id, id_db, gp)  # NCBI protein
+    if protein_id:
+        if re.fullmatch(
+            r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
+            protein_id,
+            re.IGNORECASE,
+        ):
+            id_db = "REFSEQ"
+        elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", protein_id, re.IGNORECASE):
+            id_db = "NCBI"
+        if id_db:
+            add_cv_term_genes(protein_id, id_db, gp)  # NCBI protein
 
     # add further references
     # references {'dbname':(list_or_str_of_id,lab_strain_bool)}
