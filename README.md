@@ -1,26 +1,22 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![fair-software.eu](https://img.shields.io/badge/fair--software)](https://github.com/draeger-lab/Shaemolyticus/actions/workflows/fair-software.yml)
-![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml)
-[![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
-![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
-![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems)
-![GitHub all releases](https://img.shields.io/github/downloads/draeger-lab/refinegems/total?logo=github&label=GitHub%20downloads)
-[![PyPI version](https://img.shields.io/pypi/v/refinegems?logo=pypi&label=PyPI%20package&color=neongreen)](https://pypi.org/project/refineGEMs/)
-![PyPI - Format](https://img.shields.io/pypi/format/refinegems?)
-[![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg?logo=pypi&label=PyPI%20downloads)](https://pypistats.org/packages/refinegems)  
-[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8270303-B4A069?style=flat-square&logo=zenodo&logoColor=white)](https://zenodo.org/badge/latestdoi/359867657)  
-[![Frontiers DOI](https://img.shields.io/badge/Frontiers%20DOI-10.3389%2Ffbinf.2023.1214074-B4A069?style=flat-square)](https://www.frontiersin.org/articles/10.3389/fbinf.2023.1214074/full)
-
 <p align="center">
 <img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/refineGEMs_logo.png" height="200"/>
 </p>
 
+| Topic | Badge(s) |
+| :--- | :---- |
+| General | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml) [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest) ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main) |
+| GitHub release | ![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square) ![GitHub all releases](https://img.shields.io/github/downloads/draeger-lab/refinegems/total?logo=github&label=GitHub%20downloads) |
+| PyPI | [![PyPI version](https://img.shields.io/pypi/v/refinegems?logo=pypi&label=PyPI%20package&color=neongreen)](https://pypi.org/project/refineGEMs/) [![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg?logo=pypi&label=PyPI%20downloads)](https://pypistats.org/packages/refinegems) ![PyPI - Format](https://img.shields.io/pypi/format/refinegems?) |
+| Compliance | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![FAIR checklist badge](https://fairsoftwarechecklist.net/badge.svg)](https://fairsoftwarechecklist.net/v0.2?f=31&a=32113&i=32102&r=133) [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu) |
+| References | [![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8270303-B4A069?style=flat-square&logo=zenodo&logoColor=white)](https://zenodo.org/badge/latestdoi/359867657) [![Frontiers DOI](https://img.shields.io/badge/Frontiers%20DOI-10.3389%2Ffbinf.2023.1214074-B4A069?style=flat-square)](https://www.frontiersin.org/articles/10.3389/fbinf.2023.1214074/full) |
+
+
 # refineGEMs
 `refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS). </br>
-⚠️🚧 **DISCLAIMER:** The documentation is currently under heavy-rework!
-The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
+
+> [!WARNING]
+> ⚠️🚧 The documentation is currently under heavy-rework!
+> The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
 
 ## Table of contents
 1. [Overview](#overview)
