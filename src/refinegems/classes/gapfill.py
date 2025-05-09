@@ -1931,7 +1931,7 @@ class GeneGapFiller(GapFiller):
         ]
         self.missing_genes = self.missing_genes.explode("ncbiprotein")
 
-# @TODO Note to user that default is None and though no mapping is performed
+# @TODO Note to user that default is None and so no mapping is performed
     def find_missing_reactions(
         self,
         model: cobra.Model,
@@ -1987,11 +1987,11 @@ class GeneGapFiller(GapFiller):
                 Defaults to 'swissprot'.
             - dmnd_db (str, optional):
                 Path to the DIAMOND database containing the protein sequences of SwissProt.
-                Required for the search against SwissProt or rhe users own DIAMOND dn.
+                Required for the search against SwissProt or the users own DIAMOND database.
                 Defaults to None.
             - map_db (str, optional):
-                Path to the SwissProt mapping file.
-                Required for the search against SwissProt.
+                Path to the SwissProt/users own mapping file.
+                Required for the search against SwissProt/user-defined database.
                 Greatly decreases runtime for running the DIAMOND search.
 
                 ..note::
