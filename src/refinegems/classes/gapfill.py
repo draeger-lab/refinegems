@@ -1931,7 +1931,7 @@ class GeneGapFiller(GapFiller):
         ]
         self.missing_genes = self.missing_genes.explode("ncbiprotein")
 
-# @TODO Note to user that default is None and so no mapping is performed
+
     def find_missing_reactions(
         self,
         model: cobra.Model,
@@ -1955,6 +1955,11 @@ class GeneGapFiller(GapFiller):
 
         Optionally, query the protein accession numbers against NCBI
         (increases runtime significantly).
+
+        .. note::
+            When running this function with the default parameters, no mapping is performed.
+            If you want to use the mapping, please provide the required parameters.
+            The defaults are primarily to ensure smooth addition to workflows in pipelines.
 
         .. hint::
 
