@@ -21,7 +21,7 @@ Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
   | If the organism to be modelled has an *entry in BioCyc*, this information can be compared to the model to add missing genes, reactions and more.
 
 - | :ref:`Gap-filling with a GFF (and SwissProt)`:
-  | This algorithm takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt database to find homologs, that can then be added to the model.
+  | This algorithm takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt/a user-defined database to find homologs, that can then be added to the model.
 
 ----
 
@@ -47,8 +47,8 @@ During the steps above, if the information content if insufficient or the constr
 the corresponding part is collected and saved for the user to enable faster manual curation afterwards (if desired).
 
 All algorithms have similar table outputs for the finding part, the filling part is therefore
-same for all (see :py:meth:`~refinegems.classes.gapfill.GapFiller.fill_model`). 
-Before adding any reactions to the model, it is checked, if it already exists to
+the same for all (see :py:meth:`~refinegems.classes.gapfill.GapFiller.fill_model`). 
+Before adding any reaction to the model, it is checked, if it already exists to
 reduce the possibility of duplicates being added.
 
 Additionally, the following parameters allow the user to set up restrictions on 
@@ -72,11 +72,11 @@ Gap-filling with KEGG
 
 | **Requirement:** KEGG organism ID 
 | **Class:** :py:class:`~refinegems.classes.gapfill.KEGGapFiller`
-| **Runtime estimation:** *to be determined*
+| **Runtime estimation:** ~1h 24min (1h 20min (for finding all missing components) + 4min (for filling))
 
 To find the missing genes, the genes in the model are compared to the ones that can be
 extracted from KEGG with the given organism ID. The comparison is based on the KEGG 
-locus tags (format :code:`<kegg-organism-id>:<locus-tag>`). The IDs for the missing
+Gene IDs (format :code:`<kegg-organism-id>:<locus-tag>`). The IDs for the missing
 genes are then used to retrieve the corresponding KEGG entry to extract information 
 about related enzymes and reactions (via EC number and KEGG reaction ID). If a KEGG 
 reaction ID is found, it can be directly used as a missing reaction. If an EC number is found, 
@@ -89,7 +89,7 @@ Gap-filling with BioCyc
 
 | **Requirement:** BioCyc entry for the organism, access to BioCyc smart tables
 | **Class:** :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`
-| **Runtime estimation:** *to be determined*
+| **Runtime estimation:** ~11s (5s (for finding all missing components) + 6s (for filling))
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
@@ -100,8 +100,6 @@ The missing genes are identfied by comparing the gene table ``Accession-2`` colu
 Subsequently, the missing genes are mapped back to the reactions to identify missing reactions.
 The reactions are further mapped to MetaNetX and BiGG to obtain more reaction equations and 
 information, since especially the metabolites are easier to construct using the other databases.
-
-@DISCUSSION Can we leave it like that or is still something missing?
 
 Data acquisition from BioCyc
 """"""""""""""""""""""""""""
@@ -135,36 +133,28 @@ Data acquisition from BioCyc
         
     iii. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `common names`.
 
+Gap-filling with a GFF (and a DIAMOND database)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-@TODO Are these really all requirements?
-
-Gap-filling with a GFF (and SwissProt)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-| **Requirement:** Protein GFF (RefSeq or GenBank format)
+| **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file)
 | **Class:** :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
-| **Runtime estimation:** *to be determined*
+| **Runtime estimation:** ~4min (1min (for finding all missing components without NCBI) + 3min (for filling))
 
 In contrast to the other gap-filling options, this one can be applied, if the organism has no database entry. 
 Therefore, this gap-filling algorithm also works with newly discovered strains.
 
 The idea is to extract the coding sequences of the organism from the GFF and map the corresponding
 locus tags to the ones found in the model to identify missing genes. Subsequently, the sequences of the 
-missing genes are blasted against the SwissProt database to identify homologs. The homologs are then mapped to
+missing genes are blasted against the provided DIAMOND database to identify homologs. The homologs are then mapped to
 EC numbers (if possible). If the GFF already contains EC number information, these are extracted beforehand
 to reduce the number of sequences that need to be blasted. Additionally, the (NCBI) protein IDs 
 can be searched in NCBI to extract information from there. This behaviour can be useful, if 
 the input is a RefSeq GFF. It can be enabled by passing an e-mail address to the parameter :code:`mail` and 
 setting :code:`check_NCBI` to `True` when running :py:meth:`~refinegems.classes.gapfill.GeneGapFiller.find_missing_reactions`. 
 Finally, the EC numbers are mapped to different databases to find the
-reactions that should be added to the model. 
-
-.. note:: 
-
-    Currently, this way of gap-filling is restricted to the SwissProt database, 
-    however, there are plans to extend it to allow other/multiple databases 
-    for the mapping.
-
+reactions that should be added to the model. However, enabling the NCBI search will slow down the
+algorithm significantly, since the NCBI search is done via the Entrez API and therefore
+limited to a certain number of requests per second.
 
 How to run a GapFiller
 ----------------------
@@ -172,6 +162,13 @@ How to run a GapFiller
 Due to the gap-filling algorithms having the same architecture, the function calls
 for running them are basically the same, save for some parameters (will be denoted as ``<params>`` 
 in the following code snippets.)
+
+.. note::
+
+    Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
+    If your model does not conform to this you can use one of the functions
+    :py:func:`~refinegems.curation.curate.polish_model` or
+    :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
 
 Firstly, the class instance for the chosen gapfiller, denoted by the place holder 
 ``<CHOSEN_GAPFILLER>``, must be initialised.
@@ -192,7 +189,7 @@ additional parameters need to be added.
     # model = model loaded with libsbml
     gapfiller.find_missing_genes(model, <params>)    
 
-Then, the missing reactions are identified in a similar matter. The biggest differences
+Then, the missing reactions are identified in a similar manner. The biggest difference
 is that this part relies on the model loaded with COBRApy, while the gene-finding part 
 relies on the model loaded with libSBML. 
 
@@ -219,7 +216,7 @@ To access information between steps or afterwards, the following attributes can 
 
     Some GapFillers also provide additional, for the corresponding algorithm specific, attributes.
 
-    Additionally, the statistics and information for manual curation can be saved in a :py:mod:`~refinegems.classes.reports.GapFillerReport`.
+    Furthermore, the statistics and information for manual curation can be saved in a :py:mod:`~refinegems.classes.reports.GapFillerReport`.
 
 .. code-block:: python 
     :class: copyable
