@@ -15,7 +15,7 @@
 `refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS). </br>
 
 > [!WARNING]
-> ⚠️🚧 The documentation is currently under heavy-rework!
+> 🚧 The documentation is currently under heavy-rework!
 > The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
 
 ## Table of contents
@@ -26,23 +26,21 @@
 
 ## Overview
 
-Currently `refineGEMs` can be used for the investigation of a GEM, it can complete the following tasks:
+Currently `refineGEMs` can be used for the investigation of a genome-scale metabolic model (GEM)/multiple GEMs, it can complete the following tasks:
 
-- loading GEMs with `COBRApy` and `libSBML`
-- report number of metabolites, reactions and genes
-- report orphaned, deadends and disconnected metabolites
-- report mass and charge unbalanced reactions
-- report [Memote](https://memote.readthedocs.io/en/latest/index.html) score
-- compare the genes present in the model to the genes found in:
-  - the [KEGG](https://www.genome.jp/kegg/kegg1.html) Database (Note: This requires the GFF file and the KEGG identifier of your organism.)
-  - Or the [BioCyc](https://biocyc.org) Database (Note: This requires that a database entry for your organism exists in BioCyc.)
-- compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database.
+- Loading GEMs with `COBRApy` and `libSBML`
+- Report and visualise number of metabolites, reactions and genes
+- Report orphaned, deadends and disconnected metabolites
+- Report mass and charge unbalanced reactions
+- Report the [Memote](https://memote.readthedocs.io/en/latest/index.html) score and provide a whole MEMOTE report
+- Find and fill gaps automatically via databases like KEGG, BioCyc, SwissProt or a user-defined database
+- Compare the charges and masses of the metabolites present in the model to the charges and masses denoted in the [ModelSEED](https://modelseed.org/) Database.
 
 Other applications of `refineGEMs` to curate a given model include: 
 
-- The correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers),
-- The addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin),
-- Updating the SBO-Term annotations based on [SBOannotator](https://github.com/draeger-lab/SBOannotator),
+- The correction of a model created with [CarveMe](https://github.com/cdanielmachado/carveme) v1.5.1 or v1.5.2 (for example moving all relevant information from the notes to the annotation field or automatically annotating the GeneProduct section of the model with the respective NCBI gene/protein identifiers from the GeneProduct identifiers)
+- The addition of [KEGG](https://www.genome.jp/kegg/kegg1.html) Pathways as Groups (using the [libSBML](https://synonym.caltech.edu/software/libsbml/5.18.0/docs/formatted/python-api/classlibsbml_1_1_groups_model_plugin.html) Groups Plugin)
+- Updating the SBO-Term annotations based on [SBOannotator](https://github.com/draeger-lab/SBOannotator)
 
 
 ## Installation
@@ -72,18 +70,19 @@ pip install .
 
 ```
 
-``refineGEMs`` depends on the tools [MCC](https://github.com/Biomathsys/MassChargeCuration) and 
-[BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
-Please install both tools before using ``refineGEMs``:
-
-```bash
-# For MCC, until hot fix is merged into main:
-pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration"
-
-# For BOFdat, our fork with hot fix(es):
-pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
-
-```
+> [!CAUTION]
+> ``refineGEMs`` depends on the tools [MCC](https://github.com/Biomathsys/MassChargeCuration) and 
+> [BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
+> Please install both tools before using ``refineGEMs``:
+>
+> ```bash
+> # For MCC, until hot fix is merged into main:
+> pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration"
+>
+> # For BOFdat, our fork with hot fix(es):
+> pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
+>
+> ```
 
 ## How to cite
 When using `refineGEMs`, please cite the latest publication:
