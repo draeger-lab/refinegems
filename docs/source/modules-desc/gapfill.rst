@@ -72,7 +72,7 @@ Gap-filling with KEGG
 
 | **Requirement:** KEGG organism ID 
 | **Class:** :py:class:`~refinegems.classes.gapfill.KEGGapFiller`
-| **Runtime estimation:** ~1h 24min (1h 20min (for finding all missing components) + 4min (for filling))
+| **Runtime estimation:** ~1h 4min (1h (for finding all missing components) + 4min (for filling)) # @TODO: Readjust times
 
 To find the missing genes, the genes in the model are compared to the ones that can be
 extracted from KEGG with the given organism ID. The comparison is based on the KEGG 
@@ -138,7 +138,7 @@ Gap-filling with a GFF (and a DIAMOND database)
 
 | **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file)
 | **Class:** :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
-| **Runtime estimation:** ~4min (1min (for finding all missing components without NCBI) + 3min (for filling))
+| **Runtime estimation:** ~3min (1min (for finding all missing components without NCBI) + 2min (for filling))
 
 In contrast to the other gap-filling options, this one can be applied, if the organism has no database entry. 
 Therefore, this gap-filling algorithm also works with newly discovered strains.

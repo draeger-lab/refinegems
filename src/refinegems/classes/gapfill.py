@@ -1514,7 +1514,7 @@ class BioCycGapFiller(GapFiller):
         - gff (str, required):
             Path to organism-specific GFF file
     """
-
+    # @BUG Major issue due to initialisation of super class with setter function of BioCycGapFiller
     def __init__(
         self, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str, gff: str
     ) -> None:
@@ -1544,6 +1544,8 @@ class BioCycGapFiller(GapFiller):
     @full_gene_list.setter
     def full_gene_list(self, biocyc_gene_tbl_path: str):
         # Read table
+        print(biocyc_gene_tbl_path)
+        print(type(biocyc_gene_tbl_path))
         biocyc_genes = pd.read_table(
             biocyc_gene_tbl_path,
             usecols=["Accession-2", "Reactions of gene"],
