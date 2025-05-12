@@ -72,7 +72,7 @@ Gap-filling with KEGG
 
 | **Requirement:** KEGG organism ID 
 | **Class:** :py:class:`~refinegems.classes.gapfill.KEGGapFiller`
-| **Runtime estimation:** ~1h 4min (1h (for finding all missing components) + 4min (for filling)) # @TODO: Readjust times
+| **Runtime estimation:** ~1h 4min (1h (for finding all missing components) + 4min (for filling); tested with *Klebsiella pneumoniae* HS11286 and *Staphylococcus haemolyticus* JCSC1435)
 
 To find the missing genes, the genes in the model are compared to the ones that can be
 extracted from KEGG with the given organism ID. The comparison is based on the KEGG 
@@ -89,7 +89,7 @@ Gap-filling with BioCyc
 
 | **Requirement:** BioCyc entry for the organism, access to BioCyc smart tables
 | **Class:** :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`
-| **Runtime estimation:** ~11s (5s (for finding all missing components) + 6s (for filling))
+| **Runtime estimation:** ~11s (6s (for finding all missing components) + 5s (for filling); tested with *Klebsiella pneumoniae* HS11286 and *Staphylococcus haemolyticus* ATCC29970)
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
@@ -138,7 +138,7 @@ Gap-filling with a GFF (and a DIAMOND database)
 
 | **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file)
 | **Class:** :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
-| **Runtime estimation:** ~3min (1min (for finding all missing components without NCBI) + 2min (for filling))
+| **Runtime estimation:** ~3min (1min (for finding all missing components without NCBI) + 2min (for filling); tested with *Klebsiella pneumoniae* HS11286 and *Staphylococcus haemolyticus* from a private collection)
 
 In contrast to the other gap-filling options, this one can be applied, if the organism has no database entry. 
 Therefore, this gap-filling algorithm also works with newly discovered strains.
