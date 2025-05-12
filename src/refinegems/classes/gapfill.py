@@ -596,7 +596,7 @@ class GapFiller(ABC):
     def __init__(self) -> None:
 
         # data
-        self.full_gene_list = None
+        self.__dict__["full_gene_list"] = None # self.full_gene_list = None
         self.missing_genes = (
             None  # missing genes, that have not yet been sorted into any category
         )
@@ -1253,8 +1253,8 @@ class KEGGapFiller(GapFiller):
 
     def __init__(self, organismid) -> None:
         super().__init__()
-        self.organismid = organismid
         self._variety = "KEGG"
+        self.organismid = organismid
 
     def find_missing_genes(self, model: libModel):
         """Get the missing genes in model in comparison to the KEGG entry of the
@@ -1514,15 +1514,14 @@ class BioCycGapFiller(GapFiller):
         - gff (str, required):
             Path to organism-specific GFF file
     """
-    # @BUG Major issue due to initialisation of super class with setter function of BioCycGapFiller
     def __init__(
         self, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str, gff: str
     ) -> None:
         super().__init__()
+        self._variety = "BioCyc"
         self.full_gene_list = biocyc_gene_tbl_path
         self.biocyc_rxn_tbl = biocyc_reacs_tbl_path
         self._gff = gff
-        self._variety = "BioCyc"
 
     @property
     def full_gene_list(self):
@@ -1544,8 +1543,6 @@ class BioCycGapFiller(GapFiller):
     @full_gene_list.setter
     def full_gene_list(self, biocyc_gene_tbl_path: str):
         # Read table
-        print(biocyc_gene_tbl_path)
-        print(type(biocyc_gene_tbl_path))
         biocyc_genes = pd.read_table(
             biocyc_gene_tbl_path,
             usecols=["Accession-2", "Reactions of gene"],
@@ -1567,9 +1564,9 @@ class BioCycGapFiller(GapFiller):
         # Statistics on full gene list based on BioCyc
         self._statistics["genes"][f"total (based on {self._variety})"] = biocyc_genes[
             "locus_tag"
-        ].nunique() + int(self.missing_genes["locus_tag"].isna().sum())
+        ].nunique() + int(biocyc_genes["locus_tag"].isna().sum())
 
-        self.full_gene_list = biocyc_genes
+        self._full_gene_list = biocyc_genes
 
     @property
     def biocyc_rxn_tbl(self):
@@ -1628,12 +1625,12 @@ class BioCycGapFiller(GapFiller):
 
         # Step 2: Get genes of organism from BioCyc
         # -----------------------------------------
-        # See self._biocyc_gene_tbl
+        # See self.full_gene_list
 
         # Step 3: BioCyc vs. model genes -> get missing genes for model
         # -------------------------------------------------------------
-        self.missing_genes = self.biocyc_gene_tbl[
-            ~self.biocyc_gene_tbl["locus_tag"].isin(geneps_in_model)
+        self.missing_genes = self.full_gene_list[
+            ~self.full_gene_list["locus_tag"].isin(geneps_in_model)
         ]
 
         # Step 4: Get amount of missing genes in total
