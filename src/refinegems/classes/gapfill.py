@@ -2037,11 +2037,11 @@ class GeneGapFiller(GapFiller):
                         # still no EC but ncbiprotein
                         #       -> access ncbi for ec (optional)
                         # @DEBUG .......................
-                        # mapped_reacs = mapped_reacs.iloc[300:350,:]
+                        # case_1 = case_1.iloc[300:350,:]
                         # print(UserWarning('Running in debugging mode.'))
                         # ..............................
                         if check_NCBI and mail:
-                            mapped_reacs["ec-code"] = mapped_reacs.progress_apply(
+                            case_1["ec-code"] = case_1.progress_apply(
                                 lambda x: (
                                     get_ec_from_ncbi(mail, x["ncbiprotein"])
                                     if not x["ec-code"]
