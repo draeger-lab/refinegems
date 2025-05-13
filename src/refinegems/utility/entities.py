@@ -1883,6 +1883,8 @@ def get_gpid_mapping(
             # Case 5: Model ID contains locus_tag, AB-1_S128_00983
             else:
                 ncbi_id = gene_id
+        else:
+            ncbi_id = None
 
         # Add potential database ID to dictionary
         modelid2potentialid["database_id"].append(ncbi_id)
