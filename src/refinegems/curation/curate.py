@@ -1245,7 +1245,7 @@ def polish_model(
     # @BUG / # @TEST
     if reaction_direction:
         model = _sbml_to_model(model)
-        check_direction(model, reaction_direction)
+        model = check_direction(model, reaction_direction)
         model = _model_to_sbml(model)
 
     ### set boundaries and constants ###
