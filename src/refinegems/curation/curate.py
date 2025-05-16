@@ -40,7 +40,7 @@ import re
 import warnings
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction
+from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model, _model_to_sbml
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -983,7 +983,7 @@ def resolve_duplicates(
 # ----------------------
 
 
-def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra.Model:
+def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude: Union[None, tuple[Literal['annotation','notes'], str, str]]=None) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
     database table or dataFrame (need to contain at least the following columns:
@@ -995,6 +995,11 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
         data (pd.DataFrame | str):
             Either a pandas DataFrame or a path to a CSV file
             containing the BioCyc smart table.
+        exclude (None | tuple(Literal['annotation','notes'], str, str), optional):
+            Tuple containing the type of exclusion ('annotation' or 'notes'),
+            the key to check, and the value to determine exclusion of the reaction.
+            If not tuple is given (None), no reaction is excluded.
+            Defaults to None
 
     Raises:
         - TypeError: Unknown data type for parameter data
@@ -1003,6 +1008,34 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
         cobra.Model:
             The edited model.
     """
+    
+    def _validate_exclude(exclude: tuple[Literal['annotation','notes'], str, str], reac) -> bool:
+        """Check if a reaction should be excluded from the directionality check.
+
+        Args:
+            exclude (tuple(Literal['annotation','notes'], str, str)):
+                Tuple containing the type of exclusion ('annotation' or 'notes'),
+                the key to check, and the value to determine exclusion of the reaction.
+            reac (cobra.Reaction):
+                The reaction to check.
+
+        Returns:
+            bool: True if the reaction should be excluded, False otherwise.
+        """
+        dicttype, key, value = exclude
+        match dicttype:
+            case "annotation":
+                # Check if the annotation key exists and if its value matches the exclusion value
+                if key in reac.annotation.keys() and reac.annotation[key] == value:
+                    return True 
+            case "notes":
+                # Check if the notes key exists and if its value matches the exclusion value
+                if key in reac.notes.keys() and reac.notes[key] == value:
+                    return True
+            case _:
+                logging.warning(f'Unknown type {dicttype} for checking for exclusion. Reaction direction will be checked anyway.')
+            
+        return False
 
     match data:
         # already a DataFrame
@@ -1022,89 +1055,92 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
     # check direction
     # --------------------
     for r in model.reactions:
-
-        direction = None
-        # easy case: metacyc is already (corretly) annotated
-        if (
-            "metacyc.reaction" in r.annotation
-            and len(data[data["Reactions"] == r.annotation["metacyc.reaction"]]) != 0
-        ):
-            direction = data[data["Reactions"] == r.annotation["metacyc.reaction"]][
-                "Reaction-Direction"
-            ].iloc[0]
-            r.notes["BioCyc direction check"] = f"found {direction}"
-        # complicated case: no metacyc annotation
+        # exclude certain reactions
+        if exclude and _validate_exclude(exclude, r):
+            continue
         else:
-            annotations = []
-
-            # collect matches
+            direction = None
+            # easy case: metacyc is already (corretly) annotated
             if (
-                "kegg.reaction" in r.annotation
-                and r.annotation["kegg.reaction"] in data["KEGG reaction"].tolist()
+                "metacyc.reaction" in r.annotation
+                and len(data[data["Reactions"] == r.annotation["metacyc.reaction"]]) != 0
             ):
-                annotations.append(
-                    data[data["KEGG reaction"] == r.annotation["kegg.reaction"]][
-                        "Reactions"
-                    ].tolist()
-                )
-            if (
-                "metanetx.reaction" in r.annotation
-                and r.annotation["metanetx.reaction"] in data["METANETX"].tolist()
-            ):
-                annotations.append(
-                    data[data["METANETX"] == r.annotation["metanetx.reaction"]][
-                        "Reactions"
-                    ].tolist()
-                )
-            if (
-                "ec-code" in r.annotation
-                and r.annotation["ec-code"] in data["EC-Number"].tolist()
-            ):
-                annotations.append(
-                    data[data["EC-Number"] == r.annotation["ec-code"]][
-                        "Reactions"
-                    ].tolist()
-                )
-
-            # check results
-            # no matches
-            if len(annotations) == 0:
-                r.notes["BioCyc direction check"] = "not found"
-
-            # matches found
+                direction = data[data["Reactions"] == r.annotation["metacyc.reaction"]][
+                    "Reaction-Direction"
+                ].iloc[0]
+                r.notes["BioCyc direction check"] = f"found {direction}"
+            # complicated case: no metacyc annotation
             else:
-                # built intersection
-                intersec = set(annotations[0]).intersection(*annotations)
-                # case 1: exactly one match remains
-                if len(intersec) == 1:
-                    entry = intersec.pop()
-                    direction = data[data["Reactions"] == entry][
-                        "Reaction-Direction"
-                    ].iloc[0]
-                    r.annotation["metacyc.reaction"] = entry
-                    r.notes["BioCyc direction check"] = f"found {direction}"
+                annotations = []
 
-                # case 2: multiple matches found -> inconclusive
+                # collect matches
+                if (
+                    "kegg.reaction" in r.annotation
+                    and r.annotation["kegg.reaction"] in data["KEGG reaction"].tolist()
+                ):
+                    annotations.append(
+                        data[data["KEGG reaction"] == r.annotation["kegg.reaction"]][
+                            "Reactions"
+                        ].tolist()
+                    )
+                if (
+                    "metanetx.reaction" in r.annotation
+                    and r.annotation["metanetx.reaction"] in data["METANETX"].tolist()
+                ):
+                    annotations.append(
+                        data[data["METANETX"] == r.annotation["metanetx.reaction"]][
+                            "Reactions"
+                        ].tolist()
+                    )
+                if (
+                    "ec-code" in r.annotation
+                    and r.annotation["ec-code"] in data["EC-Number"].tolist()
+                ):
+                    annotations.append(
+                        data[data["EC-Number"] == r.annotation["ec-code"]][
+                            "Reactions"
+                        ].tolist()
+                    )
+
+                # check results
+                # no matches
+                if len(annotations) == 0:
+                    r.notes["BioCyc direction check"] = "not found"
+
+                # matches found
                 else:
-                    r.notes["BioCyc direction check"] = f"found, but inconclusive"
+                    # built intersection
+                    intersec = set(annotations[0]).intersection(*annotations)
+                    # case 1: exactly one match remains
+                    if len(intersec) == 1:
+                        entry = intersec.pop()
+                        direction = data[data["Reactions"] == entry][
+                            "Reaction-Direction"
+                        ].iloc[0]
+                        r.annotation["metacyc.reaction"] = entry
+                        r.notes["BioCyc direction check"] = f"found {direction}"
 
-        # update direction if possible and needed
-        if not pd.isnull(direction):
-            if "REVERSIBLE" in direction:
-                # set reaction as reversible by setting default values for upper and lower bounds
-                r.lower_bound = cobra.Configuration().lower_bound
-            elif "RIGHT-TO-LEFT" in direction:
-                # invert the default values for the boundaries
-                r.lower_bound = cobra.Configuration().lower_bound
-                r.upper_bound = 0.0
-            elif "LEFT-To-RIGHT" in direction:
-                # In case direction was already wrong
-                r.lower_bound = 0.0
-                r.upper_bound = cobra.Configuration().upper_bound
-            else:
-                # left to right case is the standard for adding reactions
-                # = nothing left to do
-                continue
+                    # case 2: multiple matches found -> inconclusive
+                    else:
+                        r.notes["BioCyc direction check"] = f"found, but inconclusive"
+
+            # update direction if possible and needed
+            if not pd.isnull(direction):
+                if "REVERSIBLE" in direction:
+                    # set reaction as reversible by setting default values for upper and lower bounds
+                    r.lower_bound = cobra.Configuration().lower_bound
+                elif "RIGHT-TO-LEFT" in direction:
+                    # invert the default values for the boundaries
+                    r.lower_bound = cobra.Configuration().lower_bound
+                    r.upper_bound = 0.0
+                elif "LEFT-To-RIGHT" in direction:
+                    # In case direction was already wrong
+                    r.lower_bound = 0.0
+                    r.upper_bound = cobra.Configuration().upper_bound
+                else:
+                    # left to right case is the standard for adding reactions
+                    # = nothing left to do
+                    continue
 
     return model
 
@@ -1206,8 +1242,11 @@ def polish_model(
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
 
     ### Check reaction direction ###
+    # @BUG / # @TEST
     if reaction_direction:
+        model = _sbml_to_model(model)
         check_direction(model, reaction_direction)
+        model = _model_to_sbml(model)
 
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
