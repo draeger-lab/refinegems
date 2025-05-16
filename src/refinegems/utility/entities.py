@@ -71,6 +71,12 @@ from .util import (
 from ..developement.decorators import *
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -132,7 +138,7 @@ def resolve_compartment_names(model: cobra.Model):
             #    only compartments IN the model will be added
             model.compartments = VALID_COMPARTMENTS
             if "uc" in model.compartments.keys():
-                logging.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
+                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
 
         else:
             raise KeyError(
@@ -729,7 +735,7 @@ def build_metabolite_kegg(
         
         # in case of an ambiguous mapping, take first match
         if len(mnx_ids) > 1:
-            logging.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
+            logger.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
             mnx_ids = [mnx_ids[0]]
         
         # mapping is unambiguously (or made that way)
@@ -1644,7 +1650,7 @@ def remove_non_essential_genes(
                     for r in m.reactions:
                         reac_genes = [_.id for _ in list(r.genes)]
                         if reac_genes != 0 and ('and '+g.id in r.gene_reaction_rule or g.id+' and' in r.gene_reaction_rule):
-                            logging.info(f'Keeping gene {g.id}, as it is part of a complex. Check during manual curation.')
+                            logger.info(f'Keeping gene {g.id}, as it is part of a complex. Check during manual curation.')
                             complexctr = True 
                             break
                 if complexctr:
@@ -1847,7 +1853,7 @@ def get_gpid_mapping(
         return row
 
     # 1. Get model IDs & potential contained IDs
-    print("Extracting model IDs and potential valid database IDs from model...")
+    logger.info("Extracting model IDs and potential valid database IDs from model...")
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
     modelid2potentialid = {"model_id": [], "database_id": []}
 
@@ -1898,7 +1904,7 @@ def get_gpid_mapping(
     mapping_table["UNCLASSIFIED"] = None
 
     # Classify potential database IDs according to db specific regexes
-    print('Classifying potential database IDs according to db specific regexes...')
+    logger.info('Classifying potential database IDs according to db specific regexes...')
     mapping_table = mapping_table.progress_apply(_classify_potential_db_ids, axis=1)
     mapping_table.drop("database_id", axis=1, inplace=True)
 
@@ -1907,7 +1913,7 @@ def get_gpid_mapping(
 
     # 1.1 (Optional) Get information from GFF(s)
     if gff_paths:
-        print("Extracting (protein id,) locus tag and name from GFF(s)...")
+        logger.info("Extracting (protein id,) locus tag and name from GFF(s)...")
 
         # Identical attributes to keep per GFF
         to_keep = {"locus_tag": "locus_tag", "product": "name"}
@@ -1939,7 +1945,7 @@ def get_gpid_mapping(
                 current_gff["UNCLASSIFIED"] = None
 
                 # Classify potential database IDs according to db specific regexes
-                print('Classifying potential database IDs according to db specific regexes...')
+                logger.info('Classifying potential database IDs according to db specific regexes...')
                 current_gff = current_gff.progress_apply(_classify_potential_db_ids, axis=1)
                 current_gff.drop("database_id", axis=1, inplace=True)
                 
@@ -1994,7 +2000,7 @@ def get_gpid_mapping(
                     filename = Path(outpath, filename)
                 else:
                     filename = Path(filename)
-                print(f'''
+                logger.warning(f'''
 No common columns found between mapping table derived from model and mapping table derived from provided GFFs. Cannot merge.
 The resulting mapping tables will be returned separately. The table for the GFF mapping is written to {filename}.
                 ''')
@@ -2004,7 +2010,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
     contains_protein_ids = len({'NCBI', 'REFSEQ'}.intersection(set(mapping_table.columns))) > 0
     if email and contains_protein_ids:
         Entrez.email = email
-        print("Retrieve locus tag and name information from NCBI...")
+        logger.info("Retrieve locus tag and name information from NCBI...")
 
         # Add empty columns for names and locus tags if not already contained
         if not "locus_tag" in mapping_table.columns:
@@ -2021,14 +2027,14 @@ The resulting mapping tables will be returned separately. The table for the GFF 
                 mapping_table["name_refseq"] = None
 
         # Query NCBI based on RefSeq Protein ID
-        print('Querying NCBI based on RefSeq Protein IDs...')
+        logger.ingo('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
             mapping_table = mapping_table.progress_apply(
                 _search_ncbi_for_gp, axis=1, args=("refseq",)
             )
 
         # Query NCBI based on NCBI Protein ID
-        print('Querying NCBI based on NCBI Protein IDs...')
+        logger.info('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
             mapping_table = mapping_table.progress_apply(
                 _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
@@ -2066,7 +2072,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         # Default name is whatever is stored in name column, if exists, or None
         return row
 
-    print('Cleaning up dataframe for output...')
+    logger.info('Cleaning up dataframe for output...')
     # Generate default column name to set content
     if not 'name' in mapping_table.columns:
         mapping_table["name"] = None
@@ -2083,7 +2089,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         filename = Path(outpath, filename)
     else:
         filename = Path(filename)
-    logging.info(
+    logger.info(
         f"The mapping table mapping the geneProduct IDs of the provided model {model.getId()} to the names and locus "
         + f"tags is saved to {filename}"
     )
@@ -2155,11 +2161,11 @@ def create_gp(
         for g in genes:
             # for ID 
             if g.isSetId() and g.getId == model_id:
-                logging.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
+                logger.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
                 return None
             # for locus tag as label
             if label and g.isSetLabel() and g.getLabel() == label:
-                logging.warning(f'Cannot add gene product, as label {label} is already in the model.')
+                logger.warning(f'Cannot add gene product, as label {label} is already in the model.')
                 return None
         
     # create gene product object
@@ -2596,4 +2602,4 @@ def print_UnitDefinitions(unit_defs: ListOfUnitDefinitions):
             List of libSBML UnitDefinition objects
     """
     for unit_def in unit_defs:
-        logging.info(unit_def.toXMLNode())
+        logger.info(unit_def.toXMLNode())

@@ -62,6 +62,12 @@ from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, test_biomass_presence
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -215,7 +221,7 @@ def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: st
                 no_valid_kegg.append(gp.getLabel())
 
     if no_valid_kegg:
-        logging.info(
+        logger.info(
             f"The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg} with the provided KEGG Organism ID: {kegg_organism_id}."
         )
 
@@ -425,7 +431,7 @@ def polish_model_units(model: libModel) -> None:
 
         # Only print list if UnitDefinitions were removed
         if len(removed_unit_defs) == 0:
-            logging.warning(
+            logger.warning(
                 """
             The following UnitDefinition objects were removed. 
             The reasoning is that
@@ -553,7 +559,7 @@ def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions])
         case ListOfReactions():
             pass
         case _:
-            logging.warning(
+            logger.warning(
                 f"Unsupported type for entity_list {type(entity_list)}. Must be ListOfSpecies or ListOfReactions."
             )
 
@@ -1033,7 +1039,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                 if key in reac.notes.keys() and reac.notes[key] == value:
                     return True
             case _:
-                logging.warning(f'Unknown type {dicttype} for checking for exclusion. Reaction direction will be checked anyway.')
+                logger.warning(f'Unknown type {dicttype} for checking for exclusion. Reaction direction will be checked anyway.')
             
         return False
 

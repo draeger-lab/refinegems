@@ -18,6 +18,12 @@ from six import iteritems
 from typing import Union
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -174,7 +180,7 @@ def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
     """
     biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
     outcome = len(biomass_rxn) > 0
-    logging.info(
+    logger.info(
         """In this model the following {} biomass reaction(s) were
         identified: {}""".format(
             len(biomass_rxn), truncate(biomass_rxn)
@@ -260,7 +266,7 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
         return message
     else:
         if (1 - 1e-03) < biomass_weight < (1 + 1e-06):
-            logging.info(
+            logger.info(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
@@ -268,7 +274,7 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
                 )
             )
         else:
-            logging.warning(
+            logger.warning(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(

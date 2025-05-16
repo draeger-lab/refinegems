@@ -48,6 +48,12 @@ from ..utility.db_access import BIOCYC_TIER1_DATABASES_PREFIXES
 from ..utility.io import parse_dict_to_dataframe
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # functions
 ################################################################################
 
@@ -527,7 +533,7 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         else:
             # Remove annotations if no valid URIs/CURIEs were found
             if cvterm.getNumResources() < 1:
-                logging.warning(
+                logger.warning(
                     f"No valid URIs/CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs."
                 )
 
@@ -630,7 +636,7 @@ def polish_annotations(
             filename = Path(outpath, filename)
         else:
             filename = Path(filename)
-        logging.warning(
+        logger.warning(
             f"In the provided model {model.getId()} for {len(all_entity2invalid_curies)} entities invalid CURIEs were detected. "
             + f"These invalid CURIEs are saved to {filename}"
         )
@@ -678,7 +684,7 @@ def change_qualifier_per_entity(
         if (
             cvterm.getBiologicalQualifierType() == 9
         ):  # 9 = BQB_OCCURS_IN (Reaction), Check for reactions with occursIn
-            logging.info(
+            logger.info(
                 f"CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}"
                 + f" is left as {Fore.LIGHTYELLOW_EX}{BiolQualifierType_toString(cvterm.getBiologicalQualifierType())}{Style.RESET_ALL}"
             )
@@ -686,7 +692,7 @@ def change_qualifier_per_entity(
         elif (
             cvterm.getModelQualifierType() == 1
         ):  # 1 = BQM_IS_DESCRIBED_BY (UnitDefinition), Check for UnitDefinitions with isDescribedBy
-            logging.info(
+            logger.info(
                 f"CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}"
                 + f" is left as {Fore.LIGHTYELLOW_EX}{ModelQualifierType_toString(cvterm.getModelQualifierType())}{Style.RESET_ALL}"
             )
@@ -787,12 +793,12 @@ def change_qualifiers(
                     entity, new_qt, new_b_m_qt, specific_db_prefix
                 )
         except TypeError:
-            logging.info(
+            logger.info(
                 "The entity " + entity_type + " is not present in " + model.getId()
             )
 
     if not_miriam_compliant:
-        logging.warning(
+        logger.warning(
             f"The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}"
         )
 

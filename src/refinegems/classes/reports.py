@@ -38,6 +38,12 @@ from ..developement.decorators import *
 from ..utility.io import search_sbo_label
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -1937,7 +1943,7 @@ class MultiSBOTermReport:
                 try:
                     cmap = matplotlib.colormaps[color_palette]
                 except ValueError:
-                    logging.WARN('Unknown color palette, setting it to "Paired"')
+                    logger.wARN('Unknown color palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
                     cmap = cmap.colors[0 : len(self.model_reports)]

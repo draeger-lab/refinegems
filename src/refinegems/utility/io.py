@@ -32,6 +32,12 @@ from typing import Literal, Union
 from .databases import PATH_TO_DB
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -215,9 +221,9 @@ def write_model_to_file(
                     cobra.io.save_matlab_model(model, filepath)
                 case _:
                     raise ValueError("Unknown file extension for model: ", extension)
-            logging.info("Modified model written to " + str(filepath))
+            logger.info("Modified model written to " + str(filepath))
         except OSError as e:
-            print("Could not write to file. Wrong path?")
+            logger.error("Could not write to file. Wrong path?")
 
     # Cast filename to Path object if string is provided
     if isinstance(filename, str):
@@ -240,9 +246,9 @@ def write_model_to_file(
                     _write_cobra_model_to_file(data, filename)
                 case _:
                     raise ValueError("Unknown file extension for model: ", extension)
-            logging.info("Modified model written to " + str(filename))
+            logger.info("Modified model written to " + str(filename))
         except OSError as e:
-            print("Could not write to file. Wrong path?")
+            logger.error("Could not write to file. Wrong path?")
     # unknown model type or no model
     else:
         message = f"Unknown model type {type(model)}. Cannot save."

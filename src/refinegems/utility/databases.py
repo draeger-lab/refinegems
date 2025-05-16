@@ -34,6 +34,12 @@ from importlib.resources import files
 from typing import Union
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -298,7 +304,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
     )
 
     if bigg_id_duplicates_set:
-        logging.warning(
+        logger.warning(
             "The BiGG metabolite table contains the following "
             f"{len(bigg_id_duplicates_set)} duplicate(s):\n"
             f"{bigg_id_duplicates_set}\n"

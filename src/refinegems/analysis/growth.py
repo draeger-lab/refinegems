@@ -32,6 +32,12 @@ from ..classes.medium import (
 )
 from typing import Literal, Union
 
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
 ############################################################################
 # functions
 ############################################################################
@@ -202,7 +208,7 @@ def find_growth_essential_exchanges(
         try:
             model.medium = new_medium
         except ValueError:
-            logging.info(
+            logger.info(
                 "Change upper bounds to COBRApy defaults to make model simulatable."
             )
             set_bounds_to_default(model)
@@ -366,7 +372,7 @@ def growth_sim_single(
         try:
             model.medium = new_m
         except ValueError:
-            logging.info(
+            logger.info(
                 "Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable."
             )
             set_bounds_to_default(model)

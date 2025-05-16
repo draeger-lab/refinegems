@@ -84,6 +84,12 @@ from .reports import GapFillerReport
 #   enable these parts to shorten runtime during debugging (used to work on a subset,
 #   not on the whole input)
 
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
 ############################################################################
 # variables
 ############################################################################
@@ -1206,7 +1212,7 @@ class GapFiller(ABC):
             - with_title (bool, optional):
                 Option to get figure without title. Defaults to False.
         """
-        logging.warning(
+        logger.warning(
             "Please keep in mind that all statistical values are determined while running the tool "
             + "and only unique values are tracked."
         )
@@ -1386,7 +1392,7 @@ class KEGGapFiller(GapFiller):
 
         # check, if any automatic gapfilling is possible
         if self.missing_reactions.empty:
-            logging.warning(
+            logger.warning(
                 f"No missing reactions for the provided model {model.id} were found via {self._variety}."
             )
             return None
@@ -1778,7 +1784,7 @@ class BioCycGapFiller(GapFiller):
 
         # check, if any automatic gapfilling is possible
         if self.missing_reactions.empty:
-            logging.warning(
+            logger.warning(
                 f"No missing reactions for the provided model {model.id} were found via {self._variety}."
             )
             return None
@@ -2093,7 +2099,7 @@ class GeneGapFiller(GapFiller):
 
         # check, if any automatic gapfilling is still possible
         if mapped_reacs.empty:
-            logging.warning(
+            logger.warning(
                 f"No missing reactions for the provided model {model.id} were found via {self._variety}."
             )
             return None
