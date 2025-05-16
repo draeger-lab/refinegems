@@ -850,11 +850,9 @@ class AuxotrophySimulationReport(Report):
     def visualise_auxotrophies(
         self, color_palette: str = "YlGn", save: Union[None, str] = None
     ) -> Union[None, matplotlib.figure.Figure]:
-        """Visualise and/or save the results of the :py:func:`~refinegems.analysis.growth.test_auxotrophies` function.
+        """Visualise and/or save the content of the report.
 
         Args:
-            - res (pd.DataFrame):
-                The output of  :py:func:`~refinegems.analysis.growth.test_auxotrophies`.
             - color_palette (str, optional):
                 A name of a seaborn gradient color palette.
                 In case name is unknown, takes the default. Defaults to 'YlGn'.

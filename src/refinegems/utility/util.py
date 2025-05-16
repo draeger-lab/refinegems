@@ -194,6 +194,9 @@ def sum_biomass_weight(reaction: Reaction) -> float:
 
     This function expects all metabolites of the biomass reaction to have
     formula information assigned.
+    
+    .. note::
+        If there is a rest symbolised by an "R", its weight will be considered 0.
 
     Args:
         - reaction (Reaction):
@@ -203,13 +206,13 @@ def sum_biomass_weight(reaction: Reaction) -> float:
         float:
             The molecular weight of the biomass reaction in units of g/mmol.
     """
-    return (
-        sum(
+    cobra.core.formula.elements_and_molecular_weights['R'] = 1.0
+    biomass_weight = sum(
             -coef * met.formula_weight
             for (met, coef) in iteritems(reaction.metabolites)
-        )
-        / 1000.0
-    )
+        )/ 1000.0
+    del cobra.core.formula.elements_and_molecular_weights['R']
+    return biomass_weight
 
 
 def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[float, str]:
