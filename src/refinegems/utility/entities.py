@@ -2027,7 +2027,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
                 mapping_table["name_refseq"] = None
 
         # Query NCBI based on RefSeq Protein ID
-        logger.ingo('Querying NCBI based on RefSeq Protein IDs...')
+        logger.info('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
             mapping_table = mapping_table.progress_apply(
                 _search_ncbi_for_gp, axis=1, args=("refseq",)
