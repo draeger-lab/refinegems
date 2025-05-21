@@ -1030,7 +1030,7 @@ def map_to_homologs(
     fasta: str,
     db: str,
     missing_genes: pd.DataFrame,
-    mapping_file: str,
+    mapping_file: str = None,
     outdir: str = None,
     sens: Literal[
         "sensitive", "more-sensitive", "very-sensitive", "ultra-sensitive"
@@ -1038,8 +1038,47 @@ def map_to_homologs(
     cov: float = 95.0,
     t: int = 2,
     pid: float = 90.0,
-    email=None,
+    email:str = None,
 ) -> pd.DataFrame:
+    """Based on a protein FASTA and a missing genes tables, mapped them to EC numbers
+     of homologous genes based on a DIAMOND BLASTp run.
+
+    Args:
+        - fasta (str): 
+            The protein FASTA file of the organism the model was build on.
+            Defaults to None.
+        - db (str): 
+            Path to the DIAMOND database.
+            Defaults to None.
+        - missing_genes (pd.DataFrame): 
+            Table containing information about the missing genes.
+        - mapping_file (str, optional): 
+            Precomputed mapping file to map the DIAMOND results to NCBI.
+        - outdir (str, optional): 
+            Path to the output directory. 
+            Defaults to None.
+        - sens (Literal['sensitive', 'more-sensitive', 'very-sensitive', 'ultra-sensitive'], optional): 
+            Sensitivity mode for DIAMOND. Defaults to "more-sensitive".
+        - cov (float, optional): 
+            Threshold for the coverage (parameter for DIAMOND). 
+            Defaults to 95.0.
+        - t (int, optional): 
+            Number of threads to use (DIAMOND parameter). 
+            Defaults to 2.
+        - pid (float, optional): 
+            Percentage identity cutoff value (Mappings with lower values are not considered). 
+            Defaults to 90.0.
+        - email (str, optional): 
+            Email to use for the NCBI requests. 
+            If not given, skips the direct requests. 
+            Also skipped, it mapping_file is provided.
+            Defaults to None.
+
+    Returns:
+        pd.DataFrame: 
+            Output table containing the following information (columns contain None, if mapping unsuccessful):
+            "locus_tag", "ncbiprotein", "locus_tag_ref", "old_locus_tag", "GeneID", "ec-code"
+    """
 
     # Step 1: Make a FASTA out of the missing genes
     miss_fasta = create_missing_genes_protein_fasta(fasta, missing_genes, outdir)
@@ -1085,29 +1124,33 @@ def map_to_homologs(
             )
             .reset_index()
         )
-        # locus_tag ncbiprotein locus_tag_ref old_locus_tag GeneID EC number
 
     # no mapping file
+    elif email:
+        print(
+            "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
+        )
+        table = dmnd_res
+        table["locus_tag_ref"] = pd.Series(dtype="str")
+        table["old_locus_tag"] = pd.Series(dtype="str")
+        table["GeneID"] = pd.Series(dtype="str")
+        # .......................
+        # @DEBUG
+        # if len(table) > 10:
+        #     table = table.sample(10)
+        #     print('Running in debugging mode')
+        # .......................
+        table["ec-code"] = table["ncbiprotein"].progress_apply(
+            lambda x: get_ec_from_ncbi(x, email), axis=1
+        )
     else:
-        if email:
-            print(
-                "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
-            )
-            table["locus_tag_ref"] = pd.Series(dtype="str")
-            table["old_locus_tag"] = pd.Series(dtype="str")
-            table["GeneID"] = pd.Series(dtype="str")
-            # .......................
-            # @DEBUG
-            # if len(table) > 10:
-            #     table = table.sample(10)
-            #     print('Running in debugging mode')
-            # .......................
-            table["ec-code"] = table["ncbiprotein"].progress_apply(
-                lambda x: get_ec_from_ncbi(x, email), axis=1
-            )
-        else:
-            warnings.warn(
-                "No email provided for NCBI quieries. Skipping mapping to EC numbers."
-            )
-
+        warnings.warn(
+            "Neither email nor mapping provided for NCBI quieries. Skipping mapping to EC numbers."
+        )
+        table = dmnd_res
+        table["locus_tag_ref"] = pd.Series(dtype="str")
+        table["old_locus_tag"] = pd.Series(dtype="str")
+        table["GeneID"] = pd.Series(dtype="str")
+        table["ec-code"] = pd.Series(dtype="str")
+        
     return table

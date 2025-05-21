@@ -1989,7 +1989,7 @@ class GeneGapFiller(GapFiller):
                 Defaults to False.
             - fasta (str, optional):
                 The protein FASTA file of the organism the model was build on.
-                Required for the searchh against SwissProt.
+                Required for the search against SwissProt.
                 Defaults to None.
             - type_db (Literal['swissprot','user'], optional):
                 Database to search against.
@@ -2063,6 +2063,9 @@ class GeneGapFiller(GapFiller):
                         case_1 = map_to_homologs(
                             fasta, dmnd_db, case_1, map_db, email=mail, **kwargs
                         )
+                        print(case_1)
+                        import sys
+                        sys.exit()
 
                 case _:
                     raise ValueError(
