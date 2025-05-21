@@ -76,6 +76,8 @@ from ..utility.entities import (
     validate_reaction_compartment_bigg,
     REF_COL_GF_GENE_MAP,
 )
+from ..utility.databases import mnx_db_namespace
+
 from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
 
@@ -639,6 +641,14 @@ class GapFiller(ABC):
             },
         }
         self.manual_curation = {"genes": {}, "reactions": {}}
+        
+        # check, if metanetx table is in database, 
+        for t in mnx_db_namespace.keys():
+            q = f"SELECT name FROM sqlite_master WHERE type='table' AND name='mnx_{t}'"
+            if load_a_table_from_database(q, True).empty:
+                mes = f"MetaNetX table mnx_{t} not found in database. Filling part will most likely fail."
+                warnings.warn(mes, UserWarning)
+        # @IDEA maybe directly install the missing stuff?
 
     # abstract methods
     # ----------------
