@@ -7,7 +7,7 @@ reactions is important for the correctness of the model. Since the direction of 
 the default is to set the reaction to reversible. However, in the worst case, wrongly set reactions directions 
 can be the cause of energy generating cycles (EGCs), which are thermodynamically infeasible. 
 
-One of the few databases to reliably store information about a large number of reaction is `MetaCyc<https://metacyc.org>`_ / `BioCyc <https://biocyc.org>`_ .
+One of the few databases to reliably store information about a large number of reaction is `MetaCyc <https://metacyc.org>`_ / `BioCyc <https://biocyc.org>`_ .
 The :py:func:`~refinegems.curation.curate.check_direction` function enables the user to check the 
 directions of reactions in a metabolic model against a given either species-specific BioCyc or general MetaCyc database 
 table containing the information about direction of reactions. 
