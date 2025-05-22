@@ -2,7 +2,7 @@ Polishing a CarveMe model
 =========================
 
 CarveMe version 1.5.1 leads to some problems in the model, the scripts in 
-:py:mod:`~refinegems.curation.polish` enable for example the addition of BiGG IDs 
+:py:mod:`~refinegems.curation.curate.polish_model` enable for example the addition of BiGG IDs 
 to the annotations as well as a correct formatting of the annotations.
 
 .. warning:: 
