@@ -480,7 +480,7 @@ def create_missing_genes_protein_fasta(
     # format the missing genes' locus tags
     locus_tags_dict = {
         _: "[locus_tag=" + _ + "]" for _ in list(missing_genes["locus_tag"])
-    }
+    } 
 
     # parse the protein FASTA
     protfasta = SeqIO.parse(fasta, "fasta")
@@ -574,7 +574,7 @@ def parse_gff_for_cds(
 # ----
 
 
-def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
+def parse_gbff_for_cds(file_path: str, extract_translation:bool=False) -> pd.DataFrame:
     """Retrieves a table containg information about the following qualifiers from a
     Genbank file: ['protein_id','locus_tag','db_xref','old_locus_tag','EC_number'].
 
@@ -599,6 +599,10 @@ def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
     )
     attributes = ["protein_id", "locus_tag", "old_locus_tag", "db_xref", "EC_number"]
 
+    if extract_translation:
+        temp_table['translation'] = pd.Series(dtype=str)
+        attributes.append('translation')
+
     for record in SeqIO.parse(file_path, "genbank"):
         if record.features:
             for feature in record.features:
@@ -616,6 +620,145 @@ def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
     temp_table["GeneID"] = [pat.sub("", x) for x in temp_table["GeneID"]]
 
     return temp_table
+
+
+# GenBank Formatting
+# ------------------
+def mimic_genbank_fasta(annot_genome:Union[str,Path], gff_path:Union[str,Path], 
+                        dir:str=None) -> Path:
+    """Using a protein FASTA e.g. from Prokka and a GFF file, generate a 
+    FASTA-file, that mimics the GenBank-format required for e.g. 
+    :py:class:`~refinegems.classes.gapfill.GapFiller`.
+
+    Args:
+        - annot_genome (Union[str,Path]): 
+            Path to the annotated genome FASTA (protein sequences).
+        - gff_path (Union[str,Path]): 
+            Path to the GFF file.
+        - dir (str, optional): 
+            Path to a directory used to write the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Returns:
+        Path: 
+            The path the generated FASTA mimicing the GenBank format.
+    """
+
+    # get locus tag + protein id mapping
+    parsed_gff =  parse_gff_for_cds(
+        gffpath = gff_path, 
+        keep_attributes = {'locus_tag':'locus_tag',
+                        'protein_id':'protein_id'}
+        )
+    parsed_gff = parsed_gff.explode('protein_id')
+    parsed_gff.drop_duplicates(keep='first',inplace=True)
+
+    # create mimic 
+    if dir:
+        mimic_path = Path(dir, "mimic_genbank.faa")
+    else:
+        mimic_path = Path("mimic_genbank.faa")
+    with (
+        open(annot_genome, 'r') as f,
+        open(mimic_path,'w') as mimic
+    ):
+        for seq in SeqIO.parse(f, "fasta"): # get sequence + protein_id mapping
+            matched_locus = parsed_gff[parsed_gff['protein_id']==seq.id]
+            # combine mapping
+            # ideal case: one exact match
+            if len(matched_locus)==1:
+                locus = matched_locus.iloc[0,0]
+            # undefined mapping, keep first but report for manual curation
+            elif len(matched_locus)>1:
+                locus = matched_locus.iloc[0,0]
+                mes = f"Ambiguous mapping for protein ID {seq.id}. Keeping locus tag {locus}.\nList all mappings: {matched_locus['locus_tag']}"
+                logging.info(mes)
+            # no match found (prob. missing annotation)
+            else:
+                pass
+            # construct header
+            header = f">{seq.id} [locus_tag={locus}] [protein_id={seq.id}]"
+            # write fasta entry
+            mimic.write(f"{header}\n{seq.seq}\n")
+    
+    return mimic_path
+
+def mimic_genbank_gbff(gbff_path:Union[str,Path], dir:str=None) -> Path:
+    """Using a GBFF-file, generate a FASTA
+    that mimics the GenBank-format required for e.g. 
+    :py:class:`~refinegems.classes.gapfill.GapFiller`.
+
+    Args:
+        - gbff_path (Union[str,Path]): 
+            Path to the input GBFF file.
+        - dir (str, optional): 
+            Path to a directory used to write the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Returns:
+        Path: 
+            Path the generate file mimicing the GenBank format.
+    """
+    
+    # parse GBFF
+    gbff_content = parse_gbff_for_cds(gbff_path, extract_translation=True)
+    gbff_content.drop(columns=['old_locus_tag', 'GeneID', 'EC number'],inplace=True)
+    # remove entries with no seqence
+    gbff_content = gbff_content.replace('-',None)
+    gbff_content.dropna(axis='index', subset='translation', inplace=True)
+    # construc mimic
+    if dir:
+        mimic_path = Path(dir, "mimic_genbank.faa")
+    else:
+        mimic_path = Path("mimic_genbank.faa")
+    with open(mimic_path,'w') as mimic:
+        for prot, locus, seq in gbff_content.values.tolist():
+            # construct header
+            header = f">{prot} [locus_tag={locus}] [protein_id={prot}]"
+            # write entry
+            mimic.write(f"{header}\n{seq}")
+    
+    return mimic_path
+
+def mimic_genbank(annot_genome:Union[str,Path], gff:Union[str,Path] = None, dir:str=None) -> Path:
+    """Wrapper for :py:func:`~refinegems.utility.io.mimic_genbank_fasta` and 
+    :py:func:`~refinegems.utility.io.mimic_genbank_gbff`. 
+    Generate a protein FASTA file mimicing GenBank format.
+    
+    Args:
+        - annot_genome (Union[str,Path]): 
+            An annotated genome file. Can be a FASTA (.faa, .fa) or GBFF file
+        - gff (Union[str,Path], optional): 
+            Path to a GFF file. Only necesseary when `annot_genome` is a 
+            FASTA fiel. Defaults to None.
+        - dir (str, optional): 
+            Path to a directory for saving the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Raises:
+        - ValueError: Mimic of GenBank format with a FASTA-file requires also a GFF.
+        - ValueError: Unkown file extension
+
+    Returns:
+        Path: 
+            Path to the generated FASTA file mimicing GenBank format.
+    """
+    
+    extension = os.path.splitext(os.path.basename(annot_genome))[1]
+    match extension:
+        case ".gbff":
+            mimic = mimic_genbank_gbff(annot_genome, dir)
+        case ".faa" | ".fa":
+            if gff:
+                mimic = mimic_genbank_fasta(annot_genome, gff, dir)
+            else:
+                mes = f"Mimic of GenBank format with a FASTA-file requires also a GFF."
+                raise ValueError(mes)
+        case _:
+            mes = f"Unkown file extension {extension} for file {annot_genome}."
+            raise ValueError(mes)
+        
+    return mimic
 
 
 # else:

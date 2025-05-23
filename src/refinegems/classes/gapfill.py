@@ -2013,11 +2013,11 @@ class GeneGapFiller(GapFiller):
                 Path to the SwissProt/users own mapping file.
                 Required for the search against SwissProt/user-defined database.
                 Greatly decreases runtime for running the DIAMOND search.
+                Defaults to None.
 
                 ..note::
                     The mapping depends on the chosen database.
 
-                Defaults to None.
             - threshold_add_reacs (int, optional):
                 Threshold for the amount of reactions to add to the model.
                 Defaults to 5.
@@ -2073,9 +2073,6 @@ class GeneGapFiller(GapFiller):
                         case_1 = map_to_homologs(
                             fasta, dmnd_db, case_1, map_db, email=mail, **kwargs
                         )
-                        print(case_1)
-                        import sys
-                        sys.exit()
 
                 case _:
                     raise ValueError(
