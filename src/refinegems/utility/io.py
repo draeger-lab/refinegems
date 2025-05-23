@@ -672,7 +672,7 @@ def mimic_genbank_fasta(annot_genome:Union[str,Path], gff_path:Union[str,Path],
             elif len(matched_locus)>1:
                 locus = matched_locus.iloc[0,0]
                 mes = f"Ambiguous mapping for protein ID {seq.id}. Keeping locus tag {locus}.\nList all mappings: {matched_locus['locus_tag']}"
-                logging.info(mes)
+                logger.info(mes)
             # no match found (prob. missing annotation)
             else:
                 pass
