@@ -40,7 +40,7 @@ import re
 import warnings
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model, _model_to_sbml
+from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model, _model_to_sbml, F_REPLACE
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -1248,11 +1248,10 @@ def polish_model(
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
 
     ### Check reaction direction ###
-    # @BUG / # @TEST
     if reaction_direction:
         model = _sbml_to_model(model)
         model = check_direction(model, reaction_direction)
-        model = _model_to_sbml(model)
+        model = _model_to_sbml(model, F_REPLACE)
 
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)

@@ -24,6 +24,7 @@ import sqlite3
 
 from ols_client import EBIClient
 from Bio import SeqIO
+from cobra.io.sbml import F_REPLACE
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
@@ -115,7 +116,7 @@ def load_model(
                 mod = read.getModel()
             case "json" | "yml" | "mat":
                 data = load_cobra_model(modelpath)
-                mod = cobra.io.sbml._model_to_sbml(data).getModel()
+                mod = cobra.io.sbml._model_to_sbml(data, F_REPLACE).getModel()
             case _:
                 raise ValueError("Unknown file extension for model: ", extension)
 
