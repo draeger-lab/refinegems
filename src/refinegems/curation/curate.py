@@ -94,7 +94,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
     """
     for metab in model.getListOfSpecies():
         base = metab.getId()[:-2]
-        for comp in ["_c", "_e", "_p"]:
+        for comp in ["_c", "_e", "_p"]:  # @WARNING This will only work with BiGG - keep for now as  everything else mostly requires BiGG as well or try to generalise?
             other_metab = model.getSpecies(base + comp)
             if other_metab is not None:
                 if not other_metab.isSetMetaId():

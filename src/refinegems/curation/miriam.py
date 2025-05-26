@@ -94,6 +94,8 @@ def get_set_of_curies(
             extracted_curie
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
+        
+        # @DISCUSSION write a check to make sure no html like string is added? -> see #59
 
         # Prefix is valid but to have same result for same databases need to do a bit of own parsing
         if curie[0]:  

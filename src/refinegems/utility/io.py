@@ -717,7 +717,7 @@ def mimic_genbank_gbff(gbff_path:Union[str,Path], dir:str=None) -> Path:
             # construct header
             header = f">{prot} [locus_tag={locus}] [protein_id={prot}]"
             # write entry
-            mimic.write(f"{header}\n{seq}")
+            mimic.write(f"{header}\n{seq}\n")
     
     return mimic_path
 
