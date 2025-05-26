@@ -100,17 +100,18 @@ def get_set_of_curies(
             extracted_curie
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
-        
-        # @TEST 
-        # Check for presence of '<' or '>' in the identifier part of the CURIE
-        # This is to avoid issues with HTML-like strings that might be present in the identifier
-        # as these are hard to fix as it is not clear what the correct identifier should be
-        if "<" in curie[1] or ">" in curie[1]:
-            invalid_curies.append(f"{curie[0]}:{curie[1]}")
-            continue
 
         # Prefix is valid but to have same result for same databases need to do a bit of own parsing
         if curie[0]:  
+            
+            # @TEST 
+            # Check for presence of '<' or '>' in the identifier part of the CURIE
+            # This is to avoid issues with HTML-like strings that might be present in the identifier
+            # as these are hard to fix as it is not clear what the correct identifier should be
+            if "<" in curie[1] or ">" in curie[1]:
+                invalid_curies.append(f"{curie[0]}:{curie[1]}")
+                continue
+            
             if re.fullmatch(
                 r"^biocyc$", curie[0], re.IGNORECASE
             ):  # Check for biocyc to also add metacyc if possible
