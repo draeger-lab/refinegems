@@ -54,6 +54,12 @@ from ..utility.io import parse_dict_to_dataframe
 logger = logging.getLogger(__name__)
 
 ################################################################################
+# variables
+################################################################################
+
+non_alnum_pattern = re.compile('[\W_]+') # :meta: 
+
+################################################################################
 # functions
 ################################################################################
 
@@ -179,6 +185,10 @@ def get_set_of_curies(
                         )
                     elif re.fullmatch(r"^inchikey$", extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), extracted_curie[1])
+                    # @BUG testing a fix # @TEST
+                    # make sure no non-alphanumeric characters are in the InChIKey
+                    elif non_alnum_pattern.sub('', extracted_curie[0] == 'inchikey'):
+                        curie = ('inchikey', extracted_curie[1]) 
                     else:
                         wrong_prefix = extracted_curie[0].split(r":")
                         curie = (
