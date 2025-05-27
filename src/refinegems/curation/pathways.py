@@ -10,8 +10,10 @@ __author__ = "Famke Baeuerle and Carolin Brune"
 ############################################################################
 
 import cobra
+import logging
 import re
 import urllib
+import warnings
 
 from bioservices import KEGG
 from Bio.KEGG import REST, Enzyme
@@ -26,6 +28,12 @@ from ..utility.cvterms import (
 )
 from ..utility.db_access import kegg_reaction_parser
 from ..classes.reports import KEGGPathwayAnalysisReport
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ############################################################################
 # functions
@@ -166,7 +174,7 @@ def find_kegg_pathways(
 
     kegg_pathways = {}
 
-    print("Extracting pathway Id for each reaction:")
+    logger.info("Extracting pathway Id for each reaction:")
     for reac_id in tqdm(mapped_reacs.keys(), unit="reaction"):
 
         kegg_reaction = None
@@ -177,24 +185,26 @@ def find_kegg_pathways(
             for kegg_id in mapped_reacs[reac_id]["kegg.reaction"]:
                 try:
                     kegg_reaction = kegg_reaction_parser(kegg_id)
-                    if isinstance(kegg_reaction["db"]["kegg.pathway"], list):
-                        pathways.extend(kegg_reaction["db"]["kegg.pathway"])
+                    if kegg_reaction:
+                        match kegg_reaction["db"]["kegg.pathway"]:
+                            # multiple IDs
+                            case list():
+                                pathways.extend(kegg_reaction["db"]["kegg.pathway"])
+                            # one ID
+                            case str() | int():
+                                pathways.append(kegg_reaction["db"]["kegg.pathway"])
+                            # should not occur 
+                            case _:
+                                logger.warning(f"Unexpected type for KEGG pathway ID: {str(kegg_reaction['db']['kegg.pathway'])} for {reac_id} on {kegg_id}")
                     else:
-                        pathways.append(kegg_reaction["db"]["kegg.pathway"])
-
+                        logging.warning(f"There was an error while parsing KEGG ID {kegg_id} for {reac_id}.\nManual re-checking required.")
+                
                 # exception handling
-                except urllib.error.HTTPError:
-                    print(f"HTTPError: {reac_id} on {kegg_id}")
-                except ConnectionResetError:
-                    print(f"ConnectionResetError: {reac_id} on {kegg_id}")
-                except urllib.error.URLError:
-                    print(f"URLError: {reac_id} on {kegg_id}")
                 except KeyError:
                     # no pathway found
                     pass
-                # except Exception as e:
-                #     print(F'Something unexpected happened: {reac_id} on {kegg_id}')
-                #     print(repr(e))
+                except Exception as e:
+                    warnings.warn(F'Something unexpected happened: {reac_id} on {kegg_id}\n{repr(e)}', UserWarning)
 
         # via RC
         # via reaction class
@@ -209,16 +219,16 @@ def find_kegg_pathways(
                     pathways.extend(rc_results)
             # exception handling
             except urllib.error.HTTPError:
-                print(f"HTTPError: {reac_id} on RCLASS")
+                logger.warning(f"HTTPError: {reac_id} on RCLASS")
             except ConnectionResetError:
-                print(f"ConnectionResetError: {reac_id} on RCLASS")
+                logger.warning(f"ConnectionResetError: {reac_id} on RCLASS")
             except urllib.error.URLError:
-                print(f"URLError: {reac_id} on RCLASS")
+                logger.warning(f"URLError: {reac_id} on RCLASS")
             except KeyError:
                 # no pathway found
                 pass
             except Exception as e:
-                print(f"Something unexpected happened: {reac_id} on RCLASS")
+                logger.warning(f"Something unexpected happened: {reac_id} on RCLASS")
 
         # via EC
         # seems really sketchy to do it this way, as ONE EC number
@@ -254,16 +264,16 @@ def find_kegg_pathways(
                                 pathways.append(i[1])
                 # exception handling
                 except urllib.error.HTTPError:
-                    print(f"HTTPError: {reac_id} on {ecnum}")
+                    logger.warning(f"HTTPError: {reac_id} on {ecnum}")
                 except ConnectionResetError:
-                    print(f"ConnectionResetError: {reac_id} on {ecnum}")
+                    logger.warning(f"ConnectionResetError: {reac_id} on {ecnum}")
                 except urllib.error.URLError:
-                    print(f"URLError: {reac_id} on {ecnum}")
+                    logger.warning(f"URLError: {reac_id} on {ecnum}")
                 except KeyError:
                     # no pathway found
                     pass
                 except Exception as e:
-                    print(f"Something unexpected happened: {reac_id} on {ecnum}")
+                    logger.warning(f"Something unexpected happened: {reac_id} on {ecnum}")
 
         # store the pathways
         kegg_pathways[reac_id] = list(set(pathways))
@@ -312,7 +322,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     group_list = groups.getListOfGroups()
     keys = list(pathway_groups.keys())
 
-    print("Adding pathways as groups to the model:")
+    logger.info("Adding pathways as groups to the model:")
     for i in tqdm(range(len(pathway_groups))):
         kegg_pathway = k.get(keys[i])
         dbentry = k.parse(kegg_pathway)
