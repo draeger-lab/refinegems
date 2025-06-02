@@ -34,6 +34,7 @@ __author__ = "Famke Baeuerle and Carolin Brune and Gwendolyn O. Döbel"
 ################################################################################
 
 import cobra
+import copy
 import logging
 import pandas as pd
 import re
@@ -883,9 +884,10 @@ def resolve_duplicate_metabolites(
                                     else:
                                         continue
 
-                                # if not problems are found, duplicate is removed
+                                # if no problems are found, duplicate is removed
                                 if perform_deletion:
-                                    model = model_del.copy()
+                                    model = copy.deepcopy(model_del) 
+                                    # @ASK: this works, however, takes a lot of time -> better / optimised implementation
                                     print(
                                         f"\tDuplicate metabolite {del_meta_id} found. Replaced with {keep_meta.id}."
                                     )
