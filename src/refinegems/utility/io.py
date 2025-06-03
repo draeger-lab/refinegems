@@ -24,7 +24,7 @@ import sqlite3
 
 from ols_client import EBIClient
 from Bio import SeqIO
-from cobra.io.sbml import F_REPLACE
+from cobra.io.sbml import F_REPLACE, _model_to_sbml, _f_gene
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
@@ -162,6 +162,47 @@ def load_model(
         case _:
             mes = f"Unkown type for modelpath: {modelpath}"
             raise TypeError(mes)
+
+
+def convert_cobra_to_libsbml(cmodel:cobra.Model, add_label_locus:Union[None, Literal['notes', 'id']] = None) -> libModel:
+    """Convert a loaded COBRApy model to a libsbml model. If possible, 
+    also add the locus tags as labels to the libsbml model.
+
+    Args:
+        - cmodel (cobra.Model): 
+            The model loaded with COBRApy.
+        - add_label_locus (bool, optional): 
+            If True, checks the notes of the model for the key "locus_tag" and 
+            adds the values as label to the libsbml model. 
+            Defaults to True.
+
+    Returns:
+        libsbml.Model: 
+            The model loaded with libsbml.
+    """
+
+    # convert to libsbml
+    lmodel = _model_to_sbml(cmodel, F_REPLACE).getModel()
+    
+    # add locus tags as labels 
+    match add_label_locus:
+        # add locus tag from notes
+        case 'notes':
+            gene_list = lmodel.getPlugin("fbc").getListOfGeneProducts()
+            for gene in gene_list:
+                cgene = cmodel.genes.get_by_id(_f_gene(gene.getId()))
+                if "locus_tag" in cgene.notes and isinstance(cgene.notes['locus_tag'], str):
+                    gene.setLabel(cgene.notes["locus_tag"])
+        # add locus tags from id
+        case 'id':
+            gene_list = lmodel.getPlugin("fbc").getListOfGeneProducts()
+            for gene in gene_list:
+                gene.setLabel(gene.getId())
+        # skip adding locus tags as label
+        case _:
+            pass 
+    # return the converted model 
+    return lmodel     
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
