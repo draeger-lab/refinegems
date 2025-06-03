@@ -887,7 +887,7 @@ def resolve_duplicate_metabolites(
                                 # if no problems are found, duplicate is removed
                                 if perform_deletion:
                                     model = copy.deepcopy(model_del) 
-                                    # @ASK: this works, however, takes a lot of time -> better / optimised implementation
+                                    # @WARNING: this works, however, takes a lot of time -> better / optimised implementation
                                     print(
                                         f"\tDuplicate metabolite {del_meta_id} found. Replaced with {keep_meta.id}."
                                     )

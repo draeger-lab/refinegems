@@ -104,7 +104,6 @@ def get_set_of_curies(
         # Prefix is valid but to have same result for same databases need to do a bit of own parsing
         if curie[0]:  
             
-            # @TEST 
             # Check for presence of '<' or '>' in the identifier part of the CURIE
             # This is to avoid issues with HTML-like strings that might be present in the identifier
             # as these are hard to fix as it is not clear what the correct identifier should be
@@ -192,7 +191,7 @@ def get_set_of_curies(
                         )
                     elif re.fullmatch(r"^inchikey$", extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), extracted_curie[1])
-                    # @BUG testing a fix # @TEST
+                    
                     # make sure no non-alphanumeric characters are in the InChIKey
                     elif non_alnum_pattern.sub('', extracted_curie[0]) == 'inchikey':
                         curie = ('inchikey', extracted_curie[1]) 
