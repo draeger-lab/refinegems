@@ -505,7 +505,8 @@ def create_missing_genes_protein_fasta(
 
     .. note::
 
-        Please keep in mind that the input FASTA file has to have Genbank format.
+        Please keep in mind that the input FASTA file has to have the Genbank format as 
+        described in :py:func:`~refinegems.utility.io.mimic_genbank`.
 
     Args:
         - fasta (str):
@@ -767,7 +768,14 @@ def mimic_genbank_gbff(gbff_path:Union[str,Path], dir:str=None) -> Path:
 def mimic_genbank(annot_genome:Union[str,Path], gff:Union[str,Path] = None, dir:str=None) -> Path:
     """Wrapper for :py:func:`~refinegems.utility.io.mimic_genbank_fasta` and 
     :py:func:`~refinegems.utility.io.mimic_genbank_gbff`. 
-    Generate a protein FASTA file mimicing GenBank format.
+    Generate a protein FASTA file that looks similar to the extended GenBank format 
+    one can download from the FTP servers of NCBI with the "_translated_CDS" tag in 
+    their file name.
+    
+    Mainly, this format contains additional information about the sequences in the 
+    header of each entry in the following format:
+    
+        >name [protein_id=xxx] [locus_tag=yyy] ...
     
     Args:
         - annot_genome (Union[str,Path]): 
