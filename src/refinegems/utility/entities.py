@@ -2176,6 +2176,9 @@ def create_gp(
         gp.setName(name)  # Name
     if label:
         gp.setLabel(label)  # Label
+    # if locus tag, write to notes
+    if locus_tag:
+        gp.appendNotes(f"locus_tag:{locus_tag}")
     gp.setSBOTerm("SBO:0000243")  # SBOterm
     gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID
     # test for NCBI/RefSeq
