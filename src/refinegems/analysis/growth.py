@@ -472,7 +472,7 @@ def growth_analysis(
         - TypeError: Unknown or mixed types in model list.
         - KeyError: Empty list for models detected.
         - ValueError: Unknown input type for models.
-        - TypeError: Unknown type found in media, should be list fo Medium.
+        - TypeError: Unknown type found in media, should be list of Medium.
         - ValueError: Unknown input for media.
         - ValueError: Unknown input for retrieve
 
@@ -530,7 +530,7 @@ def growth_analysis(
                 pass
             else:
                 raise TypeError(
-                    "Unknown type found in media, should be list fo Medium."
+                    "Unknown type found in media, should be list of Medium."
                 )
         # string - connection to YAML config file
         case str():
