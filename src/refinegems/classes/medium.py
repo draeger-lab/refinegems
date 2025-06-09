@@ -35,7 +35,7 @@ from sqlite_dump import iterdump
 from typing import Literal, Union, Any
 
 from ..utility.databases import PATH_TO_DB
-from ..utility.io import load_substance_table_from_db, load_subset_from_db
+from ..utility.io import load_substance_table_from_db, load_subset_from_db, load_a_table_from_database
 
 ############################################################################
 # variables
@@ -597,35 +597,102 @@ class Medium:
 
             f.close()
 
-    def export_to_file(self, type: str = "tsv", dir: str = "./", max_widths: int = 80):
-        """Export medium, especially substance table.
+        """
 
         Args:
             - type (str, optional):
-                Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
+                 Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
             - dir (str, optional):
-                Path to the directory to write the file to. Defaults to './'.
+                 Defaults to './'.
             - max_widths (int, optional):
-                Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'.
+                 
                 Defaults to 80.
 
         Raises:
-            - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
+            - ValueError: 
         """
+
+    def produce_carveme_mimic(self, no_flux: bool = False) -> pd.DataFrame:
+        """Produces a pandas DataFrame for the substance table in the CarveMe format.
+
+        Args:
+            - no_flux (bool, optional): 
+                If True, the flux column is removed in the exported file. Defaults to False.
+
+        Returns:
+            pd.DataFrame: 
+                Substance table in CarveMe format, with columns 'medium', 
+                'description', 'compound', 'name' and optionally 'flux'.
+        """
+
+        # Keep all columns with BiGG IDs
+        carveme_mimic = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')]
+
+        # Remove unnecessary columns
+        if no_flux:
+            carveme_mimic = carveme_mimic[['db_id', 'name']]
+        else:
+            carveme_mimic = carveme_mimic[['db_id', 'name', 'flux']]
+            carveme_mimic = carveme_mimic.replace(np.nan, 10.0) # Replace all NaN values with a default flux of 10.0
+            # @DISCUSSION Let the user provide a default flux value here?
+
+        # Rename columns to match CarveMe format
+        carveme_mimic.rename(columns={'db_id': 'compound'}, inplace=True)
+
+        # Add medium information to table
+        carveme_mimic.insert(0, 'medium', self.name)
+        carveme_mimic.insert(1, 'description', self.description)
+        
+        return carveme_mimic
+
+    def export_to_file(self, 
+                       type: Literal['tsv','csv','docs','rst'] = 'tsv', 
+                       flavour: Literal['substance_table','carveme_mimic']='substance_table',
+                       no_flux: bool = False, 
+                       dir: str = './', 
+                       max_widths: int = 80
+    ):
+        """Export medium, especially substance table.
+
+        Args:
+            - type (Literal['tsv','csv','docs','rst'], optional): 
+                Type of file to export to. Defaults to 'tsv'.
+            - flavour (Literal['substance_table','carveme_mimic'], optional): 
+                Flavour of file to export. Only viable for 'tsv' and 'csv'. Defaults to 'substance_table'.
+            - no_flux (bool, optional):
+                If True, the flux column is removed in the exported file. Only viable for 'tsv' and 'csv'. 
+                Defaults to False.
+            - dir (str, optional): 
+                Path to the directory to write the file(s) to. Defaults to './'.
+            - max_widths (int, optional): 
+                Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80.
+
+        Raises:
+            - ValueError: Unknown flavour if flavour not in ['substance_table','carveme_mimic'].
+            - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst'].
+        """
+
+        match flavour:
+            case "substance_table":
+                table2export = self.substance_table if not no_flux else self.substance_table.drop('flux', axis=1)
+            case "carveme_mimic":
+                table2export = self.produce_carveme_mimic(no_flux)
+            case _:
+                raise ValueError(f"Unknown flavour: {flavour}")
 
         match type:
             case "tsv":
-                self.substance_table.to_csv(
+                table2export.to_csv(
                     Path(dir, self.name + "_min_medium" + ".tsv"), sep="\t", index=False
                 )
             case "csv":
-                self.substance_table.to_csv(
+                table2export.to_csv(
                     Path(dir, self.name + "_min_medium" + ".csv"), sep=";", index=False
                 )
             case "docs" | "rst":
                 self.produce_medium_docs_table(folder=dir, max_width=max_widths)
             case _:
-                raise ValueError("Unknown export type: {type}")
+                raise ValueError(f"Unknown export type: {type}")
 
     # functions for conversion
     # ------------------------
@@ -735,6 +802,70 @@ def load_medium_from_db(
     return Medium(
         name=name, substance_table=substance, description=description, doi=doi
     )
+
+# @TODO Add export via default media config file
+def export_media_from_db_to_file(
+    media_names: Union[str, list[str], Literal['all']] = 'all', 
+    type: Literal['tsv','csv','docs','rst'] = 'tsv', 
+    flavour: Literal['substance_table','carveme_mimic']='substance_table',
+    single_file: bool = False,
+    no_flux: bool = False, 
+    dir: str = './', 
+    max_widths: int = 80
+    ):
+    """Export media from the database to files/a single file.
+
+    Args:
+        - media_names (Union[str, list[str], Literal['all']], optional): 
+            The name(s) of the medium/media to export. Defaults to 'all'.
+        - type (Literal['tsv','csv','docs','rst'], optional): 
+            Type of file to export to. Defaults to 'tsv'.
+        - flavour (Literal['substance_table','carveme_mimic'], optional): 
+            Flavour of file to export. Only viable for 'tsv' and 'csv'. Defaults to 'substance_table'.
+        - single_file (bool, optional): 
+            If True, export all media in one file. Only viable for 'carveme_mimic'. Defaults to False.
+        - no_flux (bool, optional):
+            If True, the flux column is removed in the exported file. Only viable for 'tsv' and 'csv'. Defaults to False.
+        - dir (str, optional): 
+            Path to the directory to write the file(s) to. Defaults to './'.
+        - max_widths (int, optional): 
+            Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80.
+    """
+
+    # Get all media names from the database if 'all' is specified
+    if media_names == 'all':
+        media_names = load_a_table_from_database("medium", False)["name"].to_list()
+
+    # Check if media_names is a string and convert it to a list
+    if isinstance(media_names, str):
+        media_names = [media_names]
+
+    # Get all requested media from the database
+    media = [load_medium_from_db(name) for name in media_names]
+
+    # Export media based on the type and flavour
+    if (type not in ['docs', 'rst']) and single_file:
+        carveme_media = [m.produce_carveme_mimic(no_flux) for m in media] # Get media in CarveMe format
+        carveme_db_mimic = pd.concat(carveme_media, ignore_index=True) # Concatenate all media into one DataFrame
+
+        # Export media database
+        filename = 'media_db_carveme_mimic'
+        match type:
+            case "tsv":
+                carveme_db_mimic.to_csv(
+                    Path(dir, f'{filename}.tsv'), sep="\t", index=False
+                )
+            case "csv":
+                carveme_db_mimic.to_csv(
+                    Path(dir, f'{filename}.csv'), sep=";", index=False
+                )
+            case _:
+                raise ValueError(f"Unknown export type: {type}")
+
+    else:
+        # Export each medium individually
+        for m in media:
+            m.export_to_file(type, flavour, no_flux, dir, max_widths)
 
 
 def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: int = 80):
