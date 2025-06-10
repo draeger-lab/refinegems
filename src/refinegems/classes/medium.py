@@ -781,10 +781,10 @@ def load_medium_from_db(
     result = cursor.execute(
         "SELECT medium.description FROM medium WHERE medium.name = ?", (name,)
     )
-    if result:
+    try:
         description = result.fetchone()[0]  # each name should be unique
-    else:
-        raise ValueError(f"Unknown medium name: {name}")
+    except:
+        raise ValueError(f"Unknown medium name or similar error for {name}")
 
     # get DOI(s)
     result = cursor.execute(
