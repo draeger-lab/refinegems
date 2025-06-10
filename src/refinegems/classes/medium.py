@@ -634,7 +634,6 @@ class Medium:
         else:
             carveme_mimic = carveme_mimic[['db_id', 'name', 'flux']]
             carveme_mimic = carveme_mimic.replace(np.nan, 10.0) # Replace all NaN values with a default flux of 10.0
-            # @DISCUSSION Let the user provide a default flux value here?
 
         # Rename columns to match CarveMe format
         carveme_mimic.rename(columns={'db_id': 'compound'}, inplace=True)
@@ -803,9 +802,10 @@ def load_medium_from_db(
         name=name, substance_table=substance, description=description, doi=doi
     )
 
-# @TODO Add export via default media config file
+
+# @TEST
 def export_media_from_db_to_file(
-    media_names: Union[str, list[str], Literal['all']] = 'all', 
+    media_names_or_config: Union[str, list[str], Literal['all']] = 'all', 
     type: Literal['tsv','csv','docs','rst'] = 'tsv', 
     flavour: Literal['substance_table','carveme_mimic']='substance_table',
     single_file: bool = False,
@@ -816,8 +816,8 @@ def export_media_from_db_to_file(
     """Export media from the database to files/a single file.
 
     Args:
-        - media_names (Union[str, list[str], Literal['all']], optional): 
-            The name(s) of the medium/media to export. Defaults to 'all'.
+        - media_names_or_config (Union[str, list[str], Literal['all']], optional): 
+            The name(s) of the medium/media to export or the path to a media configuration file. Defaults to 'all'.
         - type (Literal['tsv','csv','docs','rst'], optional): 
             Type of file to export to. Defaults to 'tsv'.
         - flavour (Literal['substance_table','carveme_mimic'], optional): 
@@ -830,19 +830,46 @@ def export_media_from_db_to_file(
             Path to the directory to write the file(s) to. Defaults to './'.
         - max_widths (int, optional): 
             Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80.
+
+    Raises:
+        - TypeError: Invalid input for media_names_or_config.
+        - ValueError: Unknown medium name(s)
+        - ValueError: Unknown export type
     """
 
-    # Get all media names from the database if 'all' is specified
-    if media_names == 'all':
-        media_names = load_a_table_from_database("medium", False)["name"].to_list()
+    # Valid YAML file suffixes
+    yml_suffixes = ['yaml', 'YAML', 'yml', 'YML']
 
-    # Check if media_names is a string and convert it to a list
-    if isinstance(media_names, str):
-        media_names = [media_names]
+    # Get all media names from the database
+    available_media = load_a_table_from_database("medium", False)["name"].to_list()
+
+    # Loaded media
+    media = None
+
+    # Get type of media_names_or_config
+    match media_names_or_config:
+        case 'all':
+            media_names_or_config = available_media # Set all available media names if 'all' is specified
+        case str():
+            # Check if string is a path to a YAML file
+            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix in yml_suffixes):
+                # Load media from YAML file
+                media, _ = load_media(media_names_or_config)
+                
+            else: # Check if media_names_or_config is a string and convert it to a list
+                media_names_or_config = [media_names_or_config] # Only one medium name provided
+        case list():
+            pass
+        case _:
+            raise TypeError(f'Invalid input for media_names_or_config: {media_names_or_config}')
 
     # Get all requested media from the database
-    media = [load_medium_from_db(name) for name in media_names]
-
+    if not media:
+        if not all(m in available_media for m in media_names_or_config): # Check valid medium name(s) from database 
+            raise ValueError(f"Unknown medium name(s): {media_names_or_config}")
+        else:
+            media = [load_medium_from_db(name) for name in media_names_or_config]
+    
     # Export media based on the type and flavour
     if (type not in ['docs', 'rst']) and single_file:
         carveme_media = [m.produce_carveme_mimic(no_flux) for m in media] # Get media in CarveMe format
