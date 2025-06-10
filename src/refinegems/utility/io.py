@@ -195,6 +195,8 @@ def convert_cobra_to_libsbml(cmodel:cobra.Model, add_label_locus:Union[None, Lit
                 cgene = cmodel.genes.get_by_id(_f_gene(gene.getId()))
                 if "locus_tag" in cgene.notes and isinstance(cgene.notes['locus_tag'], str):
                     gene.setLabel(cgene.notes["locus_tag"])
+                else:
+                    gene.setLabel(cgene.id)
         # add locus tags from id
         case 'id':
             gene_list = lmodel.getPlugin("fbc").getListOfGeneProducts()

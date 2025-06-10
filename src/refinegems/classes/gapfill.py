@@ -64,6 +64,7 @@ from ..utility.io import (
     parse_gff_for_cds,
     load_model,
     write_model_to_file,
+    convert_cobra_to_libsbml,
 )
 from ..utility.entities import (
     create_gp,
@@ -1057,10 +1058,7 @@ class GapFiller(ABC):
         # load the correct type of model for the first step
         match model:
             case cobra.Model():
-                with NamedTemporaryFile(suffix=".xml", delete=False) as tmp:
-                    write_model_to_file(model, tmp.name)
-                    model = load_model(tmp.name, "libsbml")
-                os.remove(tmp.name)
+                model = convert_cobra_to_libsbml(model, 'notes')
             case libModel():
                 pass
             case _:
@@ -1160,10 +1158,7 @@ class GapFiller(ABC):
         # --------------------------------------------------------
 
         # re-load model with libsbml
-        with NamedTemporaryFile(suffix=".xml", delete=False) as tmp:
-            write_model_to_file(model, tmp.name)
-            model = load_model(tmp.name, "libsbml")
-        os.remove(tmp.name)
+        model = convert_cobra_to_libsbml(model, "notes")
 
         try:
             if len(missing_gprs) > 0:

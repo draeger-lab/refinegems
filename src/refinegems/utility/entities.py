@@ -2108,7 +2108,7 @@ def create_gp(
     name: str = None,
     locus_tag: str = None,
     reference: dict[str : tuple[Union[list, str], bool]] = dict(),
-    sanity_check: bool = False
+    sanity_check: bool = True
 ) -> None:
     """Creates GeneProduct in the given libSBML model.
 
@@ -2160,7 +2160,7 @@ def create_gp(
         genes = model.getPlugin(0).getListOfGeneProducts()
         for g in genes:
             # for ID 
-            if g.isSetId() and g.getId == model_id:
+            if g.isSetId() and g.getId() == model_id:
                 logger.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
                 return None
             # for locus tag as label
@@ -2178,7 +2178,9 @@ def create_gp(
         gp.setLabel(label)  # Label
     # if locus tag, write to notes
     if locus_tag:
-        gp.appendNotes(f"locus_tag:{locus_tag}")
+        gp.unsetNotes() # @TEST unset Notes not tested 
+        gp.setNotes(f"locus_tag: {locus_tag}")
+        
     gp.setSBOTerm("SBO:0000243")  # SBOterm
     gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID
     # test for NCBI/RefSeq
