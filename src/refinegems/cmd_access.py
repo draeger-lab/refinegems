@@ -284,6 +284,71 @@ def info(list):  # ,copy
         specimen.classes.medium.save_db(db,click.format_filename(copy))
 """
 
+#@TODO Improve!
+@media.command()
+@click.option(
+    "--media-names-or-config", "--mn-cfg", "-m",
+    show_default=True,
+    default=['all'],
+    type=str,
+    help="Name(s) of the medium/media to export or the path to a media configuration file. Defaults to 'all'.",
+    multiple=True
+)
+@click.option(
+    "--type", "-t",
+    show_default=True,
+    default='tsv',
+    type=click.Choice(['tsv','csv','docs','rst']),
+    help="Type of file to export to. Defaults to 'tsv'."
+)
+@click.option(
+    "--flavour", "-f",
+    show_default=True,
+    default='substance_table',
+    type=click.Choice(['substance_table','carveme_mimic']),
+    help="Flavour of file to export. Only viable for 'tsv' and 'csv'. Defaults to 'substance_table'."
+)
+@click.option(
+    "--single-file", "-s",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="If True, export all media in one file. Only viable for 'carveme_mimic'. Defaults to False.",
+)
+@click.option(
+    "--no-flux", "-n",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="If True, the flux column is removed in the exported file. Only viable for 'tsv' and 'csv'. Defaults to False.",
+)
+@click.option(
+    "--dir","-d",
+    required=False,
+    type=click.Path(),
+    show_default=True,
+    default="",
+    help="Path to the directory to write the file(s) to. Defaults to './'.",
+)
+@click.option(
+    "--max-widths", "-w",
+    show_default=True,
+    default=80,
+    type=int,
+    help="Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80."
+)
+def export(media_names_or_config, type, flavour, single_file, no_flux, dir, max_widths):
+    """Exports media from the internal media database...
+    
+    ... based on a medium name, a list of medium names or a medium configuration file in YAML format
+    """
+
+    # Handle 'all' and config file case
+    if len(media_names_or_config) == 1:
+        media_names_or_config = media_names_or_config[0]
+
+    rg.classes.medium.export_media_from_db_to_file(media_names_or_config, type, flavour, single_file, no_flux, dir, max_widths)
+
 
 # --------------
 # Curate a model
