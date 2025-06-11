@@ -872,22 +872,26 @@ def export_media_from_db_to_file(
     
     # Export media based on the type and flavour
     if (type not in ['docs', 'rst']) and single_file:
-        carveme_media = [m.produce_carveme_mimic(no_flux) for m in media] # Get media in CarveMe format
-        carveme_db_mimic = pd.concat(carveme_media, ignore_index=True) # Concatenate all media into one DataFrame
+        if flavour == 'carveme_mimic':
+            carveme_media = [m.produce_carveme_mimic(no_flux) for m in media] # Get media in CarveMe format
+            carveme_db_mimic = pd.concat(carveme_media, ignore_index=True) # Concatenate all media into one DataFrame
 
-        # Export media database
-        filename = 'media_db_carveme_mimic'
-        match type:
-            case "tsv":
-                carveme_db_mimic.to_csv(
-                    Path(dir, f'{filename}.tsv'), sep="\t", index=False
-                )
-            case "csv":
-                carveme_db_mimic.to_csv(
-                    Path(dir, f'{filename}.csv'), sep=";", index=False
-                )
-            case _:
-                raise ValueError(f"Unknown export type: {type}")
+            # Export media database
+            filename = 'media_db_carveme_mimic'
+            match type:
+                case "tsv":
+                    carveme_db_mimic.to_csv(
+                        Path(dir, f'{filename}.tsv'), sep="\t", index=False
+                    )
+                case "csv":
+                    carveme_db_mimic.to_csv(
+                        Path(dir, f'{filename}.csv'), sep=";", index=False
+                    )
+                case _:
+                    raise ValueError(f"Unknown export type: {type}")
+
+        else:
+            raise ValueError("The parameter 'single_file' can only be used with flavour='carveme_mimic'.")
 
     else:
         # Export each medium individually
