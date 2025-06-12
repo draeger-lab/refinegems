@@ -119,7 +119,10 @@ def get_uptake(model: cobraModel, type: str) -> list[str]:
             with model:
                 minimal = cobra.medium.minimal_medium(model)
                 # print(minimal)
-                return list(minimal.index)
+                if minimal:
+                    return list(minimal.index)
+                else:
+                    return list()
         # return standart, non-zero flux compounds
         case "standard" | "std":
             with model:
