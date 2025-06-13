@@ -10,6 +10,7 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 import cobra
 import json
 import memote
+import os
 import pandas as pd
 import shutil
 import subprocess
@@ -38,6 +39,7 @@ from memote.support import consistency_helpers as con_helpers
 from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
+# @TODO: Add connection for ModelPolisher to get a model and return a model object
 # note:
 #    for BOFdat to run correctly, one needs to change 'solution.f' to 'solution.objective_value'
 #    in the coenzymes_and_ions.py file of BOFdat
@@ -54,10 +56,9 @@ from .io import write_model_to_file
 # BOFdat
 # ------
 
-
+# @TEST
 def adjust_BOF(
     genome: str,
-    model_file: str,
     model: cobra.Model,
     dna_weight_fraction: float,
     weight_frac: float,
@@ -68,8 +69,6 @@ def adjust_BOF(
     Args:
         - genome (str):
             Path to the genome (e.g. .fna) FASTA file.
-        - model_file (str):
-            Path to the sbml (.xml) file of the model.
         - model (cobra.Model):
             The genome-scale metabolic model (from the string above), loaded with COBRApy.
         - dna_weight_fraction (float):
@@ -81,24 +80,33 @@ def adjust_BOF(
         str:
             The updated BOF reaction as a reaction string.
     """
+    # Generate temporary file & use for BOFdat
+    # ----------------------------------------
+    with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as temp_model:
+        # generate an up-to-date model xml-file
+        cobra.io.write_sbml_model(model, temp_model.name)
 
-    # BOFdat step 1:
-    # --------------
-    # dna coefficients
-    dna_coefficients = step1.generate_dna_coefficients(
-        genome, model_file, DNA_WEIGHT_FRACTION=dna_weight_fraction
-    )
-    bd_step1 = {}
-    for m in dna_coefficients:
-        bd_step1[m.id] = dna_coefficients[m]
+        # BOFdat step 1:
+        # --------------
+        # dna coefficients
+        dna_coefficients = step1.generate_dna_coefficients(
+            genome, temp_model.name, DNA_WEIGHT_FRACTION=dna_weight_fraction
+        )
+        bd_step1 = {}
+        for m in dna_coefficients:
+            bd_step1[m.id] = dna_coefficients[m]
 
-    # BOFdat step 2:
-    # --------------
-    # find inorganic ions
-    selected_metabolites = step2.find_coenzymes_and_ions(model_file)
-    # determine coefficients
-    bd_step2 = determine_coefficients(selected_metabolites, model, weight_frac)
-    bd_step2.update(bd_step1)
+        # BOFdat step 2:
+        # --------------
+        # find inorganic ions
+        selected_metabolites = step2.find_coenzymes_and_ions(temp_model.name)
+        # determine coefficients
+        bd_step2 = determine_coefficients(selected_metabolites, model, weight_frac)
+        bd_step2.update(bd_step1)
+
+    # Remove temp file
+    # ----------------
+    os.remove(temp_model.name)
 
     # update BOF
     # ----------

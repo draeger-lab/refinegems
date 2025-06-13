@@ -50,24 +50,23 @@ with the biological qualifier `OCCURS_IN` to the respective reaction.
 """
 
 
-def load_model_enable_groups(modelpath: str) -> libModel:
-    """Loads model as document using libSBML and enables groups extension
+def enable_groups(model: libModel) -> libModel:
+    """Enables groups extension
 
     Args:
-        - modelpath (str):
-            Path to GEM
+        - model (libModel):
+            A model loaded with libSBML.
 
     Returns:
         libModel:
-            Model loaded with libSBML
+            libSBML model with groups enabled
     """
-    reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath)  # read from file
+    model_doc = model.getSBMLDocument()  # Get model document from model object
     groupextension = GroupsExtension()
     groupURI = groupextension.getURI(3, 1, 1)
-    read.enablePackage(groupURI, "groups", True)  # enable groups extension
-    read.setPkgRequired("groups", False)  # make groups not required
-    model = read.getModel()
+    model_doc.enablePackage(groupURI, "groups", True)  # enable groups extension
+    model_doc.setPkgRequired("groups", False)  # make groups not required
+    model = model_doc.getModel()
     return model
 
 
@@ -286,7 +285,7 @@ def add_kegg_pathways(model, kegg_pathways) -> libModel:
 
     Args:
         - model (libModel):
-            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
+            Model loaded with libSBML and groups enabled. (To enable groups you can use :py:func:`~refinegems.curation.pathways.enable_groups`.)
         - kegg_pathways (dict):
             Reaction Id as key and KEGG Pathway Id as value, e.g. see output of :py:func:`~refinegems.curation.pathways.find_kegg_pathways`.
 
@@ -309,7 +308,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     Args:
         - model (libModel):
-            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
+            Model loaded with libSBML and groups enabled. (To enable groups you can use :py:func:`~refinegems.curation.pathways.enable_groups`.)
         - pathway_groups (dict):
             KEGG Pathway Id as key and reactions Ids as values, e.g. see output of :py:func:`~refinegmes.curation.pathways.set_kegg_pathways._invert_reac_pathway_dict`.
 
@@ -352,15 +351,15 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     return model
 
-
+# @TEST
 def set_kegg_pathways(
-    modelpath: str, viaEC: bool = False, viaRC: bool = False
+    model: libModel, viaEC: bool = False, viaRC: bool = False
 ) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
 
     Args:
-        - modelpath (str):
-            Path to GEM.
+        - model (libModel):
+            Model loaded with libSBML
 
     Returns:
         tuple:
@@ -391,7 +390,7 @@ def set_kegg_pathways(
         return pathway_groups
 
     # load model with groups enabled
-    model = load_model_enable_groups(modelpath)
+    model = enable_groups(model)
 
     # extract information about KEGG and EC numbers from model reactions
     reactions, non_kegg_reactions = _extract_kegg_ec_from_reac(model)
