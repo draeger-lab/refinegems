@@ -2174,12 +2174,13 @@ def create_gp(
     gp.setIdAttribute(model_id)
     if name:
         gp.setName(name)  # Name
-    if label:
+    if label: # If locus_tag exists write to label and notes
         gp.setLabel(label)  # Label
-    # if locus tag, write to notes
-    if locus_tag:
-        gp.unsetNotes() # @TEST unset Notes not tested 
-        gp.setNotes(f"locus_tag: {locus_tag}")
+        gp.unsetNotes()
+        note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+        <p>locus_tag: {label}</p>
+        </html>'''
+        gp.setNotes(note_string)
         
     gp.setSBOTerm("SBO:0000243")  # SBOterm
     gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID

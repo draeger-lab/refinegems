@@ -59,7 +59,7 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
-from ..utility.io import load_a_table_from_database
+from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
 from ..utility.util import DB2REGEX, test_biomass_presence
 
 ################################################################################
@@ -186,6 +186,14 @@ def extend_gp_annots_via_mapping_table(
             gene.setName(gp_infos["name"])
         if gp_infos["locus_tag"]:
             gene.setLabel(gp_infos["locus_tag"])
+            if gene.isSetNotes():
+                gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
+            else: 
+                gene.unsetNotes()
+                note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+                <p>locus_tag: {gp_infos["locus_tag"]}</p>
+                </html>'''
+                gene.setNotes(note_string)
         if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
             add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
         if ("NCBI" in gp_infos.index.to_list()) and gp_infos["NCBI"]:
@@ -1271,7 +1279,7 @@ def polish_model(
     if reaction_direction:
         model = _sbml_to_model(model)
         model = check_direction(model, reaction_direction)
-        model = _model_to_sbml(model, F_REPLACE)
+        model = convert_cobra_to_libsbml(model, add_label_locus='notes')
 
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
