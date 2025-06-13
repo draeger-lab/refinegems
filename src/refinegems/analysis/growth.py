@@ -119,7 +119,7 @@ def get_uptake(model: cobraModel, type: str) -> list[str]:
             with model:
                 minimal = cobra.medium.minimal_medium(model)
                 # print(minimal)
-                if minimal:
+                if minimal is not None and not minimal.empty:
                     return list(minimal.index)
                 else:
                     return list()
