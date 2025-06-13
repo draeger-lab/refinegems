@@ -175,7 +175,7 @@ def convert_cobra_to_libsbml(cmodel:cobra.Model, add_label_locus:Union[None, Lit
             Option to add locus tags as labels to the libsbml model. 
             Can either be added via 'id', if the model ID corresponds to the locus tag or 
             via 'notes', if the locus tags is save under 'notes' - 'locus_tag'.
-            None skips to addition of locua as labels. 
+            None skips the addition of locus as labels. 
             Defaults to None.
 
     Returns:
