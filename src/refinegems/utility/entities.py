@@ -2248,7 +2248,7 @@ def create_species(
             (2) libModel: Model containing the created metabolite
     """
     metabolite = model.createSpecies()
-    metabolite.setId(f"M_{metabolite_id}")
+    metabolite.setId(f"M_{metabolite_id}_{compartment_id}")
     if name:
         metabolite.setName(name)
     metabolite.setMetaId(f"meta_M_{metabolite_id}")

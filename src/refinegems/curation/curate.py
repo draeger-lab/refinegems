@@ -62,6 +62,8 @@ from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDef
 from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
 from ..utility.util import DB2REGEX, test_biomass_presence
 
+from ..classes.egcs import EGCSolver
+
 ################################################################################
 # setup logging
 ################################################################################
@@ -724,6 +726,8 @@ def resolve_duplicate_metabolites(
     # set basic parameters
     skip_cols = ["id", "compartment", "bigg.metabolite", based_on]
     colnames = df_meta.columns.tolist()
+    egcsolver = EGCSolver()
+    now = egcsolver.find_egcs(model, with_reacs=False)
     # get objective function
     bof_list = test_biomass_presence(model)
     if len(bof_list) == 1:
@@ -861,7 +865,7 @@ def resolve_duplicate_metabolites(
                                             # TODO:
                                             #    get H according to compartment
                                             #    current implementation relies heavily
-                                            #    on 'correct' use input: compartment should have format C_c or c (C_p, p, C_e, e etc.)
+                                            #    on 'correct' use input: compartment should have format: c (p, e, etc.)
                                             # ..............................
                                             reac_comp = reac.compartments.pop()[-1]
                                             if reac_comp == "c":
@@ -880,14 +884,19 @@ def resolve_duplicate_metabolites(
                                                 perform_deletion = False
                                                 break
                                         # ..............................
-                                        # TODO:
-                                        #    fix other possible problems
+                                        # @ASK more cases needed here?
                                         # ..............................
 
-                                        # finally, check balance again (continue only if fixed, else break)
+                                        # check balance again (continue only if fixed, else break)
                                         if len(reac.check_mass_balance()) > 0:
                                             perform_deletion = False
                                             break
+                                        # check for the generation of EGCs
+                                        prev = egcsolver.find_egcs(model_del, with_reacs=False)
+                                        if len(now) > len(prev) or not set(now).issubset(set(prev)):
+                                            perform_deletion = False
+                                            break
+                                        
 
                                     else:
                                         continue
