@@ -1236,7 +1236,7 @@ class GapFiller(ABC):
 # Gapfilling with KEGG
 # --------------------
 
-
+# @TODO Improve information on locus tag not matching between model and KEGG
 class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
@@ -1244,10 +1244,14 @@ class KEGGapFiller(GapFiller):
 
     .. note::
 
-        Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
+        Please keep in mind that using this module requires a model containing the Genbank locus tags as labels as these 
+        are used in combination with the organism ID to query KEGG. Usually, the KEGG Gene ID consists of the organism 
+        ID and the Genbank locus tag and looks like `<organismid>:<locus_tag>`.
         If your model does not conform to this you can use one of the functions
         :py:func:`~refinegems.curation.curate.polish_model` or
         :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
+        WARNING:  If the locus tag from Genbank and the locus tag part from the KEGG Gene ID for your organism do not 
+        match, please overwrite the labels temporarily with the version conform to KEGG.
 
     .. hint::
 

@@ -203,9 +203,15 @@ def extend_gp_annots_via_mapping_table(
 
     return model
 
-
+# @TODO Improve information on locus tag not matching between model and KEGG
 def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
     """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
+
+    .. note:: 
+
+        This function infers the KEGG Gene ID based on the Genbank locus tag stored in the GeneProduct labels in the 
+        model and the KEGG Organism ID. If the locus tag from Genbank and the locus tag part from the KEGG Gene ID for 
+        your organism do not match, please overwrite the labels temporarily with the version conform to KEGG.
 
     Args:
         gene_list (list[GeneProduct]):
@@ -441,7 +447,7 @@ def polish_model_units(model: libModel) -> None:
         model.getListOfUnitDefinitions().clear(doDelete=True)
 
         # Only print list if UnitDefinitions were removed
-        if len(removed_unit_defs) == 0:
+        if len(removed_unit_defs) != 0:
             logger.warning(
                 """
             The following UnitDefinition objects were removed. 
