@@ -15,7 +15,7 @@ from memote.utils import truncate
 
 from libsbml import Reaction
 from six import iteritems
-from typing import Union
+from typing import Union, Literal, Tuple
 
 ################################################################################
 # setup logging
@@ -91,6 +91,35 @@ MIN_GROWTH_THRESHOLD = 1.0e-5  #: :meta:
 ################################################################################
 # functions
 ################################################################################
+
+
+# Helper function to insert into dictionary
+def insert_into_dict(
+    dictionary: dict, 
+    new_key_vals: Tuple[str, int],
+    target_key: str,
+    mode: Literal['before', 'after']='before'
+    ) -> dict:
+
+    # Dictionary to list
+    itms = list(dictionary.items())
+
+    # Determine index of the target key
+    target_idx  = [i for i, (key, _) in enumerate(itms) if key == target_key][0]
+    
+    # Determine mode
+    match mode:
+        case 'before':
+            if target_idx > 0:
+                itms.insert(target_idx - 1, new_key_vals)
+            else:
+                itms.insert(target_idx, new_key_vals)
+        case 'after':
+            itms.insert(target_idx + 1, new_key_vals)
+        case _:
+            raise KeyError('Invalid key for mode provided. Should be one of ["after", "before]. ')
+
+    return dict(itms)
 
 # SBO
 # ---

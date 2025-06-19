@@ -482,4 +482,5 @@ def run_SBOannotator(model: libModel) -> libModel:
             str(Path(tempdir, "dbs")),
             str(Path(tempdir, "dud.xml")),
         )
+        
     return model

@@ -78,6 +78,7 @@ from ..utility.entities import (
     REF_COL_GF_GENE_MAP,
 )
 from ..utility.databases import mnx_db_namespace
+from ..utility.util import insert_into_dict
 
 from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
@@ -1325,9 +1326,15 @@ class KEGGapFiller(GapFiller):
         gene_KEGG_table = gene_KEGG_table[["orgid:locus"]]
 
         # Statistics on full gene list based on KEGG
-        self._statistics["genes"][f"total (based on {self._variety})"] = (
-            self.full_gene_list["orgid:locus"].nunique()
-            + int(self.full_gene_list["orgid:locus"].isna().sum())
+        self._statistics['genes'] = insert_into_dict(
+            self._statistics['genes'], (
+                f"total (based on {self._variety})",
+                (
+                    self.full_gene_list["orgid:locus"].nunique()
+                    + int(self.full_gene_list["orgid:locus"].isna().sum())
+                    )
+            ),
+            'missing (total)'
         )
 
         # Step 3: KEGG vs. model genes -> get missing genes for model
@@ -1499,6 +1506,7 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 # Gapfilling with BioCyc
 # ----------------------
+# @TODO Handle NaNs in Sccession-2/ Reactions without locus tags for gene mapping
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with
@@ -1577,9 +1585,13 @@ class BioCycGapFiller(GapFiller):
         biocyc_genes.dropna(how="all", inplace=True)
 
         # Statistics on full gene list based on BioCyc
-        self._statistics["genes"][f"total (based on {self._variety})"] = biocyc_genes[
-            "locus_tag"
-        ].nunique() + int(biocyc_genes["locus_tag"].isna().sum())
+        self._statistics['genes'] = insert_into_dict(
+            self._statistics['genes'], (
+                f"total (based on {self._variety})",
+                biocyc_genes["locus_tag"].nunique()
+            ),
+            'missing (total)'
+        )
 
         self._full_gene_list = biocyc_genes
 
@@ -1638,9 +1650,33 @@ class BioCycGapFiller(GapFiller):
             _.getLabel() for _ in model.getPlugin(0).getListOfGeneProducts()
         ]
 
-        # Step 2: Get genes of organism from BioCyc
-        # -----------------------------------------
+        # Step 2a: Get genes of organism from BioCyc
+        # ------------------------------------------
         # See self.full_gene_list
+
+        # Step 2b: Filter out reactions without gene info
+        # -----------------------------------------------
+        # Save reactions without gene info
+        reacs_no_gene_info = self.full_gene_list[
+            self.full_gene_list["locus_tag"].isnull()
+        ]
+        # Split reaction ids to get one per row
+        reacs_no_gene_info['id'] = reacs_no_gene_info["id"].str.split(r"//")
+        # Explode dataframe
+        reacs_no_gene_info = reacs_no_gene_info.explode('id', ignore_index=True)
+        self.manual_curation['reactions']['without gene info'] = reacs_no_gene_info
+
+        # Add amount of reactions without gene info to statistics
+        self._statistics['reactions'] = insert_into_dict(
+            self._statistics['reactions'], (
+                "unmappable (w/o gene info)", 
+                self.manual_curation["reactions"]["without gene info"]["id"].nunique()
+                ),
+            'missing (based on genes)'
+            )
+
+        # Remove all rows where 'locus_tag' is None
+        self.full_gene_list.dropna(subset="locus_tag", inplace=True)
 
         # Step 3: BioCyc vs. model genes -> get missing genes for model
         # -------------------------------------------------------------
@@ -1841,10 +1877,11 @@ class BioCycGapFiller(GapFiller):
         self._statistics["reactions"]["missing (total)"] = (
             self._statistics["reactions"]["missing (based on genes)"]
             - self._statistics["reactions"]["already in model"]
+            + self._statistics['reactions']['unmappable (w/o gene info)']
         )
         self._statistics["reactions"]["missing (remaining)"] = self._statistics[
             "reactions"
-        ]["unmappable"]
+        ]["unmappable"] + self._statistics['reactions']['unmappable (w/o gene info)']
 
         # Mapped reactions
         self.missing_reactions = mapped_reacs[~mask]
@@ -1903,10 +1940,17 @@ class GeneGapFiller(GapFiller):
         # get all CDS from gff
         self.full_gene_list = parse_gff_for_cds(gffpath, self.GFF_COLS)
         # Statistics on full gene list based on GFF
-        self._statistics["genes"][f"total (based on {self._variety})"] = (
-            self.full_gene_list["locus_tag"].nunique()
-            + int(self.full_gene_list["locus_tag"].isna().sum())
+        self._statistics['genes'] = insert_into_dict(
+            self._statistics['genes'], (
+                f"total (based on {self._variety})",
+                (
+                    self.full_gene_list["locus_tag"].nunique()
+                    + int(self.full_gene_list["locus_tag"].isna().sum())
+                    )
+            ),
+            'missing (total)'
         )
+        
         # get all genes from model by locus tag
         model_locustags = [
             _f_gene(g.getLabel()) for g in model.getPlugin(0).getListOfGeneProducts()
