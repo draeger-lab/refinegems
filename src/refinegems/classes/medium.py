@@ -1020,7 +1020,10 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                     for medium, perc in p["add_medium"].items():
                         new_medium = new_medium.combine(
                             load_medium_from_db(medium), how=perc
-                        )
+                        ) # @TODO couple of issues here:
+                          # 1. perc is perc for the added one here, not for base 
+                          # 2. what TODO is a number bigger than 1.0 is added?
+                          # 3. maybe allow other options for combine as well?
 
                 # from external
                 if p and "add_external" in p.keys():
