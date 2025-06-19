@@ -850,7 +850,7 @@ class AuxotrophySimulationReport(Report):
 
     def __init__(self, results) -> None:
         # super().__init__()
-        self.simulation_results = results
+        self.simulation_results = results.sort_index()
 
     # auxotrophy sim visualisation
     def visualise_auxotrophies(
