@@ -2601,11 +2601,11 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
 
 
 def print_UnitDefinitions(unit_defs: ListOfUnitDefinitions):
-    """Prints a list of libSBML UnitDefinitions as XMLNodes
+    """Prints a list of libSBML UnitDefinitions as SBML strings
 
     Args:
         - unit_defs (ListOfUnitDefinitions):
             List of libSBML UnitDefinition objects
     """
     for unit_def in unit_defs:
-        logger.info(unit_def.toXMLNode())
+        print(unit_def.toSBML())

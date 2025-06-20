@@ -41,7 +41,7 @@ import re
 import warnings
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model, _model_to_sbml, F_REPLACE
+from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -312,6 +312,10 @@ If your id_db is not part of the list, please contact the developers.
         # Get ID
         current_id = entity.getId()
 
+        # Check for biomass or growth reaction
+        if (entity.getSBOTermID() == 'SBO:0000629') or (bool(re.search('Growth|biomass', current_id, re.IGNORECASE))):
+            return
+
         # Use current_id as metaid if no metaid is present
         if not entity.isSetMetaId():
             entity.setMetaId(f"meta_{current_id}")
@@ -408,6 +412,9 @@ def extend_metab_reac_annots_via_notes(
 # correct basic model set-up
 # ---------------------------
 
+def polish_model_metadata(model: libModel) -> None:
+    pass
+
 
 def polish_model_units(model: libModel) -> None:
     """Replaces the list of unit definitions with the unit definitions needed for FBA:
@@ -450,11 +457,11 @@ def polish_model_units(model: libModel) -> None:
         if len(removed_unit_defs) != 0:
             logger.warning(
                 """
-            The following UnitDefinition objects were removed. 
-            The reasoning is that
-            \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
-            \t(b) the UnitDefinitions defined within this program are handled as ground truth.
-            Thus, the following UnitDefinitions are not seen as relevant for the model.
+The following UnitDefinition objects were removed. 
+The reasoning is that
+\t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
+\t(b) the UnitDefinitions defined within this program are handled as ground truth.
+Thus, the following UnitDefinitions are not seen as relevant for the model.
             """
             )
             print_UnitDefinitions(removed_unit_defs)
@@ -464,7 +471,7 @@ def polish_model_units(model: libModel) -> None:
         model.getListOfUnitDefinitions().append(unit_def)
 
 
-def set_model_default_units(model: libModel):
+def set_model_default_units(model: libModel) -> None:
     """Sets default units of model
 
     Args:
@@ -496,7 +503,7 @@ def set_model_default_units(model: libModel):
             model.setVolumeUnits(unit_id)
 
 
-def set_units_of_parameters(model: libModel):
+def set_units_of_parameters(model: libModel) -> None:
     """Sets units of parameters in model
 
     Args:
@@ -520,7 +527,7 @@ def set_units_of_parameters(model: libModel):
                 param.setUnits(unit_id.group(0))
 
 
-def add_compartment_structure_specs(model: libModel):
+def add_compartment_structure_specs(model: libModel) -> None:
     """| Adds the required specifications for the compartment structure
     | if not set (size & spatial dimension)
 
@@ -546,7 +553,7 @@ def add_compartment_structure_specs(model: libModel):
                 compartment.setUnits(unit_id.group(0))
 
 
-def set_initial_amount_metabs(model: libModel):
+def set_initial_amount_metabs(model: libModel) -> None:
     """Sets initial amount to all metabolites if not already set or if initial concentration is not set
 
     Args:
@@ -559,7 +566,7 @@ def set_initial_amount_metabs(model: libModel):
             species.setInitialAmount(float("NaN"))
 
 
-def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
+def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]) -> None:
     """Sets boundary condition and constant if not set for an entity
 
     Args:
@@ -1262,6 +1269,9 @@ def polish_model(
     metab_list = model.getListOfSpecies()
     reac_list = model.getListOfReactions()
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
+
+    ### Clean model metadata
+    #polish_model_metadata(model)
 
     ### unit definition ###
     polish_model_units(model)
