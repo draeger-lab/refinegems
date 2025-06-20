@@ -53,8 +53,13 @@ params:
 #            subset_name (str): default_flux (float, e.g. 0.5)
 #            Add additional subsets from the database to the base.
 #   add_medium:
-#            medium_name (str): percentage (float, e.g. 0.1)
+#            medium_name (str): mode of combination 
 #            Add additional media based on a given percentage to the base.
+#            Mode of combination can be: 
+#            a single float, e.g. 0.1 - percentage of 1.0 for base medium
+#            or a tuple of two floats, e.g. (0.1, 0.2) - percentage of each medium to use
+#            or "+" - simply add the media together 
+#            or NULL, which sets the fluxes to None
 #   add_external:
 #            'link' (str): percentage (float)
 #            Add additional external media to the base.

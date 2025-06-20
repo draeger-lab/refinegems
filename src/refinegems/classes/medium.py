@@ -45,6 +45,7 @@ ALLOWED_DATABASE_LINKS = ["BiGG", "MetaNetX", "SEED", "VMH", "ChEBI", "KEGG"]  #
 REQUIRED_SUBSTANCE_ATTRIBUTES = ["name", "formula", "flux", "source"]  #: :meta:
 INTEGER_REGEX = re.compile(r"^[-+]?([1-9]\d*|0)$")  #: :meta:
 FLOAT_REGEX = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")  #: :meta:
+REGEX_MEDIA_YML_TUPLE = re.compile(f"\((\d+\.\d+),(\d+\.\d+)\)") #: :meta:
 
 ############################################################################
 # classes
@@ -412,7 +413,7 @@ class Medium:
                 # add together
                 combined = combine_media_with_fluxes(combined, second_medium)
 
-            # combine and set all fluxes to 0
+            # combine and set all fluxes to None
             case None:
                 combined.substance_table = pd.concat(
                     [combined.substance_table, other.substance_table], ignore_index=True
@@ -1018,12 +1019,16 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                 if p and "add_medium" in p.keys():
                     # interate over all media to add
                     for medium, perc in p["add_medium"].items():
+                        # check for tuple
+                        match = re.match(REGEX_MEDIA_YML_TUPLE, perc)
+                        if match:
+                            x,y = match.groups()
+                            # convert into python-tuple
+                            perc = (float(x),float(y))
+                        # combine
                         new_medium = new_medium.combine(
                             load_medium_from_db(medium), how=perc
-                        ) # @TODO couple of issues here:
-                          # 1. perc is perc for the added one here, not for base 
-                          # 2. what TODO is a number bigger than 1.0 is added?
-                          # 3. maybe allow other options for combine as well?
+                        )
 
                 # from external
                 if p and "add_external" in p.keys():

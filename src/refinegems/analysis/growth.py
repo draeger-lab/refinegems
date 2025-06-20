@@ -218,19 +218,22 @@ def find_growth_essential_exchanges(
             model.medium = new_medium
         # find essentials
         essential = []
+        non_essential = []
         for metab in new_medium.keys():
             with model:
                 # disable uptake
                 model.reactions.get_by_id(metab).lower_bound = 0
                 # ensure, cross-dependency is not an issue
-                for ess_metab in essential:
-                    model.reactions.get_by_id(ess_metab).lower_bound = 0
+                for noness_metab in non_essential:
+                    model.reactions.get_by_id(noness_metab).lower_bound = 0
                 # optimize BOF
                 sol = model.optimize()
                 if (
                     sol.objective_value < 1e-5
                 ):  # and sol.objective_value > -1e-9: # == 0 no negative growth!
                     essential.append(metab)
+                else:
+                    non_essential.append(metab)
 
     return essential
 
