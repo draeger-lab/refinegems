@@ -1506,7 +1506,6 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 # Gapfilling with BioCyc
 # ----------------------
-# @TODO Handle NaNs in Sccession-2/ Reactions without locus tags for gene mapping
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with
