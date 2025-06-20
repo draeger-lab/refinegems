@@ -351,7 +351,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     return model
 
-# @TEST
+
 def set_kegg_pathways(
     model: libModel, viaEC: bool = False, viaRC: bool = False
 ) -> tuple[libModel, list[str]]:

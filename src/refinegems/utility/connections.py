@@ -56,7 +56,6 @@ from .io import write_model_to_file
 # BOFdat
 # ------
 
-# @TEST
 def adjust_BOF(
     genome: str,
     model: cobra.Model,
