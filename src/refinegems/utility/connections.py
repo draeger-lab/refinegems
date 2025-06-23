@@ -40,7 +40,8 @@ from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
 # @TODO: Add connection for ModelPolisher to get a model and return a model object
-# note:
+#        --> see function in specimen.util.util -> should be used as a starting point an moved here as to not keep duplicated code
+# @NOTE:
 #    for BOFdat to run correctly, one needs to change 'solution.f' to 'solution.objective_value'
 #    in the coenzymes_and_ions.py file of BOFdat
 #    -> see forked version of it in the Draeger-lab github

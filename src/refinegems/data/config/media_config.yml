@@ -88,7 +88,9 @@ media:
 #    supplement: min
   M9:
 #    add_medium: 
-#      SNM3: 1.0
+#      SNM3: 0.6   # add 60% base an 40% SNM3
+#      RPMI: (1.5,5.0) # use 1.5x M9 and 5.0x RPMI 
+#      LB: "+"   # add media simply together
 #    add_subset:
 #      AA: 5.0
     add_substance:
