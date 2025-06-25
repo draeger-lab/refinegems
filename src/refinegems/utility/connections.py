@@ -9,7 +9,9 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 
 import cobra
 import json
+import logging
 import memote
+import model_polisher as mp
 import os
 import pandas as pd
 import shutil
@@ -449,6 +451,44 @@ def get_memote_score(memote_report: dict) -> float:
             MEMOTE score
     """
     return memote_report["score"]["total_score"]
+
+
+# run ModelPolisher
+# -----------------
+
+# @TODO: make sure this works and return correct stuff
+#.       -> and what about the model?
+def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -> Union[dict, None]:
+    """Wrapper around ModelPolisher
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+        - configuration (dict): 
+            Configuration file for ModelPolisher
+
+    Returns:
+        Union[dict, None]: 
+            Result from ModelPolisher
+    """
+
+    # use correct function for input model/path to model
+    match model_or_path:
+        case libModel():
+            model_or_path = model_or_path.getSBMLDocument()
+            mp_polish = mp.polish_model_document
+        case str():
+            mp_polish = mp.polish_model_file
+        case _:
+            raise TypeError(f'Invalid input type: {type(model_or_path)}. Should be one of libSBML model object or str.')
+    
+    result = None
+    try:
+        result = mp_polish(model_or_path, configuration)
+    except:
+        logging.error(f"Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
+        
+    return result
 
 
 # SBOannotator
