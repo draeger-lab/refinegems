@@ -1481,14 +1481,14 @@ class KEGGapFiller(GapFiller):
 
         # statistics on mapped reactions
         self._statistics["reactions"]["mapped to MNX"] = reacs_mapped[
-            reacs_mapped["add_to_GPR"].isnull()
-        ][reacs_mapped["via"] == "MetaNetX"]["id"].nunique()
+            (reacs_mapped["add_to_GPR"].isnull()) & (reacs_mapped["via"] == "MetaNetX")
+        ]["id"].nunique()
         self._statistics["reactions"]["mapped to BiGG"] = reacs_mapped[
-            reacs_mapped["add_to_GPR"].isnull()
-        ][reacs_mapped["via"] == "BiGG"]["id"].nunique()
+            (reacs_mapped["add_to_GPR"].isnull()) & (reacs_mapped["via"] == "BiGG")
+        ]["id"].nunique()
         self._statistics["reactions"]["mapped to KEGG"] = reacs_mapped[
-            reacs_mapped["add_to_GPR"].isnull()
-        ][reacs_mapped["via"] == "KEGG"]["id"].nunique()
+            (reacs_mapped["add_to_GPR"].isnull()) & (reacs_mapped["via"] == "KEGG")
+        ]["id"].nunique()
 
         # calculate remaining statistics
         self._statistics["reactions"]["missing (total)"] = (
@@ -2228,14 +2228,14 @@ class GeneGapFiller(GapFiller):
 
         # statistics on mapped reactions
         self._statistics["reactions"]["mapped to MNX"] = mapped_reacs[
-            mapped_reacs["add_to_GPR"].isnull()
-        ][mapped_reacs["via"] == "MetaNetX"]["id"].nunique()
+            (mapped_reacs["add_to_GPR"].isnull()) & (mapped_reacs["via"] == "MetaNetX")
+        ]["id"].nunique()
         self._statistics["reactions"]["mapped to BiGG"] = mapped_reacs[
-            mapped_reacs["add_to_GPR"].isnull()
-        ][mapped_reacs["via"] == "BiGG"]["id"].nunique()
+            (mapped_reacs["add_to_GPR"].isnull()) & (mapped_reacs["via"] == "BiGG")
+        ]["id"].nunique()
         self._statistics["reactions"]["mapped to KEGG"] = mapped_reacs[
-            mapped_reacs["add_to_GPR"].isnull()
-        ][mapped_reacs["via"] == "KEGG"]["id"].nunique()
+            (mapped_reacs["add_to_GPR"].isnull()) & (mapped_reacs["via"] == "KEGG")
+        ]["id"].nunique()
 
         # calculate remaining statistics
         self._statistics["reactions"]["missing (total)"] = (

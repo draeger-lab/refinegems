@@ -8,6 +8,8 @@ __author__ = "Carolin Brune"
 ################################################################################
 
 import logging
+import warnings
+
 from functools import wraps, partial
 
 ################################################################################
@@ -88,3 +90,27 @@ def deprecate(func=None, note: str = None):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+
+# written with help from Copilot
+def suppress_warning(msg_substring):
+    """A decorator to suppress warnings that contain a specific substring.
+
+    Args:
+        - msg_substring (str): 
+            The substring to look for in warning messages.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with warnings.catch_warnings():
+                def custom_filter(message, category, filename, lineno, file=None, line=None):
+                    if msg_substring in str(message):
+                        return
+                    return warnings._showwarnmsg_impl(warnings.WarningMessage(
+                        message, category, filename, lineno, file, line))
+                warnings.showwarning = custom_filter
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator

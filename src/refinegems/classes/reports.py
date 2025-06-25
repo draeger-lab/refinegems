@@ -1716,7 +1716,7 @@ class GapFillerReport(Report):
             warnings.warn('Unknown color palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
-        fig = plt.figure(tight_layout=True)
+        fig = plt.figure() # tight_layout=True
         if not self.no_title:
             fig.suptitle(f"Statistics for Gapfilling via {self.variety}", fontsize=16)
         grid = gspec.GridSpec(2, 1, hspace=0.6)

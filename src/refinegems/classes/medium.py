@@ -18,6 +18,7 @@ __author__ = "Carolin Brune"
 import cobra
 import copy
 import io
+import logging
 import numpy as np
 import pandas as pd
 import random
@@ -268,7 +269,8 @@ class Medium:
                 ] = (2 * flux)
         # keep already set fluxes
         else:
-            self.substance_table["flux"] = self.substance_table["flux"].fillna(flux)
+            with pd.option_context("future.no_silent_downcasting", True): # @NOTE remove after pandas truly adapts to this behaviour
+                self.substance_table["flux"] = self.substance_table["flux"].fillna(flux).infer_objects(copy=False)
             if (
                 self.is_aerobic()
                 and double_o2
@@ -364,9 +366,22 @@ class Medium:
                     added.append(subs)
             # add remaining substances to medium from the second one
             second_medium = second_medium[~second_medium["name"].isin(added)]
-            combined.substance_table = pd.concat(
-                [combined.substance_table, second_medium], ignore_index=True
-            )
+            
+            # Filter out empty or all-NA DataFrames before concatenation 
+            frames_to_concat = [
+                df for df in [combined.substance_table, second_medium]
+                if not df.empty and not df.isna().all(axis=None)
+            ]
+            # case 1: all are empty or NA
+            if not frames_to_concat:
+                raise ValueError("The substance tables of both media are empty or contain only NA values. Cannot combine.")
+            # case 2: only one is valid
+            elif len(frames_to_concat) == 1:
+                logging.warning("Only one of the substance tables contains valid rows during combination.")
+                combined.substance_table = frames_to_concat[0]
+            # case 3: simply merge the substance tables
+            else:
+                combined.substance_table = pd.concat(frames_to_concat, ignore_index=True)
 
             return combined
 
