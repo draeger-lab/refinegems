@@ -41,8 +41,6 @@ from memote.support import consistency_helpers as con_helpers
 from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
-# @TODO: Add connection for ModelPolisher to get a model and return a model object
-#        --> see function in specimen.util.util -> should be used as a starting point an moved here as to not keep duplicated code
 # @NOTE:
 #    for BOFdat to run correctly, one needs to change 'solution.f' to 'solution.objective_value'
 #    in the coenzymes_and_ions.py file of BOFdat
@@ -67,6 +65,12 @@ def adjust_BOF(
 ) -> str:
     """Adjust the model's BOF using BOFdat. Currently implemented are step 1
     DNA coefficients and step 2.
+    
+    Connection to the BOFdat tool as described in:
+    BOFdat: Generating biomass objective functions for genome-scale metabolic models from experimental data
+    Lachance JC, Lloyd CJ, Monk JM, Yang L, Sastry AV, et al. (2019) BOFdat: Generating biomass objective 
+    functions for genome-scale metabolic models from experimental data. PLOS Computational Biology 
+    15(4): e1006971. https://doi.org/10.1371/journal.pcbi.1006971
 
     Args:
         - genome (str):
@@ -179,6 +183,11 @@ def run_DIAMOND_blastp(
     outname: str = "DIAMOND_blastp_res.tsv",
 ) -> str:
     """Run DIAMOND in BLASTp mode.
+    
+    Connection to the DIAMOND tool as described in:
+    Buchfink B, Reuter K, Drost HG, 
+    "Sensitive protein alignments at tree-of-life scale using DIAMOND", 
+    Nature Methods 18, 366-368 (2021). doi:10.1038/s41592-021-01101-x
 
     Args:
         - fasta (str):
@@ -313,6 +322,11 @@ def filter_DIAMOND_blastp_results(
 def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model:
     """Run the MassChargeCuration toll on the model and optionally directly apply
     the solution.
+    
+    Connection to the MCC tool, preprint is available at:
+    MCC: Automated Mass and Charge Curation at Genome-Scale Applied to C. tuberculostearicum
+    Reihaneh Mostolizadeh, Finn Mier, Andreas Dräger
+    bioRxiv 2024.11.19.624331; doi: https://doi.org/10.1101/2024.11.19.624331
 
     Args:
         - model (cobra.Model):
@@ -360,6 +374,10 @@ def run_memote(
     verbose: bool = False,
 ) -> Union[dict, str, None]:
     """Run the memote snapshot function on a given model loaded with COBRApy.
+    
+    Connection to the memote tool as described in:
+    Lieven, C., Beber, M. E., Olivier, B. G., Bergmann, F. T., Ataman, M., Babaei, P., ... & Zhang, C. 
+    (2020). MEMOTE for standardized genome-scale metabolic model testing. Nature biotechnology, 38(3), 272-276.
 
     Args:
         - model (cobra.Model):
@@ -497,6 +515,10 @@ def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -
 
 def run_SBOannotator(model: libModel) -> libModel:
     """Run SBOannotator on a model to annotate the SBO terms.
+
+    Connection to the SBOannotator tool as described in:
+    Leonidou, N., Fritze, E., Renz, A., & Dräger, A. (2023). SBOannotator: a Python tool for the automated 
+    assignment of systems biology ontology terms. Bioinformatics, 39(7), btad437.
 
     Args:
         - model (libModel):
