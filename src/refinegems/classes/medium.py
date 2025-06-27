@@ -26,7 +26,6 @@ import re
 import sqlite3
 import string
 import sys
-import warnings
 import yaml
 
 from colorama import init as colorama_init
@@ -37,6 +36,12 @@ from typing import Literal, Union, Any
 
 from ..utility.databases import PATH_TO_DB
 from ..utility.io import load_substance_table_from_db, load_subset_from_db, load_a_table_from_database
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ############################################################################
 # variables
@@ -118,7 +123,7 @@ class Medium:
 
         # check if fetch was successful
         if len(substance) == 0:
-            warnings.warn(f"Could not fetch substance {name} from DB.")
+            logger.warning(f"Could not fetch substance {name} from DB.")
             return
 
         # add substance to table
@@ -300,8 +305,8 @@ class Medium:
                 * perc
             )
         else:
-            warnings.warn(
-                f"WARNING: no oxygen detected in medium {self.name}, cannot set oxygen percentage."
+            logger.warning(
+                f"No oxygen detected in medium {self.name}, cannot set oxygen percentage."
             )
 
     def combine(
@@ -377,7 +382,7 @@ class Medium:
                 raise ValueError("The substance tables of both media are empty or contain only NA values. Cannot combine.")
             # case 2: only one is valid
             elif len(frames_to_concat) == 1:
-                logging.warning("Only one of the substance tables contains valid rows during combination.")
+                logger.warning("Only one of the substance tables contains valid rows during combination.")
                 combined.substance_table = frames_to_concat[0]
             # case 3: simply merge the substance tables
             else:
@@ -511,7 +516,7 @@ class Medium:
             return self.combine(sub_medium, inplace=inplace)
 
         else:
-            warnings.warn(
+            logger.warning(
                 f"Could not find subset in DB, nothing added to medium: {subset_name}"
             )
             # just return the original medium
@@ -1097,7 +1102,7 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                                     f = f * 10.0
                             else:
                                 warn_string = f"Could not read in flux for {s}: {f}. \nWill be using default 10.0 instead."
-                                warnings.warn(warn_string)
+                                logger.warning(warn_string)
                                 f = 10.0
                         # change medium
                         if s in new_medium.substance_table["name"].tolist():
@@ -1240,7 +1245,7 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
             if "name" in infos.keys():
                 name = infos["name"]
             else:
-                warnings.warn(
+                logger.warning(
                     "No name found for externally loaded medium. Setting random one."
                 )
                 name = "noname_" + "".join(
@@ -1441,11 +1446,11 @@ def enter_substance_row(
         substance_id = None
         if len(candidate_list) > 0:
 
-            print(
+            logger.info(
                 f'Following similar entries have been found for the substance {row["name"]}.'
             )
             for i in candidate_list:
-                print(i)
+                logger.info(i)
             res = input(
                 "If one matches your entry, please enter the ID or enter skip/s: \n"
             )
@@ -1519,7 +1524,7 @@ def enter_m2s_row(
         )
         connection.commit()
     else:
-        warnings.warn(
+        logger.warning(
             f'Medium2substance connection {medium_id} - {row["substance_id"]} already exists, skipped second assignment.'
         )
 
@@ -1619,13 +1624,13 @@ def enter_medium_into_db(medium: Medium, database: str = PATH_TO_DB):
                         "SELECT 1 FROM medium WHERE medium.name = ?", (new_name,)
                     )
                     if name_check_2.fetchone():
-                        print("This name already exists in the database.")
+                        logger.info("This name already exists in the database.")
                     else:
                         medium.name = new_name
                         break
             elif check in ["n", "no"]:
                 # end program when no new name is set
-                print("No new name chosen. Ending the program.")
+                logger.info("No new name chosen. Ending the program.")
                 sys.exit()
             else:
                 # Abort program at unknown input
@@ -1654,22 +1659,22 @@ def enter_medium_into_db(medium: Medium, database: str = PATH_TO_DB):
                 enter_s2db_row, axis=1, args=(current_db, connection, cursor)
             )
 
-        print(
+        logger.info(
             f"Medium {medium.name} with ID {medium_id} has been added to the database."
         )
 
     # in case of problems, interupt and revert changes
     except:
 
-        print(f"During execution, the following error occured: \n{sys.exc_info()}")
-        print("Reverting changes to database...")
+        logger.info(f"During execution, the following error occured: \n{sys.exc_info()}")
+        logger.info("Reverting changes to database...")
 
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_medium,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_medium2substance,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_substance,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_substance2db,))
 
-        print("Done")
+        logger.info("Done")
 
     # in any case close connection to database
     finally:
@@ -1747,11 +1752,12 @@ def add_subset_to_db(
                 connection.commit()
             else:
                 mes = f"Substance {s} not in database. Not added. Please check your input."
-                warnings.warn(mes)
+                logger.warning(mes)
 
     else:
         mes = f"Subset name {name} already in database. Cannot add.\nPlease choose a different name or delete the old one."
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
+        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
 
     # close connection to database
     connection.close()
@@ -2061,9 +2067,11 @@ def update_db_multi(
         try:
             cursor.execute(query)
         except sqlite3.IntegrityError as ie:
-            print(f"{Fore.MAGENTA}{ie}")
-            print(
-                f'Ocurred with: column={row["column"]}, new_value={row["new_value"]}, condition={row["conditions"]}'
+            logger.warning(
+                f"""
+{Fore.MAGENTA}{ie}{Fore.WHITE}
+Ocurred with: column={row['column']}, new_value={row['new_value']}, condition={row['conditions']}
+                """
             )
             continue
 

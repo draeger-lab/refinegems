@@ -11,13 +11,19 @@ from .medium import Medium
 from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
 
 import cobra
+import logging
 import pandas as pd
-import warnings
 
 from functools import partial
 from multiprocess import Pool
 from tqdm import tqdm
 from typing import Literal, Union
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -214,7 +220,7 @@ class EGCSolver:
                     # No namespacce given
                     case _:
                         mes = f"Unknown namespace or no namespace given: {namespace}"
-                        warnings.warn(mes)
+                        logger.warning(mes)
                         return None
 
                 if i not in c1_metab:
@@ -689,11 +695,11 @@ class GreedyEGCSolver(EGCSolver):
         output_list = []
 
         if len(present_egcs) == 0:
-            print("No EGCs present, nothing to solve.")
+            logger.info("No EGCs present, nothing to solve.")
 
         else:
-            print("_____________________________________")
-            print(
+            logger.info("_____________________________________")
+            logger.info(
                 f"Try to resolve the following EGCs: {[egc for egc in present_egcs]} \nThis might take a while..."
             )
 
@@ -799,7 +805,7 @@ class GreedyEGCSolver(EGCSolver):
                 not_solvable.append(col)
         # report the problems for manual curation
         if len(not_solvable) > 0:
-            print(
+            logger.info(
                 f"The following EGCs cannot be fixed with the current code: {not_solvable}"
             )
             solution_table.drop(not_solvable, axis=1, inplace=True)
@@ -862,7 +868,7 @@ class GreedyEGCSolver(EGCSolver):
                         mes = (
                             f"{mode} is no viable modification... Something went wrong."
                         )
-                        warnings.warn(mes)
+                        logger.warning(mes)
 
     # run the complete solving process
     # --------------------------------

@@ -38,7 +38,6 @@ import copy
 import logging
 import pandas as pd
 import re
-import warnings
 
 from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
@@ -158,7 +157,7 @@ def extend_gp_annots_via_mapping_table(
 
     # 1. Get mapping
     # If no mapping table provided, get via function
-    print("Get mapping information...")
+    logger.info("Get mapping information...")
     if not mapping_tbl_file:
         mapping_table = get_gpid_mapping(
             model, gff_paths, email, contains_locus_tags, outpath
@@ -178,7 +177,7 @@ def extend_gp_annots_via_mapping_table(
     # Get gene list
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
 
-    print("Extending GeneProduct information...")
+    logger.info("Extending GeneProduct information...")
     for gene in tqdm(gene_list):
         # Get row of mapping table for current model_id
         gp_infos = mapping_table.loc[gene.getId(), :]
@@ -285,18 +284,18 @@ def extend_metab_reac_annots_via_id(
     try:
         id_db_prefix = db2prefix[id_db]
     except KeyError:
-        print(
+        logger.info(
             f"""
 KeyError: with id_db=\'{id_db}\'
 id_db must be one of the valid database names: {db2prefix.keys()}
 If your id_db is not part of the list, please contact the developers.
-              """
+            """
         )
         return
     try:
         db_pattern = DB2REGEX[id_db_prefix]
     except KeyError:
-        print(
+        logger.warning(
             f"KeyError: id_db_prefix = {id_db_prefix} must be one of the valid prefixes in https://bioregistry.io/."
         )
         return
@@ -330,6 +329,7 @@ If your id_db is not part of the list, please contact the developers.
                 entity.unsetAnnotation()
 
             # Get ID for annotation
+            # @TODO Throws SyntaxWarning: invalid escape sequence '\['f"(_|\[){entity.getCompartment()}\]?$", "", current_id
             if isinstance(entity, Species):  # Remove compartment suffix
                 id_for_anno = re.sub(
                     f"(_|\[){entity.getCompartment()}\]?$", "", current_id
@@ -414,7 +414,6 @@ def extend_metab_reac_annots_via_notes(
 
 def polish_model_metadata(model: libModel) -> None:
     pass
-
 
 def polish_model_units(model: libModel) -> None:
     """Replaces the list of unit definitions with the unit definitions needed for FBA:
@@ -627,8 +626,8 @@ def resolve_duplicate_reactions(
 
     # check if based_on is valid
     if not based_on in df_reac.columns.tolist():
-        warnings.warn(
-            f"Warning: Annotation column {based_on} does not exists. Search for duplicates will be skipped."
+        logger.warning(
+            f"Annotation column {based_on} does not exist. Search for duplicates will be skipped."
         )
         return model
 
@@ -687,11 +686,11 @@ def resolve_duplicate_reactions(
                             else:
                                 pass  # nothing to add
                             model.reactions.get_by_id(r_id).remove_from_model()
-                            print(
+                            logger.info(
                                 f"\tDuplicate reaction {r_id} found. Combined to {keep_reac.id} and deleted."
                             )
                     else:
-                        print(
+                        logger.info(
                             f'\tDuplicate reactions {", ".join(mnx[1]["id"].tolist())} found.'
                         )
 
@@ -731,8 +730,8 @@ def resolve_duplicate_metabolites(
 
     # check if based_on is valid
     if not based_on in df_meta.columns.tolist():
-        warnings.warn(
-            f"Warning: Annotation {based_on} not found. Search for metabolite duplicates skipped."
+        logger.warning(
+            f"Annotation {based_on} not found. Search for metabolite duplicates skipped."
         )
         return model
 
@@ -747,11 +746,13 @@ def resolve_duplicate_metabolites(
         objective_function = bof_list[0]
     elif len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
+        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
         objective_function = bof_list[0]
     else:
         mes = "No BOF detected. Might lead to problems during duplicate removal."
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
+        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
 
     for c in df_meta.groupby("compartment"):
         # note: using groupby drops nans
@@ -829,7 +830,7 @@ def resolve_duplicate_metabolites(
                                         for _ in [keep_meta.id, del_meta_id]
                                     ]
                                 ):
-                                    print(
+                                    logger.info(
                                         f"\tSpecial case -Duplicate NH4/NH3- detected.\n\tTrying to solve by additionally removing reactions containing both metabolites."
                                     )
                                     # ... remove reactions with nh3 and nh4 both present
@@ -918,12 +919,12 @@ def resolve_duplicate_metabolites(
                                 if perform_deletion:
                                     model = copy.deepcopy(model_del) 
                                     # @WARNING: this works, however, takes a lot of time -> better / optimised implementation
-                                    print(
+                                    logger.info(
                                         f"\tDuplicate metabolite {del_meta_id} found. Replaced with {keep_meta.id}."
                                     )
                                 # if problems are not solvable, duplicate is kept and only reported
                                 else:
-                                    print(
+                                    logger.info(
                                         f"\tDuplicate metabolite {del_meta_id} found (duplicate to {keep_meta.id} based on annotation).\n\t\tAutomated deletion not possible due to problems with consistency."
                                     )
 
@@ -931,13 +932,13 @@ def resolve_duplicate_metabolites(
                         #       since it might be an isomer, elongation, or other explanation
                         #       for the same annotation
                         else:
-                            print(
+                            logger.info(
                                 f"\tDuplicate metabolite {del_meta_id} found (duplicate to {keep_meta.id} based on annotation).\n\t\tKept, as reaction containing both metabolites was found."
                             )
 
                 # ... or only report duplicates
                 else:
-                    print(
+                    logger.info(
                         f'\tDuplicate metabolite(s) {", ".join(mnx[1]["id"].tolist())} found.'
                     )
 
@@ -995,16 +996,16 @@ def resolve_duplicates(
                 model, colname, replace=replace_dupl_meta
             )
     elif check_meta == "skip":
-        print("\tSkip check for duplicate metabolites.")
+        logger.info("\tSkip check for duplicate metabolites.")
     else:
-        warnings.warn(
-            f"Warning: Unknown option for metabolites duplicate checking {check_meta}. Search for metabolite duplicates skipped."
+        logger.warning(
+            f"Unknown option for metabolites duplicate checking {check_meta}. Search for metabolite duplicates skipped."
         )
 
     # remove now unused metabolites
     if remove_unused_meta:
         model, removed = cobra.manipulation.delete.prune_unused_metabolites(model)
-        print(
+        logger.info(
             f'\tThe following metabolites () have been removed: {", ".join([x.id for x in removed])}'
         )
 
@@ -1311,11 +1312,11 @@ def polish_model(
     polish_entity_conditions(reac_list)
 
     ### MIRIAM compliance of CVTerms ###
-    print(
+    logger.info(
         "Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):"
     )
     model = polish_annotations(model, True, outpath)
-    print("Changing all qualifiers to be MIRIAM compliant:")
+    logger.info("Changing all qualifiers to be MIRIAM compliant:")
     model = change_all_qualifiers(model, lab_strain)
 
     return model
