@@ -356,20 +356,19 @@ def set_kegg_pathways(
     model: libModel, viaEC: bool = False, viaRC: bool = False
 ) -> tuple[libModel, list[str]]:
     """Executes all steps to add KEGG pathways as groups
+    to a given model.
+    
+    Changes the model in-place.
 
     Args:
         - model (libModel):
             Model loaded with libSBML
 
     Returns:
-        tuple:
-            libSBML model (1) & List of reactions without KEGG Id (2)
-
-            (1) libModel: Modified model with Pathways as groups
-            (2) list: Ids of reactions without KEGG annotation
+        list: Ids of reactions without KEGG annotation
     """
 
-    def _invert_reac_patway_dict(kegg_pathways) -> dict:
+    def _invert_reac_pathway_dict(kegg_pathways) -> dict:
         """Group reaction into pathways.
 
         Args:
@@ -404,10 +403,10 @@ def set_kegg_pathways(
     model_pathways = add_kegg_pathways(model, pathways)
 
     # add corresponding groups
-    pathway_groups = _invert_reac_patway_dict(pathways)
-    model_pathway_groups = create_pathway_groups(model_pathways, pathway_groups)
+    pathway_groups = _invert_reac_pathway_dict(pathways)
+    model = create_pathway_groups(model_pathways, pathway_groups)
 
-    return model_pathway_groups, non_kegg_reactions
+    return non_kegg_reactions
 
 
 # analyse the pathways in a model
