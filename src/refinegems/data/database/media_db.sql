@@ -15,6 +15,7 @@ INSERT INTO "medium" VALUES(8,'RPMI','Roswell Park Memorial Institute 1640 Mediu
 INSERT INTO "medium" VALUES(9,'SNM3','Synthetic Nasal Medium Version 3','https://doi.org/10.1371/journal.ppat.1003862');
 INSERT INTO "medium" VALUES(10,'artSw','Artificial Sweat','https://doi.org/10.1128/spectrum.04180-22, Table 1');
 INSERT INTO "medium" VALUES(11,'BMS23','Basal Medium as described in Swaney et al. 2023','https://doi.org/10.1128/spectrum.04180-22, Material & Methods; M9 components from: https://www.sigmaaldrich.com/DE/de/product/sigma/m6030');
+INSERT INTO "medium" VALUES(12,'BHI','Brain Heart Infusion (working progress)','First attempt to create this medium in silico, based loosely on literature and mainly on experience as this is a complex medium');
 
 
 CREATE TABLE IF NOT EXISTS "medium2substance" (
@@ -635,6 +636,69 @@ INSERT INTO "medium2substance" VALUES(5,314,NULL,'Selenium');
 INSERT INTO "medium2substance" VALUES(5,315,NULL,'Selenium');
 INSERT INTO "medium2substance" VALUES(5,316,NULL,'Selenium');
 INSERT INTO "medium2substance" VALUES(5,248,NULL,'Selenium');
+INSERT INTO "medium2substance" VALUES(12,138,2.199999999999999734e-01,NULL);
+INSERT INTO "medium2substance" VALUES(12,162,0.03,NULL);
+INSERT INTO "medium2substance" VALUES(12,164,0.28,NULL);
+INSERT INTO "medium2substance" VALUES(12,166,0.36,NULL);
+INSERT INTO "medium2substance" VALUES(12,169,0.63,NULL);
+INSERT INTO "medium2substance" VALUES(12,175,2.11,NULL);
+INSERT INTO "medium2substance" VALUES(12,178,0.27,NULL);
+INSERT INTO "medium2substance" VALUES(12,180,0.56,NULL);
+INSERT INTO "medium2substance" VALUES(12,182,8.4000000000000008e-01,NULL);
+INSERT INTO "medium2substance" VALUES(12,183,0.75,NULL);
+INSERT INTO "medium2substance" VALUES(12,186,0.27,NULL);
+INSERT INTO "medium2substance" VALUES(12,188,4.599999999999999644e-01,NULL);
+INSERT INTO "medium2substance" VALUES(12,189,0.99,NULL);
+INSERT INTO "medium2substance" VALUES(12,190,0.56,NULL);
+INSERT INTO "medium2substance" VALUES(12,192,4.2000000000000004e-01,NULL);
+INSERT INTO "medium2substance" VALUES(12,194,1.099999999999999867e-01,NULL);
+INSERT INTO "medium2substance" VALUES(12,195,0.61,NULL);
+INSERT INTO "medium2substance" VALUES(12,196,0.5,NULL);
+INSERT INTO "medium2substance" VALUES(12,56,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,75,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,81,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,102,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,120,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,150,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,201,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,232,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,235,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,251,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,258,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,286,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,270,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,246,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,240,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,25,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,26,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,211,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,66,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,334,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,281,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,93,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,83,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,170,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,55,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,289,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,204,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,90,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,89,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,269,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,136,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,282,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,274,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,97,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,156,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,157,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,87,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,88,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,285,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,168,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,173,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,176,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,147,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,268,10,NULL);
+INSERT INTO "medium2substance" VALUES(12,335,1,NULL);
 
 
 CREATE TABLE IF NOT EXISTS "subset" (
@@ -646,6 +710,7 @@ INSERT INTO "subset" VALUES(1,'CasA','Casamino acids (based on: https://www.usbi
 INSERT INTO "subset" VALUES(2,'protAA','Proteinogenic amino acids');
 INSERT INTO "subset" VALUES(3,'artSe','Artificial Sebum (based on: https://journals.asm.org/doi/10.1128/spectrum.04180-22, Table 2)');
 INSERT INTO "subset" VALUES(4,'DiReM','Dissociation reaction metabolites');
+INSERT INTO "subset" VALUES(5,'Tween 80™','Culture medium additive Tween 80™ (oleate source)');
 
 
 CREATE TABLE IF NOT EXISTS "subset2substance" (
@@ -759,6 +824,7 @@ INSERT INTO "subset2substance" VALUES(4,102,1);
 INSERT INTO "subset2substance" VALUES(4,17,1);
 INSERT INTO "subset2substance" VALUES(4,56,1);
 INSERT INTO "subset2substance" VALUES(4,48,1);
+INSERT INTO "subset2substance" VALUES(5,227,1);
 
 
 CREATE TABLE IF NOT EXISTS substance (
@@ -1097,6 +1163,7 @@ INSERT INTO "substance" VALUES(330,'2-Demethylmenaquinol-8','C50H72O2');
 INSERT INTO "substance" VALUES(331,'2-Demethylmenaquinone-8','C50H70O2');
 INSERT INTO "substance" VALUES(332,'Acetyl-CoA','C23H38N7O17P3S');
 INSERT INTO "substance" VALUES(334,'Coenzyme A','C21H36N7O16P3S');
+INSERT INTO "substance" VALUES(335,'Glycylglycine','C4H8N2O3');
 
 
 CREATE TABLE IF NOT EXISTS substance2db (
@@ -1847,3 +1914,11 @@ INSERT INTO "substance2db" VALUES(281,'cpd00073','SEED');
 INSERT INTO "substance2db" VALUES(285,'cpd03424','SEED');
 INSERT INTO "substance2db" VALUES(105,'orn_D','VMH');
 INSERT INTO "substance2db" VALUES(173,'cys_L','VMH');
+INSERT INTO "substance2db" VALUES(335,'glygly','BiGG');
+INSERT INTO "substance2db" VALUES(335,'17201','CHEBI');
+INSERT INTO "substance2db" VALUES(335,'5504','CHEBI');
+INSERT INTO "substance2db" VALUES(335,'14364','CHEBI');
+INSERT INTO "substance2db" VALUES(335,'24413','CHEBI');
+INSERT INTO "substance2db" VALUES(335,'C02037','KEGG');
+INSERT INTO "substance2db" VALUES(335,'cpd01391','SEED');
+INSERT INTO "substance2db" VALUES(335,'MNXM4002','MetaNetX');

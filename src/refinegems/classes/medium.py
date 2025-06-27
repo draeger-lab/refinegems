@@ -2093,6 +2093,10 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
         "bigg_metabolites",
         "bigg_reactions",
         "modelseed_compounds",
+        "mnx_chem_prop",
+        "mnx_chem_xref",
+        "mnx_reac_prop",
+        "mnx_reac_xref"
     ]
     counter = 0  # To count rows in newly generated file
 
