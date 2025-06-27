@@ -86,6 +86,8 @@ class SingleGrowthSimulationReport(Report):
             Name of the model.
         - medium_name:
             Name of the medium.
+        - supplementation_variety
+            Variety of the supplementation. One of ['min', 'std', None].
         - growth_value:
             Simulated growth value.
         - doubling_time:
@@ -102,6 +104,7 @@ class SingleGrowthSimulationReport(Report):
         self,
         model_name=None,
         medium_name=None,
+        supplementation_variety=None,
         growth_value=None,
         doubling_time=None,
         additives=None,
@@ -109,6 +112,7 @@ class SingleGrowthSimulationReport(Report):
     ):
         self.model_name = model_name
         self.medium_name = medium_name
+        self.supplementation_variety = supplementation_variety
         self.growth_value = growth_value
         self.doubling_time = doubling_time
         self.additives = additives
@@ -118,6 +122,7 @@ class SingleGrowthSimulationReport(Report):
         return (
             f"model: {self.model_name}\n"
             f"medium: {self.medium_name}\n"
+            f"supplementation: {self.supplementation_variety}"
             f"growth: {self.growth_value}\n"
             f"doubling time: {self.doubling_time}\n"
             f"additives: {self.additives}\n"
@@ -135,13 +140,15 @@ class SingleGrowthSimulationReport(Report):
         return {
             "model_name": self.model_name,
             "medium_name": self.medium_name,
+            "supplementation_variety": self.supplementation_variety,
             "growth_value": self.growth_value,
             "doubling_time": self.doubling_time,
             "additives": self.additives if len(self.additives) > 0 else None,
             "no_exchange": self.no_exchange,
         }
 
-
+# @TEST Added supplementation info to report -> Requires testing
+# @DISCUSSION Add supplementation and aerobic/anaerbic info also to plots?
 class GrowthSimulationReport(Report):
     """Report for the growth simulation analysis.
 
@@ -152,6 +159,8 @@ class GrowthSimulationReport(Report):
             List of the model names.
         - media:
             List of the media names.
+        - supplementation:
+            List of the supplementation varieties.
     """
 
     def __init__(self, reports: list[SingleGrowthSimulationReport] = None):
@@ -159,6 +168,7 @@ class GrowthSimulationReport(Report):
         self.reports = reports if reports else []
         self.models = set([_.model_name for _ in reports]) if reports else set()
         self.media = set([_.medium_name for _ in reports]) if reports else set()
+        self.supplementation = set([_.supplementation_variety for _ in reports]) if reports else set()
 
     def __str__(self) -> str:
 
@@ -175,6 +185,7 @@ class GrowthSimulationReport(Report):
         self.reports.append(new_rep)
         self.models.add(new_rep.model_name)
         self.media.add(new_rep.medium_name)
+        self.supplementation.add(new_rep.supplementation_variety)
 
     def to_table(self) -> pd.DataFrame:
         """Return a table of the contents of the report.

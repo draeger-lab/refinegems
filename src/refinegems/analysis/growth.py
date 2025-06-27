@@ -123,7 +123,8 @@ def get_uptake(model: cobraModel, type: str) -> list[str]:
                 if minimal is not None and not minimal.empty:
                     return list(minimal.index)
                 else:
-                    return list()
+                    logger.warning(f'No minimal medium for given model found. Using the default medium for supplementation.')
+                    return get_uptake(model, 'std')
         # return standart, non-zero flux compounds
         case "standard" | "std":
             with model:
@@ -391,7 +392,7 @@ def growth_sim_single(
             model.medium = new_m
 
         # simulate growth
-        report = SingleGrowthSimulationReport(model_name=model.id, medium_name=m.name)
+        report = SingleGrowthSimulationReport(model_name=model.id, medium_name=m.name, supplementation_variety=supplement)
         report.growth_value = model.optimize().objective_value
         report.doubling_time = (
             (np.log(2) / report.growth_value) * 60 if report.growth_value != 0 else 0
