@@ -92,6 +92,23 @@ def deprecate(func=None, note: str = None):
     return wrapper
 
 
+# with help from Copilot 
+def suppress_log_message(logger_name, level, message_substring):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            logger = logging.getLogger(logger_name)
+            class MessageFilter(logging.Filter):
+                def filter(self, record):
+                    return not (record.levelno == level and message_substring in record.getMessage())
+            filt = MessageFilter()
+            logger.addFilter(filt)
+            try:
+                return func(*args, **kwargs)
+            finally:
+                logger.removeFilter(filt)
+        return wrapper
+    return decorator
 
 # written with help from Copilot
 def suppress_warning(msg_substring):

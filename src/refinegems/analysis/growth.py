@@ -15,6 +15,7 @@ import pandas as pd
 import warnings
 
 from cobra import Model as cobraModel
+from ..developement.decorators import suppress_log_message
 from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import (
@@ -288,7 +289,7 @@ def find_additives_to_enable_growth(
         suppl_medium = {**growth_medium, **supplements}
         return suppl_medium
     else:
-        # ... the list of suplements
+        # ... the list of supplements
         return additives
 
 
@@ -448,6 +449,7 @@ def growth_sim_multi(
     return report
 
 
+@suppress_log_message("cobra.medium.boundary_types", logging.INFO, "Compartment `e` sounds like an external compartment.")
 def growth_analysis(
     models: Union[cobra.Model, str, list[str], list[cobra.Model]],
     media: Union[Medium, list[Medium], str],
