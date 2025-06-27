@@ -27,7 +27,7 @@ from datetime import date
 from functools import reduce
 
 from libsbml import Model as libModel
-from libsbml import UnitDefinition, SBase
+from libsbml import SBMLDocument, UnitDefinition, SBase, ListOf
 from libsbml import (
     MODEL_QUALIFIER,
     BQM_IS,
@@ -542,6 +542,8 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
 
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
+        
+        # Add valid CURIEs with selected pattern & report if no valid CURIEs exist
         if prefix2id:
             if new_pattern:
                 uri_set = generate_miriam_compliant_uri_set(prefix2id)
@@ -551,8 +553,9 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         else:
             # Remove annotations if no valid URIs/CURIEs were found
             if cvterm.getNumResources() < 1:
+                entity_reference = entity.getElementName() if type(entity) == SBMLDocument else entity.getId()
                 logger.warning(
-                    f"No valid URIs/CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs."
+                    f"No valid URIs/CURIEs found for {entity_reference}. To resolve manually please inspect file containing invalid CURIEs."
                 )
 
     return collected_invalid_curies
@@ -575,10 +578,12 @@ def improve_uris(entities: SBase, new_pattern: bool) -> dict[str : list[str]]:
     """
     entity2invalid_curies = {}
 
-    if type(entities) == libModel:  # Model needs to be handled like entity!
+    if not isinstance(entities, ListOf):  # Model & SBMLDocument need to be handled like entity! 
+        # type(entities) == libModel or type(entities) == SBMLDocument
         invalid_curies = improve_uri_per_entity(entities, new_pattern)
         if invalid_curies:
-            entity2invalid_curies[entities.getId()] = invalid_curies
+            entity_reference = entities.getElementName() if type(entities) == SBMLDocument else entities.getId()
+            entity2invalid_curies[entity_reference] = invalid_curies
 
     else:
         for entity in tqdm(entities):
@@ -621,6 +626,7 @@ def polish_annotations(
     """
     list_of_entity2invalid_curies = []
     listOf_dict = {
+        "sbml": model.getSBMLDocument(),
         "model": model,
         "compartment": model.getListOfCompartments(),
         "metabolite": model.getListOfSpecies(),
@@ -636,14 +642,47 @@ def polish_annotations(
         listOf_dict["group"] = model.getPlugin("groups").getListOfGroups()
 
     # Adjust annotations in model
-    for listOf in listOf_dict:
-        print(f"Polish {listOf} annotations...")
-        entity2invalid_curies = improve_uris(listOf_dict[listOf], new_pattern)
+    for lof in listOf_dict:
+        logger.info(f"Polish {lof} annotations...")
+        entity2invalid_curies = improve_uris(listOf_dict[lof], new_pattern)
+        
         list_of_entity2invalid_curies.append(entity2invalid_curies)
 
     all_entity2invalid_curies = reduce(
         lambda d1, d2: {**d1, **d2}, list_of_entity2invalid_curies
     )
+
+    # Handle CarveMe details correctly (written with help of Copilot)
+    cm_details_locations = {
+        k: [i for i, x in enumerate(v) if re.search('CarveMe', x, re.IGNORECASE)] 
+        for k, v in all_entity2invalid_curies.items()
+        if any(re.search('CarveMe', x, re.IGNORECASE) for x in v)
+    } # Get keys and indeces in value list for all CarveMe hits
+    if cm_details_locations:
+        cm_details4notes = set()
+        # Remove all entries for CarveMe and generate set of entries for notes
+        for k in cm_details_locations.keys():
+            cm_entries_at_k = all_entity2invalid_curies[k]
+            for i in cm_details_locations[k]:
+                cm_details4notes.add(cm_entries_at_k.pop(i).replace(':', ': ')) # Add to set
+
+            logger.info(f'Moved all invalid CURIE(s) from the annotations of {k} containing details on CarveMe to notes of the model object.')
+
+            if not all_entity2invalid_curies[k]: 
+                del all_entity2invalid_curies[k]
+                logger.warning(f'List of invalid CURIEs for {k} now empty.')
+
+        # Generate notes string from set to model notes
+        model_metadata = '\n'.join([f'<p>{cm_details}</p>' for cm_details in cm_details4notes])
+        if model.isSetNotes():
+            for cm_details in cm_details4notes:
+                model.appendNotes(model_metadata)
+        else: 
+            model.unsetNotes()
+            note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+            {model_metadata}
+            </html>'''
+            model.setNotes(note_string)
 
     # Write invalid CURIEs to file if present
     if all_entity2invalid_curies:
@@ -839,7 +878,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
     # Change all model entities to have the correct model qualifier
     entity_list_mod = ["model", "unit definition", "unit"]
     for entity in entity_list_mod:
-        print(f"Change {str(entity)} qualifiers...")
+        logger.info(f"Change {str(entity)} qualifiers...")
         model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
 
     # Change all remaining entities to have the correct biological qualifier
@@ -857,7 +896,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
         entity_list.append("group")
 
     for entity in entity_list:
-        print(f"Change {str(entity)} qualifiers...")
+        logger.info(f"Change {str(entity)} qualifiers...")
         if lab_strain and entity == "gene product":
             model = change_qualifiers(
                 model, "gene product", BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO
