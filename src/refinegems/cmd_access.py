@@ -284,7 +284,7 @@ def info(list):  # ,copy
         specimen.classes.medium.save_db(db,click.format_filename(copy))
 """
 
-#@TODO Improve!
+#@DISCUSSION How to make is more userfriendly?
 @media.command()
 @click.option(
     "--media-names-or-config", "--mn-cfg", "-m",

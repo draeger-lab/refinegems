@@ -147,8 +147,6 @@ class SingleGrowthSimulationReport(Report):
             "no_exchange": self.no_exchange,
         }
 
-# @TEST Added supplementation info to report -> Requires testing
-# @DISCUSSION Add supplementation and aerobic/anaerbic info also to plots?
 class GrowthSimulationReport(Report):
     """Report for the growth simulation analysis.
 

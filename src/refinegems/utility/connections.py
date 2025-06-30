@@ -474,10 +474,11 @@ def get_memote_score(memote_report: dict) -> float:
 # run ModelPolisher
 # -----------------
 
-# @TODO: make sure this works and return correct stuff
-#.       -> and what about the model?
 def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -> Union[dict, None]:
     """Wrapper around ModelPolisher
+    
+    .. warning:: 
+        ModelPolisher is currently not maintained. Might not work as expected
 
     Args:
         - model (libModel): 

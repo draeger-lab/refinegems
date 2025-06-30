@@ -1757,7 +1757,6 @@ def add_subset_to_db(
     else:
         mes = f"Subset name {name} already in database. Cannot add.\nPlease choose a different name or delete the old one."
         logger.warning(mes)
-        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
 
     # close connection to database
     connection.close()

@@ -329,10 +329,9 @@ If your id_db is not part of the list, please contact the developers.
                 entity.unsetAnnotation()
 
             # Get ID for annotation
-            # @TODO Throws SyntaxWarning: invalid escape sequence '\['f"(_|\[){entity.getCompartment()}\]?$", "", current_id
             if isinstance(entity, Species):  # Remove compartment suffix
                 id_for_anno = re.sub(
-                    f"(_|\[){entity.getCompartment()}\]?$", "", current_id
+                    re.compile(f"(_|\[){entity.getCompartment()}\]?$"), "", current_id
                 )
             else:
                 id_for_anno = current_id
@@ -747,12 +746,10 @@ def resolve_duplicate_metabolites(
     elif len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
         logger.warning(mes)
-        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
         objective_function = bof_list[0]
     else:
         mes = "No BOF detected. Might lead to problems during duplicate removal."
         logger.warning(mes)
-        # @DISCUSSION category=UserWarning not possible with logging but we could do: category = UserWarning; logger.warning(f"{mes} [Category: {category}]")
 
     for c in df_meta.groupby("compartment"):
         # note: using groupby drops nans
