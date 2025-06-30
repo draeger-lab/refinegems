@@ -1660,6 +1660,11 @@ class MultiModelInfoReport(Report):
 
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
+    
+    .. note:: 
+        In care cases, the statistics might not sum up perfectly, 
+        as they only count the main steps, appart from the total and total 
+        missing amounts.
 
     Attributes:
         - variety:
@@ -1670,6 +1675,7 @@ class GapFillerReport(Report):
             List of IDs for manual curation.
         - hide_zeros:
             Option to hide all zero values in the statistics. Defaults to False.
+            
     """
 
     def __init__(
