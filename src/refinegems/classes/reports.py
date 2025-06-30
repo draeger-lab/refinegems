@@ -1029,6 +1029,7 @@ class SourceTestReport(Report):
         legend = data_to_plot.pivot(index="row", columns="column", values="substance")
 
         # plot
+        plt.figure()
         ax = sns.heatmap(
             data_to_plot.pivot(index="row", columns="column", values="growth value"),
             linewidth=0.5,
@@ -1660,6 +1661,11 @@ class MultiModelInfoReport(Report):
 
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
+    
+    .. note:: 
+        In care cases, the statistics might not sum up perfectly, 
+        as they only count the main steps, appart from the total and total 
+        missing amounts.
 
     Attributes:
         - variety:
@@ -1670,6 +1676,7 @@ class GapFillerReport(Report):
             List of IDs for manual curation.
         - hide_zeros:
             Option to hide all zero values in the statistics. Defaults to False.
+            
     """
 
     def __init__(
