@@ -803,7 +803,9 @@ def test_auxotrophies(
 # source test
 # -----------
 
-
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
 def test_growth_with_source(
     model: cobra.Model,
     element: str,

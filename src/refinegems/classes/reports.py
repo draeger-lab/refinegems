@@ -1029,6 +1029,7 @@ class SourceTestReport(Report):
         legend = data_to_plot.pivot(index="row", columns="column", values="substance")
 
         # plot
+        plt.figure()
         ax = sns.heatmap(
             data_to_plot.pivot(index="row", columns="column", values="growth value"),
             linewidth=0.5,
