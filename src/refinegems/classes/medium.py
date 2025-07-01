@@ -99,6 +99,15 @@ class Medium:
         self.description = description
         self.substance_table = substance_table
         self.doi = doi
+        
+    def copy(self) -> "Medium":
+        """Create a deep copy of the Medium object.
+
+        Returns:
+            Medium: A new Medium object with the same data, independent of the original.
+        """
+        return copy.deepcopy(self)
+    
 
     def add_substance_from_db(self, name: str, flux: float = 10.0):
         """Add a substance from the database to the medium.
