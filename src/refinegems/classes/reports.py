@@ -956,6 +956,7 @@ class SourceTestReport(Report):
         self.element = element
         self.model_name = model_name
 
+    @suppress_warning("The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.") # @NOTE: maybe remove in future update
     def visualise(
         self, width: int = 12, color_palette: str = "YlGn"
     ) -> tuple[matplotlib.figure.Figure, pd.DataFrame]:
@@ -1003,12 +1004,12 @@ class SourceTestReport(Report):
         )
 
         # remove unplottable entries
-        data_to_plot["growth value"].replace([np.inf, -np.inf], 0, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace([np.inf, -np.inf], 0)
         over_growth = (
             data_to_plot["growth value"].max()
             + 0.1 * data_to_plot["growth value"].max()
         )
-        data_to_plot["growth value"].replace(np.nan, over_growth, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace(np.nan, over_growth)
         vmin = 1e-5  # Use same threshhold as in find_missing_essential in growth
         vmax = over_growth - 0.05 * data_to_plot["growth value"].max()
 

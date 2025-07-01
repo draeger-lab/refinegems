@@ -15,7 +15,7 @@ import pandas as pd
 import warnings
 
 from cobra import Model as cobraModel
-from ..developement.decorators import suppress_log_message
+from ..developement.decorators import suppress_log_message, suppress_warning
 from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import (
@@ -803,9 +803,10 @@ def test_auxotrophies(
 # source test
 # -----------
 
+@suppress_warning("Solver status is 'infeasible'") # to be expected, as organism is likely to not grow on all media
 @suppress_log_message("cobra.medium.boundary_types", 
                       logging.INFO, 
-                      "Compartment `e` sounds like an external compartment.")
+                      "Compartment `e` sounds like an external compartment.") # e is the default external compartment for refineGEMs, no logging neccessary
 def test_growth_with_source(
     model: cobra.Model,
     element: str,
