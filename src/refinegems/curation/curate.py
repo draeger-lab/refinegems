@@ -330,8 +330,10 @@ If your id_db is not part of the list, please contact the developers.
 
             # Get ID for annotation
             if isinstance(entity, Species):  # Remove compartment suffix
+                # Remove compartment suffixes like "_c" or "[c]" from metabolite IDs for annotation purposes
                 id_for_anno = re.sub(
-                    re.compile(f"(_|\[){entity.getCompartment()}\]?$"), "", current_id
+                    re.compile(f"(_{entity.getCompartment()}|\\[{entity.getCompartment()}\\])$"), 
+                    "", current_id
                 )
             else:
                 id_for_anno = current_id
