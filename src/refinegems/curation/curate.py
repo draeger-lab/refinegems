@@ -57,7 +57,7 @@ from ..utility.cvterms import (
     DB2PREFIX_REACS,
     get_id_from_cv_term,
 )
-from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
+from ..utility.entities import get_gpid_mapping, create_fba_units
 from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
 from ..utility.util import DB2REGEX, test_biomass_presence
 
@@ -108,7 +108,9 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)
     return model
 
-
+# @BUG Mapping of G_spontaneous to RefSeq ID possible -> Why? Remove!
+# @BUG After BioCycGapFiller table has duplicated RefSeq IDs -> Why?
+# @BUG Initial table after draft creation with CarveMe without locus_tags -> Investigate!
 def extend_gp_annots_via_mapping_table(
     model: libModel,
     mapping_tbl_file: Union[str,Path] = None,
@@ -462,7 +464,8 @@ The reasoning is that
 Thus, the following UnitDefinitions are not seen as relevant for the model.
             """
             )
-            print_UnitDefinitions(removed_unit_defs)
+            for rm_unit_def in removed_unit_defs:
+                logger.info(unit_def.toSBML())
 
     # Add all defined FBA units to the model
     for unit_def in fba_unit_defs:
@@ -589,7 +592,8 @@ def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions])
 # duplicates
 # ----------
 
-
+# @BUG WARNING 	 refinegems.classes.medium 	 Only one of the substance tables contains valid rows during combination.
+# -> Where does this come from?
 def resolve_duplicate_reactions(
     model: cobra.Model, based_on: str = "reaction", remove_reac: bool = True
 ) -> cobra.Model:
@@ -1018,7 +1022,7 @@ def resolve_duplicates(
 # Directionality Control
 # ----------------------
 
-
+# @BUG Add sanity check to check if model can still grow/have minimal medium(?)
 def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude: Union[None, tuple[Literal['annotation','notes'], str, str]]=None) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
@@ -1098,7 +1102,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
             pass
         case str():
             # load from a table
-            data = pd.read_csv(data, sep="\t")
+            data = pd.read_csv(data, sep="\t", dtype=str)
             # rewrite the columns into a better comparable/searchable format
             data["KEGG reaction"] = data["KEGG reaction"].str.extract(r".*>(R\d*)<.*")
             data["METANETX"] = data["METANETX"].str.extract(r".*>(MNXR\d*)<.*")
@@ -1219,6 +1223,10 @@ def polish_model(
 
         So far only tested for models having either BiGG or VMH identifiers.
 
+    .. hint::
+
+        Reaction direction check disabled for now as function generalises bad.
+
     Args:
         - model (libModel):
              Model loaded with libSBML
@@ -1253,6 +1261,11 @@ def polish_model(
             ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
             For more details see :py:func:`~refinegems.curation.curate.check_direction`
             Defaults to None.
+
+            .. hint::
+
+                Currently disabled as function generalises bad.
+
         - outpath (str, optional):
             Output path for mapping table from model ID to valid database IDs (if mapping_tbl_file == None)
             & incorrect annotations file(s).
@@ -1298,11 +1311,12 @@ def polish_model(
     if kegg_organism_id:
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
 
-    ### Check reaction direction ###
-    if reaction_direction:
-        model = _sbml_to_model(model)
-        model = check_direction(model, reaction_direction)
-        model = convert_cobra_to_libsbml(model, add_label_locus='notes')
+    # ### Check reaction direction ###
+    # @IDEA If generalises more add again
+    # if reaction_direction:
+    #     model = _sbml_to_model(model)
+    #     model = check_direction(model, reaction_direction)
+    #     model = convert_cobra_to_libsbml(model, add_label_locus='notes')
 
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
