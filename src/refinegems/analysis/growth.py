@@ -120,11 +120,12 @@ def get_uptake(model: cobraModel, type: str) -> list[str]:
             with model:
                 minimal = cobra.medium.minimal_medium(model)
                 # print(minimal)
-                if minimal is not None and not minimal.empty:
-                    return list(minimal.index)
-                else:
-                    logger.warning(f'No minimal medium for given model found. Using the default medium for supplementation.')
-                    return get_uptake(model, 'std')
+            if minimal is not None and not minimal.empty:
+                return list(minimal.index)
+            else:
+                logger.warning(f'No minimal medium for given model found. Using the default medium for supplementation.')
+                supp_with_std = get_uptake(model, 'standard')
+                return supp_with_std
         # return standart, non-zero flux compounds
         case "standard" | "std":
             with model:
