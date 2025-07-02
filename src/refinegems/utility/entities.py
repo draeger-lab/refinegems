@@ -32,7 +32,6 @@ from libsbml import (
     GeneProductRef,
     Unit,
     UnitDefinition,
-    ListOfUnitDefinitions,
 )
 from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
 from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
@@ -1087,7 +1086,7 @@ def build_reaction_xxx():
     """
     pass
 
-
+# @TODO Recheck if compartment is added properly to IDs
 def build_reaction_mnx(
     model: cobra.Model,
     id: str,
@@ -2594,18 +2593,3 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
     add_cv_term_units("pubmed:7986045", mmgdwh, BQM_IS_DESCRIBED_BY)
 
     return [mmgdwh, mmgdw, hour, femto_litre]
-
-
-# print model entities using libsbml
-# ----------------------------------
-
-
-def print_UnitDefinitions(unit_defs: ListOfUnitDefinitions):
-    """Prints a list of libSBML UnitDefinitions as SBML strings
-
-    Args:
-        - unit_defs (ListOfUnitDefinitions):
-            List of libSBML UnitDefinition objects
-    """
-    for unit_def in unit_defs:
-        print(unit_def.toSBML())

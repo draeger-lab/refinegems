@@ -553,7 +553,10 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         else:
             # Remove annotations if no valid URIs/CURIEs were found
             if cvterm.getNumResources() < 1:
-                entity_reference = entity.getElementName() if type(entity) == SBMLDocument else entity.getId()
+                entity_reference = entity.getId()
+                if type(entity) == SBMLDocument:
+                    entity.unsetMetaId() # Remove meta ID from SBMLDocument as not necessary
+                    entity_reference = entity.getElementName() # Get entity name as SBMLDocument has no ID
                 logger.warning(
                     f"No valid URIs/CURIEs found for {entity_reference}. To resolve manually please inspect file containing invalid CURIEs."
                 )
@@ -603,7 +606,7 @@ def improve_uris(entities: SBase, new_pattern: bool) -> dict[str : list[str]]:
 
     return entity2invalid_curies
 
-
+# @TODO Re-check if stuff from here packs REVERSIBLE into annotations
 def polish_annotations(
     model: libModel, new_pattern: bool, outpath: str = None
 ) -> libModel:
