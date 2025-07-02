@@ -866,7 +866,7 @@ def test_growth_with_source(
         case str():
             current_medium = load_medium_from_db(medium)
         case Medium():
-            current_medium = medium
+            current_medium = medium.copy()
         case _:
             current_medium = read_from_cobra_model(model)
 
