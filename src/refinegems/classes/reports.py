@@ -122,7 +122,7 @@ class SingleGrowthSimulationReport(Report):
         return (
             f"model: {self.model_name}\n"
             f"medium: {self.medium_name}\n"
-            f"supplementation: {self.supplementation_variety}"
+            f"supplementation: {self.supplementation_variety}\n"
             f"growth: {self.growth_value}\n"
             f"doubling time: {self.doubling_time}\n"
             f"additives: {self.additives}\n"
