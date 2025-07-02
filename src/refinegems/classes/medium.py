@@ -391,8 +391,13 @@ class Medium:
                 raise ValueError("The substance tables of both media are empty or contain only NA values. Cannot combine.")
             # case 2: only one is valid
             elif len(frames_to_concat) == 1:
-                logger.warning("Only one of the substance tables contains valid rows during combination.")
-                combined.substance_table = frames_to_concat[0]
+                # if one is empty, just use the other one
+                if any(df.empty for df in [combined.substance_table, second_medium]):
+                    combined.substance_table = frames_to_concat[0]
+                # if one has invalid rows, additionally report
+                else:
+                    logger.warning("Only one of the substance tables contains valid rows during combination.")
+                    combined.substance_table = frames_to_concat[0]
             # case 3: simply merge the substance tables
             else:
                 combined.substance_table = pd.concat(frames_to_concat, ignore_index=True)

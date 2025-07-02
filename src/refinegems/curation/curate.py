@@ -40,7 +40,7 @@ import pandas as pd
 import re
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
+from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -58,7 +58,7 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units
-from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
+from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
@@ -594,8 +594,6 @@ def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions])
 # duplicates
 # ----------
 
-# @BUG WARNING 	 refinegems.classes.medium 	 Only one of the substance tables contains valid rows during combination.
-# -> Where does this come from?
 def resolve_duplicate_reactions(
     model: cobra.Model, based_on: str = "reaction", remove_reac: bool = True
 ) -> cobra.Model:
@@ -726,7 +724,6 @@ def resolve_duplicate_metabolites(
         cobra.Model:
             The model.
     """
-
     # get annotation and compartment information
     anno_meta = []
     for m in model.metabolites:
@@ -987,9 +984,10 @@ def resolve_duplicates(
         # resolve duplicates starting with the metanetx.chemical database identifiers
         model = resolve_duplicate_metabolites(model, replace=replace_dupl_meta)
     elif check_meta == "exhaustive":
-        # resolve duplicates by starting at every database identifer one after another
-        # note: bigg and sbo are skipped as sbo gives not much information and bigg is
-        #       usually the one that differs (naming issue)
+        # resolve duplicates by starting at every database identifier one after another
+        # Note: "bigg" and "sbo" annotations are skipped here.
+        # "sbo" (Systems Biology Ontology) provides little information for duplicate detection,
+        # and "bigg" identifiers often differ due to naming conventions, so including them could lead to false positives.
         anno_types = set()
         # get all database annotation types present in the model
         for m in model.metabolites:
