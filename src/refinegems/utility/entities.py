@@ -327,6 +327,7 @@ def match_id_to_namespace(
             match namespace:
 
                 case "BiGG":
+                    # if a BiGG idea is annotated
                     if "bigg.metabolite" in model_entity.annotation.keys():
                         # currently takes first entry if annotation is list
                         model_entity.id = (
@@ -336,8 +337,15 @@ def match_id_to_namespace(
                             if isinstance(
                                 model_entity.annotation["bigg.metabolite"], str
                             )
-                            else model_entity.annotation["bigg.metabolite"][0]
+                            else model_entity.annotation["bigg.metabolite"][0] + "_" + model_entity.compartment
                         )
+                    # otherwise, transfer current ID into "BiGG" format
+                    # @DISCUSSION is there a better way to do this?
+                    else: 
+                        if model_entity.id.endswith(f"_{model_entity.compartment}"):
+                            pass
+                        else:
+                            model_entity.id = model_entity.id + f"_{model_entity.compartment}"
 
                 case _:
                     mes = f"Unknown input for namespace: {namespace}"
@@ -1086,7 +1094,7 @@ def build_reaction_xxx():
     """
     pass
 
-# @TODO Recheck if compartment is added properly to IDs
+
 def build_reaction_mnx(
     model: cobra.Model,
     id: str,
