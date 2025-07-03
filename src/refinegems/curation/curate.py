@@ -57,11 +57,14 @@ from ..utility.cvterms import (
     DB2PREFIX_REACS,
     get_id_from_cv_term,
 )
-from ..utility.entities import get_gpid_mapping, create_fba_units
+from ..utility.entities import get_gpid_mapping, create_fba_units, MIN_GROWTH_THRESHOLD
 from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
+from ..analysis.growth import model_minimal_medium
+
+from ..developement.decorators import suppress_log_message
 
 ################################################################################
 # setup logging
@@ -1022,7 +1025,9 @@ def resolve_duplicates(
 # Directionality Control
 # ----------------------
 
-# @BUG Add sanity check to check if model can still grow/have minimal medium(?)
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
 def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude: Union[None, tuple[Literal['annotation','notes'], str, str]]=None) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
@@ -1110,6 +1115,9 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
         case _:
             mes = f"Unknown data type for parameter data: {type(data)}"
             raise TypeError(mes)
+
+    # create a "working model"
+    model_checkpoint = copy.copy(model)
 
     # check direction
     # --------------------
@@ -1199,9 +1207,35 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                     # left to right case is the standard for adding reactions
                     # = nothing left to do
                     continue
-
-    return model
-
+                
+    # sanity checks
+    # -------------
+    sane_changes = True 
+    # Can a minimal medium be constructed?
+    min_medium = model_minimal_medium(model)
+    if min_medium.substance_table.empty:
+        sane_changes = False
+    
+    # test, if growth got significantly worse
+    test_growth_new = model.optimize().objective_value
+    test_growth_old = model_checkpoint.optimize().objective_value
+    if test_growth_old > MIN_GROWTH_THRESHOLD and test_growth_new < MIN_GROWTH_THRESHOLD:
+        sane_changes = False 
+    
+    # check, if EGCs have been added 
+    egcsolver = EGCSolver()
+    egcs_before = egcsolver.find_egcs(model_checkpoint)
+    egcs_after = egcsolver.find_egcs(model)
+    if not set(egcs_after).issubset(set(egcs_before)):
+        sane_changes = False 
+    
+    # if model sane, return otherwise return the checkpoint 
+    if sane_changes:
+        return model 
+    else: 
+        # otherwise report suggested changes
+        return model_checkpoint
+    
 
 # Perform all clean-up steps
 # --------------------------

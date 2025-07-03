@@ -9,6 +9,7 @@ __author__ = "Carolin Brune and Tobias Fehrenbach"
 from ..analysis.growth import set_bounds_to_default
 from .medium import Medium
 from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
+from ..developement.decorators import suppress_log_message
 
 import cobra
 import logging
@@ -305,7 +306,9 @@ class EGCSolver:
 
     # find EGCs
     # ---------
-
+    @suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
     def find_egcs(
         self,
         model: cobra.Model,
