@@ -19,9 +19,6 @@ from multiprocess import Pool
 from tqdm import tqdm
 from typing import Literal, Union
 
-# @BUG WARNING 	 refinegems.classes.medium 	 Only one of the substance tables contains valid rows during combination.
-# -> Where does this come from?
-
 ################################################################################
 # setup logging
 ################################################################################

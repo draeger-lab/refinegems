@@ -927,7 +927,9 @@ def test_growth_with_source(
 # minimal medium
 # --------------
 
-
+@suppress_log_message("cobra.medium.boundary_types",
+                      logging.INFO,
+                      "Compartment `e` sounds like an external compartment.")
 def model_minimal_medium(
     model: cobraModel,
     objective: Literal["flux", "medium", "exchanges"] = "flux",
