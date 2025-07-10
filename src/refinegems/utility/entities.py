@@ -1925,7 +1925,6 @@ def get_gpid_mapping(
     # Drop all columns containing only NaNs
     mapping_table = mapping_table.dropna(axis=1, how="all")
 
-    # @BUG gy 
     # 1.1 (Optional) Get information from GFF(s)
     if gff_paths:
         logger.info("Extracting (protein id,) locus tag and name from GFF(s)...")
