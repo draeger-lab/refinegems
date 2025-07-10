@@ -111,9 +111,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)
     return model
 
-# @BUG Mapping of G_spontaneous to RefSeq ID possible -> Why? Remove!
-# @BUG After BioCycGapFiller table has duplicated RefSeq IDs -> Why?
-# @BUG Initial table after draft creation with CarveMe without locus_tags -> Investigate!
+
 def extend_gp_annots_via_mapping_table(
     model: libModel,
     mapping_tbl_file: Union[str,Path] = None,

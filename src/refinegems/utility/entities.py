@@ -1838,6 +1838,9 @@ def get_gpid_mapping(
         """
         # Get NCBI ID
         ncbi_id = row["database_id"] if not pd.isnull(row["database_id"]) else ''
+        ncbi_id_alt = None # search for alternative pattern with '_' instead of '.'
+        if ncbi_id.count('_') == 2:
+            ncbi_id_alt = '.'.join(ncbi_id.rsplit("_",1))
 
         # Get locus_tag
         locus_tag = row.get("locus_tag", '') if not pd.isnull(row.get("locus_tag")) else ''
@@ -1848,10 +1851,14 @@ def get_gpid_mapping(
             # If identifier matches RefSeq ID pattern
             if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
                 row["REFSEQ"] = row["database_id"]
+            elif ncbi_id_alt and re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id_alt, re.IGNORECASE):
+                row["REFSEQ"] = ncbi_id_alt
 
             # If identifier matches ncbiprotein ID pattern
             elif re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id, re.IGNORECASE):
                 row["NCBI"] = row["database_id"]
+            elif ncbi_id_alt and re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id_alt, re.IGNORECASE):
+                row["NCBI"] = ncbi_id_alt
 
             # No pattern match & no locus_tag match
             else:
@@ -1918,6 +1925,7 @@ def get_gpid_mapping(
     # Drop all columns containing only NaNs
     mapping_table = mapping_table.dropna(axis=1, how="all")
 
+    # @BUG gy 
     # 1.1 (Optional) Get information from GFF(s)
     if gff_paths:
         logger.info("Extracting (protein id,) locus tag and name from GFF(s)...")
@@ -1986,9 +1994,13 @@ def get_gpid_mapping(
         # Merge both dataframes
         # If merge on identical columns is possible
         if identical_columns:
+            # Filter mapping_table to only keep rows where at least one of the identical_columns is not NaN/None
+            filtered_mapping_table = mapping_table.dropna(subset=identical_columns, how="all")
+            nan_mapping_table = mapping_table[~mapping_table.index.isin(filtered_mapping_table.index)]
             mapping_table = pd.merge(
-                mapping_table, gff_mapping, how="outer", on=identical_columns
+                filtered_mapping_table, gff_mapping, how="outer", on=identical_columns
             )
+            mapping_table = pd.concat([mapping_table, nan_mapping_table], ignore_index=True)
         else:  
             # Try merge on locus_tag & UNCLASSIFIED as UNCLASSIFIED could contain locus tags
             try:
@@ -2084,6 +2096,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
     if not 'name' in mapping_table.columns:
         mapping_table["name"] = None
     mapping_table = mapping_table.progress_apply(_merge_name_cols, axis=1)
+
     # Remove unnecessary name columns, if they exist
     names_to_remove = [n_col for n_col in mapping_table.columns if n_col.startswith("name_")]
     if names_to_remove: mapping_table.drop(names_to_remove, axis=1, inplace=True)
