@@ -606,7 +606,7 @@ def improve_uris(entities: SBase, new_pattern: bool) -> dict[str : list[str]]:
 
     return entity2invalid_curies
 
-# @TODO Re-check if stuff from here packs REVERSIBLE into annotations
+
 def polish_annotations(
     model: libModel, new_pattern: bool, outpath: str = None
 ) -> libModel:

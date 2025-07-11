@@ -64,7 +64,7 @@ from ..utility.util import DB2REGEX, test_biomass_presence
 from ..classes.egcs import EGCSolver
 from ..analysis.growth import model_minimal_medium
 
-from ..developement.decorators import suppress_log_message
+from ..developement.decorators import suppress_log_message, template
 
 ################################################################################
 # setup logging
@@ -416,6 +416,7 @@ def extend_metab_reac_annots_via_notes(
 # correct basic model set-up
 # ---------------------------
 
+@template
 def polish_model_metadata(model: libModel) -> None:
     pass
 
@@ -1180,8 +1181,6 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                     # case 1: exactly one match remains
                     if len(direction) == 1:
                         found_direction = list(direction)[0]
-                        r.annotation["biocyc"] = found_direction
-                        r.annotation["metacyc.reaction"] = found_direction
                         r.notes["BioCyc direction check"] = f"found {found_direction}"
 
                     # case 2: multiple matches found -> inconclusive
