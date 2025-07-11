@@ -341,23 +341,25 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         cobra.Model:
             The model (updated or not)
     """
+    try:
+        # make temporary directory to save files for MCC in
+        with tempfile.TemporaryDirectory() as temp:
 
-    # make temporary directory to save files for MCC in
-    with tempfile.TemporaryDirectory() as temp:
+            # use MCC
+            if apply:
+                # update model
+                balancer = MassChargeCuration(model, update_ids=False, data_path=temp)
+            else:
+                # do not change original model
+                with model as model_copy:
+                    balancer = MassChargeCuration(model_copy, update_ids=False, data_path=temp)
 
-        # use MCC
-        if apply:
-            # update model
-            balancer = MassChargeCuration(model, update_ids=False, data_path=temp)
-        else:
-            # do not change original model
-            model_copy = model.copy()
-            balancer = MassChargeCuration(model_copy, update_ids=False, data_path=temp)
-
-    # save reports
-    balancer.generate_reaction_report(Path(dir, model.id + "_mcc_reactions"))
-    balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
-    balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
+        # save reports
+        balancer.generate_reaction_report(Path(dir, model.id + "_mcc_reactions"))
+        balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
+        balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
+    except Exception as e:
+        logging.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
 
     return model
 

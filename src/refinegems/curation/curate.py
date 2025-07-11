@@ -468,7 +468,7 @@ Thus, the following UnitDefinitions are not seen as relevant for the model.
             """
             )
             for rm_unit_def in removed_unit_defs:
-                logger.info(unit_def.toSBML())
+                logger.info(rm_unit_def.toSBML())
 
     # Add all defined FBA units to the model
     for unit_def in fba_unit_defs:

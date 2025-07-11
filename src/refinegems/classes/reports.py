@@ -33,7 +33,7 @@ from ..analysis.investigate import (
     get_reac_with_gpr,
     get_reactions_per_sbo,
 )
-from ..utility.util import test_biomass_presence
+from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
 from ..developement.decorators import *
 from ..utility.io import search_sbo_label
 
@@ -200,7 +200,7 @@ class GrowthSimulationReport(Report):
 
     def plot_growth(
         self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
-    ) -> matplotlib.figure.Figure:
+    ) -> matplotlib.figure.Figure|None:
         """Visualise the contents of the report.
 
         .. note::
@@ -220,8 +220,10 @@ class GrowthSimulationReport(Report):
                 Defaults to 'YlGn'.
 
         Returns:
-            matplotlib.figure.Figure:
-                The plotted figure.
+            If plotting possible: matplotlib.figure.Figure:
+                    The plotted figure.
+            Else None
+            
         """
 
         def plot_growth_bar(
@@ -403,6 +405,11 @@ class GrowthSimulationReport(Report):
 
             return fig
 
+        # sanity check to not produce empty graphs
+        if all(_.growth_value < MIN_GROWTH_THRESHOLD for _ in self.reports):
+            logger.info("No growth detected, nothing to plot.")
+            return None
+        
         # match the unit
         match unit:
             case "h":
@@ -528,10 +535,11 @@ class GrowthSimulationReport(Report):
                     f.write(str(self))
                 # save visualisation for doubling time
                 fig_dt = self.plot_growth(color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
-                # save visualisation for growth rate
-                fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
+                if fig_dt:
+                    fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
+                    # save visualisation for growth rate
+                    fig_h = self.plot_growth(unit="h", color_palette=color_palette)
+                    fig_h.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
 
             case _:
                 raise ValueError(
@@ -1960,7 +1968,7 @@ class MultiSBOTermReport:
                 try:
                     cmap = matplotlib.colormaps[color_palette]
                 except ValueError:
-                    logger.wARN('Unknown color palette, setting it to "Paired"')
+                    logger.warning('Unknown color palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
                     cmap = cmap.colors[0 : len(self.model_reports)]

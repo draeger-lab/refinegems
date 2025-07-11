@@ -668,7 +668,8 @@ class Medium:
             carveme_mimic = carveme_mimic[['db_id', 'name']]
         else:
             carveme_mimic = carveme_mimic[['db_id', 'name', 'flux']]
-            carveme_mimic = carveme_mimic.replace(np.nan, 10.0) # Replace all NaN values with a default flux of 10.0
+            with pd.option_context("future.no_silent_downcasting", True): #@NOTE remove after pandas update
+                carveme_mimic = carveme_mimic.fillna(10.0).infer_objects(copy=False) # Replace all NaN values with a default flux of 10.0
 
         # Rename columns to match CarveMe format
         carveme_mimic.rename(columns={'db_id': 'compound'}, inplace=True)
@@ -838,7 +839,6 @@ def load_medium_from_db(
     )
 
 
-# @TEST
 def export_media_from_db_to_file(
     media_names_or_config: Union[str, list[str], Literal['all']] = 'all', 
     type: Literal['tsv','csv','docs','rst'] = 'tsv', 
