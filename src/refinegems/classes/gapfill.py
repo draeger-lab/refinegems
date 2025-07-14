@@ -1237,7 +1237,7 @@ class GapFiller(ABC):
 # Gapfilling with KEGG
 # --------------------
 
-# @TODO Improve information on locus tag not matching between model and KEGG
+# @TEST
 class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
@@ -1250,9 +1250,12 @@ class KEGGapFiller(GapFiller):
         ID and the Genbank locus tag and looks like `<organismid>:<locus_tag>`.
         If your model does not conform to this you can use one of the functions
         :py:func:`~refinegems.curation.curate.polish_model` or
-        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
-        WARNING:  If the locus tag from Genbank and the locus tag part from the KEGG Gene ID for your organism do not 
-        match, please overwrite the labels temporarily with the version conform to KEGG.
+        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table` in combination with 
+        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_KEGG`.
+        WARNING: If the locus tag from Genbank and the locus tag part from the KEGG Gene ID do not match and running the 
+        functions above does not solve the issue for your organism, please overwrite the labels temporarily with the 
+        version conform to KEGG. The labels for the GeneProducts in your model need to contain the part after 
+        '<organismid>:' from the KEGG Gene ID.
 
     .. hint::
 
@@ -1321,6 +1324,7 @@ class KEGGapFiller(GapFiller):
         # ---------------------------------------
         gene_KEGG_list = KEGG().list(self.organismid)
         gene_KEGG_table = pd.read_table(io.StringIO(gene_KEGG_list), header=None)
+        gene_KEGG_table.to_csv("gene_KEGG_table.tsv", sep="\t", index=False)
         gene_KEGG_table.columns = ["orgid:locus", "CDS", "position", "protein"]
         self.full_gene_list = gene_KEGG_table
         gene_KEGG_table = gene_KEGG_table[["orgid:locus"]]
@@ -1345,6 +1349,7 @@ class KEGGapFiller(GapFiller):
 
         # Step 4: extract locus tag
         # -------------------------
+        # @TODO Rework as this is not a general solution -> Get from labels in model? Might be safer!
         genes_not_in_model["locus_tag"] = (
             genes_not_in_model["orgid:locus"].str.split(r":").str[1]
         )

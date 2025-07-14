@@ -43,6 +43,7 @@ from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
+from libsbml import LIBSBML_OPERATION_SUCCESS, LIBSBML_OPERATION_FAILED, LIBSBML_INVALID_OBJECT
 from pathlib import Path
 from tqdm.auto import tqdm
 from typing import Literal, Union
@@ -111,7 +112,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)
     return model
 
-
+# @TODO Recheck appendNotes()
 def extend_gp_annots_via_mapping_table(
     model: libModel,
     mapping_tbl_file: Union[str,Path] = None,
@@ -194,9 +195,9 @@ def extend_gp_annots_via_mapping_table(
                 gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
             else: 
                 gene.unsetNotes()
-                note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+                note_string = f'''<body xmlns = "http://www.w3.org/1999/xhtml" >
                 <p>locus_tag: {gp_infos["locus_tag"]}</p>
-                </html>'''
+                </body>'''
                 gene.setNotes(note_string)
         if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
             add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
@@ -205,41 +206,82 @@ def extend_gp_annots_via_mapping_table(
 
     return model
 
-# @TODO Improve information on locus tag not matching between model and KEGG
-def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
+
+def extend_gp_annots_via_KEGG(
+    gene_list: list[GeneProduct], 
+    kegg_organism_id: str, 
+    prefixes2remove: Union[str,list[str]] = None
+    ) -> None:
     """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
 
     .. note:: 
 
         This function infers the KEGG Gene ID based on the Genbank locus tag stored in the GeneProduct labels in the 
         model and the KEGG Organism ID. If the locus tag from Genbank and the locus tag part from the KEGG Gene ID for 
-        your organism do not match, please overwrite the labels temporarily with the version conform to KEGG.
+        your organism do not match, please provide a prefix or a list of prefixes to remove from the locus tag in the 
+        `prefixes2remove` argument.
 
     Args:
-        gene_list (list[GeneProduct]):
+        - gene_list (list[GeneProduct]):
             libSBML ListOfGenes
-        kegg_organism_id (str):
+        - kegg_organism_id (str):
             Organism identifier in the KEGG database
+        - prefixes2remove (Union[str,list[str]], optional):
+            Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
+            Defaults to None.
     """
     k = KEGG()
     mapping_kegg_uniprot = k.conv("uniprot", kegg_organism_id)
+    if type(prefixes2remove) is str: prefixes2remove = [prefixes2remove]
+    prefixes2remove.insert(0, '')
+    prefixes2remove = list(set(prefixes2remove))  # Remove duplicates
     no_valid_kegg = []
 
-    for gp in tqdm(gene_list):
+    def add_KEGG_UniProt_id(gene: GeneProduct, kegg_gene_id_suffix: str) -> tuple[list[str], str]:
+        """ Adds KEGG Gene ID and UniProt ID to the GeneProduct annotations
 
-        if gp.getId() != "G_spontaneous":
-            kegg_gene_id = f"{kegg_organism_id}:{gp.getLabel()}"
+        Args:
+            - gene (GeneProduct): 
+                GeneProduct to which the KEGG Gene ID and UniProt ID should be added
+            - kegg_gene_id_suffix (str):
+                KEGG Gene ID suffix to get valid KEGG Gene ID         
+        Returns:
+            list[str]: 
+                List of locus_tags that could not be combined to a valid KEGG Gene ID
+        """
+        no_valid_kegg_id = None
+        kegg_gene_id = f"{kegg_organism_id}:{kegg_gene_id_suffix}"
+        
+        try:
+            uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
 
-            try:
-                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+            # Add KEGG Gene ID and UniProt ID to the GeneProduct annotations
+            add_cv_term_genes(kegg_gene_id, "KEGG", gene)
+            add_cv_term_genes(uniprot_id.split(r"up:")[1], "UNIPROT", gene)
 
-                add_cv_term_genes(kegg_gene_id, "KEGG", gp)
-                add_cv_term_genes(uniprot_id.split(r"up:")[1], "UNIPROT", gp)
+        except KeyError:
+            no_valid_kegg_id = gene.getLabel()
 
-            except KeyError:
-                no_valid_kegg.append(gp.getLabel())
+        return no_valid_kegg_id
+
+    logging.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
+    for gp in tqdm(gene_list): 
+        if gp.getId() != "G_spontaneous": 
+            locus_tag = gp.getLabel()
+
+            for prefix in prefixes2remove:
+                # Remove prefix from locus tag to get valid KEGG Gene ID
+                kegg_gene_id_suffix = locus_tag.removeprefix(prefix)
+                no_valid_kegg_id = add_KEGG_UniProt_id(gp, kegg_gene_id_suffix)
+
+                # If valid KEGG Gene ID was found, break the loop
+                if not no_valid_kegg_id:
+                    break
+
+            if no_valid_kegg_id: no_valid_kegg.append(no_valid_kegg_id)
 
     if no_valid_kegg:
+        no_valid_kegg = list(set(no_valid_kegg))  # Remove duplicates
         logger.info(
             f"The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg} with the provided KEGG Organism ID: {kegg_organism_id}."
         )
@@ -1245,6 +1287,7 @@ def polish_model(
     contains_locus_tags: bool = False,
     lab_strain: bool = False,
     kegg_organism_id: str = None,
+    prefixes2remove_kegg: Union[list[str], str] = None,
     reaction_direction: str = None,
     outpath: str = None,
 ) -> libModel:
@@ -1286,6 +1329,9 @@ def polish_model(
             Defaults to False.
         - kegg_organism_id (str, optional):
             KEGG organism identifier if available.
+            Defaults to None.
+        - prefixes2remove_kegg (Union[str,list[str]], optional):
+            Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
             Defaults to None.
         - reaction_direction (str, optional):
             Path to a CSV file containing the BioCyc smart table with the columns
@@ -1340,7 +1386,7 @@ def polish_model(
         outpath
     )
     if kegg_organism_id:
-        extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
+        extend_gp_annots_via_KEGG(gene_list, kegg_organism_id, prefixes2remove_kegg)
 
     # ### Check reaction direction ###
     # @IDEA If generalises more add again
