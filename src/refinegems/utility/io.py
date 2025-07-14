@@ -502,7 +502,7 @@ def create_missing_genes_protein_fasta(
     fasta: str,
     missing_genes: pd.DataFrame,
     outdir: str = None,
-) -> str:
+) -> Union[str,None]:
     """Creates a FASTA file containing proteins for missing_genes
 
     .. note::
@@ -520,8 +520,11 @@ def create_missing_genes_protein_fasta(
             Defaults to None.
 
     Returns:
-        str:
-            Path to the FASTA protein file for the missing genes.
+        Case 1: FASTA created successfully
+            str
+                Path to the FASTA protein file for the missing genes.
+        Case 2: No missing genes or Error in mapping.
+            None
     """
 
     # format the missing genes' locus tags
@@ -554,9 +557,13 @@ def create_missing_genes_protein_fasta(
         outfile = str(Path(outdir, "missing_genes.fasta"))
     else:
         outfile = str(Path("missing_genes.fasta"))
-    SeqIO.write(missing_seqs, outfile, "fasta")
-
-    return outfile
+    
+    if len(missing_seqs) != 0:
+        SeqIO.write(missing_seqs, outfile, "fasta")
+        return outfile
+    else:
+        raise ValueError("No missing genes were found using the provided FASTA file. Please re-check your input.")
+    
 
 
 # GFF

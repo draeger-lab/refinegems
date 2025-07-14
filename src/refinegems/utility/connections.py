@@ -260,7 +260,7 @@ def run_DIAMOND_blastp(
     )
     with open(logfile, "a") as f:
         f.write(completed_blast.stderr)
-
+        
     return outname
 
 

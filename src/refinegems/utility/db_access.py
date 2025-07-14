@@ -1000,12 +1000,12 @@ def get_ec_via_swissprot(
 
     # Step 1: Make a FASTA out of the missing genes
     miss_fasta = create_missing_genes_protein_fasta(fasta, missing_genes, outdir)
+    
     # Step 2: Run DIAMOND
     #         blastp mode against SwissProt DB
     blast_path = run_DIAMOND_blastp(
         miss_fasta, db, sensitivity=sens, coverage=cov, threads=t, outdir=outdir
     )
-    # @TODO What happens if no mapping is performed?
     # Step 3: filter DIAMOND hits
     dmnd_res = filter_DIAMOND_blastp_results(blast_path, pid)
     # Step 4: map to Swissprot mapping file
