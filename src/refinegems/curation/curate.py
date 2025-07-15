@@ -43,7 +43,6 @@ from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
-from libsbml import LIBSBML_OPERATION_SUCCESS, LIBSBML_OPERATION_FAILED, LIBSBML_INVALID_OBJECT
 from pathlib import Path
 from tqdm.auto import tqdm
 from typing import Literal, Union
@@ -112,7 +111,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
                             add_cv_term_metabolites(entry, db_id, other_metab)
     return model
 
-# @TODO Recheck appendNotes()
+
 def extend_gp_annots_via_mapping_table(
     model: libModel,
     mapping_tbl_file: Union[str,Path] = None,
@@ -186,12 +185,13 @@ def extend_gp_annots_via_mapping_table(
         # Get row of mapping table for current model_id
         gp_infos = mapping_table.loc[gene.getId(), :]
 
-        # Add infos to current GeneProduct
-        if gp_infos["name"]:
+        # Add infos to current GeneProduct if available
+        if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
             gene.setName(gp_infos["name"])
-        if gp_infos["locus_tag"]:
+        if ('locus_tag' in gp_infos.index.to_list()) and gp_infos["locus_tag"]:
             gene.setLabel(gp_infos["locus_tag"])
-            if gene.isSetNotes():
+            if gene.isSetNotes(): 
+                # @TODO Write own implementation for appendNotes
                 gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
             else: 
                 gene.unsetNotes()
@@ -347,7 +347,7 @@ If your id_db is not part of the list, please contact the developers.
 
     # Get BiGG IDs for VMH ID == BiGG ID validation
     if "vmh" in id_db_prefix.lower():
-        bigg_ids = load_a_table_from_database(f"SELECT bigg_id FROM {bigg_db}")
+        bigg_ids = load_a_table_from_database(f"SELECT {bigg_id_type} FROM {bigg_db}")
         bigg_ids = set(bigg_ids[bigg_id_type].tolist())
 
     # Get ID from entity & add annotation if valid database ID
@@ -376,6 +376,7 @@ If your id_db is not part of the list, please contact the developers.
             # Get ID for annotation
             if isinstance(entity, Species):  # Remove compartment suffix
                 # Remove compartment suffixes like "_c" or "[c]" from metabolite IDs for annotation purposes
+                # @TODO Recheck if this is really functional
                 id_for_anno = re.sub(
                     re.compile(f"(_{entity.getCompartment()}|\\[{entity.getCompartment()}\\])$"), 
                     "", current_id

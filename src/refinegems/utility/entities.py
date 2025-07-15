@@ -1785,14 +1785,18 @@ def get_gpid_mapping(
     """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional)
     and NCBI requests (optional).
 
-    .. hint:
+    .. warning::
 
         Mappings may be incomplete and require manual adjustment.
+        
+        If locus tags from Genbank or RefSeq are present within the GeneProduct 
+        identifier and no GFF is provided, these will be added incorrectly to 
+        the annotations as NCBI Protein or RefSeq URIs.
 
-    .. note:
+    .. note::
 
         Mapping currently is only implemented for NCBI Protein and RefSeq IDs.
-        Other databases may be added in the future.
+        Other databases may be added in the future. 
 
     Args:
         - model (libModel):
@@ -1940,6 +1944,9 @@ def get_gpid_mapping(
 
             # Check if protein_id in columns
             if "protein_id" in current_gff.columns: to_keep.update({"protein_id": "database_id"})
+            # @TODO
+            # @IDEA 
+            # Also get refseq locus tag for filtering?
 
             # Subset dataframe to only keep relevant columns & rename them
             current_gff = current_gff[to_keep.keys()]
