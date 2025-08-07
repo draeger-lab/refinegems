@@ -210,7 +210,7 @@ def extend_gp_annots_via_mapping_table(
 def extend_gp_annots_via_KEGG(
     gene_list: list[GeneProduct], 
     kegg_organism_id: str, 
-    prefixes2remove: Union[str,list[str]] = None
+    prefixes2remove: Union[str,list[str]] = ''
     ) -> None:
     """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
 
@@ -228,7 +228,7 @@ def extend_gp_annots_via_KEGG(
             Organism identifier in the KEGG database
         - prefixes2remove (Union[str,list[str]], optional):
             Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
-            Defaults to None.
+            Defaults to empty string ('').
     """
     k = KEGG()
     mapping_kegg_uniprot = k.conv("uniprot", kegg_organism_id)
@@ -1288,7 +1288,7 @@ def polish_model(
     contains_locus_tags: bool = False,
     lab_strain: bool = False,
     kegg_organism_id: str = None,
-    prefixes2remove_kegg: Union[list[str], str] = None,
+    prefixes2remove_kegg: Union[list[str], str] = '',
     reaction_direction: str = None,
     outpath: str = None,
 ) -> libModel:
@@ -1333,7 +1333,7 @@ def polish_model(
             Defaults to None.
         - prefixes2remove_kegg (Union[str,list[str]], optional):
             Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
-            Defaults to None.
+            Defaults to empty string ('').
         - reaction_direction (str, optional):
             Path to a CSV file containing the BioCyc smart table with the columns
             ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
