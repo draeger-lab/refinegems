@@ -1108,6 +1108,10 @@ class GapFiller(ABC):
                 ~self.missing_genes.duplicated(subset=["ncbiprotein"])
             ]
 
+        # Store mapping table for later manual curation (or debugging purposes)
+        self.manual_curation["genes"]["missing, before filling"] = self.missing_genes
+        self.manual_curation["reactions"]["missing, before filling"] = self.missing_reactions
+
         # Step 1: Add genes to model whose reactions are already in it
         # -------------------------------------------------------------
         # filter the respective genes and reactions
