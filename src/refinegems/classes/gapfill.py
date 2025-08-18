@@ -1730,6 +1730,19 @@ class BioCycGapFiller(GapFiller):
             locus_tag2ncbiprotein_df, on="locus_tag"
         )
 
+        # Save not mappable genes due to no ncbiprotein ID
+        self.manual_curation["genes"]["no NCBI Protein ID"] = self.missing_genes[
+            self.missing_genes["ncbiprotein"].isna()
+        ]
+
+        # Adjust amount of unmappable genes in statistics
+        self._statistics["genes"]["unmappable"] = self.manual_curation["genes"][
+            "no NCBI Protein ID"
+        ]["locus_tag"].nunique()
+
+        # Remove all rows where 'ncbiprotein' is None
+        self.missing_genes.dropna(subset="ncbiprotein", inplace=True)
+        
         # Step 7: Get amount of missing genes in total
         # --------------------------------------------
         self._statistics["genes"]["missing (mappable)"] = self.missing_genes[
