@@ -613,6 +613,12 @@ class Medium:
             - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
         """
 
+        # Set-up path
+        if dir:
+            if isinstance(dir, str):
+                dir = Path(dir)
+            dir.mkdir(parents=True, exist_ok=True)
+        
         match type:
             case "tsv":
                 self.substance_table.to_csv(

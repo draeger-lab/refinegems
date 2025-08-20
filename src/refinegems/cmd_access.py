@@ -77,7 +77,7 @@ def config(filename, type):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -183,15 +183,20 @@ def geneproduct_mapping_table(modelpath, gff_paths, email, lt, outdir):
     "-d",
     "--dir",
     required=False,
-    type=click.Path(),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 def build_pancore(models, based_on, name, keep_genes, rcomp, dir):
     """Build a pan-core model."""
+
+    # Set-up directory path
+    if dir:
+        dir.mkdir(parents=True, exist_ok=True)
+    
     models = list(models)
-    # construc the core-pan model
+    # construct the core-pan model
     pancore_mod = rg.analysis.core_pan.generate_core_pan_model(
         models, based_on, name, not keep_genes
     )
@@ -320,6 +325,10 @@ def annotations(modelpath, new_pattern, outdir):
 
     Changes qualifiers and annotations to be MIRIAM-compliant
     """
+    # Set-up path
+    if outdir:
+        outdir.mkdir(parents=True, exist_ok=True)
+    
     model = rg.utility.io.load_model(modelpath, "libsbml")
     model = rg.curation.curate.polish_annotations(model, new_pattern, outdir)
     rg.utility.io.write_model_to_file(
@@ -442,6 +451,10 @@ def model(
 
     (Tested for models having either BiGG or VMH identifiers.)
     """
+    # Set-up path
+    if outdir:
+        outdir.mkdir(parents=True, exist_ok=True)
+    
     model = rg.utility.io.load_model(modelpath, "libsbml")
     model = rg.curation.curate.polish_model(
         model,
@@ -721,8 +734,13 @@ def automated_gapfill(
     threads,
 ):
 
+    # Set model variants
     cmodel = rg.utility.io.load_model(modelpath, "cobra")
     model = rg.utility.io.load_model(modelpath, "libsbml")
+
+    # Set-up path
+    if outdir:
+        outdir.mkdir(parents=True, exist_ok=True)
 
     # set class instance
     match alg:
@@ -813,13 +831,18 @@ def biomass(modelpath, cycles, outfile):
     "--dir",
     "-d",
     required=False,
-    type=click.Path(),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     show_default=True,
     default="",
-    help="Directory to save the output to.",
+    help="Path to the output directory.",
 )
 def charges(modelpath, dir):
     """Changes the charges in a model by comparison to the ModelSEED database"""
+
+    # Set-up path
+    if dir:
+        dir.mkdir(parents=True, exist_ok=True)
+    
     model = rg.utility.io.load_model(modelpath, "libsbml")
     corr, charg = rg.curation.charges.correct_charges_modelseed(model)
     rg.utility.io.write_model_to_file(corr, str(Path(dir, "corrected_model.xml")))
@@ -834,15 +857,20 @@ def charges(modelpath, dir):
     "--dir",
     "-d",
     required=False,
-    type=click.Path(),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     show_default=True,
     default="",
-    help="Directory to save the output to.",
+    help="Path to the output directory.",
 )
 def direction(modelpath, data, dir):
     """Checks & if necessary, corrects the direction for each reaction in a model"""
+
+    # Set-up path
+    if dir:
+        dir.mkdir(parents=True, exist_ok=True)
+    
     model = rg.utility.io.load_model(modelpath, "cobra")
-    corr = rg.curation.polish.check_direction(model, data)
+    corr = rg.curation.curate.check_direction(model, data)
     rg.utility.io.write_model_to_file(
         corr, str(Path(dir, f"{model.id}_corrected_model.xml"))
     )
@@ -922,13 +950,18 @@ def annot():
     "--dir",
     "-d",
     required=False,
-    type=click.Path(),
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
     show_default=True,
     default="",
-    help="Directory to save the output to.",
+    help="Path to the output directory.",
 )
 def sboterms(modelpath, dir):
     """Calls SBOannotator to enhance the SBO terms in a model"""
+
+    # Set-up path
+    if dir:
+        dir.mkdir(parents=True, exist_ok=True)
+    
     model = rg.utility.io.load_model(modelpath, "libsbml")
     SBOannotated = rg.utility.connections.run_SBOannotator(model)
     rg.utility.io.write_model_to_file(
@@ -939,10 +972,19 @@ def sboterms(modelpath, dir):
 @annot.command()
 @click.argument("modelpath", type=click.Path(exists=True))
 @click.option(
-    "-d", "--dir", required=False, default="", help="Path to the output directory"
+    "-d",
+    "--dir", 
+    required=False,
+    type=click.Path(exists=False, dir_okay=True, file_okay=False, writable=True, path_type=Path),
+    default="",
+    help="Path to the output directory"
 )
 def pathways(modelpath, dir):
     """Add KEGG pathways as groups to a model"""
+    # Set-up path
+    if dir:
+        dir.mkdir(parents=True, exist_ok=True)
+    
     model, missing = rg.curation.pathways.kegg_pathways(modelpath)
     with open(Path(dir, "reac_wo_kegg_pathway_groups.txt"), "w") as outfile:
         # save reactions with missing groups
@@ -1002,7 +1044,7 @@ def memote(modelpath, score_only, file):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1017,6 +1059,10 @@ def pathways(modelpath, dir, colors):
     """Analysis of pathways contained in a model"""
     model = rg.utility.io.load_model(modelpath, "cobra")
     report = rg.curation.pathways.kegg_pathway_analysis(model)
+    # @TODO What to do with all the report saves? Individually check directory?
+    # # Set-up directory path
+    # if dir:
+    #     dir.mkdir(parents=True, exist_ok=True)
     report.save(dir, colors)
 
 
@@ -1029,7 +1075,7 @@ def pathways(modelpath, dir, colors):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1044,6 +1090,7 @@ def stats(modelpath, dir, colors):
     """Generate a report on the statistics of a model."""
     model = rg.utility.io.load_model(modelpath, "cobra")
     report = rg.classes.reports.ModelInfoReport(model)
+    # @TODO
     report.save(dir, colors)
 
 
@@ -1066,13 +1113,14 @@ def stats(modelpath, dir, colors):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 def pancore(modelpath, pcpath, based_on, dir):
     """Compare a model to a pan-core model."""
     model = rg.utility.io.load_model(modelpath, "cobra")
     pcmodel = rg.utility.io.load_model(pcpath, "cobra")
     report = rg.analysis.core_pan.compare_to_core_pan(model, pcmodel, based_on)
+    # @TODO
     report.save(dir)
 
 
@@ -1103,7 +1151,7 @@ def pancore(modelpath, pcpath, based_on, dir):
     type=click.Path(file_okay=False),
     show_default=True,
     default="comparison",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1121,6 +1169,7 @@ def compare(modelpaths, type, all, dir, colour):
     if all or "sboterm" in type:
         models = rg.utility.io.load_model(list(modelpaths), "libsbml")
         fig = rg.analysis.comparison.plot_rea_sbo_multiple(models, color_palette=colour)
+        # @TODO Needs to use the new report class
         fig.savefig(Path(dir, "sboterm"), dpi=400, bbox_inches="tight")
 
 
@@ -1157,7 +1206,7 @@ def growth():
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1174,6 +1223,7 @@ def simulate(modelpaths, media, namespace, dir, colors):
     report = rg.analysis.growth.growth_analysis(
         modelpaths, media, namespace, retrieve="report"
     )
+    # @TODO
     report.save(to=dir, color_palette=colors)
 
 
@@ -1202,7 +1252,7 @@ def simulate(modelpaths, media, namespace, dir, colors):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1218,6 +1268,7 @@ def auxotrophies(modelpath, media, namespace, dir, colors):
     medialist, supps = rg.classes.medium.load_media(media)
     model = rg.utility.io.load_model(modelpath, "cobra")
     report = rg.analysis.growth.test_auxotrophies(model, medialist, namespace)
+    # @TODO
     report.save(dir, colors)
 
 
@@ -1264,7 +1315,7 @@ def auxotrophies(modelpath, media, namespace, dir, colors):
     required=False,
     type=click.Path(),
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 @click.option(
     "-c",
@@ -1281,6 +1332,7 @@ def sources(modelpath, element, substances, medium, namespace, dir, colors):
     report = rg.analysis.growth.test_growth_with_source(
         model, element, substances, medium, namespace
     )
+    # @TODO
     report.save(dir, color_palette=colors)
 
 
@@ -1311,7 +1363,7 @@ def sources(modelpath, element, substances, medium, namespace, dir, colors):
     type=click.Path(),
     show_default=True,
     default="",
-    help="Path to the output dir.",
+    help="Path to the output directory.",
 )
 def minimal_medium(modelpath, objective, growth_rate, dir):
     """Calculate the minimal medium of a model.
