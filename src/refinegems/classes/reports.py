@@ -21,6 +21,7 @@ import re
 import seaborn as sns
 import warnings
 
+from abc import ABC, abstractmethod
 from importlib.resources import files
 from itertools import chain
 from libsbml import Model as libModel
@@ -68,8 +69,62 @@ KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"  #: :meta:
 ################################################################################
 
 
-class Report:
-    pass
+class Report(ABC):
+    """Abstract base class for the reports.
+
+    Each subclass needs an implementation of `save`.
+    """
+
+    def __init__(self):
+        """Initialise the report.
+        """
+        # Optionally, store a name or identifier for the report
+        self.name = None
+
+    # abstract methods
+    # ----------------
+    @abstractmethod
+    def save(self, dir: Union[str, Path], *args, **kwargs):
+        """Abstract method to save the report. 
+        Only implements a method to ensure a provided directory exists.
+
+        Args:
+            - dir (Union[str, Path]): 
+                Path to a directory to save the output to.
+        """
+        # Ensure the directory exists
+        if isinstance(dir, str):
+            dir = Path(dir)
+        
+        try:
+            Path(dir).mkdir(parents=True, exist_ok=False)
+            print(f'Creating new directory {str(Path(dir))}')
+        except FileExistsError:
+            print("Given directory already exists.")
+
+        # Rest needs to be fully implemented in subclasses
+
+    # methods to implement
+    # --------------------
+    @implement
+    def to_table(self) -> pd.DataFrame:
+        """Return the contents of the report as a pandas.DataFrame."""
+        pass
+    
+    @implement
+    def visualise(self, *args, **kwargs):
+        """Visualise the report contents. Should return a matplotlib.figure.Figure."""
+        pass
+    
+    @implement
+    def __str__(self):
+        """Return a string representation of the report."""
+        pass
+    
+    @implement
+    def to_dict(self) -> dict:
+        """Return the contents of the report as a dictionary."""
+        pass
 
 
 class SingleGrowthSimulationReport(Report):
@@ -101,6 +156,7 @@ class SingleGrowthSimulationReport(Report):
         additives=None,
         no_exchange=None,
     ):
+        super().__init__()
         self.model_name = model_name
         self.medium_name = medium_name
         self.growth_value = growth_value
@@ -150,6 +206,7 @@ class GrowthSimulationReport(Report):
 
     def __init__(self, reports: list[SingleGrowthSimulationReport] = None):
 
+        super().__init__()
         self.reports = reports if reports else []
         self.models = set([_.model_name for _ in reports]) if reports else set()
         self.media = set([_.medium_name for _ in reports]) if reports else set()
@@ -472,24 +529,15 @@ class GrowthSimulationReport(Report):
 
     def save(
         self,
-        to: str,
-        how: Literal["dir"] = "dir",
+        dir: Union[str, Path],
         check_overwrite: bool = True,
         color_palette: str = "YlGn",
     ):
         """Save the report.
 
-        Current options include:
-
-        - 'dir': save the report to a directory, including a txt and two graphics
-
         Args:
-            - to (str):
-                Path to a directory to save the report to.
-            - how (Literal['dir'], optional):
-                How to save the report.
-                For options see functions description.
-                Defaults to 'dir'.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - check_overwrite (bool, optional):
                 Flag to choose to check for existing directory/files of same name
                 or just to overwrite them. Defaults to True.
@@ -497,31 +545,21 @@ class GrowthSimulationReport(Report):
                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
-
-        Raises:
-            - ValueError: If the parameter 'how' is given something unexpected.
         """
-
-        match how:
-            # save to a new directory
-            case "dir":
-                # create directory to save report to
-                dir_path = Path(to, "GrowthSimReport")
-                dir_path.mkdir(parents=True, exist_ok=check_overwrite)
-                # save the report
-                with open(Path(dir_path, "report.txt"), "w") as f:
-                    f.write(str(self))
-                # save visualisation for doubling time
-                fig_dt = self.plot_growth(color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
-                # save visualisation for growth rate
-                fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
-
-            case _:
-                raise ValueError(
-                    f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.'
-                )
+        super().save(dir)
+        
+        # create directory to save report to
+        dir_path = Path(dir, "GrowthSimReport")
+        dir_path.mkdir(parents=True, exist_ok=check_overwrite)
+        # save the report
+        with open(Path(dir_path, "report.txt"), "w") as f:
+            f.write(str(self))
+        # save visualisation for doubling time
+        fig_dt = self.plot_growth(color_palette=color_palette)
+        fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
+        # save visualisation for growth rate
+        fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
+        fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
 
 
 class KEGGPathwayAnalysisReport(Report):
@@ -549,7 +587,7 @@ class KEGGPathwayAnalysisReport(Report):
         kegg_rest=None,
     ) -> None:
 
-        # super().__init__()
+        super().__init__()
         # general counts
         self.total_reac = total_reac
         self.kegg_count = kegg_count
@@ -743,17 +781,18 @@ class KEGGPathwayAnalysisReport(Report):
 
         return fig
 
-    def save(self, dir: str, colors: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], colors: str = "YlGn") -> None:
         """Save the content of the report as plots.
 
         Args:
-            - dir (str):
-                Path to a directory to save the output directory with all the plot in.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - colors(str,optional):
                 Colour palette for the plots.
                 Should be a valid name of a matplotlib sequential colour palette.
         """
-
+        super().save(dir)
+        
         # collect all produced file in one directory
         try:
             Path(dir, "pathway-analysis").mkdir(parents=True, exist_ok=False)
@@ -843,7 +882,7 @@ class AuxotrophySimulationReport(Report):
     """
 
     def __init__(self, results) -> None:
-        # super().__init__()
+        super().__init__()
         self.simulation_results = results
 
     # auxotrophy sim visualisation
@@ -904,16 +943,17 @@ class AuxotrophySimulationReport(Report):
         else:
             return fig
 
-    def save(self, dir: str, color_palette: str = "YlGn"):
+    def save(self, dir: Union[str, Path], color_palette: str = "YlGn"):
         """Save the report to a given dictionary.
 
         Args:
-            - dir (str):
-                Path to a dictionary.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - color_palette (str, optional):
                 Name of a matplotlib colour palette. Defaults to 'YnGr'.
         """
-
+        super().save(dir)
+        
         # save the visualisation of the growth rates
         self.visualise_auxotrophies(color_palette, save=dir)
 
@@ -938,7 +978,7 @@ class SourceTestReport(Report):
     def __init__(
         self, results: pd.DataFrame = None, element: str = None, model_name: str = None
     ):
-        # super().__init__()
+        super().__init__()
         self.results = results
         self.element = element
         self.model_name = model_name
@@ -1033,12 +1073,12 @@ class SourceTestReport(Report):
 
         return (ax.get_figure(), legend)
 
-    def save(self, dir: str, width: int = 12, color_palette: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], width: int = 12, color_palette: str = "YlGn") -> None:
         """Save the results of the source test.
 
         Args:
-            - dir (str):
-                Path to a directory to save the results to.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - width (int, optional):
                 Number of columns for the heatmap.
                 Defaults to 12.
@@ -1046,6 +1086,7 @@ class SourceTestReport(Report):
                 Color palette (gradient) for the plot.
                 Defaults to 'YlGn'.
         """
+        super().save(dir)
 
         # save the list
         self.results.to_csv(
@@ -1085,7 +1126,7 @@ class CorePanAnalysisReport(Report):
         novel_reac: list[str] = None,
     ):
 
-        # super().__init__()
+        super().__init__()
         # general attributes
         self.model = model
         # reaction attributes
@@ -1202,7 +1243,7 @@ class CorePanAnalysisReport(Report):
 
         return fig
 
-    def save(self, dir: str):
+    def save(self, dir: Union[str, Path]):
         """Save the results inside a PanCoreAnalysisReport object.
 
         The function creates a new folder 'pan-core-analysis'
@@ -1212,9 +1253,10 @@ class CorePanAnalysisReport(Report):
         - visualise_reactions : donut chart of the values above
 
         Args:
-            - dir (str):
+            - dir (Union[str, Path]):
                 Path to a directory to save the output to.
         """
+        super().save(dir)
 
         # collect all produced file in one directory
         try:
@@ -1281,6 +1323,7 @@ class ModelInfoReport(Report):
 
     def __init__(self, model: cobra.Model) -> None:
 
+        super().__init__()
         # cobra version
         # basics
         self.name = model.id
@@ -1549,16 +1592,17 @@ class ModelInfoReport(Report):
 
         return fig
 
-    def save(self, dir: str, color_palette: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], color_palette: str = "YlGn") -> None:
         """Save the report.
 
         Args:
-            - dir (str):
-                Directory to save the report to.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - color_palette (str, optional):
                 Colour palette of matplotlib to plot
                 figures in. Defaults to 'YlGn'.
         """
+        super().save(dir)
 
         # save the statistics report
         self.format_table().to_csv(Path(dir, f"{self.name}_report.csv"), sep=";")
@@ -1614,7 +1658,7 @@ class ModelInfoReport(Report):
 class MultiModelInfoReport(Report):
 
     def __init__(self) -> None:
-        # super().__init__()
+        super().__init__()
         self.table = pd.DataFrame(
             "model",
             "#reactions",
@@ -1640,6 +1684,7 @@ class MultiModelInfoReport(Report):
 
     @implement
     def save(self):
+        # super().save(dir)
         pass
 
 
@@ -1665,6 +1710,7 @@ class GapFillerReport(Report):
         hide_zeros: bool = False,
         no_title: bool = False,
     ) -> None:
+        super().__init__()
         self.variety = variety
         self.manual_curation = manual_curation
         self.hide_zeros = hide_zeros
@@ -1762,6 +1808,8 @@ class GapFillerReport(Report):
             - color_palette (str, optional):
                 A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to `YlGn`.
         """
+        super().save(dir)
+        
         dir_path = Path(
             dir,
             "GapFillerReport",
@@ -1818,6 +1866,7 @@ class SBOTermReport(Report):
             - model (libModel):
                 A model loaded with libSBML.
         """
+        super().__init__()
         self.name = model.getId()
         self.sbodata = get_reactions_per_sbo(model)
 
@@ -1850,18 +1899,20 @@ class SBOTermReport(Report):
 
         return fig
 
-    def save(self, dir: str):
+    def save(self, dir: Union[str, Path]):
         """Save the information inside
 
         Args:
-            - dir (str):
-                String to the output directory.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
         """
+        super().save(dir)
+        
         fig = self.visualise()
         fig.savefig(Path(dir, "sboterms.png"), dpi=400)
 
 
-class MultiSBOTermReport:
+class MultiSBOTermReport(Report):
     """A collection of SBO term reports.
 
     Attributes:
@@ -1879,7 +1930,8 @@ class MultiSBOTermReport:
         Raises:
             - ValueError: Wrong input type
         """
-
+        super().__init__()
+        
         match reports:
             case list():
                 self.model_reports = reports
@@ -1976,7 +2028,7 @@ class MultiSBOTermReport:
 
     def save(
         self,
-        dir: str,
+        dir: Union[str, Path],
         rename: dict = Union[None, dict],
         color_palette: Union[str, list[str]] = "Paired",
         figsize: tuple = (10, 10),
@@ -1984,8 +2036,8 @@ class MultiSBOTermReport:
         """Save the information of contained in the report.
 
         Args:
-            - dir (str):
-                String for the path of the outpt directory.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - rename (Union[None,dict], optional):
                 Takes a dictioanry of model IDs and alternative names
                 When set, uses the dictionary to rename the models.
@@ -1997,5 +2049,7 @@ class MultiSBOTermReport:
                 Site of the figure. Requires a tuple of two integers.
                 Defaults to (10,10).
         """
+        super().save(dir)
+        
         fig = self.visualise(rename, color_palette, figsize)
         fig.save(Path(dir, "sboterms.png"), dpi=400)
