@@ -1,31 +1,31 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml)
-[![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest)
-![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main)
-![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems)
-![GitHub all releases](https://img.shields.io/github/downloads/draeger-lab/refinegems/total?logo=github&label=GitHub%20downloads)
-[![PyPI version](https://img.shields.io/pypi/v/refinegems?logo=pypi&label=PyPI%20package&color=neongreen)](https://pypi.org/project/refineGEMs/)
-![PyPI - Format](https://img.shields.io/pypi/format/refinegems?)
-[![PyPI downloads](https://img.shields.io/pypi/dm/refinegems.svg?logo=pypi&label=PyPI%20downloads)](https://pypistats.org/packages/refinegems)  
-[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8270303-B4A069?style=flat-square&logo=zenodo&logoColor=white)](https://zenodo.org/badge/latestdoi/359867657)  
-[![Frontiers DOI](https://img.shields.io/badge/Frontiers%20DOI-10.3389%2Ffbinf.2023.1214074-B4A069?style=flat-square)](https://www.frontiersin.org/articles/10.3389/fbinf.2023.1214074/full)
-
 <p align="center">
 <img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/refineGEMs_logo.png" height="200"/>
 </p>
+
+| Topic | Badge(s) |
+| :--- | :---- |
+| General | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml) [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest) ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main) |
+| GitHub release | ![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square) ![GitHub all releases](https://img.shields.io/github/downloads/draeger-lab/refinegems/total?logo=github&label=GitHub%20downloads) |
+| PyPI | [![PyPI version](https://img.shields.io/pypi/v/refinegems?logo=pypi&label=PyPI%20package&color=neongreen)](https://pypi.org/project/refineGEMs/) ![PyPI - Format](https://img.shields.io/pypi/format/refinegems?) |
+| Compliance | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![FAIR checklist badge](https://fairsoftwarechecklist.net/badge.svg)](https://fairsoftwarechecklist.net/v0.2?f=31&a=32113&i=32102&r=133) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10532/badge)](https://www.bestpractices.dev/projects/10532) [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu) |
+| References | [![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8270303-B4A069?style=flat-square&logo=zenodo&logoColor=white)](https://zenodo.org/badge/latestdoi/359867657) [![Frontiers DOI](https://img.shields.io/badge/Frontiers%20DOI-10.3389%2Ffbinf.2023.1214074-B4A069?style=flat-square)](https://www.frontiersin.org/articles/10.3389/fbinf.2023.1214074/full) |
+
 
 # refineGEMs
 `refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS). </br>
 ⚠️🚧 **DISCLAIMER:** The documentation is currently under heavy-rework!
 The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
 
-## Table of contents
-1. [Overview](#overview)
-2. [Installation](#installation)
-3. [How to cite](#how-to-cite)
-4. [Repositories using refineGEMs](#repositories-using-refinegems)
+<!-- TOC -->
+
+- [Overview](#overview)
+- [Installation](#installation)
+    - [Via pip](#pypi-via-pip)
+    - [Via Docker](#docker-via-docker)
+- [How to cite](#how-to-cite)
+- [Repositories using refineGEMs](#repositories-using-refinegems)
+
+<!-- /TOC -->
 
 ## Overview
 
@@ -49,6 +49,9 @@ Other applications of `refineGEMs` to curate a given model include:
 
 
 ## Installation
+The toolbox ``refineGEMs``can be installed via pip or via Docker.
+
+### ![pypi](https://skillicons.dev/icons?i=py) Via pip 
 
 You can install `refineGEMs` via pip:
 
@@ -88,6 +91,42 @@ pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
 
 ```
 
+### ![docker](https://skillicons.dev/icons?i=docker) Via Docker
+
+``refineGEMs`` can also be used via Docker. To build the docker image, firtsly clone the repository:
+
+```bash
+   git clone "https://github.com/draeger-lab/refinegems.git"
+```
+
+Then change into the directory and build the image:
+
+```bash
+   cd refinegems \
+   docker build -t refinegems .
+```
+
+The default command executed by the image is ``refinegems -h`` and provides the help information for the CLI of 
+``refineGEMs``.
+
+```bash
+   docker run refinegems -h
+```
+
+To use the image interactively and open a bash shell, run the following command:
+
+```bash
+   docker run -it --entrypoint bash refinegems
+```
+
+To use the image for specific commands, you can simply use every of the CLI commands as entrypoint. 
+For example, to curate a (draft) model, run:
+
+```bash
+   docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
+```
+
+
 ## How to cite
 When using `refineGEMs`, please cite the latest publication:
 
@@ -97,5 +136,10 @@ striatum. Front. Bioinform., oct 2023. [doi:10.3389/fbinf.2023.1214074](https://
 
 ## Repositories using refineGEMs
 - [C_striatum_GEMs](https://github.com/draeger-lab/C_striatum_GEMs)
+- draeger-lab/Cacnes - `private`
+- draeger-lab/Cgranulosum - `private`
+- draeger-lab/Koxytoca - `private`
+- draeger-lab/Mfortuitum - `private`
+- draeger-lab/Scohnii - `private`
 - draeger-lab/Shaemolyticus - `private`
 - draeger-lab/Ssanguinis - `private`
