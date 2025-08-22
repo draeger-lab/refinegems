@@ -21,7 +21,7 @@ To install refineGEMs as Python package from `PyPI <https://pypi.org/project/ref
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
-``refineGEMs`` depends on the tools `ModelPolisher <>`__, `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and 
+``refineGEMs`` depends on the tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__, `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and 
 `BOFdat <https://github.com/draeger-lab/BOFdat>`__ which cannot directly be installed via 
 `PyPI <https://pypi.org/project/refineGEMs/>`__. Please install all three tools before using ``refineGEMs``:
 
@@ -60,6 +60,11 @@ Then change into the directory and build the image:
 
    cd refinegems \
    docker build -t refinegems .
+
+.. note:: 
+
+   To provide the input files and retrieve the output files mount one folder as workspace folder to the Docker image 
+   with `-v`.
 
 The default command executed by the image is ``refinegems -h`` and provides the help information for the CLI of 
 ``refineGEMs``.

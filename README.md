@@ -105,6 +105,8 @@ Then change into the directory and build the image:
    cd refinegems \
    docker build -t refinegems .
 ```
+> [!NOTE]
+> To provide the input files and retrieve the output files mount one folder as workspace folder to the Docker image with `-v`.
 
 The default command executed by the image is ``refinegems -h`` and provides the help information for the CLI of 
 ``refineGEMs``.
