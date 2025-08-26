@@ -1074,7 +1074,10 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
     database table or dataFrame (need to contain at least the following columns:
-    Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
+    
+    Reaction | EC-Number | KEGG reaction | METANETX | Reaction-Direction
+    
+    The Reaction column should contain the BioCyc/MetaCyc ID (withou the META: etc. prefix)
 
     Args:
         model (cobra.Model):
@@ -1131,11 +1134,11 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
             ):
                 if isinstance(r.annotation[annot_key], str):
                     return data[data[biocyc_key] == r.annotation[annot_key]][
-                        "Reactions"
+                        "Reaction"
                     ].tolist()
                 elif isinstance(r.annotation[annot_key], list):
                     return data[data[biocyc_key].isin(r.annotation[annot_key])][
-                        "Reactions"
+                        "Reaction"
                     ].tolist()
                 else:
                     return list()
@@ -1176,19 +1179,19 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                 # one annotation 
                 if (
                     isinstance(r.annotation["metacyc.reaction"], str)
-                    and len(data[data["Reactions"] == r.annotation["metacyc.reaction"]]) != 0
+                    and len(data[data["Reaction"] == r.annotation["metacyc.reaction"]]) != 0
                 ):
-                    direction = data[data["Reactions"] == r.annotation["metacyc.reaction"]][
+                    direction = data[data["Reaction"] == r.annotation["metacyc.reaction"]][
                         "Reaction-Direction"
                     ].iloc[0]
                     r.notes["BioCyc direction check"] = f"found {direction}"
                 # multiple annotations 
                 elif (
                     isinstance(r.annotation["metacyc.reaction"], list)
-                    and len(data[data["Reactions"].isin(r.annotation["metacyc.reaction"])]) != 0
+                    and len(data[data["Reaction"].isin(r.annotation["metacyc.reaction"])]) != 0
                 ):
                     # @ASK make this more suffisticated?
-                    direction = data[data["Reactions"].isin(r.annotation["metacyc.reaction"])][
+                    direction = data[data["Reaction"].isin(r.annotation["metacyc.reaction"])][
                         "Reaction-Direction"
                     ].iloc[0]
                     r.notes["BioCyc direction check"] = f"found {direction}"
@@ -1218,7 +1221,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                 # matches found
                 else:
                     # get direction for matches
-                    direction = set(data[data["Reactions"].isin(annotations)][
+                    direction = set(data[data["Reaction"].isin(annotations)][
                             "Reaction-Direction"
                         ].to_list())
                     # case 1: exactly one match remains

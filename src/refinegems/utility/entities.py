@@ -2187,7 +2187,7 @@ def create_gp(
         for g in genes:
             # for ID 
             if g.isSetId() and g.getId() == model_id:
-                logger.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
+                logger.warning(f'Cannot add gene product, as ID {model_id} is already in the model.')
                 return None
             # for locus tag as label
             if label and g.isSetLabel() and g.getLabel() == label:
