@@ -341,6 +341,11 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         cobra.Model:
             The model (updated or not)
     """
+    
+    for r in model.reactions:
+        for m,c in r.metabolites.items():
+            r.metabolites[m] = c * 1.0  # ensure that all stoichiometric coefficients are floats
+            
     try:
         # make temporary directory to save files for MCC in
         with tempfile.TemporaryDirectory() as temp:
@@ -359,6 +364,9 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
         balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
     except Exception as e:
+        print(repr(e))
+        import traceback
+        traceback.print_exc()
         logging.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
 
     return model
