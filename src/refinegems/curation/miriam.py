@@ -58,6 +58,10 @@ logger = logging.getLogger(__name__)
 ################################################################################
 
 non_alnum_pattern = re.compile('[\W_]+') # :meta: 
+DEPRECATED_PREFIXES = {
+    'ecogene',
+    'ncbigi' # Converted to accession version since 2016 according to NCBI
+} # :meta:
 
 ################################################################################
 # functions
@@ -101,8 +105,11 @@ def get_set_of_curies(
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
 
+        # @DEBUG
+        #print(f'Prefix:CURIE at start of get_set_of_curies: {curie[0]}:{curie[1]}')
+
         # Prefix is valid but to have same result for same databases need to do a bit of own parsing
-        if curie[0]:  
+        if curie[0]:
             
             # Check for presence of '<' or '>' in the identifier part of the CURIE
             # This is to avoid issues with HTML-like strings that might be present in the identifier
@@ -449,8 +456,17 @@ def generate_miriam_compliant_uri_set(
 
     for prefix in prefix2id:
         for identifier in prefix2id.get(prefix):
-            uri = get_identifiers_org_iri(prefix, identifier)
-            uri_set.add(uri)
+            # @DEBUG
+            #print(f'Prefix:CURIE before identifiers.org IRI is generated: {prefix}:{identifier}')
+            if not prefix in DEPRECATED_PREFIXES:
+                uri = get_identifiers_org_iri(prefix, identifier)
+                # @DEBUG
+                #print(f'Resulting IRI: {uri}')
+                uri_set.add(uri)
+            else:
+                logger.warning(
+                    f"The prefix '{prefix}' is deprecated. The corresponding CURIE '{prefix}:{identifier}' cannot be converted to a MIRIAM compliant URI."
+                )
 
     return uri_set
 
@@ -546,6 +562,8 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         # Add valid CURIEs with selected pattern & report if no valid CURIEs exist
         if prefix2id:
             if new_pattern:
+                # @DEBUG
+                #print(f'Prefix:CURIE dictionary before generate_miriam_compliant_uri_set: {prefix2id}')
                 uri_set = generate_miriam_compliant_uri_set(prefix2id)
             else:
                 uri_set = generate_uri_set_with_old_pattern(prefix2id)
@@ -692,7 +710,10 @@ def polish_annotations(
         filename = (
             f'{model.getId()}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.csv'
         )
+        # Set-up path
         if outpath:
+            outpath = Path(outpath)
+            outpath.mkdir(parents=True, exist_ok=True)
             filename = Path(outpath, filename)
         else:
             filename = Path(filename)
