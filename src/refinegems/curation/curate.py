@@ -1162,7 +1162,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
             raise TypeError(mes)
 
     # create a "working model"
-    model_checkpoint = copy.copy(model)
+    model_checkpoint = copy.deepcopy(model)
 
     # check direction
     # --------------------
