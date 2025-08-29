@@ -1519,6 +1519,7 @@ class KEGGapFiller(GapFiller):
 # ----------------------
 # Gapfilling with BioCyc
 # ----------------------
+# @BUG stats for unmappable genes weird / wrong 
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with

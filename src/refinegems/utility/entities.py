@@ -447,20 +447,21 @@ def isreaction_complete(
     # check mass balance 
     elements_products = dict()
     elements_reactants = dict()
+    factors = reac.metabolites
     # get elements products
     for met in reac.products:
         for k,v in met.elements.items():
             if k in elements_products.keys():
-                elements_products[k] += v
+                elements_products[k] += v*factors[met]
             else:
-                elements_products[k] = v
+                elements_products[k] = v*factors[met]
     # get elements of reactants
     for met in reac.reactants:
         for k,v in met.elements.items():
             if k in elements_reactants.keys():
-                elements_reactants[k] += v
+                elements_reactants[k] += v*abs(factors[met])
             else:
-                elements_reactants[k] = v
+                elements_reactants[k] = v*abs(factors[met])
     # check difference
     if elements_products == elements_reactants:
         # mass conservation 
@@ -471,6 +472,7 @@ def isreaction_complete(
     else: 
         # elements counts to not match
         # @ASK better idea, so see, if this might be fixable?  
+        factors = reac.metabolites
         for k in elements_products.keys():
             if elements_reactants[k] != elements_products[k]:
                 return False

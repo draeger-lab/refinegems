@@ -63,6 +63,7 @@ from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
 from ..analysis.growth import model_minimal_medium
+from ..analysis.investigate import get_mass_charge_unbalanced
 
 from ..developement.decorators import suppress_log_message, template
 
@@ -506,7 +507,7 @@ def fix_compartments(model: libModel) -> None:
             else:
                 # No compartment in id found, using unknown
                 default_comp = 'uc'
-                logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS['uc']}')
+                logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
                 m.setCompartment(default_comp)
 
     # Add specifications for compartment structure
@@ -1089,6 +1090,53 @@ def resolve_duplicates(
         )
 
     return model
+
+
+# Model pruning
+# -------------
+
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
+def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
+    """Prune mass unbalanced reactions from a model. 
+    Reactions that are part of the biomass function or boundary reactions
+    are not pruned, even if they are mass unbalanced.
+    Metabolites and genes that become orphaned due to the pruning are also removed.
+
+    Args:
+        - model (cobra.Model): 
+            The input model, loaded with COBRApy.
+    """
+
+    logger.info('Pruning mass unbalanced reactions ...')
+    
+    # original entities
+    og_reacs = {_.id for _ in model.reactions}
+    og_metabs = {_.id for _ in model.metabolites}
+    og_genes = {_.id for _ in model.genes}
+    
+    # get unbalanced reactions
+    ubmass, ubcharge = get_mass_charge_unbalanced(model)
+    
+    # get reactions, that are at the boundary or biomass 
+    # => these are allowed to be - somewhat - unbalanced
+    ub_allowed_ids = set(test_biomass_presence(model)).union([_.id for _ in model.boundary])
+    
+    # identify, which reactions should be pruned
+    to_prune = [_ for _ in ubmass if _ not in ub_allowed_ids]
+    
+    # prune the model
+    model.remove_reactions(to_prune, remove_orphans=True)
+    
+    # report pruned entities
+    pruned_reacs = [rid for rid in og_reacs if rid not in {_.id for _ in model.reactions}]
+    pruned_metabs = [mid for mid in og_metabs if mid not in {_.id for _ in model.metabolites}]
+    pruned_genes = [gid for gid in og_genes if gid not in {_.id for _ in model.genes}]
+    logger.info(f'Pruned {len(pruned_reacs)} reactions:\n{pruned_reacs}')
+    logger.info(f'Pruned {len(pruned_metabs)} metabolites:\n{pruned_metabs}')
+    logger.info(f'Pruned {len(pruned_genes)} genes:\n{pruned_genes}')
+
 
 
 # Directionality Control
