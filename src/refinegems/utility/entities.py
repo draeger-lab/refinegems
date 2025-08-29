@@ -1241,6 +1241,8 @@ def build_reaction_mnx(
     # get annotations
     # ---------------
     new_reac.annotation["sbo"] = "SBO:0000167"
+    # get annotation for id
+    new_reac.annotation["metanetx.reaction"] = [id]
     # get more annotation from the mnx_reac_xref table
     for db in [
         "bigg.reaction",
@@ -1267,10 +1269,6 @@ def build_reaction_mnx(
 
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references, new_reac)
-
-    # get annotations
-    # ---------------
-    new_reac.annotation["sbo"] = "SBO:0000167"
 
     # add notes
     # ---------
@@ -1410,6 +1408,8 @@ def build_reaction_kegg(
     # add more information
     # --------------------
     new_reac.annotation["sbo"] = "SBO:0000167"
+     # get annotation for id
+    new_reac.annotation["kegg.reaction"] = [id]
     # get more information from searching the KEGG ID in BiGG
     bigg_res = load_a_table_from_database(
         f"SELECT * FROM bigg_reactions WHERE \"KEGG Reaction\" = '{id}'", query=True
