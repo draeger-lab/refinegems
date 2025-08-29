@@ -40,7 +40,7 @@ import pandas as pd
 import re
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction
+from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -58,8 +58,8 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units, MIN_GROWTH_THRESHOLD
-from ..utility.io import load_a_table_from_database
-from ..utility.util import DB2REGEX, test_biomass_presence
+from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
+from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
 from ..analysis.growth import model_minimal_medium
@@ -458,6 +458,59 @@ def extend_metab_reac_annots_via_notes(
 
 # correct basic model set-up
 # ---------------------------
+def add_compartment_structure_specs(model: libModel) -> None:
+    """| Adds the required specifications for the compartment structure
+    | if not set (size & spatial dimension)
+
+    Args:
+        - model (libModel):
+            Model loaded with libSBML
+    """
+    for compartment in model.getListOfCompartments():
+
+        if not compartment.isSetSize():
+            compartment.setSize(float("NaN"))
+
+        if not compartment.isSetSpatialDimensions():
+            compartment.setSpatialDimensions(3)
+
+        if any(
+            (unit_id := re.fullmatch(r"fL", unit.getId(), re.IGNORECASE))
+            for unit in model.getListOfUnitDefinitions()
+        ):
+            if not (
+                compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)
+            ):
+                compartment.setUnits(unit_id.group(0))
+
+def fix_compartments(model: libModel) -> None:
+    """Fixes compartments in a model
+       - By adding missing compartments based on metabolite IDs if not set
+       - Setting the size and spatial dimension if not set
+
+    Args:
+        - metab_list (ListOfSpecies):
+            libSBML ListOfSpecies
+    """
+    # Check if any metabolites without compartment exist
+    comps_missing = not all([m.isSetCompartment() for m in model.getListOfSpecies()])
+
+    # If any metabolite has no compartment
+    if comps_missing:
+        # Get compartment list (for consistency)
+        comps_in_model = model.getListOfCompartments()
+        for m in model.getListOfSpecies():
+            comp_from_id = m.getId().split('_')[-1]
+            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS):
+                m.setCompartment(comp_from_id)
+            else:
+                # No compartment in id found, using unknown
+                default_comp = 'uc'
+                logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS['uc']}')
+                m.setCompartment(default_comp)
+
+    # Add specifications for compartment structure
+    add_compartment_structure_specs(model)
 
 @template
 def polish_model_metadata(model: libModel) -> None:
@@ -573,32 +626,6 @@ def set_units_of_parameters(model: libModel) -> None:
         ):
             if not (param.isSetUnits() and param.getUnits() == unit_id.group(0)):
                 param.setUnits(unit_id.group(0))
-
-
-def add_compartment_structure_specs(model: libModel) -> None:
-    """| Adds the required specifications for the compartment structure
-    | if not set (size & spatial dimension)
-
-    Args:
-        - model (libModel):
-            Model loaded with libSBML
-    """
-    for compartment in model.getListOfCompartments():
-
-        if not compartment.isSetSize():
-            compartment.setSize(float("NaN"))
-
-        if not compartment.isSetSpatialDimensions():
-            compartment.setSpatialDimensions(3)
-
-        if any(
-            (unit_id := re.fullmatch(r"fL", unit.getId(), re.IGNORECASE))
-            for unit in model.getListOfUnitDefinitions()
-        ):
-            if not (
-                compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)
-            ):
-                compartment.setUnits(unit_id.group(0))
 
 
 def set_initial_amount_metabs(model: libModel) -> None:
@@ -1369,7 +1396,6 @@ def polish_model(
     polish_model_units(model)
     set_model_default_units(model)
     set_units_of_parameters(model)
-    add_compartment_structure_specs(model)
     set_initial_amount_metabs(model)
 
     ### improve metabolite, reaction and gene annotations ###
@@ -1378,6 +1404,9 @@ def polish_model(
     extend_metab_reac_annots_via_notes(metab_list)
     extend_metab_reac_annots_via_notes(reac_list)
     update_annotations_from_others(model)
+
+    ### Add compartments based on id
+    fix_compartments(model)
 
     ### Extend annotations for GeneProducts ###
     extend_gp_annots_via_mapping_table(
@@ -1392,12 +1421,11 @@ def polish_model(
     if kegg_organism_id:
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id, prefixes2remove_kegg)
 
-    # ### Check reaction direction ###
-    # @IDEA If generalises more add again
-    # if reaction_direction:
-    #     model = _sbml_to_model(model)
-    #     model = check_direction(model, reaction_direction)
-    #     model = convert_cobra_to_libsbml(model, add_label_locus='notes')
+    ### Check reaction direction ###
+    if reaction_direction:
+        model = _sbml_to_model(model)
+        model = check_direction(model, reaction_direction)
+        model = convert_cobra_to_libsbml(model, add_label_locus='notes')
 
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
