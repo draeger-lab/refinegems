@@ -440,6 +440,40 @@ def isreaction_complete(
             case _:
                 mes = f"Unknown options for formula_check: {formula_check}\nChecking the metabolite formula will be skipped."
                 warnings.warn(mes, UserWarning)
+                
+    # check chemical plausability 
+    # ---------------------------
+    
+    # check mass balance 
+    elements_products = dict()
+    elements_reactants = dict()
+    # get elements products
+    for met in reac.products:
+        for k,v in met.elements.items():
+            if k in elements_products.keys():
+                elements_products[k] += v
+            else:
+                elements_products[k] = v
+    # get elements of reactants
+    for met in reac.reactants:
+        for k,v in met.elements.items():
+            if k in elements_reactants.keys():
+                elements_reactants[k] += v
+            else:
+                elements_reactants[k] = v
+    # check difference
+    if elements_products == elements_reactants:
+        # mass conservation 
+        pass
+    elif len(set(elements_products.keys()).union(set(elements_reactants.keys()))) != len(elements_reactants):
+        # elements do not match
+        return False
+    else: 
+        # elements counts to not match
+        # @ASK better idea, so see, if this might be fixable?  
+        for k in elements_products.keys():
+            if elements_reactants[k] != elements_products[k]:
+                return False
 
     return True
 
