@@ -1739,7 +1739,7 @@ class BioCycGapFiller(GapFiller):
         ]
 
         # Adjust amount of unmappable genes in statistics
-        self._statistics["genes"]["unmappable"] = self.manual_curation["genes"][
+        self._statistics["genes"]["unmappable"] += self.manual_curation["genes"][
             "no NCBI Protein ID"
         ]["locus_tag"].nunique()
 
