@@ -820,7 +820,6 @@ class GapFiller(ABC):
         """
 
         model_gene_ids = [_.getId() for _ in model.getPlugin(0).getListOfGeneProducts()]
-        print(f"Model gene ids in add_gene_reac_associations: {model_gene_ids}")
 
         # get each unique ncbiprotein vs reaction(s) mapping
         reac_table = reac_table[["ncbiprotein", "add_to_GPR"]]

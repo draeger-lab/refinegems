@@ -354,7 +354,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
 def set_kegg_pathways(
     model: libModel, viaEC: bool = False, viaRC: bool = False
-) -> tuple[libModel, list[str]]:
+) -> list[str]:
     """Executes all steps to add KEGG pathways as groups
     to a given model.
     
