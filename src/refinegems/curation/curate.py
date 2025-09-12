@@ -513,6 +513,33 @@ def fix_compartments(model: libModel) -> None:
     # Add specifications for compartment structure
     add_compartment_structure_specs(model)
 
+def fix_reac_bounds(model: cobra.Model) -> None:
+    """Check the model`s reaction bounds and adjust values, if 
+    they are likely to cause problems.
+    
+    If the lower bound is greater than 0.0 or the upper bound is 
+    greater than 0.0, they are set to 0.0. If both cases appear at the same time, 
+    the value are switches, as it is assumed, that the reaction direction
+    got messed up.
+
+    Args:
+        - model (cobra.Model): 
+            The model to check loaded with COBRApy.
+    """
+    
+    for r in model.reactions:
+        
+        # assume wrong order
+        if r.upper_bound < 0.0 and r.lower_bound > 0.0:
+            r.bounds = (r.upper_bound, r.lower_bound)
+        # fix upper bound
+        elif r.upper_bound < 0.0:
+            r.upper_bound = 0.0
+        # fix lower bound    
+        elif r.lower_bound > 0.0:
+            r.lower_bound = 0.0
+
+
 @template
 def polish_model_metadata(model: libModel) -> None:
     pass

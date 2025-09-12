@@ -225,10 +225,16 @@ def find_growth_essential_exchanges(
         for metab in new_medium.keys():
             with model:
                 # disable uptake
-                model.reactions.get_by_id(metab).lower_bound = 0
+                try:
+                    model.reactions.get_by_id(metab).lower_bound = 0
+                except ValueError:
+                    model.reactions.get_by_id(metab).bounds = (0.0,0.0)
                 # ensure, cross-dependency is not an issue
                 for noness_metab in non_essential:
-                    model.reactions.get_by_id(noness_metab).lower_bound = 0
+                    try: 
+                        model.reactions.get_by_id(noness_metab).lower_bound = 0
+                    except ValueError:
+                        model.reactions.get_by_id(metab).bounds = (0.0,0.0)
                 # optimize BOF
                 sol = model.optimize()
                 if (
@@ -971,52 +977,56 @@ def model_minimal_medium(
             The medium that is a solution for the minimisation task.
     """
 
-    # minimise the fluxes of the current medium
-    if objective == "flux":
-        max_growth = model.slim_optimize()
-        min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
+    try:
+        # minimise the fluxes of the current medium
+        if objective == "flux":
+            max_growth = model.slim_optimize()
+            min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
 
-    # minimise components of current medium
-    elif objective == "medium":
-        warnings.warn(
-            "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
-        )
-        min_medium = dict(
-            cobra.medium.minimal_medium(
-                model,
-                growth_rate,
-                minimize_components=True,
-                open_exchanges=open_exchanges,
+        # minimise components of current medium
+        elif objective == "medium":
+            warnings.warn(
+                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
             )
-        )
-
-    # get minimal number of medium components
-    # based on exchange reaction possible in the model
-    # note 1: can be time consuming
-    # note 2: can lead to different results if run only once each time
-    elif objective == "exchanges":
-        # create cobra medium from all available exchange reactions
-        ex_medium = {_.id: 1000.0 for _ in model.exchanges}
-        # perform minimisation
-        model.medium = ex_medium
-        warnings.warn(
-            "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
-        )
-        min_medium = dict(
-            cobra.medium.minimal_medium(
-                model,
-                growth_rate,
-                minimize_components=True,
-                open_exchanges=open_exchanges,
+            min_medium = dict(
+                cobra.medium.minimal_medium(
+                    model,
+                    growth_rate,
+                    minimize_components=True,
+                    open_exchanges=open_exchanges,
+                )
             )
-        )
 
-    else:
-        raise ValueError("Unknown objective for minimisation.")
+        # get minimal number of medium components
+        # based on exchange reaction possible in the model
+        # note 1: can be time consuming
+        # note 2: can lead to different results if run only once each time
+        elif objective == "exchanges":
+            # create cobra medium from all available exchange reactions
+            ex_medium = {_.id: 1000.0 for _ in model.exchanges}
+            # perform minimisation
+            model.medium = ex_medium
+            warnings.warn(
+                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
+            )
+            min_medium = dict(
+                cobra.medium.minimal_medium(
+                    model,
+                    growth_rate,
+                    minimize_components=True,
+                    open_exchanges=open_exchanges,
+                )
+            )
 
-    # create a Medium object from the minimal medium
-    with model as tmp_model:
-        tmp_model.medium = min_medium
-        medium = read_from_cobra_model(tmp_model)
+        else:
+            raise ValueError("Unknown objective for minimisation.")
 
-    return medium
+        # create a Medium object from the minimal medium
+        with model as tmp_model:
+            tmp_model.medium = min_medium
+            medium = read_from_cobra_model(tmp_model)
+
+        return medium
+    
+    except:
+        return Medium("Minimal medium")
