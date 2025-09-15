@@ -50,17 +50,18 @@ VERSION_FILE = PATH_TO_DB_FOLDER.joinpath(
 )  #: :meta hide-value:
 VERSION_URL = "http://bigg.ucsd.edu/api/v2/database_version"  #: :meta:
 
+MNX_FTP_BASE_PATH = "https://www.metanetx.org/ftp/latest/"
 mnx_db_namespace = {
     "reac_prop": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_prop.tsv",
+        f"{MNX_FTP_BASE_PATH}reac_prop.tsv",
         ["id", "mnx_equation", "reference", "ec-code", "is_balanced", "is_transport"],
     ),
     "reac_xref": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_xref.tsv",
+        f"{MNX_FTP_BASE_PATH}reac_xref.tsv",
         ["source", "id", "description"],
     ),
     "chem_prop": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_prop.tsv",
+        f"{MNX_FTP_BASE_PATH}chem_prop.tsv",
         [
             "id",
             "name",
@@ -74,7 +75,7 @@ mnx_db_namespace = {
         ],
     ),
     "chem_xref": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_xref.tsv",
+        f"{MNX_FTP_BASE_PATH}chem_xref.tsv",
         ["source", "id", "description"],
     ),
 }
