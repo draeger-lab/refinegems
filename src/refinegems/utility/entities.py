@@ -615,7 +615,8 @@ def build_metabolite_mnx(
         new_metabolite.annotation["metanetx.chemical"] = [metabolite_prop["id"].iloc[0]]
         if not pd.isnull(metabolite_prop["InChIKey"].iloc[0]):
             new_metabolite.annotation["inchikey"] = (
-                metabolite_prop["InChIKey"].iloc[0].split("=")[1]
+                # MNX version < 4.5: inchikey=... ; version >= 4.5 just the key, no "="
+                metabolite_prop["InChIKey"].iloc[0].split("=")[1] if "=" in metabolite_prop["InChIKey"].iloc[0] else metabolite_prop["InChIKey"].iloc[0]
             )
 
         # get more annotation from the mnx_chem_xref table
