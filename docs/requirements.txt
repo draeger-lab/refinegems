@@ -4,6 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt --strip-extras requirements.in
 #
+# Some version have been adjusted manually.
 accessible-pygments==0.0.5
     # via -r requirements.in
 alabaster==0.7.16
@@ -49,7 +50,7 @@ ipython==8.18.1
     # via -r requirements.in
 jedi==0.19.2
     # via ipython
-jinja2==3.1.4
+jinja2==3.1.6
     # via
     #   nbconvert
     #   nbsphinx
@@ -135,7 +136,7 @@ referencing==0.35.1
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.5
     # via sphinx
 rpds-py==0.21.0
     # via
@@ -184,7 +185,7 @@ tinycss2==1.4.0
     # via nbconvert
 tomli==2.0.2
     # via sphinx
-tornado==6.4.1
+tornado==6.5.2
     # via jupyter-client
 traitlets==5.14.3
     # via
@@ -196,7 +197,7 @@ traitlets==5.14.3
     #   nbconvert
     #   nbformat
     #   nbsphinx
-urllib3==2.2.3
+urllib3==2.5.0
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit
