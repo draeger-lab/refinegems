@@ -125,17 +125,13 @@ def insert_into_dict(
 # ---
 
 
-def reannotate_sbo_memote(model: cobra.Model) -> cobra.Model:
+def reannotate_sbo_memote(model: cobra.Model):
     """Reannotate the SBO annotations (e.g. from SBOannotator) of a model
     into the SBO scheme accessible by memote.
 
     Args:
        - model (cobra.Model):
           The cobra Model to be reannotated.
-
-    Returns:
-        cobra.Model:
-          The reannotated model
     """
 
     # reactions
