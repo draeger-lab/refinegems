@@ -19,6 +19,7 @@ from libsbml import (
     BQB_IS,
     BQB_OCCURS_IN,
     BQB_IS_HOMOLOG_TO,
+    BQB_IS_DESCRIBED_BY,
     MODEL_QUALIFIER,
     BQM_IS_DESCRIBED_BY,
 )
@@ -57,6 +58,7 @@ DB2PREFIX_METABS = {
     #"UPA": "unipathway.compound", #closed due to financial issues
     #"UNIPATHWAY COMPOUND": "unipathway.compound"
     "VMH": "vmhmetabolite",
+    "ECO": "ECO",
 }  #: :meta hide-value:
 
 PREFIX2DB_METABS = {v: k for (k, v) in DB2PREFIX_METABS.items()}  #: :meta hide-value:
@@ -78,6 +80,7 @@ DB2PREFIX_REACS = {
     #"UPA": "unipathway.reaction:", #closed due to financial issues
     #"UNIPATHWAY REACTION": "unipathway.reaction:"
     "VMH": "vmhreaction",
+    "ECO": "ECO",
 }  #: :meta hide-value:
 
 PREFIX2DB_REACS = {v: k for (k, v) in DB2PREFIX_REACS.items()}  #: :meta hide-value:
@@ -88,6 +91,7 @@ DB2PREFIX_GENES = {
     "NCBIGENE": "ncbigene",
     "REFSEQ": "refseq",
     "UNIPROT": "uniprot",
+    "ECO": "ECO",
 }  #: :meta hide-value:
 
 PREFIX2DB_GENES = {v: k for (k, v) in DB2PREFIX_GENES.items()}  #: :meta hide-value:
@@ -209,7 +213,10 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
                 entry = entry[4:]
         cv = CVTerm()
         cv.setQualifierType(BIOLOGICAL_QUALIFIER)
-        cv.setBiologicalQualifierType(BQB_IS)
+        if db_id == "ECO":
+            cv.setBiologicalQualifierType(BQB_IS_DESCRIBED_BY)
+        else:
+            cv.setBiologicalQualifierType(BQB_IS)
         cv.addResource(resource)
         reac.addCVTerm(cv)
     else:

@@ -79,6 +79,7 @@ from ..utility.entities import (
 )
 from ..utility.databases import mnx_db_namespace
 from ..utility.util import insert_into_dict
+from ..utility.cvterms import add_cv_term_reactions
 
 from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
@@ -831,6 +832,9 @@ class GapFiller(ABC):
         for idx, row in reac_table.iterrows():
             # check, if G_+ncbiprotein in model
             # if yes, add gpr
+            if type(row["ncbiprotein"]) == float:
+                if np.isnan(row["ncbiprotein"]):
+                    row["ncbiprotein"] = ""
             geneid = _f_gene_rev(row["ncbiprotein"])
             for reacid in row["add_to_GPR"]:
                 current_reacid = "R_" + reacid
@@ -1001,6 +1005,10 @@ class GapFiller(ABC):
                 ):
                     # Extend reaction notes with information about the GapFiller
                     reac.notes["found with"] = f"refineGEMs GapFiller, {self._variety}"
+                    if self._variety == "KEGG" or self._variety == "BioCyc":
+                        add_cv_term_reactions("0007636", "ECO", reac)
+                    elif self._variety == "GFF" or self._variety == "KEGG (alternative strain)" or self._variety == "BioCyc (alternative strain)":
+                        add_cv_term_reactions("0007482", "ECO", reac)
                     # add reaction to model (if validation successful)
                     model.add_reactions([reac])
                     self._statistics["reactions"]["added"] += 1
