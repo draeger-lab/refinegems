@@ -289,6 +289,7 @@ class GrowthSimulationReport(Report):
             ax.set_xlabel(xlab, labelpad=12)
             xlims = ax.get_xlim()
             ax.set_xlim(xlims[0], xlims[1] + (xlims[1] * 0.03))
+            ax.tick_params(axis='x', labelrotation=90)
             ax.set_title(title)
 
             return fig

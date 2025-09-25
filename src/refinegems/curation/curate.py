@@ -168,7 +168,7 @@ def extend_gp_annots_via_mapping_table(
         )
     else:  # Otherwise read in table from file
         mapping_tbl_file = mapping_tbl_file if isinstance(mapping_tbl_file, str) else str(mapping_tbl_file)
-        mapping_table = pd.read_csv(mapping_tbl_file)
+        mapping_table = pd.read_csv(mapping_tbl_file, sep="\t")
 
     # Drop all rows without model_id entries
     mapping_table.dropna(subset="model_id", inplace=True)
@@ -183,27 +183,32 @@ def extend_gp_annots_via_mapping_table(
 
     logger.info("Extending GeneProduct information...")
     for gene in tqdm(gene_list):
-        # Get row of mapping table for current model_id
-        gp_infos = mapping_table.loc[gene.getId(), :]
+        
+        if gene.getId() in mapping_table.index:
+        
+            # Get row of mapping table for current model_id
+            gp_infos = mapping_table.loc[gene.getId(), :]
 
-        # Add infos to current GeneProduct if available
-        if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
-            gene.setName(gp_infos["name"])
-        if ('locus_tag' in gp_infos.index.to_list()) and gp_infos["locus_tag"]:
-            gene.setLabel(gp_infos["locus_tag"])
-            if gene.isSetNotes(): 
-                # @TODO Write own implementation for appendNotes
-                gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
-            else: 
-                gene.unsetNotes()
-                note_string = f'''<body xmlns = "http://www.w3.org/1999/xhtml" >
-                <p>locus_tag: {gp_infos["locus_tag"]}</p>
-                </body>'''
-                gene.setNotes(note_string)
-        if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
-            add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
-        if ("NCBI" in gp_infos.index.to_list()) and gp_infos["NCBI"]:
-            add_cv_term_genes(gp_infos["NCBI"], "NCBI", gene, lab_strain)
+            # Add infos to current GeneProduct if available
+            if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
+                gene.setName(gp_infos["name"])
+            if ('locus_tag' in gp_infos.index.to_list()) and gp_infos["locus_tag"]:
+                gene.setLabel(gp_infos["locus_tag"])
+                if gene.isSetNotes(): 
+                    # @TODO Write own implementation for appendNotes
+                    gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
+                else: 
+                    gene.unsetNotes()
+                    note_string = f'''<body xmlns = "http://www.w3.org/1999/xhtml" >
+                    <p>locus_tag: {gp_infos["locus_tag"]}</p>
+                    </body>'''
+                    gene.setNotes(note_string)
+            if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
+                add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
+            if ("NCBI" in gp_infos.index.to_list()) and gp_infos["NCBI"]:
+                add_cv_term_genes(gp_infos["NCBI"], "NCBI", gene, lab_strain)
+            if ("UNIPROT" in gp_infos.index.to_list()) and gp_infos["UNIPROT"]:
+                add_cv_term_genes(gp_infos["UNIPROT"], "UNIPROT", gene, lab_strain)
 
     return model
 

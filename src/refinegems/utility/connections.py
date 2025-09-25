@@ -218,7 +218,7 @@ def run_DIAMOND_blastp(
     """
 
     if outdir:
-        outname = str(Path(outdir, "DIAMOND_blastp_res.tsv"))
+        outname = str(Path(outdir, outname))
         logfile = Path(outdir, "log_DIAMOND_blastp.txt")
     else:
         outname = str(Path(outname))

@@ -722,18 +722,24 @@ def mimic_genbank_fasta(annot_genome:Union[str,Path], gff_path:Union[str,Path],
             # ideal case: one exact match
             if len(matched_locus)==1:
                 locus = matched_locus.iloc[0,0]
+                
+                # construct header
+                header = f">{seq.id} [locus_tag={locus}] [protein_id={seq.id}]"
+                # write fasta entry
+                mimic.write(f"{header}\n{seq.seq}\n")
             # undefined mapping, keep first but report for manual curation
             elif len(matched_locus)>1:
                 locus = matched_locus.iloc[0,0]
                 mes = f"Ambiguous mapping for protein ID {seq.id}. Keeping locus tag {locus}.\nList all mappings: {matched_locus['locus_tag']}"
                 logger.info(mes)
+                
+                # construct header
+                header = f">{seq.id} [locus_tag={locus}] [protein_id={seq.id}]"
+                # write fasta entry
+                mimic.write(f"{header}\n{seq.seq}\n")
             # no match found (prob. missing annotation)
             else:
                 pass
-            # construct header
-            header = f">{seq.id} [locus_tag={locus}] [protein_id={seq.id}]"
-            # write fasta entry
-            mimic.write(f"{header}\n{seq.seq}\n")
     
     return mimic_path
 
