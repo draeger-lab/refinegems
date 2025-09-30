@@ -412,6 +412,8 @@ def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, associ
                     for gene in association.getListOfAssociations():
                         genes.append(gene.getGeneProduct())
                     gene_existence = get_uniprot_existence(model, genes, 'AND', reac_id)
+                elif type(association) == FbcOr:
+                    gene_existence = get_uniprot_existence(model, association, "OR", reac_id)
                 overall_existence.append(gene_existence)
             overall_existence = list(filter(None, overall_existence))
             overall_existence.sort()
