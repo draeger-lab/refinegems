@@ -346,6 +346,8 @@ def add_ECO_terms(model: libsbml.Model):
                         existence = get_uniprot_existence(model, association.getGeneProduct(), "GeneProduct", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
+                        else:
+                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
                     elif type(association) == FbcAnd:
                         geneAssociations = []
                         for gene in association.getListOfAssociations():
@@ -353,11 +355,15 @@ def add_ECO_terms(model: libsbml.Model):
                         existence = get_uniprot_existence(model, geneAssociations, "AND", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
+                        else:
+                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
                     elif type(association) == FbcOr:
                         existence = get_uniprot_existence(model, association, "OR", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
-                    else: print(f"Unknown Gene Product Association: {type(association)}")
+                        else: 
+                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
+                    else: logger.warning(f"Unknown Gene Product Association: {type(association)}")
 
 def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, association_type: Literal['GeneProduct','AND','OR'], reac_id: str) -> str:
     def get_protein_existence(uniprot_id):
@@ -399,7 +405,6 @@ def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, associ
             if len(overall_existence) != 0:
                 return overall_existence[-1]
             else: 
-                print(f"There were no UniProt IDs found for {reac_id}, no ECO term could be added.")
                 return ""
         case 'OR':
             # get the "highest" existence level (from multiple GPRs connected by OR)
@@ -420,5 +425,4 @@ def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, associ
             if len(overall_existence) != 0:
                 return overall_existence[0]
             else: 
-                print(f"There were no UniProt IDs found for {reac_id}, no ECO term could be added.")
                 return ""
