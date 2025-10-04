@@ -9,17 +9,13 @@ __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 import bioregistry
 import cobra
 import logging
-import requests
-import libsbml
 
 import memote.support.helpers as helpers
 from memote.utils import truncate
 
-from libsbml import Reaction, GeneProductRef, FbcAnd, FbcOr
+from libsbml import Reaction
 from six import iteritems
 from typing import Union, Literal, Tuple
-
-from .cvterms import add_cv_term_reactions, get_id_from_cv_term
 
 ################################################################################
 # setup logging
@@ -61,14 +57,6 @@ SBO_TRANSPORT_TERMS = [
     "SBO:0000659",
     "SBO:0000660",
 ]  #: :meta:
-
-uniprot_existence = {
-    "1: Evidence at protein level": "0000039",
-    "2: Evidence at transcript level": "0000009",
-    "3: Inferred from homology": "0000044",
-    "4: Predicted": "0000363",
-    "5: Uncertain": None
-}   #: :meta:
 
 # Database local identifier regex patterns
 # ----------------------------------------
@@ -322,107 +310,3 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
     # To account for numerical inaccuracies, a range from 1-1e0-3 to 1+1e-06
     # is implemented in the assertion check
     return biomass_weight
-
-# adding ECO terms
-# ----------------
-
-def add_ECO_terms(model: libsbml.Model):
-    for reac in model.getListOfReactions():
-        if len(get_id_from_cv_term(reac, "ECO")) == 0:
-            if "creation: via template" in reac.getNotesString():
-                add_cv_term_reactions("0007482", "ECO", reac)
-            elif "found with: refineGEMs GapFiller" in reac.getNotesString() and ("BioCyc" in reac.getNotesString() or "KEGG" in reac.getNotesString()) and "alternative strain" not in reac.getNotesString():
-                add_cv_term_reactions("0007636", "ECO", reac)
-            elif "found with: refineGEMs GapFiller" in reac.getNotesString() and ("BioCyc" in reac.getNotesString() or "KEGG" in reac.getNotesString()) and "alternative strain" in reac.getNotesString():
-                add_cv_term_reactions("0007482", "ECO", reac)
-            elif "found with: refineGEMs GapFiller" in reac.getNotesString() and "GFF" in reac.getNotesString():
-                add_cv_term_reactions("0007482", "ECO", reac)
-            else:
-                fbc_plugin = reac.getPlugin("fbc")
-                gpr = fbc_plugin.getGeneProductAssociation()
-                if gpr is not None:
-                    association = gpr.getAssociation()
-                    if type(association) == GeneProductRef:
-                        existence = get_uniprot_existence(model, association.getGeneProduct(), "GeneProduct", reac.id)
-                        if existence != '' and existence != "5: Uncertain":
-                            add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
-                        else:
-                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
-                    elif type(association) == FbcAnd:
-                        geneAssociations = []
-                        for gene in association.getListOfAssociations():
-                            geneAssociations.append(gene.getGeneProduct())
-                        existence = get_uniprot_existence(model, geneAssociations, "AND", reac.id)
-                        if existence != '' and existence != "5: Uncertain":
-                            add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
-                        else:
-                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
-                    elif type(association) == FbcOr:
-                        existence = get_uniprot_existence(model, association, "OR", reac.id)
-                        if existence != '' and existence != "5: Uncertain":
-                            add_cv_term_reactions(uniprot_existence[existence], "ECO", reac)
-                        else: 
-                            logger.info(f"There were no UniProt IDs found for {reac.id}, no ECO term could be added.")
-                    else: logger.warning(f"Unknown Gene Product Association: {type(association)}")
-
-def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, association_type: Literal['GeneProduct','AND','OR'], reac_id: str) -> str:
-    def get_protein_existence(uniprot_id):
-        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.json"
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            data = response.json()
-            try:
-                pe = data["proteinExistence"]
-                return pe
-            except KeyError:
-                return "Protein existence not found"
-        else:
-            return f"Error: {response.status_code}"
-    
-    fbc_plugin_model = model.getPlugin("fbc")
-    match association_type:
-        case 'GeneProduct':
-            # get the "highest" existence level (from multiple UniProt IDs)
-            gene = fbc_plugin_model.getListOfGeneProducts().get(gpr)
-            uniprot = get_id_from_cv_term(gene, "uniprot")
-            existence = ""
-            if len(uniprot) > 0:
-                for id in uniprot:
-                    if existence == "":
-                        existence = get_protein_existence(id)
-                    elif get_protein_existence(id) < existence:
-                        existence = get_protein_existence(id)
-            return existence
-        case 'AND':
-            # get the "lowest" existence level (from multiple GPRs connected by AND)
-            overall_existence = []
-            for gene_id in gpr:
-                gene_existence = get_uniprot_existence(model, gene_id, 'GeneProduct', reac_id)
-                overall_existence.append(gene_existence)
-            overall_existence = list(filter(None, overall_existence))
-            overall_existence.sort()
-            if len(overall_existence) != 0:
-                return overall_existence[-1]
-            else: 
-                return ""
-        case 'OR':
-            # get the "highest" existence level (from multiple GPRs connected by OR)
-            overall_existence = []
-            for association in gpr.getListOfAssociations():
-                if type(association) == GeneProductRef:
-                    gene_existence = get_uniprot_existence(model, association.getGeneProduct(), 'GeneProduct', reac_id)
-                elif type(association) == FbcAnd:
-                    genes = []
-                    for gene in association.getListOfAssociations():
-                        genes.append(gene.getGeneProduct())
-                    gene_existence = get_uniprot_existence(model, genes, 'AND', reac_id)
-                elif type(association) == FbcOr:
-                    gene_existence = get_uniprot_existence(model, association, "OR", reac_id)
-                overall_existence.append(gene_existence)
-            overall_existence = list(filter(None, overall_existence))
-            overall_existence.sort()
-            if len(overall_existence) != 0:
-                return overall_existence[0]
-            else: 
-                return ""

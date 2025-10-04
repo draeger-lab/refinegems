@@ -1054,7 +1054,7 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                     # interate over all media to add
                     for medium, perc in p["add_medium"].items():
                         # check for tuple
-                        match = re.match(REGEX_MEDIA_YML_TUPLE, perc)
+                        match = re.match(REGEX_MEDIA_YML_TUPLE, str(perc))
                         if match:
                             x,y = match.groups()
                             # convert into python-tuple

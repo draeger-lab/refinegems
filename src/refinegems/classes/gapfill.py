@@ -79,7 +79,6 @@ from ..utility.entities import (
 )
 from ..utility.databases import mnx_db_namespace
 from ..utility.util import insert_into_dict
-from ..utility.cvterms import add_cv_term_reactions
 
 from .medium import Medium, medium_to_model
 from .reports import GapFillerReport
@@ -1006,9 +1005,9 @@ class GapFiller(ABC):
                     # Extend reaction notes with information about the GapFiller
                     reac.notes["found with"] = f"refineGEMs GapFiller, {self._variety}"
                     if self._variety == "KEGG" or self._variety == "BioCyc":
-                        add_cv_term_reactions("0007636", "ECO", reac)
+                        reac.annotation["ec"] = "ECO:0007636"
                     elif self._variety == "GFF" or self._variety == "KEGG (alternative strain)" or self._variety == "BioCyc (alternative strain)":
-                        add_cv_term_reactions("0007482", "ECO", reac)
+                        reac.annotation["eco"] = "ECO:0007482"
                     # add reaction to model (if validation successful)
                     model.add_reactions([reac])
                     self._statistics["reactions"]["added"] += 1

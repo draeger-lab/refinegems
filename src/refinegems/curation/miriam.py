@@ -35,6 +35,7 @@ from libsbml import (
     BQB_IS,
     BQB_HAS_PROPERTY,
     BQB_IS_HOMOLOG_TO,
+    BQB_IS_DESCRIBED_BY,
 )
 from libsbml import BiolQualifierType_toString, ModelQualifierType_toString
 
@@ -925,6 +926,9 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
             model = change_qualifiers(
                 model, "gene product", BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO
             )
+        elif entity == "reaction":
+            model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
+            model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS_DESCRIBED_BY, "ECO")
         else:
             model = change_qualifiers(model, entity, BIOLOGICAL_QUALIFIER, BQB_IS)
 
