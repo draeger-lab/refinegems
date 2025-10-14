@@ -1097,8 +1097,8 @@ class GapFiller(ABC):
             ~self.missing_genes["ncbiprotein"].isna()
         ]
 
-        # @BUG The resulting tables still do not look correct
         # Filter out genes with duplicated locus tag & NCBI Protein ID
+        # to avoid duplicated IDs & labels
         # Remove duplicates
         deduplicated_missing_genes = self.missing_genes.drop_duplicates(subset=["ncbiprotein", "locus_tag"])
         # Save duplicates for manual curation

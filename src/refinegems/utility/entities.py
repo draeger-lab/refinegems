@@ -2246,7 +2246,7 @@ def create_gp(
         gp.setNotes(note_string)
         
     gp.setSBOTerm("SBO:0000243")  # SBOterm
-    gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID
+    gp.setMetaId(f"meta_{model_id}")  # Meta ID
     # test for NCBI/RefSeq
     id_db = None
     if protein_id:
