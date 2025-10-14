@@ -624,6 +624,8 @@ class GapFiller(ABC):
                 "missing (total)": 0,
                 "unmappable": 0,
                 "missing (mappable)": 0,
+                "duplicated NCBI Protein ID": 0,
+                "duplicated locus tag": 0,
                 "duplicated": 0,
                 "added": 0,
                 "building failed": 0,
@@ -1095,18 +1097,43 @@ class GapFiller(ABC):
             ~self.missing_genes["ncbiprotein"].isna()
         ]
 
-        # filter out duplicated genes to avoid duplicated IDs in the model
+        # @BUG The resulting tables still do not look correct
+        # Filter out genes with duplicated locus tag & NCBI Protein ID
+        # Remove duplicates
+        deduplicated_missing_genes = self.missing_genes.drop_duplicates(subset=["ncbiprotein", "locus_tag"])
+        # Save duplicates for manual curation
+        self.manual_curation["genes"]["duplicated"] = self.missing_genes[self.missing_genes.duplicated(subset=["ncbiprotein", "locus_tag"], keep='first')]
+        # Get statistics
+        self._statistics["genes"]["duplicated"] = self.manual_curation["genes"]["duplicated"]["locus_tag"].nunique()
+        # Update missing genes
+        self.missing_genes = deduplicated_missing_genes
+
+        # filter out duplicated genes based on NCBI Protein IDs to avoid duplicated IDs in the model
         if len(self.missing_genes) != len(self.missing_genes["ncbiprotein"].unique()):
-            self.manual_curation["genes"]["duplicated (not added)"] = (
+            self.manual_curation["genes"]["duplicated NCBI Protein ID (not added)"] = (
                 self.missing_genes[
                     self.missing_genes.duplicated(subset=["ncbiprotein"])
                 ]
             )
-            self._statistics["genes"]["duplicated"] = self.manual_curation["genes"][
-                "duplicated (not added)"
+            self._statistics["genes"]["duplicated NCBI Protein ID"] = self.manual_curation["genes"][
+                "duplicated NCBI Protein ID (not added)"
             ]["locus_tag"].nunique()
             self.missing_genes = self.missing_genes[
                 ~self.missing_genes.duplicated(subset=["ncbiprotein"])
+            ]
+
+        # filter out duplicated genes based on the locus tag to avoid duplicated labels in the model
+        if len(self.missing_genes) != len(self.missing_genes["locus_tag"].unique()):
+            self.manual_curation["genes"]["duplicated locus tag (not added)"] = (
+                self.missing_genes[
+                    self.missing_genes.duplicated(subset=["locus_tag"])
+                ]
+            )
+            self._statistics["genes"]["duplicated locus tag"] = self.manual_curation["genes"][
+                "duplicated locus tag (not added)"
+            ]["locus_tag"].nunique() # @ASK Use something different for the stats here?
+            self.missing_genes = self.missing_genes[
+                ~self.missing_genes.duplicated(subset=["locus_tag"])
             ]
 
         # Store mapping table for later manual curation (or debugging purposes)
