@@ -787,6 +787,8 @@ class GapFiller(ABC):
         gene_table = gene_table.copy()
         # gene_table.drop(columns=['ec-code'],inplace=True)
 
+        # @TODO Rewrite for references column
+        # @ASK Do we still need then the REF_COL_GF_GENE_MAP?
         # create gps from the table and add them to the model
         cols_for_refs = [
             _ for _ in REF_COL_GF_GENE_MAP.keys() if _ in gene_table.columns
@@ -1269,7 +1271,6 @@ class GapFiller(ABC):
 # Gapfilling with KEGG
 # --------------------
 
-# @TEST
 class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
@@ -1406,6 +1407,8 @@ class KEGGapFiller(GapFiller):
         self._statistics["genes"]["missing (total)"] = genes_not_in_model[
             "locus_tag"
         ].nunique()
+
+        # @TODO Add references column with KEGG Gene IDs? + NCBI Protein IDs?
 
         self.missing_genes = genes_not_in_model
 
@@ -1781,6 +1784,8 @@ class BioCycGapFiller(GapFiller):
             "unmappable"
         ]
 
+        # @TODO Add references column with NCBI Protein IDs?
+
     def find_missing_reactions(self, model: cobra.Model):
         """Retrieves the missing reactions with more information like the
         equation, EC code, etc. according to the missing genes
@@ -2021,6 +2026,8 @@ class GeneGapFiller(GapFiller):
             "locus_tag"
         ].nunique() + int(self.missing_genes["locus_tag"].isna().sum())
 
+        # @ASK Should we not filter out all genes without locus tag here?
+        # Even without ncbiprotein some entries could be without locus tag?
         # save genes with no locus tag for manual curation
         if "ncbiprotein" in self.missing_genes.columns:
             self.manual_curation["genes"]["gff no locus tag"] = self.missing_genes[
@@ -2127,6 +2134,7 @@ class GeneGapFiller(GapFiller):
 
         # try to identfy missing ECs
         # --------------------------
+        self.missing_genes.to_csv('./gapfill_test/ggf_missing_genes_at_start.tsv', sep='\t', index=False)
         case_1 = self.missing_genes[self.missing_genes["ec-code"].isna()]
         not_case_1 = self.missing_genes[~self.missing_genes["ec-code"].isna()]
         if len(case_1) > 0:
@@ -2161,13 +2169,24 @@ class GeneGapFiller(GapFiller):
                                 ),
                                 axis=1,
                             )
+                        # @TODO Transfer UniProt IDs to references column + NCBI Protein IDs?
+                        case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 # type_db = user: BLAST against user defined database
                 case "user":
                     if fasta and dmnd_db:
                         case_1 = map_to_homologs(
                             fasta, dmnd_db, case_1, map_db, email=mail, **kwargs
-                        )
+                        ) 
+                        # @TODO Post filtering:
+                        # If ncbiprotein in self.missing_genes 
+                        #   -> Merge self.missing_genes with case_1 on locus_tag, how: Keep only entries from case_1
+                        #   -> Transfer NCBI Protein IDs from both dataframes to references column
+                        # @ASK What to do with EC codes columns? Does this case even exist? Merge both columns somehow?
+                        # Else 
+                        #   -> Transfer NCBI Protein IDs to references column
+                        #   -> Replace NCBI Protein IDs with pseudoids/locus_tags
+                        case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 case _:
                     raise ValueError(
