@@ -935,12 +935,12 @@ def map_dmnd_res_to_sp_ec_brenda(
     swissprot_mapping.dropna(subset=["BRENDA", "EC number"], how="all", inplace=True)
 
     # extract SwissProts IDs from subject_ID
-    dmnd_results.columns = ["locus_tag", "UniProt"]
-    dmnd_results["UniProt"] = dmnd_results["UniProt"].apply(lambda x: x.split("|")[1])
+    dmnd_results.columns = ["locus_tag", "uniprot"]
+    dmnd_results["uniprot"] = dmnd_results["uniprot"].apply(lambda x: x.split("|")[1])
 
     # match
     dmnd_results = dmnd_results.merge(
-        swissprot_mapping, left_on="UniProt", right_on="Entry", how="left"
+        swissprot_mapping, left_on="uniprot", right_on="Entry", how="left"
     )
     dmnd_results.drop("Entry", axis=1, inplace=True)
     dmnd_results["ec-code"] = dmnd_results.apply(
@@ -1014,7 +1014,7 @@ def get_ec_via_swissprot(
     #         EC numbers and locus tags
     mapped_res = (
         mapped_res.groupby(["locus_tag", "ec-code"])
-        .agg({"UniProt": lambda x: x.tolist()})
+        .agg({"uniprot": lambda x: x.tolist()})
         .reset_index()
     )
 

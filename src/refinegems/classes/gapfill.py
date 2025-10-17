@@ -59,6 +59,7 @@ from ..utility.db_access import (
     parse_KEGG_ec,
     map_to_homologs,
 )
+from ..utility.cvterms import PREFIX2DB_GENES
 from ..utility.io import (
     load_a_table_from_database,
     parse_gff_for_cds,
@@ -98,10 +99,105 @@ logger = logging.getLogger(__name__)
 # variables
 ############################################################################
 
+DB_REFERENCE_COLS = {
+    'ncbiprotein_x',
+    'BioCyc',
+    'BiGG',
+    'ncbigene',
+    'MetaNetX',
+    'uniprot',
+} #: :meta hide-value:
+
+DBEQ2EQ = {
+    "BiGG": "reaction_string", 
+    "MetaNetX": "mnx_equation",
+} #: :meta hide-value:
 
 ############################################################################
 # functions
 ############################################################################
+
+# Cleaning up references after mapping
+# ------------------------------------
+def _clean_table_after_mapping(mapped_table: pd.DataFrame, entity_type: Literal["reaction", "gene"] = "reaction") -> pd.DataFrame:
+    """Clean a table containing mapping results for different databases
+
+    Args:
+        - mapped_table (pd.DataFrame): 
+            Table containinfg a mapping for different databases
+        - entity_type (Literal['reaction', 'gene'], optional):
+            Type of entity the mapping refers to.
+            Defaults to 'reaction'.
+
+    Returns:
+        pd.DataFrame: 
+            The cleaned table.
+    """
+
+    def _clean_ref_row(
+        ref_row: pd.Series, ref_dbs: set, entity_type: Literal["reaction", "gene"]
+    ) -> pd.Series:
+        """Clean a row of a table containing mapping results for different databases
+
+        Args:
+            - ref_row (pd.Series):
+                Row containing a mapping for different databases
+            - ref_db (set):
+                Set of column name(s) for reference databases
+            - entity_type (Literal['reaction', 'gene'], optional):
+                Type of entity the mapping refers to.
+
+        Returns:
+            pd.Series:
+                The cleaned row.
+        """
+        references = {} # Initialise references dictionary
+        # Iterate over possible database columns
+        for db in ref_dbs:
+            # Get list of mapped to database IDs
+            id_list = ref_row[db].replace(' ', '').split(',') if isinstance(ref_row[db], str) else ref_row[db]
+            if id_list:
+
+                match entity_type:
+                    case "gene":
+                        db = db.removesuffix('_x') # Remove suffix if necessary
+                        references[PREFIX2DB_GENES[db]] = set(id_list)
+                    case "reaction":
+                        # Move BioCyc IDs to references if BioCyc IDs are present
+                        biocyc_reac_id = ref_row["id"]
+                        ref_row["id"] = str(id_list[0])  # Ensure ID is a string
+
+                        # Remove ID from column 'id' from list in column 'alias'
+                        if len(id_list) != 1:
+                            id_list.remove(ref_row["id"])
+                            alias = set(id_list)
+                        else:
+                            alias = None
+
+                        # Set-up references
+                        references["metacyc.reaction"] = biocyc_reac_id # Move BioCyc IDs and alias to references
+                        references["alias"] = alias
+                        ref_row["equation"] = ref_row[DBEQ2EQ.get(db)] # Move equation from other database to equation column
+                        ref_row["via"] = db # Replace BioCyc in via column with mapped to database
+                    case _:
+                        raise ValueError(f"Unknown entity_type {entity_type} in subfunction _clean_ref_row from _clean_table_after_mapping.")
+
+        # Add all reference columns to references
+        ref_row["reference"] = references
+
+        return ref_row
+
+    # Get union between DB_REFERENCE_COLS and columns in table
+    contained_cols = set(mapped_table.columns).intersection(DB_REFERENCE_COLS)
+
+    # If no columns found, return table as is
+    if not contained_cols: return mapped_table
+
+    # Otherwise iterate over the columns
+    cleaned_table = mapped_table.apply(_clean_ref_row, args=(contained_cols,entity_type), axis=1)
+    cleaned_table.drop(columns=contained_cols, inplace=True) # Drop database columns
+
+    return cleaned_table
 
 
 # Mapping for BioCyc Reactions
@@ -768,10 +864,10 @@ class GapFiller(ABC):
     def add_genes_from_table(self, model: libModel, gene_table: pd.DataFrame) -> None:
         """Create new GeneProduct for a table of genes in the format:
 
-        | ncbiprotein | locus_tag | UniProt | ... |
+        | ncbiprotein | locus_tag | uniprot | ... |
 
         The dots symbolise additional columns, that can be passed to the function,
-        but will not be used by it. The other columns, except UniProt, are required.
+        but will not be used by it. The other columns, except uniprot, are required.
 
         Args:
             - model (libModel):
@@ -779,7 +875,7 @@ class GapFiller(ABC):
             - gene_table (pd.DataFrame):
                 The table with the genes to add. At least needs the columns
                 *ncbiprotein* and *locus_tag*. Optional columns include
-                *UniProt* amongst other.
+                *uniprot* amongst other.
         """
 
         # ncbiprotein | locus_tag | ...
@@ -2152,7 +2248,7 @@ class GeneGapFiller(GapFiller):
                         )  # further optional params for the mapping
                         case_1.drop("ec-code", inplace=True, axis=1)
                         case_1 = case_1.merge(case_1_mapped, on="locus_tag", how="left")
-                        not_case_1["UniProt"] = None
+                        not_case_1["uniprot"] = None
                         # still no EC but ncbiprotein
                         #       -> access ncbi for ec (optional)
                         # @DEBUG .......................
@@ -2169,7 +2265,6 @@ class GeneGapFiller(GapFiller):
                                 ),
                                 axis=1,
                             )
-                        # @TODO Transfer UniProt IDs to references column + NCBI Protein IDs?
                         case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 # type_db = user: BLAST against user defined database
@@ -2178,14 +2273,19 @@ class GeneGapFiller(GapFiller):
                         case_1 = map_to_homologs(
                             fasta, dmnd_db, case_1, map_db, email=mail, **kwargs
                         ) 
-                        # @TODO Post filtering:
-                        # If ncbiprotein in self.missing_genes 
-                        #   -> Merge self.missing_genes with case_1 on locus_tag, how: Keep only entries from case_1
-                        #   -> Transfer NCBI Protein IDs from both dataframes to references column
-                        # @ASK What to do with EC codes columns? Does this case even exist? Merge both columns somehow?
-                        # Else 
-                        #   -> Transfer NCBI Protein IDs to references column
-                        #   -> Replace NCBI Protein IDs with pseudoids/locus_tags
+                        # Post processing
+                        # ---------------
+                        # Add information from self.missing_genes back into case_1
+                        case_1 = case_1.merge(
+                            self.missing_genes,
+                            on="locus_tag",
+                            how="left",
+                        )
+                        # Ensure that the correct column is renamed back to ncbiprotein
+                        case_1.rename({'ncbiprotein_y': 'ncbiprotein', 'ec-code_x': 'ec-code'}, axis=1, inplace=True)
+
+                        # Drop empty ec-code_y column
+                        case_1.drop('ec-code_y', axis=1, inplace=True)
                         case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 case _:
@@ -2238,6 +2338,10 @@ class GeneGapFiller(GapFiller):
         # ---------
         # update the gene information
         updated_missing_genes = mapped_reacs.copy()
+        # @TEST Put ncbiprotein_x, ncbigene, uniprot in references -> if entry is not None
+        if 'GeneID' in updated_missing_genes.columns: updated_missing_genes.rename({'GeneID': 'ncbigene'}, axis=1, inplace=True)
+        updated_missing_genes = _clean_table_after_mapping(updated_missing_genes, 'gene')
+        updated_missing_genes.to_csv('./gapfill_test/ggf_updated_missing_genes.tsv', sep='\t', index=False)
 
         # reformat missing reacs
         if type_db == "swissprot":
