@@ -76,7 +76,6 @@ from ..utility.entities import (
     isreaction_complete,
     parse_reac_str,
     validate_reaction_compartment_bigg,
-    REF_COL_GF_GENE_MAP,
 )
 from ..utility.databases import mnx_db_namespace
 from ..utility.util import insert_into_dict
@@ -119,6 +118,7 @@ DBEQ2EQ = {
 
 # Cleaning up references after mapping
 # ------------------------------------
+# @TODO Add to/Update BioCycGapFiller
 def _clean_table_after_mapping(mapped_table: pd.DataFrame, entity_type: Literal["reaction", "gene"] = "reaction") -> pd.DataFrame:
     """Clean a table containing mapping results for different databases
 
@@ -161,7 +161,26 @@ def _clean_table_after_mapping(mapped_table: pd.DataFrame, entity_type: Literal[
                 match entity_type:
                     case "gene":
                         db = db.removesuffix('_x') # Remove suffix if necessary
-                        references[PREFIX2DB_GENES[db]] = set(id_list)
+                        id_set = set(id_list)
+                        # Divide into RefSeq & NCBI Protein IDs if in column ncbiprotein
+                        if db == 'ncbiprotein':
+                            split_id_set = {
+                                PREFIX2DB_GENES['refseq']: set(),
+                                PREFIX2DB_GENES[db]: set()
+                                } # Initialise sets for RefSeq & NCBI Protein IDs
+                            for i in id_set:
+                                if re.fullmatch(
+                                            r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
+                                            i,
+                                            re.IGNORECASE,
+                                        ):
+                                    split_id_set[PREFIX2DB_GENES['refseq']].add(i)
+                                elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", i, re.IGNORECASE):
+                                    split_id_set[PREFIX2DB_GENES[db]].add(i)
+                                
+                                references.update((k,v) for k,v in split_id_set.items() if len(v)) # Add IDs to references
+                        else:
+                            references[PREFIX2DB_GENES[db]] = set(id_list)
                     case "reaction":
                         # Move BioCyc IDs to references if BioCyc IDs are present
                         biocyc_reac_id = ref_row["id"]
@@ -864,42 +883,30 @@ class GapFiller(ABC):
     def add_genes_from_table(self, model: libModel, gene_table: pd.DataFrame) -> None:
         """Create new GeneProduct for a table of genes in the format:
 
-        | ncbiprotein | locus_tag | uniprot | ... |
+        | ncbiprotein | locus_tag | reference | ... |
 
         The dots symbolise additional columns, that can be passed to the function,
-        but will not be used by it. The other columns, except uniprot, are required.
+        but will not be used by it. The other columns are required.
 
         Args:
             - model (libModel):
                 The model loaded with libSBML.
             - gene_table (pd.DataFrame):
                 The table with the genes to add. At least needs the columns
-                *ncbiprotein* and *locus_tag*. Optional columns include
-                *uniprot* amongst other.
+                *ncbiprotein*, *locus_tag* and *reference*. More columns can be provided.
         """
 
-        # ncbiprotein | locus_tag | ...
+        # ncbiprotein | locus_tag | reference | ... 
         # work on a copy to ensure input stays the same
         gene_table = gene_table.copy()
         # gene_table.drop(columns=['ec-code'],inplace=True)
-
-        # @TODO Rewrite for references column
-        # @ASK Do we still need then the REF_COL_GF_GENE_MAP?
-        # create gps from the table and add them to the model
-        cols_for_refs = [
-            _ for _ in REF_COL_GF_GENE_MAP.keys() if _ in gene_table.columns
-        ]
 
         # create gp
         for idx, x in tqdm(
             gene_table.iterrows(), total=len(gene_table), desc="Adding genes to model"
         ):
-            # get additional references
-            references = dict()
-            for dbname in cols_for_refs:
-                references[dbname] = (x[dbname], True)
             create_gp(
-                model, x["ncbiprotein"], locus_tag=x["locus_tag"], reference=references
+                model, x["ncbiprotein"], locus_tag=x["locus_tag"], reference=x['reference']
             )
             self._statistics["genes"]["added"] += 1
 
@@ -2230,7 +2237,6 @@ class GeneGapFiller(GapFiller):
 
         # try to identfy missing ECs
         # --------------------------
-        self.missing_genes.to_csv('./gapfill_test/ggf_missing_genes_at_start.tsv', sep='\t', index=False)
         case_1 = self.missing_genes[self.missing_genes["ec-code"].isna()]
         not_case_1 = self.missing_genes[~self.missing_genes["ec-code"].isna()]
         if len(case_1) > 0:
@@ -2265,7 +2271,6 @@ class GeneGapFiller(GapFiller):
                                 ),
                                 axis=1,
                             )
-                        case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 # type_db = user: BLAST against user defined database
                 case "user":
@@ -2286,7 +2291,6 @@ class GeneGapFiller(GapFiller):
 
                         # Drop empty ec-code_y column
                         case_1.drop('ec-code_y', axis=1, inplace=True)
-                        case_1.to_csv('./gapfill_test/ggf_user_res.tsv', sep='\t', index=False)
 
                 case _:
                     raise ValueError(
@@ -2338,10 +2342,8 @@ class GeneGapFiller(GapFiller):
         # ---------
         # update the gene information
         updated_missing_genes = mapped_reacs.copy()
-        # @TEST Put ncbiprotein_x, ncbigene, uniprot in references -> if entry is not None
         if 'GeneID' in updated_missing_genes.columns: updated_missing_genes.rename({'GeneID': 'ncbigene'}, axis=1, inplace=True)
         updated_missing_genes = _clean_table_after_mapping(updated_missing_genes, 'gene')
-        updated_missing_genes.to_csv('./gapfill_test/ggf_updated_missing_genes.tsv', sep='\t', index=False)
 
         # reformat missing reacs
         if type_db == "swissprot":
