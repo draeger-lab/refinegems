@@ -358,7 +358,7 @@ def parse_KEGG_gene(locus_tag: str) -> dict:
     """
 
     gene_info = dict()
-    gene_info["orgid:locus"] = locus_tag
+    gene_info["kegg.genes"] = locus_tag
 
     # retireve KEGG gene entry
     try:
