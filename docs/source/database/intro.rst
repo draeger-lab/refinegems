@@ -1,7 +1,7 @@
 Media & Subsets
 ===============
 
-**refineGEMs** has an in-build database for different media, media compounds and Subsets
+``refineGEMs`` has an in-build database for different media, media compounds and Subsets
 to facilitate model curation and allow for a range of different simulations.
 
 .. hint::
@@ -36,8 +36,6 @@ an *in silico* medium and how to transform a medium e.g. from the labratory (*in
 into an *in silico* medium. Our standardised aproach is described in :doc:`in_silico_media_generation`.
 
 You can find a detailed explanation of the database architecture under :doc:`db_architecture`.
-
-Additionally, the last point refers to more information about accessing the database. ``TODO`` Worauf bezieht sich das hier genau?
 
 .. toctree::
 
