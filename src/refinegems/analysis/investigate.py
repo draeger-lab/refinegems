@@ -138,23 +138,26 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
 
 
 def summarise_annotation_coverage(model:cobra.Model) -> tuple[dict, dict, dict]:
-    """Summarise the annotation coverage of model entities by collecting the types of annotations 
-    and their counts and percentages.
+    """Summarise the annotation coverage of model entities by collecting types of annotations and their counts and percentages.
 
     Args:
-        - model (cobra.Model): 
-            A model loaded with the COBRApy package.
+       -  model (cobra.Model): A model loaded with the COBRApy package.
 
     Returns:
         tuple[dict, dict, dict]: 
             Three dictionaries containing the annotation coverage for genes, reactions, and metabolites.
-            Each dictionary has the format:
-            {
-                'database_name': (count, percentage),
-                ...
-            }
-            where 'database_name' is the name of the annotation database, 'count' is the number of entities
-            annotated with that database, and 'percentage' is the percentage of entities annotated with that database.
+            Each dictionary maps a database name to a tuple (count, percentage), where:
+
+            - database_name (str): name of the annotation database
+            - count (int): number of entities annotated with that database
+            - percentage (float): percentage of entities annotated with that database
+
+    .. code-block::
+
+        {
+            'database_name': (count, percentage),
+            ...
+        }
     """
     
     # genes

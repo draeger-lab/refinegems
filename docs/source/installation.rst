@@ -2,6 +2,7 @@ Installation
 ============
 
 The package ``refineGEMs`` and all its dependencies can be installed within virtual environments like ``conda`` or ``pipenv``.
+The latest version should work for Python 3.10-3.13.
 
 .. warning::
 
@@ -21,9 +22,10 @@ To install refineGEMs as Python package from `PyPI <https://pypi.org/project/ref
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
-``refineGEMs`` depends on the tools `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and 
-`BOFdat <https://github.com/draeger-lab/BOFdat>`__ which cannot directly be installed via 
-`PyPI <https://pypi.org/project/refineGEMs/>`__. Please install both tools before using ``refineGEMs``:
+``refineGEMs`` depends on the tools `MCC <https://github.com/Biomathsys/MassChargeCuration>`__,  
+`BOFdat <https://github.com/draeger-lab/BOFdat>`__ and `ModelPolisher <https://github.com/draeger-lab/MPClient>`__ 
+which cannot directly be installed via `PyPI <https://pypi.org/project/refineGEMs/>`__. 
+Please install both tools before using ``refineGEMs``:
 
 .. hint:: 
 

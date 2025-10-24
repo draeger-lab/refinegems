@@ -20,7 +20,7 @@ Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
 - | :ref:`Gap-filling with BioCyc`:
   | If the organism to be modelled has an *entry in BioCyc*, this information can be compared to the model to add missing genes, reactions and more.
 
-- | :ref:`Gap-filling with a GFF (and SwissProt)`:
+- | :ref:`Gap-filling with a GFF (and a DIAMOND database)`:
   | This algorithm takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt/a user-defined database to find homologs, that can then be added to the model.
 
 ----

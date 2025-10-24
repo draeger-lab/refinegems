@@ -965,9 +965,9 @@ def model_minimal_medium(
             If set to True assigns large upper bound to all import reactions.
             Defaults to False.
 
-            .. warning::
+    .. warning::
 
-                Running `open_exchanges` on `True` can lead to infeasible runtimes.
+        Running `open_exchanges` on `True` can lead to infeasible runtimes.
 
     Raises:
         - ValueError: unknown objective.

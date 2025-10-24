@@ -200,7 +200,7 @@ class GrowthSimulationReport(Report):
 
     def plot_growth(
         self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
-    ) -> matplotlib.figure.Figure|None:
+    ) -> Union[matplotlib.figure.Figure,None]:
         """Visualise the contents of the report.
 
         .. note::
@@ -222,6 +222,7 @@ class GrowthSimulationReport(Report):
         Returns:
             If plotting possible: matplotlib.figure.Figure:
                     The plotted figure.
+                    
             Else None
             
         """
