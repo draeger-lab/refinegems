@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 # variables
 ################################################################################
 
-non_alnum_pattern = re.compile('[\W_]+') # :meta: 
+non_alnum_pattern = re.compile(r'[\W_]+') # :meta: 
 DEPRECATED_PREFIXES = {
     'ecogene',
     'ncbigi' # Converted to accession version since 2016 according to NCBI
