@@ -707,6 +707,12 @@ class Medium:
             - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst'].
         """
 
+        # Set-up path
+        if dir:
+            if isinstance(dir, str):
+                dir = Path(dir)
+            dir.mkdir(parents=True, exist_ok=True)
+        
         match flavour:
             case "substance_table":
                 table2export = self.substance_table if not no_flux else self.substance_table.drop('flux', axis=1)

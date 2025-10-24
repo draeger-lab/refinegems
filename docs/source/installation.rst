@@ -36,14 +36,62 @@ Please install both tools before using ``refineGEMs``:
 .. code:: console
    :class: copyable
 
-   pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration@installation-fix"
+   pip install "model-polisher@git+https://github.com/draeger-lab/MPClient"
+
+.. code:: console
+   :class: copyable
+
+   pip install "masschargecuration@git+https://github.com/draeger-lab/MassChargeCuration"
 
 .. code:: console
    :class: copyable
 
    pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
 
+``refineGEMs`` can also be used via Docker. To build the docker image, firtsly clone the repository:
 
-.. hint:: 
+.. code:: console
+   :class: copyable
+
+   git clone "https://github.com/draeger-lab/refinegems.git"
+
+Then change into the directory and build the image:
+
+.. code:: console
+   :class: copyable
+
+   cd refinegems \
+   docker build -t refinegems .
+
+.. note:: 
+
+   To provide the input files and retrieve the output files mount one folder as workspace folder to the Docker image 
+   with `-v`.
+
+The default command executed by the image is ``refinegems -h`` and provides the help information for the CLI of 
+``refineGEMs``.
+
+.. code:: console
+   :class: copyable
+
+   docker run refinegems -h
+
+To use the image interactively and open a bash shell, run the following command:
+
+.. code:: console
+   :class: copyable
+
+   docker run -it --entrypoint bash refinegems
+
+To use the image for specific commands, you can simply use every of the CLI commands as entrypoint. 
+For example, to curate a (draft) model, run:
+
+.. code:: console
+   :class: copyable
+
+   docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
+
+
+.. hint::
 
    For the installation for developers, refer to :ref:`installation for developers`
