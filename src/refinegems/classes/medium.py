@@ -18,6 +18,7 @@ __author__ = "Carolin Brune"
 import cobra
 import copy
 import io
+import logging
 import numpy as np
 import pandas as pd
 import random
@@ -25,7 +26,6 @@ import re
 import sqlite3
 import string
 import sys
-import warnings
 import yaml
 
 from colorama import init as colorama_init
@@ -35,7 +35,13 @@ from sqlite_dump import iterdump
 from typing import Literal, Union, Any
 
 from ..utility.databases import PATH_TO_DB
-from ..utility.io import load_substance_table_from_db, load_subset_from_db
+from ..utility.io import load_substance_table_from_db, load_subset_from_db, load_a_table_from_database
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ############################################################################
 # variables
@@ -45,6 +51,7 @@ ALLOWED_DATABASE_LINKS = ["BiGG", "MetaNetX", "SEED", "VMH", "ChEBI", "KEGG"]  #
 REQUIRED_SUBSTANCE_ATTRIBUTES = ["name", "formula", "flux", "source"]  #: :meta:
 INTEGER_REGEX = re.compile(r"^[-+]?([1-9]\d*|0)$")  #: :meta:
 FLOAT_REGEX = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")  #: :meta:
+REGEX_MEDIA_YML_TUPLE = re.compile(r"\((\d+\.\d+),(\d+\.\d+)\)") #: :meta:
 
 ############################################################################
 # classes
@@ -92,6 +99,15 @@ class Medium:
         self.description = description
         self.substance_table = substance_table
         self.doi = doi
+        
+    def copy(self) -> "Medium":
+        """Create a deep copy of the Medium object.
+
+        Returns:
+            Medium: A new Medium object with the same data, independent of the original.
+        """
+        return copy.deepcopy(self)
+    
 
     def add_substance_from_db(self, name: str, flux: float = 10.0):
         """Add a substance from the database to the medium.
@@ -116,7 +132,7 @@ class Medium:
 
         # check if fetch was successful
         if len(substance) == 0:
-            warnings.warn(f"Could not fetch substance {name} from DB.")
+            logger.warning(f"Could not fetch substance {name} from DB.")
             return
 
         # add substance to table
@@ -267,7 +283,8 @@ class Medium:
                 ] = (2 * flux)
         # keep already set fluxes
         else:
-            self.substance_table["flux"] = self.substance_table["flux"].fillna(flux)
+            with pd.option_context("future.no_silent_downcasting", True): # @NOTE remove after pandas truly adapts to this behaviour
+                self.substance_table["flux"] = self.substance_table["flux"].fillna(flux).infer_objects(copy=False)
             if (
                 self.is_aerobic()
                 and double_o2
@@ -297,8 +314,8 @@ class Medium:
                 * perc
             )
         else:
-            warnings.warn(
-                f"WARNING: no oxygen detected in medium {self.name}, cannot set oxygen percentage."
+            logger.warning(
+                f"No oxygen detected in medium {self.name}, cannot set oxygen percentage."
             )
 
     def combine(
@@ -363,9 +380,27 @@ class Medium:
                     added.append(subs)
             # add remaining substances to medium from the second one
             second_medium = second_medium[~second_medium["name"].isin(added)]
-            combined.substance_table = pd.concat(
-                [combined.substance_table, second_medium], ignore_index=True
-            )
+            
+            # Filter out empty or all-NA DataFrames before concatenation 
+            frames_to_concat = [
+                df for df in [combined.substance_table, second_medium]
+                if not df.empty and not df.isna().all(axis=None)
+            ]
+            # case 1: all are empty or NA
+            if not frames_to_concat:
+                raise ValueError("The substance tables of both media are empty or contain only NA values. Cannot combine.")
+            # case 2: only one is valid
+            elif len(frames_to_concat) == 1:
+                # if one is empty, just use the other one
+                if any(df.empty for df in [combined.substance_table, second_medium]):
+                    combined.substance_table = frames_to_concat[0]
+                # if one has invalid rows, additionally report
+                else:
+                    logger.warning("Only one of the substance tables contains valid rows during combination.")
+                    combined.substance_table = frames_to_concat[0]
+            # case 3: simply merge the substance tables
+            else:
+                combined.substance_table = pd.concat(frames_to_concat, ignore_index=True)
 
             return combined
 
@@ -412,7 +447,7 @@ class Medium:
                 # add together
                 combined = combine_media_with_fluxes(combined, second_medium)
 
-            # combine and set all fluxes to 0
+            # combine and set all fluxes to None
             case None:
                 combined.substance_table = pd.concat(
                     [combined.substance_table, other.substance_table], ignore_index=True
@@ -495,7 +530,7 @@ class Medium:
             return self.combine(sub_medium, inplace=inplace)
 
         else:
-            warnings.warn(
+            logger.warning(
                 f"Could not find subset in DB, nothing added to medium: {subset_name}"
             )
             # just return the original medium
@@ -597,20 +632,79 @@ class Medium:
 
             f.close()
 
-    def export_to_file(self, type: str = "tsv", dir: str = "./", max_widths: int = 80):
-        """Export medium, especially substance table.
+        """
 
         Args:
             - type (str, optional):
-                Type of file to export to. Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
+                 Defaults to 'tsv'. Further choices are 'csv', 'docs', 'rst'.
             - dir (str, optional):
-                Path to the directory to write the file to. Defaults to './'.
+                 Defaults to './'.
             - max_widths (int, optional):
-                Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'.
+                 
                 Defaults to 80.
 
         Raises:
-            - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst']
+            - ValueError: 
+        """
+
+    def produce_carveme_mimic(self, no_flux: bool = False) -> pd.DataFrame:
+        """Produces a pandas DataFrame for the substance table in the CarveMe format.
+
+        Args:
+            - no_flux (bool, optional): 
+                If True, the flux column is removed in the exported file. Defaults to False.
+
+        Returns:
+            pd.DataFrame: 
+                Substance table in CarveMe format, with columns 'medium', 
+                'description', 'compound', 'name' and optionally 'flux'.
+        """
+
+        # Keep all columns with BiGG IDs
+        carveme_mimic = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')]
+
+        # Remove unnecessary columns
+        if no_flux:
+            carveme_mimic = carveme_mimic[['db_id', 'name']]
+        else:
+            carveme_mimic = carveme_mimic[['db_id', 'name', 'flux']]
+            with pd.option_context("future.no_silent_downcasting", True): #@NOTE remove after pandas update
+                carveme_mimic = carveme_mimic.fillna(10.0).infer_objects(copy=False) # Replace all NaN values with a default flux of 10.0
+
+        # Rename columns to match CarveMe format
+        carveme_mimic.rename(columns={'db_id': 'compound'}, inplace=True)
+
+        # Add medium information to table
+        carveme_mimic.insert(0, 'medium', self.name)
+        carveme_mimic.insert(1, 'description', self.description)
+        
+        return carveme_mimic
+
+    def export_to_file(self, 
+                       type: Literal['tsv','csv','docs','rst'] = 'tsv', 
+                       flavour: Literal['substance_table','carveme_mimic']='substance_table',
+                       no_flux: bool = False, 
+                       dir: str = './', 
+                       max_widths: int = 80
+    ):
+        """Export medium, especially substance table.
+
+        Args:
+            - type (Literal['tsv','csv','docs','rst'], optional): 
+                Type of file to export to. Defaults to 'tsv'.
+            - flavour (Literal['substance_table','carveme_mimic'], optional): 
+                Flavour of file to export. Only viable for 'tsv' and 'csv'. Defaults to 'substance_table'.
+            - no_flux (bool, optional):
+                If True, the flux column is removed in the exported file. Only viable for 'tsv' and 'csv'. 
+                Defaults to False.
+            - dir (str, optional): 
+                Path to the directory to write the file(s) to. Defaults to './'.
+            - max_widths (int, optional): 
+                Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80.
+
+        Raises:
+            - ValueError: Unknown flavour if flavour not in ['substance_table','carveme_mimic'].
+            - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst'].
         """
 
         # Set-up path
@@ -619,19 +713,27 @@ class Medium:
                 dir = Path(dir)
             dir.mkdir(parents=True, exist_ok=True)
         
+        match flavour:
+            case "substance_table":
+                table2export = self.substance_table if not no_flux else self.substance_table.drop('flux', axis=1)
+            case "carveme_mimic":
+                table2export = self.produce_carveme_mimic(no_flux)
+            case _:
+                raise ValueError(f"Unknown flavour: {flavour}")
+
         match type:
             case "tsv":
-                self.substance_table.to_csv(
+                table2export.to_csv(
                     Path(dir, self.name + "_min_medium" + ".tsv"), sep="\t", index=False
                 )
             case "csv":
-                self.substance_table.to_csv(
+                table2export.to_csv(
                     Path(dir, self.name + "_min_medium" + ".csv"), sep=";", index=False
                 )
             case "docs" | "rst":
                 self.produce_medium_docs_table(folder=dir, max_width=max_widths)
             case _:
-                raise ValueError("Unknown export type: {type}")
+                raise ValueError(f"Unknown export type: {type}")
 
     # functions for conversion
     # ------------------------
@@ -721,10 +823,10 @@ def load_medium_from_db(
     result = cursor.execute(
         "SELECT medium.description FROM medium WHERE medium.name = ?", (name,)
     )
-    if result:
+    try:
         description = result.fetchone()[0]  # each name should be unique
-    else:
-        raise ValueError(f"Unknown medium name: {name}")
+    except:
+        raise ValueError(f"Unknown medium name or similar error for {name}")
 
     # get DOI(s)
     result = cursor.execute(
@@ -741,6 +843,101 @@ def load_medium_from_db(
     return Medium(
         name=name, substance_table=substance, description=description, doi=doi
     )
+
+
+def export_media_from_db_to_file(
+    media_names_or_config: Union[str, list[str], Literal['all']] = 'all', 
+    type: Literal['tsv','csv','docs','rst'] = 'tsv', 
+    flavour: Literal['substance_table','carveme_mimic']='substance_table',
+    single_file: bool = False,
+    no_flux: bool = False, 
+    dir: str = './', 
+    max_widths: int = 80
+    ):
+    """Export media from the database to files/a single file.
+
+    Args:
+        - media_names_or_config (Union[str, list[str], Literal['all']], optional): 
+            The name(s) of the medium/media to export or the path to a media configuration file. Defaults to 'all'.
+        - type (Literal['tsv','csv','docs','rst'], optional): 
+            Type of file to export to. Defaults to 'tsv'.
+        - flavour (Literal['substance_table','carveme_mimic'], optional): 
+            Flavour of file to export. Only viable for 'tsv' and 'csv'. Defaults to 'substance_table'.
+        - single_file (bool, optional): 
+            If True, export all media in one file. Only viable for 'carveme_mimic'. Defaults to False.
+        - no_flux (bool, optional):
+            If True, the flux column is removed in the exported file. Only viable for 'tsv' and 'csv'. Defaults to False.
+        - dir (str, optional): 
+            Path to the directory to write the file(s) to. Defaults to './'.
+        - max_widths (int, optional): 
+            Maximal table width for the documentation table (). Only viable for 'rst' and 'docs'. Defaults to 80.
+
+    Raises:
+        - TypeError: Invalid input for media_names_or_config.
+        - ValueError: Unknown medium name(s)
+        - ValueError: Unknown export type
+    """
+
+    # Valid YAML file suffixes
+    yml_suffixes = ['yaml', 'YAML', 'yml', 'YML']
+
+    # Get all media names from the database
+    available_media = load_a_table_from_database("medium", False)["name"].to_list()
+
+    # Loaded media
+    media = None
+
+    # Get type of media_names_or_config
+    match media_names_or_config:
+        case 'all':
+            media_names_or_config = available_media # Set all available media names if 'all' is specified
+        case str():
+            # Check if string is a path to a YAML file
+            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix in yml_suffixes):
+                # Load media from YAML file
+                media, _ = load_media(media_names_or_config)
+                
+            else: # Check if media_names_or_config is a string and convert it to a list
+                media_names_or_config = [media_names_or_config] # Only one medium name provided
+        case list():
+            pass
+        case _:
+            raise TypeError(f'Invalid input for media_names_or_config: {media_names_or_config}')
+
+    # Get all requested media from the database
+    if not media:
+        if not all(m in available_media for m in media_names_or_config): # Check valid medium name(s) from database 
+            raise ValueError(f"Unknown medium name(s): {media_names_or_config}")
+        else:
+            media = [load_medium_from_db(name) for name in media_names_or_config]
+    
+    # Export media based on the type and flavour
+    if (type not in ['docs', 'rst']) and single_file:
+        if flavour == 'carveme_mimic':
+            carveme_media = [m.produce_carveme_mimic(no_flux) for m in media] # Get media in CarveMe format
+            carveme_db_mimic = pd.concat(carveme_media, ignore_index=True) # Concatenate all media into one DataFrame
+
+            # Export media database
+            filename = 'media_db_carveme_mimic'
+            match type:
+                case "tsv":
+                    carveme_db_mimic.to_csv(
+                        Path(dir, f'{filename}.tsv'), sep="\t", index=False
+                    )
+                case "csv":
+                    carveme_db_mimic.to_csv(
+                        Path(dir, f'{filename}.csv'), sep=";", index=False
+                    )
+                case _:
+                    raise ValueError(f"Unknown export type: {type}")
+
+        else:
+            raise ValueError("The parameter 'single_file' can only be used with flavour='carveme_mimic'.")
+
+    else:
+        # Export each medium individually
+        for m in media:
+            m.export_to_file(type, flavour, no_flux, dir, max_widths)
 
 
 def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: int = 80):
@@ -862,6 +1059,13 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                 if p and "add_medium" in p.keys():
                     # interate over all media to add
                     for medium, perc in p["add_medium"].items():
+                        # check for tuple
+                        match = re.match(REGEX_MEDIA_YML_TUPLE, perc)
+                        if match:
+                            x,y = match.groups()
+                            # convert into python-tuple
+                            perc = (float(x),float(y))
+                        # combine
                         new_medium = new_medium.combine(
                             load_medium_from_db(medium), how=perc
                         )
@@ -918,7 +1122,7 @@ def load_media(yaml_path: str) -> tuple[list[Medium], list[str, None]]:
                                     f = f * 10.0
                             else:
                                 warn_string = f"Could not read in flux for {s}: {f}. \nWill be using default 10.0 instead."
-                                warnings.warn(warn_string)
+                                logger.warning(warn_string)
                                 f = 10.0
                         # change medium
                         if s in new_medium.substance_table["name"].tolist():
@@ -1061,7 +1265,7 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
             if "name" in infos.keys():
                 name = infos["name"]
             else:
-                warnings.warn(
+                logger.warning(
                     "No name found for externally loaded medium. Setting random one."
                 )
                 name = "noname_" + "".join(
@@ -1262,11 +1466,11 @@ def enter_substance_row(
         substance_id = None
         if len(candidate_list) > 0:
 
-            print(
+            logger.info(
                 f'Following similar entries have been found for the substance {row["name"]}.'
             )
             for i in candidate_list:
-                print(i)
+                logger.info(i)
             res = input(
                 "If one matches your entry, please enter the ID or enter skip/s: \n"
             )
@@ -1340,7 +1544,7 @@ def enter_m2s_row(
         )
         connection.commit()
     else:
-        warnings.warn(
+        logger.warning(
             f'Medium2substance connection {medium_id} - {row["substance_id"]} already exists, skipped second assignment.'
         )
 
@@ -1440,13 +1644,13 @@ def enter_medium_into_db(medium: Medium, database: str = PATH_TO_DB):
                         "SELECT 1 FROM medium WHERE medium.name = ?", (new_name,)
                     )
                     if name_check_2.fetchone():
-                        print("This name already exists in the database.")
+                        logger.info("This name already exists in the database.")
                     else:
                         medium.name = new_name
                         break
             elif check in ["n", "no"]:
                 # end program when no new name is set
-                print("No new name chosen. Ending the program.")
+                logger.info("No new name chosen. Ending the program.")
                 sys.exit()
             else:
                 # Abort program at unknown input
@@ -1475,22 +1679,22 @@ def enter_medium_into_db(medium: Medium, database: str = PATH_TO_DB):
                 enter_s2db_row, axis=1, args=(current_db, connection, cursor)
             )
 
-        print(
+        logger.info(
             f"Medium {medium.name} with ID {medium_id} has been added to the database."
         )
 
     # in case of problems, interupt and revert changes
     except:
 
-        print(f"During execution, the following error occured: \n{sys.exc_info()}")
-        print("Reverting changes to database...")
+        logger.info(f"During execution, the following error occured: \n{sys.exc_info()}")
+        logger.info("Reverting changes to database...")
 
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_medium,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_medium2substance,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_substance,))
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_substance2db,))
 
-        print("Done")
+        logger.info("Done")
 
     # in any case close connection to database
     finally:
@@ -1568,11 +1772,11 @@ def add_subset_to_db(
                 connection.commit()
             else:
                 mes = f"Substance {s} not in database. Not added. Please check your input."
-                warnings.warn(mes)
+                logger.warning(mes)
 
     else:
         mes = f"Subset name {name} already in database. Cannot add.\nPlease choose a different name or delete the old one."
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
 
     # close connection to database
     connection.close()
@@ -1882,9 +2086,11 @@ def update_db_multi(
         try:
             cursor.execute(query)
         except sqlite3.IntegrityError as ie:
-            print(f"{Fore.MAGENTA}{ie}")
-            print(
-                f'Ocurred with: column={row["column"]}, new_value={row["new_value"]}, condition={row["conditions"]}'
+            logger.warning(
+                f"""
+{Fore.MAGENTA}{ie}{Fore.WHITE}
+Ocurred with: column={row['column']}, new_value={row['new_value']}, condition={row['conditions']}
+                """
             )
             continue
 
@@ -1914,6 +2120,10 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
         "bigg_metabolites",
         "bigg_reactions",
         "modelseed_compounds",
+        "mnx_chem_prop",
+        "mnx_chem_xref",
+        "mnx_reac_prop",
+        "mnx_reac_xref"
     ]
     counter = 0  # To count rows in newly generated file
 

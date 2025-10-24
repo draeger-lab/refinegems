@@ -34,9 +34,15 @@ from ..analysis.investigate import (
     get_reac_with_gpr,
     get_reactions_per_sbo,
 )
-from ..utility.util import test_biomass_presence
+from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
 from ..developement.decorators import *
 from ..utility.io import search_sbo_label
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -135,6 +141,8 @@ class SingleGrowthSimulationReport(Report):
             Name of the model.
         - medium_name:
             Name of the medium.
+        - supplementation_variety
+            Variety of the supplementation. One of ['min', 'std', None].
         - growth_value:
             Simulated growth value.
         - doubling_time:
@@ -151,6 +159,7 @@ class SingleGrowthSimulationReport(Report):
         self,
         model_name=None,
         medium_name=None,
+        supplementation_variety=None,
         growth_value=None,
         doubling_time=None,
         additives=None,
@@ -159,6 +168,7 @@ class SingleGrowthSimulationReport(Report):
         super().__init__()
         self.model_name = model_name
         self.medium_name = medium_name
+        self.supplementation_variety = supplementation_variety
         self.growth_value = growth_value
         self.doubling_time = doubling_time
         self.additives = additives
@@ -168,6 +178,7 @@ class SingleGrowthSimulationReport(Report):
         return (
             f"model: {self.model_name}\n"
             f"medium: {self.medium_name}\n"
+            f"supplementation: {self.supplementation_variety}\n"
             f"growth: {self.growth_value}\n"
             f"doubling time: {self.doubling_time}\n"
             f"additives: {self.additives}\n"
@@ -185,12 +196,12 @@ class SingleGrowthSimulationReport(Report):
         return {
             "model_name": self.model_name,
             "medium_name": self.medium_name,
+            "supplementation_variety": self.supplementation_variety,
             "growth_value": self.growth_value,
             "doubling_time": self.doubling_time,
             "additives": self.additives if len(self.additives) > 0 else None,
             "no_exchange": self.no_exchange,
         }
-
 
 class GrowthSimulationReport(Report):
     """Report for the growth simulation analysis.
@@ -202,6 +213,8 @@ class GrowthSimulationReport(Report):
             List of the model names.
         - media:
             List of the media names.
+        - supplementation:
+            List of the supplementation varieties.
     """
 
     def __init__(self, reports: list[SingleGrowthSimulationReport] = None):
@@ -210,6 +223,7 @@ class GrowthSimulationReport(Report):
         self.reports = reports if reports else []
         self.models = set([_.model_name for _ in reports]) if reports else set()
         self.media = set([_.medium_name for _ in reports]) if reports else set()
+        self.supplementation = set([_.supplementation_variety for _ in reports]) if reports else set()
 
     def __str__(self) -> str:
 
@@ -226,6 +240,7 @@ class GrowthSimulationReport(Report):
         self.reports.append(new_rep)
         self.models.add(new_rep.model_name)
         self.media.add(new_rep.medium_name)
+        self.supplementation.add(new_rep.supplementation_variety)
 
     def to_table(self) -> pd.DataFrame:
         """Return a table of the contents of the report.
@@ -242,7 +257,7 @@ class GrowthSimulationReport(Report):
 
     def plot_growth(
         self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
-    ) -> matplotlib.figure.Figure:
+    ) -> matplotlib.figure.Figure|None:
         """Visualise the contents of the report.
 
         .. note::
@@ -262,8 +277,10 @@ class GrowthSimulationReport(Report):
                 Defaults to 'YlGn'.
 
         Returns:
-            matplotlib.figure.Figure:
-                The plotted figure.
+            If plotting possible: matplotlib.figure.Figure:
+                    The plotted figure.
+            Else None
+            
         """
 
         def plot_growth_bar(
@@ -445,6 +462,11 @@ class GrowthSimulationReport(Report):
 
             return fig
 
+        # sanity check to not produce empty graphs
+        if all(_.growth_value < MIN_GROWTH_THRESHOLD for _ in self.reports):
+            logger.info("No growth detected, nothing to plot.")
+            return None
+        
         # match the unit
         match unit:
             case "h":
@@ -560,6 +582,28 @@ class GrowthSimulationReport(Report):
         # save visualisation for growth rate
         fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
         fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
+
+        match how:
+            # save to a new directory
+            case "dir":
+                # create directory to save report to
+                dir_path = Path(to, "GrowthSimReport")
+                dir_path.mkdir(parents=True, exist_ok=check_overwrite)
+                # save the report
+                with open(Path(dir_path, "report.txt"), "w") as f:
+                    f.write(str(self))
+                # save visualisation for doubling time
+                fig_dt = self.plot_growth(color_palette=color_palette)
+                if fig_dt:
+                    fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
+                    # save visualisation for growth rate
+                    fig_h = self.plot_growth(unit="h", color_palette=color_palette)
+                    fig_h.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
+
+            case _:
+                raise ValueError(
+                    f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.'
+                )
 
 
 class KEGGPathwayAnalysisReport(Report):
@@ -882,18 +926,16 @@ class AuxotrophySimulationReport(Report):
     """
 
     def __init__(self, results) -> None:
-        super().__init__()
-        self.simulation_results = results
+        # super().__init__()
+        self.simulation_results = results.sort_index()
 
     # auxotrophy sim visualisation
     def visualise_auxotrophies(
         self, color_palette: str = "YlGn", save: Union[None, str] = None
     ) -> Union[None, matplotlib.figure.Figure]:
-        """Visualise and/or save the results of the :py:func:`~refinegems.analysis.growth.test_auxotrophies` function.
+        """Visualise and/or save the content of the report.
 
         Args:
-            - res (pd.DataFrame):
-                The output of  :py:func:`~refinegems.analysis.growth.test_auxotrophies`.
             - color_palette (str, optional):
                 A name of a seaborn gradient color palette.
                 In case name is unknown, takes the default. Defaults to 'YlGn'.
@@ -983,6 +1025,7 @@ class SourceTestReport(Report):
         self.element = element
         self.model_name = model_name
 
+    @suppress_warning("The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.") # @NOTE: maybe remove in future update
     def visualise(
         self, width: int = 12, color_palette: str = "YlGn"
     ) -> tuple[matplotlib.figure.Figure, pd.DataFrame]:
@@ -1030,12 +1073,12 @@ class SourceTestReport(Report):
         )
 
         # remove unplottable entries
-        data_to_plot["growth value"].replace([np.inf, -np.inf], 0, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace([np.inf, -np.inf], 0)
         over_growth = (
             data_to_plot["growth value"].max()
             + 0.1 * data_to_plot["growth value"].max()
         )
-        data_to_plot["growth value"].replace(np.nan, over_growth, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace(np.nan, over_growth)
         vmin = 1e-5  # Use same threshhold as in find_missing_essential in growth
         vmax = over_growth - 0.05 * data_to_plot["growth value"].max()
 
@@ -1054,6 +1097,7 @@ class SourceTestReport(Report):
         legend = data_to_plot.pivot(index="row", columns="column", values="substance")
 
         # plot
+        plt.figure()
         ax = sns.heatmap(
             data_to_plot.pivot(index="row", columns="column", values="growth value"),
             linewidth=0.5,
@@ -1690,6 +1734,11 @@ class MultiModelInfoReport(Report):
 
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
+    
+    .. note:: 
+        In care cases, the statistics might not sum up perfectly, 
+        as they only count the main steps, appart from the total and total 
+        missing amounts.
 
     Attributes:
         - variety:
@@ -1700,6 +1749,7 @@ class GapFillerReport(Report):
             List of IDs for manual curation.
         - hide_zeros:
             Option to hide all zero values in the statistics. Defaults to False.
+            
     """
 
     def __init__(
@@ -1758,7 +1808,7 @@ class GapFillerReport(Report):
             warnings.warn('Unknown color palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
-        fig = plt.figure(tight_layout=True)
+        fig = plt.figure() # tight_layout=True
         if not self.no_title:
             fig.suptitle(f"Statistics for Gapfilling via {self.variety}", fontsize=16)
         grid = gspec.GridSpec(2, 1, hspace=0.6)
@@ -1991,7 +2041,7 @@ class MultiSBOTermReport(Report):
                 try:
                     cmap = matplotlib.colormaps[color_palette]
                 except ValueError:
-                    logging.WARN('Unknown color palette, setting it to "Paired"')
+                    logger.warning('Unknown color palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
                     cmap = cmap.colors[0 : len(self.model_reports)]

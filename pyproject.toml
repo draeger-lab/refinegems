@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "refineGEMs"
 version = "2.0.0-beta.1"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.10, <3.14"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
     {name = "Gwendolyn O. Döbel", email = "gwendolyn.o.gusak@gmail.com"},
@@ -54,7 +54,7 @@ dependencies = [
     "pandas>=2.2.2",
     'pyyaml>=6.0.1',
     "ratelimit>=2.2.1",
-    'requests>=2.32.2',
+    'requests>=2.32.4',
     "sboannotator>=3.0.2",
     "seaborn>=0.12.2",
     "sortedcontainers>=2.4.0",

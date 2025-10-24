@@ -1,0 +1,16 @@
+name: FAIR software
+
+on: [push, pull_request]
+
+jobs:
+  verify:
+    name: "fair-software"
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - uses: fair-software/howfairis-github-action@0.2.1
+        name: Measure compliance with fair-software.eu recommendations
+        env:
+          PYCHARM_HOSTED: "Trick colorama into displaying colored output" 
+        with:
+          MY_REPO_URL: "https://github.com/${{ github.repository }}"

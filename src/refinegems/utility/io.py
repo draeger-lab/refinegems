@@ -24,12 +24,19 @@ import sqlite3
 
 from ols_client import EBIClient
 from Bio import SeqIO
+from cobra.io.sbml import F_REPLACE, _model_to_sbml, _f_gene
 from libsbml import Model as libModel
 from libsbml import SBMLReader, writeSBMLToFile, SBMLValidator, SBMLDocument
 from pathlib import Path
 from typing import Literal, Union
 
 from .databases import PATH_TO_DB
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -109,7 +116,7 @@ def load_model(
                 mod = read.getModel()
             case "json" | "yml" | "mat":
                 data = load_cobra_model(modelpath)
-                mod = cobra.io.sbml._model_to_sbml(data).getModel()
+                mod = cobra.io.sbml._model_to_sbml(data, F_REPLACE).getModel()
             case _:
                 raise ValueError("Unknown file extension for model: ", extension)
 
@@ -155,6 +162,51 @@ def load_model(
         case _:
             mes = f"Unkown type for modelpath: {modelpath}"
             raise TypeError(mes)
+
+
+def convert_cobra_to_libsbml(cmodel:cobra.Model, add_label_locus:Union[None, Literal['notes', 'id']] = None) -> libModel:
+    """Convert a loaded COBRApy model to a libsbml model. If possible, 
+    also add the locus tags as labels to the libsbml model.
+
+    Args:
+        - cmodel (cobra.Model): 
+            The model loaded with COBRApy.
+        - add_label_locus (bool, optional): 
+            Option to add locus tags as labels to the libsbml model. 
+            Can either be added via 'id', if the model ID corresponds to the locus tag or 
+            via 'notes', if the locus tags is save under 'notes' - 'locus_tag'.
+            None skips the addition of locus as labels. 
+            Defaults to None.
+
+    Returns:
+        libsbml.Model: 
+            The model loaded with libsbml.
+    """
+
+    # convert to libsbml
+    lmodel = _model_to_sbml(cmodel, F_REPLACE).getModel()
+    
+    # add locus tags as labels 
+    match add_label_locus:
+        # add locus tag from notes
+        case 'notes':
+            gene_list = lmodel.getPlugin("fbc").getListOfGeneProducts()
+            for gene in gene_list:
+                cgene = cmodel.genes.get_by_id(_f_gene(gene.getId()))
+                if "locus_tag" in cgene.notes and isinstance(cgene.notes['locus_tag'], str):
+                    gene.setLabel(cgene.notes["locus_tag"])
+                else:
+                    gene.setLabel(cgene.id)
+        # add locus tags from id
+        case 'id':
+            gene_list = lmodel.getPlugin("fbc").getListOfGeneProducts()
+            for gene in gene_list:
+                gene.setLabel(gene.getId())
+        # skip adding locus tags as label
+        case _:
+            pass 
+    # return the converted model 
+    return lmodel     
 
 
 def load_document_libsbml(modelpath: str) -> SBMLDocument:
@@ -215,9 +267,9 @@ def write_model_to_file(
                     cobra.io.save_matlab_model(model, filepath)
                 case _:
                     raise ValueError("Unknown file extension for model: ", extension)
-            logging.info("Modified model written to " + str(filepath))
+            logger.info("Modified model written to " + str(filepath))
         except OSError as e:
-            print("Could not write to file. Wrong path?")
+            logger.error("Could not write to file. Wrong path?")
 
     # Cast filename to Path object if string is provided
     if isinstance(filename, str):
@@ -240,9 +292,9 @@ def write_model_to_file(
                     _write_cobra_model_to_file(data, filename)
                 case _:
                     raise ValueError("Unknown file extension for model: ", extension)
-            logging.info("Modified model written to " + str(filename))
+            logger.info("Modified model written to " + str(filename))
         except OSError as e:
-            print("Could not write to file. Wrong path?")
+            logger.error("Could not write to file. Wrong path?")
     # unknown model type or no model
     else:
         message = f"Unknown model type {type(model)}. Cannot save."
@@ -450,12 +502,13 @@ def create_missing_genes_protein_fasta(
     fasta: str,
     missing_genes: pd.DataFrame,
     outdir: str = None,
-) -> str:
+) -> Union[str,None]:
     """Creates a FASTA file containing proteins for missing_genes
 
     .. note::
 
-        Please keep in mind that the input FASTA file has to have Genbank format.
+        Please keep in mind that the input FASTA file has to have the Genbank format as 
+        described in :py:func:`~refinegems.utility.io.mimic_genbank`.
 
     Args:
         - fasta (str):
@@ -467,14 +520,17 @@ def create_missing_genes_protein_fasta(
             Defaults to None.
 
     Returns:
-        str:
-            Path to the FASTA protein file for the missing genes.
+        Case 1: FASTA created successfully
+            str
+                Path to the FASTA protein file for the missing genes.
+        Case 2: No missing genes or Error in mapping.
+            None
     """
 
     # format the missing genes' locus tags
     locus_tags_dict = {
         _: "[locus_tag=" + _ + "]" for _ in list(missing_genes["locus_tag"])
-    }
+    } 
 
     # parse the protein FASTA
     protfasta = SeqIO.parse(fasta, "fasta")
@@ -501,9 +557,13 @@ def create_missing_genes_protein_fasta(
         outfile = str(Path(outdir, "missing_genes.fasta"))
     else:
         outfile = str(Path("missing_genes.fasta"))
-    SeqIO.write(missing_seqs, outfile, "fasta")
-
-    return outfile
+    
+    if len(missing_seqs) != 0:
+        SeqIO.write(missing_seqs, outfile, "fasta")
+        return outfile
+    else:
+        raise ValueError("No missing genes were found using the provided FASTA file. Please re-check your input.")
+    
 
 
 # GFF
@@ -568,7 +628,7 @@ def parse_gff_for_cds(
 # ----
 
 
-def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
+def parse_gbff_for_cds(file_path: str, extract_translation:bool=False) -> pd.DataFrame:
     """Retrieves a table containg information about the following qualifiers from a
     Genbank file: ['protein_id','locus_tag','db_xref','old_locus_tag','EC_number'].
 
@@ -593,6 +653,10 @@ def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
     )
     attributes = ["protein_id", "locus_tag", "old_locus_tag", "db_xref", "EC_number"]
 
+    if extract_translation:
+        temp_table['translation'] = pd.Series(dtype=str)
+        attributes.append('translation')
+
     for record in SeqIO.parse(file_path, "genbank"):
         if record.features:
             for feature in record.features:
@@ -610,6 +674,152 @@ def parse_gbff_for_cds(file_path: str) -> pd.DataFrame:
     temp_table["GeneID"] = [pat.sub("", x) for x in temp_table["GeneID"]]
 
     return temp_table
+
+
+# GenBank Formatting
+# ------------------
+def mimic_genbank_fasta(annot_genome:Union[str,Path], gff_path:Union[str,Path], 
+                        dir:str=None) -> Path:
+    """Using a protein FASTA e.g. from Prokka and a GFF file, generate a 
+    FASTA-file, that mimics the GenBank-format required for e.g. 
+    :py:class:`~refinegems.classes.gapfill.GapFiller`.
+
+    Args:
+        - annot_genome (Union[str,Path]): 
+            Path to the annotated genome FASTA (protein sequences).
+        - gff_path (Union[str,Path]): 
+            Path to the GFF file.
+        - dir (str, optional): 
+            Path to a directory used to write the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Returns:
+        Path: 
+            The path the generated FASTA mimicing the GenBank format.
+    """
+
+    # get locus tag + protein id mapping
+    parsed_gff =  parse_gff_for_cds(
+        gffpath = gff_path, 
+        keep_attributes = {'locus_tag':'locus_tag',
+                        'protein_id':'protein_id'}
+        )
+    parsed_gff = parsed_gff.explode('protein_id')
+    parsed_gff.drop_duplicates(keep='first',inplace=True)
+
+    # create mimic 
+    if dir:
+        mimic_path = Path(dir, "mimic_genbank.faa")
+    else:
+        mimic_path = Path("mimic_genbank.faa")
+    with (
+        open(annot_genome, 'r') as f,
+        open(mimic_path,'w') as mimic
+    ):
+        for seq in SeqIO.parse(f, "fasta"): # get sequence + protein_id mapping
+            matched_locus = parsed_gff[parsed_gff['protein_id']==seq.id]
+            # combine mapping
+            # ideal case: one exact match
+            if len(matched_locus)==1:
+                locus = matched_locus.iloc[0,0]
+            # undefined mapping, keep first but report for manual curation
+            elif len(matched_locus)>1:
+                locus = matched_locus.iloc[0,0]
+                mes = f"Ambiguous mapping for protein ID {seq.id}. Keeping locus tag {locus}.\nList all mappings: {matched_locus['locus_tag']}"
+                logger.info(mes)
+            # no match found (prob. missing annotation)
+            else:
+                pass
+            # construct header
+            header = f">{seq.id} [locus_tag={locus}] [protein_id={seq.id}]"
+            # write fasta entry
+            mimic.write(f"{header}\n{seq.seq}\n")
+    
+    return mimic_path
+
+def mimic_genbank_gbff(gbff_path:Union[str,Path], dir:str=None) -> Path:
+    """Using a GBFF-file, generate a FASTA
+    that mimics the GenBank-format required for e.g. 
+    :py:class:`~refinegems.classes.gapfill.GapFiller`.
+
+    Args:
+        - gbff_path (Union[str,Path]): 
+            Path to the input GBFF file.
+        - dir (str, optional): 
+            Path to a directory used to write the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Returns:
+        Path: 
+            Path the generate file mimicing the GenBank format.
+    """
+    
+    # parse GBFF
+    gbff_content = parse_gbff_for_cds(gbff_path, extract_translation=True)
+    gbff_content.drop(columns=['old_locus_tag', 'GeneID', 'EC number'],inplace=True)
+    # remove entries with no seqence
+    gbff_content = gbff_content.replace('-',None)
+    gbff_content.dropna(axis='index', subset='translation', inplace=True)
+    # construc mimic
+    if dir:
+        mimic_path = Path(dir, "mimic_genbank.faa")
+    else:
+        mimic_path = Path("mimic_genbank.faa")
+    with open(mimic_path,'w') as mimic:
+        for prot, locus, seq in gbff_content.values.tolist():
+            # construct header
+            header = f">{prot} [locus_tag={locus}] [protein_id={prot}]"
+            # write entry
+            mimic.write(f"{header}\n{seq}\n")
+    
+    return mimic_path
+
+def mimic_genbank(annot_genome:Union[str,Path], gff:Union[str,Path] = None, dir:str=None) -> Path:
+    """Wrapper for :py:func:`~refinegems.utility.io.mimic_genbank_fasta` and 
+    :py:func:`~refinegems.utility.io.mimic_genbank_gbff`. 
+    Generate a protein FASTA file that looks similar to the extended GenBank format 
+    one can download from the FTP servers of NCBI with the "_translated_CDS" tag in 
+    their file name.
+    
+    Mainly, this format contains additional information about the sequences in the 
+    header of each entry in the following format:
+    
+        >name [protein_id=xxx] [locus_tag=yyy] ...
+    
+    Args:
+        - annot_genome (Union[str,Path]): 
+            An annotated genome file. Can be a FASTA (.faa, .fa) or GBFF file
+        - gff (Union[str,Path], optional): 
+            Path to a GFF file. Only necesseary when `annot_genome` is a 
+            FASTA fiel. Defaults to None.
+        - dir (str, optional): 
+            Path to a directory for saving the output to. 
+            Defaults to None, which uses the current working directory.
+
+    Raises:
+        - ValueError: Mimic of GenBank format with a FASTA-file requires also a GFF.
+        - ValueError: Unkown file extension
+
+    Returns:
+        Path: 
+            Path to the generated FASTA file mimicing GenBank format.
+    """
+    
+    extension = os.path.splitext(os.path.basename(annot_genome))[1]
+    match extension:
+        case ".gbff":
+            mimic = mimic_genbank_gbff(annot_genome, dir)
+        case ".faa" | ".fa":
+            if gff:
+                mimic = mimic_genbank_fasta(annot_genome, gff, dir)
+            else:
+                mes = f"Mimic of GenBank format with a FASTA-file requires also a GFF."
+                raise ValueError(mes)
+        case _:
+            mes = f"Unkown file extension {extension} for file {annot_genome}."
+            raise ValueError(mes)
+        
+    return mimic
 
 
 # else:

@@ -10,8 +10,10 @@ __author__ = "Famke Baeuerle and Carolin Brune"
 ############################################################################
 
 import cobra
+import logging
 import re
 import urllib
+import warnings
 
 from bioservices import KEGG
 from Bio.KEGG import REST, Enzyme
@@ -26,6 +28,12 @@ from ..utility.cvterms import (
 )
 from ..utility.db_access import kegg_reaction_parser
 from ..classes.reports import KEGGPathwayAnalysisReport
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ############################################################################
 # functions
@@ -42,24 +50,23 @@ with the biological qualifier `OCCURS_IN` to the respective reaction.
 """
 
 
-def load_model_enable_groups(modelpath: str) -> libModel:
-    """Loads model as document using libSBML and enables groups extension
+def enable_groups(model: libModel) -> libModel:
+    """Enables groups extension
 
     Args:
-        - modelpath (str):
-            Path to GEM
+        - model (libModel):
+            A model loaded with libSBML.
 
     Returns:
         libModel:
-            Model loaded with libSBML
+            libSBML model with groups enabled
     """
-    reader = SBMLReader()
-    read = reader.readSBMLFromFile(modelpath)  # read from file
+    model_doc = model.getSBMLDocument()  # Get model document from model object
     groupextension = GroupsExtension()
     groupURI = groupextension.getURI(3, 1, 1)
-    read.enablePackage(groupURI, "groups", True)  # enable groups extension
-    read.setPkgRequired("groups", False)  # make groups not required
-    model = read.getModel()
+    model_doc.enablePackage(groupURI, "groups", True)  # enable groups extension
+    model_doc.setPkgRequired("groups", False)  # make groups not required
+    model = model_doc.getModel()
     return model
 
 
@@ -166,7 +173,7 @@ def find_kegg_pathways(
 
     kegg_pathways = {}
 
-    print("Extracting pathway Id for each reaction:")
+    logger.info("Extracting pathway Id for each reaction:")
     for reac_id in tqdm(mapped_reacs.keys(), unit="reaction"):
 
         kegg_reaction = None
@@ -177,24 +184,26 @@ def find_kegg_pathways(
             for kegg_id in mapped_reacs[reac_id]["kegg.reaction"]:
                 try:
                     kegg_reaction = kegg_reaction_parser(kegg_id)
-                    if isinstance(kegg_reaction["db"]["kegg.pathway"], list):
-                        pathways.extend(kegg_reaction["db"]["kegg.pathway"])
+                    if kegg_reaction:
+                        match kegg_reaction["db"]["kegg.pathway"]:
+                            # multiple IDs
+                            case list():
+                                pathways.extend(kegg_reaction["db"]["kegg.pathway"])
+                            # one ID
+                            case str() | int():
+                                pathways.append(kegg_reaction["db"]["kegg.pathway"])
+                            # should not occur 
+                            case _:
+                                logger.warning(f"Unexpected type for KEGG pathway ID: {str(kegg_reaction['db']['kegg.pathway'])} for {reac_id} on {kegg_id}")
                     else:
-                        pathways.append(kegg_reaction["db"]["kegg.pathway"])
-
+                        logging.warning(f"There was an error while parsing KEGG ID {kegg_id} for {reac_id}.\nManual re-checking required.")
+                
                 # exception handling
-                except urllib.error.HTTPError:
-                    print(f"HTTPError: {reac_id} on {kegg_id}")
-                except ConnectionResetError:
-                    print(f"ConnectionResetError: {reac_id} on {kegg_id}")
-                except urllib.error.URLError:
-                    print(f"URLError: {reac_id} on {kegg_id}")
                 except KeyError:
                     # no pathway found
                     pass
-                # except Exception as e:
-                #     print(F'Something unexpected happened: {reac_id} on {kegg_id}')
-                #     print(repr(e))
+                except Exception as e:
+                    warnings.warn(F'Something unexpected happened: {reac_id} on {kegg_id}\n{repr(e)}', UserWarning)
 
         # via RC
         # via reaction class
@@ -209,16 +218,16 @@ def find_kegg_pathways(
                     pathways.extend(rc_results)
             # exception handling
             except urllib.error.HTTPError:
-                print(f"HTTPError: {reac_id} on RCLASS")
+                logger.warning(f"HTTPError: {reac_id} on RCLASS")
             except ConnectionResetError:
-                print(f"ConnectionResetError: {reac_id} on RCLASS")
+                logger.warning(f"ConnectionResetError: {reac_id} on RCLASS")
             except urllib.error.URLError:
-                print(f"URLError: {reac_id} on RCLASS")
+                logger.warning(f"URLError: {reac_id} on RCLASS")
             except KeyError:
                 # no pathway found
                 pass
             except Exception as e:
-                print(f"Something unexpected happened: {reac_id} on RCLASS")
+                logger.warning(f"Something unexpected happened: {reac_id} on RCLASS")
 
         # via EC
         # seems really sketchy to do it this way, as ONE EC number
@@ -254,16 +263,16 @@ def find_kegg_pathways(
                                 pathways.append(i[1])
                 # exception handling
                 except urllib.error.HTTPError:
-                    print(f"HTTPError: {reac_id} on {ecnum}")
+                    logger.warning(f"HTTPError: {reac_id} on {ecnum}")
                 except ConnectionResetError:
-                    print(f"ConnectionResetError: {reac_id} on {ecnum}")
+                    logger.warning(f"ConnectionResetError: {reac_id} on {ecnum}")
                 except urllib.error.URLError:
-                    print(f"URLError: {reac_id} on {ecnum}")
+                    logger.warning(f"URLError: {reac_id} on {ecnum}")
                 except KeyError:
                     # no pathway found
                     pass
                 except Exception as e:
-                    print(f"Something unexpected happened: {reac_id} on {ecnum}")
+                    logger.warning(f"Something unexpected happened: {reac_id} on {ecnum}")
 
         # store the pathways
         kegg_pathways[reac_id] = list(set(pathways))
@@ -276,7 +285,7 @@ def add_kegg_pathways(model, kegg_pathways) -> libModel:
 
     Args:
         - model (libModel):
-            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
+            Model loaded with libSBML and groups enabled. (To enable groups you can use :py:func:`~refinegems.curation.pathways.enable_groups`.)
         - kegg_pathways (dict):
             Reaction Id as key and KEGG Pathway Id as value, e.g. see output of :py:func:`~refinegems.curation.pathways.find_kegg_pathways`.
 
@@ -299,7 +308,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
     Args:
         - model (libModel):
-            Model loaded with libSBML. Output of :py:func:`~refinegems.curation.pathways.load_model_enable_groups`.
+            Model loaded with libSBML and groups enabled. (To enable groups you can use :py:func:`~refinegems.curation.pathways.enable_groups`.)
         - pathway_groups (dict):
             KEGG Pathway Id as key and reactions Ids as values, e.g. see output of :py:func:`~refinegmes.curation.pathways.set_kegg_pathways._invert_reac_pathway_dict`.
 
@@ -312,7 +321,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     group_list = groups.getListOfGroups()
     keys = list(pathway_groups.keys())
 
-    print("Adding pathways as groups to the model:")
+    logger.info("Adding pathways as groups to the model:")
     for i in tqdm(range(len(pathway_groups))):
         kegg_pathway = k.get(keys[i])
         dbentry = k.parse(kegg_pathway)
@@ -344,23 +353,22 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
 
 
 def set_kegg_pathways(
-    modelpath: str, viaEC: bool = False, viaRC: bool = False
-) -> tuple[libModel, list[str]]:
+    model: libModel, viaEC: bool = False, viaRC: bool = False
+) -> list[str]:
     """Executes all steps to add KEGG pathways as groups
+    to a given model.
+    
+    Changes the model in-place.
 
     Args:
-        - modelpath (str):
-            Path to GEM.
+        - model (libModel):
+            Model loaded with libSBML
 
     Returns:
-        tuple:
-            libSBML model (1) & List of reactions without KEGG Id (2)
-
-            (1) libModel: Modified model with Pathways as groups
-            (2) list: Ids of reactions without KEGG annotation
+        list: Ids of reactions without KEGG annotation
     """
 
-    def _invert_reac_patway_dict(kegg_pathways) -> dict:
+    def _invert_reac_pathway_dict(kegg_pathways) -> dict:
         """Group reaction into pathways.
 
         Args:
@@ -381,7 +389,7 @@ def set_kegg_pathways(
         return pathway_groups
 
     # load model with groups enabled
-    model = load_model_enable_groups(modelpath)
+    model = enable_groups(model)
 
     # extract information about KEGG and EC numbers from model reactions
     reactions, non_kegg_reactions = _extract_kegg_ec_from_reac(model)
@@ -395,10 +403,10 @@ def set_kegg_pathways(
     model_pathways = add_kegg_pathways(model, pathways)
 
     # add corresponding groups
-    pathway_groups = _invert_reac_patway_dict(pathways)
-    model_pathway_groups = create_pathway_groups(model_pathways, pathway_groups)
+    pathway_groups = _invert_reac_pathway_dict(pathways)
+    model = create_pathway_groups(model_pathways, pathway_groups)
 
-    return model_pathway_groups, non_kegg_reactions
+    return non_kegg_reactions
 
 
 # analyse the pathways in a model

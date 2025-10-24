@@ -17,6 +17,12 @@ from typing import Union
 
 from ..utility.util import test_biomass_consistency, test_biomass_presence
 
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
 ############################################################################
 # variables
 ############################################################################
@@ -54,19 +60,19 @@ def check_normalise_biomass(
         for bm_rxn in biomass_rxn:
             bm_weight = test_biomass_consistency(model, bm_rxn)
             if type(bm_weight) == str:
-                logging.error(f"Reaction {bm_rxn}: {bm_weight}")
+                logger.error(f"Reaction {bm_rxn}: {bm_weight}")
             else:
                 c = 0  # counter to ensure it does not run endlessly
                 while not ((1 - 1e-03) < bm_weight < (1 + 1e-06)) and c <= cycles:
                     model.reactions.get_by_id(bm_rxn).__imul__(1 / bm_weight)
                     bm_weight = test_biomass_consistency(model, bm_rxn)
-                    logging.info(f"For reaction '{bm_rxn}' the coefficients changed.")
+                    logger.info(f"For reaction '{bm_rxn}' the coefficients changed.")
                     c += 1
 
         return model
 
     else:
-        logging.error(
+        logger.error(
             f"No biomass objective function was found in the provided model {model.id}."
         )
         return biomass_rxn
