@@ -983,7 +983,6 @@ def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: in
             f.write(f"    - {l}\n")
 
         # produce table body
-        # @FIXME does not work like this 
         subs.apply(Medium._produce_medium_docs_table_row, file=f, axis=1)
 
 
