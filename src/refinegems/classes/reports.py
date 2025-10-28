@@ -203,6 +203,23 @@ class SingleGrowthSimulationReport(Report):
             "no_exchange": self.no_exchange,
         }
 
+    def save(self, dir: Union[str, Path]):
+        """Save the report.
+
+        Args:
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
+            - check_overwrite (bool, optional):
+                Flag to choose to check for existing directory/files of same name
+                or just to overwrite them. Defaults to True.
+        """
+        super().save(dir)
+        
+        # save the report
+        with open(Path(dir, "report.txt"), "w") as f:
+            f.write(str(self))
+
+
 class GrowthSimulationReport(Report):
     """Report for the growth simulation analysis.
 
@@ -370,18 +387,24 @@ class GrowthSimulationReport(Report):
             """
 
             # clean up + transform data
+            order = data.model.unique().tolist()
             growth = data.set_index(["medium", "model"]).sort_index().T.stack()
             growth.columns.name = None
             growth.index.names = (None, None)
             growth.index.name = None
             growth.index = growth.index.get_level_values(1)
+        
+            growth.index = pd.CategoricalIndex(growth.index, categories=order)
+            growth.sort_index(level=0, inplace=True)
 
             # over / under (meaningful) values
             growth[growth > 1000] = 0
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
+            
             over_growth = growth.max().max() + 6
             growth.replace(np.nan, over_growth, inplace=True)
+            
             under_growth = growth.min().min() - 5
             vmin = (
                 under_growth if under_growth > 1e-5 else 1e-5
