@@ -45,6 +45,7 @@ from bioservices.kegg import KEGG
 from itertools import chain
 from libsbml import Model as libModel
 from pathlib import Path
+from sortedcontainers import SortedSet
 from tempfile import NamedTemporaryFile
 from typing import Literal, Union
 
@@ -60,6 +61,7 @@ from ..utility.db_access import (
     parse_KEGG_ec,
     map_to_homologs,
 )
+from ..utility.cvterms import PREFIX2DB_GENES
 from ..utility.io import (
     load_a_table_from_database,
     parse_gff_for_cds,
@@ -76,7 +78,6 @@ from ..utility.entities import (
     isreaction_complete,
     parse_reac_str,
     validate_reaction_compartment_bigg,
-    REF_COL_GF_GENE_MAP,
 )
 from ..utility.databases import mnx_db_namespace
 from ..utility.util import insert_into_dict
@@ -99,10 +100,125 @@ logger = logging.getLogger(__name__)
 # variables
 ############################################################################
 
+DB_REFERENCE_COLS = {
+    'ncbigene',
+    'ncbiprotein_x',
+    'kegg.genes',
+    'uniprot',
+    'BioCyc',
+    'BiGG',
+    'MetaNetX',
+} #: :meta hide-value:
+
+DBEQ2EQ = {
+    "BiGG": "reaction_string", 
+    "MetaNetX": "mnx_equation",
+} #: :meta hide-value:
 
 ############################################################################
 # functions
 ############################################################################
+
+# Cleaning up references after mapping
+# ------------------------------------
+def _clean_table_after_mapping(mapped_table: pd.DataFrame, entity_type: Literal["reaction", "gene"] = "reaction") -> pd.DataFrame:
+    """Clean a table containing mapping results for different databases
+
+    Args:
+        - mapped_table (pd.DataFrame): 
+            Table containinfg a mapping for different databases
+        - entity_type (Literal['reaction', 'gene'], optional):
+            Type of entity the mapping refers to.
+            Defaults to 'reaction'.
+
+    Returns:
+        pd.DataFrame: 
+            The cleaned table.
+    """
+
+    def _clean_ref_row(
+        ref_row: pd.Series, ref_dbs: set, entity_type: Literal["reaction", "gene"]
+    ) -> pd.Series:
+        """Clean a row of a table containing mapping results for different databases
+
+        Args:
+            - ref_row (pd.Series):
+                Row containing a mapping for different databases
+            - ref_db (set):
+                Set of column name(s) for reference databases
+            - entity_type (Literal['reaction', 'gene'], optional):
+                Type of entity the mapping refers to.
+
+        Returns:
+            pd.Series:
+                The cleaned row.
+        """
+        references = {} # Initialise references dictionary
+        # Iterate over possible database columns
+        for db in ref_dbs:
+            # Get list of mapped to database IDs
+            id_list = ref_row[db].replace(' ', '').split(',') if isinstance(ref_row[db], str) else ref_row[db]
+            if id_list:
+
+                match entity_type:
+                    case "gene":
+                        db = db.removesuffix('_x') # Remove suffix if necessary
+                        id_set = set(id_list)
+                        # Divide into RefSeq & NCBI Protein IDs if in column ncbiprotein
+                        if db == 'ncbiprotein':
+                            split_id_set = {
+                                PREFIX2DB_GENES['refseq']: set(),
+                                PREFIX2DB_GENES[db]: set()
+                                } # Initialise sets for RefSeq & NCBI Protein IDs
+                            for i in id_set:
+                                if re.fullmatch(
+                                            r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
+                                            i,
+                                            re.IGNORECASE,
+                                        ):
+                                    split_id_set[PREFIX2DB_GENES['refseq']].add(i)
+                                elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", i, re.IGNORECASE):
+                                    split_id_set[PREFIX2DB_GENES[db]].add(i)
+                                
+                                references.update((k,v) for k,v in split_id_set.items() if len(v)) # Add IDs to references
+                        else:
+                            references[PREFIX2DB_GENES[db]] = set(id_list)
+                    case "reaction":
+                        # Move BioCyc IDs to references if BioCyc IDs are present
+                        biocyc_reac_id = ref_row["id"]
+                        ref_row["id"] = str(id_list[0]) # Ensure ID is a string
+
+                        # Remove ID from column 'id' from list in column 'alias'
+                        if len(id_list) != 1:
+                            id_list.remove(ref_row["id"])
+                            alias = id_list
+                        else:
+                            alias = None
+
+                        # Set-up references
+                        references["metacyc.reaction"] = biocyc_reac_id # Move BioCyc IDs and alias to references
+                        references["alias"] = alias
+                        ref_row["equation"] = ref_row[DBEQ2EQ.get(db)] # Move equation from other database to equation column
+                        ref_row["via"] = db # Replace BioCyc in via column with mapped to database
+                    case _:
+                        raise ValueError(f"Unknown entity_type {entity_type} in subfunction _clean_ref_row from _clean_table_after_mapping.")
+
+        # Add all reference columns to references
+        ref_row["reference"] = references
+
+        return ref_row
+
+    # Get union between DB_REFERENCE_COLS and columns in table
+    contained_cols = set(mapped_table.columns).intersection(DB_REFERENCE_COLS)
+
+    # If no columns found, return table as is
+    if not contained_cols: return mapped_table
+
+    # Otherwise iterate over the columns
+    cleaned_table = mapped_table.apply(_clean_ref_row, args=(contained_cols,entity_type), axis=1)
+    cleaned_table.drop(columns=contained_cols, inplace=True) # Drop database columns
+
+    return cleaned_table
 
 
 # Mapping for BioCyc Reactions
@@ -129,49 +245,6 @@ def map_biocyc_to_reac(
         pd.DataFrame:
             The extended table.
     """
-
-    def _clean_res_row(
-        res_row: pd.Series, mapped2db: Literal["BiGG", "MetaNetX"]
-    ) -> pd.Series:
-        """Clean a row of a table containing mapping results from BioCyc to another database
-
-        Args:
-            - res_row (pd.Series):
-                Row containing a mapping from BioCyc to another database
-            - mapped2db (Literal['BiGG', 'MetaNetX']):
-                Database where Biocyc entries where mapped to. One of 'BiGG', 'MetaNetX'.
-
-        Returns:
-            pd.Series:
-                The cleaned row.
-        """
-        # Mapping for equation column name for other databases
-        dbeq2eq = {"BiGG": "reaction_string", "MetaNetX": "mnx_equation"}
-
-        # Get list of mapped to database IDs in row if available
-        id_list = list(res_row[mapped2db]) if res_row[mapped2db] else None
-        if id_list:
-            # Move BioCyc IDs to references
-            biocyc_reac_id = res_row["id"]
-            res_row["id"] = str(id_list[0])  # Ensure ID is a string
-
-            # Remove ID from column 'id' from list in column 'alias'
-            if len(id_list) != 1:
-                id_list.remove(res_row["id"])
-                alias = id_list
-            else:
-                alias = None
-
-            # Move BioCyc IDs and alias to references
-            res_row["reference"] = {"metacyc.reaction": biocyc_reac_id, "alias": alias}
-
-            # Move equation from other database to equation column
-            res_row["equation"] = res_row[dbeq2eq.get(mapped2db)]
-
-            # Replace BioCyc in via column with mapped to database
-            res_row["via"] = mapped2db
-
-        return res_row
 
     def _map_biocyc_to_mnx(unmapped_reacs: pd.DataFrame) -> pd.DataFrame:
         """
@@ -214,7 +287,7 @@ def map_biocyc_to_reac(
         # Crop table to contain MetaNetX IDs set per BioCyc ID
         mnx_as_list = (
             mnx2biocyc_reacs.groupby("id")["MetaNetX"]
-            .apply(set)
+            .apply(SortedSet)
             .reset_index(name="MetaNetX")
         )
         mnx2biocyc_reacs.drop("MetaNetX", axis=1, inplace=True)
@@ -233,7 +306,7 @@ def map_biocyc_to_reac(
 
         # Turn MetaNetX column in single value, rename column to id
         # & if multiple MetaNetX IDs exist add to column alias
-        reacs_mapped = reacs_mapped.apply(_clean_res_row, args=("MetaNetX",), axis=1)
+        reacs_mapped = _clean_table_after_mapping(reacs_mapped, 'reaction')
 
         # Create list of EC codes in column ec-code_x,
         # Join both ec-code columns into one & Create a set of ec-codes
@@ -250,7 +323,7 @@ def map_biocyc_to_reac(
 
         # Drop all unnecessary columns
         reacs_mapped.drop(
-            ["MetaNetX", "mnx_equation", "ec-code_x", "ec-code_y"], axis=1, inplace=True
+            ["mnx_equation", "ec-code_x", "ec-code_y"], axis=1, inplace=True
         )
 
         # Step 3: Return result
@@ -295,7 +368,7 @@ def map_biocyc_to_reac(
 
         # Crop table to contain BiGG IDs set per BioCyc ID
         bigg_as_list = (
-            bigg2biocyc_reacs.groupby("id")["BiGG"].apply(set).reset_index(name="BiGG")
+            bigg2biocyc_reacs.groupby("id")["BiGG"].apply(SortedSet).reset_index(name="BiGG")
         )
         bigg2biocyc_reacs.drop("BiGG", axis=1, inplace=True)
         bigg2biocyc_reacs = bigg_as_list.merge(bigg2biocyc_reacs, on="id")
@@ -313,10 +386,10 @@ def map_biocyc_to_reac(
 
         # Turn BiGG column in single value, rename column to id
         # & if multiple BiGG IDs exist add to column alias
-        reacs_mapped = reacs_mapped.apply(_clean_res_row, args=("BiGG",), axis=1)
+        reacs_mapped = _clean_table_after_mapping(reacs_mapped, 'reaction')
 
         # Drop all unnecessary columns
-        reacs_mapped.drop(["BiGG", "reaction_string", "name"], axis=1, inplace=True)
+        reacs_mapped.drop(["reaction_string", "name"], axis=1, inplace=True)
 
         # Step 3: Return result
         # ---------------------
@@ -329,6 +402,7 @@ def map_biocyc_to_reac(
 
     # Step 2: Mapping
     # ---------------
+    # @DISCUSSION Rewrite to use _clean_table_after_mapping only once? Add BiGG & MetaNetX columns if both True?
     # Map to MetaNetX
     if use_MNX:
         biocyc_reacs_to_map = _map_biocyc_to_mnx(biocyc_reacs_to_map)
@@ -625,6 +699,8 @@ class GapFiller(ABC):
                 "missing (total)": 0,
                 "unmappable": 0,
                 "missing (mappable)": 0,
+                "duplicated NCBI Protein ID": 0,
+                "duplicated locus tag": 0,
                 "duplicated": 0,
                 "added": 0,
                 "building failed": 0,
@@ -767,40 +843,30 @@ class GapFiller(ABC):
     def add_genes_from_table(self, model: libModel, gene_table: pd.DataFrame) -> None:
         """Create new GeneProduct for a table of genes in the format:
 
-        | ncbiprotein | locus_tag | UniProt | ... |
+        | ncbiprotein | locus_tag | reference | ... |
 
         The dots symbolise additional columns, that can be passed to the function,
-        but will not be used by it. The other columns, except UniProt, are required.
+        but will not be used by it. The other columns are required.
 
         Args:
             - model (libModel):
                 The model loaded with libSBML.
             - gene_table (pd.DataFrame):
                 The table with the genes to add. At least needs the columns
-                *ncbiprotein* and *locus_tag*. Optional columns include
-                *UniProt* amongst other.
+                *ncbiprotein*, *locus_tag* and *reference*. More columns can be provided.
         """
 
-        # ncbiprotein | locus_tag | ...
+        # ncbiprotein | locus_tag | reference | ... 
         # work on a copy to ensure input stays the same
         gene_table = gene_table.copy()
         # gene_table.drop(columns=['ec-code'],inplace=True)
-
-        # create gps from the table and add them to the model
-        cols_for_refs = [
-            _ for _ in REF_COL_GF_GENE_MAP.keys() if _ in gene_table.columns
-        ]
 
         # create gp
         for idx, x in tqdm(
             gene_table.iterrows(), total=len(gene_table), desc="Adding genes to model"
         ):
-            # get additional references
-            references = dict()
-            for dbname in cols_for_refs:
-                references[dbname] = (x[dbname], True)
             create_gp(
-                model, x["ncbiprotein"], locus_tag=x["locus_tag"], reference=references
+                model, x["ncbiprotein"], locus_tag=x["locus_tag"], reference=x['reference']
             )
             self._statistics["genes"]["added"] += 1
 
@@ -844,11 +910,11 @@ class GapFiller(ABC):
                         create_gpr(model.getReaction(current_reacid), current_mgids[0])
                     else:
                         mes = f"Found multiple matches for {geneid} in model: {current_mgids}. Belongs to reaction {current_reacid}."
-                        warnings.warn(mes, UserWarning)
+                        logging.warning(mes)
                 # else, print warning
                 else:
                     mes = f"Cannot find {geneid} in model. Should be added to {current_reacid}."
-                    warnings.warn(mes, UserWarning)
+                    logging.warning(mes)
 
     def add_reactions_from_table(
         self,
@@ -1103,18 +1169,43 @@ class GapFiller(ABC):
             ~self.missing_genes["ncbiprotein"].isna()
         ]
 
-        # filter out duplicated genes to avoid duplicated IDs in the model
+        # Filter out genes with duplicated locus tag & NCBI Protein ID
+        # to avoid duplicated IDs & labels
+        # Remove duplicates
+        deduplicated_missing_genes = self.missing_genes.drop_duplicates(subset=["ncbiprotein", "locus_tag"])
+        # Save duplicates for manual curation
+        self.manual_curation["genes"]["duplicated"] = self.missing_genes[self.missing_genes.duplicated(subset=["ncbiprotein", "locus_tag"], keep='first')]
+        # Get statistics
+        self._statistics["genes"]["duplicated"] = self.manual_curation["genes"]["duplicated"]["locus_tag"].nunique()
+        # Update missing genes
+        self.missing_genes = deduplicated_missing_genes
+
+        # filter out duplicated genes based on NCBI Protein IDs to avoid duplicated IDs in the model
         if len(self.missing_genes) != len(self.missing_genes["ncbiprotein"].unique()):
-            self.manual_curation["genes"]["duplicated (not added)"] = (
+            self.manual_curation["genes"]["duplicated NCBI Protein ID (not added)"] = (
                 self.missing_genes[
                     self.missing_genes.duplicated(subset=["ncbiprotein"])
                 ]
             )
-            self._statistics["genes"]["duplicated"] = self.manual_curation["genes"][
-                "duplicated (not added)"
+            self._statistics["genes"]["duplicated NCBI Protein ID"] = self.manual_curation["genes"][
+                "duplicated NCBI Protein ID (not added)"
             ]["locus_tag"].nunique()
             self.missing_genes = self.missing_genes[
                 ~self.missing_genes.duplicated(subset=["ncbiprotein"])
+            ]
+
+        # filter out duplicated genes based on the locus tag to avoid duplicated labels in the model
+        if len(self.missing_genes) != len(self.missing_genes["locus_tag"].unique()):
+            self.manual_curation["genes"]["duplicated locus tag (not added)"] = (
+                self.missing_genes[
+                    self.missing_genes.duplicated(subset=["locus_tag"])
+                ]
+            )
+            self._statistics["genes"]["duplicated locus tag"] = self.manual_curation["genes"][
+                "duplicated locus tag (not added)"
+            ]["locus_tag"].nunique() # @ASK Use something different for the stats here?
+            self.missing_genes = self.missing_genes[
+                ~self.missing_genes.duplicated(subset=["locus_tag"])
             ]
 
         # Store mapping table for later manual curation (or debugging purposes)
@@ -1249,8 +1340,6 @@ class GapFiller(ABC):
 # --------------------
 # Gapfilling with KEGG
 # --------------------
-
-# @TEST
 class KEGGapFiller(GapFiller):
     """Based on a KEGG organism ID (corresponding to the organism of the model),
     find missing genes in the model and map them to reactions to try and fill the gaps
@@ -1299,7 +1388,7 @@ class KEGGapFiller(GapFiller):
 
         Format:
 
-        ``orgid:locus | locus_tag | kegg.orthology | ec-code | ncbiprotein | uniprot``
+        ``locus_tag | kegg.orthology | ec-code | ncbiprotein | reference``
 
         Args:
             - model (libModel):
@@ -1331,7 +1420,7 @@ class KEGGapFiller(GapFiller):
                                     re.split(r"kegg.genes:|kegg.genes/", uri)[1]
                                 ) # work with old/new pattern
 
-            return pd.DataFrame(genes_in_model, columns=["orgid:locus"])
+            return pd.DataFrame(genes_in_model, columns=["kegg.genes"])
 
         # Step 1: get genes from model
         # ----------------------------
@@ -1341,17 +1430,17 @@ class KEGGapFiller(GapFiller):
         # ---------------------------------------
         gene_KEGG_list = KEGG().list(self.organismid)
         gene_KEGG_table = pd.read_table(io.StringIO(gene_KEGG_list), header=None)
-        gene_KEGG_table.columns = ["orgid:locus", "CDS", "position", "protein"]
+        gene_KEGG_table.columns = ["kegg.genes", "CDS", "position", "protein"]
         self.full_gene_list = gene_KEGG_table
-        gene_KEGG_table = gene_KEGG_table[["orgid:locus"]]
+        gene_KEGG_table = gene_KEGG_table[["kegg.genes"]]
 
         # Statistics on full gene list based on KEGG
         self._statistics['genes'] = insert_into_dict(
             self._statistics['genes'], (
                 f"total (based on {self._variety})",
                 (
-                    self.full_gene_list["orgid:locus"].nunique()
-                    + int(self.full_gene_list["orgid:locus"].isna().sum())
+                    self.full_gene_list["kegg.genes"].nunique()
+                    + int(self.full_gene_list["kegg.genes"].isna().sum())
                     )
             ),
             'missing (total)'
@@ -1360,13 +1449,13 @@ class KEGGapFiller(GapFiller):
         # Step 3: KEGG vs. model genes -> get missing genes for model
         # ----------------------------
         genes_not_in_model = gene_KEGG_table[
-            ~gene_KEGG_table["orgid:locus"].isin(genes_in_model["orgid:locus"])
+            ~gene_KEGG_table["kegg.genes"].isin(genes_in_model["kegg.genes"])
         ]
 
         # Step 4: extract locus tag
         # -------------------------
         genes_not_in_model["locus_tag"] = (
-            genes_not_in_model["orgid:locus"].str.split(r":").str[1]
+            genes_not_in_model["kegg.genes"].str.split(r":").str[1]
         )
 
         # Step 5: map to EC via KEGG
@@ -1376,14 +1465,20 @@ class KEGGapFiller(GapFiller):
         # print(UserWarning('Running in debugging mode.'))
         # ..............................
         geneKEGG_mapping = pd.DataFrame.from_dict(
-            list(genes_not_in_model["orgid:locus"].progress_apply(parse_KEGG_gene))
+            list(genes_not_in_model["kegg.genes"].progress_apply(parse_KEGG_gene))
         )
         genes_not_in_model = genes_not_in_model.merge(
-            geneKEGG_mapping, how="left", on="orgid:locus"
+            geneKEGG_mapping, how="left", on="kegg.genes"
         )
         genes_not_in_model = genes_not_in_model.explode("ncbiprotein")
 
-        # collect stats
+        # Step 6: Clean-up table to contain a single reference column with the KEGG Gene & UniProt IDs
+        # ----------------------
+        genes_not_in_model.mask(genes_not_in_model.isna(), other=None, inplace=True)
+        genes_not_in_model = _clean_table_after_mapping(genes_not_in_model, 'gene')
+
+        # Step 7: collect stats
+        # ---------------------
         self._statistics["genes"]["missing (total)"] = genes_not_in_model[
             "locus_tag"
         ].nunique()
@@ -1661,7 +1756,7 @@ class KEGGapFiller_Alternative(KEGGapFiller):
 # ----------------------
 # Gapfilling with BioCyc
 # ----------------------
-# @BUG stats for unmappable genes weird / wrong 
+# @BUG stats for unmappable genes weird / wrong
 class BioCycGapFiller(GapFiller):
     """
     | Based on a SmartTable with information on the genes and a SmartTable with
@@ -1738,6 +1833,11 @@ class BioCycGapFiller(GapFiller):
 
         # Drop only complete empty rows
         biocyc_genes.dropna(how="all", inplace=True)
+
+        # Add references column
+        biocyc_genes["reference"] = None
+        # @TODO Recheck BioCyc if references can be obtained
+        # biocyc_genes = _clean_table_after_mapping(biocyc_genes, 'gene')
 
         # Statistics on full gene list based on BioCyc
         self._statistics['genes'] = insert_into_dict(
@@ -2346,6 +2446,8 @@ class GeneGapFiller(GapFiller):
             "locus_tag"
         ].nunique() + int(self.missing_genes["locus_tag"].isna().sum())
 
+        # @ASK Should we not filter out all genes without locus tag here?
+        # Even without ncbiprotein some entries could be without locus tag?
         # save genes with no locus tag for manual curation
         if "ncbiprotein" in self.missing_genes.columns:
             self.manual_curation["genes"]["gff no locus tag"] = self.missing_genes[
@@ -2469,7 +2571,7 @@ class GeneGapFiller(GapFiller):
                         )  # further optional params for the mapping
                         case_1.drop("ec-code", inplace=True, axis=1)
                         case_1 = case_1.merge(case_1_mapped, on="locus_tag", how="left")
-                        not_case_1["UniProt"] = None
+                        not_case_1["uniprot"] = None
                         # still no EC but ncbiprotein
                         #       -> access ncbi for ec (optional)
                         # @DEBUG .......................
@@ -2492,7 +2594,20 @@ class GeneGapFiller(GapFiller):
                     if fasta and dmnd_db:
                         case_1 = map_to_homologs(
                             fasta, dmnd_db, case_1, map_db, email=mail, **kwargs
+                        ) 
+                        # Post processing
+                        # ---------------
+                        # Add information from self.missing_genes back into case_1
+                        case_1 = case_1.merge(
+                            self.missing_genes,
+                            on="locus_tag",
+                            how="left",
                         )
+                        # Ensure that the correct column is renamed back to ncbiprotein
+                        case_1.rename({'ncbiprotein_y': 'ncbiprotein', 'ec-code_x': 'ec-code'}, axis=1, inplace=True)
+
+                        # Drop empty ec-code_y column
+                        case_1.drop('ec-code_y', axis=1, inplace=True)
 
                 case _:
                     raise ValueError(
@@ -2544,6 +2659,8 @@ class GeneGapFiller(GapFiller):
         # ---------
         # update the gene information
         updated_missing_genes = mapped_reacs.copy()
+        if 'GeneID' in updated_missing_genes.columns: updated_missing_genes.rename({'GeneID': 'ncbigene'}, axis=1, inplace=True)
+        updated_missing_genes = _clean_table_after_mapping(updated_missing_genes, 'gene')
 
         # reformat missing reacs
         if type_db == "swissprot":
@@ -2693,7 +2810,7 @@ def single_cobra_gapfill(
                     f"Gapfilling for medium {medium.name} failed. Manual curation required."
                 )
         else:
-            print(
+            logging.info(
                 f"Model already grows on medium {medium.name} with objective value of {model_copy.optimize().objective_value}"
             )
             return True
@@ -2800,7 +2917,7 @@ def cobra_gapfill_wrapper(
     if isinstance(solution, list) and len(solution) > 0:
         for reac in solution[0]:
             reac.notes["creation"] = "via gapfilling"
-        print(
+        logging.info(
             f"Adding {len(solution[0])} reactions to model to ensure growth on medium {medium.name}."
         )
         model.add_reactions(solution[0])

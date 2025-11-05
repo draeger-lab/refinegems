@@ -51,7 +51,7 @@ ALLOWED_DATABASE_LINKS = ["BiGG", "MetaNetX", "SEED", "VMH", "ChEBI", "KEGG"]  #
 REQUIRED_SUBSTANCE_ATTRIBUTES = ["name", "formula", "flux", "source"]  #: :meta:
 INTEGER_REGEX = re.compile(r"^[-+]?([1-9]\d*|0)$")  #: :meta:
 FLOAT_REGEX = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")  #: :meta:
-REGEX_MEDIA_YML_TUPLE = re.compile(f"\((\d+\.\d+),(\d+\.\d+)\)") #: :meta:
+REGEX_MEDIA_YML_TUPLE = re.compile(r"\((\d+\.\d+),(\d+\.\d+)\)") #: :meta:
 
 ############################################################################
 # classes
@@ -538,6 +538,24 @@ class Medium:
 
     # functions for export table
     # --------------------------
+    
+    def _produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
+            """Helper function for producing reStructured text for medium definitions, 
+            e.g. in with :py:func:`produce_medium_docs_table`.
+            Tranforms each row of the substance table into a row of the rst-file.
+
+            Args:
+                - row (pd.Series):
+                    The row of the Medium.substance_table.
+                - file (io.TextIOWrapper):
+                    The connection to the file to write the rows into.
+            """
+
+            list = row.to_list()
+            file.write(f"  * - {list[0]}\n")
+            for l in list[1:]:
+                file.write(f"    - {l}\n")
+                
 
     def produce_medium_docs_table(self, folder: str = "./", max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
@@ -573,22 +591,6 @@ class Medium:
             else:
                 partition = (max_width - flux_width) // 2
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
-
-        def produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
-            """Helper function for :py:func:`produce_medium_docs_table`.
-            Tranforms each row of the substance table into a row of the rst-file.
-
-            Args:
-                - row (pd.Series):
-                    The row of the Medium.substance_table.
-                - file (io.TextIOWrapper):
-                    The connection to the file to write the rows into.
-            """
-
-            list = row.to_list()
-            file.write(f"  * - {list[0]}\n")
-            for l in list[1:]:
-                file.write(f"    - {l}\n")
 
         # make sure given directory path ends with '/'
         if not folder.endswith("/"):
@@ -628,7 +630,7 @@ class Medium:
                 f.write(f"    - {l}\n")
 
             # produce table body
-            m_subs.apply(produce_medium_docs_table_row, file=f, axis=1)
+            m_subs.apply(self._produce_medium_docs_table_row, file=f, axis=1)
 
             f.close()
 
@@ -707,6 +709,12 @@ class Medium:
             - ValueError: Unknown export type if type not in ['tsv','csv','docs','rst'].
         """
 
+        # Set-up path
+        if dir:
+            if isinstance(dir, str):
+                dir = Path(dir)
+            dir.mkdir(parents=True, exist_ok=True)
+        
         match flavour:
             case "substance_table":
                 table2export = self.substance_table if not no_flux else self.substance_table.drop('flux', axis=1)
@@ -975,7 +983,7 @@ def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: in
             f.write(f"    - {l}\n")
 
         # produce table body
-        subs.apply(Medium.produce_medium_docs_table.produce_medium_docs_table_row, file=f, axis=1)
+        subs.apply(Medium._produce_medium_docs_table_row, file=f, axis=1)
 
 
 ############################################################################

@@ -349,7 +349,10 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
     try:
         # make temporary directory to save files for MCC in
         with tempfile.TemporaryDirectory() as temp:
-
+            # @DISCUSSION for the sake of runtime, it would be good to save the data needed by MCC somewhere 
+            # e.g. step 1: check, if data is available 
+            #      step 2: if not, download data once 
+            # => question is, where to save it? Or do we need a parameter for that? (kinda do not want that ...)
             # use MCC
             if apply:
                 # update model

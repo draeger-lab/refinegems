@@ -415,6 +415,11 @@ def load_subset_from_db(subset_name: str) -> tuple[str, str, pd.DataFrame]:
             (subset_name,),
         )
         substance_table = pd.DataFrame(db_res.fetchall(), columns=["name", "percent"])
+    
+    else:
+        mes = f"Subset name {subset_name} not found in database."
+        connection.close()
+        raise ValueError(mes)
 
     return (name, description, substance_table)
 

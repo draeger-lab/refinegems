@@ -79,8 +79,6 @@ logger = logging.getLogger(__name__)
 # variables
 ################################################################################
 
-REF_COL_GF_GENE_MAP = {"UniProt": "UNIPROT", "GeneID": "NCBIGENE"}  #: :meta:
-
 ################################################################################
 # functions
 ################################################################################
@@ -2192,8 +2190,7 @@ def create_gp(
             Defaults to None.
         - reference (dict, optional):
             Dictionary containing references for the gene product.
-            The key is the database name, the value is a tuple with the first element being the ID(s)
-            and the second element being a boolean indicating if the strain is a lab strain or not.
+            The key is the database name, the value is either a set containing the ID(s) or a single ID string.
             Defaults to an empty dictionary.
         - sanity_check (bool, optional):
             Check, whether locus tag (label) or model ID (ID) already exist in model.
@@ -2246,7 +2243,7 @@ def create_gp(
         gp.setNotes(note_string)
         
     gp.setSBOTerm("SBO:0000243")  # SBOterm
-    gp.setMetaId(f"meta_{_f_gene_rev(model_id)}")  # Meta ID
+    gp.setMetaId(f"meta_{model_id}")  # Meta ID
     # test for NCBI/RefSeq
     id_db = None
     if protein_id:
@@ -2262,21 +2259,21 @@ def create_gp(
             add_cv_term_genes(protein_id, id_db, gp)  # NCBI protein
 
     # add further references
-    # references {'dbname':(list_or_str_of_id,lab_strain_bool)}
+    # references {'dbname': set_or_str_of_id}
     if reference and len(reference) > 0:
-        for dbname, specs in reference.items():
-            match specs[0]:
-                case list():
-                    for s in specs[0]:
-                        add_cv_term_genes(s, REF_COL_GF_GENE_MAP[dbname], gp, specs[1])
+        for dbname, ids in reference.items():
+            match ids:
+                case set():
+                    for s in ids:
+                        add_cv_term_genes(s, dbname, gp, True)
                 case str():
                     add_cv_term_genes(
-                        specs[0], REF_COL_GF_GENE_MAP[dbname], gp, specs[1]
+                        ids, dbname, gp, True
                     )
                 case None:
                     pass
                 case _:
-                    raise ValueError(f"Unexpected type for reference value: {specs[0]}")
+                    raise ValueError(f"Unexpected type for reference value: {ids}")
 
 
 def create_species(
@@ -2322,6 +2319,7 @@ def create_species(
     metabolite.setConstant(False)
     metabolite.setCompartment(compartment_id)
     metabolite.getPlugin(0).setCharge(charge)
+    # @DISCUSSION Replace '*' with 'R' except if only '*' to ensure SBML conformity?
     metabolite.getPlugin(0).setChemicalFormula(chem_formula)
     add_cv_term_metabolites(metabolite_id[:-2], "BIGG", metabolite)
     return metabolite, model

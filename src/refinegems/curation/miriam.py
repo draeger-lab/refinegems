@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 # variables
 ################################################################################
 
-non_alnum_pattern = re.compile('[\W_]+') # :meta: 
+non_alnum_pattern = re.compile(r'[\W_]+') # :meta: 
 DEPRECATED_PREFIXES = {
     'ecogene',
     'ncbigi' # Converted to accession version since 2016 according to NCBI
@@ -712,6 +712,11 @@ def polish_annotations(
             f'{model.getId()}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.csv'
         )
         # Set-up path
+        if dir:
+            if isinstance(dir, str):
+                dir = Path(dir)
+            dir.mkdir(parents=True, exist_ok=True)
+
         if outpath:
             outpath = Path(outpath)
             outpath.mkdir(parents=True, exist_ok=True)
