@@ -606,28 +606,6 @@ class GrowthSimulationReport(Report):
         fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
         fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
 
-        match how:
-            # save to a new directory
-            case "dir":
-                # create directory to save report to
-                dir_path = Path(to, "GrowthSimReport")
-                dir_path.mkdir(parents=True, exist_ok=check_overwrite)
-                # save the report
-                with open(Path(dir_path, "report.txt"), "w") as f:
-                    f.write(str(self))
-                # save visualisation for doubling time
-                fig_dt = self.plot_growth(color_palette=color_palette)
-                if fig_dt:
-                    fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
-                    # save visualisation for growth rate
-                    fig_h = self.plot_growth(unit="h", color_palette=color_palette)
-                    fig_h.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
-
-            case _:
-                raise ValueError(
-                    f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.'
-                )
-
 
 class KEGGPathwayAnalysisReport(Report):
     """Report for the KEGG pathway analysis.
