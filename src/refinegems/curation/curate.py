@@ -57,7 +57,7 @@ from ..utility.cvterms import (
     DB2PREFIX_REACS,
     get_id_from_cv_term,
 )
-from ..utility.entities import get_gpid_mapping, create_fba_units, MIN_GROWTH_THRESHOLD
+from ..utility.entities import get_gpid_mapping, create_fba_units, resolve_compartment_names, MIN_GROWTH_THRESHOLD
 from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
 from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
 
@@ -484,14 +484,19 @@ def add_compartment_structure_specs(model: libModel) -> None:
             ):
                 compartment.setUnits(unit_id.group(0))
 
-def fix_compartments(model: libModel) -> None:
+def fix_compartments(model: libModel) -> libModel:
     """Fixes compartments in a model
-       - By adding missing compartments based on metabolite IDs if not set
-       - Setting the size and spatial dimension if not set
+        - By adding missing compartments based on metabolite IDs if not set
+        - By checking for valid compartment IDs & adjusting them if necessary
+        - By setting the size and spatial dimension if not set
 
     Args:
-        - metab_list (ListOfSpecies):
-            libSBML ListOfSpecies
+        - model (libModel):
+            Model loaded with libSBML
+
+    Returns:
+        libModel: 
+            Model as libSBML model with adjusted compartments
     """
     # Check if any metabolites without compartment exist
     comps_missing = not all([m.isSetCompartment() for m in model.getListOfSpecies()])
@@ -510,8 +515,16 @@ def fix_compartments(model: libModel) -> None:
                 logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
                 m.setCompartment(default_comp)
 
+    # Check validity of compartment IDs & adjust if necessary
+    # Turn into COBRA model
+    model = _sbml_to_model(model)
+    resolve_compartment_names(model)
+    model = convert_cobra_to_libsbml(model, add_label_locus='notes')
+
     # Add specifications for compartment structure
     add_compartment_structure_specs(model)
+
+    return model
 
 def fix_reac_bounds(model: cobra.Model) -> None:
     """Check the model`s reaction bounds and adjust values, if 
@@ -1481,7 +1494,7 @@ def polish_model(
     update_annotations_from_others(model)
 
     ### Add compartments based on id
-    fix_compartments(model)
+    model = fix_compartments(model)
 
     ### Extend annotations for GeneProducts ###
     extend_gp_annots_via_mapping_table(

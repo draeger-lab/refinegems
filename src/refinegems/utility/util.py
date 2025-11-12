@@ -79,6 +79,9 @@ COMP_MAPPING = {
     "C_c": "c",
     "C_e": "e",
     "C_p": "p",
+    # Common names
+    "cytosol": "c",
+    "extracellular": "e",
     # unknown compartments
     "": "uc", 
     "w": "uc",
