@@ -352,7 +352,11 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
             if str(db_id) in ann_string.getResourceURI(r)
         ]
         all_ids.extend(ids)
-
+        
+    # Correct ECO terms
+    if db_id.lower() == "eco":
+        all_ids = [id for id in all_ids if id.isdigit()]
+    
     # Clean-up: Remove all Nones
     all_ids = [_ for _ in all_ids if _ is not None]
     if len(all_ids) == 0:
@@ -384,6 +388,26 @@ def generate_cvterm(qt, b_m_qt) -> CVTerm:
 
     return cvterm
 
+def remove_cv_terms(entity: SBase, db_id: str) -> list[str]:
+    # Special case for ECO terms
+    if db_id.lower() == "eco":
+        db_id = db_id+":"
+    
+    cvterms = entity.getCVTerms()
+    cvterms = [cvterm.clone() for cvterm in cvterms]
+    entity.unsetCVTerms()
+        
+    for cvterm in cvterms:
+        current_uris = [
+            cvterm.getResourceURI(i) for i in range(cvterm.getNumResources())
+        ]
+        for uri in current_uris:
+            if db_id not in uri:
+                cv = CVTerm()
+                cv.setQualifierType(BIOLOGICAL_QUALIFIER)
+                cv.setBiologicalQualifierType(cvterm.getBiologicalQualifierType())
+                cv.addResource(uri)
+                entity.addCVTerm(cv)
 
 @debug
 def print_cvterm(cvterm: CVTerm):

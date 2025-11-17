@@ -58,6 +58,7 @@ from ..utility.cvterms import (
     DB2PREFIX_METABS,
     DB2PREFIX_REACS,
     get_id_from_cv_term,
+    remove_cv_terms,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units, MIN_GROWTH_THRESHOLD
 from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
@@ -88,7 +89,7 @@ ECO_TERMS = {
     "2: Evidence at transcript level": "0000009",
     "3: Inferred from homology": "0000044",
     "4: Predicted": "0000363",
-    "5: Uncertain": None
+    "5: Uncertain": "0000000"
 }   #: :meta:
 
 ################################################################################
@@ -471,15 +472,19 @@ def extend_metab_reac_annots_via_notes(
 # adding ECO terms
 # ----------------
 
-def add_ECO_terms(model: libsbml.Model) -> libsbml.Model:
+def add_ECO_terms(model: libModel) -> libModel:
     for reac in model.getListOfReactions():
-        if len(get_id_from_cv_term(reac, "ECO")) == 0:
+        ids = get_id_from_cv_term(reac, "ECO")
+        if len(ids) == 0 or (len(ids) == 1 and ids[0] == "0000000"):
+            if (len(ids) == 1 and ids[0] == "0000000"):
+                remove_cv_terms(reac, "ECO")
+            
             if "creation: via template" in reac.getNotesString():
                 add_cv_term_reactions("0007482", "ECO", reac)
-            elif "found with: refineGEMs GapFiller, KEGG (alternative strain)" in reac.getNotesString() or "found with: refineGEMs GapFiller, BioCyc (alternative strain)" in reac.getNotesString():
-                add_cv_term_reactions("0007636", "ECO", reac)
-            elif "found with: refineGEMs GapFiller, KEGG" in reac.getNotesString() or "found with: refineGEMs GapFiller, BioCyc" in reac.getNotesString():
+            elif "found with: refineGEMs GapFiller, KEGG (homologous strain)" in reac.getNotesString() or "found with: refineGEMs GapFiller, BioCyc (homologous strain)" in reac.getNotesString():
                 add_cv_term_reactions("0007482", "ECO", reac)
+            elif "found with: refineGEMs GapFiller, KEGG" in reac.getNotesString() or "found with: refineGEMs GapFiller, BioCyc" in reac.getNotesString():
+                add_cv_term_reactions("0007636", "ECO", reac)
             elif "found with: refineGEMs GapFiller, GFF + swissprot" in reac.getNotesString():
                 add_cv_term_reactions("0007482", "ECO", reac)
             else:
@@ -491,6 +496,10 @@ def add_ECO_terms(model: libsbml.Model) -> libsbml.Model:
                         existence = get_uniprot_existence(model, association.getGeneProduct(), "GeneProduct", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif existence == "5: Uncertain":
+                            add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif "CarveMe" in model.getNotesString():
+                            add_cv_term_reactions("0000364", "ECO", reac)
                         else:
                             logger.info(f"Unspecific ECO term ECO:0000000 added to {reac.id}")
                             add_cv_term_reactions("0000000", "ECO", reac)
@@ -501,6 +510,10 @@ def add_ECO_terms(model: libsbml.Model) -> libsbml.Model:
                         existence = get_uniprot_existence(model, geneAssociations, "AND", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif existence == "5: Uncertain":
+                            add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif "CarveMe" in model.getNotesString():
+                            add_cv_term_reactions("0000364", "ECO", reac)
                         else:
                             logger.info(f"Unspecific ECO term ECO:0000000 added to {reac.id}")
                             add_cv_term_reactions("0000000", "ECO", reac)
@@ -508,6 +521,10 @@ def add_ECO_terms(model: libsbml.Model) -> libsbml.Model:
                         existence = get_uniprot_existence(model, association, "OR", reac.id)
                         if existence != '' and existence != "5: Uncertain":
                             add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif existence == "5: Uncertain":
+                            add_cv_term_reactions(ECO_TERMS[existence], "ECO", reac)
+                        elif "CarveMe" in model.getNotesString():
+                            add_cv_term_reactions("0000364", "ECO", reac)
                         else: 
                             logger.info(f"Unspecific ECO term ECO:0000000 added to {reac.id}")
                             add_cv_term_reactions("0000000", "ECO", reac)
@@ -519,7 +536,7 @@ def add_ECO_terms(model: libsbml.Model) -> libsbml.Model:
                     add_cv_term_reactions("0000000", "ECO", reac)
     return model
             
-def get_uniprot_existence(model: libsbml.Model, gpr: FbcOr|list[str]|str, association_type: Literal['GeneProduct','AND','OR'], reac_id: str) -> str:
+def get_uniprot_existence(model: libModel, gpr: FbcOr|list[str]|str, association_type: Literal['GeneProduct','AND','OR'], reac_id: str) -> str:
     def get_protein_existence(uniprot_id):
         url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.json"
         response = requests.get(url)
