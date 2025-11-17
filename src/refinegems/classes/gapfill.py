@@ -1073,7 +1073,7 @@ class GapFiller(ABC):
                     reac.notes["found with"] = f"refineGEMs GapFiller, {self._variety}"
                     if self._variety == "KEGG" or self._variety == "BioCyc":
                         reac.annotation["ec"] = "ECO:0007636"
-                    elif self._variety == "GFF" or self._variety == "KEGG (alternative strain)" or self._variety == "BioCyc (alternative strain)":
+                    elif self._variety == "GFF" or self._variety == "KEGG (homologous strain)" or self._variety == "BioCyc (homologous strain)":
                         reac.annotation["eco"] = "ECO:0007482"
                     # add reaction to model (if validation successful)
                     model.add_reactions([reac])
@@ -1617,7 +1617,7 @@ class KEGGapFiller(GapFiller):
         # return missing_reactions
         self.missing_reactions = reacs_mapped
 
-class KEGGapFiller_Alternative(KEGGapFiller):
+class KEGGapFiller_via_homolog(KEGGapFiller):
     """ Based on the KEGG organism ID for a closely related strain of your organism,
     find missing genes in the model and map them back to the reactions of your organism to
     try and fill the gaps found with the KEGG database.
@@ -1655,9 +1655,9 @@ class KEGGapFiller_Alternative(KEGGapFiller):
     # TEST
     def __init__(self, organismid: str) -> None:
         super().__init__(organismid)
-        self._variety = "KEGG (alternative strain)"        
+        self._variety = "KEGG (homologous strain)"        
 
-    def find_missing_genes(self, model: cobra.Model, original_fasta: str, alternative_fasta: str, blast_result: str, cutoff: float=90.0):
+    def find_missing_genes(self, model: libModel, original_fasta: str, alternative_fasta: str, blast_result: str, cutoff: float=90.0, from_pgab: bool=False):
         # Step 1: Process BLAST result table
         # ----------------------------------
         colnames = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore']
@@ -1672,10 +1672,12 @@ class KEGGapFiller_Alternative(KEGGapFiller):
         # Step 2: Create mapping table between original and alternative strain
         # --------------------------------------------------------------------
         # Sort out protein_ids that are already in the model
-        not_in_model = pd.DataFrame()
+        not_in_model = pd.DataFrame()  
+        current_labels = [gene.getLabel() for gene in model.getPlugin(0).getListOfGeneProducts()]
         for gene in blast_result["qseqid"].values:
-            protein_id = gene.replace("|","_").replace(".","_")
-            if protein_id not in model.genes:
+            locus_tag = gene.split("_")
+            locus_tag = locus_tag[2] + "_" + locus_tag[3]
+            if locus_tag not in current_labels:
                 not_in_model = pd.concat([not_in_model, blast_result[blast_result["qseqid"]==gene]], ignore_index=True)
 
         not_in_model = pd.DataFrame(not_in_model)
@@ -1718,16 +1720,16 @@ class KEGGapFiller_Alternative(KEGGapFiller):
         
         # Step 3: Create missing_genes table for KEGG
         # -------------------------------------------
-        missing_genes = pd.DataFrame(alternative_locus_tags.keys(), columns=["orgid:locus"])
-        missing_genes["orgid:locus"] = self.organismid + ":" + missing_genes["orgid:locus"]
+        missing_genes = pd.DataFrame(alternative_locus_tags.keys(), columns=["kegg.genes"])
+        missing_genes["kegg.genes"] = self.organismid + ":" + missing_genes["kegg.genes"]
 
         # Statistics on full gene list based on KEGG
         self._statistics['genes'] = insert_into_dict(
             self._statistics['genes'], (
                 f"total (based on {self._variety})",
                 (
-                    missing_genes["orgid:locus"].nunique()
-                    + int(missing_genes["orgid:locus"].isna().sum())
+                    missing_genes["kegg.genes"].nunique()
+                    + int(missing_genes["kegg.genes"].isna().sum())
                     )
             ),
             'missing (total)'
@@ -1735,18 +1737,28 @@ class KEGGapFiller_Alternative(KEGGapFiller):
 
         # Step 4: map to EC via KEGG
         # --------------------------
+        # @DEBUG .......................
+        # missing_genes = missing_genes.iloc[0:10,:]
+        # print(UserWarning('Running in debugging mode.'))
+        # ..............................
         kegg_genes = []
-        for tag in tqdm(missing_genes["orgid:locus"]):
+        for tag in tqdm(missing_genes["kegg.genes"]):
             kegg_genes.append(parse_KEGG_gene(tag))
-                
+
+        # Step 5: clean up missing genes table
+        # ------------------------------------
         missing_genes = pd.DataFrame(kegg_genes)
-        missing_genes["orgid:locus"] = missing_genes["orgid:locus"].str.removeprefix(self.organismid + ":")
-        missing_genes = missing_genes.merge(not_in_model, how='left', right_on="locus_tag_alternative", left_on="orgid:locus")
-        missing_genes = missing_genes[["orgid:locus", "locus_tag_original", "ec-code", "ncbiprotein", "kegg.orthology"]]
+        missing_genes["kegg.genes"] = missing_genes["kegg.genes"].str.removeprefix(self.organismid + ":")
+        missing_genes = missing_genes.merge(not_in_model, how='left', right_on="locus_tag_alternative", left_on="kegg.genes")
+        missing_genes = missing_genes[["kegg.genes", "locus_tag_original", "ec-code", "ncbiprotein", "kegg.orthology"]]
         missing_genes = missing_genes.rename(columns={"locus_tag_original": "locus_tag"})
         missing_genes = missing_genes.explode("ncbiprotein")
+        missing_genes["kegg.genes"] = self.organismid + ":" + missing_genes["kegg.genes"]
         
-        # collect stats
+        missing_genes = _clean_table_after_mapping(missing_genes, 'gene')
+        
+        # Step 6: collect stats
+        # ---------------------
         self._statistics["genes"]["missing (total)"] = missing_genes[
             "locus_tag"
         ].nunique()
@@ -1764,6 +1776,8 @@ class BioCycGapFiller(GapFiller):
     | finds missing genes in the model and maps them to reactions to try and
     | fill the gaps found with the BioCyc gene SmartTable.
     |
+    | The flag homology gives the option to use the SmartTables from a homologous strain.
+    | 
     | For specifications on the SmartTables see the attributes `biocyc_gene_tbl`
     | & `biocyc_reacs_tbl`
 
@@ -1786,15 +1800,21 @@ class BioCycGapFiller(GapFiller):
             ``Reaction | Object ID | EC-Number | Spontaneous?``
         - gff (str, required):
             Path to organism-specific GFF file
+        - homology (bool, optional):
+            Specifies, if homologous strain is used for BioCyc tables.
+            Default is false.
     """
     def __init__(
-        self, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str, gff: str
+        self, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str, gff: str, homology: bool=False
     ) -> None:
         super().__init__()
-        self._variety = "BioCyc"
         self.full_gene_list = biocyc_gene_tbl_path
         self.biocyc_rxn_tbl = biocyc_reacs_tbl_path
         self._gff = gff
+        self.homology = homology
+        if self.homology:
+            self._variety = "BioCyc (homologous strain)"
+        else: self._variety = "BioCyc"
 
     @property
     def full_gene_list(self):
@@ -1890,20 +1910,113 @@ class BioCycGapFiller(GapFiller):
 
         self._biocyc_rxn_tbl = biocyc_rxns
 
-    def find_missing_genes(self, model: libModel):
+    def find_missing_genes(self, model: libModel, 
+                           fasta_original: str=None, fasta_homolog: str=None, 
+                           blast_result: str=None, cutoff: float=90.0, 
+                           from_pgab: bool=False):
         """Retrieves the missing genes and reactions from the BioCyc table
-        according to the 'Accession-2' identifiers (locus_tags)
+        according to the 'Accession-2' identifiers (locus_tags).
+        The optional arguments 'fasta_original', 'fasta_homolog' and 'blast_result'
+        are required for gapfilling with a homologous strain.
 
         Args:
             - model (libModel):
-                Model loaded with libSBML
+                Model loaded with libSBML.
+            - fasta_original (str, optional):
+                Path to the FASTA file of the original strain.
+            - fasta_homolog (str, optional):
+                Path to the FASTA file of the homologous strain.
+            - blast_result (str, optional):
+                Path to the result files from BLAST between the original
+                and the homologous strain.
+            - cutoff (float, optional):
+                Cutoff value for BLAST results.
+                Defaults to 90.0.
+            - from_pgab (bool, optional):
+                Flag for FASTA file created with PGAB.
+                Defaults to false.
         """
+        
+        # Step 0: Prepare data for homologous gapfilling
+        # ----------------------------------------------
+        if self.homology:
+            # Step 0.1: Process BLAST results table
+            # -----------------------------------
+            # Sort out results that are duplicated or below the cutoff
+            colnames = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore']
+            blast_result = pd.read_table(blast_result, header=None, names=colnames)
+            blast_result = blast_result.sort_values(by=["qseqid", "pident", "length"], ascending=[True, False, False])
+            # Deduplicate
+            blast_result = blast_result.drop_duplicates(subset="qseqid", keep="first")
+            # Cutoff
+            blast_result = blast_result.loc[blast_result['pident'] >= cutoff]
+            blast_result = blast_result[['qseqid','sseqid','pident']]
+
+            # Step 0.2: Create mapping table between original and alternative strain
+            # --------------------------------------------------------------------
+            in_model = pd.DataFrame()
+            complete_results = pd.DataFrame()
+            current_labels = [gene.getLabel() for gene in model.getPlugin(0).getListOfGeneProducts()]
+            for gene in blast_result["qseqid"].values:
+                locus_tag = gene.split("_")
+                locus_tag = locus_tag[2] + "_" + locus_tag[3]
+                if locus_tag in current_labels:
+                    in_model = pd.concat([in_model, blast_result[blast_result["qseqid"]==gene]], ignore_index=True)
+                complete_results = pd.concat([complete_results, blast_result[blast_result["qseqid"]==gene]], ignore_index=True)
+
+            in_model = pd.DataFrame(in_model)
+            complete_results = pd.DataFrame(complete_results)
+            
+            # Dictionary with locus_tag:protein_id for every BLAST result for the original
+            original_locus_tags = {}
+            for record in SeqIO.parse(fasta_original, "fasta"):
+                description = record.description
+                
+                if "[locus_tag=" in description:
+                    prot_id = description.split()[0]
+                    
+                    if prot_id in complete_results["qseqid"].values:
+                        start = description.find("[locus_tag=") + len("[locus_tag=")
+                        end = description.find("]", start)
+                        locus_tag = description[start:end]
+                        original_locus_tags.update({locus_tag: prot_id})
+                
+            # Dictionary with locus_tag:protein_id for every BLAST result for the alternative
+            alternative_locus_tags = {}
+            for record in SeqIO.parse(fasta_homolog, "fasta"):
+                description = record.description
+                
+                if "[locus_tag=" in description:
+                    prot_id = description.split()[0]
+                    
+                    if prot_id in complete_results["sseqid"].values:
+                        start = description.find("[locus_tag=") + len("[locus_tag=")
+                        end = description.find("]", start)
+                        locus_tag = description[start:end]
+                        alternative_locus_tags.update({locus_tag: prot_id})
+            
+            complete_results = complete_results.merge(pd.DataFrame(alternative_locus_tags.items(), columns=['locus_tag','sseqid']), how="left", on="sseqid")
+            complete_results = complete_results.merge(pd.DataFrame(original_locus_tags.items(), columns=['locus_tag','qseqid']), how="left", on="qseqid")
+            complete_results = complete_results.rename(columns={
+                "locus_tag_x": "locus_tag_alternative",
+                "locus_tag_y": "locus_tag_original"
+            })
+            
+            in_model = in_model.merge(pd.DataFrame(alternative_locus_tags.items(), columns=['locus_tag','sseqid']), how="left", on="sseqid")
+            in_model = in_model.merge(pd.DataFrame(original_locus_tags.items(), columns=['locus_tag','qseqid']), how="left", on="qseqid")
+            in_model = in_model.rename(columns={
+                "locus_tag_x": "locus_tag_alternative",
+                "locus_tag_y": "locus_tag_original"
+            })
 
         # Step 1: get genes from model
         # ----------------------------
-        geneps_in_model = [
-            _.getLabel() for _ in model.getPlugin(0).getListOfGeneProducts()
-        ]
+        if self.homology:
+            geneps_in_model = in_model["locus_tag_alternative"]
+        else:
+            geneps_in_model = [
+                _.getLabel() for _ in model.getPlugin(0).getListOfGeneProducts()
+            ]
 
         # Step 2a: Get genes of organism from BioCyc
         # ------------------------------------------
@@ -1967,13 +2080,29 @@ class BioCycGapFiller(GapFiller):
             self._gff,
             {"locus_tag": "locus_tag", "protein_id": "ncbiprotein", "product": "name"},
         )
+        
         locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.explode("ncbiprotein")
         locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.explode("name")
 
-        # Get the complete missing genes dataframe with the ncbiprotein IDs
-        self.missing_genes = self.missing_genes.merge(
-            locus_tag2ncbiprotein_df, on="locus_tag"
-        )
+        if self.homology:
+            locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.merge(complete_results, how="left", left_on="locus_tag", right_on="locus_tag_original")
+            locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df[["locus_tag", "locus_tag_alternative", "name", "ncbiprotein"]]
+            locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.rename(columns={"locus_tag": "locus_tag_original"})
+
+            # Get the complete missing genes dataframe with the ncbiprotein IDs
+            self.missing_genes = self.missing_genes.merge(
+                locus_tag2ncbiprotein_df, how="left", left_on="locus_tag", right_on="locus_tag_alternative"
+            )
+            self.missing_genes = self.missing_genes[["id", "locus_tag_original", "name", "ncbiprotein","reference"]]
+            self.missing_genes = self.missing_genes.rename(columns={"locus_tag_original": "locus_tag"})
+        else:
+            # Get the complete missing genes dataframe with the ncbiprotein IDs
+            self.missing_genes = self.missing_genes.merge(
+                locus_tag2ncbiprotein_df, on="locus_tag"
+            )
+        
+        if from_pgab:
+            self.missing_genes["ncbiprotein"] = self.missing_genes["locus_tag"]
 
         # Save not mappable genes due to no ncbiprotein ID
         self.manual_curation["genes"]["no NCBI Protein ID"] = self.missing_genes[
@@ -2153,215 +2282,6 @@ class BioCycGapFiller(GapFiller):
 
         # Mapped reactions
         self.missing_reactions = mapped_reacs[~mask]
-
-class BioCycGapFiller_Alternative(BioCycGapFiller):
-    """
-    | Based on a SmartTable with information on the genes and a SmartTable with
-    | information on the reactions of the organism of the model, this class
-    | finds missing genes in the model and maps them to reactions to try and
-    | fill the gaps found with the BioCyc gene SmartTable.
-    |
-    | For specifications on the SmartTables see the attributes `biocyc_gene_tbl`
-    | & `biocyc_reacs_tbl`
-
-    .. note::
-
-        Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
-        If your model does not conform to this you can use one of the functions
-        :py:func:`~refinegems.curation.curate.polish_model` or
-        :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table`.
-
-    Attributes:
-        - GapFiller Attributes:
-            All attributes of the parent class :py:class:`~refinegems.classes.gapfill.GapFiller`
-        - biocyc_gene_tbl_path (str, required):
-            Path to organism-specific SmartTable for genes from BioCyc;
-            Should contain the columns: ``Accession-2 | Reactions of gene``
-        - biocyc_reacs_tbl_path (str, required):
-            Path to organism-specific SmartTable for reactions from BioCyc;
-            Should contain the columns:
-            ``Reaction | Object ID | EC-Number | Spontaneous?``
-        - gff (str, required):
-            Path to organism-specific GFF file
-    """
-    def __init__(self, biocyc_gene_tbl_path: str, biocyc_reacs_tbl_path: str, gff: str) -> None: # TEST
-        super().__init__(biocyc_gene_tbl_path, biocyc_reacs_tbl_path, gff)
-        self._variety = "BioCyc (alternative strain)"
-
-    def find_missing_genes(self, model: cobra.Model, original_fasta: str, alternative_fasta: str, blast_result: str, cutoff: float=90.0):
-        # Step 1: Process BLAST results table
-        # -----------------------------------
-        # Sort out results that are duplicated or below the cutoff
-        colnames = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore']
-        blast_result = pd.read_table(blast_result, header=None, names=colnames)
-        blast_result = blast_result.sort_values(by=["qseqid", "pident", "length"], ascending=[True, False, False])
-        # Deduplicate
-        blast_result = blast_result.drop_duplicates(subset="qseqid", keep="first")
-        # Cutoff
-        blast_result = blast_result.loc[blast_result['pident'] >= cutoff]
-        blast_result = blast_result[['qseqid','sseqid','pident']]
-
-        # Step 2: Create mapping table between original and alternative strain
-        # --------------------------------------------------------------------
-        in_model = pd.DataFrame()
-        complete_results = pd.DataFrame()
-        for gene in blast_result["qseqid"].values:
-            protein_id = gene.replace("|","_").replace(".","_")
-            if protein_id in model.genes:
-                in_model = pd.concat([in_model, blast_result[blast_result["qseqid"]==gene]], ignore_index=True)
-            complete_results = pd.concat([complete_results, blast_result[blast_result["qseqid"]==gene]], ignore_index=True)
-
-        in_model = pd.DataFrame(in_model)
-        complete_results = pd.DataFrame(complete_results)
-        
-        # Dictionary with locus_tag:protein_id for every BLAST result for the original
-        original_locus_tags = {}
-        for record in SeqIO.parse(original_fasta, "fasta"):
-            description = record.description
-            
-            if "[locus_tag=" in description:
-                prot_id = description.split()[0]
-                
-                if prot_id in complete_results["qseqid"].values:
-                    start = description.find("[locus_tag=") + len("[locus_tag=")
-                    end = description.find("]", start)
-                    locus_tag = description[start:end]
-                    original_locus_tags.update({locus_tag: prot_id})
-            
-        # Dictionary with locus_tag:protein_id for every BLAST result for the alternative
-        alternative_locus_tags = {}
-        for record in SeqIO.parse(alternative_fasta, "fasta"):
-            description = record.description
-            
-            if "[locus_tag=" in description:
-                prot_id = description.split()[0]
-                
-                if prot_id in complete_results["sseqid"].values:
-                    start = description.find("[locus_tag=") + len("[locus_tag=")
-                    end = description.find("]", start)
-                    locus_tag = description[start:end]
-                    alternative_locus_tags.update({locus_tag: prot_id})
-        
-        complete_results = complete_results.merge(pd.DataFrame(alternative_locus_tags.items(), columns=['locus_tag','sseqid']), how="left", on="sseqid")
-        complete_results = complete_results.merge(pd.DataFrame(original_locus_tags.items(), columns=['locus_tag','qseqid']), how="left", on="qseqid")
-        complete_results = complete_results.rename(columns={
-            "locus_tag_x": "locus_tag_alternative",
-            "locus_tag_y": "locus_tag_original"
-        })
-        
-        in_model2 = in_model.copy()
-        in_model2 = in_model2.merge(pd.DataFrame(alternative_locus_tags.items(), columns=['locus_tag','sseqid']), how="left", on="sseqid")
-        in_model2 = in_model2.merge(pd.DataFrame(original_locus_tags.items(), columns=['locus_tag','qseqid']), how="left", on="qseqid")
-        in_model2 = in_model2.rename(columns={
-            "locus_tag_x": "locus_tag_alternative",
-            "locus_tag_y": "locus_tag_original"
-        })
-
-        # Step 3: get genes from model
-        # ----------------------------
-        # genes_in_original_model = [
-        #     _.getLabel() for _ in model.getPlugin(0).getListOfGeneProducts()
-        # ]
-        alternative_genes_in_model = in_model2["locus_tag_alternative"]
-
-        # Step 4a: Get genes of organism from BioCyc
-        # ------------------------------------------
-        # See bcgf.full_gene_list
-
-        # Step 4b: Filter out reactions without gene info
-        # -----------------------------------------------
-        # Save reactions without gene info
-        reacs_no_gene_info = self.full_gene_list[
-            self.full_gene_list["locus_tag"].isna()
-        ]
-        # Split reaction ids to get one per row
-        reacs_no_gene_info['id'] = reacs_no_gene_info["id"].str.split(r"//")
-        # Explode dataframe
-        reacs_no_gene_info = reacs_no_gene_info.explode('id', ignore_index=True)
-        self.manual_curation['reactions']['without gene info'] = reacs_no_gene_info
-
-        # Add amount of reactions without gene info to statistics
-        self._statistics['reactions'] = insert_into_dict(
-            self._statistics['reactions'], (
-                "unmappable (w/o gene info)", 
-                self.manual_curation["reactions"]["without gene info"]["id"].nunique()
-                ),
-            'missing (based on genes)'
-            )
-
-        # Remove all rows where 'locus_tag' is None
-        self.full_gene_list.dropna(subset="locus_tag", inplace=True)
-        
-        # Step 5: BioCyc vs. model genes -> get missing genes for model
-        # -------------------------------------------------------------
-        self.missing_genes = self.full_gene_list[
-            ~self.full_gene_list["locus_tag"].isin(alternative_genes_in_model)
-        ]
-
-        # Step 6: Get amount of missing genes in total
-        # --------------------------------------------
-        self._statistics["genes"]["missing (total)"] = self.missing_genes[
-            "locus_tag"
-        ].nunique()
-        
-        # Save not mappable genes due to no ncbiprotein ID
-        self.manual_curation["genes"]["no NCBI Protein ID"] = self.missing_genes[
-            self.missing_genes["ncbiprotein"].isna()
-        ]
-        
-        # Adjust amount of unmappable genes in statistics
-        self._statistics["genes"]["unmappable"] += self.manual_curation["genes"][
-            "no NCBI Protein ID"
-        ]["locus_tag"].nunique()
-
-        # Remove all rows where 'ncbiprotein' is None
-        self.missing_genes.dropna(subset="ncbiprotein", inplace=True)
-
-        # Step 7: Filter results
-        # ----------------------
-        # Save not mappable genes due to no reaction ID
-        self.manual_curation["genes"]["no reaction ID"] = self.missing_genes[
-            self.missing_genes["id"].isna()
-        ]
-
-        # Add amount of unmappable genes to statistics
-        self._statistics["genes"]["unmappable"] = self.manual_curation["genes"][
-            "no reaction ID"
-        ]["locus_tag"].nunique()
-        
-        # Remove all rows where 'id' is None
-        self.missing_genes.dropna(subset="id", inplace=True)
-
-        # Step 8: Get ncbiprotein IDs
-        # ---------------------------
-        # Parse GFF file to obtain locus_tag2ncbiportein mapping for all CDS
-        # same GFF as original or alternative?
-        locus_tag2ncbiprotein_df = parse_gff_for_cds(
-            self._gff,
-            {"locus_tag": "locus_tag", "protein_id": "ncbiprotein", "product": "name"},
-        )
-        locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.explode("ncbiprotein")
-        locus_tag2ncbiprotein_df = locus_tag2ncbiprotein_df.explode("name")
-
-        locus_tag2ncbiprotein_df2 = locus_tag2ncbiprotein_df.merge(complete_results, how="left", left_on="locus_tag", right_on="locus_tag_original")
-        locus_tag2ncbiprotein_df2 = locus_tag2ncbiprotein_df2[["locus_tag", "locus_tag_alternative", "name", "ncbiprotein"]]
-        locus_tag2ncbiprotein_df2 = locus_tag2ncbiprotein_df2.rename(columns={"locus_tag": "locus_tag_original"})
-
-        # Get the complete missing genes dataframe with the ncbiprotein IDs
-        self.missing_genes = self.missing_genes.merge(
-            locus_tag2ncbiprotein_df2, how="left", left_on="locus_tag", right_on="locus_tag_alternative"
-        )
-        self.missing_genes = self.missing_genes[["id", "locus_tag_original", "name", "ncbiprotein"]]
-        self.missing_genes = self.missing_genes.rename(columns={"locus_tag_original": "locus_tag"})
-        
-        # Step 9: Get amount of missing genes in total
-        # --------------------------------------------
-        self._statistics["genes"]["missing (mappable)"] = self.missing_genes[
-            "locus_tag"
-        ].nunique()
-        self._statistics["genes"]["missing (remaining)"] = self._statistics["genes"][
-            "unmappable"
-        ]
 
 
 # -------------------------------------
