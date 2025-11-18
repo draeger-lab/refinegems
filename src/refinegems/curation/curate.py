@@ -1471,6 +1471,9 @@ def polish_model(
         libModel:
             Polished libSBML model
     """
+    ### Add compartments based on id
+    model = fix_compartments(model)
+    
     ### Set-up
     # Get ListOf objects
     metab_list = model.getListOfSpecies()
@@ -1493,9 +1496,6 @@ def polish_model(
     extend_metab_reac_annots_via_notes(reac_list)
     update_annotations_from_others(model)
 
-    ### Add compartments based on id
-    model = fix_compartments(model)
-
     ### Extend annotations for GeneProducts ###
     extend_gp_annots_via_mapping_table(
         model,
@@ -1508,16 +1508,16 @@ def polish_model(
     )
     if kegg_organism_id:
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id, prefixes2remove_kegg)
+        
+    ### set boundaries and constants ###
+    polish_entity_conditions(metab_list)
+    polish_entity_conditions(reac_list)
 
     ### Check reaction direction ###
     if reaction_direction:
         model = _sbml_to_model(model)
         model = check_direction(model, reaction_direction)
         model = convert_cobra_to_libsbml(model, add_label_locus='notes')
-
-    ### set boundaries and constants ###
-    polish_entity_conditions(metab_list)
-    polish_entity_conditions(reac_list)
 
     ### MIRIAM compliance of CVTerms ###
     logger.info(
