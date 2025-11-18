@@ -601,10 +601,12 @@ class GrowthSimulationReport(Report):
             f.write(str(self))
         # save visualisation for doubling time
         fig_dt = self.plot_growth(color_palette=color_palette)
-        fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
+        if fig_dt:
+            fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
         # save visualisation for growth rate
         fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
-        fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
+        if fig_dt:
+            fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
 
 
 class KEGGPathwayAnalysisReport(Report):
