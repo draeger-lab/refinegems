@@ -70,6 +70,7 @@ DEPRECATED_PREFIXES = {
 
 # Change CURIE pattern/Correct CURIEs
 # ------------------------------------
+# @FIXME Check if compatibility with bioregistry versions starting from 0.12.19 is possible
 def get_set_of_curies(
     uri_list: list[str],
 ) -> tuple[SortedDict[str : SortedSet[str]], list[str]]:
