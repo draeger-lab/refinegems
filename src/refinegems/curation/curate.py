@@ -1471,15 +1471,6 @@ def polish_model(
         libModel:
             Polished libSBML model
     """
-    ### Add compartments based on id
-    model = fix_compartments(model)
-    
-    ### Set-up
-    # Get ListOf objects
-    metab_list = model.getListOfSpecies()
-    reac_list = model.getListOfReactions()
-    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
-
     ### Clean model metadata
     #polish_model_metadata(model)
 
@@ -1488,6 +1479,15 @@ def polish_model(
     set_model_default_units(model)
     set_units_of_parameters(model)
     set_initial_amount_metabs(model)
+
+    ### Fix/clean-up compartments -> requires unit in model
+    model = fix_compartments(model)
+
+    ### Set-up for later functions
+    # Get ListOf objects
+    metab_list = model.getListOfSpecies()
+    reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
 
     ### improve metabolite, reaction and gene annotations ###
     extend_metab_reac_annots_via_id(metab_list, id_db)
