@@ -448,16 +448,6 @@ def annotations(modelpath, new_pattern, outdir):
         help="KEGG organism identifier if available.",
     ),
     cloup.option(
-        "-r",
-        "--rd",
-        "--reaction-direction",
-        required=False,
-        type=click.Path(exists=True, dir_okay=False),
-        default=None,
-        show_default=True,
-        help="Path to a CSV file containing the BioCyc smart table with the columns `Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction`.",
-    ),
-    cloup.option(
         "-o",
         "--outdir",
         required=False,
@@ -507,7 +497,6 @@ def model(
     lt,
     lab_strain,
     kid,
-    rd,
     outdir,
 ):
     """Completes all steps to polish a model created by an automatic reconstruction pipeline.
@@ -530,7 +519,6 @@ def model(
         lt,
         lab_strain,
         kid,
-        rd,
         outdir,
     )
     rg.utility.io.write_model_to_file(

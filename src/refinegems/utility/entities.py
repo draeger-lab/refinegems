@@ -90,57 +90,97 @@ logger = logging.getLogger(__name__)
 # handling compartments
 # ---------------------
 
+def get_compartment_ids(model: Union[cobra.Model, libModel]) -> list[str]:
+    """Get compartment IDs based on model type
 
-def are_compartment_names_valid(model: cobra.Model) -> bool:
+    Args:
+        - model (Union[cobra.Model, libModel]): 
+            The model loaded with COBRApy or libSBML.
+
+    Returns:
+        list[str]: 
+            List of compartment IDs
+    Raises:
+        - TypeError: Unknown model object type
+    """
+    match model:
+        case cobra.Model():
+            return model.compartments.keys()
+        case libModel():
+            return [c.getId() for c in model.getListOfCompartments()]
+        case _:
+            raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+# Adjusted with Copilot suggestions for refinement and libSBML support
+def are_compartment_names_valid(model: Union[cobra.Model, libModel]) -> bool:
     """Check if compartment names of model are considered valid based on
     :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`.
 
     Args:
-        - model (cobra.Model):
-            The model, loaded with COBRApy.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Returns:
         bool:
             True, if valid, else false.
+
     """
+    compartment_ids = get_compartment_ids(model)
+    return all(c in VALID_COMPARTMENTS for c in compartment_ids)
 
-    for c in model.compartments.keys():
-        if c not in VALID_COMPARTMENTS.keys():
-            return False
-
-    return True
-
-
-def resolve_compartment_names(model: cobra.Model):
+def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
     """Resolves compartment naming problems.
 
     Args:
-        - model (cobra.Model):
-            A COBRApy model object.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Raises:
         - KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
     """
 
-    # check if compartment names are valid
+    initial_compartment_ids = get_compartment_ids(model)
+
+    # Check if compartment names are valid
     if not are_compartment_names_valid(model):
-
         # check if mapping is possible
-        if set(model.compartments.keys()).issubset(set(COMP_MAPPING.keys())):
-            # for each metabolite rename the compartment
-            for metabolite in model.metabolites:
-                metabolite.compartment = COMP_MAPPING[metabolite.compartment]
-            # add whole descriptions of the compartments to the model
-            # note:
-            #    only compartments IN the model will be added
-            model.compartments = VALID_COMPARTMENTS
-            if "uc" in model.compartments.keys():
-                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
+        if set(initial_compartment_ids).issubset(set(COMP_MAPPING.keys())):
+            match model:
+                case isinstance(cobra.Model()):
+                    # for each metabolite rename the compartment
+                    for metabolite in model.metabolites:
+                        metabolite.compartment = COMP_MAPPING[metabolite.compartment]
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        model.compartments = VALID_COMPARTMENTS
 
+                case isinstance(libModel()):
+                    # for each metabolite rename the compartment
+                    for metabolite in model.getListOfSpecies():
+                        metabolite.setCompartment(COMP_MAPPING[metabolite.getCompartment()])
+                        
+                    # for each compartment rename the compartment ID
+                    for comp in model.getListOfCompartments():
+                        new_id = COMP_MAPPING[comp.getId()]
+                        comp.setId(new_id)
+                        
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        if comp.getId() in VALID_COMPARTMENTS:
+                            comp.setName(VALID_COMPARTMENTS[comp.getId()])
+
+                case _:
+                    raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+            updated_compartment_ids = get_compartment_ids(model)
+            if "uc" in updated_compartment_ids:
+                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
         else:
             raise KeyError(
                 f"Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Please contact developers or change compartment names manually."
-            )
+                )
 
 
 # handling cobra entities (features)

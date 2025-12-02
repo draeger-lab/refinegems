@@ -516,10 +516,7 @@ def fix_compartments(model: libModel) -> libModel:
                 m.setCompartment(default_comp)
 
     # Check validity of compartment IDs & adjust if necessary
-    # Turn into COBRA model
-    model = _sbml_to_model(model)
     resolve_compartment_names(model)
-    model = convert_cobra_to_libsbml(model, add_label_locus='notes')
 
     # Add specifications for compartment structure
     add_compartment_structure_specs(model)
@@ -1397,6 +1394,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
 
 # Perform all clean-up steps
 # --------------------------
+# @TODO Remove reaction direction & check all usages of polish_model (mainly in SPECIMEN)
 def polish_model(
     model: libModel,
     id_db: str = "BiGG",
@@ -1407,7 +1405,6 @@ def polish_model(
     lab_strain: bool = False,
     kegg_organism_id: str = None,
     prefixes2remove_kegg: Union[list[str], str] = '',
-    reaction_direction: str = None,
     outpath: str = None,
 ) -> libModel:
     """Completes all steps to polish a model
@@ -1452,16 +1449,6 @@ def polish_model(
         - prefixes2remove_kegg (Union[str,list[str]], optional):
             Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
             Defaults to empty string ('').
-        - reaction_direction (str, optional):
-            Path to a CSV file containing the BioCyc smart table with the columns
-            ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
-            For more details see :py:func:`~refinegems.curation.curate.check_direction`
-            Defaults to None.
-
-            .. hint::
-
-                Currently disabled as function generalises bad.
-
         - outpath (str, optional):
             Output path for mapping table from model ID to valid database IDs (if mapping_tbl_file == None)
             & incorrect annotations file(s).
@@ -1512,12 +1499,6 @@ def polish_model(
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
     polish_entity_conditions(reac_list)
-
-    ### Check reaction direction ###
-    if reaction_direction:
-        model = _sbml_to_model(model)
-        model = check_direction(model, reaction_direction)
-        model = convert_cobra_to_libsbml(model, add_label_locus='notes')
 
     ### MIRIAM compliance of CVTerms ###
     logger.info(
