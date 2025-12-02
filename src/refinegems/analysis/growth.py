@@ -456,8 +456,8 @@ def growth_sim_multi(
 
     # simulate the growth of the models on the different media
     report = GrowthSimulationReport()
-    for mod in models:
-        for med, supp, nsp in zip(media, supplement_modes, namespace):
+    for mod, nsp in zip(models, namespace):
+        for med, supp in zip(media, supplement_modes):
             r = growth_sim_single(mod, med, namespace=nsp, supplement=supp)
             report.add_sim_results(r)
 
