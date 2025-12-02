@@ -40,7 +40,7 @@ import pandas as pd
 import re
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
+from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition
 from pathlib import Path
@@ -58,7 +58,7 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
 )
 from ..utility.entities import get_gpid_mapping, create_fba_units, resolve_compartment_names, MIN_GROWTH_THRESHOLD
-from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
+from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
