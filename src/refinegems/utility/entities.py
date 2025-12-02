@@ -146,7 +146,7 @@ def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
         # check if mapping is possible
         if set(initial_compartment_ids).issubset(set(COMP_MAPPING.keys())):
             match model:
-                case isinstance(cobra.Model()):
+                case cobra.Model():
                     # for each metabolite rename the compartment
                     for metabolite in model.metabolites:
                         metabolite.compartment = COMP_MAPPING[metabolite.compartment]
@@ -155,7 +155,7 @@ def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
                         #    only compartments IN the model will be added
                         model.compartments = VALID_COMPARTMENTS
 
-                case isinstance(libModel()):
+                case libModel():
                     # for each metabolite rename the compartment
                     for metabolite in model.getListOfSpecies():
                         metabolite.setCompartment(COMP_MAPPING[metabolite.getCompartment()])
