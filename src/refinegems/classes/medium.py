@@ -741,10 +741,11 @@ class Medium:
     # ------------------------
     def export_to_cobra(
         self,
-        namespace: Literal["Name", "BiGG"] = "BiGG",
+        namespace: Literal["Name", "BiGG", "SEED"] = "BiGG",
         default_flux: float = 10.0,
         replace: bool = False,
         double_o2: bool = True,
+        ext_compartment: str = "e",
     ) -> dict[str, float]:
         """Export a medium to the COBRApy format for a medium.
 
@@ -757,6 +758,10 @@ class Medium:
                 Replace all values with the default flux. Defaults to False.
             - double_o2 (bool, optional):
                 Double the flux of oxygen. Defaults to True.
+            - ext_compartment (str, optional):
+                The compartment suffix for external compounds 
+                Mainly used fir the SEED namespace. 
+                Defaults to 'e'.
 
         Raises:
             - ValueError: Unknown namespace.
@@ -783,6 +788,16 @@ class Medium:
                 biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
                 cobra_medium = pd.Series(
                     biggs.flux.values, index=biggs.db_id_EX
+                ).to_dict()
+                
+            case "SEED":
+                
+                seeds = self.substance_table[   
+                    self.substance_table["db_type"].str.contains("SEED")
+                ][["name", "db_id", "flux"]]
+                seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
+                cobra_medium = pd.Series(
+                    seeds.flux.values, index=seeds.db_id_EX
                 ).to_dict()
 
             case _:
@@ -2188,6 +2203,7 @@ def medium_to_model(
         default_flux=default_flux,
         replace=replace,
         double_o2=double_o2,
+        ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)
     )
 
     # remove exchanges that do not exist in model
