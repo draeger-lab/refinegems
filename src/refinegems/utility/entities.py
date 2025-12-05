@@ -15,8 +15,12 @@ import logging
 import pandas as pd
 import re
 import requests
+import subprocess
+import tempfile
 import urllib
 import warnings
+
+from .io import load_model, write_model_to_file
 
 from Bio import Entrez
 from Bio.KEGG import REST, Compound
@@ -155,21 +159,32 @@ def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
                         #    only compartments IN the model will be added
                         model.compartments = VALID_COMPARTMENTS
 
+                # @TEST: Needs further testing
                 case libModel():
                     # for each metabolite rename the compartment
                     for metabolite in model.getListOfSpecies():
                         metabolite.setCompartment(COMP_MAPPING[metabolite.getCompartment()])
-                        
+
+                    comp_map = {}
                     # for each compartment rename the compartment ID
                     for comp in model.getListOfCompartments():
-                        new_id = COMP_MAPPING[comp.getId()]
+                        current_id = comp.getId()
+                        new_id = COMP_MAPPING[current_id]
                         comp.setId(new_id)
+                        # comp_map[current_id] = new_id
                         
                         # add whole descriptions of the compartments to the model
                         # note:
                         #    only compartments IN the model will be added
                         if comp.getId() in VALID_COMPARTMENTS:
                             comp.setName(VALID_COMPARTMENTS[comp.getId()])
+
+                    # # fix ID references in the whole file 
+                    # with tempfile.NamedTemporaryFile(suffix=".xml") as tmp:
+                    #     write_model_to_file(model, tmp.name)
+                    #     for current_id, new_id in tqdm(comp_map.items()):
+                    #         subprocess.run(['sed', '-i', "''",f's/{current_id}/{new_id}/g', tmp.name])
+                    #     model = load_model(tmp.name, "libsbml")
 
                 case _:
                     raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")

@@ -469,6 +469,16 @@ def add_compartment_structure_specs(model: libModel) -> None:
     """
     for compartment in model.getListOfCompartments():
 
+        if not compartment.isSetMetaId():
+            compartment.setMetaId(f"meta_{compartment.getId()}")
+
+        # Physical compartment is most likely case
+        if not compartment.isSetSBOTerm():
+            if (compartment.getId() == 'uc') or 'unknown' in compartment.getName().lower():
+                compartment.setSBOTerm("SBO:0000410")  # implicit compartment
+            else:
+                compartment.setSBOTerm('SBO:0000290')  # physical compartment
+
         if not compartment.isSetSize():
             compartment.setSize(float("NaN"))
 
@@ -504,16 +514,36 @@ def fix_compartments(model: libModel) -> libModel:
     # If any metabolite has no compartment
     if comps_missing:
         # Get compartment list (for consistency)
-        comps_in_model = model.getListOfCompartments()
+        comps_in_model = set([c.getId() for c in model.getListOfCompartments()])
+        metab_comps = set()
         for m in model.getListOfSpecies():
-            comp_from_id = m.getId().split('_')[-1]
-            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS):
-                m.setCompartment(comp_from_id)
+            comp_from_id = m.getId().split('_')[-1].strip() # In case of whitespace
+            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS.keys()):
+                m.setCompartment(comp_from_id) # Set compartment from id
+                metab_comps.add(comp_from_id)
+
             else:
                 # No compartment in id found, using unknown
                 default_comp = 'uc'
-                logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
+                logging.warning(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
                 m.setCompartment(default_comp)
+                metab_comps.add(default_comp)
+
+        # Check if any compartment assigned to a metabolite is missing in the compartment list
+        missing_comps = metab_comps - comps_in_model # Comps missing in model
+        if missing_comps: # If any comps missing add to model
+            for c in missing_comps:
+                # Create new compartment based on the id found in the metabolite id
+                new_comp = model.createCompartment()
+                new_comp.setId(c)
+                new_comp.setName(VALID_COMPARTMENTS[c])
+                new_comp.setMetaId(f'meta_{c}')
+
+        comps_to_remove = comps_in_model - metab_comps # Comps in model that are not used by any metabolite
+        if comps_to_remove: # If any comps to remove
+            for c in comps_to_remove:
+                logging.warning(f'Removing compartment {c} as no metabolite is assigned to it.')
+                model.removeCompartment(c)
 
     # Check validity of compartment IDs & adjust if necessary
     resolve_compartment_names(model)
