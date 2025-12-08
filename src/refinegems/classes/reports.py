@@ -1913,14 +1913,18 @@ class SBOTermReport(Report):
             the model.
     """
 
-    def __init__(self, model: libModel):
+    def __init__(self, model: libModel, name: Union[str, None] = None):
         """
         Args:
             - model (libModel):
                 A model loaded with libSBML.
+            - name (Union[str, None], optional):
+                An optional name for the model.
+                If not provided, the ID of the model is used.
+                Defaults to None.
         """
         super().__init__()
-        self.name = model.getId()
+        self.name = name if name else model.getId()
         self.sbodata = get_reactions_per_sbo(model)
 
     def visualise(self) -> matplotlib.figure.Figure:
@@ -2007,23 +2011,23 @@ class MultiSBOTermReport(Report):
 
     def visualise(
         self,
-        rename: dict = Union[None, dict],
+        rename: Union[None, dict] = None,
         color_palette: Union[str, list[str]] = "Paired",
-        figsize: tuple = (10, 10),
+        kwargs: dict={'figsize': (10, 10), 'legend_loc':'lower right'},
     ) -> matplotlib.figure.Figure:
         """Visualise the amount of SBO terms in the models.
 
         Args:
             - rename (Union[None,dict], optional):
-                Takes a dictioanry of model IDs and alternative names
+                Takes a dictionary of model IDs and alternative names
                 When set, uses the dictionary to rename the models.
                 Defaults to None.
             - color_palette (Union[str,list[str]], optional):
                 Color palette name or list of colours for the graphic.
                 Defaults to 'Paired'.
-            - figsize (tuple, optional):
-                Site of the figure. Requires a tuple of two integers.
-                Defaults to (10,10).
+            - kwargs (dict, optional):
+                Dictionary containing details for plotting the MultiSBOTermReport. 
+                Defaults to {'figsize': (10, 10), 'legend_loc':'lower right'}.
 
         Raises:
             - TypeError: Unkown type for color palette.
@@ -2069,13 +2073,13 @@ class MultiSBOTermReport(Report):
             df = df.rename(rename, axis=1)
 
         # make the figure
-        ax = df.plot.barh(stacked=True, width=0.8, figsize=figsize, color=cmap)
+        ax = df.plot.barh(stacked=True, width=0.8, color=cmap, figsize=kwargs.get('figsize', (10,10)))
         for patch in ax.patches:
             colour = patch.get_facecolor()
             patch.set_edgecolor(colour)
         ax.set_ylabel("")
-        ax.set_xlabel("number of reactions", fontsize=16)
-        ax.legend(loc="lower right")
+        ax.set_xlabel("Number of reactions", fontsize=16)
+        ax.legend(loc=kwargs.get('legend_loc', 'lower right'))
 
         return ax.get_figure()
 
