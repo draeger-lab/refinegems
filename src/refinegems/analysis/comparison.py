@@ -218,7 +218,7 @@ def plot_db_entity_overlap(
     if outdir:
         if isinstance(outdir, str): outdir = Path(outdir)
         outdir.mkdir(parents=True, exist_ok=True)
-        filename = f'{entity}{db}_comparison_plot.{outfile_suffix}' if db else f'{entity}_comparison_plot.{outfile_suffix}'
+        filename = f'{entity}_{db}_comparison_plot' if db else f'{entity}_ID_comparison_plot'
         filepath = Path(outdir, f'{filename}.{outfile_suffix}')
 
     # If no renaming list is given, use model IDs
