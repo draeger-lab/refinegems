@@ -38,27 +38,43 @@ logger = logging.getLogger(__name__)
 ################################################################################
 
 
-def sbo_terms(models: list[libModel], rename: Union[list[str],None]=None) -> MultiSBOTermReport:
+def sbo_terms(models: Union[libModel, list[libModel]], rename: Union[str,list[str],None]=None) -> Union[SBOTermReport,MultiSBOTermReport]:
     """Analyse and compare the SBO term annotations of a given list
     of models.
 
     Args:
-        - models (list[libModel]):
+        - models (libModel | list[libModel]):
             A list containing models loaded with libSBML.
-        - rename (list[str], optional):
+        - rename (str | list[str], optional):
             Rename model ids to custom names.
             Defaults to None.
 
+    Raises:
+        - ValueError: Length mismatch with provided lists for models and rename
+
     Returns:
-        MultiSBOTermReport:
-            A :py:class:`~refinegems.classes.reports.MultiSBOTermReport` instance.
+        SBOTermReport | MultiSBOTermReport:
+            A :py:class:`~refinegems.classes.reports.SBOTermReport` for a single model or a :py:class:`~refinegems.classes.reports.MultiSBOTermReport` instance if multiple models are provided.
     """
-
-    sboanalyses = []
-    for m, name in zip(models, rename):
-        sboanalyses.append(SBOTermReport(m, name))
-
-    return MultiSBOTermReport(sboanalyses)
+    # Check if only one model
+    if isinstance(models, libModel):
+        if isinstance(rename, list):
+            if len(rename) != 1:
+                logging.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
+                                Taking first entry to rename model IDs with custom ID: {rename[0]}.
+                                Proper use: 
+                                Provide a list with one entry or a string.
+                                ''')
+            rename = rename[0] # Take first entry
+            
+        return SBOTermReport(models, rename)
+    else:
+        if len(models) != len(rename):
+            raise ValueError(f'Length of provided model list ({len(models)}) does not match the length of the custom IDs provided by rename ({len(rename)}).')
+        sboanalyses = []
+        for m, name in zip(models, rename):
+            sboanalyses.append(SBOTermReport(m, name))
+        return MultiSBOTermReport(sboanalyses)
 
 ###
 # Model entity comparison

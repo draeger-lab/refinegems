@@ -1829,7 +1829,7 @@ class GapFillerReport(Report):
         )
         ax2.bar_label(p, values)
         ax2.set_xlabel("count")
-        ax2.tick_params(axis="x", which="major", labelsize=7, labelrotation=90)
+        ax2.tick_params(axis="x", which="major", labelsize=7)
         ax2.set_title("A) Genes")
 
         # plot statistics about reactions
@@ -1847,7 +1847,7 @@ class GapFillerReport(Report):
         )
         ax1.bar_label(p, values)
         ax1.set_xlabel("count")
-        ax1.tick_params(axis="x", which="major", labelsize=7, labelrotation=90)
+        ax1.tick_params(axis="x", which="major", labelsize=7)
         ax1.set_title("B) Reactions")
 
         return fig
@@ -1927,9 +1927,20 @@ class SBOTermReport(Report):
         self.name = name if name else model.getId()
         self.sbodata = get_reactions_per_sbo(model)
 
-    def visualise(self) -> matplotlib.figure.Figure:
+    def visualise(self, color_palette: str = "forestgreen", show_invalid: bool=False, show_overall_counts: bool=False) -> matplotlib.figure.Figure:
         """Visualise the amount of SBO terms found in the model
         the report was created with.
+
+        Args:
+            - color_palette (str, optional):
+                Name of a color.
+                Defaults to 'forestgreen'.
+            - show_invalid (bool, optional):
+                Whether to include invalid SBO terms in the visualisation.
+                Defaults to False.
+            - show_overall_counts (bool, optional):
+                Whether to show overall counts of SBO terms in the visualisation.
+                Defaults to False.
 
         Returns:
             matplotlib.figure.Figure:
@@ -1942,12 +1953,37 @@ class SBOTermReport(Report):
             .rename({0: self.name, "index": "SBO-Term"}, axis=1)
         )
         df["SBO-Name"] = df["SBO-Term"].apply(search_sbo_label)
-        ax = (
-            df.drop("SBO-Term", axis=1)
-            .sort_values(self.name)
-            .set_index("SBO-Name")
-            .plot.barh(width=0.8, figsize=(8, 10))
-        )
+
+        # Show number for invalid SBO terms, optionally
+        if not show_invalid:
+            df = df[df['SBO-Name'] != 'invalid']
+
+        # Generate sorted df for plotting
+        df_sorted = df[df['SBO-Name'] != 'invalid'].sort_values(self.name)
+        df_invalid = df[df['SBO-Name'] == 'invalid']
+        df = pd.concat([df_invalid, df_sorted], ignore_index=True)
+
+        # Generate the plot + colour
+        try:
+            ax = (
+                df.drop("SBO-Term", axis=1)
+                .set_index("SBO-Name")
+                .plot.barh(width=0.8, color=color_palette, figsize=(8, 10))
+                )
+        except ValueError:
+            logger.warning('Unknown color, setting it to "forestgreen"')
+            ax = (
+                df.drop("SBO-Term", axis=1)
+                .set_index("SBO-Name")
+                .plot.barh(width=0.8, color='forestgreen', figsize=(8, 10))
+                )
+
+        if show_overall_counts:
+            df_counts = df[self.name]
+            for x, y in enumerate(df_counts):
+                ax.annotate(y, (y+(df_counts.max()*0.01), x), xycoords="data", va='center')
+            ax.set_xlim(0, df_counts.max()*1.08)
+        
         ax.set_ylabel("")
         ax.set_xlabel("number of reactions", fontsize=16)
         ax.legend(loc="lower right")
@@ -2013,6 +2049,8 @@ class MultiSBOTermReport(Report):
         self,
         rename: Union[None, dict] = None,
         color_palette: Union[str, list[str]] = "Paired",
+        show_invalid: bool=False,
+        show_overall_counts: bool=False,
         kwargs: dict={'figsize': (10, 10), 'legend_loc':'lower right'},
     ) -> matplotlib.figure.Figure:
         """Visualise the amount of SBO terms in the models.
@@ -2025,6 +2063,12 @@ class MultiSBOTermReport(Report):
             - color_palette (Union[str,list[str]], optional):
                 Color palette name or list of colours for the graphic.
                 Defaults to 'Paired'.
+            - show_invalid (bool, optional):
+                Whether to include invalid SBO terms in the visualisation.
+                Defaults to False.
+            - show_overall_counts (bool, optional):
+                Whether to show overall counts of SBO terms in the visualisation.
+                Defaults to False.
             - kwargs (dict, optional):
                 Dictionary containing details for plotting the MultiSBOTermReport. 
                 Defaults to {'figsize': (10, 10), 'legend_loc':'lower right'}.
@@ -2062,18 +2106,26 @@ class MultiSBOTermReport(Report):
 
         # prepare the data
         df.drop("SBO-Term", axis=1, inplace=True)
-        df = df.set_index("SBO-Name")
         # sort by total SBO term count
-        df["rowsum"] = df.sum(axis=1)
-        df = df.sort_values(by="rowsum", axis=0)
+        cols_to_sum = df.select_dtypes(include='number').columns
+        df["rowsum"] = df[cols_to_sum].sum(axis=1)
+        df_sorted = df[df["SBO-Name"] != 'invalid'].sort_values(by="rowsum", axis=0)
+        df_invalid = df[df["SBO-Name"] == 'invalid']
+        df = pd.concat([df_invalid, df_sorted], ignore_index=True) if show_invalid else df_sorted
+        df = df.set_index("SBO-Name")
+        df_rowsum = df["rowsum"]
         df.drop("rowsum", axis=1, inplace=True)
 
         # rename to custom names
-        if rename is not None:
-            df = df.rename(rename, axis=1)
+        # if rename is not None:
+        #     df = df.rename(rename, axis=1)
 
         # make the figure
         ax = df.plot.barh(stacked=True, width=0.8, color=cmap, figsize=kwargs.get('figsize', (10,10)))
+        if show_overall_counts:
+            for x, y in enumerate(df_rowsum):
+                ax.annotate(y, (y+(df_rowsum.max()*0.01), x), xycoords="data", va='center')
+            ax.set_xlim(0, df_rowsum.max()*1.08)
         for patch in ax.patches:
             colour = patch.get_facecolor()
             patch.set_edgecolor(colour)

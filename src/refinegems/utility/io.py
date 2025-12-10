@@ -842,7 +842,10 @@ def search_sbo_label(sbo_number: str) -> str:
         str:
             Denoted label for given SBO Term
     """
-    sbo_number = str(sbo_number)
-    client = EBIClient()
-    sbo = client.get_term("sbo", "http://biomodels.net/SBO/SBO_0000" + sbo_number)
-    return sbo["_embedded"]["terms"][0]["label"]
+    if sbo_number == 'invalid':
+        return sbo_number
+    else:
+        sbo_number = str(sbo_number)
+        client = EBIClient()
+        sbo = client.get_term("sbo", "http://biomodels.net/SBO/SBO_0000" + sbo_number)
+        return sbo["_embedded"]["terms"][0]["label"]
