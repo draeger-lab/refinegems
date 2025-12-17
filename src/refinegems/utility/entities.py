@@ -2482,51 +2482,60 @@ def create_gpr(reaction: Reaction, gene: Union[str, list[str]]) -> None:
             Either a gene ID or a list of gene IDs, that will be added to the GPR
             (OR causality).
     """
+    
+    # Step 0: Pre-processing
+    # ----------------------
+    
+    if isinstance(gene, str):
+        gene_list = [gene]
+    else:
+        gene_list = gene
 
     # Step 1: test, if there is already a gpr
     # ---------------------------------------
-    old_association_str = None
-    old_association_fbc = None
+    
+    # case 1: reaction already has a gpr
     if reaction.getPlugin(0).getGeneProductAssociation():
-        old_association = (
-            reaction.getPlugin(0).getGeneProductAssociation().getListOfAllElements()
-        )
-        # case 1: only a single association
-        if len(old_association) == 1 and isinstance(old_association[0], GeneProductRef):
-            old_association_str = old_association[0].getGeneProduct()
-        # case 2: nested structure of asociations
-        elif isinstance(old_association[0], FbcOr) or isinstance(
-            old_association[0], FbcAnd
-        ):
-            old_association_fbc = old_association[0].clone()
-            # this should get the highest level association (that includes all others)
-
-    # Step 2: create new gene product association
-    # -------------------------------------------
-    if old_association_str and isinstance(gene, str):
-        gene = [old_association_str, gene]
-    elif old_association_str and isinstance(gene, list):
-        gene.append(old_association_str)
-
-    # add the old association rule as an 'OR' (if needed)
-    if not old_association_fbc:
-        new_association = reaction.getPlugin(0).createGeneProductAssociation()
+        match reaction.getPlugin(0).getGeneProductAssociation().getAssociation():
+            # case 1.1: single association
+            case GeneProductRef():
+                # save the existing gene product
+                gene_list.append(reaction.getPlugin(0).getGeneProductAssociation().getAssociation().getGeneProduct())
+                # remove old association 
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                # create new 'OR' association
+                reaction.getPlugin(0).createGeneProductAssociation().createOr()
+            # case 1.2: highest level fbc:or
+            case FbcOr():
+                # nothing to do here
+                pass
+            # case 1.3: highest level fbc:and
+            case FbcAnd():
+                # copy old association
+                old_association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation().clone()
+                # build new 'OR' association
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                newOR = reaction.getPlugin(0).createGeneProductAssociation().createOr()
+                # add old association as sub-association
+                newOR.addAssociation(old_association)
+            # case not defined
+            case _:
+                raise TypeError(f"Unknown GPR association type {type(reaction.getPlugin(0).getGeneProductAssociation().getAssociation())}. Check your model for errors or contact developers, if a association type is not implemented.")
+            
+    # case 2: reaction has no gpr yet
     else:
-        new_association = (
-            reaction.getPlugin(0).createGeneProductAssociation().createOr()
-        )
-        new_association.addAssociation(old_association_fbc)
-
-    # add the remaining genes
-    if isinstance(gene, str):
-        new_association.createGeneProductRef().setGeneProduct(gene)
-    elif isinstance(gene, list) and len(gene) == 1:
-        new_association.createGeneProductRef().setGeneProduct(gene[0])
-    elif isinstance(gene, list) and len(gene) > 1:
-        gpa_or = new_association.createOr()
-        for i in gene:
-            gpa_or.createGeneProductRef().setGeneProduct(i)
-
+        # create a new gpr with an 'OR' association
+        reaction.getPlugin(0).createGeneProductAssociation().createOr()
+    
+    # Step 2: add new gprs 
+    # --------------------
+    
+    # get highest level association (should now be FBCor)
+    association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation()
+    # add genes from the list
+    for g in gene:
+        association.createGeneProductRef().setGeneProduct(g)
+    
 
 def create_unit(
     model_specs: tuple[int],
