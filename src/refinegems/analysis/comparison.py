@@ -14,7 +14,6 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Carolin Brune"
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from cobra import Model as cobraModel
 from libsbml import Model as libModel
@@ -32,6 +31,11 @@ from ..curation.miriam import get_set_of_curies
 ################################################################################
 
 logger = logging.getLogger(__name__)
+
+################################################################################
+# variables
+################################################################################
+# METABOLITE_COMPARTMENT_SEPARATOR = {r'_(?)', r'__91__(?)__93__', r'_(?)0'}
 
 ################################################################################
 # functions
@@ -137,8 +141,12 @@ def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metab
                             for i in id_set:
                                 if i != 'NaN': # Exclude NaN identifiers
                                     entity_curie_set.add(i)
-        else:
-            entity_curie_set.add(e.getId())
+        else: # Use internal model IDs
+            # Preprocessing of IDs for metabolites
+            entity_id = e.getId().split('_', 1)[1]
+            # if entity == 'metabolties':
+            #     entity_id = entity.removesuffix()
+            entity_curie_set.add(entity_id)
 
     return entity_curie_set
 
@@ -187,6 +195,7 @@ def plot_venn(
 def plot_db_entity_overlap(
     models: list[cobraModel], entity: Literal['genes', 'metabolites', 'reactions', 'pathways'], db: Union[str, None]=None, 
     cmap: Union[list[tuple], None]=None, rename: list[str]=None, include_homologs: bool=False, 
+    use_venn: bool=False,
     venn_kwargs: dict={'fmt': "{percentage:.1f}%", 'legend_loc':'lower right'}, 
     upset_min_subset_size: int=15,
     outfile_suffix: str='pdf', outdir: str='./'
@@ -212,8 +221,12 @@ def plot_db_entity_overlap(
         - include_homologs (bool, optional): 
             Specifies if homologs should be included in the comparison. 
             Defaults to False.
+        - use_venn (bool, optional):
+            Specifies if Venn diagrams should be plotted (restricted to a set size of four).
+            Defaults to False (=> Plotting UpSetPlots).
         - venn_kwargs (dict, optional): 
-            Dictionary containing details for plotting the venn plots. 
+            Dictionary containing details for plotting the Venn plots. 
+            Only used if user specifies use_venn=True. 
             Defaults to {'fmt': "{percentage:.1f}%", 'legend_loc':'lower right'}.
         - upset_min_subset_size (int, optional): 
             Minimum subset size to be shown in the UpSet plot. 
@@ -247,16 +260,19 @@ def plot_db_entity_overlap(
     # Filter out Nones
     model2remove = []
     for m in model2ids.keys():
-        if model2ids[m] is None:
+        if not model2ids[m]:
             comp_method = f'{db} {entity}' if db else f'{entity}'
             logging.warning(f'Skipping model {m} for {comp_method} comparison. No {entity} information available in the model.')
             model2remove.append(m)
     model2ids = {m: model2ids[m] for m in model2ids.keys() if m not in model2remove}
 
     # Generate and save plot
-    if len(models) <= 4:
+    is_set_size_smaller_4 = (len(model2ids) <= 4)
+    if use_venn and is_set_size_smaller_4:
         fig = venn(model2ids, cmap=cmap, **venn_kwargs)
     else:
+        if use_venn and not is_set_size_smaller_4: 
+            logging.warning(f'Amount of sets: {len(model2ids)}. Too large for Venn plot. Plotting UpSetPlot...')
         # Prepare data for UpSet plot
         all_ids = sorted(set.union(*model2ids.values()))
         memberships = []
@@ -283,6 +299,7 @@ def plot_db_entity_overlap(
     if outdir:
         plt.savefig(filepath, dpi=300)
         plt.close()
+        logging.info(f'Resulting plot saved to {filepath}.')
     else:
         logging.info(f'No ouput directory given. Resulting figure returned but NOT saved.')
 
