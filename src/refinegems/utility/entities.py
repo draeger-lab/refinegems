@@ -2533,7 +2533,7 @@ def create_gpr(reaction: Reaction, gene: Union[str, list[str]]) -> None:
     # get highest level association (should now be FBCor)
     association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation()
     # add genes from the list
-    for g in gene:
+    for g in gene_list:
         association.createGeneProductRef().setGeneProduct(g)
     
 
