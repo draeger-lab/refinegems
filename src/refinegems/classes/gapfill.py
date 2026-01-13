@@ -906,11 +906,11 @@ class GapFiller(ABC):
                         create_gpr(model.getReaction(current_reacid), current_mgids[0])
                     else:
                         mes = f"Found multiple matches for {geneid} in model: {current_mgids}. Belongs to reaction {current_reacid}."
-                        logging.warning(mes)
+                        logger.warning(mes)
                 # else, print warning
                 else:
                     mes = f"Cannot find {geneid} in model. Should be added to {current_reacid}."
-                    logging.warning(mes)
+                    logger.warning(mes)
 
     def add_reactions_from_table(
         self,
@@ -2458,7 +2458,7 @@ def single_cobra_gapfill(
                     f"Gapfilling for medium {medium.name} failed. Manual curation required."
                 )
         else:
-            logging.info(
+            logger.info(
                 f"Model already grows on medium {medium.name} with objective value of {model_copy.optimize().objective_value}"
             )
             return True
@@ -2565,7 +2565,7 @@ def cobra_gapfill_wrapper(
     if isinstance(solution, list) and len(solution) > 0:
         for reac in solution[0]:
             reac.notes["creation"] = "via gapfilling"
-        logging.info(
+        logger.info(
             f"Adding {len(solution[0])} reactions to model to ensure growth on medium {medium.name}."
         )
         model.add_reactions(solution[0])

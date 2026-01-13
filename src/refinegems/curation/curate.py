@@ -265,7 +265,7 @@ def extend_gp_annots_via_KEGG(
 
         return no_valid_kegg_id
 
-    logging.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
+    logger.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
     for gp in tqdm(gene_list): 
         if gp.getId() != "G_spontaneous": 
             locus_tag = gp.getLabel()
@@ -525,7 +525,7 @@ def fix_compartments(model: libModel) -> libModel:
             else:
                 # No compartment in id found, using unknown
                 default_comp = 'uc'
-                logging.warning(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
+                logger.warning(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
                 m.setCompartment(default_comp)
                 metab_comps.add(default_comp)
 
@@ -542,7 +542,7 @@ def fix_compartments(model: libModel) -> libModel:
         comps_to_remove = comps_in_model - metab_comps # Comps in model that are not used by any metabolite
         if comps_to_remove: # If any comps to remove
             for c in comps_to_remove:
-                logging.warning(f'Removing compartment {c} as no metabolite is assigned to it.')
+                logger.warning(f'Removing compartment {c} as no metabolite is assigned to it.')
                 model.removeCompartment(c)
 
     # Check validity of compartment IDs & adjust if necessary

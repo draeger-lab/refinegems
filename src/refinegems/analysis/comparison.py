@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from cobra import Model as cobraModel
 from libsbml import Model as libModel
-from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BQB_OCCURS_IN
 from pathlib import Path
 from typing import Literal, Union
 from upsetplot import from_memberships, UpSet
@@ -64,7 +64,7 @@ def sbo_terms(models: Union[libModel, list[libModel]], rename: Union[str,list[st
     if isinstance(models, libModel):
         if isinstance(rename, list):
             if len(rename) != 1:
-                logging.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
+                logger.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
                                 Taking first entry to rename model IDs with custom ID: {rename[0]}.
                                 Proper use: 
                                 Provide a list with one entry or a string.
@@ -83,7 +83,6 @@ def sbo_terms(models: Union[libModel, list[libModel]], rename: Union[str,list[st
 ###
 # Model entity comparison
 ###
-# @TODO add handling of IDs as they can differ between models for the suffix, e.g. _c vs. __61__c__63__
 def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metabolites', 'reactions', 'pathways'], db: Union[str, None], include_homologs: bool=False) -> Union[set, None]:
     """Get set of CURIEs for one entity type for a specific database
 
@@ -100,6 +99,7 @@ def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metab
         - ValueError: If entity type is unknown
     """
     list_of = []
+    no_groups_attribute = False
 
     match entity:
         case 'genes':
@@ -112,16 +112,17 @@ def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metab
             try:
                 list_of = model.getPlugin('groups').getListOfGroups()
             except AttributeError:
-                logging.warning(f'Model {model.getId()} does not contain any pathway information.')
-                return None
+                no_groups_attribute = True
+                logger.warning(f'Model {model.getId()} does not contain any pathway information in the groups attribute. Trying to find pathways via reaction annotations.')
+                list_of = model.getListOfReactions()
+                db = 'kegg.pathway' # Override db to only get kegg pathway annotations from reactions
         case _:
             raise ValueError(f"Unknown entity: {entity!r}. Expected one of: {', '.join(['genes', 'metabolites', 'reactions', 'pathways'])}")
 
     entity_curie_set = set()
 
     for e in list_of:
-
-        if db:
+        if db or no_groups_attribute:
             cvterms = e.getCVTerms()
 
             for cvt in cvterms:
@@ -132,6 +133,13 @@ def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metab
                     if include_homologs else 
                     (cvt.getQualifierType() == BIOLOGICAL_QUALIFIER) and (cvt.getBiologicalQualifierType() == BQB_IS)
                     )
+
+                # Case for pathways if no groups attribute present
+                #   1. Update curie_condition to also include BQB_OCCURS_IN
+                #   2. Set db parameter to 'kegg.pathway' to only get kegg pathway annotations from reactions
+                if no_groups_attribute: 
+                    curie_condition = curie_condition or (cvt.getBiologicalQualifierType() == BQB_OCCURS_IN)
+                
                 if curie_condition:
                     current_curies = [cvt.getResourceURI(i) for i in range(cvt.getNumResources())]
                     prefix2id = get_set_of_curies(current_curies)[0]
@@ -143,9 +151,8 @@ def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metab
                                     entity_curie_set.add(i)
         else: # Use internal model IDs
             # Preprocessing of IDs for metabolites
-            entity_id = e.getId().split('_', 1)[1]
-            # if entity == 'metabolties':
-            #     entity_id = entity.removesuffix()
+            # @TODO add handling of IDs as they can differ between models for the suffix, e.g. _c vs. __61__c__63__
+            entity_id = e.getId()
             entity_curie_set.add(entity_id)
 
     return entity_curie_set
@@ -262,7 +269,7 @@ def plot_db_entity_overlap(
     for m in model2ids.keys():
         if not model2ids[m]:
             comp_method = f'{db} {entity}' if db else f'{entity}'
-            logging.warning(f'Skipping model {m} for {comp_method} comparison. No {entity} information available in the model.')
+            logger.warning(f'Skipping model {m} for {comp_method} comparison. No {entity} information available in the model.')
             model2remove.append(m)
     model2ids = {m: model2ids[m] for m in model2ids.keys() if m not in model2remove}
 
@@ -272,7 +279,7 @@ def plot_db_entity_overlap(
         fig = venn(model2ids, cmap=cmap, **venn_kwargs)
     else:
         if use_venn and not is_set_size_smaller_4: 
-            logging.warning(f'Amount of sets: {len(model2ids)}. Too large for Venn plot. Plotting UpSetPlot...')
+            logger.warning(f'Amount of sets: {len(model2ids)}. Too large for Venn plot. Plotting UpSetPlot...')
         # Prepare data for UpSet plot
         all_ids = sorted(set.union(*model2ids.values()))
         memberships = []
@@ -295,13 +302,15 @@ def plot_db_entity_overlap(
                 upset.style_subsets(min_degree=degree, facecolor=colour)
 
         # Plot UpSetPlot
-        upset.plot(fig=fig)
+        plot_res = upset.plot(fig=fig)
+        plot_res["intersections"].set_ylabel("Subset size")
+        plot_res["totals"].set_xlabel("Total ID amount")
     if outdir:
         plt.savefig(filepath, dpi=300)
         plt.close()
-        logging.info(f'Resulting plot saved to {filepath}.')
+        logger.info(f'Resulting plot saved to {filepath}.')
     else:
-        logging.info(f'No ouput directory given. Resulting figure returned but NOT saved.')
+        logger.info(f'No ouput directory given. Resulting figure returned but NOT saved.')
 
     # Also return figure
     return fig
