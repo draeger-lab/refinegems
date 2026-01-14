@@ -967,7 +967,7 @@ class GapFiller(ABC):
             if row["reference"]:
                 refs = row["reference"]
                 if isinstance(refs, dict):
-                    continue
+                    pass
                 elif refs[0] == "{":
                     refs = refs.replace(r"'", r"\"")
                     refs = json.loads(refs)
