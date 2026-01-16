@@ -145,7 +145,7 @@ def get_set_of_curies(
                     curie[1] = curie[1].split(r"META:")[
                         1
                     ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                    if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                    if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                         curie[0] = "metacyc.reaction"
                     else: 
                         curie[0] = "metacyc.compound"
@@ -241,7 +241,7 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
@@ -328,7 +328,7 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE): 
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
