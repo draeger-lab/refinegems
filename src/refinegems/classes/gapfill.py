@@ -984,9 +984,8 @@ class GapFiller(ABC):
                     if isinstance(row["ec-code"], list):
                         refs["ec-code"] = list(set(refs["ec-code"] + row["ec-code"]))
                     elif isinstance(row["ec-code"], str):
-                        refs["ec-code"] = list(
-                            set(refs["ec-code"].append(row["ec-code"]))
-                        )
+                        refs["ec-code"].append(row["ec-code"])
+                        refs["ec-code"] = list(set(refs["ec-code"]))
                     else:
                         warnings.warn(
                             f'Unknown type for ec-code: {type(row["ec-code"])}',
