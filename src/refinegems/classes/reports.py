@@ -1979,13 +1979,13 @@ class SBOTermReport(Report):
                 )
 
         if show_overall_counts:
-            df_counts = df[self.name]
+            df_counts = df[self.name].astype(int)
             for x, y in enumerate(df_counts):
                 ax.annotate(y, (y+(df_counts.max()*0.01), x), xycoords="data", va='center')
             ax.set_xlim(0, df_counts.max()*1.08)
         
         ax.set_ylabel("")
-        ax.set_xlabel("number of reactions", fontsize=16)
+        ax.set_xlabel("Number of reactions", fontsize=16)
         ax.legend(loc="lower right")
         fig = ax.get_figure()
         plt.tight_layout()
@@ -2002,7 +2002,7 @@ class SBOTermReport(Report):
         super().save(dir)
         
         fig = self.visualise()
-        fig.savefig(Path(dir, "sboterms.png"), dpi=400)
+        fig.savefig(Path(dir, "sboterms.png"), bbox_inches='tight', dpi=400)
 
 
 class MultiSBOTermReport(Report):
@@ -2113,7 +2113,7 @@ class MultiSBOTermReport(Report):
         df_invalid = df[df["SBO-Name"] == 'invalid']
         df = pd.concat([df_invalid, df_sorted], ignore_index=True) if show_invalid else df_sorted
         df = df.set_index("SBO-Name")
-        df_rowsum = df["rowsum"]
+        df_rowsum = df["rowsum"].astype(int)
         df.drop("rowsum", axis=1, inplace=True)
 
         # rename to custom names
@@ -2161,4 +2161,4 @@ class MultiSBOTermReport(Report):
         super().save(dir)
         
         fig = self.visualise(rename, color_palette, figsize)
-        fig.save(Path(dir, "sboterms.png"), dpi=400)
+        fig.savefig(Path(dir, "sboterms.png"), bbox_inches='tight', dpi=400)
