@@ -60,24 +60,45 @@ def sbo_terms(models: Union[libModel, list[libModel]], rename: Union[str,list[st
         SBOTermReport | MultiSBOTermReport:
             A :py:class:`~refinegems.classes.reports.SBOTermReport` for a single model or a :py:class:`~refinegems.classes.reports.MultiSBOTermReport` instance if multiple models are provided.
     """
-    # Check if only one model
-    if isinstance(models, libModel):
-        if isinstance(rename, list):
-            if len(rename) != 1:
-                logger.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
-                                Taking first entry to rename model IDs with custom ID: {rename[0]}.
-                                Proper use: 
-                                Provide a list with one entry or a string.
-                                ''')
-            rename = rename[0] # Take first entry
-            
-        return SBOTermReport(models, rename)
+    sboanalyses = []
+    
+    # handle models
+    match models:
+        case libModel():
+            models = [models]
+        case list():
+            if not all(isinstance(m, libModel) for m in models):
+                raise ValueError(f'Expected a list of libSBML models. Got a list with the following types: {[type(m) for m in models]}')
+        case _:
+            raise ValueError(f'Expected a libSBML model or a list of libSBML models. Got {type(models)}')
+    
+    # handle names 
+    if rename is None:
+        rename = [m.getId() for m in models]
+    elif isinstance(rename, str):
+        rename = [rename]
+    elif isinstance(rename, list) and len(rename) == len(models):
+        pass
+    elif isinstance(rename, list) and len(rename) > len(models):
+        logger.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
+                        Taking first {len(models)} entries to rename model IDs with custom IDs: {rename[:len(models)]}.
+                        Proper use: 
+                        Provide a list with the same length as the number of models or a string.
+                        ''')
+        rename = rename[:len(models)] # Take first entries according to the number of models
+    elif isinstance(rename, list) and len(rename) < len(models):
+        raise ValueError(f'''Length of provided model list ({len(models)}) does not match the length of the custom IDs provided by rename ({len(rename)}). 
+                         Provide a list with the same length as the number of models or a string.''')
     else:
-        if len(models) != len(rename):
-            raise ValueError(f'Length of provided model list ({len(models)}) does not match the length of the custom IDs provided by rename ({len(rename)}).')
-        sboanalyses = []
-        for m, name in zip(models, rename):
-            sboanalyses.append(SBOTermReport(m, name))
+        raise ValueError(f'''Expected rename to be either None, a string or a list of strings with the same length as the number of models. 
+                         Got {type(rename)}.''')
+
+    # construct report 
+    for m, name in zip(models, rename):
+        sboanalyses.append(SBOTermReport(m, name))
+    if len(sboanalyses) == 1:
+        return sboanalyses[0]
+    else:
         return MultiSBOTermReport(sboanalyses)
 
 ###

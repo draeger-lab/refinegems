@@ -2,6 +2,8 @@
 
 __author__ = "Carolin Brune, Famke Baeuerle, Gwendolyn O. Döbel"
 
+# @ASK: re-check, if the figures (after returning/plotting) are closed properly to avoid memory leaks. If not, add plt.close() where necessary.
+
 ################################################################################
 # requirements
 ################################################################################
@@ -368,7 +370,7 @@ class GrowthSimulationReport(Report):
             return fig
 
         def plot_growth_heatmap(
-            data: pd.DataFrame, color_palette: str = "YlGn"
+            data: pd.DataFrame, color_palette: str = "YlGn", unit_text: str = "doubling time [min]"
         ) -> matplotlib.figure.Figure:
             """Helper function to plot the heatmap for the growth visualisation.
 
@@ -443,7 +445,7 @@ class GrowthSimulationReport(Report):
                 linewidth=0.5,
                 cbar_kws={
                     "orientation": "vertical",
-                    "label": "Doubling time [min]",
+                    "label": unit_text, 
                     "extend": "min",
                     "extendrect": True,
                 },
@@ -564,7 +566,7 @@ class GrowthSimulationReport(Report):
                 }
             )
 
-            return plot_growth_heatmap(data, color_palette)
+            return plot_growth_heatmap(data, color_palette, unit_text)
 
         # problematic case
         else:
