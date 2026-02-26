@@ -515,7 +515,7 @@ def map_ec_to_reac(
         # rename columns and cleanup
         reacs_mapped.rename({"mnx_equation": "equation"}, inplace=True, axis=1)
         reacs_mapped = (
-            reacs_mapped.groupby(["ec-code", "id"])
+            reacs_mapped.groupby(["ec-code", "id"], dropna=False)
             .agg(
                 {
                     "ncbiprotein": lambda x: x.tolist(),
