@@ -275,13 +275,13 @@ class GrowthSimulationReport(Report):
         return pd.DataFrame(l)
 
     def plot_growth(
-        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
+        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn", **kwargs
     ) -> matplotlib.figure.Figure|None:
         """Visualise the contents of the report.
 
         .. note::
 
-            Please keep in mind that the figure does not show unrealistically high and minicules values to zero.
+            Please keep in mind that the figure does not show unrealistically high and miniscule values to zero.
             However, all values are contained within the table one can get via
             :py:func:`~refinegems.classes.reports.GrowthSimulationReport.to_table`.
 
@@ -294,6 +294,10 @@ class GrowthSimulationReport(Report):
                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
+            - **kwargs:
+                Additional keyword arguments for the plotting functions. 
+                See the ax.bar and sns.heatmap documentation for possible arguments.
+
 
         Returns:
             If plotting possible: matplotlib.figure.Figure:
@@ -309,6 +313,7 @@ class GrowthSimulationReport(Report):
             ylab: str,
             title: str,
             color_palette: str = "YlGn",
+            **kwargs
         ) -> matplotlib.figure.Figure:
             """Helper function to plot the bar plot for the growth visualisation.
 
@@ -327,6 +332,9 @@ class GrowthSimulationReport(Report):
                     A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default.
                     Defaults to 'YlGn'.
+                - **kwargs:
+                    Additional keyword arguments for the plt.figure() function. 
+                    See the plt.figure() documentation for possible arguments.
 
             Returns:
                 matplotlib.figure.Figure:
@@ -341,7 +349,7 @@ class GrowthSimulationReport(Report):
                 cmap = matplotlib.colormaps["YlGn"]
 
             # set up the figure
-            fig = plt.figure()
+            fig = plt.figure(**kwargs)
             ax = fig.add_axes([0, 0, 1, 1])
 
             # clean-up data
@@ -370,7 +378,7 @@ class GrowthSimulationReport(Report):
             return fig
 
         def plot_growth_heatmap(
-            data: pd.DataFrame, color_palette: str = "YlGn", unit_text: str = "doubling time [min]"
+            data: pd.DataFrame, color_palette: str = "YlGn", unit_text: str = "doubling time [min]", **kwargs
         ) -> matplotlib.figure.Figure:
             """Helper function to plot the heatmap for the growth visualisation.
 
@@ -382,6 +390,12 @@ class GrowthSimulationReport(Report):
                     A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default.
                     Defaults to 'YlGn'.
+                - unit_text (str, optional):
+                    The text for the colorbar label.
+                    Defaults to "doubling time [min]".
+                - **kwargs:
+                    Additional keyword arguments for the plt.subplots() function.
+                    See the plt.subplots() documentation for possible arguments.
 
             Returns:
                 matplotlib.figure.Figure:
@@ -429,7 +443,7 @@ class GrowthSimulationReport(Report):
             cmap.set_over("white")  # no data
 
             # plot the heatmap
-            fig, ax = plt.subplots(figsize=(10, 8))
+            fig, ax = plt.subplots(**kwargs)
 
             zm = np.ma.masked_where(growth.T != over_growth, growth.T)
             x = np.arange(len(growth.T.columns) + 1)
@@ -453,6 +467,10 @@ class GrowthSimulationReport(Report):
                 fmt="",
             )
 
+            # Keep special-value legend coupled to the colorbar axis so it
+            # remains aligned under the color scale for any figure size.
+            cbar = res.collections[0].colorbar
+
             # labels
             rotation = 40 if len(growth.index) > 3 else 0
             plt.tick_params(
@@ -471,7 +489,7 @@ class GrowthSimulationReport(Report):
                 spine.set_linewidth(1)
                 spine.set_edgecolor("grey")
 
-            # extra legend
+            # extra legend for special values, aligned below the colorbar
             handles = []
             handles.append(
                 mpatches.Rectangle(
@@ -483,7 +501,14 @@ class GrowthSimulationReport(Report):
                     (0, 0), 0, 0, color="white", ec="grey", hatch="xxx", label="No data"
                 )
             )
-            fig.legend(handles=handles, loc="lower right", bbox_to_anchor=(0.9, 0.05))
+            cbar.ax.legend(
+                handles=handles,
+                loc="lower left",
+                bbox_to_anchor=(-0.3, -0.17),
+                bbox_transform=cbar.ax.transAxes,
+                frameon=False,
+                borderaxespad=0
+            )
 
             return fig
 
@@ -516,7 +541,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # one model vs mutiple media
         elif len(self.models) == 1 and len(self.media) > 1:
@@ -533,7 +558,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # one medium, one model case - just to make it usable for all inputs
         elif len(self.models) == 1 and len(self.media) == 1:
@@ -550,7 +575,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # multiple vs multiple
         elif len(self.models) > 1 and len(self.media) > 1:
@@ -566,7 +591,7 @@ class GrowthSimulationReport(Report):
                 }
             )
 
-            return plot_growth_heatmap(data, color_palette, unit_text)
+            return plot_growth_heatmap(data, color_palette, unit_text, **kwargs)
 
         # problematic case
         else:
