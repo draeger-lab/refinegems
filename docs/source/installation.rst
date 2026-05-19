@@ -21,7 +21,7 @@ To install refineGEMs as Python package from `PyPI <https://pypi.org/project/ref
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
-``refineGEMs`` depends on the tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__, `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and 
+``refineGEMs`` depends on the tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__, `MCC <https://github.com/draeger-lab/MassChargeCuration>`__ and 
 `BOFdat <https://github.com/draeger-lab/BOFdat>`__ which cannot directly be installed via 
 `PyPI <https://pypi.org/project/refineGEMs/>`__. Please install all three tools before using ``refineGEMs``:
 
