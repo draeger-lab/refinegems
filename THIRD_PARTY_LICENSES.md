@@ -5,6 +5,10 @@ from external resources. This file records notices for redistributed or
 license-sensitive resources. It is not legal advice; users remain responsible
 for checking the current upstream terms for their own use case.
 
+The refineGEMs source code is distributed under the MIT license. Bundled
+third-party data, database identifiers, and connected external tools remain
+under their own licenses or terms.
+
 ## BiGG Models
 
 refineGEMs ships BiGG-derived metabolite and reaction tables in its internal
@@ -107,7 +111,8 @@ EMBL-EBI terms of use.
 ## KEGG
 
 refineGEMs queries KEGG for genes, enzymes, reactions, compounds, and pathway
-annotations.
+annotations. Released refineGEMs files should contain only KEGG identifiers or
+annotations, not cached KEGG records or KEGG database exports.
 
 Source: <https://www.kegg.jp/kegg/legal.html>
 
@@ -120,6 +125,22 @@ KEGG states that academic users may freely use the KEGG website. It also states
 that KEGG is not a public database for non-academic use and that non-academic
 use requires a commercial license.
 
+## Adapted MEMOTE code
+
+Parts of `src/refinegems/curation/biomass.py` were adapted from MEMOTE and
+modified by Gwendolyn O. Döbel. MEMOTE is distributed under the Apache License
+2.0.
+
+Source: <https://github.com/opencobra/memote>
+
+License: <https://github.com/opencobra/memote/blob/develop/LICENSE>
+
+Citation:
+
+Lieven C, Beber ME, Olivier BG, et al. MEMOTE for standardized genome-scale
+metabolic model testing. Nature Biotechnology 38:272-276.
+<https://doi.org/10.1038/s41587-020-0446-y>
+
 ## Connected tools
 
 The following connected software tools are distributed by their upstream
@@ -128,4 +149,5 @@ projects under their own software licenses:
 - SBOannotator: GNU GPL-3.0; cite <https://doi.org/10.1093/bioinformatics/btad437>.
 - MassChargeCuration (MCC): GNU LGPL-3.0; cite <https://doi.org/10.1128/spectrum.03200-24>.
 - MEMOTE: Apache-2.0; cite <https://doi.org/10.1038/s41587-020-0446-y>.
-- BOFdat: original software under MIT, used forked by Dragerlab, also under MIT; cite <https://doi.org/10.1371/journal.pcbi.1006971>.
+- BOFdat: original software under MIT, used forked by Draeger lab, also under
+  MIT; cite <https://doi.org/10.1371/journal.pcbi.1006971>.

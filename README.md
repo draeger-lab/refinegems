@@ -24,6 +24,7 @@
 - [Installation](#installation)
     - [Via pip](#pypi-via-pip)
     - [Via Docker](#docker-via-docker)
+- [License](#license)
 - [How to cite](#how-to-cite)
 - [Repositories using refineGEMs](#repositories-using-refinegems)
 
@@ -128,6 +129,13 @@ For example, to curate a (draft) model, run:
 ```bash
    docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
 ```
+
+## License
+
+The refineGEMs source code is distributed under the MIT license. Bundled
+third-party data, database identifiers, adapted code, and connected external
+tools remain under their own licenses or terms; see
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for details.
 
 
 ## How to cite
