@@ -19,6 +19,7 @@ Model annotation
 ----------------
 
 .. toctree:: 
+    Annotation polishing <modules-desc/annotations>
     Pathway addition <modules-desc/pathways>
     SBO-Term annotation <modules-desc/sboann>
 
@@ -26,8 +27,15 @@ Analysis and simulation
 -----------------------
 
 .. toctree:: 
+    Model comparison <modules-desc/comparison>
     Growth simulation <modules-desc/growth>
     Statistical report <modules-desc/stats>
+
+Media
+-----
+
+.. toctree::
+    Media export <modules-desc/media_export>
 
 Further examples
 ----------------
