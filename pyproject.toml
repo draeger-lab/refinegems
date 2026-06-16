@@ -91,6 +91,9 @@ refinegems = "refinegems.cmd_access:cli"
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
 
+[tool.setuptools]
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+
 [tool.setuptools.packages.find]
 where = ['src']
 
