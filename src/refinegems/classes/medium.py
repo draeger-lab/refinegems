@@ -538,6 +538,24 @@ class Medium:
 
     # functions for export table
     # --------------------------
+    
+    def _produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
+            """Helper function for producing reStructured text for medium definitions, 
+            e.g. in with :py:func:`produce_medium_docs_table`.
+            Tranforms each row of the substance table into a row of the rst-file.
+
+            Args:
+                - row (pd.Series):
+                    The row of the Medium.substance_table.
+                - file (io.TextIOWrapper):
+                    The connection to the file to write the rows into.
+            """
+
+            list = row.to_list()
+            file.write(f"  * - {list[0]}\n")
+            for l in list[1:]:
+                file.write(f"    - {l}\n")
+                
 
     def produce_medium_docs_table(self, folder: str = "./", max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
@@ -573,22 +591,6 @@ class Medium:
             else:
                 partition = (max_width - flux_width) // 2
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
-
-        def produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
-            """Helper function for :py:func:`produce_medium_docs_table`.
-            Tranforms each row of the substance table into a row of the rst-file.
-
-            Args:
-                - row (pd.Series):
-                    The row of the Medium.substance_table.
-                - file (io.TextIOWrapper):
-                    The connection to the file to write the rows into.
-            """
-
-            list = row.to_list()
-            file.write(f"  * - {list[0]}\n")
-            for l in list[1:]:
-                file.write(f"    - {l}\n")
 
         # make sure given directory path ends with '/'
         if not folder.endswith("/"):
@@ -628,7 +630,7 @@ class Medium:
                 f.write(f"    - {l}\n")
 
             # produce table body
-            m_subs.apply(produce_medium_docs_table_row, file=f, axis=1)
+            m_subs.apply(self._produce_medium_docs_table_row, file=f, axis=1)
 
             f.close()
 
@@ -739,10 +741,11 @@ class Medium:
     # ------------------------
     def export_to_cobra(
         self,
-        namespace: Literal["Name", "BiGG"] = "BiGG",
+        namespace: Literal["Name", "BiGG", "SEED"] = "BiGG",
         default_flux: float = 10.0,
         replace: bool = False,
         double_o2: bool = True,
+        ext_compartment: str = "e",
     ) -> dict[str, float]:
         """Export a medium to the COBRApy format for a medium.
 
@@ -755,6 +758,10 @@ class Medium:
                 Replace all values with the default flux. Defaults to False.
             - double_o2 (bool, optional):
                 Double the flux of oxygen. Defaults to True.
+            - ext_compartment (str, optional):
+                The compartment suffix for external compounds 
+                Mainly used fir the SEED namespace. 
+                Defaults to 'e'.
 
         Raises:
             - ValueError: Unknown namespace.
@@ -781,6 +788,16 @@ class Medium:
                 biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
                 cobra_medium = pd.Series(
                     biggs.flux.values, index=biggs.db_id_EX
+                ).to_dict()
+                
+            case "SEED":
+                
+                seeds = self.substance_table[   
+                    self.substance_table["db_type"].str.contains("SEED")
+                ][["name", "db_id", "flux"]]
+                seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
+                cobra_medium = pd.Series(
+                    seeds.flux.values, index=seeds.db_id_EX
                 ).to_dict()
 
             case _:
@@ -981,7 +998,7 @@ def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: in
             f.write(f"    - {l}\n")
 
         # produce table body
-        subs.apply(Medium.produce_medium_docs_table.produce_medium_docs_table_row, file=f, axis=1)
+        subs.apply(Medium._produce_medium_docs_table_row, file=f, axis=1)
 
 
 ############################################################################
@@ -2186,6 +2203,7 @@ def medium_to_model(
         default_flux=default_flux,
         replace=replace,
         double_o2=double_o2,
+        ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)
     )
 
     # remove exchanges that do not exist in model

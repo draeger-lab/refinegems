@@ -79,7 +79,7 @@ pip install .
 ```
 
 > [!CAUTION]
-> ``refineGEMs`` depends on the tools [MCC](https://github.com/Biomathsys/MassChargeCuration) and 
+> ``refineGEMs`` depends on the tools [MCC](https://github.com/draeger-lab/MassChargeCuration) and 
 > [BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
 > Please install both tools before using ``refineGEMs``:
 >

@@ -341,7 +341,8 @@ def get_metabs_essential_for_growth_wrapper(
 def growth_sim_single(
     model: cobraModel,
     m: Medium,
-    namespace: Literal["BiGG", "Name"] = "BiGG",
+    model_name: str=None,
+    namespace: Literal["BiGG", "Name", "SEED"] = "BiGG",
     supplement: Literal[None, "std", "min"] = None,
 ) -> SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
@@ -351,6 +352,13 @@ def growth_sim_single(
             The model.
         - m (Medium):
             The medium.
+        - model_name (str, optional):
+            The name of the model, which will be used in the report. 
+            Defaults to the model ID.
+        - namespace (Literal['BiGG','Name','SEED'], optional):
+            The namespace of the model that needs to be used for the medium.
+            Currently supports one of ['BiGG','Name','SEED']. 
+            Defaults to 'BiGG'.
         - supplement (Literal[None,'std','min'], optional):
             Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
@@ -399,7 +407,11 @@ def growth_sim_single(
             model.medium = new_m
 
         # simulate growth
-        report = SingleGrowthSimulationReport(model_name=model.id, medium_name=m.name, supplementation_variety=supplement)
+        report = SingleGrowthSimulationReport(
+            model_name=model_name if model_name else model.id, 
+            medium_name=m.name, 
+            supplementation_variety=supplement
+            )
         report.growth_value = model.optimize().objective_value
         report.doubling_time = (
             (np.log(2) / report.growth_value) * 60 if report.growth_value != 0 else 0
@@ -407,7 +419,7 @@ def growth_sim_single(
         report.additives = [_ for _ in new_m if _ not in exported_m]
         report.no_exchange = [
             _
-            for _ in m.export_to_cobra(namespace=namespace).keys()
+            for _ in m.export_to_cobra(namespace=namespace, ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)).keys()
             if _ not in exported_m
         ]
 
@@ -417,7 +429,8 @@ def growth_sim_single(
 def growth_sim_multi(
     models: Union[cobraModel, list[cobraModel]],
     media: Union[Medium, list[Medium]],
-    namespace: Literal["BiGG", "Name"] = "BiGG",
+    model_names: Union[None, list[str]] = None,
+    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
     supplement_modes: Union[
         list[Literal["None", "min", "std"]], None, Literal["None", "min", "std"]
     ] = None,
@@ -429,10 +442,21 @@ def growth_sim_multi(
             A COBRApy model or a list of multiple.
         - media (Medium | list[Medium]):
             A refinegems Medium object or a list of multiple.
+        - model_names (None | list[str], optional): 
+            The names of the models, which will be used in the report. 
+            Defaults to the model IDs.
+        - namespace (list | Literal['BiGG','Name','SEED'], optional):
+            Namespace(s) of the model(s).
+            Can be a single string to set the same namespace for all models or a list with one entry for each model.
+            Further options include 'BiGG', 'Name' and 'SEED'.
+            Defaults to 'BiGG'.
         - supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional):
             Option to supplement the media to enable growth.
             Default to None. Further options include a list with one entry for each medium or a string to set the same default for all.
             The string can be 'min', 'std' or None.
+
+    Raises:
+        - ValueError: Length of model_names list should match the number of models, if model_names is provided.
 
     Returns:
         GrowthSimulationReport:
@@ -444,14 +468,24 @@ def growth_sim_multi(
         models = [models]
     if type(media) != list:
         media = [media]
+    if type(namespace) != list:
+        namespace = [namespace] * len(models)
     if type(supplement_modes) != list:
         supplement_modes = [supplement_modes] * len(media)
 
+    if model_names: # Check if model_names was provided
+        if type(model_names) != list: # Check if it is a list, if not, make it a list
+            model_names = [model_names]
+        if len(model_names) != len(models):
+            raise ValueError("Length of model_names list should match the number of models.")
+    else:
+        model_names = [None] * len(models) # If not provided, create a list of None with the same length as models
+
     # simulate the growth of the models on the different media
     report = GrowthSimulationReport()
-    for mod in models:
+    for mod, mn, nsp in zip(models, model_names, namespace):
         for med, supp in zip(media, supplement_modes):
-            r = growth_sim_single(mod, med, namespace=namespace, supplement=supp)
+            r = growth_sim_single(mod, med, mn, namespace=nsp, supplement=supp)
             report.add_sim_results(r)
 
     return report
@@ -461,7 +495,8 @@ def growth_sim_multi(
 def growth_analysis(
     models: Union[cobra.Model, str, list[str], list[cobra.Model]],
     media: Union[Medium, list[Medium], str],
-    namespace: Literal["BiGG"] = "BiGG",
+    model_names: Union[None, list[str]] = None,
+    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
     supplements: Union[
         None, list[Literal[None, "std", "min"]], Literal[None, "std", "min"]
     ] = None,
@@ -476,8 +511,12 @@ def growth_analysis(
         - media (Medium | list[Medium] | str):
             Medium or media to be tested.
             Can be single or a list of medium objects or a path to a medium config file.
+        - model_names (None | list[str], optional): 
+            The names of the models, which will be used in the report. 
+            Defaults to the model IDs.
         - namespace (Literal['BiGG'], optional):
-            Namespace of the model.
+            Namespace of the model(s).
+            Can be a list or a string, which sets the same namespace for all models.
             Defaults to 'BiGG'.
         - supplements (None | list[Literal[None,'std','min']] | Literal[None,'std','min'], optional):
             Option to supplement media to enable growth. Can be None, std or min. If a single
@@ -562,7 +601,7 @@ def growth_analysis(
 
     # run simulation
     # --------------
-    report = growth_sim_multi(mod_list, media, namespace, supplements)
+    report = growth_sim_multi(mod_list, media, model_names, namespace, supplements)
 
     # save / visualise report
     # -----------------------

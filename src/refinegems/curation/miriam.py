@@ -70,6 +70,7 @@ DEPRECATED_PREFIXES = {
 
 # Change CURIE pattern/Correct CURIEs
 # ------------------------------------
+# @FIXME Check if compatibility with bioregistry versions starting from 0.12.19 is possible
 def get_set_of_curies(
     uri_list: list[str],
 ) -> tuple[SortedDict[str : SortedSet[str]], list[str]]:
@@ -144,7 +145,7 @@ def get_set_of_curies(
                     curie[1] = curie[1].split(r"META:")[
                         1
                     ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                    if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                    if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                         curie[0] = "metacyc.reaction"
                     else: 
                         curie[0] = "metacyc.compound"
@@ -240,7 +241,7 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
@@ -327,7 +328,7 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$|^trans-rxn-|^rxn0-", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE): 
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
@@ -711,13 +712,9 @@ def polish_annotations(
             f'{model.getId()}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.csv'
         )
         # Set-up path
-        if dir:
-            if isinstance(dir, str):
-                dir = Path(dir)
-            dir.mkdir(parents=True, exist_ok=True)
-
         if outpath:
-            outpath = Path(outpath)
+            if isinstance(outpath, str):
+                outpath = Path(outpath)
             outpath.mkdir(parents=True, exist_ok=True)
             filename = Path(outpath, filename)
         else:

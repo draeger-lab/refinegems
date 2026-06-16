@@ -47,6 +47,12 @@ from .io import write_model_to_file
 #    -> see forked version of it in the Draeger-lab github
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -349,7 +355,10 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
     try:
         # make temporary directory to save files for MCC in
         with tempfile.TemporaryDirectory() as temp:
-
+            # @DISCUSSION for the sake of runtime, it would be good to save the data needed by MCC somewhere 
+            # e.g. step 1: check, if data is available 
+            #      step 2: if not, download data once 
+            # => question is, where to save it? Or do we need a parameter for that? (kinda do not want that ...)
             # use MCC
             if apply:
                 # update model
@@ -367,7 +376,7 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         print(repr(e))
         import traceback
         traceback.print_exc()
-        logging.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
+        logger.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
 
     return model
 
@@ -515,7 +524,7 @@ def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -
     try:
         result = mp_polish(model_or_path, configuration)
     except:
-        logging.error(f"Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
+        logger.error(f"Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
         
     return result
 

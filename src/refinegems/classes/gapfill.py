@@ -515,7 +515,7 @@ def map_ec_to_reac(
         # rename columns and cleanup
         reacs_mapped.rename({"mnx_equation": "equation"}, inplace=True, axis=1)
         reacs_mapped = (
-            reacs_mapped.groupby(["ec-code", "id"])
+            reacs_mapped.groupby(["ec-code", "id"], dropna=False)
             .agg(
                 {
                     "ncbiprotein": lambda x: x.tolist(),
@@ -906,11 +906,11 @@ class GapFiller(ABC):
                         create_gpr(model.getReaction(current_reacid), current_mgids[0])
                     else:
                         mes = f"Found multiple matches for {geneid} in model: {current_mgids}. Belongs to reaction {current_reacid}."
-                        logging.warning(mes)
+                        logger.warning(mes)
                 # else, print warning
                 else:
                     mes = f"Cannot find {geneid} in model. Should be added to {current_reacid}."
-                    logging.warning(mes)
+                    logger.warning(mes)
 
     def add_reactions_from_table(
         self,
@@ -967,7 +967,7 @@ class GapFiller(ABC):
             if row["reference"]:
                 refs = row["reference"]
                 if isinstance(refs, dict):
-                    continue
+                    pass
                 elif refs[0] == "{":
                     refs = refs.replace(r"'", r"\"")
                     refs = json.loads(refs)
@@ -984,9 +984,8 @@ class GapFiller(ABC):
                     if isinstance(row["ec-code"], list):
                         refs["ec-code"] = list(set(refs["ec-code"] + row["ec-code"]))
                     elif isinstance(row["ec-code"], str):
-                        refs["ec-code"] = list(
-                            set(refs["ec-code"].append(row["ec-code"]))
-                        )
+                        refs["ec-code"].append(row["ec-code"])
+                        refs["ec-code"] = list(set(refs["ec-code"]))
                     else:
                         warnings.warn(
                             f'Unknown type for ec-code: {type(row["ec-code"])}',
@@ -2461,7 +2460,7 @@ def single_cobra_gapfill(
                     f"Gapfilling for medium {medium.name} failed. Manual curation required."
                 )
         else:
-            logging.info(
+            logger.info(
                 f"Model already grows on medium {medium.name} with objective value of {model_copy.optimize().objective_value}"
             )
             return True
@@ -2568,7 +2567,7 @@ def cobra_gapfill_wrapper(
     if isinstance(solution, list) and len(solution) > 0:
         for reac in solution[0]:
             reac.notes["creation"] = "via gapfilling"
-        logging.info(
+        logger.info(
             f"Adding {len(solution[0])} reactions to model to ensure growth on medium {medium.name}."
         )
         model.add_reactions(solution[0])

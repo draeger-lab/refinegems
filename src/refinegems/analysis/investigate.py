@@ -12,8 +12,9 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 
 import cobra
 
-from libsbml import Model as libModel
+from bioregistry import is_valid_curie
 from cobra import Model as cobraModel
+from libsbml import Model as libModel
 
 from memote.support import consistency
 
@@ -238,8 +239,14 @@ def get_reactions_per_sbo(model: libModel) -> dict:
     sbos_dict = {}
     for react in model.getListOfReactions():
         sbo = react.getSBOTerm()
+        
+        complete_sbo_term = f'sbo:0000{sbo}'
+        if not is_valid_curie(complete_sbo_term):
+            sbo = 'invalid'
+    
         if sbo in sbos_dict.keys():
             sbos_dict[sbo] += 1
         else:
             sbos_dict[sbo] = 1
+    
     return sbos_dict
