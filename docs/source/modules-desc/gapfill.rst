@@ -93,13 +93,34 @@ Gap-filling with BioCyc
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
-``Reactions of gene``) and the reactions (at least the columns ``Reaction | Object ID | EC-Number | Spontanous?``).
+``Reactions of gene``) and the reactions (at least the columns ``Reaction | Object ID | EC-Number | Spontaneous?``).
 
 These two tables, together with the GFF file are the required input for this gap-filling algorithm.
-The missing genes are identfied by comparing the gene table ``Accession-2`` column to the model.
+The missing genes are identified by comparing the gene table ``Accession-2`` column to the model.
 Subsequently, the missing genes are mapped back to the reactions to identify missing reactions.
 The reactions are further mapped to MetaNetX and BiGG to obtain more reaction equations and 
 information, since especially the metabolites are easier to construct using the other databases.
+
+Required BioCyc input files
+"""""""""""""""""""""""""""
+
+The command line interface expects the BioCyc input files under the following options:
+
+- ``--genetable`` / ``-gt``: BioCyc gene SmartTable exported as a spreadsheet file.
+  The parser requires the columns ``Accession-2`` and ``Reactions of gene``. The
+  ``Accession-2`` column must contain the same GenBank locus tags that are stored
+  as gene product labels in the model.
+- ``--reactable`` / ``-rt``: BioCyc reaction SmartTable exported as a spreadsheet
+  file. The parser requires the columns ``Reaction``, ``Object ID``, ``EC-Number``
+  and ``Spontaneous?``.
+- ``--gff-bc``: GFF3 annotation file for the same organism or strain. The file is
+  used to map missing locus tags to NCBI protein identifiers and names, so its CDS
+  entries should contain ``locus_tag``, ``protein_id`` and, if available, ``product``
+  attributes.
+
+If BioCyc stores the relevant locus tags in a different accession column for the
+organism, export that column and rename it to ``Accession-2`` before using the
+table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
 
 Data acquisition from BioCyc
 """"""""""""""""""""""""""""
@@ -115,7 +136,7 @@ Data acquisition from BioCyc
         iii. then add the `property` 'Accession-2'
 
         .. note:: The column 'Accession-2' should contain the Genbank locus tags of your organism. If this information 
-            is not in this column, try the column 'Acccession-1'. If you used another column to obtain these locus tags, 
+            is not in this column, try the column 'Accession-1'. If you used another column to obtain these locus tags, 
             please, rename it to 'Accession-2' before using the table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
 
         iv. and delete the 'Gene Name' column.
@@ -136,7 +157,7 @@ Data acquisition from BioCyc
 Gap-filling with a GFF (and a DIAMOND database)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file)
+| **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file for DIAMOND-based EC mapping)
 | **Class:** :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
 | **Runtime estimation:** ~3min (1min (for finding all missing components without NCBI) + 2min (for filling); tested with *Klebsiella pneumoniae* HS11286 and *Staphylococcus haemolyticus* from a private collection)
 
@@ -155,6 +176,32 @@ Finally, the EC numbers are mapped to different databases to find the
 reactions that should be added to the model. However, enabling the NCBI search will slow down the
 algorithm significantly, since the NCBI search is done via the Entrez API and therefore
 limited to a certain number of requests per second.
+
+Required GeneGapFiller input files
+""""""""""""""""""""""""""""""""""
+
+The command line interface expects the organism annotation under ``--gff-g``. This
+GFF3 file should describe the same organism or strain as the model and should contain
+CDS entries with ``locus_tag`` attributes. The locus tags are compared to the gene
+product labels in the model. CDS entries may also contain ``protein_id`` and
+``eC_number`` attributes. Existing EC numbers are used directly; missing EC numbers
+can be inferred from homolog searches or, optionally, from NCBI.
+
+For DIAMOND-based mapping, the following files are required together:
+
+- ``--fasta``: protein FASTA file for the same organism or model. The sequences are
+  used as DIAMOND query input for missing genes that still need EC information.
+- ``--dmnd-db``: DIAMOND database searched for homologs. For the default
+  ``--db-type swissprot`` workflow, this is the SwissProt DIAMOND database. The
+  required SwissProt files can be downloaded with ``refinegems setup data
+  SwissProt_gapfill``. For ``--db-type user``, provide a DIAMOND database built from
+  the user-defined reference proteins.
+- ``--db-mapping`` / ``-db-map``: mapping file for the selected database. For
+  ``swissprot``, this maps SwissProt identifiers to EC and BRENDA information. For
+  ``user``, it must map the identifiers in the user-defined database to EC numbers.
+
+The NCBI lookup is optional. If ``--check-ncbi`` is set, ``--mail`` must also be
+provided so Entrez requests include a contact address.
 
 How to run a GapFiller
 ----------------------
