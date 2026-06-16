@@ -14,12 +14,15 @@ The workflow of the script is as follows:
 3. Addition of all KEGG pathways for a reaction with the biological qualifier ``OCCURS_IN`` to the annotations
 4. Addition of all KEGG pathways as groups with references to the contained reactions as ``groups:member``
 
-The only function that you will need to access 
-is :py:func:`~refinegems.curation.pathways.kegg_pathways`:
+The main function for adding KEGG pathway groups is
+:py:func:`~refinegems.curation.pathways.set_kegg_pathways`:
 
 .. code:: python
     :linenos:
     
-    import refinegems as rg 
-    model_pathway_groups, non_kegg_reactions = rg.pathways.kegg_pathways(<path to your model>)
-    rg.io.write_to_file(model_pathway_groups, <path to modified model>)
+    from refinegems.curation.pathways import set_kegg_pathways
+    from refinegems.utility.io import load_model, write_model_to_file
+
+    model = load_model("path/to/model.xml", "libsbml")
+    non_kegg_reactions = set_kegg_pathways(model)
+    write_model_to_file(model, "path/to/model_with_pathways.xml")

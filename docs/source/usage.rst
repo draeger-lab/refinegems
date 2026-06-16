@@ -12,7 +12,7 @@ Access points
 via command line/terminal
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main functionalities of refineGEMs can be accessed directly from the command line after a successfull installation.
+The main functionalities of refineGEMs can be accessed directly from the command line after a successful installation.
 
 For more information, call the following in your command line or terminal:
 
@@ -42,7 +42,7 @@ Or, e.g.:
 The media database  
 ------------------
 
-The media database can be accessed via a mutitude of different routes.
+The media database can be accessed via a multitude of different routes.
 
 .. hint::
 
@@ -57,7 +57,7 @@ and open it with an IDE with an SQL-extension (e.g. VSCode) or with a graphical 
 Access via the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``refineGEMs`` command line tool provides limited access to some of the basic functionalities concering
+The ``refineGEMs`` command line tool provides limited access to some of the basic functionalities concerning
 the media database, including downloading a config file and retrieving a list of all available media:
 
 .. code-block:: bash
@@ -76,22 +76,20 @@ For example, to extract the medium `LB` run:
 
 .. code-block:: python
 
-  from refinegems.classes import Medium
+  from refinegems.classes.medium import load_medium_from_db
 
-  lb = medium.load_medium_from_db('LB')
+  lb = load_medium_from_db('LB')
 
 
 Access the database via a config.yaml
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the idea is to load a list of media - from the database or externel, with or without modifications -
+If the idea is to load a list of media - from the database or external, with or without modifications -
 it might be useful to use the media configuration file. There, different media names with options for 
-modifications can be listed and subsequently loaded using :py:class:`~refinegems.classes.medium` or used as input for other 
+modifications can be listed and subsequently loaded using :py:func:`~refinegems.classes.medium.load_media` or used as input for other
 entry points that requires a list of media or the config itself. 
 
 .. toctree::
 
   The configuration file <config-desc/media-yaml>
   How to adjust the config <config-desc/media-yaml-howto>
-
-
 

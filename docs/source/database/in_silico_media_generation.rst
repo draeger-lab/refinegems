@@ -1,10 +1,10 @@
 From laboratory to *in silico* medium
 ==========================================
 
-The `refineGEMs` toolbox allows users to add their own media definition to the workflows 
+The ``refineGEMs`` toolbox allows users to add their own media definition to the workflows
 or to their models. Personal media definitions can be converted into a Medium object by calling 
-the function :py:func:`~refinegems.classes.medium.read_external_medium` 
-or added to the pipelines by using the `external_base` / `add_external` options in the media config.
+the function :py:func:`~refinegems.classes.medium.load_external_medium`
+or added to the pipelines by using the ``external_base`` / ``add_external`` options in the media config.
 The input for both is a path to a tab-separated file (TSV) file containing the medium information.
 
 The format of the input TSV file and the conversion of a medium definition to an *in silico* medium
@@ -12,7 +12,7 @@ will be discussed in the following sections.
 
 .. hint::
 
-   Please contact the developers of leave a comment in this 
+   Please contact the developers or leave a comment in this
    `GitHub issue <https://github.com/draeger-lab/refinegems/issues/123>`_ for any suggestions on new media for the 
    internal database.
 
@@ -20,7 +20,7 @@ will be discussed in the following sections.
 Medium file format of the toolbox
 ---------------------------------
 
-The file format for a medium usable with the `refineGEMs` toolbox is a TSV
+The file format for a medium usable with the ``refineGEMs`` toolbox is a TSV
 in the following format (with example):
 
 .. code::
@@ -56,7 +56,7 @@ How to get from a lab medium to the *in silico* one
 
 To create your own *in silico* medium definition, follow the steps listed below:
 
-1. Search papers containing medium definitions./ Search paper or provider information for a medium that could be 
+1. Search papers or provider information for a medium that could be
    interesting for your organism.
 2. If the paper already contains an *in silico* definition: 
 
@@ -69,7 +69,7 @@ To create your own *in silico* medium definition, follow the steps listed below:
 
          .. note::
 
-            *Substance* means an independant chemical entity in the context of the medium, e.g., 
+            *Substance* means an independent chemical entity in the context of the medium, e.g.,
             an ion in a salt. Each type of ion in a salt is one substance, even though the salt is one component 
             in the medium recipe, since chemically, they dissolve in aqueous solution. Thus, they can 
             react independently from one another.

@@ -294,7 +294,7 @@ class GrowthSimulationReport(Report):
                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
-            - **kwargs:
+            - ``**kwargs``:
                 Additional keyword arguments for the plotting functions. 
                 See the ax.bar and sns.heatmap documentation for possible arguments.
 
@@ -333,7 +333,7 @@ class GrowthSimulationReport(Report):
                     A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default.
                     Defaults to 'YlGn'.
-                - **kwargs:
+                - ``**kwargs``:
                     Additional keyword arguments for the plt.figure() function. 
                     See the plt.figure() documentation for possible arguments.
 
@@ -394,7 +394,7 @@ class GrowthSimulationReport(Report):
                 - unit_text (str, optional):
                     The text for the colorbar label.
                     Defaults to "doubling time [min]".
-                - **kwargs:
+                - ``**kwargs``:
                     Additional keyword arguments for the plt.subplots() function.
                     See the plt.subplots() documentation for possible arguments.
 

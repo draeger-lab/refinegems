@@ -5,7 +5,7 @@ The :py:mod:`~refinegems.analysis.growth` submodule provides a number of functio
 to analyse and simulate the growth of a model including:
 
 1. actual growth simulation on different media
-2. auxothrophy simulation
+2. auxotrophy simulation
 3. simulating growth on different elemental sources, e.g. a C-source test
 4. model the minimal medium for a model
 
@@ -39,7 +39,7 @@ further visualisation of these values,including a tabulary and graphical display
 Auxothrophy 
 -----------
 
-The function :py:func:`~refinegems.analysis.growth.test_auxotrophies` tests the auxothrophies
+The function :py:func:`~refinegems.analysis.growth.test_auxotrophies` tests the auxotrophies
 for the 20 proteinogenic amino acids for a model, a set of media and supplement modes.
 
 Iteratively for each amino acids, a sink reactions for that particular amino acids is temporarily added
@@ -101,5 +101,4 @@ ways to calculate one, set using the parameter ``objective``:
 
   The function always returns a single solution, but there may be more than one solution, especially
   for the third case.
-
 
