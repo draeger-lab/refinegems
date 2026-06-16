@@ -1964,12 +1964,14 @@ def get_gpid_mapping(
     logger.info("Extracting model IDs and potential valid database IDs from model...")
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
     modelid2potentialid = {"model_id": [], "database_id": []}
+    if contains_locus_tags:
+        modelid2potentialid["locus_tag"] = []
 
     for gene in tqdm(gene_list):
 
         # Get locus_tag if available
         if contains_locus_tags:
-            modelid2potentialid["locus_tag"] = (
+            modelid2potentialid["locus_tag"].append(
                 gene.getLabel() if gene.isSetLabel() else None
             )
 
