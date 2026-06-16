@@ -80,6 +80,7 @@ When using ``refineGEMs``, please cite the latest publication:
    usage
    main-modules
    database/intro
+   Third-party databases and tools <licenses-citations>
    Content of refineGEMs <api>
    Help and FAQ <help>
    Notes for developers <development>
