@@ -57,7 +57,9 @@ Databases
      - :footcite:t:`Hastings2016_chebi`
    * - KEGG
      - KEGG is queried for genes, enzymes, reactions, compounds, and pathway
-       annotations.
+       annotations. Released ``refineGEMs`` files should contain only KEGG
+       identifiers or annotations, not cached KEGG records or KEGG database
+       exports.
      - Academic users may use the KEGG website freely. KEGG is not a public
        database for non-academic use; non-academic use and service provision
        require the appropriate KEGG license.
@@ -76,7 +78,9 @@ Tools
      - Citation
    * - SBOannotator
      - Called to assign SBO terms to SBML model entities.
-     - Distributed as free software under the GNU GPL-3.0 license.
+     - Distributed as free software under the GNU GPL-3.0 license. This affects
+       users who install or redistribute the optional SBOannotator-dependent
+       functionality.
      - :footcite:t:`Leonidou2023_sboann`
    * - MassChargeCuration (MCC)
      - Called to curate metabolite masses and charges.
@@ -84,7 +88,8 @@ Tools
      - :footcite:t:`Mostolizadeh2026_mcc`
    * - MEMOTE
      - Used to run model consistency tests and generate MEMOTE reports. Some
-       consistency helper functions are imported for internal checks.
+       consistency helper functions are imported for internal checks, and
+       biomass-normalisation code in ``refineGEMs`` was adapted from MEMOTE.
      - Distributed under the Apache-2.0 license.
      - :footcite:t:`Lieven2020_memote`
    * - BOFdat
@@ -100,6 +105,11 @@ Compliance notes for maintainers
 The internal SQLite database currently redistributes BiGG and ModelSEED-derived
 tables. When these tables are updated, preserve the upstream license notices,
 record the source version or download date, and keep this page in sync.
+
+The ``refineGEMs`` source code is distributed under the MIT license. Bundled
+third-party data, database identifiers, and connected external tools remain
+under their own licenses or terms, as listed above and in
+``THIRD_PARTY_LICENSES.md``.
 
 KEGG-dependent functionality should be documented and implemented as online
 queries through the user-accessed KEGG services. Avoid bundling KEGG data in
