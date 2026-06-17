@@ -597,12 +597,8 @@ class GapFiller(ABC):
 
         # data
         self.full_gene_list = None
-        self.missing_genes = (
-            None  # missing genes, that have not yet been sorted into any category
-        )
-        self.missing_reactions = (
-            None  # missing reacs, that have not yet been sorted into any category
-        )
+        self._missing_genes = None  # missing genes, that have not yet been sorted into any category
+        self._missing_reactions = None  # missing reacs, that have not yet been sorted into any category
 
         # general information
         self.geneid_type = "ncbi"
@@ -633,6 +629,24 @@ class GapFiller(ABC):
             },
         }
         self.manual_curation = {"genes": {}, "reactions": {}}
+
+    @property
+    def missing_genes(self) -> pd.DataFrame:
+        """Get or set the current missing genes table."""
+        return self._missing_genes
+
+    @missing_genes.setter
+    def missing_genes(self, table: pd.DataFrame):
+        self._missing_genes = table
+
+    @property
+    def missing_reactions(self) -> pd.DataFrame:
+        """Get or set the current missing reactions table."""
+        return self._missing_reactions
+
+    @missing_reactions.setter
+    def missing_reactions(self, table: pd.DataFrame):
+        self._missing_reactions = table
 
     # abstract methods
     # ----------------
@@ -2197,6 +2211,33 @@ class GeneGapFiller(GapFiller):
         self.missing_genes = updated_missing_genes
         self.missing_reactions = mapped_reacs
 
+# -----------------------
+# Manual Gapfilling
+# -----------------------
+
+class ManualGapFiller(GapFiller):
+    """GapFiller initialized with manually curated tables for missing genes and reactions.
+
+    Attributes:
+        - GapFiller Attributes:
+            All attributes of the parent class :py:class:`~refinegems.classes.gapfill.GapFiller`
+    """
+
+    def __init__(self, missing_genes: pd.DataFrame, missing_reactions: pd.DataFrame) -> None:
+        super().__init__()
+        self._variety = "Manual"
+        self.missing_genes = missing_genes
+        self.missing_reactions = missing_reactions
+
+    def find_missing_genes(self, model: Union[cobra.Model, libModel]):
+        """ManualGapFiller is initialized with missing genes. This method does nothing."""
+        logging.info("Missing genes were provided manually. Skipping search.")
+        pass
+
+    def find_missing_reactions(self, model: cobra.Model):
+        """ManualGapFiller is initialized with missing reactions. This method does nothing."""
+        logging.info("Missing reactions were provided manually. Skipping search.")
+        pass
 
 ############################################################################
 # functions (2)
