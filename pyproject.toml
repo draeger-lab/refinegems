@@ -98,7 +98,7 @@ license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
 where = ['src']
 
 [tool.setuptools.package-data]
-"refinegems.example.example_inputs" = ['*.xlsx','*.csv']
+"refinegems.example.example_inputs" = ['*.tsv']
 "refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
 "refinegems.data.config" = ['*.yaml','*.yml']
 "refinegems.data.pathway" = ['*.csv']

@@ -30,6 +30,7 @@ import yaml
 
 from colorama import init as colorama_init
 from colorama import Fore
+from importlib.resources import files
 from pathlib import Path
 from sqlite_dump import iterdump
 from typing import Literal, Union, Any
@@ -1270,7 +1271,7 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
                 for line in f:
                     # parse the comment lines from the file
                     if line.startswith("#"):
-                        l = line.split(":")
+                        l = line.split(":", maxsplit=1)
                         k = l[0]
                         k = k[1:].strip()
                         v = "".join(l[1:])
@@ -1315,6 +1316,24 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
         # unknown case, raise error
         case _:
             raise ValueError(f"Unknown input for parameter how: {how}")
+
+
+def download_example_medium(filename: str = "custom_medium_substance_table.tsv"):
+    """Load the example external medium file from the package and save a copy for the user to edit.
+
+    Args:
+        - filename (str, optional):
+            Filename to write the example medium to/save it under as.
+            Defaults to 'custom_medium_substance_table.tsv'.
+    """
+
+    example_medium = files("refinegems.example.example_inputs").joinpath(
+        "custom_medium_substance_table.tsv"
+    )
+
+    with example_medium.open("r") as infile, open(filename, "w") as outfile:
+        for line in infile:
+            outfile.write(line)
 
 
 def extract_medium_info_from_model_bigg(row, model: cobra.Model) -> pd.Series:
@@ -2216,7 +2235,6 @@ def medium_to_model(
         return
     else:
         return exported_medium
-
 
 
 
