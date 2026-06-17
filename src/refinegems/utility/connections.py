@@ -11,7 +11,6 @@ import cobra
 import json
 import logging
 import memote
-import model_polisher as mp
 import os
 import pandas as pd
 import shutil
@@ -20,17 +19,10 @@ import tempfile
 import time
 import warnings
 
-from BOFdat import step1
-from BOFdat import step2
-from BOFdat.util import update
-from BOFdat.util.update import determine_coefficients
-
 from importlib.resources import files
 from libsbml import Model as libModel
-from MCC import MassChargeCuration
 from pathlib import Path
 from libsbml import readSBML
-from sboannotator.SBOannotator import sbo_annotator
 from typing import Literal, Union
 
 from memote.support import consistency
@@ -38,6 +30,7 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
+from ..developement.optional import OptionalDependencyError, require_optional_dependency
 from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
@@ -68,7 +61,7 @@ def adjust_BOF(
     model: cobra.Model,
     dna_weight_fraction: float,
     weight_frac: float,
-) -> str:
+) -> Union[str, None]:
     """Adjust the model's BOF using BOFdat. Currently implemented are step 1
     DNA coefficients and step 2.
     
@@ -89,9 +82,30 @@ def adjust_BOF(
             Weight fraction for the second step of BOFdat (coenzymes and ions)
 
     Returns:
-        str:
-            The updated BOF reaction as a reaction string.
+        str | None:
+            The updated BOF reaction as a reaction string. Returns None if
+            BOFdat is not installed.
     """
+    try:
+        step1 = require_optional_dependency(
+            "BOFdat.step1",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+        step2 = require_optional_dependency(
+            "BOFdat.step2",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+        update = require_optional_dependency(
+            "BOFdat.util.update",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping BOFdat adjustment.", e)
+        return None
+
     # Generate temporary file & use for BOFdat
     # ----------------------------------------
     with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as temp_model:
@@ -113,7 +127,7 @@ def adjust_BOF(
         # find inorganic ions
         selected_metabolites = step2.find_coenzymes_and_ions(temp_model.name)
         # determine coefficients
-        bd_step2 = determine_coefficients(selected_metabolites, model, weight_frac)
+        bd_step2 = update.determine_coefficients(selected_metabolites, model, weight_frac)
         bd_step2.update(bd_step1)
 
     # Remove temp file
@@ -353,6 +367,13 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
             r.metabolites[m] = c * 1.0  # ensure that all stoichiometric coefficients are floats
             
     try:
+        mcc = require_optional_dependency(
+            "MCC",
+            package_name="MassChargeCuration",
+            purpose="run MassChargeCuration",
+        )
+        MassChargeCuration = mcc.MassChargeCuration
+
         # make temporary directory to save files for MCC in
         with tempfile.TemporaryDirectory() as temp:
             # @DISCUSSION for the sake of runtime, it would be good to save the data needed by MCC somewhere 
@@ -372,6 +393,8 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         balancer.generate_reaction_report(Path(dir, model.id + "_mcc_reactions"))
         balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
         balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping MCC.", e)
     except Exception as e:
         print(repr(e))
         import traceback
@@ -509,6 +532,15 @@ def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -
         Union[dict, None]: 
             Result from ModelPolisher
     """
+    try:
+        mp = require_optional_dependency(
+            "model_polisher",
+            package_name="model-polisher",
+            purpose="run ModelPolisher",
+        )
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping ModelPolisher.", e)
+        return None
 
     # use correct function for input model/path to model
     match model_or_path:
@@ -548,6 +580,17 @@ def run_SBOannotator(model: libModel) -> libModel:
         libModel:
             The model with corrected / added SBO terms.
     """
+    try:
+        sboannotator = require_optional_dependency(
+            "sboannotator.SBOannotator",
+            package_name="sboannotator",
+            extra="sbo",
+            purpose="annotate SBO terms",
+        )
+        sbo_annotator = sboannotator.sbo_annotator
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping SBOannotator.", e)
+        return model
 
     dbs_scheme = files("sboannotator").joinpath("create_dbs.sql")
 

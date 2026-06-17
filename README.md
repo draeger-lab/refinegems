@@ -79,10 +79,26 @@ pip install .
 
 ```
 
+Optional features require additional packages that are not needed for the base installation:
+
+```bash
+# ChEBI lookups
+pip install "refineGEMs[chebi]"
+
+# SBO label lookup via OLS
+pip install "refineGEMs[ols]"
+
+# SBO annotation
+pip install "refineGEMs[sbo]"
+
+# install all optional dependencies
+pip install "refineGEMs[optional]"
+```
+
 > [!CAUTION]
-> ``refineGEMs`` depends on the tools [MCC](https://github.com/draeger-lab/MassChargeCuration) and 
-> [BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
-> Please install both tools before using ``refineGEMs``:
+> Some connected tools are optional and currently need to be installed directly from GitHub before using the
+> corresponding refineGEMs workflow step. If they are missing, refineGEMs reports the missing dependency and skips
+> the affected optional step where possible.
 >
 > ```bash
 > # For MCC, until hot fix is merged into main:
@@ -90,6 +106,9 @@ pip install .
 >
 > # For BOFdat, our fork with hot fix(es):
 > pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
+>
+> # ModelPolisher client:
+> pip install "model-polisher@git+https://github.com/draeger-lab/MPClient"
 >
 > ```
 
