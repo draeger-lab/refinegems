@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 import re
 import requests
+import time
 import warnings
 import xmltodict
 
@@ -36,6 +37,7 @@ from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
 from typing import Literal, Union
 from tqdm import tqdm
+from urllib.error import HTTPError
 
 tqdm.pandas()
 pd.options.mode.chained_assignment = None  # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
@@ -787,90 +789,129 @@ like EC number of an NBCI protein accession number or information about locus ta
 """
 
 
-def _search_ncbi_for_gp(
-    row: pd.Series, id_type: Literal["refseq", "ncbiprotein"]
-) -> pd.Series:
-    """Fetches protein name and locus tag from NCBI
-
+def batch_search_ncbi_for_gp(
+    df: pd.DataFrame, id_type: Literal["refseq", "ncbiprotein"], email: str
+) -> pd.DataFrame:
+    """Fetches protein name and locus tag from NCBI in batches with exponential backoff.
+    
     Args:
-        - row (pd.Series):
-            Row of a pandas DataFrame containing RefSeq/NCBI Protein IDs in columns
+        - df (pd.DataFrame):
+            Pandas DataFrame containing RefSeq/NCBI Protein IDs.
         - id_type (Literal['refseq', 'ncbiprotein']):
-            ID type of IDs in provided row.
-            Can be one of ['refseq', 'ncbiprotein'].
-
+            ID type of IDs in provided DataFrame.
+        - email (str):
+            User's mail address for the NCBI Entrez tool.
+            
     Returns:
-        pd.Series:
-            Modified input row
+        pd.DataFrame:
+            Modified input DataFrame with fetched data.
     """
-    match id_type:
-        case "refseq":
-            ncbi_id = row["REFSEQ"]
-        case "ncbiprotein":
-            ncbi_id = row["NCBI"]
-        case _:
-            raise TypeError(
-                f"Provided type for id_type {id_type} invalid. Please use one of ['refseq', 'ncbiprotein']."
-            )
-            return row
+    if email:
+        Entrez.email = email
+        Entrez.tool = "refineGEMs"
+        
+    id_col = "REFSEQ" if id_type == "refseq" else "NCBI"
+    if id_col not in df.columns:
+        return df
+        
+    # Filter non-null IDs
+    valid_ids = df[df[id_col].notnull()][id_col].unique().tolist()
+    if not valid_ids:
+        return df
+        
+    # Initialize target columns if they don't exist
+    if id_type == "refseq" and "name_refseq" not in df.columns:
+        df["name_refseq"] = None
+    elif id_type == "ncbiprotein":
+        if "name_ncbi" not in df.columns:
+            df["name_ncbi"] = None
+        if "locus_tag" not in df.columns:
+            df["locus_tag"] = None
 
-    if not pd.isnull(ncbi_id):
+    chunk_size = 150  # Process 150 IDs per single HTTP request
+    name_dict = {}
+    locus_dict = {}
+    
+    for i in tqdm(range(0, len(valid_ids), chunk_size), desc=f"Batch fetching {id_type} from NCBI"):
+        chunk = valid_ids[i:i+chunk_size]
+        id_string = ",".join(chunk)
+        
+        records = []
+        max_retries = 5
+        
+        # Exponential Backoff Loop
+        for attempt in range(max_retries):
+            try:
+                handle = Entrez.efetch(db="protein", id=id_string, rettype="gbwithparts", retmode="text")
+                records = list(SeqIO.parse(handle, "gb"))
+                handle.close()
+                break
+            except HTTPError as e:
+                if e.code in [400, 429, 500, 502, 503, 504]:
+                    time.sleep(2 ** attempt) # Wait 1s, 2s, 4s, 8s...
+                else:
+                    logging.error(f"NCBI API Error: {e}")
+                    break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    logging.error(f"Failed to fetch chunk after {max_retries} attempts: {e}")
+                time.sleep(2 ** attempt)
 
-        try:
-            handle = Entrez.efetch(
-                db="protein", id=ncbi_id, rettype="gbwithparts", retmode="text"
-            )
-            records = SeqIO.parse(handle, "gb")
+        for record in records:
+            # Match the exact queried ID to the returned record
+            matched_id = None
+            for q_id in chunk:
+                if q_id in record.id or record.id in q_id or q_id in record.name:
+                    matched_id = q_id
+                    break
+            if not matched_id:
+                matched_id = record.id
 
-            for i, record in enumerate(records):
-                match id_type:
-                    case "refseq":
-                        row["name_refseq"] = record.description
-                    case "ncbiprotein":
-                        for feature in record.features:
-                            if feature.type == "CDS":
-                                row["name_ncbi"] = record.description
-                                row["locus_tag"] = feature.qualifiers["locus_tag"][0]
+            if id_type == "refseq":
+                name_dict[matched_id] = record.description
+            elif id_type == "ncbiprotein":
+                name_dict[matched_id] = record.description
+                for feature in record.features:
+                    if feature.type == "CDS" and "locus_tag" in feature.qualifiers:
+                        locus_dict[matched_id] = feature.qualifiers["locus_tag"][0]
+                        break
 
-        except Exception as e:
-            print(f"{e} with {id_type} ID {ncbi_id}")
+    # Safely map results back to dataframe without destroying existing entries
+    if id_type == "refseq":
+        df["name_refseq"] = df.apply(lambda row: name_dict.get(row[id_col], row["name_refseq"]), axis=1)
+    elif id_type == "ncbiprotein":
+        df["name_ncbi"] = df.apply(lambda row: name_dict.get(row[id_col], row["name_ncbi"]), axis=1)
+        df["locus_tag"] = df.apply(lambda row: locus_dict.get(row[id_col], row["locus_tag"]), axis=1)
+        
+    return df
 
-    return row
 
-
-# fetching the EC number (if possible) from NCBI
-# based on an NCBI protein ID (accession version number)
 def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
     """Based on a NCBI protein accession number, try and fetch the
-    EC number from NCBI.
-
-    Args:
-        - mail (str):
-            User's mail address for the NCBI ENtrez tool.
-        - ncbiprot (str):
-            The NCBI protein accession number.
-
-    Returns:
-        (1) Case: fetching successful
-                str:
-                    The EC number associated with the protein ID based on NCBI.
-
-        (2) Case: fetching unsuccessful
-                None:
-                    Nothing to return
+    EC number from NCBI with Exponential Backoff.
     """
-    try:
-        Entrez.email = mail
-        handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
-        for feature_dict in xmltodict.parse(handle)["INSDSet"]["INSDSeq"][
-            "INSDSeq_feature-table"
-        ]["INSDFeature"]:
-            if isinstance(feature_dict["INSDFeature_quals"]["INSDQualifier"], list):
-                for qual in feature_dict["INSDFeature_quals"]["INSDQualifier"]:
-                    if qual["INSDQualifier_name"] == "EC_number":
-                        return qual["INSDQualifier_value"]
-    except Exception as e:
-        return None
+    Entrez.email = mail
+    Entrez.tool = "refineGEMs"
+    max_retries = 5
+    
+    for attempt in range(max_retries):
+        try:
+            handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
+            for feature_dict in xmltodict.parse(handle)["INSDSet"]["INSDSeq"]["INSDSeq_feature-table"]["INSDFeature"]:
+                if isinstance(feature_dict.get("INSDFeature_quals", {}).get("INSDQualifier"), list):
+                    for qual in feature_dict["INSDFeature_quals"]["INSDQualifier"]:
+                        if qual.get("INSDQualifier_name") == "EC_number":
+                            return qual.get("INSDQualifier_value")
+            return None
+        except HTTPError as e:
+            if e.code in [400, 429, 500, 502, 503, 504]:
+                time.sleep(2 ** attempt)
+            else:
+                break
+        except Exception:
+            time.sleep(2 ** attempt)
+            
+    return None
 
 
 # Uniprot

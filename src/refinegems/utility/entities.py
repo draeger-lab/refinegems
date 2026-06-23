@@ -58,7 +58,7 @@ from .db_access import (
     _add_annotations_from_bigg_reac_row,
     get_BiGG_metabs_annot_via_dbid,
     add_annotations_from_BiGG_metabs,
-    _search_ncbi_for_gp,
+    batch_search_ncbi_for_gp,
 )
 from .io import load_a_table_from_database, parse_gff_for_cds
 from .util import (
@@ -2003,16 +2003,12 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         # Query NCBI based on RefSeq Protein ID
         print('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("refseq",)
-            )
+            mapping_table = batch_search_ncbi_for_gp(mapping_table, "refseq", email)
 
         # Query NCBI based on NCBI Protein ID
         print('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
-            )
+            mapping_table = batch_search_ncbi_for_gp(mapping_table, "ncbiprotein", email)
 
     # Clean-up dataframe for output
     def _merge_name_cols(row: pd.Series) -> pd.Series:
