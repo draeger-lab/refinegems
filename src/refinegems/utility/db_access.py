@@ -23,6 +23,7 @@ __author__ = """Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune,
 import cobra
 import io
 import libchebipy
+import logging
 import numpy as np
 import pandas as pd
 import re
@@ -262,7 +263,7 @@ def add_info_from_ChEBI_BiGG(
     # Finds the chemical formula through the ChEBI/BiGG API, defaults to: 'No formula'
     def find_formula(row: pd.Series) -> str:
         chebi_id = get_chebi_id(row)
-        bigg_id, chem_form = str(row.get("bigg_id")), str(row.get("Chemical Formula"))
+        bigg_id, chem_form = str(row.get("Chemical Formula")), str(row.get("Chemical Formula"))
         chem_formula = None
         if chebi_id:  # Get formula from ChEBI
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
@@ -808,9 +809,14 @@ def batch_search_ncbi_for_gp(
     """
     if email:
         Entrez.email = email
-        Entrez.tool = "refineGEMs"
         
-    id_col = "REFSEQ" if id_type == "refseq" else "NCBI"
+    if id_type == "refseq":
+        id_col = "REFSEQ"
+    elif id_type == "ncbiprotein":
+        id_col = "NCBI"
+    else:
+        raise TypeError(f"Provided type for id_type '{id_type}' invalid. Please use one of ['refseq', 'ncbiprotein'].")
+        
     if id_col not in df.columns:
         return df
         
@@ -860,8 +866,10 @@ def batch_search_ncbi_for_gp(
         for record in records:
             # Match the exact queried ID to the returned record
             matched_id = None
+            record_id_base = record.id.split('.')[0]
             for q_id in chunk:
-                if q_id in record.id or record.id in q_id or q_id in record.name:
+                q_id_base = q_id.split('.')[0]
+                if q_id == record.id or q_id_base == record_id_base:
                     matched_id = q_id
                     break
             if not matched_id:
@@ -878,10 +886,10 @@ def batch_search_ncbi_for_gp(
 
     # Safely map results back to dataframe without destroying existing entries
     if id_type == "refseq":
-        df["name_refseq"] = df.apply(lambda row: name_dict.get(row[id_col], row["name_refseq"]), axis=1)
+        df["name_refseq"] = df[id_col].map(name_dict).fillna(df["name_refseq"])
     elif id_type == "ncbiprotein":
-        df["name_ncbi"] = df.apply(lambda row: name_dict.get(row[id_col], row["name_ncbi"]), axis=1)
-        df["locus_tag"] = df.apply(lambda row: locus_dict.get(row[id_col], row["locus_tag"]), axis=1)
+        df["name_ncbi"] = df[id_col].map(name_dict).fillna(df["name_ncbi"])
+        df["locus_tag"] = df[id_col].map(locus_dict).fillna(df["locus_tag"])
         
     return df
 
@@ -891,15 +899,27 @@ def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
     EC number from NCBI with Exponential Backoff.
     """
     Entrez.email = mail
-    Entrez.tool = "refineGEMs"
     max_retries = 5
     
     for attempt in range(max_retries):
+        handle = None
         try:
             handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
-            for feature_dict in xmltodict.parse(handle)["INSDSet"]["INSDSeq"]["INSDSeq_feature-table"]["INSDFeature"]:
-                if isinstance(feature_dict.get("INSDFeature_quals", {}).get("INSDQualifier"), list):
-                    for qual in feature_dict["INSDFeature_quals"]["INSDQualifier"]:
+            parsed_xml = xmltodict.parse(handle.read())
+            
+            features = parsed_xml.get("INSDSet", {}).get("INSDSeq", {}).get("INSDSeq_feature-table", {}).get("INSDFeature", [])
+            
+            if isinstance(features, dict):
+                features = [features]
+                
+            for feature_dict in features:
+                qualifiers = feature_dict.get("INSDFeature_quals", {}).get("INSDQualifier", [])
+                
+                if isinstance(qualifiers, dict):
+                    qualifiers = [qualifiers]
+                    
+                if isinstance(qualifiers, list):
+                    for qual in qualifiers:
                         if qual.get("INSDQualifier_name") == "EC_number":
                             return qual.get("INSDQualifier_value")
             return None
@@ -910,7 +930,10 @@ def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
                 break
         except Exception:
             time.sleep(2 ** attempt)
-            
+        finally:
+            if handle is not None:
+                handle.close()
+                
     return None
 
 
