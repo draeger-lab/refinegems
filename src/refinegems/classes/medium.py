@@ -32,7 +32,6 @@ from colorama import init as colorama_init
 from colorama import Fore
 from importlib.resources import files
 from pathlib import Path
-from sqlite_dump import iterdump
 from typing import Literal, Union, Any
 
 from ..utility.databases import PATH_TO_DB
@@ -2170,7 +2169,7 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
 
     conn = sqlite3.connect(PATH_TO_DB)
     with open(Path(directory, filename), "w") as file:
-        for line in iterdump(conn):
+        for line in conn.iterdump():
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if "CREATE TABLE" in line and counter != 0:
                     file.write(f"\n\n{line}\n")

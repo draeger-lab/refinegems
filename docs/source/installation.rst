@@ -21,9 +21,37 @@ To install refineGEMs as Python package from `PyPI <https://pypi.org/project/ref
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
-``refineGEMs`` depends on the tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__, `MCC <https://github.com/draeger-lab/MassChargeCuration>`__ and 
-`BOFdat <https://github.com/draeger-lab/BOFdat>`__ which cannot directly be installed via 
-`PyPI <https://pypi.org/project/refineGEMs/>`__. Please install all three tools before using ``refineGEMs``:
+Some ``refineGEMs`` features require optional dependencies that are not needed
+for the base installation:
+
+.. code:: console
+   :class: copyable
+
+   pip install "refineGEMs[chebi]"
+
+.. code:: console
+   :class: copyable
+
+   pip install "refineGEMs[ols]"
+
+.. code:: console
+   :class: copyable
+
+   pip install "refineGEMs[sbo]"
+
+To install all optional dependencies at once, run:
+
+.. code:: console
+   :class: copyable
+
+   pip install "refineGEMs[optional]"
+
+The connected tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__,
+`MCC <https://github.com/draeger-lab/MassChargeCuration>`__ and
+`BOFdat <https://github.com/draeger-lab/BOFdat>`__ are also optional workflow
+steps and currently need to be installed directly from GitHub before using the
+corresponding functionality. If they are missing, ``refineGEMs`` reports the
+missing dependency and skips the affected optional step where possible.
 
 .. hint:: 
 
