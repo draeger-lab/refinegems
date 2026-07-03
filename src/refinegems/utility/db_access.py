@@ -22,7 +22,6 @@ __author__ = """Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune,
 
 import cobra
 import io
-import libchebipy
 import numpy as np
 import pandas as pd
 import re
@@ -42,6 +41,7 @@ pd.options.mode.chained_assignment = None  # suppresses the pandas SettingWithCo
 
 from .connections import run_DIAMOND_blastp, filter_DIAMOND_blastp_results
 from .io import load_a_table_from_database, create_missing_genes_protein_fasta
+from ..developement.optional import OptionalDependencyError, require_optional_dependency
 
 ############################################################################
 # variables
@@ -219,6 +219,24 @@ def add_info_from_ChEBI_BiGG(
        pd.DataFrame:
           Input table extended with the charges & chemical formulas obtained from ChEBI/BiGG.
     """
+    libchebipy = None
+    needs_chebi = (
+        (charge or formula or iupac)
+        and "ChEBI" in missing_metabs.columns
+        and missing_metabs["ChEBI"].notna().any()
+    )
+    if needs_chebi:
+        try:
+            libchebipy = require_optional_dependency(
+                "libchebipy",
+                extra="chebi",
+                purpose="query ChEBI for metabolite information",
+            )
+        except OptionalDependencyError as e:
+            warnings.warn(
+                f"{e} ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
+                category=UserWarning,
+            )
 
     # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
     def get_chebi_id(row: pd.Series) -> str:
@@ -242,7 +260,7 @@ def add_info_from_ChEBI_BiGG(
         chebi_id = get_chebi_id(row)
         bigg_id = str(row.get("bigg_id"))
         charge = None
-        if chebi_id:  # Get charge from ChEBI (Returns always a charge)
+        if chebi_id and libchebipy:  # Get charge from ChEBI (Returns always a charge)
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             return chebi_entity.get_charge()
         elif bigg_id != "nan":  # Get charge from BiGG if no ChEBI ID available
@@ -262,7 +280,7 @@ def add_info_from_ChEBI_BiGG(
         chebi_id = get_chebi_id(row)
         bigg_id, chem_form = str(row.get("bigg_id")), str(row.get("Chemical Formula"))
         chem_formula = None
-        if chebi_id:  # Get formula from ChEBI
+        if chebi_id and libchebipy:  # Get formula from ChEBI
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             chem_formula = chebi_entity.get_formula()
         if not chem_formula:  # If no formula was found with ChEBI/No ChEBI ID available
@@ -284,7 +302,7 @@ def add_info_from_ChEBI_BiGG(
     def find_iupac(row: pd.Series) -> str:
 
         chebi_id = get_chebi_id(row)
-        if chebi_id:
+        if chebi_id and libchebipy:
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             # only take the IUPAC names
             iupac_names = []

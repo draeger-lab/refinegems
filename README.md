@@ -24,6 +24,7 @@
 - [Installation](#installation)
     - [Via pip](#pypi-via-pip)
     - [Via Docker](#docker-via-docker)
+- [License](#license)
 - [How to cite](#how-to-cite)
 - [Repositories using refineGEMs](#repositories-using-refinegems)
 
@@ -78,10 +79,26 @@ pip install .
 
 ```
 
+Optional features require additional packages that are not needed for the base installation:
+
+```bash
+# ChEBI lookups
+pip install "refineGEMs[chebi]"
+
+# SBO label lookup via OLS
+pip install "refineGEMs[ols]"
+
+# SBO annotation
+pip install "refineGEMs[sbo]"
+
+# install all optional dependencies
+pip install "refineGEMs[optional]"
+```
+
 > [!CAUTION]
-> ``refineGEMs`` depends on the tools [MCC](https://github.com/draeger-lab/MassChargeCuration) and 
-> [BOFdat](https://github.com/draeger-lab/BOFdat) which cannot directly be installed via PyPI or the `pyproject.toml`. 
-> Please install both tools before using ``refineGEMs``:
+> Some connected tools are optional and currently need to be installed directly from GitHub before using the
+> corresponding refineGEMs workflow step. If they are missing, refineGEMs reports the missing dependency and skips
+> the affected optional step where possible.
 >
 > ```bash
 > # For MCC, until hot fix is merged into main:
@@ -89,6 +106,9 @@ pip install .
 >
 > # For BOFdat, our fork with hot fix(es):
 > pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
+>
+> # ModelPolisher client:
+> pip install "model-polisher@git+https://github.com/draeger-lab/MPClient"
 >
 > ```
 
@@ -128,6 +148,13 @@ For example, to curate a (draft) model, run:
 ```bash
    docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
 ```
+
+## License
+
+The refineGEMs source code is distributed under the MIT license. Bundled
+third-party data, database identifiers, adapted code, and connected external
+tools remain under their own licenses or terms; see
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for details.
 
 
 ## How to cite

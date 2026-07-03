@@ -45,22 +45,18 @@ dependencies = [
     "depinfo>=1.7.0",
     "gffutils>=0.10.1",
     'ipywidgets', # needed to run tqdm normally without error
-    "libchebipy>=1.0.10",
     "markupsafe>=2.0.1",
     'matplotlib >= 3.8.2',
     "memote>=0.17.0", 
     "multiprocess>=0.70.16",
     "numpy>=2.0.0",
-    "ols-client>=0.1.3",
     "pandas>=2.2.2",
     'pyyaml>=6.0.1',
     "ratelimit>=2.2.1",
     'requests>=2.32.4',
-    "sboannotator>=3.0.2",
     "seaborn>=0.12.2",
     "sortedcontainers>=2.4.0",
     "sqlalchemy>=2.0.0",
-    "sqlite_dump>=0.1.1",
     'tqdm>=4.66.1',
     'upsetplot>=0.9.0',
     "venn>=0.1.3",
@@ -68,6 +64,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+chebi = ["libchebipy>=1.0.10"]
+ols = ["ols-client>=0.1.3"]
+sbo = ["sboannotator>=3.0.2"]
+optional = [
+       "libchebipy>=1.0.10",
+       "ols-client>=0.1.3",
+       "sboannotator>=3.0.2"]
 # developer/docs installation dependancies
 docs = ["accessible-pygments",
        "sphinx", 
@@ -91,11 +94,14 @@ refinegems = "refinegems.cmd_access:cli"
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
 
+[tool.setuptools]
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+
 [tool.setuptools.packages.find]
 where = ['src']
 
 [tool.setuptools.package-data]
-"refinegems.example.example_inputs" = ['*.xlsx','*.csv']
+"refinegems.example.example_inputs" = ['*.tsv']
 "refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
 "refinegems.data.config" = ['*.yaml','*.yml']
 "refinegems.data.pathway" = ['*.csv']
