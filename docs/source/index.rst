@@ -12,44 +12,44 @@ information about the in-build media database and the code behind the modules.
 Quick access to main sites
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: images/buttons/Install.png
+.. image:: images/buttons/refineGEMs_button_install.png
   :height: 0px
   :width: 0px
 
 .. raw:: html
 
   <a class="reference external image-reference" href="installation.html">
-    <img src='_images/Install.png' alt='Installation' title='Installation' style="width: 20%;">
+    <img src='_images/refineGEMs_button_install.png' alt='Installation' title='Installation' style="width: 20%;">
   </a>
 
-.. image:: images/buttons/Usage.png
+.. image:: images/buttons/refineGEMs_button_usage.png
   :height: 0px
   :width: 0px
 
 .. raw:: html
 
   <a class="reference external image-reference" href="main-modules.html">
-    <img src='_images/Usage.png' alt='Applications' title='Applications' style="width: 20%;">
+    <img src='_images/refineGEMs_button_usage.png' alt='Applications' title='Applications' style="width: 20%;">
   </a>
 
-.. image:: images/buttons/Media.png
+.. image:: images/buttons/refineGEMs_button_media.png
   :height: 0px
   :width: 0px
 
 .. raw:: html
 
   <a class="reference external image-reference" href="database/intro.html">
-    <img src='_images/Media.png' alt='Media database' title='Media Database' style="width: 20%;">
+    <img src='_images/refineGEMs_button_media.png' alt='Media database' title='Media Database' style="width: 20%;">
   </a>
 
-.. image:: images/buttons/Code.png
+.. image:: images/buttons/refineGEMs_button_code.png
   :height: 0px
   :width: 0px
 
 .. raw:: html
 
   <a class="reference external image-reference" href="api.html">
-    <img src='_images/Code.png' alt='Code' title='Code' style="width: 20%;">
+    <img src='_images/refineGEMs_button_code.png' alt='Code' title='Code' style="width: 20%;">
   </a>
 
 Connections to other tools

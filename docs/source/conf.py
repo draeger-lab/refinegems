@@ -79,14 +79,14 @@ html_static_path = ['_static']
 html_css_files = ['custom_theme.css']
 
 # Adds logo to documentation page
-html_logo = str(Path('images','logos','full-nb.png'))
+html_logo = str(Path('images','logos','refineGEMs_full_nb.png'))
 html_theme_options = {
     'logo_only': True,
 	'flyout_display': 'attached'
 }
 
 #Adds logo as favicon to tab
-html_favicon = str(Path('images','logos','icon-nb.png'))
+html_favicon = str(Path('images','logos','refineGEMs_icon_nb.png'))
 
 # Changes code highlighting
 pygments_style = 'blinds-light'

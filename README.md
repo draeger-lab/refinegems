@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/logos/full-nb.png" height="200"/>
+<img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/logos/refineGEMs_full_nb.png" height="200"/>
 </p>
 
 | Topic | Badge(s) |
@@ -16,13 +16,14 @@
 
 <!-- TOC -->
 
-- [Overview](#overview)
-- [Installation](#installation)
-    - [Via pip](#pypi-via-pip)
-    - [Via Docker](#docker-via-docker)
-- [License](#license)
-- [How to cite](#how-to-cite)
-- [Repositories using refineGEMs](#repositories-using-refinegems)
+- [refineGEMs](#refinegems)
+    - [Overview](#overview)
+    - [Installation](#installation)
+        - [pypi Via pip](#pypi-via-pip)
+        - [docker Via Docker](#docker-via-docker)
+    - [License](#license)
+    - [How to cite](#how-to-cite)
+    - [Repositories using refineGEMs](#repositories-using-refinegems)
 
 <!-- /TOC -->
 

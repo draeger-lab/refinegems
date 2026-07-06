@@ -51,6 +51,8 @@ My ``pipenv`` is not locking after f.ex. moving the repository. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 
+.. _help-pandoc:
+
 How to solve errors caused by ``pandoc`` (Development)?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 | `Here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.

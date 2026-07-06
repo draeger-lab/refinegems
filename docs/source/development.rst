@@ -129,7 +129,9 @@ Alternatively, install the tool with the extra `docs`, e.g.
 .. code:: console
     :class: copyable
 
-     pip install -e ".[docs]" --config-settings editable_mode=strict  
+     pip install -e ".[docs]" --config-settings editable_mode=strict
+
+For `pandoc` please also take a look at :ref:`help-pandoc`.
 
 Updating the `requirements.txt`
 -------------------------------
