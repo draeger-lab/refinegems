@@ -45,7 +45,8 @@ extensions = [
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib.bibtex',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'sphinxcontrib.icon'
 ]
 
 # For copy buttons in code blocks
