@@ -4,7 +4,7 @@ The media yaml file
 The default media configuration file distributed with ``refineGEMs`` is shown below.
 It can be downloaded with:
 
-.. code:: bash
+.. code-block:: bash
 
     refinegems setup config --type media --filename media_config.yml
 

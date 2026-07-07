@@ -3,8 +3,8 @@ How to adjust the media config file
 
 The media configuration file is divided into two main parts:
 
-- params: sets the defaults for all non-set parameters in the media definitions
-- media: actual part where the media are listed
+- params: Sets the defaults for all non-set parameters in the media definitions
+- media: Actual part where the media are listed
 
 Media config: params block
 --------------------------
@@ -26,7 +26,7 @@ Options:
 - ``aerobic`` boolean
 
     Sets the media to aerobic, if True (adds O2 when necessary).
-    Default does not change media definitions.
+    Default sets the media to anaerobic.
 
 - ``supplement`` None, std or min
 
@@ -60,16 +60,18 @@ Its structure is as follows:
         name 2:
         ...
 
-The block begins with the keyword ``media``. This block can contain an arbitrary number of
-subdictionary. Each starts with a name. The placeholder ``name`` can be substituted with a name for a medium or a name of a medium in 
-the media database. The following options can be used to further modify each medium (but no modification (empty dict) is
-necessary):
+The block begins with the keyword ``media``. This block can contain an arbitrary number of subdictionaries. Each starts 
+with a name. The placeholder ``name`` can be substituted with a name for a medium or a name of a medium in the media 
+database. If the ``name`` of the medium is not a valid name for the media database, either base or external_base is 
+required to set the base medium for the medium ``name``. The following options can be used to further modify each medium:
+
+.. note::
+
+    To specify the medium ``name`` without modification, simply set the name and leave the dictionary empty.
 
 - ``base`` None or str
 
-    If the name of the medium is not a valid name for the media database, either base or external_base
-    is required to set the base medium for this medium. The value for base has to a valid name/abbreviation 
-    of the media database.
+     The value for base has to be a valid name/abbreviation of the media database.
 
 - ``external_base`` None or str(path)
 
@@ -82,15 +84,18 @@ necessary):
 
 - ``add_medium`` List of medium name: mode of combination
 
-    Similar to add_subset but add another medium instead of a subset. The mode of
-    combination can be a single float, e.g. ``0.1``; a tuple of two floats, e.g.
-    ``(0.1, 0.2)``; ``"+"`` to simply add the media together; or ``NULL`` to set
-    the fluxes to ``None``.
+    Similar to add_subset but adds another medium instead of a subset. The mode of
+    combination can be:
 
-- ``add_external`` List of path: percentage (float, e.g. 0.5)
+    - a single float, e.g. ``0.1``; 
+    - a tuple of two floats, e.g. ``(0.1, 0.2)``; 
+    - ``"+"`` to simply add the media together; 
+    - or ``NULL`` to set the fluxes to ``None``.
 
-    Similar to add_subset, but add a medium loaded from an external path and
-    add it to the medium.
+- ``add_external`` List of paths: percentage (float, e.g. 0.5)
+
+    Similar to add_subset, but adds a medium loaded from an external path and
+    adds it to the medium.
 
 - ``add_substance`` Name:  Null|float|str in format 'X.X%' with X being [0-9]*
 
