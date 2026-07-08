@@ -1,42 +1,65 @@
 Polishing a draft model
 =======================
 
-The polishing workflow is intended for draft models created by automatic reconstruction
-pipelines. It collects several recurring clean-up steps in
+The polishing function is intended for draft models created by automatic reconstruction
+workflows. It collects several recurring clean-up steps in
 :py:func:`~refinegems.curation.curate.polish_model`, for example extending annotations,
 cleaning notes fields, fixing qualifier patterns and adding model-level defaults that
 are commonly missing in draft reconstructions.
 
-The workflow can be run from the command line with:
+The function can be run from the command line with defaults via:
 
 .. code-block:: bash
 
     refinegems curate model MODEL.xml --outdir polished_model
 
-For models with BiGG or VMH identifiers, the workflow can use the model entity IDs as
-the main identifier source:
+The function uses the model entity IDs. To specify the namespace of the identifiers use ``--id-db``. 
+The default is ``BiGG``.
+
+.. note::
+
+    Currently, the implementation is only tested for models with identifiers from the BiGG Models database or VMH.
 
 .. code-block:: bash
 
     refinegems curate model MODEL.xml --id-db BIGG --outdir polished_model
 
-Gene product mappings
----------------------
+To see the other options simply call the help message of ``curate model``:
 
-Several polishing steps require a mapping between model gene products and external
-identifiers such as RefSeq, NCBI protein identifiers or locus tags. The mapping can be
-provided directly:
+.. code-block:: bash
+
+    refinegems curate model --help
+
+.. warning:: 
+    Using ``lab_strain=True`` has the following two requirements:
+
+    1. The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.
+        If there is no available data for the modelled organism in any database these identifiers can be added with
+        the `PGAB pipeline described in SPECIMEN <https://specimen.readthedocs.io/en/latest/pipeline_idea.html>`__ 
+        before draft model creation.
+    2. Input of a FASTA file containing header lines similar to:
+        >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
+
+        Of the description part in the header line only locus_tag, protein and protein_id are important for ``cv_ncbiprotein``/ ``polish``.
+
+Enhancing the gene product annotations
+--------------------------------------
+
+Within the ``polish_model`` function, additional annotations for the gene products of the provided model can be added.
+This is done either via a mapping table for RefSeq, NCBI Protein IDs and locus tags or by querying the KEGG database for 
+KEGG and UniProt IDs. The mapping table can be provided directly with the ``--mapping-tbl-file`` option to 
+``curate model``:
 
 .. code-block:: bash
 
     refinegems curate model MODEL.xml --mapping-tbl-file geneproduct_mapping.tsv
 
-Alternatively, the mapping table can be generated first from the model and one or more
-GFF files:
+Alternatively, the mapping table can be generated from the model, one or more
+GFF files (optional) and by querying the NCBI database (optional):
 
 .. code-block:: bash
 
-    refinegems setup geneproduct-mapping-table MODEL.xml --gff-paths annotation.gff --outdir mapping
+    refinegems setup geneproduct-mapping-table MODEL.xml --gff-paths annotation.gff -email user@example.com --outdir mapping
 
 The generated table can then be checked manually and passed to ``curate model``.
 
@@ -74,12 +97,9 @@ the shortened GFF are omitted from this example:
     G_b0351,b0351,b0351,NP_414885.1,acetaldehyde dehydrogenase (acetylating) MhpF
     G_b1241,b1241,b1241,NP_415757.1,fused acetaldehyde-CoA dehydrogenase and Fe-dependent alcohol dehydrogenasealdehyde/alcohol dehydrogenase AdhE
 
-.. warning:: 
-    Using ``lab_strain=True`` has the following two requirements:
+.. hint::
 
-    1. The model already contains GeneProduct identifiers containing valid NCBI Protein/RefSeq identifiers.
-        If there is no available data for the modeled organism in any database these identifiers can be added with
-        the ``PGAB`` pipeline described in ``SPECIMEN`` From genome sequence to draft model` before draft model creation.
-    2. Input of a FASTA file containing header lines similar to:
-        >lcl|CP035291.1_prot_QCY37216.1_1 [gene=dnaA] [locus_tag=EQ029_00005] [protein=chromosomal replication initiator protein DnaA] [protein_id=QCY37216.1] [location=1..1356] [gbkey=CDS]
-        Of the description part in the header line only locus_tag, protein and protein_id are important for ``cv_ncbiprotein``/ ``polish``.
+    The mapping file does not need to be generated and provided beforehand to ``curate model``.
+    If the mapping file is not provided, but an enhacement of the gene product annotations is desired, the mapping table 
+    can be generated automatically by ``curate model``, if the corresponding flags are set.
+    See the flags under `Parameters required when --mapping-tbl-file is not provided:` in the help message of ``curate model``.
