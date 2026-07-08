@@ -1893,19 +1893,15 @@ def get_gpid_mapping(
             Model loaded with libSBML
         - gff_paths (str|list[str]):
             Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - email (str):
             E-mail for NCBI queries.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - contains_locus_tags (bool, optional):
             Specifies if provided model has locus tags within the label tag if set to True.
-            This is only used when mapping_tbl_file == None.
             Defaults to False.
         - outpath (str|Path, optional):
             Output path for location where the generated mapping table should be written to.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
 
     Returns:

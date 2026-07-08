@@ -115,7 +115,7 @@ def data(downloadtype, dir, chunksize):
     show_default=True,
     default=None,
     type=str,
-    help="E-mail for NCBI queries. This is only used when --mapping-tbl-file is not provided.",
+    help="E-mail for NCBI queries.",
 )
 @click.option(
     "-t",
