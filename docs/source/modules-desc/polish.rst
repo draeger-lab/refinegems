@@ -5,13 +5,23 @@ The polishing function is intended for draft models created by automatic reconst
 workflows. It collects several recurring clean-up steps in
 :py:func:`~refinegems.curation.curate.polish_model`, for example extending annotations,
 cleaning notes fields, fixing qualifier patterns and adding model-level defaults that
-are commonly missing in draft reconstructions.
+are commonly missing in draft reconstructions. In the following mostly examples for 
+the command line are shown. All options available via the command line are also 
+available in the Python function.
 
-The function can be run from the command line with defaults via:
+The function can be run from the command line with defaults via
 
 .. code-block:: bash
 
     refinegems curate model MODEL.xml --outdir polished_model
+
+or directly used in Python via
+
+.. code-block:: python
+
+    from refinegems.curation.curate import polish_model
+
+    polish_model("MODEL.xml", outdir="polished_model")
 
 The function uses the model entity IDs. To specify the namespace of the identifiers use ``--id-db``. 
 The default is ``BiGG``.
@@ -55,13 +65,22 @@ KEGG and UniProt IDs. The mapping table can be provided directly with the ``--ma
     refinegems curate model MODEL.xml --mapping-tbl-file geneproduct_mapping.tsv
 
 Alternatively, the mapping table can be generated from the model, one or more
-GFF files (optional) and by querying the NCBI database (optional):
+GFF files (optional) and by querying the NCBI database (optional). This can be 
+accessed via
 
 .. code-block:: bash
 
     refinegems setup geneproduct-mapping-table MODEL.xml --gff-paths annotation.gff -email user@example.com --outdir mapping
 
-The generated table can then be checked manually and passed to ``curate model``.
+or
+
+.. code-block:: python
+
+    from refinegems.utility.entities import generate_geneproduct_mapping_table
+
+    get_gpid_mapping("MODEL.xml", gff_paths=["annotation.gff"], email="user@example.com", outpath="mapping")
+
+The generated table can then be checked manually and passed to ``curate model`` or ``polish_model``.
 
 For example, a small mapping table can be generated from the bundled *E. coli*
 core model and an annotation file in GFF format:
