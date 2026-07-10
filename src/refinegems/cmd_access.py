@@ -13,7 +13,6 @@ import cloup
 import pandas as pd
 
 import refinegems as rg
-from refinegems.utility.io import write_model_to_file
 
 ################################################################################
 # Entry points
@@ -844,7 +843,7 @@ def automated_gapfill(
             namespace=namespace,
         )
         # save model
-        write_model_to_file(model, str(Path(outdir, "gapfilled_model.xml")))
+        rg.utility.io.write_model_to_file(model, str(Path(outdir, "gapfilled_model.xml")))
     # report statistics
     if report:
         gapfiller.report(outdir)
@@ -1033,18 +1032,22 @@ def sboterms(modelpath, dir):
     help="Path to the output directory"
 )
 def pathways(modelpath, dir):
-    """Add KEGG pathways as groups to a model"""
+    """Executes all steps to add KEGG pathways as groups
+    to a given model."""
     # Set-up path
     if dir:
         dir.mkdir(parents=True, exist_ok=True)
+
+    # Load model
+    model = rg.utility.io.load_model(modelpath, "libsbml")
     
-    model, missing = rg.curation.pathways.kegg_pathways(modelpath)
+    missing = rg.curation.pathways.set_kegg_pathways(model)
     with open(Path(dir, "reac_wo_kegg_pathway_groups.txt"), "w") as outfile:
         # save reactions with missing groups
         for line in missing:
             outfile.write(f"{line}\n")
     # save model
-    write_model_to_file(model, str(Path(dir, "model_with_added_KeggPathwayGroups.xml")))
+    rg.utility.io.write_model_to_file(model, str(Path(dir, "model_with_added_KeggPathwayGroups.xml")))
 
 
 # -----------------------------------------------
