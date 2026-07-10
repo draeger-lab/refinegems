@@ -20,8 +20,8 @@ The table should contain all reactions (of interest) and it **MUST** contain the
 - `METANETX`: contains the href link to the associated MetaNetX reaction or nan
 - `Reaction-Direction`: contains a string describing the directionality of the reaction
 
-Data acquisition from BioCyc
-""""""""""""""""""""""""""""
+How to get the table from BioCyc
+""""""""""""""""""""""""""""""""
 1. If you have no BioCyc account you will need to create one. See `BioCyc Create Free Account <https://biocyc.org/new-account.shtml>`__ to create an account. 
 2. Then you need to search for your specific organism, i.e. the exact strain, and change to the corresponding organism database.
    In case you want to use MetaCyc, you have to switch to the MetaCyc database.

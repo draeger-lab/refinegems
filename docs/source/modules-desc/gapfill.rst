@@ -131,8 +131,8 @@ The command-line interface expects the BioCyc input files under the following op
   organism, export that column and rename it to ``Accession-2`` before using the 
   table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
 
-Data acquisition from BioCyc
-""""""""""""""""""""""""""""
+How to get the tables from BioCyc
+"""""""""""""""""""""""""""""""""
 
 1. If you have no BioCyc account you will need to create one. See `BioCyc Create Free Account <https://biocyc.org/new-account.shtml>`__ to create an account. 
 2. Then you need to search for your specific organism, i.e. the exact strain, and change to the corresponding organism database.
@@ -215,7 +215,7 @@ limited to a certain number of requests per second.
 Required GeneGapFiller input files
 """"""""""""""""""""""""""""""""""
 
-The command line interface expects the organism annotation under ``--gff-g``. This
+The command-line interface expects the organism annotation under ``--gff-g``. This
 GFF3 file should describe the same organism or strain as the model and should contain
 CDS entries with ``locus_tag`` attributes. The locus tags are compared to the gene
 product labels in the model. CDS entries may also contain ``protein_id`` and
@@ -224,14 +224,14 @@ can be inferred from homolog searches or, optionally, from NCBI.
 
 For DIAMOND-based mapping, the following files are required together:
 
-- ``--fasta``: protein FASTA file for the same organism or model. The sequences are
+- ``--fasta``: Protein FASTA file for the same organism or model. The sequences are
   used as DIAMOND query input for missing genes that still need EC information.
 - ``--dmnd-db``: DIAMOND database searched for homologs. For the default
   ``--db-type swissprot`` workflow, this is the SwissProt DIAMOND database. The
   required SwissProt files can be downloaded with ``refinegems setup data
   SwissProt_gapfill``. For ``--db-type user``, provide a DIAMOND database built from
   the user-defined reference proteins.
-- ``--db-mapping`` / ``-db-map``: mapping file for the selected database. For
+- ``--db-mapping`` / ``-db-map``: Mapping file for the selected database. For
   ``swissprot``, this maps SwissProt identifiers to EC and BRENDA information. For
   ``user``, it must map the identifiers in the user-defined database to EC numbers.
 
@@ -243,9 +243,9 @@ How to run a GapFiller
 
 Due to the gap-filling algorithms having the same architecture, the function calls
 for running them are basically the same, save for some parameters (will be denoted as ``<params>`` 
-in the following code snippets.)
+in the following code snippets).
 
-.. note::
+.. important::
 
     Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
     If your model does not conform to this you can use one of the functions
@@ -294,7 +294,7 @@ To access information between steps or afterwards, the following attributes can 
     - :code:`gapfiller.missing_genes`: Table of currently missing and not further categorised genes.
     - :code:`gapfiller.missing_reactions`: Table of currently missing and not further categorised reactions.
     - :code:`gapfiller._statistics`: Dictionary of statistical values, e.g. number of added genes.
-    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information that cannot be added automatically due to different reasons. Reason is denoted in the key.
+    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information that cannot be added automatically due to different reasons. The reason is denoted in the key.
 
     Some GapFillers also provide additional, for the corresponding algorithm specific, attributes.
 
