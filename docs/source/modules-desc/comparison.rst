@@ -1,29 +1,15 @@
-Model comparison and pan-core analysis
+Pan-core analysis and model comparison
 ======================================
 
-``refineGEMs`` contains functions for comparing model content and for working with
-pan-core models. These workflows are useful when curating a set of related strain
-models or when checking how one model differs from a reference or pan-core model.
+``refineGEMs`` contains functions for working with pan-core models and for comparing model content. 
+These functions are useful when curating a set of related strain models or when checking how one model 
+differs from a reference or pan-core model.
 
-Comparing SBO annotations
--------------------------
+.. note::
 
-The command line comparison currently supports comparing SBO term distributions across
-multiple models:
-
-.. code-block:: bash
-
-    refinegems analyse compare MODEL_A.xml MODEL_B.xml --type sboterm --dir comparison
-
-To run all available comparison plots, use:
-
-.. code-block:: bash
-
-    refinegems analyse compare MODEL_A.xml MODEL_B.xml --all --dir comparison
-
-The Python API behind this workflow is available in
-:py:mod:`~refinegems.analysis.comparison`, especially
-:py:func:`~refinegems.analysis.comparison.sbo_terms`.
+    The pan-core module is not fully developed yet. The current implementation
+    should be treated as a starting point and may be extended or revised in a
+    future update.
 
 Pan-core model construction
 ---------------------------
@@ -56,8 +42,22 @@ Once a pan-core model exists, another model can be compared against it:
 The corresponding Python function is
 :py:func:`~refinegems.analysis.core_pan.compare_to_core_pan`.
 
-.. note::
+Comparing SBO annotations
+-------------------------
 
-    The pan-core module is not fully developed yet. The current implementation
-    should be treated as a starting point and may be extended or revised in a
-    future update.
+The command-line comparison currently supports comparing SBO term distributions across
+multiple models:
+
+.. code-block:: bash
+
+    refinegems analyse compare MODEL_A.xml MODEL_B.xml --type sboterm --dir comparison
+
+To run all available comparison plots, use:
+
+.. code-block:: bash
+
+    refinegems analyse compare MODEL_A.xml MODEL_B.xml --all --dir comparison
+
+The Python API behind this workflow is available in
+:py:mod:`~refinegems.analysis.comparison`, especially
+:py:func:`~refinegems.analysis.comparison.sbo_terms`.

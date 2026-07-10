@@ -3,8 +3,8 @@ Addition of KEGG Pathways
 
 The KEGG database holds information on metabolic pathways. 
 
-Add KEGG pathways from reaction:
---------------------------------
+Add KEGG pathways from reactions:
+---------------------------------
 You can use this to add KEGG pathways with the libSBML Groups plugin.
 
 The workflow of the script is as follows:
@@ -26,3 +26,9 @@ The main function for adding KEGG pathway groups is
     model = load_model("path/to/model.xml", "libsbml")
     non_kegg_reactions = set_kegg_pathways(model)
     write_model_to_file(model, "path/to/model_with_pathways.xml")
+
+This function can also be accessed via the command line:
+
+.. code:: bash
+
+    refinegems refine annot pathways MODEL.xml --dir out_dir
