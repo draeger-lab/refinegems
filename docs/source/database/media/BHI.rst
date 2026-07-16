@@ -1,7 +1,7 @@
-Brain Heart Infusion (working progress) (BHI)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Brain Heart Infusion (BHI, :icon:`fa-solid fa-person-digging` work-in-progress)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The brain-heart infusion (BHI) medium is a nutrient-rich medium used for the cultivation of 
-various microbes, that either do not have specific know growth requirement or require very rich 
+various microbes, that either do not have specific known growth requirements or require very rich 
 media. 
 
 .. attention::
