@@ -37,8 +37,9 @@ possible applications of ``refineGEMs`` in the context of different areas of mod
 .. toctree::
     Media export <modules-desc/media_export>
 
-:icon:`fa-solid fa-plus` Further examples
------------------------------------------
 
-.. toctree:: 
-    Application examples <modules-desc/examples>
+.. :icon:`fa-solid fa-plus` Further examples
+.. -----------------------------------------
+
+.. .. toctree:: 
+..     Application examples <modules-desc/examples>
