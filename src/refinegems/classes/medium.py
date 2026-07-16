@@ -539,7 +539,7 @@ class Medium:
     # functions for export table
     # --------------------------
     
-    def _produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
+    def _produce_medium_docs_table_row(self,row: pd.Series, file: io.TextIOWrapper):
             """Helper function for producing reStructured text for medium definitions, 
             e.g. in with :py:func:`produce_medium_docs_table`.
             Tranforms each row of the substance table into a row of the rst-file.
@@ -593,10 +593,10 @@ class Medium:
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
 
         # make sure given directory path ends with '/'
-        if not folder.endswith("/"):
-            folder = folder + "/"
+        # if not folder.endswith("/"):
+        #     folder = folder + "/"
 
-        with open(folder + f"{self.name}.rst", "w") as f:
+        with open(Path(folder, f"{self.name}.rst"), "w") as f:
 
             # slim table to columns of interest for documentation
             m_subs = self.substance_table[["name", "flux", "source"]]
@@ -910,7 +910,7 @@ def export_media_from_db_to_file(
             media_names_or_config = available_media # Set all available media names if 'all' is specified
         case str():
             # Check if string is a path to a YAML file
-            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix in yml_suffixes):
+            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix.split('.')[1] in yml_suffixes):
                 # Load media from YAML file
                 media, _ = load_media(media_names_or_config)
                 

@@ -53,12 +53,8 @@ Iteratively for each amino acid the following steps are performed:
 
 The function returns a report, which in turn can be e.g. visualised as a heatmap.
 
-..
-  @TODO What to do with the (...)?
-
-Below, an examplary heatmap based on the Master Thesis of Carolin Brune (...) for 
-*Klebsiella pneumoniae* MD01 can be seen. The model is able to produce all amino acids 
-and therefore is autotroph for all amino acids.
+Below, an examplary heatmap based on a model for a *Klebsiella pneumoniae* strain from a private collection can be seen. 
+The model is able to produce all amino acids and, therefore, is prototroph for all amino acids.
 
 .. image:: ../images/MT_CB_Kpneu_auxo.png
 

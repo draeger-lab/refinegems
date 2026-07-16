@@ -13,7 +13,7 @@ To export all media definitions as TSV files:
 
     refinegems media export --media-names-or-config all --type tsv --dir media_export
 
-The option ``--media-names-or-config`` can also be shortened to ``-m``:
+The options can also be shortened to:
 
 .. code-block:: bash
 
