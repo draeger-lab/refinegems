@@ -51,8 +51,6 @@ My ``pipenv`` is not locking after f.ex. moving the repository. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 
-.. _help-pandoc:
-
 How to solve errors caused by ``pandoc`` (Development)?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 | `Here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
@@ -77,6 +75,6 @@ When do I use ``lab_strain=True``?
 If the parameter ``lab_strain`` is set to ``True`` it is assumed that the input model was created for a strain of an 
 organism for which so far no data is available in any database. To get sufficient information for the knowledge-base 
 stored within the model of the strain the ``PGAB`` pipeline described in ``SPECIMEN`` should be used before model 
-creation. The resulting FASTA from the ``PGAB`` pipeline can then be used as input for CarveMe and is then also
-required as additional input for :py:func:`~refinegems.curation.curate.polish_model`. In this case the parameter ``lab_strain`` should
+creation. The resulting FASTA from the ``PGAB`` pipeline can then be used als input for CarveMe and is then also 
+required as additional input for :py:mod:`~refinegems.curation.polish`. In this case the parameter ``lab_strain`` should 
 be set to ``True``.

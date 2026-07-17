@@ -1,30 +1,23 @@
 Installation
 ============
 
-The package ``refineGEMs`` and all its dependencies can be installed either via pip into virtual environments like 
-``conda`` or ``pipenv`` or via Docker.
-The latest version is tested with Python 3.10, 3.11 and 3.12.
+The package ``refineGEMs`` and all its dependencies can be installed within virtual environments like ``conda`` or ``pipenv``.
+
+.. warning::
+
+   | With the release of version 2.0.0, refineGEMs will only work with Python 3.10+.
+   | For older versions Python 3.9 can still be used.
 
 .. hint::
 
-   * For help and information about known bugs, refer to :ref:`Help and FAQ`.
-   * For the installation for developers, refer to :ref:`installation for developers`
+   For help and information about known bugs, refer to :ref:`Help and FAQ`.
 
-:icon:`fa-brands fa-python` Via pip
------------------------------------
-..
-   @TODO: PyPI and here have the same underlying link to the refineGEMs PyPI page!
-.. warning::
-
-   | With the release of version 2.0.0, ``refineGEMs`` will only work with Python 3.10+.
-   | For older versions Python 3.9 can still be used.
-
-To install ``refineGEMs`` as Python package from `PyPI <https://pypi.org/project/refineGEMs/>`__, simply install it via ``pip``:
+To install refineGEMs as Python package from `PyPI <https://pypi.org/project/refineGEMs/>`__, simply install it via ``pip``:
 
 .. code:: console
    :class: copyable
 
-   pip install refinegems
+   pip install refineGEMs
 
 The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
@@ -34,28 +27,28 @@ for the base installation:
 .. code:: console
    :class: copyable
 
-   pip install "refinegems[chebi]"
+   pip install "refineGEMs[chebi]"
 
 .. code:: console
    :class: copyable
 
-   pip install "refinegems[ols]"
+   pip install "refineGEMs[ols]"
 
 .. code:: console
    :class: copyable
 
-   pip install "refinegems[sbo]"
+   pip install "refineGEMs[sbo]"
 
 To install all optional dependencies at once, run:
 
 .. code:: console
    :class: copyable
 
-   pip install "refinegems[optional]"
+   pip install "refineGEMs[optional]"
 
-The connected tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__\ :footcite:p:`Roemer2016_ModelPolisher,King2016_ModelPolisher`,
-`MCC <https://github.com/draeger-lab/MassChargeCuration>`__\ :footcite:p:`Mostolizadeh2026_mcc` and
-`BOFdat <https://github.com/draeger-lab/BOFdat>`__\ :footcite:p:`Lachance2019_bofdat` are also optional workflow
+The connected tools `ModelPolisher <https://github.com/draeger-lab/ModelPolisher>`__,
+`MCC <https://github.com/draeger-lab/MassChargeCuration>`__ and
+`BOFdat <https://github.com/draeger-lab/BOFdat>`__ are also optional workflow
 steps and currently need to be installed directly from GitHub before using the
 corresponding functionality. If they are missing, ``refineGEMs`` reports the
 missing dependency and skips the affected optional step where possible.
@@ -80,10 +73,6 @@ missing dependency and skips the affected optional step where possible.
    :class: copyable
 
    pip install "bofdat@git+https://github.com/draeger-lab/BOFdat"
-
-
-:icon:`fa-brands fa-docker` Via Docker
---------------------------------------
 
 ``refineGEMs`` can also be used via Docker. To build the docker image, firtsly clone the repository:
 
@@ -128,4 +117,7 @@ For example, to curate a (draft) model, run:
 
    docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
 
-.. footbibliography::
+
+.. hint::
+
+   For the installation for developers, refer to :ref:`installation for developers`

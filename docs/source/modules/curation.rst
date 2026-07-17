@@ -31,19 +31,18 @@ curate module
    :private-members: 
    :special-members:
 
-miriam module
--------------
-.. automodule:: refinegems.curation.miriam
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members: 
-   :special-members:
-
 pathways module
 ---------------
 
 .. automodule:: refinegems.curation.pathways
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+polish module
+-------------
+
+.. automodule:: refinegems.curation.polish
    :members:
    :undoc-members:
    :show-inheritance:

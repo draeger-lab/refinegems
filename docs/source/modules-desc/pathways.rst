@@ -3,8 +3,8 @@ Addition of KEGG Pathways
 
 The KEGG database holds information on metabolic pathways. 
 
-Add KEGG pathways from reactions:
----------------------------------
+Add KEGG pathways from reaction:
+--------------------------------
 You can use this to add KEGG pathways with the libSBML Groups plugin.
 
 The workflow of the script is as follows:
@@ -14,21 +14,12 @@ The workflow of the script is as follows:
 3. Addition of all KEGG pathways for a reaction with the biological qualifier ``OCCURS_IN`` to the annotations
 4. Addition of all KEGG pathways as groups with references to the contained reactions as ``groups:member``
 
-The main function for adding KEGG pathway groups is
-:py:func:`~refinegems.curation.pathways.set_kegg_pathways`:
+The only function that you will need to access 
+is :py:func:`~refinegems.curation.pathways.kegg_pathways`:
 
 .. code:: python
     :linenos:
     
-    from refinegems.curation.pathways import set_kegg_pathways
-    from refinegems.utility.io import load_model, write_model_to_file
-
-    model = load_model("path/to/model.xml", "libsbml")
-    non_kegg_reactions = set_kegg_pathways(model)
-    write_model_to_file(model, "path/to/model_with_pathways.xml")
-
-This function can also be accessed via the command line:
-
-.. code:: bash
-
-    refinegems refine annot pathways MODEL.xml --dir out_dir
+    import refinegems as rg 
+    model_pathway_groups, non_kegg_reactions = rg.pathways.kegg_pathways(<path to your model>)
+    rg.io.write_to_file(model_pathway_groups, <path to modified model>)

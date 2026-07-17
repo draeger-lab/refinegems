@@ -106,7 +106,6 @@ Additional packages required for development
     * `sphinx_copybutton`
     * `sphinx_rtd_theme`
     * `sphinxcontrib-bibtex`
-    * `sphinx-icon`
     
 
     In addition, `pip-compile` should be installed to update the `requirements.txt` for the next release.
@@ -118,7 +117,7 @@ You can install the packages via pip to your local environment:
 .. code:: console
     :class: copyable
 
-    pip install accessible-pygments ipython nbsphinx pandoc sphinx sphinx_copybutton sphinx_rtd_theme sphinxcontrib-bibtex sphinx-icon
+    pip install accessible-pygments sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
 
 .. code:: console
     :class: copyable
@@ -130,9 +129,7 @@ Alternatively, install the tool with the extra `docs`, e.g.
 .. code:: console
     :class: copyable
 
-     pip install -e ".[docs]" --config-settings editable_mode=strict
-
-For `pandoc` please also take a look at :ref:`help-pandoc`.
+     pip install -e ".[docs]" --config-settings editable_mode=strict  
 
 Updating the `requirements.txt`
 -------------------------------

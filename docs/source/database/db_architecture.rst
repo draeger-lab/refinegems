@@ -81,7 +81,7 @@ Substaces are added using the following naming conventions:
 .. hint::
     | Before adding a new substance to the table, please check carefully that the substance does not already have an entry.
     | In case your substance already exists, please use the existing entry.
-    | For help mapping identifiers and formulas, see functions such as :py:func:`~refinegems.utility.entities.match_id_to_namespace` and :py:func:`~refinegems.utility.db_access.add_info_from_ChEBI_BiGG`.
+    | Help regarding mapping your information e.g. the BiGG identifier to a formula or the ChEBI IUPAC name, please refer to the functions XXX and YYY.
 
 
 Substance2db
