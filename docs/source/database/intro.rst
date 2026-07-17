@@ -1,7 +1,7 @@
 Media & Subsets
 ===============
 
-``refineGEMs`` has an in-build database for different media, media compounds and subsets
+The toolbox ``refineGEMs`` has an in-build database for different media, media compounds and subsets
 to facilitate model curation and allow for a range of different simulations.
 
 .. hint::
