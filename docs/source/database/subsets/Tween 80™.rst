@@ -1,7 +1,9 @@
 Culture medium additive Tween 80™ (Tween 80™, oleate source)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Culture medium additive Tween 80™ (oleate source)
-.. @TODO: Reference? + better descriptive text?
+
+..
+    @TODO: Reference? + better descriptive text?
 
 .. list-table:: Tween 80™ composition
   :name: tween 80™_comp

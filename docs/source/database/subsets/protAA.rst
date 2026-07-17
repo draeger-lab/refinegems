@@ -3,7 +3,8 @@ Proteinogenic amino acids (protAA)
 The definition of the Proteinogenic amino acids (protAA) subset contains all proteinogenic amino acids with a default 
 percentage of 100%.
 
-.. @TODO: Reference?
+.. 
+  @TODO: Reference?
 
 .. list-table:: protAA composition
   :name: protaa_comp
