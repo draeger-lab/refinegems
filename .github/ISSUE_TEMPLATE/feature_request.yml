@@ -1,0 +1,65 @@
+name: Feature request
+description: Suggest an improvement or new workflow for refineGEMs.
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement. For larger API, CLI, architecture, or media-related changes, early discussion helps avoid wasted work. Substantial new media database work may belong in the related standalone database effort rather than directly in refineGEMs.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Describe the scientific, modelling, curation, or developer workflow problem first.
+      placeholder: "I want to ... because ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: What should refineGEMs do?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: affected-areas
+    attributes:
+      label: Affected area
+      description: Select all areas this feature would touch.
+      options:
+        - label: Python API
+        - label: Command line interface
+        - label: Sphinx / Read the Docs documentation
+        - label: Existing media workflow or media documentation
+        - label: Tests
+        - label: Packaging, installation, or optional dependencies
+        - label: Developer architecture
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example usage
+      description: Show the desired Python call, CLI command, documentation example, or media workflow.
+      render: text
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe other approaches, tools, publications, or standards you considered.
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Could this affect existing APIs, CLI commands, documentation examples, models, media workflows, or simulations?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add related issues, references, screenshots, or links.
