@@ -53,44 +53,6 @@ License notice from <http://bigg.ucsd.edu/license>:
 > merchantability or fitness for a particular purpose, or that the use of the
 > BiGG Models will not infringe any patent, trademark or other rights.
 
-## ModelSEED
-
-refineGEMs ships ModelSEED-derived compound data in its internal database.
-
-Source: <https://github.com/ModelSEED/ModelSEEDDatabase>
-
-Citation:
-
-Henry CS, DeJongh M, Best AA, Frybarger PM, Linsay B, Stevens RL.
-High-throughput generation, optimization and analysis of genome-scale metabolic
-models. Nature Biotechnology 28:977-982.
-<https://doi.org/10.1038/nbt.1672>
-
-The ModelSEEDDatabase license states that, except where otherwise noted, data in
-the ModelSEED GitHub repository are licensed under
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). It also states that
-ModelSEED includes information sourced in part from external resources, and that
-data derived from those resources may remain subject to the original resource
-restrictions.
-
-## MetaNetX / MNXref
-
-refineGEMs uses MetaNetX identifiers and mapping tables.
-
-Source: <https://www.metanetx.org/mnxdoc/mnxref.html>
-
-Citation:
-
-Moretti S, Tran VD, Mehl F, Ibberson M, Pagni M. MetaNetX/MNXref: unified
-namespace for metabolites and biochemical reactions in the context of metabolic
-models. Nucleic Acids Research 49(D1):D570-D574.
-<https://doi.org/10.1093/nar/gkaa992>
-
-MetaNetX states that, except where otherwise noted, data from the site are
-licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-MetaNetX also notes that MNXref data can be subject to the original licensing
-restrictions of external source resources.
-
 ## ChEBI
 
 refineGEMs queries ChEBI for compound names, formulae, charges, and identifiers.
@@ -125,6 +87,44 @@ KEGG states that academic users may freely use the KEGG website. It also states
 that KEGG is not a public database for non-academic use and that non-academic
 use requires a commercial license.
 
+## MetaNetX / MNXref
+
+refineGEMs uses MetaNetX identifiers and mapping tables.
+
+Source: <https://www.metanetx.org/mnxdoc/mnxref.html>
+
+Citation:
+
+Moretti S, Tran VD, Mehl F, Ibberson M, Pagni M. MetaNetX/MNXref: unified
+namespace for metabolites and biochemical reactions in the context of metabolic
+models. Nucleic Acids Research 49(D1):D570-D574.
+<https://doi.org/10.1093/nar/gkaa992>
+
+MetaNetX states that, except where otherwise noted, data from the site are
+licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+MetaNetX also notes that MNXref data can be subject to the original licensing
+restrictions of external source resources.
+
+## ModelSEED
+
+refineGEMs ships ModelSEED-derived compound data in its internal database.
+
+Source: <https://github.com/ModelSEED/ModelSEEDDatabase>
+
+Citation:
+
+Henry CS, DeJongh M, Best AA, Frybarger PM, Linsay B, Stevens RL.
+High-throughput generation, optimization and analysis of genome-scale metabolic
+models. Nature Biotechnology 28:977-982.
+<https://doi.org/10.1038/nbt.1672>
+
+The ModelSEEDDatabase license states that, except where otherwise noted, data in
+the ModelSEED GitHub repository are licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). It also states that
+ModelSEED includes information sourced in part from external resources, and that
+data derived from those resources may remain subject to the original resource
+restrictions.
+
 ## Adapted MEMOTE code
 
 Parts of `src/refinegems/curation/biomass.py` were adapted from MEMOTE and
@@ -133,21 +133,21 @@ modified by Gwendolyn O. Döbel. MEMOTE is distributed under the Apache License
 
 Source: <https://github.com/opencobra/memote>
 
-License: <https://github.com/opencobra/memote/blob/develop/LICENSE>
-
 Citation:
 
 Lieven C, Beber ME, Olivier BG, et al. MEMOTE for standardized genome-scale
 metabolic model testing. Nature Biotechnology 38:272-276.
 <https://doi.org/10.1038/s41587-020-0446-y>
 
+License: <https://github.com/opencobra/memote/blob/develop/LICENSE>
+
 ## Connected tools
 
 The following connected software tools are distributed by their upstream
 projects under their own software licenses:
 
-- SBOannotator: GNU GPL-3.0; cite <https://doi.org/10.1093/bioinformatics/btad437>.
-- MassChargeCuration (MCC): GNU LGPL-3.0; cite <https://doi.org/10.1128/spectrum.03200-24>.
-- MEMOTE: Apache-2.0; cite <https://doi.org/10.1038/s41587-020-0446-y>.
-- BOFdat: original software under MIT, used forked by Draeger lab, also under
+- BOFdat: Original software under [MIT](https://choosealicense.com/licenses/mit/), used fork by Draeger lab, also under
   MIT; cite <https://doi.org/10.1371/journal.pcbi.1006971>.
+- MassChargeCuration (MCC): [GNU LGPL-3.0](https://choosealicense.com/licenses/lgpl-3.0/); cite <https://doi.org/10.1128/spectrum.03200-24>.
+- MEMOTE: [Apache-2.0](https://choosealicense.com/licenses/apache-2.0/); cite <https://doi.org/10.1038/s41587-020-0446-y>.
+- SBOannotator: [GNU GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/); cite <https://doi.org/10.1093/bioinformatics/btad437>.
