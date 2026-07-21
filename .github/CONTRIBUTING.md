@@ -16,14 +16,14 @@ documentation fix in your pull request.
 
 Useful contributions include:
 
-- bug reports with reproducible examples;
-- fixes for Python code, command line workflows, documentation, examples, and
+- Bug reports with reproducible examples;
+- Fixes for Python code, command-line workflows, documentation, examples, and
   packaging;
-- new or improved model curation and analysis functionality;
-- tests that describe expected behaviour or prevent regressions;
-- clearer docstrings, tutorials, and Read the Docs pages;
-- corrections to existing media database behaviour or documentation;
-- feature ideas, architecture discussions, and reviews of open pull requests.
+- New or improved model curation and analysis functionality;
+- Tests that describe expected behaviour or prevent regressions;
+- Clearer docstrings, tutorials, and Read the Docs pages;
+- Corrections to existing media database behaviour or documentation;
+- Feature ideas, architecture discussions, and reviews of open pull requests.
 
 Small contributions are valuable. If you are unsure whether a change belongs in
 the project, open an issue or discussion before investing too much time.
@@ -32,12 +32,12 @@ the project, open an issue or discussion before investing too much time.
 
 Please report bugs in the GitHub issue tracker. A good bug report includes:
 
-- the installed `refineGEMs` version or commit;
-- the Python version and operating system;
-- how `refineGEMs` was installed, including optional dependencies if relevant;
-- the command, script, model, medium, or database entry involved;
-- the full error message or unexpected output;
-- a minimal example that maintainers can run, whenever possible.
+- The installed `refineGEMs` version or commit;
+- The Python version and operating system;
+- How `refineGEMs` was installed, including optional dependencies if relevant;
+- The command, script, model, medium, or database entry involved;
+- The full error message or unexpected output;
+- A minimal example that maintainers can run, whenever possible.
 
 Avoid sharing private or unpublished models unless you are allowed to do so. If
 the problem depends on data that cannot be shared, describe the relevant model
@@ -48,11 +48,11 @@ features, file format, and workflow as precisely as possible.
 Feature requests are easiest to evaluate when they describe the scientific or
 workflow problem first. Please include:
 
-- the use case and expected output;
-- whether the feature should be part of the Python API, the command line
+- The use case and expected output;
+- Whether the feature should be part of the Python API, the command-line
   interface, the documentation, or several of these;
-- examples of related tools, publications, or standards;
-- compatibility considerations for existing users and workflows.
+- Examples of related tools, publications, or standards;
+- Compatibility considerations for existing users and workflows.
 
 For larger changes, start with an issue or discussion so the API, CLI, module
 placement, and documentation plan can be agreed before implementation.
@@ -62,7 +62,7 @@ placement, and documentation plan can be agreed before implementation.
 `refineGEMs` requires Python 3.10 or newer. The latest installation page lists
 the currently tested Python versions and optional dependencies.
 
-1. Fork or clone the repository.
+1. Clone the repository.
 
    ```console
    git clone https://github.com/draeger-lab/refinegems.git
@@ -103,8 +103,12 @@ the currently tested Python versions and optional dependencies.
 
    ```console
    cd docs
+   make clean
    make html
    ```
+
+7. If you think your code is ready to be integrated, submit a pull request to 
+   the `dev` branch.
 
 ## Coding and Documentation Standards
 
@@ -136,9 +140,9 @@ existing package structure and public interfaces.
 - Update developer documentation when architecture, module responsibilities, or
   configuration changes.
 
-### Command Line Interface
+### Command-Line Interface
 
-The command line interface is part of the public user experience.
+The command-line interface is part of the public user experience.
 
 - Keep command names, option names, argument order, output style, and error
   handling consistent with existing `refinegems` commands.
@@ -176,18 +180,18 @@ still be traceable and documented.
 
 Before opening a pull request, please check that:
 
-- the branch is based on an up-to-date target branch;
-- the pull request has a clear title and explains why the change is needed;
-- public Python functionality has docstrings and Read the Docs documentation;
-- documentation examples are executable;
-- new CLI behaviour updates both help text and documentation;
-- new commands or workflows include examples;
-- relevant unit tests or manual checks were run and are listed in the pull
+- The branch is based on the up-to-date target branch `dev`;
+- The pull request has a clear title and explains why the change is needed;
+- Public Python functionality has docstrings and Read the Docs documentation;
+- Documentation examples are executable;
+- New CLI behaviour updates both help text and documentation;
+- New commands or workflows include examples;
+- Relevant unit tests or manual checks were run and are listed in the pull
   request;
-- media database maintenance changes were discussed when needed and document
-  their sources, scope, and generated documentation updates;
-- backward compatibility risks are called out;
-- unrelated formatting or generated files are not included.
+- Media database maintenance changes were discussed when needed and their 
+  sources, scope, and generated documentation updates documented;
+- Backward compatibility risks are called out;
+- Unrelated formatting or generated files are not included.
 
 ## Review Process
 
