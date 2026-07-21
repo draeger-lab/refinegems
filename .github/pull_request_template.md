@@ -9,7 +9,7 @@
 - [ ] Documentation update
 - [ ] Existing media workflow or media documentation update
 - [ ] Refactor or developer-facing change
-- [ ] Packaging, installation, or CI change
+- [ ] Packaging, installation, or CLI change
 
 ## Checklist
 
@@ -20,7 +20,7 @@
 - [ ] CLI changes update both help text and documentation.
 - [ ] New commands or workflows include examples.
 - [ ] Relevant unit tests or manual checks were run and are listed below.
-- [ ] Media-related maintenance changes were discussed when needed and document their source, scope, and generated documentation updates.
+- [ ] Media-related maintenance changes were discussed when needed and their source, scope, and generated documentation updates documented.
 - [ ] Backward compatibility risks are explained below.
 
 ## Tests and checks
