@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement or new workflow for refineGEMs.
+description: Suggest an improvement or new function for refineGEMs.
 title: "[FEATURE] "
 labels: ["enhancement"]
 body:
@@ -32,7 +32,7 @@ body:
       description: Select all areas this feature would touch.
       options:
         - label: Python API
-        - label: Command line interface
+        - label: Command-line interface
         - label: Sphinx / Read the Docs documentation
         - label: Existing media workflow or media documentation
         - label: Tests
