@@ -68,8 +68,6 @@ Redistribution notices are also collected in the repository-level
 
 :icon:`fa-solid fa-screwdriver-wrench` Tools
 --------------------------------------------
-.. 
-  @ASK: Which license is correct here? For the SBOannotator two different licenses are mentioned on the GitHub page!
 
 .. list-table::
    :class: no-scrollbar-table
