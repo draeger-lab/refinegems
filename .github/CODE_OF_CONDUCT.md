@@ -16,19 +16,19 @@ diverse, inclusive, and healthy community.
 
 Examples of behaviour that contributes to a positive environment include:
 
-- demonstrating empathy and kindness toward other people;
-- being respectful of differing opinions, viewpoints, and experiences;
-- giving and gracefully accepting constructive feedback;
-- accepting responsibility and apologising to those affected by mistakes;
-- focusing on what is best for the overall community.
+- Demonstrating empathy and kindness toward other people;
+- Being respectful of differing opinions, viewpoints, and experiences;
+- Giving and gracefully accepting constructive feedback;
+- Accepting responsibility and apologising to those affected by mistakes;
+- Focusing on what is best for the overall community.
 
 Examples of unacceptable behaviour include:
 
-- sexualised language or imagery, and sexual attention or advances of any kind;
-- trolling, insulting or derogatory comments, and personal or political attacks;
-- public or private harassment;
-- publishing others' private information without explicit permission;
-- other conduct which could reasonably be considered inappropriate in a
+- Sexualised language or imagery, and sexual attention or advances of any kind;
+- Trolling, insulting or derogatory comments, and personal or political attacks;
+- Public or private harassment;
+- Publishing others' private information without explicit permission;
+- Other conduct which could reasonably be considered inappropriate in a
   professional setting.
 
 ## Enforcement Responsibilities
