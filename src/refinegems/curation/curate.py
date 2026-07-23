@@ -884,15 +884,19 @@ def resolve_duplicate_metabolites(
     now = egcsolver.find_egcs(model, with_reacs=False)
     # get objective function
     bof_list = test_biomass_presence(model)
-    if len(bof_list) == 1:
+    
+    # FIX: Safely check if bof_list is not None before checking its length
+    if bof_list and len(bof_list) == 1:
         objective_function = bof_list[0]
-    elif len(bof_list) > 1:
+    elif bof_list and len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
         logger.warning(mes)
         objective_function = bof_list[0]
     else:
         mes = "No BOF detected. Might lead to problems during duplicate removal."
         logger.warning(mes)
+        # FIX: Initialize the variable to None to prevent UnboundLocalError later
+        objective_function = None
 
     for c in df_meta.groupby("compartment"):
         # note: using groupby drops nans
@@ -977,7 +981,7 @@ def resolve_duplicate_metabolites(
                                     for del_reac_id in reac_intersec:
                                         # if objective_function is part of the set
                                         # automated deletion is (currently) not possible
-                                        if del_reac_id == objective_function:
+                                        if objective_function is not None and del_reac_id == objective_function:
                                             perform_deletion = False
                                             break
                                         model_del.reactions.get_by_id(
@@ -985,7 +989,7 @@ def resolve_duplicate_metabolites(
                                         ).remove_from_model()
                                     # set the metabolites to be deleted to be the one NOT in the objective functions
                                     # to avoid inconsistencies
-                                    if del_meta_id in [
+                                    if objective_function is not None and del_meta_id in [
                                         _.id
                                         for _ in model_del.reactions.get_by_id(
                                             objective_function
@@ -1007,50 +1011,48 @@ def resolve_duplicate_metabolites(
                                     )
 
                                     # skip if objective function is found
-                                    if reac.id == objective_function:
+                                    if objective_function is not None and reac.id == objective_function:
                                         continue
 
                                     # check if consistency is still intact
                                     balance_test = reac.check_mass_balance()
                                     if not reac.boundary and len(balance_test) > 0:
-                                        # try fixing H-balance
+                                        
+                                        comp = keep_meta.compartment
+                                        comp_suffix = comp.split('_')[-1].strip() if '_' in comp else comp.strip()
+                                        
+                                        # Dynamically resolve full names to short IDs using the global VALID_COMPARTMENTS mapping
+                                        if comp_suffix not in VALID_COMPARTMENTS:
+                                            for short_id, full_name in VALID_COMPARTMENTS.items():
+                                                if re.search(rf'(_{short_id}$|^{short_id}$|{full_name})', comp, re.IGNORECASE):
+                                                    comp_suffix = short_id
+                                                    break
+                                            
+                                        if "O" in balance_test.keys():
+                                            h2o_metab_id = f"h2o_{comp_suffix}"
+                                            if h2o_metab_id in model_del.metabolites:
+                                                reac.subtract_metabolites(
+                                                    {model_del.metabolites.get_by_id(h2o_metab_id): balance_test["O"]}
+                                                )
+                                                balance_test = reac.check_mass_balance()
+
                                         if "H" in balance_test.keys():
-                                            # ..............................
-                                            # TODO:
-                                            #    get H according to compartment
-                                            #    current implementation relies heavily
-                                            #    on 'correct' use input: compartment should have format: c (p, e, etc.)
-                                            # ..............................
-                                            reac_comp = reac.compartments.pop()[-1]
-                                            if reac_comp == "c":
+                                            h_metab_id = f"h_{comp_suffix}"
+                                            if h_metab_id in model_del.metabolites:
                                                 reac.subtract_metabolites(
-                                                    {"h_c": balance_test["H"]}
+                                                    {model_del.metabolites.get_by_id(h_metab_id): balance_test["H"]}
                                                 )
-                                            elif reac_comp == "p":
-                                                reac.subtract_metabolites(
-                                                    {"h_p": balance_test["H"]}
-                                                )
-                                            elif reac_comp == "e":
-                                                reac.subtract_metabolites(
-                                                    {"h_e": balance_test["H"]}
-                                                )
-                                            else:
-                                                perform_deletion = False
-                                                break
-                                        # ..............................
-                                        # @ASK more cases needed here?
-                                        # ..............................
 
                                         # check balance again (continue only if fixed, else break)
                                         if len(reac.check_mass_balance()) > 0:
                                             perform_deletion = False
                                             break
+                                            
                                         # check for the generation of EGCs
                                         prev = egcsolver.find_egcs(model_del, with_reacs=False)
                                         if len(now) > len(prev) or not set(now).issubset(set(prev)):
                                             perform_deletion = False
                                             break
-                                        
 
                                     else:
                                         continue
