@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Provides functions to simulate growth on any medium and other functionalities related to growth."""
+"""Provides functions to simulate growth on any medium and other functionalities replated to growth."""
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -1004,9 +1004,9 @@ def model_minimal_medium(
             If set to True assigns large upper bound to all import reactions.
             Defaults to False.
 
-    .. warning::
+            .. warning::
 
-        Running `open_exchanges` on `True` can lead to infeasible runtimes.
+                Running `open_exchanges` on `True` can lead to infeasible runtimes.
 
     Raises:
         - ValueError: unknown objective.

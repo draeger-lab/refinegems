@@ -1345,8 +1345,7 @@ class KEGGapFiller(GapFiller):
         :py:func:`~refinegems.curation.curate.polish_model` or the function
         :py:func:`~refinegems.curation.curate.extend_gp_annots_via_mapping_table` in combination with the function
         :py:func:`~refinegems.curation.curate.extend_gp_annots_via_KEGG`.
-        
-    .. warning:: If the locus tag from Genbank and the locus tag part from the KEGG Gene ID do not match and running the 
+        WARNING: If the locus tag from Genbank and the locus tag part from the KEGG Gene ID do not match and running the 
         functions above does not solve the issue for your organism, please recheck if all GeneProducts in your model 
         contain valid KEGG Gene IDs in the annotation bag. Otherwise, add these manually to the model.
 
@@ -1355,14 +1354,9 @@ class KEGGapFiller(GapFiller):
         If the Genbank locus tags are not part of the KEGG Gene ID, please recheck the locus tags added as labels to the 
         newly created GeneProducts after running :py:meth:`~refinegems.classes.gapfill.fill_model`.
 
-    .. note::
+    .. hint::
 
         Due to the KEGG REST API this is relatively slow.
-        
-    .. attention:: 
-
-        A second version of this class is in development, that will enable gap-filling via KEGG
-        using an orthologouos strains instead of relying on a direct match in the KEGG database. 
 
     Attributes:
 
@@ -2142,7 +2136,7 @@ class GeneGapFiller(GapFiller):
     ) -> None:
         """Find missing reactions in the model by blasting the missing genes
         against the SwissProt database and mapping the results to EC/BRENDA.
-        
+
         Optionally, query the protein accession numbers against NCBI
         (increases runtime significantly).
 
@@ -2187,13 +2181,16 @@ class GeneGapFiller(GapFiller):
             - map_db (str, optional):
                 Path to the SwissProt/users own mapping file.
                 Required for the search against SwissProt/user-defined database.
-                Greatly decreases runtime for running the DIAMOND search. 
-                Note, that the mapping depends on the chosen database.
+                Greatly decreases runtime for running the DIAMOND search.
                 Defaults to None.
+
+                ..note::
+                    The mapping depends on the chosen database.
+
             - threshold_add_reacs (int, optional):
                 Threshold for the amount of reactions to add to the model.
                 Defaults to 5.
-            - kwargs:
+            - **kwargs:
                 Further optional parameters for the mapping,
                 e.g. outdir, sens, cov, t, pid, etc.
                 For more information see :py:func:`refinegems.utility.db_access.map_to_homologs`

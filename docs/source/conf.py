@@ -45,8 +45,7 @@ extensions = [
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib.bibtex',
-    'sphinx.ext.viewcode',
-    'sphinxcontrib.icon'
+    'sphinx.ext.viewcode'
 ]
 
 # For copy buttons in code blocks
@@ -80,14 +79,14 @@ html_static_path = ['_static']
 html_css_files = ['custom_theme.css']
 
 # Adds logo to documentation page
-html_logo = str(Path('images','logos','refineGEMs_full_nb.png'))
+html_logo = str(Path('images','refineGEMs_logo.png'))
 html_theme_options = {
     'logo_only': True,
 	'flyout_display': 'attached'
 }
 
 #Adds logo as favicon to tab
-html_favicon = str(Path('images','logos','refineGEMs_icon_nb.png'))
+html_favicon = str(Path('images','refineGEMs_logo.png'))
 
 # Changes code highlighting
 pygments_style = 'blinds-light'
