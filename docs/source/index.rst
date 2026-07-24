@@ -61,14 +61,19 @@ Connections to other tools
 * Balancing the masses and charges with `MassChargeCuration (MCC) <https://github.com/Biomathsys/MassChargeCuration>`__\ :footcite:p:`Mostolizadeh2026_mcc`
 * Correcting a biomass objective function with `BOFdat <https://github.com/jclachance/BOFdat>`__
 
-Licence and brand assets
-^^^^^^^^^^^^^^^^^^^^^^^^
+Licence and visual assets
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The refineGEMs source code is distributed under the MIT licence. The project
 logos are licensed separately under `CC BY 4.0
 <https://creativecommons.org/licenses/by/4.0/>`__; see the :doc:`brand usage
 guide <brand>` for attribution, colours, minimum size, clear space, and
 acceptable modifications.
+
+Project-created documentation graphics are also licensed separately under `CC
+BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`__; see the
+:doc:`documentation graphics licence <graphics>` for covered assets and
+third-party exclusions.
 
 Contributing
 ^^^^^^^^^^^^
@@ -100,6 +105,7 @@ When using ``refineGEMs``, please cite the latest publication:
    Content of refineGEMs <api>
    Help and FAQ <help>
    Logo licence and brand usage <brand>
+   Documentation graphics licence <graphics>
    Notes for developers <development>
 
 .. footbibliography::

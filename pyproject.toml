@@ -95,7 +95,7 @@ refinegems = "refinegems.cmd_access:cli"
 # version = {attr = "refinegems.VERSION"}
 
 [tool.setuptools]
-license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md", "docs/source/images/logos/LOGO_LICENSE.md"]
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md", "docs/source/images/logos/LOGO_LICENSE.md", "docs/source/images/GRAPHICS_LICENSE.md"]
 
 [tool.setuptools.packages.find]
 where = ['src']

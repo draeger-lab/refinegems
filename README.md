@@ -22,6 +22,7 @@
     - [Contributing](#contributing)
     - [Licence](#licence)
         - [Logo licence and brand usage](#logo-licence-and-brand-usage)
+        - [Documentation graphics licence](#documentation-graphics-licence)
     - [How to cite](#how-to-cite)
     - [Repositories using refineGEMs](#repositories-using-refinegems)
 
@@ -178,6 +179,16 @@ The asset-side notice is stored at
 
 For colours, minimum size, clear space, and acceptable modifications, see the
 [brand usage guide](docs/source/brand.rst).
+
+### Documentation graphics licence
+
+Project-created documentation graphics are licensed separately from the source
+code under the
+[Creative Commons Attribution 4.0 International Licence (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+The asset-side notice is stored at
+[docs/source/images/GRAPHICS_LICENSE.md](docs/source/images/GRAPHICS_LICENSE.md).
+Third-party graphics are excluded unless explicitly listed there or accompanied
+by a compatible notice.
 
 
 ## How to cite
