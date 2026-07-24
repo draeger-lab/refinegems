@@ -112,7 +112,7 @@ pip install "refineGEMs[optional]"
 
 ### ![docker](https://skillicons.dev/icons?i=docker) Via Docker
 
-``refineGEMs`` can also be used via Docker. To build the docker image, firtsly clone the repository:
+``refineGEMs`` can also be used via Docker. To build the Docker image, firstly clone the repository:
 
 ```bash
    git clone "https://github.com/draeger-lab/refinegems.git"
@@ -121,9 +121,34 @@ pip install "refineGEMs[optional]"
 Then change into the directory and build the image:
 
 ```bash
-   cd refinegems \
+   cd refinegems
    docker build -t refinegems .
 ```
+
+The default image installs the runtime optional dependency group from
+`pyproject.toml` and the optional connected tools that are currently installed
+directly from GitHub. The dependency set can be adjusted at build time:
+
+```bash
+   # build a smaller base image without optional dependencies or connected tools
+   docker build \
+      --build-arg REFINEGEMS_EXTRAS= \
+      --build-arg INSTALL_EXTERNAL_TOOLS=false \
+      -t refinegems:base .
+
+   # install selected optional groups
+   docker build --build-arg REFINEGEMS_EXTRAS=chebi,ols,sbo -t refinegems:extras .
+```
+
+The full default can also be made explicit:
+
+```bash
+   docker build \
+      --build-arg REFINEGEMS_EXTRAS=optional \
+      --build-arg INSTALL_EXTERNAL_TOOLS=true \
+      -t refinegems:full .
+```
+
 > [!NOTE]
 > To provide the input files and retrieve the output files mount one folder as workspace folder to the Docker image with `-v`.
 
