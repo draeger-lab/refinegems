@@ -94,6 +94,37 @@ if you are a Windows user).
    code, it is recommended to change the :code:`pip install` line from the code blocks to 
    :code:`pip install -e . --config-settings editable_mode=strict`.
 
+Contributing via GitHub
+-----------------------
+
+The repository contains a dedicated `contributing guide
+<https://github.com/draeger-lab/refinegems/blob/dev/.github/CONTRIBUTING.md>`__
+with the recommended development workflow, coding and documentation standards,
+media database notes, review process, and pull request checklist. Please read it
+before starting larger changes.
+
+Use the GitHub issue forms for structured reports and suggestions:
+
+* `Bug report <https://github.com/draeger-lab/refinegems/issues/new?template=bug_report.yml>`__
+  for reproducible undesired behaviour, including the refineGEMs version,
+  Python version, operating system, installation details, inputs, and full error
+  output where possible.
+* `Feature request <https://github.com/draeger-lab/refinegems/issues/new?template=feature_request.yml>`__
+  for new functions, workflow improvements, CLI changes, documentation ideas,
+  or media-related proposals. Larger API, CLI, architecture, or media database
+  changes should start with an issue or discussion before implementation.
+
+Blank issues are disabled so maintainers receive the context needed for triage.
+Pull requests should target the ``dev`` branch and use the repository `pull
+request template
+<https://github.com/draeger-lab/refinegems/blob/dev/.github/pull_request_template.md>`__.
+The template asks contributors to summarize the change, mark the type of
+change, list tests and checks, link documentation updates, and call out
+compatibility or review notes.
+
+All project interactions are covered by the `code of conduct
+<https://github.com/draeger-lab/refinegems/blob/dev/.github/CODE_OF_CONDUCT.md>`__.
+
 :icon:`fa-solid fa-box-open` Additional packages required for development
 -------------------------------------------------------------------------
 

@@ -19,8 +19,10 @@
     - [Installation](#installation)
         - [pypi Via pip](#pypi-via-pip)
         - [docker Via Docker](#docker-via-docker)
-    - [License](#license)
-    - [How to cite](#how-to-cite)
+    - [Contributing](#contributing)
+- [License](#license)
+    - [Logo license and brand usage](#logo-license-and-brand-usage)
+- [How to cite](#how-to-cite)
     - [Repositories using refineGEMs](#repositories-using-refinegems)
 
 <!-- /TOC -->
@@ -144,12 +146,38 @@ For example, to curate a (draft) model, run:
    docker run --name <container_name> -v <user_folder>:/rg_cont refinegems analyse stats ./path/to/model.xml
 ```
 
+## Contributing
+
+Contributions are welcome from users, developers, model curators, and
+documentation writers. Please read the
+[contributing guide](.github/CONTRIBUTING.md) before opening larger changes.
+It describes the recommended development workflow, coding and documentation
+standards, media database notes, review process, and pull request checklist.
+
+GitHub issue forms are available for
+[bug reports](https://github.com/draeger-lab/refinegems/issues/new?template=bug_report.yml)
+and
+[feature requests](https://github.com/draeger-lab/refinegems/issues/new?template=feature_request.yml).
+Pull requests should target the `dev` branch and use the repository
+[pull request template](.github/pull_request_template.md). Please also follow
+the project [code of conduct](.github/CODE_OF_CONDUCT.md).
+
 ## License
 
 The refineGEMs source code is distributed under the MIT license. Bundled
 third-party data, database identifiers, adapted code, and connected external
 tools remain under their own licenses or terms; see
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for details.
+
+## Logo license and brand usage
+
+The refineGEMs logo is licensed separately from the source code under the
+[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+The asset-side notice is stored at
+[docs/source/images/LOGO_LICENSE.md](docs/source/images/LOGO_LICENSE.md).
+
+For colors, minimum size, clear space, and acceptable modifications, see the
+[brand usage guide](docs/source/brand.rst).
 
 
 ## How to cite
