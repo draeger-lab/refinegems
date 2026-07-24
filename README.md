@@ -99,7 +99,7 @@ pip install "refineGEMs[optional]"
 > the affected optional step where possible.
 >
 > ```bash
-> # For MCC, until hot fix is merged into main:
+> # For MCC
 > pip install "masschargecuration@git+https://github.com/Biomathsys/MassChargeCuration"
 >
 > # For BOFdat, our fork with hot fix(es):
