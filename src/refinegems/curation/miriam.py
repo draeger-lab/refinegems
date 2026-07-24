@@ -15,13 +15,6 @@ import re
 import libsbml
 import logging
 
-from bioregistry import (
-    is_valid_curie,
-    is_valid_identifier,
-    manager,
-    normalize_parsed_curie,
-    get_identifiers_org_iri,
-)
 from colorama import Fore, Style
 from datetime import date
 from functools import reduce
@@ -46,6 +39,7 @@ from tqdm.auto import tqdm
 from ..utility.cvterms import generate_cvterm, MIRIAM, OLD_MIRIAM
 from ..utility.db_access import BIOCYC_TIER1_DATABASES_PREFIXES
 from ..utility.io import parse_dict_to_dataframe
+from ..developement.optional import require_bioregistry
 
 ################################################################################
 # setup logging
@@ -90,6 +84,7 @@ def get_set_of_curies(
     curie_dict = SortedDict()
     prefix, identifier = None, None
     invalid_curies = []
+    bioregistry = require_bioregistry("polish and validate MIRIAM annotations")
 
     for uri in uri_list:
 
@@ -101,7 +96,7 @@ def get_set_of_curies(
         else:
             extracted_curie = uri
 
-        curie = manager.parse_curie(
+        curie = bioregistry.manager.parse_curie(
             extracted_curie
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
@@ -130,10 +125,10 @@ def get_set_of_curies(
                 )
 
                 if "META" in curie[1]:
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid BioCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -150,10 +145,10 @@ def get_set_of_curies(
                     else: 
                         curie[0] = "metacyc.compound"
             elif "metacyc." in curie[0]:
-                if is_valid_identifier(
+                if bioregistry.is_valid_identifier(
                     *curie
                 ):  # Get the valid MetaCyc identifier & Add to dictionary
-                    prefix, identifier = normalize_parsed_curie(*curie)
+                    prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                     if not curie_dict or (prefix not in curie_dict):
                         curie_dict[prefix] = SortedSet()
@@ -226,10 +221,10 @@ def get_set_of_curies(
                     curie = ["biocyc", extracted_curie[1]]
 
                     if "META" in curie[1]:
-                        if is_valid_identifier(
+                        if bioregistry.is_valid_identifier(
                             *curie
                         ):  # Get the valid BioCyc identifier & Add to dictionary
-                            prefix, identifier = normalize_parsed_curie(*curie)
+                            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                             if not curie_dict or (prefix not in curie_dict):
                                 curie_dict[prefix] = SortedSet()
@@ -247,10 +242,10 @@ def get_set_of_curies(
                             curie[0] = "metacyc.compound"
                 elif "metacyc." in extracted_curie[0]:
                     curie = extracted_curie
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid MetaCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -313,10 +308,10 @@ def get_set_of_curies(
                     curie = ["biocyc", extracted_curie[1]]
 
                     if "META" in curie[1]:
-                        if is_valid_identifier(
+                        if bioregistry.is_valid_identifier(
                             *curie
                         ):  # Get the valid BioCyc identifier & Add to dictionary
-                            prefix, identifier = normalize_parsed_curie(*curie)
+                            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                             if not curie_dict or (prefix not in curie_dict):
                                 curie_dict[prefix] = SortedSet()
@@ -334,10 +329,10 @@ def get_set_of_curies(
                             curie[0] = "metacyc.compound"
                 elif "metacyc." in extracted_curie[0]:
                     curie = extracted_curie
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid MetaCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -365,8 +360,8 @@ def get_set_of_curies(
                     else:
                         curie[1] = extracted_curie[1]
 
-        if is_valid_identifier(*curie):  # Get all valid identifiers
-            prefix, identifier = normalize_parsed_curie(*curie)
+        if bioregistry.is_valid_identifier(*curie):  # Get all valid identifiers
+            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
         else:
 
             if curie[0] == "eccode":
@@ -375,7 +370,7 @@ def get_set_of_curies(
                 ]  # EC number needs to have 4 places if splitted at the dots
                 while len(correct_id.split(r".")) < 4:
                     correct_id = f"{correct_id}.-"
-                prefix, identifier = normalize_parsed_curie(curie[0], correct_id)
+                prefix, identifier = bioregistry.normalize_parsed_curie(curie[0], correct_id)
                 # Report too long EC codes as invalid CURIEs!
                 if len(correct_id.split(r".")) > 4:
                     invalid_curies.append(f"{prefix}:{identifier}")
@@ -454,13 +449,14 @@ def generate_miriam_compliant_uri_set(
             Sorted set containing complete URIs
     """
     uri_set = SortedSet()
+    bioregistry = require_bioregistry("generate MIRIAM-compliant annotation IRIs")
 
     for prefix in prefix2id:
         for identifier in prefix2id.get(prefix):
             # @DEBUG
             #print(f'Prefix:CURIE before identifiers.org IRI is generated: {prefix}:{identifier}')
             if not prefix in DEPRECATED_PREFIXES:
-                uri = get_identifiers_org_iri(prefix, identifier)
+                uri = bioregistry.get_identifiers_org_iri(prefix, identifier)
                 # @DEBUG
                 #print(f'Resulting IRI: {uri}')
                 uri_set.add(uri)
@@ -508,6 +504,7 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
     """
     collected_invalid_curies = []
     pattern = rf"{MIRIAM}|{OLD_MIRIAM}"
+    bioregistry = require_bioregistry("polish and validate MIRIAM annotations")
     cvterms = entity.getCVTerms()
     cvterms = [cvterm.clone() for cvterm in cvterms]
     entity.unsetCVTerms()
@@ -541,8 +538,8 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
             cvterm.removeResource(cu)
 
             if (
-                is_valid_identifier(*manager.parse_uri(current_uri))
-                or is_valid_curie(current_uri.lower())
+                bioregistry.is_valid_identifier(*bioregistry.manager.parse_uri(current_uri))
+                or bioregistry.is_valid_curie(current_uri.lower())
                 or re.match(pattern, current_uri, re.IGNORECASE)
             ):
                 # For Rhea entries if version is specified with '#' remove the version
