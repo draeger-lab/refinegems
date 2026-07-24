@@ -45,7 +45,7 @@ idna==3.15
     # via requests
 imagesize==1.4.1
     # via sphinx
-ipython==8.18.1
+ipython==8.39.0
     # via -r docs/requirements.in
 jedi==0.19.2
     # via ipython
@@ -203,6 +203,7 @@ traitlets==5.14.3
 typing-extensions==4.16.0
     # via
     #   exceptiongroup
+    #   ipython
     #   mistune
 urllib3==2.7.0
     # via requests
