@@ -3,7 +3,7 @@ Third-party databases and tools
 
 ``refineGEMs`` connects to, queries, and in some cases redistributes selected
 data from external databases and tools. This page summarises the expected
-citations and the license or terms that are relevant for use of these resources.
+citations and the licence or terms that are relevant for use of these resources.
 Redistribution notices are also collected in the repository-level
 ``THIRD_PARTY_LICENSES.md`` file.
 
@@ -24,14 +24,14 @@ Redistribution notices are also collected in the repository-level
 
    * - Resource
      - Use in ``refineGEMs``
-     - License or terms
+     - Licence or terms
      - Citation
    * - BiGG Models
      - Local BiGG metabolite and reaction tables are shipped in the internal
        database and BiGG identifiers are used for media export, mapping, and
        model curation.
      - Free for educational, research, and non-profit purposes if the BiGG
-       copyright notice and license text are retained. Commercial use requires
+       copyright notice and licence text are retained. Commercial use requires
        a separate agreement with UC San Diego.
      - :footcite:t:`King2016_bigg`
    * - ChEBI
@@ -47,7 +47,7 @@ Redistribution notices are also collected in the repository-level
        exports.
      - Academic users may use the KEGG website freely. KEGG is not a public
        database for non-academic use; non-academic use and service provision
-       require the appropriate KEGG license.
+       require the appropriate KEGG licence.
      - :footcite:t:`Kanehisa2000_kegg`
    * - MetaNetX / MNXref
      - MetaNetX identifiers and mapping tables are used for reaction and
@@ -76,27 +76,27 @@ Redistribution notices are also collected in the repository-level
 
    * - Tool
      - Use in ``refineGEMs``
-     - License or terms
+     - Licence or terms
      - Citation
    * - BOFdat
      - Called to generate selected biomass objective function coefficients from
        experimental input data.
-     - Distributed as open-source software under the `MIT license <https://choosealicense.com/licenses/mit/>`__; check the installed upstream or
-       forked package for the exact license text.
+     - Distributed as open-source software under the `MIT licence <https://choosealicense.com/licenses/mit/>`__; check the installed upstream or
+       forked package for the exact licence text.
      - :footcite:t:`Lachance2019_bofdat`
    * - MassChargeCuration (MCC)
      - Called to curate metabolite masses and charges.
-     - Distributed as free software under the `GNU LGPL-3.0 license <https://choosealicense.com/licenses/lgpl-3.0/>`__.
+     - Distributed as free software under the `GNU LGPL-3.0 licence <https://choosealicense.com/licenses/lgpl-3.0/>`__.
      - :footcite:t:`Mostolizadeh2026_mcc`
    * - MEMOTE
      - Used to run model consistency tests and generate MEMOTE reports. Some
        consistency helper functions are imported for internal checks, and
        biomass-normalisation code in ``refineGEMs`` was adapted from MEMOTE.
-     - Distributed under the `Apache-2.0 license <https://choosealicense.com/licenses/apache-2.0/>`__.
+     - Distributed under the `Apache-2.0 licence <https://choosealicense.com/licenses/apache-2.0/>`__.
      - :footcite:t:`Lieven2020_memote`
    * - SBOannotator
      - Called to assign SBO terms to SBML model entities.
-     - Distributed as free software under the `GNU GPL-3.0 license
+     - Distributed as free software under the `GNU GPL-3.0 licence
        <https://choosealicense.com/licenses/gpl-3.0/>`__. This affects
        users who install or redistribute the optional SBOannotator-dependent
        functionality.
@@ -106,18 +106,18 @@ Redistribution notices are also collected in the repository-level
 -----------------------------------------------------------------
 
 The internal SQLite database currently redistributes BiGG and ModelSEED-derived
-tables. When these tables are updated, preserve the upstream license notices,
+tables. When these tables are updated, preserve the upstream licence notices,
 record the source version or download date, and keep this page in sync.
 
-The ``refineGEMs`` source code is distributed under the MIT license. Bundled
+The ``refineGEMs`` source code is distributed under the MIT licence. Bundled
 third-party data, database identifiers, and connected external tools remain
-under their own licenses or terms, as listed above and in
+under their own licences or terms, as listed above and in
 ``THIRD_PARTY_LICENSES.md``.
 
 KEGG-dependent functionality should be documented and implemented as online
 queries through the user-accessed KEGG services. Avoid bundling KEGG data in
-released artifacts unless the project has confirmed that the intended release
-and user base are covered by an appropriate KEGG license.
+released artefacts unless the project has confirmed that the intended release
+and user base are covered by an appropriate KEGG licence.
 
 Because ModelSEED and MetaNetX aggregate data from other resources, downstream
 use may need to follow the original source terms for specific records. Preserve

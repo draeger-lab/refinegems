@@ -2,12 +2,12 @@
 
 refineGEMs connects to, queries, and in some cases redistributes selected data
 from external resources. This file records notices for redistributed or
-license-sensitive resources. It is not legal advice; users remain responsible
+licence-sensitive resources. It is not legal advice; users remain responsible
 for checking the current upstream terms for their own use case.
 
-The refineGEMs source code is distributed under the MIT license. Bundled
+The refineGEMs source code is distributed under the MIT licence. Bundled
 third-party data, database identifiers, and connected external tools remain
-under their own licenses or terms.
+under their own licences or terms.
 
 ## BiGG Models
 
@@ -23,7 +23,7 @@ Palsson BO, and Lewis NE. BiGG Models: A platform for integrating,
 standardizing, and sharing genome-scale models. Nucleic Acids Research
 44(D1):D515-D522. <https://doi.org/10.1093/nar/gkv1049>
 
-License notice from <http://bigg.ucsd.edu/license>:
+Licence notice from <http://bigg.ucsd.edu/license>:
 
 > Copyright (c) 2019 The Regents of the University of California
 >
@@ -85,7 +85,7 @@ Acids Research 28(1):27-30. <https://doi.org/10.1093/nar/28.1.27>
 
 KEGG states that academic users may freely use the KEGG website. It also states
 that KEGG is not a public database for non-academic use and that non-academic
-use requires a commercial license.
+use requires a commercial licence.
 
 ## MetaNetX / MNXref
 
@@ -102,7 +102,7 @@ models. Nucleic Acids Research 49(D1):D570-D574.
 
 MetaNetX states that, except where otherwise noted, data from the site are
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-MetaNetX also notes that MNXref data can be subject to the original licensing
+MetaNetX also notes that MNXref data can be subject to the original licence
 restrictions of external source resources.
 
 ## ModelSEED
@@ -118,7 +118,7 @@ High-throughput generation, optimization and analysis of genome-scale metabolic
 models. Nature Biotechnology 28:977-982.
 <https://doi.org/10.1038/nbt.1672>
 
-The ModelSEEDDatabase license states that, except where otherwise noted, data in
+The ModelSEEDDatabase licence states that, except where otherwise noted, data in
 the ModelSEED GitHub repository are licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). It also states that
 ModelSEED includes information sourced in part from external resources, and that
@@ -139,12 +139,12 @@ Lieven C, Beber ME, Olivier BG, et al. MEMOTE for standardized genome-scale
 metabolic model testing. Nature Biotechnology 38:272-276.
 <https://doi.org/10.1038/s41587-020-0446-y>
 
-License: <https://github.com/opencobra/memote/blob/develop/LICENSE>
+Licence: <https://github.com/opencobra/memote/blob/develop/LICENSE>
 
 ## Connected tools
 
 The following connected software tools are distributed by their upstream
-projects under their own software licenses:
+projects under their own software licences:
 
 - BOFdat: Original software under [MIT](https://choosealicense.com/licenses/mit/), used fork by Draeger lab, also under
   MIT; cite <https://doi.org/10.1371/journal.pcbi.1006971>.

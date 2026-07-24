@@ -1,25 +1,25 @@
-Logo License and Brand Usage
+Logo Licence and Brand Usage
 ============================
 
-The refineGEMs source code is licensed under the MIT license. The refineGEMs
-logo is licensed separately under `Creative Commons Attribution 4.0
+The refineGEMs source code is licensed under the MIT licence. The refineGEMs
+logos are licensed separately under `Creative Commons Attribution 4.0
 International <https://creativecommons.org/licenses/by/4.0/>`__ (CC BY 4.0).
-The asset-side notice is stored next to the logo in
-``docs/source/images/LOGO_LICENSE.md``.
+The asset-side notice is stored next to the logo files in
+``docs/source/images/logos/LOGO_LICENSE.md``.
 
 When reusing the logo, include attribution such as:
 
   refineGEMs logo by the refineGEMs contributors, licensed under CC BY 4.0.
 
-Approved Logo Asset
--------------------
+Approved Logo Assets
+--------------------
 
-Use ``docs/source/images/refineGEMs_logo.png`` as the canonical project logo
+Use the files in ``docs/source/images/logos/`` as the canonical project logos
 for README files, documentation pages, presentations, and community material.
 Use the logo as supplied whenever possible.
 
-Colors
-------
+Colours
+-------
 
 The approved logo palette is intentionally restrained:
 
@@ -27,7 +27,7 @@ The approved logo palette is intentionally restrained:
    :header-rows: 1
 
    * - Role
-     - Color
+     - Colour
      - Hex
    * - Primary logo gold
      - muted warm gold
@@ -43,9 +43,9 @@ The approved logo palette is intentionally restrained:
      - ``#FFFFFF``
 
 For project material, prefer the primary gold for logo strokes, accents, and
-small highlights. Use neutral text colors for readability. Avoid recoloring the
-logo into unrelated palettes unless a single-color accessibility or production
-constraint requires it.
+small highlights. Use neutral text colours for readability. Avoid recolouring
+the logo into unrelated palettes unless a single-colour accessibility or
+production constraint requires it.
 
 Minimum Size
 ------------
@@ -77,7 +77,7 @@ You may:
   background.
 * Export the logo to another raster format when required by a publishing
   system.
-* Use a single-color version in primary gold, black, or white when technical
+* Use a single-colour version in primary gold, black, or white when technical
   constraints require it.
 
 Please avoid:

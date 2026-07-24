@@ -2,7 +2,7 @@
 
 | Topic | Badge(s) |
 | :--- | :---- |
-| General | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml) [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest) ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main) |
+| General | [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fdraeger-lab%2Frefinegems%2Fmain%2Fpyproject.toml) [![Documentation Status](https://readthedocs.org/projects/refinegems/badge/?version=latest)](https://refinegems.readthedocs.io/en/latest/?badge=latest) ![Repo Size](https://img.shields.io/github/repo-size/draeger-lab/refinegems) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/draeger-lab/refinegems/main) |
 | GitHub release | ![GitHub release (with filter)](https://img.shields.io/github/v/release/draeger-lab/refinegems?logo=github&label=refineGEMs&color=B4A069&style=flat-square) ![GitHub all releases](https://img.shields.io/github/downloads/draeger-lab/refinegems/total?logo=github&label=GitHub%20downloads) |
 | PyPI | [![PyPI version](https://img.shields.io/pypi/v/refinegems?logo=pypi&label=PyPI%20package&color=neongreen)](https://pypi.org/project/refineGEMs/) ![PyPI - Format](https://img.shields.io/pypi/format/refinegems?) |
 | Compliance | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![FAIR checklist badge](https://fairsoftwarechecklist.net/badge.svg)](https://fairsoftwarechecklist.net/v0.2?f=31&a=32113&i=32102&r=133) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10532/badge)](https://www.bestpractices.dev/projects/10532) [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu) |
@@ -20,9 +20,9 @@
         - [pypi Via pip](#pypi-via-pip)
         - [docker Via Docker](#docker-via-docker)
     - [Contributing](#contributing)
-- [License](#license)
-    - [Logo license and brand usage](#logo-license-and-brand-usage)
-- [How to cite](#how-to-cite)
+    - [Licence](#licence)
+        - [Logo licence and brand usage](#logo-licence-and-brand-usage)
+    - [How to cite](#how-to-cite)
     - [Repositories using refineGEMs](#repositories-using-refinegems)
 
 <!-- /TOC -->
@@ -162,21 +162,21 @@ Pull requests should target the `dev` branch and use the repository
 [pull request template](.github/pull_request_template.md). Please also follow
 the project [code of conduct](.github/CODE_OF_CONDUCT.md).
 
-## License
+## Licence
 
-The refineGEMs source code is distributed under the MIT license. Bundled
+The refineGEMs source code is distributed under the MIT licence. Bundled
 third-party data, database identifiers, adapted code, and connected external
-tools remain under their own licenses or terms; see
+tools remain under their own licences or terms; see
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for details.
 
-## Logo license and brand usage
+### Logo licence and brand usage
 
-The refineGEMs logo is licensed separately from the source code under the
-[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+The refineGEMs logos are licensed separately from the source code under the
+[Creative Commons Attribution 4.0 International Licence (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 The asset-side notice is stored at
-[docs/source/images/LOGO_LICENSE.md](docs/source/images/LOGO_LICENSE.md).
+[docs/source/images/logos/LOGO_LICENSE.md](docs/source/images/logos/LOGO_LICENSE.md).
 
-For colors, minimum size, clear space, and acceptable modifications, see the
+For colours, minimum size, clear space, and acceptable modifications, see the
 [brand usage guide](docs/source/brand.rst).
 
 
