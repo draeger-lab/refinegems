@@ -118,7 +118,7 @@ Blank issues are disabled so maintainers receive the context needed for triage.
 Pull requests should target the ``dev`` branch and use the repository `pull
 request template
 <https://github.com/draeger-lab/refinegems/blob/dev/.github/pull_request_template.md>`__.
-The template asks contributors to summarize the change, mark the type of
+The template asks contributors to summarise the change, mark the type of
 change, list tests and checks, link documentation updates, and call out
 compatibility or review notes.
 
