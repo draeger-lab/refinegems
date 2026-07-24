@@ -131,8 +131,10 @@ pyyaml==6.0.2
     # via
     #   pybtex
     #   sphinx-icon
-pyzmq==26.2.0
-    # via jupyter-client
+pyzmq==27.0.2
+    # via
+    #   -r requirements.in
+    #   jupyter-client
 referencing==0.35.1
     # via
     #   jsonschema
