@@ -77,7 +77,10 @@ html_theme = 'sphinx_rtd_theme' #'alabaster'
 html_static_path = ['_static']
 
 # Change colours in theme for navigation
-html_css_files = ['custom_theme.css']
+html_css_files = [
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css',
+    'custom_theme.css',
+]
 
 # Adds logo to documentation page
 html_logo = str(Path('images','logos','refineGEMs_full_nb.png'))
