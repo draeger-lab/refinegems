@@ -11,38 +11,172 @@ __author__ = "Famke Baeuerle, Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
+import logging
 import matplotlib
-import matplotlib.colors
+import matplotlib.pyplot as plt
 
 from cobra import Model as cobraModel
 from libsbml import Model as libModel
+from libsbml import BIOLOGICAL_QUALIFIER, BQB_IS, BQB_IS_HOMOLOG_TO, BQB_OCCURS_IN
+from pathlib import Path
+from typing import Literal, Union
+from upsetplot import from_memberships, UpSet
 from venn import venn
 
 from ..classes.reports import MultiSBOTermReport, SBOTermReport
+from ..curation.miriam import get_set_of_curies
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
+# variables
+################################################################################
+# METABOLITE_COMPARTMENT_SEPARATOR = {r'_(?)', r'__91__(?)__93__', r'_(?)0'}
 
 ################################################################################
 # functions
 ################################################################################
 
 
-def sbo_terms(models: list[libModel]) -> MultiSBOTermReport:
+def sbo_terms(models: Union[libModel, list[libModel]], rename: Union[str,list[str],None]=None) -> Union[SBOTermReport,MultiSBOTermReport]:
     """Analyse and compare the SBO term annotations of a given list
     of models.
 
     Args:
-        - models (list[libModel]):
+        - models (libModel | list[libModel]):
             A list containing models loaded with libSBML.
+        - rename (str | list[str], optional):
+            Rename model ids to custom names.
+            Defaults to None.
+
+    Raises:
+        - ValueError: Length mismatch with provided lists for models and rename
 
     Returns:
-        MultiSBOTermReport:
-            A :py:class:`~refinegems.classes.reports.MultiSBOTermReport` instance.
+        SBOTermReport | MultiSBOTermReport:
+            A :py:class:`~refinegems.classes.reports.SBOTermReport` for a single model or a :py:class:`~refinegems.classes.reports.MultiSBOTermReport` instance if multiple models are provided.
     """
-
     sboanalyses = []
-    for m in models:
-        sboanalyses.append(SBOTermReport(m))
+    
+    # handle models
+    match models:
+        case libModel():
+            models = [models]
+        case list():
+            if not all(isinstance(m, libModel) for m in models):
+                raise ValueError(f'Expected a list of libSBML models. Got a list with the following types: {[type(m) for m in models]}')
+        case _:
+            raise ValueError(f'Expected a libSBML model or a list of libSBML models. Got {type(models)}')
+    
+    # handle names 
+    if rename is None:
+        rename = [m.getId() for m in models]
+    elif isinstance(rename, str):
+        rename = [rename]
+    elif isinstance(rename, list) and len(rename) == len(models):
+        pass
+    elif isinstance(rename, list) and len(rename) > len(models):
+        logger.warning(f'''List of custom names provided with rename too large (Length: {len(rename)}). 
+                        Taking first {len(models)} entries to rename model IDs with custom IDs: {rename[:len(models)]}.
+                        Proper use: 
+                        Provide a list with the same length as the number of models or a string.
+                        ''')
+        rename = rename[:len(models)] # Take first entries according to the number of models
+    elif isinstance(rename, list) and len(rename) < len(models):
+        raise ValueError(f'''Length of provided model list ({len(models)}) does not match the length of the custom IDs provided by rename ({len(rename)}). 
+                         Provide a list with the same length as the number of models or a string.''')
+    else:
+        raise ValueError(f'''Expected rename to be either None, a string or a list of strings with the same length as the number of models. 
+                         Got {type(rename)}.''')
 
-    return MultiSBOTermReport(sboanalyses)
+    # construct report 
+    for m, name in zip(models, rename):
+        sboanalyses.append(SBOTermReport(m, name))
+    if len(sboanalyses) == 1:
+        return sboanalyses[0]
+    else:
+        return MultiSBOTermReport(sboanalyses)
+
+###
+# Model entity comparison
+###
+def get_entity_curie_set_per_db(model: libModel, entity: Literal['genes', 'metabolites', 'reactions', 'pathways'], db: Union[str, None], include_homologs: bool=False) -> Union[set, None]:
+    """Get set of CURIEs for one entity type for a specific database
+
+    Args:
+        model (libModel): Model laoded with libSBML
+        entity (str): String specifying the entity type. One of: metabolites|reactions|pathways
+        db (str): Specifies the database the entity identifier should come from. 
+        Needs to be one of the keys in bioregistry.get_prefix_map().
+
+    Returns:
+        Union[set, None]: Set of identifiers found in the model for the given entity type and database if available, else None.
+
+    Raises:
+        - ValueError: If entity type is unknown
+    """
+    list_of = []
+    no_groups_attribute = False
+
+    match entity:
+        case 'genes':
+           list_of = model.getPlugin('fbc').getListOfGeneProducts()
+        case 'metabolites':
+            list_of = model.getListOfSpecies()
+        case 'reactions':
+            list_of = model.getListOfReactions()
+        case 'pathways':
+            try:
+                list_of = model.getPlugin('groups').getListOfGroups()
+            except AttributeError:
+                no_groups_attribute = True
+                logger.warning(f'Model {model.getId()} does not contain any pathway information in the groups attribute. Trying to find pathways via reaction annotations.')
+                list_of = model.getListOfReactions()
+                db = 'kegg.pathway' # Override db to only get kegg pathway annotations from reactions
+        case _:
+            raise ValueError(f"Unknown entity: {entity!r}. Expected one of: {', '.join(['genes', 'metabolites', 'reactions', 'pathways'])}")
+
+    entity_curie_set = set()
+
+    for e in list_of:
+        if db or no_groups_attribute:
+            cvterms = e.getCVTerms()
+
+            for cvt in cvterms:
+                # Only get CURIEs from IS relationship or include CURIEs with BQB_IS_HOMOLOG_TO if include_homologs=True
+                curie_condition = (
+                    (cvt.getQualifierType() == BIOLOGICAL_QUALIFIER) and ((cvt.getBiologicalQualifierType() == BQB_IS) 
+                    or (cvt.getBiologicalQualifierType() == BQB_IS_HOMOLOG_TO)) 
+                    if include_homologs else 
+                    (cvt.getQualifierType() == BIOLOGICAL_QUALIFIER) and (cvt.getBiologicalQualifierType() == BQB_IS)
+                    )
+
+                # Case for pathways if no groups attribute present
+                #   1. Update curie_condition to also include BQB_OCCURS_IN
+                #   2. Set db parameter to 'kegg.pathway' to only get kegg pathway annotations from reactions
+                if no_groups_attribute: 
+                    curie_condition = curie_condition or (cvt.getBiologicalQualifierType() == BQB_OCCURS_IN)
+                
+                if curie_condition:
+                    current_curies = [cvt.getResourceURI(i) for i in range(cvt.getNumResources())]
+                    prefix2id = get_set_of_curies(current_curies)[0]
+                    for key in prefix2id:
+                        if db in key:
+                            id_set = prefix2id.get(key)
+                            for i in id_set:
+                                if i != 'NaN': # Exclude NaN identifiers
+                                    entity_curie_set.add(i)
+        else: # Use internal model IDs
+            # Preprocessing of IDs for metabolites
+            # @TODO add handling of IDs as they can differ between models for the suffix, e.g. _c vs. __61__c__63__
+            entity_id = e.getId()
+            entity_curie_set.add(entity_id)
+
+    return entity_curie_set
 
 
 def plot_venn(
@@ -66,9 +200,9 @@ def plot_venn(
         matplotlib.axes.Axes:
             Venn diagram
     """
-    intersec = {}
+    intersec = {} # model ID : list of entity IDs
     for model in models:
-        reas = []
+        reas = [] # List of current entity IDs
         if entity == "metabolite":
             for rea in model.metabolites:
                 reas.append(rea.id)
@@ -83,4 +217,121 @@ def plot_venn(
         fig = venn(intersec, fmt="{percentage:.1f}%")
     else:
         fig = venn(intersec)
+    return fig
+
+
+def plot_db_entity_overlap(
+    models: list[cobraModel], entity: Literal['genes', 'metabolites', 'reactions', 'pathways'], db: Union[str, None]=None, 
+    cmap: Union[list[tuple], None]=None, rename: list[str]=None, include_homologs: bool=False, 
+    use_venn: bool=False,
+    venn_kwargs: dict={'fmt': "{percentage:.1f}%", 'legend_loc':'lower right'}, 
+    upset_min_subset_size: int=15,
+    outfile_suffix: str='pdf', outdir: str='./'
+) -> matplotlib.axes.Axes:
+    """Creates Venn diagram (<= 4 models) or UpSet plot to show the overlap of model entities (based on a specific database)
+
+    Args:
+        - models (list[cobraModel]): 
+             Models loaded with libSBML
+        - entity (Literal[genes, metabolites, reactions, pathways]): 
+            Entity to compare on.
+            Can be one of [genes, metabolites, reactions, pathways].
+        - db (str, optional)
+            Specifies the database the entity identifier should come from. 
+            Needs to be one of the keys in bioregistry.get_prefix_map().
+            Defaults to None, which uses model internal IDs.
+        - cmap (list[tuple]): 
+            Specify colour map to be used by venn/upsetplot or None to use default colours. 
+            Defaults to None.
+        - rename (str, optional): 
+            Rename model ids to custom names.
+            Defaults to None.
+        - include_homologs (bool, optional): 
+            Specifies if homologs should be included in the comparison. 
+            Defaults to False.
+        - use_venn (bool, optional):
+            Specifies if Venn diagrams should be plotted (restricted to a set size of four).
+            Defaults to False (=> Plotting UpSetPlots).
+        - venn_kwargs (dict, optional): 
+            Dictionary containing details for plotting the Venn plots. 
+            Only used if user specifies use_venn=True. 
+            Defaults to {'fmt': "{percentage:.1f}%", 'legend_loc':'lower right'}.
+        - upset_min_subset_size (int, optional): 
+            Minimum subset size to be shown in the UpSet plot. 
+            Defaults to 15.
+        - outfile_suffix (str, optional): 
+            File extension to be used for saved figures. 
+            Defaults to 'pdf'.
+        - outdir (str, optional): 
+            Directory to save resulting figure to. 
+            Defaults to './'.
+
+    Returns:
+        matplotlib.axes.Axes: 
+            Figure resulting from venn/upsetplot
+    """
+
+    # Set-up filepath and folder to store resulting figure in
+    if outdir:
+        if isinstance(outdir, str): outdir = Path(outdir)
+        outdir.mkdir(parents=True, exist_ok=True)
+        filename = f'{entity}_{db}_comparison_plot' if db else f'{entity}_ID_comparison_plot'
+        filepath = Path(outdir, f'{filename}.{outfile_suffix}')
+
+    # If no renaming list is given, use model IDs
+    if not rename: rename = [model.id for model in models]
+    
+    # Get CURIE set for specifed entity and database for each model
+    model2ids = {model_id2use: get_entity_curie_set_per_db(model, entity, db, include_homologs)
+                 for model, model_id2use in zip(models, rename)} # model ID : set of entity IDs
+
+    # Filter out Nones
+    model2remove = []
+    for m in model2ids.keys():
+        if not model2ids[m]:
+            comp_method = f'{db} {entity}' if db else f'{entity}'
+            logger.warning(f'Skipping model {m} for {comp_method} comparison. No {entity} information available in the model.')
+            model2remove.append(m)
+    model2ids = {m: model2ids[m] for m in model2ids.keys() if m not in model2remove}
+
+    # Generate and save plot
+    is_set_size_smaller_4 = (len(model2ids) <= 4)
+    if use_venn and is_set_size_smaller_4:
+        fig = venn(model2ids, cmap=cmap, **venn_kwargs)
+    else:
+        if use_venn and not is_set_size_smaller_4: 
+            logger.warning(f'Amount of sets: {len(model2ids)}. Too large for Venn plot. Plotting UpSetPlot...')
+        # Prepare data for UpSet plot
+        all_ids = sorted(set.union(*model2ids.values()))
+        memberships = []
+        for id_ in all_ids:
+            present_in = [mid for mid, ids in model2ids.items() if id_ in ids]
+            memberships.append(present_in)
+
+        upset_data = from_memberships(memberships, data=[1]*len(memberships))
+        fig = plt.figure()
+        upset = UpSet(upset_data, subset_size='count', min_subset_size=upset_min_subset_size, show_counts=True )
+
+        # Set colours per degree if provided
+        if cmap:
+            # Determine the maximum degree present in the intersections
+            max_degree = max(len(idx) for idx in upset_data.index)
+            
+            # Colour bars per degree
+            for degree in range(1, max_degree + 1):
+                colour = cmap[(degree - 1) % len(cmap)] # Cycle through provided colours if not enough
+                upset.style_subsets(min_degree=degree, facecolor=colour)
+
+        # Plot UpSetPlot
+        plot_res = upset.plot(fig=fig)
+        plot_res["intersections"].set_ylabel("Subset size")
+        plot_res["totals"].set_xlabel("Total ID amount")
+    if outdir:
+        plt.savefig(filepath, dpi=300)
+        plt.close()
+        logger.info(f'Resulting plot saved to {filepath}.')
+    else:
+        logger.info(f'No ouput directory given. Resulting figure returned but NOT saved.')
+
+    # Also return figure
     return fig

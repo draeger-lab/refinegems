@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # 🐋 Check for base image updates in Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/"               # Root directory of Dockerfile
+    schedule:
+      interval: "weekly"         # Check weekly
+    commit-message:
+      prefix: "docker"
+    open-pull-requests-limit: 3
+
+  # Check for Python dependencies in pyproject.toml
+  - package-ecosystem: "pip"
+    directory: "/"               # Directory with pyproject.toml
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "pip"
+    open-pull-requests-limit: 3

@@ -36,23 +36,36 @@ How do I cite ``refineGEMs``?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please see :ref:`How to cite`.
 
-After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?
+After restarting my device (MacOS) my conda set-up has the wrong Python version. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. Deactivate all environments including the base environment
-2. Activate your environment for ``refinegems`` again
+2. Activate your environment for ``refineGEMs`` again
 
-I cannot access ``python`` from within my conda environment in my VSCode terminal. What can I do?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Please refer to the solution for :ref:`After restarting my device (MacOS) my conda set-up has the wrong python version. What can I do?`
-
+I cannot access Python from within my conda environment in my VSCode terminal. What can I do?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Please refer to the solution for :ref:`After restarting my device (MacOS) my conda set-up has the wrong Python version. What can I do?`
 
 My ``pipenv`` is not locking after f.ex. moving the repository. What can I do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Try uninstalling ``pipenv`` and reinstalling it via pip. Then  run ``pipenv install`` and it should work again.
 
-How to solve errors caused by ``pandoc`` (Development)?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When do I use ``lab_strain=True``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the parameter ``lab_strain`` is set to ``True`` it is assumed that the input model was created for a strain of an 
+organism for which so far no data is available in any database. To get sufficient information for the knowledge-base 
+stored within the model of the strain the `PGAB pipeline described in SPECIMEN <https://specimen.readthedocs.io/en/latest/pipeline_idea.html>`__ 
+should be used before model creation. The resulting FASTA from the ``PGAB`` pipeline can then be used as input for 
+CarveMe and is then also required as additional input for :py:func:`~refinegems.curation.curate.polish_model`. In this 
+case the parameter ``lab_strain`` should be set to ``True``.
+
+:icon:`fa-solid fa-code-branch` Development
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _help-pandoc:
+
+How to solve errors caused by ``pandoc``?
+"""""""""""""""""""""""""""""""""""""""""
 | `Here <https://stackoverflow.com/a/71585691>`__ is an answer that might help.
 | If you install pandoc with conda use:
 
@@ -61,20 +74,11 @@ How to solve errors caused by ``pandoc`` (Development)?
     
     conda install -c conda-forge pandoc
 
-How to solve errors caused by ``jinja2`` (Development)?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+How to solve errors caused by ``jinja2``?
+"""""""""""""""""""""""""""""""""""""""""
 Try to switch to version 3.0.3:
 
 .. code:: console
     :class: copyable
     
     pip install jinja2==3.0.3
-
-When do I use ``lab_strain=True``?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the parameter ``lab_strain`` is set to ``True`` it is assumed that the input model was created for a strain of an 
-organism for which so far no data is available in any database. To get sufficient information for the knowledge-base 
-stored within the model of the strain the ``PGAB`` pipeline described in ``SPECIMEN`` should be used before model 
-creation. The resulting FASTA from the ``PGAB`` pipeline can then be used als input for CarveMe and is then also 
-required as additional input for :py:mod:`~refinegems.curation.polish`. In this case the parameter ``lab_strain`` should 
-be set to ``True``.

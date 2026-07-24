@@ -34,6 +34,12 @@ from importlib.resources import files
 from typing import Union
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -44,17 +50,18 @@ VERSION_FILE = PATH_TO_DB_FOLDER.joinpath(
 )  #: :meta hide-value:
 VERSION_URL = "http://bigg.ucsd.edu/api/v2/database_version"  #: :meta:
 
+MNX_FTP_BASE_PATH = "https://www.metanetx.org/ftp/latest/"
 mnx_db_namespace = {
     "reac_prop": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_prop.tsv",
+        f"{MNX_FTP_BASE_PATH}reac_prop.tsv",
         ["id", "mnx_equation", "reference", "ec-code", "is_balanced", "is_transport"],
     ),
     "reac_xref": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/reac_xref.tsv",
+        f"{MNX_FTP_BASE_PATH}reac_xref.tsv",
         ["source", "id", "description"],
     ),
     "chem_prop": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_prop.tsv",
+        f"{MNX_FTP_BASE_PATH}chem_prop.tsv",
         [
             "id",
             "name",
@@ -68,7 +75,7 @@ mnx_db_namespace = {
         ],
     ),
     "chem_xref": (
-        "https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_xref.tsv",
+        f"{MNX_FTP_BASE_PATH}chem_xref.tsv",
         ["source", "id", "description"],
     ),
 }
@@ -116,7 +123,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     """Verifies if database has:
 
        - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-       - 6 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance', 'subset' & 'subset2substance'
+       - 6 tables with names 'medium', 'substance', 'substance2db', 'medium2substance', 'subset' & 'subset2substance'
        - 1 table with name 'modelseed_compounds'
 
     Args:
@@ -183,8 +190,8 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 
 def create_media_database(db_cursor: sqlite3.Cursor):
-    """Creates the media database with 4 tables 
-    ('medium', 'substance', 'substance2db', 'medium2substance') 
+    """Creates the media database with 6 tables 
+    ('medium', 'substance', 'substance2db', 'medium2substance', 'subset' & 'subset2substance') 
     from file './data/database/media_db.sql'
 
     Args:
@@ -197,6 +204,8 @@ def create_media_database(db_cursor: sqlite3.Cursor):
                            DROP TABLE IF EXISTS substance2db;
                            DROP TABLE IF EXISTS medium;
                            DROP TABLE IF EXISTS medium2substance;
+                           DROP TABLE IF EXISTS subset;
+                           DROP TABLE IF EXISTS subset2substance;
                            """
     )
 
@@ -234,7 +243,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
                 key, value = link.split(":", 1)
                 key = key.strip()
                 value = value.rsplit("/", 1)[1].strip()
-                value = re.sub(r"^(?i)meta:", "", value)
+                value = re.sub(r"^meta:", "", value, re.IGNORECASE)
                 if key in database_ids.keys():
                     database_ids[key].append(value)
                 else:
@@ -298,7 +307,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
     )
 
     if bigg_id_duplicates_set:
-        logging.warning(
+        logger.warning(
             "The BiGG metabolite table contains the following "
             f"{len(bigg_id_duplicates_set)} duplicate(s):\n"
             f"{bigg_id_duplicates_set}\n"

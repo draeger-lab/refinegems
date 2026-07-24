@@ -67,6 +67,10 @@ def download_url(
     # Ensure that directory is not None
     if directory is None:
         directory = Path.cwd()
+    # Ensure directory exists
+    if isinstance(directory, str):
+        directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
 
     # match URLS to type of database, that the user wants to download
     match download_type:

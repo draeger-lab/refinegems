@@ -12,8 +12,9 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 
 import cobra
 
-from libsbml import Model as libModel
+from bioregistry import is_valid_curie
 from cobra import Model as cobraModel
+from libsbml import Model as libModel
 
 from memote.support import consistency
 
@@ -137,6 +138,62 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
     return mass_list, charge_list
 
 
+def summarise_annotation_coverage(model:cobra.Model) -> tuple[dict, dict, dict]:
+    """Summarise the annotation coverage of model entities by collecting types of annotations and their counts and percentages.
+
+    Args:
+       -  model (cobra.Model): A model loaded with the COBRApy package.
+
+    Returns:
+        tuple[dict, dict, dict]: 
+            Three dictionaries containing the annotation coverage for genes, reactions, and metabolites.
+            Each dictionary maps a database name to a tuple (count, percentage), where:
+
+            - database_name (str): name of the annotation database
+            - count (int): number of entities annotated with that database
+            - percentage (float): percentage of entities annotated with that database
+
+    .. code-block::
+
+        {
+            'database_name': (count, percentage),
+            ...
+        }
+    """
+    
+    # genes
+    annot_genes = dict()
+    for gene in model.genes:
+        for db, _ in gene.annotation.items():
+            if db not in annot_genes:
+                annot_genes[db] = 0
+            annot_genes[db] += 1
+    total_genes = len(model.genes)
+    annot_genes = {db: (count, count/total_genes*100) for db, count in annot_genes.items()}
+    
+    # reactions
+    annot_reacs = dict()
+    for reac in model.reactions:
+        for db, _ in reac.annotation.items():
+            if db not in annot_reacs:
+                annot_reacs[db] = 0
+            annot_reacs[db] += 1
+    total_reacs = len(model.reactions)
+    annot_reacs = {db: (count, count/total_reacs*100) for db, count in annot_reacs.items()}
+    
+    # metabolites
+    annot_metabs = dict()
+    for metab in model.metabolites:
+        for db, _ in metab.annotation.items():
+            if db not in annot_metabs:
+                annot_metabs[db] = 0
+            annot_metabs[db] += 1
+    total_metabs = len(model.metabolites)
+    annot_metabs = {db: (count, count/total_metabs*100) for db, count in annot_metabs.items()}
+    
+    return annot_genes, annot_reacs, annot_metabs
+
+
 # other
 # -----
 
@@ -182,8 +239,14 @@ def get_reactions_per_sbo(model: libModel) -> dict:
     sbos_dict = {}
     for react in model.getListOfReactions():
         sbo = react.getSBOTerm()
+        
+        complete_sbo_term = f'sbo:0000{sbo}'
+        if not is_valid_curie(complete_sbo_term):
+            sbo = 'invalid'
+    
         if sbo in sbos_dict.keys():
             sbos_dict[sbo] += 1
         else:
             sbos_dict[sbo] = 1
+    
     return sbos_dict
