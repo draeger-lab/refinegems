@@ -4,5 +4,6 @@ ipython
 sphinxcontrib-bibtex~=2.5.0
 sphinx_rtd_theme>=3.0.0
 sphinx_copybutton
+sphinx-icon
 accessible-pygments
 pandoc
