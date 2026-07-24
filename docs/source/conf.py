@@ -24,11 +24,11 @@ if os.environ.get("READTHEDOCS", "") == "True":
 # -- Project information -----------------------------------------------------
 
 project = 'refineGEMs'
-project_copyright = '2024, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
+project_copyright = '2023-2026, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 author = 'Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 
 # The full version, including alpha/beta/rc tags
-release = '2.0.0-beta.1'
+release = '2.0.0-beta.2'
 
 
 # -- General configuration ---------------------------------------------------
