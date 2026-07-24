@@ -16,7 +16,7 @@ Approved Logo Assets
 
 Use the files in ``docs/source/images/logos/`` as the canonical project logos
 for README files, documentation pages, presentations, and community material.
-Use the logo as supplied whenever possible.
+Use the logo(s) as supplied whenever possible.
 
 Colours
 -------
