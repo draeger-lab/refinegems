@@ -62,6 +62,35 @@ DEPRECATED_PREFIXES = {
 ################################################################################
 
 
+def _parse_bioregistry_uri(bioregistry, uri: str) -> tuple[str, str] | None:
+    """Parse a URI while tolerating incompatible bioregistry/curies releases."""
+    try:
+        parsed_uri = bioregistry.manager.parse_uri(uri)
+    except Exception:
+        try:
+            parsed_uri = bioregistry.manager.converter.parse_uri(uri)
+        except Exception:
+            return None
+
+    if not parsed_uri:
+        return None
+
+    prefix, identifier = parsed_uri
+    if prefix is None or identifier is None:
+        return None
+
+    return prefix, identifier
+
+
+def _is_valid_bioregistry_uri(bioregistry, uri: str) -> bool:
+    """Return whether a URI parses to a valid bioregistry identifier."""
+    parsed_uri = _parse_bioregistry_uri(bioregistry, uri)
+    try:
+        return bool(parsed_uri and bioregistry.is_valid_identifier(*parsed_uri))
+    except Exception:
+        return False
+
+
 # Change CURIE pattern/Correct CURIEs
 # ------------------------------------
 # @FIXME Check if compatibility with bioregistry versions starting from 0.12.19 is possible
@@ -538,7 +567,7 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
             cvterm.removeResource(cu)
 
             if (
-                bioregistry.is_valid_identifier(*bioregistry.manager.parse_uri(current_uri))
+                _is_valid_bioregistry_uri(bioregistry, current_uri)
                 or bioregistry.is_valid_curie(current_uri.lower())
                 or re.match(pattern, current_uri, re.IGNORECASE)
             ):
