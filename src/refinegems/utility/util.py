@@ -15,7 +15,13 @@ from memote.utils import truncate
 
 from libsbml import Reaction
 from six import iteritems
-from typing import Union
+from typing import Union, Literal, Tuple
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -73,6 +79,9 @@ COMP_MAPPING = {
     "C_c": "c",
     "C_e": "e",
     "C_p": "p",
+    # Common names
+    "cytosol": "c",
+    "extracellular": "e",
     # unknown compartments
     "": "uc", 
     "w": "uc",
@@ -86,21 +95,46 @@ MIN_GROWTH_THRESHOLD = 1.0e-5  #: :meta:
 # functions
 ################################################################################
 
+
+# Helper function to insert into dictionary
+def insert_into_dict(
+    dictionary: dict, 
+    new_key_vals: Tuple[str, int],
+    target_key: str,
+    mode: Literal['before', 'after']='before'
+    ) -> dict:
+
+    # Dictionary to list
+    itms = list(dictionary.items())
+
+    # Determine index of the target key
+    target_idx  = [i for i, (key, _) in enumerate(itms) if key == target_key][0]
+    
+    # Determine mode
+    match mode:
+        case 'before':
+            if target_idx > 0:
+                itms.insert(target_idx - 1, new_key_vals)
+            else:
+                itms.insert(target_idx, new_key_vals)
+        case 'after':
+            itms.insert(target_idx + 1, new_key_vals)
+        case _:
+            raise KeyError('Invalid key for mode provided. Should be one of ["after", "before]. ')
+
+    return dict(itms)
+
 # SBO
 # ---
 
 
-def reannotate_sbo_memote(model: cobra.Model) -> cobra.Model:
+def reannotate_sbo_memote(model: cobra.Model):
     """Reannotate the SBO annotations (e.g. from SBOannotator) of a model
     into the SBO scheme accessible by memote.
 
     Args:
        - model (cobra.Model):
           The cobra Model to be reannotated.
-
-    Returns:
-        cobra.Model:
-          The reannotated model
     """
 
     # reactions
@@ -174,7 +208,7 @@ def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
     """
     biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
     outcome = len(biomass_rxn) > 0
-    logging.info(
+    logger.info(
         """In this model the following {} biomass reaction(s) were
         identified: {}""".format(
             len(biomass_rxn), truncate(biomass_rxn)
@@ -194,6 +228,9 @@ def sum_biomass_weight(reaction: Reaction) -> float:
 
     This function expects all metabolites of the biomass reaction to have
     formula information assigned.
+    
+    .. note::
+        If there is a rest symbolised by an "R", its weight will be considered 0.
 
     Args:
         - reaction (Reaction):
@@ -203,13 +240,13 @@ def sum_biomass_weight(reaction: Reaction) -> float:
         float:
             The molecular weight of the biomass reaction in units of g/mmol.
     """
-    return (
-        sum(
+    cobra.core.formula.elements_and_molecular_weights['R'] = 1.0
+    biomass_weight = sum(
             -coef * met.formula_weight
             for (met, coef) in iteritems(reaction.metabolites)
-        )
-        / 1000.0
-    )
+        )/ 1000.0
+    del cobra.core.formula.elements_and_molecular_weights['R']
+    return biomass_weight
 
 
 def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[float, str]:
@@ -257,7 +294,7 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
         return message
     else:
         if (1 - 1e-03) < biomass_weight < (1 + 1e-06):
-            logging.info(
+            logger.info(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
@@ -265,7 +302,7 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
                 )
             )
         else:
-            logging.warning(
+            logger.warning(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(

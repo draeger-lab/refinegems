@@ -28,6 +28,12 @@ from typing import Union
 from ..developement.decorators import debug
 
 ################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -153,7 +159,7 @@ def add_cv_term_units(unit_id: str, unit: Unit, relation: int):
         cv.addResource(resource)
         unit.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {unit} with relation {relation} and {db_id}:{unit_id}."
         )
 
@@ -180,7 +186,7 @@ def add_cv_term_metabolites(entry: str, db_id: str, metab: Species):
         cv.addResource(resource)
         metab.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {metab} with {db_id} and {DB2PREFIX_METABS.get(db_id)}:{entry}."
         )
 
@@ -207,7 +213,7 @@ def add_cv_term_reactions(entry: str, db_id: str, reac: Reaction):
         cv.addResource(resource)
         reac.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_REACS.get(db_id)}:{entry}."
         )
 
@@ -238,7 +244,7 @@ def add_cv_term_genes(
         cv.addResource(resource)
         gene.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {gene} with {db_id} and {DB2PREFIX_GENES.get(db_id)}:{entry}."
         )
 
@@ -262,7 +268,7 @@ def add_cv_term_pathways(entry: str, db_id: str, path: Group):
         cv.addResource(resource)
         path.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {path} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}."
         )
 
@@ -286,7 +292,7 @@ def add_cv_term_pathways_to_entity(entry: str, db_id: str, reac: Reaction):
         cv.addResource(resource)
         reac.addCVTerm(cv)
     else:
-        logging.warning(
+        logger.warning(
             f"No valid IRI could be formed for {reac} with {db_id} and {DB2PREFIX_PATHWAYS.get(db_id)}:{entry}."
         )
 
@@ -317,13 +323,13 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
         extracted_id = parse_iri(uri)[1]
 
         if not extracted_id:
-            logging.info(f"Could not extract ID with bioregistry from URI: {uri}")
+            logger.info(f"Could not extract ID with bioregistry from URI: {uri}")
             extracted_id = uri.split('/')[-1]  # Fallback to splitting by "/"
             if ':' in extracted_id:
                 extracted_id = extracted_id.split(':')[-1]
 
             if not extracted_id:
-                logging.warning(f"Could not extract ID from URI: {uri} at all!")
+                logger.warning(f"Could not extract ID from URI: {uri} at all!")
                 return None
 
         return extracted_id
@@ -343,7 +349,7 @@ def get_id_from_cv_term(entity: SBase, db_id: str) -> list[str]:
     # Clean-up: Remove all Nones
     all_ids = [_ for _ in all_ids if _ is not None]
     if len(all_ids) == 0:
-        logging.info(f'No URIs extracted for {db_id} database from {entity.getId()}')
+        logger.info(f'No URIs extracted for {db_id} database from {entity.getId()}')
     
     return all_ids
 
@@ -381,7 +387,7 @@ def print_cvterm(cvterm: CVTerm):
             A libSBML CVTerm
     """
     if cvterm == None:
-        logging.info("CVTerm currently empty!")
+        logger.info("CVTerm currently empty!")
     else:
         current_b_m_qt = 0
 
@@ -393,13 +399,13 @@ def print_cvterm(cvterm: CVTerm):
             current_b_m_qt = cvterm.getModelQualifierType()
 
         if cvterm.getNumResources() == 0:
-            logging.info("No URIs present.")
+            logger.info("No URIs present.")
         else:
-            logging.info(f"Current CVTerm contains:  {cvterm.getResourceURI(0)}")
+            logger.info(f"Current CVTerm contains:  {cvterm.getResourceURI(0)}")
 
             for i in range(1, cvterm.getNumResources()):
-                logging.info(f"                          {cvterm.getResourceURI(i)}")
+                logger.info(f"                          {cvterm.getResourceURI(i)}")
 
-        logging.info(
+        logger.info(
             f"Current CVTerm has QualifierType {current_qt} and Biological/ModelQualifierType {current_b_m_qt}."
         )

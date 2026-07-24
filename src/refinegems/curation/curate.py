@@ -34,10 +34,10 @@ __author__ = "Famke Baeuerle and Carolin Brune and Gwendolyn O. Döbel"
 ################################################################################
 
 import cobra
+import copy
 import logging
 import pandas as pd
 import re
-import warnings
 
 from bioservices.kegg import KEGG
 from cobra.io.sbml import _f_specie, _f_reaction
@@ -57,9 +57,21 @@ from ..utility.cvterms import (
     DB2PREFIX_REACS,
     get_id_from_cv_term,
 )
-from ..utility.entities import get_gpid_mapping, create_fba_units, print_UnitDefinitions
+from ..utility.entities import get_gpid_mapping, create_fba_units, resolve_compartment_names, MIN_GROWTH_THRESHOLD
 from ..utility.io import load_a_table_from_database
-from ..utility.util import DB2REGEX, test_biomass_presence
+from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
+
+from ..classes.egcs import EGCSolver
+from ..analysis.growth import model_minimal_medium
+from ..analysis.investigate import get_mass_charge_unbalanced
+
+from ..developement.decorators import suppress_log_message, template
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -88,7 +100,7 @@ def update_annotations_from_others(model: libModel) -> libModel:
     """
     for metab in model.getListOfSpecies():
         base = metab.getId()[:-2]
-        for comp in ["_c", "_e", "_p"]:
+        for comp in ["_c", "_e", "_p"]:  # @WARNING This will only work with BiGG - keep for now as  everything else mostly requires BiGG as well or try to generalise?
             other_metab = model.getSpecies(base + comp)
             if other_metab is not None:
                 if not other_metab.isSetMetaId():
@@ -149,7 +161,7 @@ def extend_gp_annots_via_mapping_table(
 
     # 1. Get mapping
     # If no mapping table provided, get via function
-    print("Get mapping information...")
+    logger.info("Get mapping information...")
     if not mapping_tbl_file:
         mapping_table = get_gpid_mapping(
             model, gff_paths, email, contains_locus_tags, outpath
@@ -169,16 +181,25 @@ def extend_gp_annots_via_mapping_table(
     # Get gene list
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
 
-    print("Extending GeneProduct information...")
+    logger.info("Extending GeneProduct information...")
     for gene in tqdm(gene_list):
         # Get row of mapping table for current model_id
         gp_infos = mapping_table.loc[gene.getId(), :]
 
-        # Add infos to current GeneProduct
-        if gp_infos["name"]:
+        # Add infos to current GeneProduct if available
+        if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
             gene.setName(gp_infos["name"])
-        if gp_infos["locus_tag"]:
+        if ('locus_tag' in gp_infos.index.to_list()) and gp_infos["locus_tag"]:
             gene.setLabel(gp_infos["locus_tag"])
+            if gene.isSetNotes(): 
+                # @TODO Write own implementation for appendNotes
+                gene.appendNotes(f"<p>locus_tag: {gp_infos['locus_tag']}</p>")
+            else: 
+                gene.unsetNotes()
+                note_string = f'''<body xmlns = "http://www.w3.org/1999/xhtml" >
+                <p>locus_tag: {gp_infos["locus_tag"]}</p>
+                </body>'''
+                gene.setNotes(note_string)
         if ("REFSEQ" in gp_infos.index.to_list()) and gp_infos["REFSEQ"]:
             add_cv_term_genes(gp_infos["REFSEQ"], "REFSEQ", gene, lab_strain)
         if ("NCBI" in gp_infos.index.to_list()) and gp_infos["NCBI"]:
@@ -187,35 +208,82 @@ def extend_gp_annots_via_mapping_table(
     return model
 
 
-def extend_gp_annots_via_KEGG(gene_list: list[GeneProduct], kegg_organism_id: str):
+def extend_gp_annots_via_KEGG(
+    gene_list: list[GeneProduct], 
+    kegg_organism_id: str, 
+    prefixes2remove: Union[str,list[str]] = ''
+    ) -> None:
     """Adds KEGG gene & UniProt identifiers to the GeneProduct annotations
 
+    .. note:: 
+
+        This function infers the KEGG Gene ID based on the Genbank locus tag stored in the GeneProduct labels in the 
+        model and the KEGG Organism ID. If the locus tag from Genbank and the locus tag part from the KEGG Gene ID for 
+        your organism do not match, please provide a prefix or a list of prefixes to remove from the locus tag in the 
+        `prefixes2remove` argument.
+
     Args:
-        gene_list (list[GeneProduct]):
+        - gene_list (list[GeneProduct]):
             libSBML ListOfGenes
-        kegg_organism_id (str):
+        - kegg_organism_id (str):
             Organism identifier in the KEGG database
+        - prefixes2remove (Union[str,list[str]], optional):
+            Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
+            Defaults to empty string ('').
     """
     k = KEGG()
     mapping_kegg_uniprot = k.conv("uniprot", kegg_organism_id)
+    if type(prefixes2remove) is str: prefixes2remove = [prefixes2remove]
+    prefixes2remove.insert(0, '')
+    prefixes2remove = list(set(prefixes2remove))  # Remove duplicates
     no_valid_kegg = []
 
-    for gp in tqdm(gene_list):
+    def add_KEGG_UniProt_id(gene: GeneProduct, kegg_gene_id_suffix: str) -> tuple[list[str], str]:
+        """ Adds KEGG Gene ID and UniProt ID to the GeneProduct annotations
 
-        if gp.getId() != "G_spontaneous":
-            kegg_gene_id = f"{kegg_organism_id}:{gp.getLabel()}"
+        Args:
+            - gene (GeneProduct): 
+                GeneProduct to which the KEGG Gene ID and UniProt ID should be added
+            - kegg_gene_id_suffix (str):
+                KEGG Gene ID suffix to get valid KEGG Gene ID         
+        Returns:
+            list[str]: 
+                List of locus_tags that could not be combined to a valid KEGG Gene ID
+        """
+        no_valid_kegg_id = None
+        kegg_gene_id = f"{kegg_organism_id}:{kegg_gene_id_suffix}"
+        
+        try:
+            uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
 
-            try:
-                uniprot_id = mapping_kegg_uniprot[kegg_gene_id]
+            # Add KEGG Gene ID and UniProt ID to the GeneProduct annotations
+            add_cv_term_genes(kegg_gene_id, "KEGG", gene)
+            add_cv_term_genes(uniprot_id.split(r"up:")[1], "UNIPROT", gene)
 
-                add_cv_term_genes(kegg_gene_id, "KEGG", gp)
-                add_cv_term_genes(uniprot_id.split(r"up:")[1], "UNIPROT", gp)
+        except KeyError:
+            no_valid_kegg_id = gene.getLabel()
 
-            except KeyError:
-                no_valid_kegg.append(gp.getLabel())
+        return no_valid_kegg_id
+
+    logger.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
+    for gp in tqdm(gene_list): 
+        if gp.getId() != "G_spontaneous": 
+            locus_tag = gp.getLabel()
+
+            for prefix in prefixes2remove:
+                # Remove prefix from locus tag to get valid KEGG Gene ID
+                kegg_gene_id_suffix = locus_tag.removeprefix(prefix)
+                no_valid_kegg_id = add_KEGG_UniProt_id(gp, kegg_gene_id_suffix)
+
+                # If valid KEGG Gene ID was found, break the loop
+                if not no_valid_kegg_id:
+                    break
+
+            if no_valid_kegg_id: no_valid_kegg.append(no_valid_kegg_id)
 
     if no_valid_kegg:
-        logging.info(
+        no_valid_kegg = list(set(no_valid_kegg))  # Remove duplicates
+        logger.info(
             f"The following {len(no_valid_kegg)} locus tags form no valid KEGG Gene ID: {no_valid_kegg} with the provided KEGG Organism ID: {kegg_organism_id}."
         )
 
@@ -262,25 +330,25 @@ def extend_metab_reac_annots_via_id(
     try:
         id_db_prefix = db2prefix[id_db]
     except KeyError:
-        print(
+        logger.info(
             f"""
 KeyError: with id_db=\'{id_db}\'
 id_db must be one of the valid database names: {db2prefix.keys()}
 If your id_db is not part of the list, please contact the developers.
-              """
+            """
         )
         return
     try:
         db_pattern = DB2REGEX[id_db_prefix]
     except KeyError:
-        print(
+        logger.warning(
             f"KeyError: id_db_prefix = {id_db_prefix} must be one of the valid prefixes in https://bioregistry.io/."
         )
         return
 
     # Get BiGG IDs for VMH ID == BiGG ID validation
     if "vmh" in id_db_prefix.lower():
-        bigg_ids = load_a_table_from_database(f"SELECT bigg_id FROM {bigg_db}")
+        bigg_ids = load_a_table_from_database(f"SELECT {bigg_id_type} FROM {bigg_db}")
         bigg_ids = set(bigg_ids[bigg_id_type].tolist())
 
     # Get ID from entity & add annotation if valid database ID
@@ -288,6 +356,10 @@ If your id_db is not part of the list, please contact the developers.
 
         # Get ID
         current_id = entity.getId()
+
+        # Check for biomass or growth reaction
+        if (entity.getSBOTermID() == 'SBO:0000629') or (bool(re.search('Growth|biomass', current_id, re.IGNORECASE))):
+            return
 
         # Use current_id as metaid if no metaid is present
         if not entity.isSetMetaId():
@@ -304,8 +376,11 @@ If your id_db is not part of the list, please contact the developers.
 
             # Get ID for annotation
             if isinstance(entity, Species):  # Remove compartment suffix
+                # Remove compartment suffixes like "_c" or "[c]" from metabolite IDs for annotation purposes
+                # @TODO Recheck if this is really functional
                 id_for_anno = re.sub(
-                    f"(_|\[){entity.getCompartment()}\]?$", "", current_id
+                    re.compile(f"(_{entity.getCompartment()}|\\[{entity.getCompartment()}\\])$"), 
+                    "", current_id
                 )
             else:
                 id_for_anno = current_id
@@ -384,7 +459,130 @@ def extend_metab_reac_annots_via_notes(
 
 # correct basic model set-up
 # ---------------------------
+def add_compartment_structure_specs(model: libModel) -> None:
+    """| Adds the required specifications for the compartment structure
+    | if not set (size & spatial dimension)
 
+    Args:
+        - model (libModel):
+            Model loaded with libSBML
+    """
+    for compartment in model.getListOfCompartments():
+
+        if not compartment.isSetMetaId():
+            compartment.setMetaId(f"meta_{compartment.getId()}")
+
+        # Physical compartment is most likely case
+        if not compartment.isSetSBOTerm():
+            if (compartment.getId() == 'uc') or 'unknown' in compartment.getName().lower():
+                compartment.setSBOTerm("SBO:0000410")  # implicit compartment
+            else:
+                compartment.setSBOTerm('SBO:0000290')  # physical compartment
+
+        if not compartment.isSetSize():
+            compartment.setSize(float("NaN"))
+
+        if not compartment.isSetSpatialDimensions():
+            compartment.setSpatialDimensions(3)
+
+        if any(
+            (unit_id := re.fullmatch(r"fL", unit.getId(), re.IGNORECASE))
+            for unit in model.getListOfUnitDefinitions()
+        ):
+            if not (
+                compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)
+            ):
+                compartment.setUnits(unit_id.group(0))
+
+def fix_compartments(model: libModel) -> libModel:
+    """Fixes compartments in a model
+        - By adding missing compartments based on metabolite IDs if not set
+        - By checking for valid compartment IDs & adjusting them if necessary
+        - By setting the size and spatial dimension if not set
+
+    Args:
+        - model (libModel):
+            Model loaded with libSBML
+
+    Returns:
+        libModel: 
+            Model as libSBML model with adjusted compartments
+    """
+    # Check if any metabolites without compartment exist
+    comps_missing = not all([m.isSetCompartment() for m in model.getListOfSpecies()])
+
+    # If any metabolite has no compartment
+    if comps_missing:
+        # Get compartment list (for consistency)
+        comps_in_model = set([c.getId() for c in model.getListOfCompartments()])
+        metab_comps = set()
+        for m in model.getListOfSpecies():
+            comp_from_id = m.getId().split('_')[-1].strip() # In case of whitespace
+            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS.keys()):
+                m.setCompartment(comp_from_id) # Set compartment from id
+                metab_comps.add(comp_from_id)
+
+            else:
+                # No compartment in id found, using unknown
+                default_comp = 'uc'
+                logger.warning(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
+                m.setCompartment(default_comp)
+                metab_comps.add(default_comp)
+
+        # Check if any compartment assigned to a metabolite is missing in the compartment list
+        missing_comps = metab_comps - comps_in_model # Comps missing in model
+        if missing_comps: # If any comps missing add to model
+            for c in missing_comps:
+                # Create new compartment based on the id found in the metabolite id
+                new_comp = model.createCompartment()
+                new_comp.setId(c)
+                new_comp.setName(VALID_COMPARTMENTS[c])
+                new_comp.setMetaId(f'meta_{c}')
+
+        comps_to_remove = comps_in_model - metab_comps # Comps in model that are not used by any metabolite
+        if comps_to_remove: # If any comps to remove
+            for c in comps_to_remove:
+                logger.warning(f'Removing compartment {c} as no metabolite is assigned to it.')
+                model.removeCompartment(c)
+
+    # Check validity of compartment IDs & adjust if necessary
+    resolve_compartment_names(model)
+
+    # Add specifications for compartment structure
+    add_compartment_structure_specs(model)
+
+    return model
+
+def fix_reac_bounds(model: cobra.Model) -> None:
+    """Check the model`s reaction bounds and adjust values, if 
+    they are likely to cause problems.
+    
+    If the lower bound is greater than 0.0 or the upper bound is 
+    greater than 0.0, they are set to 0.0. If both cases appear at the same time, 
+    the value are switches, as it is assumed, that the reaction direction
+    got messed up.
+
+    Args:
+        - model (cobra.Model): 
+            The model to check loaded with COBRApy.
+    """
+    
+    for r in model.reactions:
+        
+        # assume wrong order
+        if r.upper_bound < 0.0 and r.lower_bound > 0.0:
+            r.bounds = (r.upper_bound, r.lower_bound)
+        # fix upper bound
+        elif r.upper_bound < 0.0:
+            r.upper_bound = 0.0
+        # fix lower bound    
+        elif r.lower_bound > 0.0:
+            r.lower_bound = 0.0
+
+
+@template
+def polish_model_metadata(model: libModel) -> None:
+    pass
 
 def polish_model_units(model: libModel) -> None:
     """Replaces the list of unit definitions with the unit definitions needed for FBA:
@@ -424,24 +622,25 @@ def polish_model_units(model: libModel) -> None:
         model.getListOfUnitDefinitions().clear(doDelete=True)
 
         # Only print list if UnitDefinitions were removed
-        if len(removed_unit_defs) == 0:
-            logging.warning(
+        if len(removed_unit_defs) != 0:
+            logger.warning(
                 """
-            The following UnitDefinition objects were removed. 
-            The reasoning is that
-            \t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
-            \t(b) the UnitDefinitions defined within this program are handled as ground truth.
-            Thus, the following UnitDefinitions are not seen as relevant for the model.
+The following UnitDefinition objects were removed. 
+The reasoning is that
+\t(a) these UnitDefinitions are not contained in the UnitDefinition list of this program and
+\t(b) the UnitDefinitions defined within this program are handled as ground truth.
+Thus, the following UnitDefinitions are not seen as relevant for the model.
             """
             )
-            print_UnitDefinitions(removed_unit_defs)
+            for rm_unit_def in removed_unit_defs:
+                logger.info(rm_unit_def.toSBML())
 
     # Add all defined FBA units to the model
     for unit_def in fba_unit_defs:
         model.getListOfUnitDefinitions().append(unit_def)
 
 
-def set_model_default_units(model: libModel):
+def set_model_default_units(model: libModel) -> None:
     """Sets default units of model
 
     Args:
@@ -473,7 +672,7 @@ def set_model_default_units(model: libModel):
             model.setVolumeUnits(unit_id)
 
 
-def set_units_of_parameters(model: libModel):
+def set_units_of_parameters(model: libModel) -> None:
     """Sets units of parameters in model
 
     Args:
@@ -497,33 +696,7 @@ def set_units_of_parameters(model: libModel):
                 param.setUnits(unit_id.group(0))
 
 
-def add_compartment_structure_specs(model: libModel):
-    """| Adds the required specifications for the compartment structure
-    | if not set (size & spatial dimension)
-
-    Args:
-        - model (libModel):
-            Model loaded with libSBML
-    """
-    for compartment in model.getListOfCompartments():
-
-        if not compartment.isSetSize():
-            compartment.setSize(float("NaN"))
-
-        if not compartment.isSetSpatialDimensions():
-            compartment.setSpatialDimensions(3)
-
-        if any(
-            (unit_id := re.fullmatch(r"fL", unit.getId(), re.IGNORECASE))
-            for unit in model.getListOfUnitDefinitions()
-        ):
-            if not (
-                compartment.isSetUnits() and compartment.getUnits() == unit_id.group(0)
-            ):
-                compartment.setUnits(unit_id.group(0))
-
-
-def set_initial_amount_metabs(model: libModel):
+def set_initial_amount_metabs(model: libModel) -> None:
     """Sets initial amount to all metabolites if not already set or if initial concentration is not set
 
     Args:
@@ -536,7 +709,7 @@ def set_initial_amount_metabs(model: libModel):
             species.setInitialAmount(float("NaN"))
 
 
-def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]):
+def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions]) -> None:
     """Sets boundary condition and constant if not set for an entity
 
     Args:
@@ -553,14 +726,13 @@ def polish_entity_conditions(entity_list: Union[ListOfSpecies, ListOfReactions])
         case ListOfReactions():
             pass
         case _:
-            logging.warning(
+            logger.warning(
                 f"Unsupported type for entity_list {type(entity_list)}. Must be ListOfSpecies or ListOfReactions."
             )
 
 
 # duplicates
 # ----------
-
 
 def resolve_duplicate_reactions(
     model: cobra.Model, based_on: str = "reaction", remove_reac: bool = True
@@ -597,8 +769,8 @@ def resolve_duplicate_reactions(
 
     # check if based_on is valid
     if not based_on in df_reac.columns.tolist():
-        warnings.warn(
-            f"Warning: Annotation column {based_on} does not exists. Search for duplicates will be skipped."
+        logger.warning(
+            f"Annotation column {based_on} does not exist. Search for duplicates will be skipped."
         )
         return model
 
@@ -657,11 +829,11 @@ def resolve_duplicate_reactions(
                             else:
                                 pass  # nothing to add
                             model.reactions.get_by_id(r_id).remove_from_model()
-                            print(
+                            logger.info(
                                 f"\tDuplicate reaction {r_id} found. Combined to {keep_reac.id} and deleted."
                             )
                     else:
-                        print(
+                        logger.info(
                             f'\tDuplicate reactions {", ".join(mnx[1]["id"].tolist())} found.'
                         )
 
@@ -692,7 +864,6 @@ def resolve_duplicate_metabolites(
         cobra.Model:
             The model.
     """
-
     # get annotation and compartment information
     anno_meta = []
     for m in model.metabolites:
@@ -701,25 +872,27 @@ def resolve_duplicate_metabolites(
 
     # check if based_on is valid
     if not based_on in df_meta.columns.tolist():
-        warnings.warn(
-            f"Warning: Annotation {based_on} not found. Search for metabolite duplicates skipped."
+        logger.warning(
+            f"Annotation {based_on} not found. Search for metabolite duplicates skipped."
         )
         return model
 
     # set basic parameters
     skip_cols = ["id", "compartment", "bigg.metabolite", based_on]
     colnames = df_meta.columns.tolist()
+    egcsolver = EGCSolver()
+    now = egcsolver.find_egcs(model, with_reacs=False)
     # get objective function
     bof_list = test_biomass_presence(model)
     if len(bof_list) == 1:
         objective_function = bof_list[0]
     elif len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
         objective_function = bof_list[0]
     else:
         mes = "No BOF detected. Might lead to problems during duplicate removal."
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
 
     for c in df_meta.groupby("compartment"):
         # note: using groupby drops nans
@@ -797,7 +970,7 @@ def resolve_duplicate_metabolites(
                                         for _ in [keep_meta.id, del_meta_id]
                                     ]
                                 ):
-                                    print(
+                                    logger.info(
                                         f"\tSpecial case -Duplicate NH4/NH3- detected.\n\tTrying to solve by additionally removing reactions containing both metabolites."
                                     )
                                     # ... remove reactions with nh3 and nh4 both present
@@ -846,7 +1019,7 @@ def resolve_duplicate_metabolites(
                                             # TODO:
                                             #    get H according to compartment
                                             #    current implementation relies heavily
-                                            #    on 'correct' use input: compartment should have format C_c or c (C_p, p, C_e, e etc.)
+                                            #    on 'correct' use input: compartment should have format: c (p, e, etc.)
                                             # ..............................
                                             reac_comp = reac.compartments.pop()[-1]
                                             if reac_comp == "c":
@@ -865,27 +1038,33 @@ def resolve_duplicate_metabolites(
                                                 perform_deletion = False
                                                 break
                                         # ..............................
-                                        # TODO:
-                                        #    fix other possible problems
+                                        # @ASK more cases needed here?
                                         # ..............................
 
-                                        # finally, check balance again (continue only if fixed, else break)
+                                        # check balance again (continue only if fixed, else break)
                                         if len(reac.check_mass_balance()) > 0:
                                             perform_deletion = False
                                             break
+                                        # check for the generation of EGCs
+                                        prev = egcsolver.find_egcs(model_del, with_reacs=False)
+                                        if len(now) > len(prev) or not set(now).issubset(set(prev)):
+                                            perform_deletion = False
+                                            break
+                                        
 
                                     else:
                                         continue
 
-                                # if not problems are found, duplicate is removed
+                                # if no problems are found, duplicate is removed
                                 if perform_deletion:
-                                    model = model_del.copy()
-                                    print(
+                                    model = copy.deepcopy(model_del) 
+                                    # @WARNING: this works, however, takes a lot of time -> better / optimised implementation
+                                    logger.info(
                                         f"\tDuplicate metabolite {del_meta_id} found. Replaced with {keep_meta.id}."
                                     )
                                 # if problems are not solvable, duplicate is kept and only reported
                                 else:
-                                    print(
+                                    logger.info(
                                         f"\tDuplicate metabolite {del_meta_id} found (duplicate to {keep_meta.id} based on annotation).\n\t\tAutomated deletion not possible due to problems with consistency."
                                     )
 
@@ -893,13 +1072,13 @@ def resolve_duplicate_metabolites(
                         #       since it might be an isomer, elongation, or other explanation
                         #       for the same annotation
                         else:
-                            print(
+                            logger.info(
                                 f"\tDuplicate metabolite {del_meta_id} found (duplicate to {keep_meta.id} based on annotation).\n\t\tKept, as reaction containing both metabolites was found."
                             )
 
                 # ... or only report duplicates
                 else:
-                    print(
+                    logger.info(
                         f'\tDuplicate metabolite(s) {", ".join(mnx[1]["id"].tolist())} found.'
                     )
 
@@ -945,9 +1124,10 @@ def resolve_duplicates(
         # resolve duplicates starting with the metanetx.chemical database identifiers
         model = resolve_duplicate_metabolites(model, replace=replace_dupl_meta)
     elif check_meta == "exhaustive":
-        # resolve duplicates by starting at every database identifer one after another
-        # note: bigg and sbo are skipped as sbo gives not much information and bigg is
-        #       usually the one that differs (naming issue)
+        # resolve duplicates by starting at every database identifier one after another
+        # Note: "bigg" and "sbo" annotations are skipped here.
+        # "sbo" (Systems Biology Ontology) provides little information for duplicate detection,
+        # and "bigg" identifiers often differ due to naming conventions, so including them could lead to false positives.
         anno_types = set()
         # get all database annotation types present in the model
         for m in model.metabolites:
@@ -957,16 +1137,16 @@ def resolve_duplicates(
                 model, colname, replace=replace_dupl_meta
             )
     elif check_meta == "skip":
-        print("\tSkip check for duplicate metabolites.")
+        logger.info("\tSkip check for duplicate metabolites.")
     else:
-        warnings.warn(
-            f"Warning: Unknown option for metabolites duplicate checking {check_meta}. Search for metabolite duplicates skipped."
+        logger.warning(
+            f"Unknown option for metabolites duplicate checking {check_meta}. Search for metabolite duplicates skipped."
         )
 
     # remove now unused metabolites
     if remove_unused_meta:
         model, removed = cobra.manipulation.delete.prune_unused_metabolites(model)
-        print(
+        logger.info(
             f'\tThe following metabolites () have been removed: {", ".join([x.id for x in removed])}'
         )
 
@@ -979,15 +1159,67 @@ def resolve_duplicates(
     return model
 
 
+# Model pruning
+# -------------
+
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
+def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
+    """Prune mass unbalanced reactions from a model. 
+    Reactions that are part of the biomass function or boundary reactions
+    are not pruned, even if they are mass unbalanced.
+    Metabolites and genes that become orphaned due to the pruning are also removed.
+
+    Args:
+        - model (cobra.Model): 
+            The input model, loaded with COBRApy.
+    """
+
+    logger.info('Pruning mass unbalanced reactions ...')
+    
+    # original entities
+    og_reacs = {_.id for _ in model.reactions}
+    og_metabs = {_.id for _ in model.metabolites}
+    og_genes = {_.id for _ in model.genes}
+    
+    # get unbalanced reactions
+    ubmass, ubcharge = get_mass_charge_unbalanced(model)
+    
+    # get reactions, that are at the boundary or biomass 
+    # => these are allowed to be - somewhat - unbalanced
+    ub_allowed_ids = set(test_biomass_presence(model)).union([_.id for _ in model.boundary])
+    
+    # identify, which reactions should be pruned
+    to_prune = [_ for _ in ubmass if _ not in ub_allowed_ids]
+    
+    # prune the model
+    model.remove_reactions(to_prune, remove_orphans=True)
+    
+    # report pruned entities
+    pruned_reacs = [rid for rid in og_reacs if rid not in {_.id for _ in model.reactions}]
+    pruned_metabs = [mid for mid in og_metabs if mid not in {_.id for _ in model.metabolites}]
+    pruned_genes = [gid for gid in og_genes if gid not in {_.id for _ in model.genes}]
+    logger.info(f'Pruned {len(pruned_reacs)} reactions:\n{pruned_reacs}')
+    logger.info(f'Pruned {len(pruned_metabs)} metabolites:\n{pruned_metabs}')
+    logger.info(f'Pruned {len(pruned_genes)} genes:\n{pruned_genes}')
+
+
+
 # Directionality Control
 # ----------------------
 
-
-def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra.Model:
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
+def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude: Union[None, tuple[Literal['annotation','notes'], str, str]]=None) -> cobra.Model:
     """Check the direction of reactions by searching for matching MetaCyc,
     KEGG and MetaNetX IDs as well as EC number in a downloaded BioCyc (MetaCyc)
     database table or dataFrame (need to contain at least the following columns:
-    Reactions (MetaCyc ID),EC-Number,KEGG reaction,METANETX,Reaction-Direction.
+    
+    Reaction | EC-Number | KEGG reaction | METANETX | Reaction-Direction
+    
+    The Reaction column should contain the BioCyc/MetaCyc ID (withou the META: etc. prefix)
 
     Args:
         model (cobra.Model):
@@ -995,6 +1227,11 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
         data (pd.DataFrame | str):
             Either a pandas DataFrame or a path to a CSV file
             containing the BioCyc smart table.
+        exclude (None | tuple(Literal['annotation','notes'], str, str), optional):
+            Tuple containing the type of exclusion ('annotation' or 'notes'),
+            the key to check, and the value to determine exclusion of the reaction.
+            If not tuple is given (None), no reaction is excluded.
+            Defaults to None
 
     Raises:
         - TypeError: Unknown data type for parameter data
@@ -1003,6 +1240,53 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
         cobra.Model:
             The edited model.
     """
+    
+    def _validate_exclude(exclude: tuple[Literal['annotation','notes'], str, str], reac) -> bool:
+        """Check if a reaction should be excluded from the directionality check.
+
+        Args:
+            exclude (tuple(Literal['annotation','notes'], str, str)):
+                Tuple containing the type of exclusion ('annotation' or 'notes'),
+                the key to check, and the value to determine exclusion of the reaction.
+            reac (cobra.Reaction):
+                The reaction to check.
+
+        Returns:
+            bool: True if the reaction should be excluded, False otherwise.
+        """
+        dicttype, key, value = exclude
+        match dicttype:
+            case "annotation":
+                # Check if the annotation key exists and if its value matches the exclusion value
+                if key in reac.annotation.keys() and reac.annotation[key] == value:
+                    return True 
+            case "notes":
+                # Check if the notes key exists and if its value matches the exclusion value
+                if key in reac.notes.keys() and reac.notes[key] == value:
+                    return True
+            case _:
+                logger.warning(f'Unknown type {dicttype} for checking for exclusion. Reaction direction will be checked anyway.')
+            
+        return False
+    
+    def _match_db_id_biocyc_with_model_annot(r,data,biocyc_key, annot_key):
+        if (
+                annot_key in r.annotation
+                and r.annotation[annot_key] in data[biocyc_key].tolist()
+            ):
+                if isinstance(r.annotation[annot_key], str):
+                    return data[data[biocyc_key] == r.annotation[annot_key]][
+                        "Reaction"
+                    ].tolist()
+                elif isinstance(r.annotation[annot_key], list):
+                    return data[data[biocyc_key].isin(r.annotation[annot_key])][
+                        "Reaction"
+                    ].tolist()
+                else:
+                    return list()
+        
+        else: 
+            return list()
 
     match data:
         # already a DataFrame
@@ -1010,7 +1294,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
             pass
         case str():
             # load from a table
-            data = pd.read_csv(data, sep="\t")
+            data = pd.read_csv(data, sep="\t", dtype=str)
             # rewrite the columns into a better comparable/searchable format
             data["KEGG reaction"] = data["KEGG reaction"].str.extract(r".*>(R\d*)<.*")
             data["METANETX"] = data["METANETX"].str.extract(r".*>(MNXR\d*)<.*")
@@ -1019,95 +1303,124 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str]) -> cobra
             mes = f"Unknown data type for parameter data: {type(data)}"
             raise TypeError(mes)
 
+    # create a "working model"
+    model_checkpoint = copy.deepcopy(model)
+
     # check direction
     # --------------------
     for r in model.reactions:
-
-        direction = None
-        # easy case: metacyc is already (corretly) annotated
-        if (
-            "metacyc.reaction" in r.annotation
-            and len(data[data["Reactions"] == r.annotation["metacyc.reaction"]]) != 0
-        ):
-            direction = data[data["Reactions"] == r.annotation["metacyc.reaction"]][
-                "Reaction-Direction"
-            ].iloc[0]
-            r.notes["BioCyc direction check"] = f"found {direction}"
-        # complicated case: no metacyc annotation
+        # exclude certain reactions
+        if exclude and _validate_exclude(exclude, r):
+            continue
         else:
-            annotations = []
-
-            # collect matches
+            direction = None
+            # easy case: metacyc is already (corretly) annotated
             if (
-                "kegg.reaction" in r.annotation
-                and r.annotation["kegg.reaction"] in data["KEGG reaction"].tolist()
+                "metacyc.reaction" in r.annotation
             ):
-                annotations.append(
-                    data[data["KEGG reaction"] == r.annotation["kegg.reaction"]][
-                        "Reactions"
-                    ].tolist()
-                )
-            if (
-                "metanetx.reaction" in r.annotation
-                and r.annotation["metanetx.reaction"] in data["METANETX"].tolist()
-            ):
-                annotations.append(
-                    data[data["METANETX"] == r.annotation["metanetx.reaction"]][
-                        "Reactions"
-                    ].tolist()
-                )
-            if (
-                "ec-code" in r.annotation
-                and r.annotation["ec-code"] in data["EC-Number"].tolist()
-            ):
-                annotations.append(
-                    data[data["EC-Number"] == r.annotation["ec-code"]][
-                        "Reactions"
-                    ].tolist()
-                )
-
-            # check results
-            # no matches
-            if len(annotations) == 0:
-                r.notes["BioCyc direction check"] = "not found"
-
-            # matches found
-            else:
-                # built intersection
-                intersec = set(annotations[0]).intersection(*annotations)
-                # case 1: exactly one match remains
-                if len(intersec) == 1:
-                    entry = intersec.pop()
-                    direction = data[data["Reactions"] == entry][
+                # one annotation 
+                if (
+                    isinstance(r.annotation["metacyc.reaction"], str)
+                    and len(data[data["Reaction"] == r.annotation["metacyc.reaction"]]) != 0
+                ):
+                    direction = data[data["Reaction"] == r.annotation["metacyc.reaction"]][
                         "Reaction-Direction"
                     ].iloc[0]
-                    r.annotation["metacyc.reaction"] = entry
                     r.notes["BioCyc direction check"] = f"found {direction}"
-
-                # case 2: multiple matches found -> inconclusive
-                else:
-                    r.notes["BioCyc direction check"] = f"found, but inconclusive"
-
-        # update direction if possible and needed
-        if not pd.isnull(direction):
-            if "REVERSIBLE" in direction:
-                # set reaction as reversible by setting default values for upper and lower bounds
-                r.lower_bound = cobra.Configuration().lower_bound
-            elif "RIGHT-TO-LEFT" in direction:
-                # invert the default values for the boundaries
-                r.lower_bound = cobra.Configuration().lower_bound
-                r.upper_bound = 0.0
-            elif "LEFT-To-RIGHT" in direction:
-                # In case direction was already wrong
-                r.lower_bound = 0.0
-                r.upper_bound = cobra.Configuration().upper_bound
+                # multiple annotations 
+                elif (
+                    isinstance(r.annotation["metacyc.reaction"], list)
+                    and len(data[data["Reaction"].isin(r.annotation["metacyc.reaction"])]) != 0
+                ):
+                    # @ASK make this more sophisticated?
+                    direction = data[data["Reaction"].isin(r.annotation["metacyc.reaction"])][
+                        "Reaction-Direction"
+                    ].iloc[0]
+                    r.notes["BioCyc direction check"] = f"found {direction}"
+            # complicated case: no metacyc annotation
             else:
-                # left to right case is the standard for adding reactions
-                # = nothing left to do
-                continue
+                annotations = []
 
-    return model
+                # collect matches
+                # for KEGG
+                annotations.extend(
+                    _match_db_id_biocyc_with_model_annot(r,data,"KEGG reaction", "kegg.reaction")
+                )
+                # for MetaNetX
+                annotations.extend(
+                    _match_db_id_biocyc_with_model_annot(r,data,"METANETX", "metanetx.reaction")
+                )
+                # for EC number 
+                annotations.extend(
+                    _match_db_id_biocyc_with_model_annot(r,data,"EC-Number", "ec-code")
+                )
 
+                # check results
+                # no matches
+                if len(annotations) == 0:
+                    r.notes["BioCyc direction check"] = "not found"
+
+                # matches found
+                else:
+                    # get direction for matches
+                    direction = set(data[data["Reaction"].isin(annotations)][
+                            "Reaction-Direction"
+                        ].to_list())
+                    # case 1: exactly one match remains
+                    if len(direction) == 1:
+                        found_direction = list(direction)[0]
+                        r.notes["BioCyc direction check"] = f"found {found_direction}"
+
+                    # case 2: multiple matches found -> inconclusive
+                    else:
+                        r.notes["BioCyc direction check"] = f"found, but inconclusive"
+
+            # update direction if possible and needed
+            if not pd.isnull(direction):
+                if "REVERSIBLE" in direction:
+                    # set reaction as reversible by setting default values for upper and lower bounds
+                    r.lower_bound = cobra.Configuration().lower_bound
+                elif "RIGHT-TO-LEFT" in direction:
+                    # invert the default values for the boundaries
+                    r.lower_bound = cobra.Configuration().lower_bound
+                    r.upper_bound = 0.0
+                elif "LEFT-To-RIGHT" in direction:
+                    # In case direction was already wrong
+                    r.lower_bound = 0.0
+                    r.upper_bound = cobra.Configuration().upper_bound
+                else:
+                    # left to right case is the standard for adding reactions
+                    # = nothing left to do
+                    continue
+                
+    # sanity checks
+    # -------------
+    sane_changes = True 
+    # Can a minimal medium be constructed?
+    min_medium = model_minimal_medium(model)
+    if min_medium.substance_table.empty:
+        sane_changes = False
+    
+    # test, if growth got significantly worse
+    test_growth_new = model.optimize().objective_value
+    test_growth_old = model_checkpoint.optimize().objective_value
+    if test_growth_old > MIN_GROWTH_THRESHOLD and test_growth_new < MIN_GROWTH_THRESHOLD:
+        sane_changes = False 
+    
+    # check, if EGCs have been added 
+    egcsolver = EGCSolver()
+    egcs_before = egcsolver.find_egcs(model_checkpoint)
+    egcs_after = egcsolver.find_egcs(model)
+    if not set(egcs_after).issubset(set(egcs_before)):
+        sane_changes = False 
+    
+    # if model sane, return otherwise return the checkpoint 
+    if sane_changes:
+        return model 
+    else: 
+        # otherwise report suggested changes
+        return model_checkpoint
+    
 
 # Perform all clean-up steps
 # --------------------------
@@ -1120,7 +1433,7 @@ def polish_model(
     contains_locus_tags: bool = False,
     lab_strain: bool = False,
     kegg_organism_id: str = None,
-    reaction_direction: str = None,
+    prefixes2remove_kegg: Union[list[str], str] = '',
     outpath: str = None,
 ) -> libModel:
     """Completes all steps to polish a model
@@ -1158,11 +1471,9 @@ def polish_model(
         - kegg_organism_id (str, optional):
             KEGG organism identifier if available.
             Defaults to None.
-        - reaction_direction (str, optional):
-            Path to a CSV file containing the BioCyc smart table with the columns
-            ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
-            For more details see :py:func:`~refinegems.curation.curate.check_direction`
-            Defaults to None.
+        - prefixes2remove_kegg (Union[str,list[str]], optional):
+            Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
+            Defaults to empty string ('').
         - outpath (str, optional):
             Output path for mapping table from model ID to valid database IDs (if mapping_tbl_file == None)
             & incorrect annotations file(s).
@@ -1172,18 +1483,23 @@ def polish_model(
         libModel:
             Polished libSBML model
     """
-    ### Set-up
-    # Get ListOf objects
-    metab_list = model.getListOfSpecies()
-    reac_list = model.getListOfReactions()
-    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
+    ### Clean model metadata
+    #polish_model_metadata(model)
 
     ### unit definition ###
     polish_model_units(model)
     set_model_default_units(model)
     set_units_of_parameters(model)
-    add_compartment_structure_specs(model)
     set_initial_amount_metabs(model)
+
+    ### Fix/clean-up compartments -> requires unit in model
+    model = fix_compartments(model)
+
+    ### Set-up for later functions
+    # Get ListOf objects
+    metab_list = model.getListOfSpecies()
+    reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
 
     ### improve metabolite, reaction and gene annotations ###
     extend_metab_reac_annots_via_id(metab_list, id_db)
@@ -1203,22 +1519,18 @@ def polish_model(
         outpath
     )
     if kegg_organism_id:
-        extend_gp_annots_via_KEGG(gene_list, kegg_organism_id)
-
-    ### Check reaction direction ###
-    if reaction_direction:
-        check_direction(model, reaction_direction)
-
+        extend_gp_annots_via_KEGG(gene_list, kegg_organism_id, prefixes2remove_kegg)
+        
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
     polish_entity_conditions(reac_list)
 
     ### MIRIAM compliance of CVTerms ###
-    print(
+    logger.info(
         "Remove duplicates & transform all CURIEs to the new identifiers.org pattern (: between db and ID):"
     )
     model = polish_annotations(model, True, outpath)
-    print("Changing all qualifiers to be MIRIAM compliant:")
+    logger.info("Changing all qualifiers to be MIRIAM compliant:")
     model = change_all_qualifiers(model, lab_strain)
 
     return model

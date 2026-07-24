@@ -1,0 +1,16 @@
+# name: Example minimal glucose medium
+# description: Exemplary external medium file compatible with refinegems.classes.medium.load_external_medium.
+# reference: https://github.com/draeger-lab/refinegems/issues/165
+name	formula	flux	source	BiGG	MetaNetX	SEED	ChEBI	KEGG
+Water	H2O	10.0	water	h2o	MNXM2	cpd00001	15377	C00001
+Proton	H	10.0	buffer	h	MNXM1	cpd00067	15378	C00080
+Dioxygen	O2	20.0	aeration	o2	MNXM4	cpd00007	15379	C00007
+Ammonium	NH4	10.0	ammonium chloride	nh4	MNXM15	cpd00013	28938	C01342
+Chloride	Cl	10.0	ammonium chloride	cl	MNXM29	cpd00099	17996	C00698
+Potassium	K	10.0	potassium phosphate	k	MNXM30	cpd00205	29103	C00238
+Phosphate	HO4P	10.0	potassium phosphate	pi	MNXM9	cpd00009	18367	C00009
+Sulfate	O4S	10.0	magnesium sulfate	so4	MNXM3	cpd00048	16189	C00059
+Magnesium	Mg	10.0	magnesium sulfate	mg2	MNXM726457	cpd00254	18420	C00305
+Calcium	Ca	10.0	calcium chloride	ca2	MNXM128	cpd00063	29108	C00076
+Iron(II)	Fe	10.0	iron sulfate	fe2	MNXM726711	cpd10515	29033	C14818
+D-Glucose	C6H12O6	10.0	glucose	glc__D	MNXM41	cpd00027	4167	C00031
