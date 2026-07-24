@@ -126,25 +126,21 @@ Then change into the directory and build the image:
 ```
 
 The default image installs the runtime optional dependency group from
-`pyproject.toml` and the optional connected tools that are currently installed
-directly from GitHub. The dependency set can be adjusted at build time:
+`pyproject.toml`, but excludes the documentation dependencies. Optional
+connected tools that are currently installed directly from GitHub are included
+by default and can be disabled for a smaller image:
 
 ```bash
-   # build a smaller base image without optional dependencies or connected tools
+   # build without the optional connected GitHub tools
    docker build \
-      --build-arg REFINEGEMS_EXTRAS= \
       --build-arg INSTALL_EXTERNAL_TOOLS=false \
-      -t refinegems:base .
-
-   # install selected optional groups
-   docker build --build-arg REFINEGEMS_EXTRAS=chebi,ols,sbo -t refinegems:extras .
+      -t refinegems:runtime .
 ```
 
 The full default can also be made explicit:
 
 ```bash
    docker build \
-      --build-arg REFINEGEMS_EXTRAS=optional \
       --build-arg INSTALL_EXTERNAL_TOOLS=true \
       -t refinegems:full .
 ```

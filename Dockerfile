@@ -4,7 +4,6 @@ WORKDIR /rg_cont
 
 RUN apt-get update && apt-get install -y build-essential git && rm -rf /var/lib/apt/lists/*
 
-ARG REFINEGEMS_EXTRAS="optional"
 ARG INSTALL_EXTERNAL_TOOLS=true
 
 COPY pyproject.toml ./
@@ -14,14 +13,10 @@ COPY docs/source/images/logos/LOGO_LICENSE.md ./docs/source/images/logos/LOGO_LI
 COPY docs/source/images/GRAPHICS_LICENSE.md ./docs/source/images/GRAPHICS_LICENSE.md
 COPY src/ ./src/
 
-# Install the package using pip. Optional dependency groups can be adjusted with
-# --build-arg REFINEGEMS_EXTRAS=chebi,ols,sbo or disabled with REFINEGEMS_EXTRAS=
+# Install the package with all runtime extras. The docs extra is intentionally
+# excluded from the Docker image.
 RUN python -m pip install --no-cache-dir --upgrade pip \
-    && if [ -n "$REFINEGEMS_EXTRAS" ]; then \
-        python -m pip install --no-cache-dir ".[${REFINEGEMS_EXTRAS}]"; \
-    else \
-        python -m pip install --no-cache-dir .; \
-    fi
+    && python -m pip install --no-cache-dir ".[optional]"
 
 # Install optional connected tools that are not distributed via the base package.
 RUN if [ "$INSTALL_EXTERNAL_TOOLS" = "true" ]; then \
