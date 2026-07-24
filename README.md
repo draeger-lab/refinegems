@@ -1,6 +1,4 @@
-<p align="center">
-<img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/logos/refineGEMs_full_nb.png" height="200"/>
-</p>
+![Logo of refineGEMs](docs/source/images/logos/refineGEMs_text_nb.png)
 
 | Topic | Badge(s) |
 | :--- | :---- |
