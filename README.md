@@ -1,4 +1,5 @@
-![Logo of refineGEMs](docs/source/images/logos/refineGEMs_text_nb.png)
+![Logo of refineGEMs](https://raw.githubusercontent.com/draeger-lab/refinegems/main/docs/source/images/logos/refineGEMs_text_nb.png)
+<!-- Needs to be a raw link and no relative path due to usage in PyPI and DockerHub! -->
 
 | Topic | Badge(s) |
 | :--- | :---- |
