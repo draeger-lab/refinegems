@@ -1332,7 +1332,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                     isinstance(r.annotation["metacyc.reaction"], list)
                     and len(data[data["Reaction"].isin(r.annotation["metacyc.reaction"])]) != 0
                 ):
-                    # @ASK make this more suffisticated?
+                    # @ASK make this more sophisticated?
                     direction = data[data["Reaction"].isin(r.annotation["metacyc.reaction"])][
                         "Reaction-Direction"
                     ].iloc[0]
@@ -1424,7 +1424,6 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
 
 # Perform all clean-up steps
 # --------------------------
-# @TODO Remove reaction direction & check all usages of polish_model (mainly in SPECIMEN)
 def polish_model(
     model: libModel,
     id_db: str = "BiGG",
@@ -1442,10 +1441,6 @@ def polish_model(
     .. note::
 
         So far only tested for models having either BiGG or VMH identifiers.
-
-    .. hint::
-
-        Reaction direction check disabled for now as function generalises bad.
 
     Args:
         - model (libModel):

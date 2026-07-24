@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/refineGEMs_logo.png" height="200"/>
+<img src="https://github.com/draeger-lab/refinegems/raw/main/docs/source/images/logos/refineGEMs_full_nb.png" height="200"/>
 </p>
 
 | Topic | Badge(s) |
@@ -14,19 +14,16 @@
 # refineGEMs
 `refineGEMs` is a python package intended to help with the curation of genome-scale metabolic models (GEMS). </br>
 
-> [!WARNING]
-> 🚧 The documentation is currently under heavy-rework!
-> The documentation can be found [here](https://refinegems.readthedocs.io/en/latest/).🚧
-
 <!-- TOC -->
 
-- [Overview](#overview)
-- [Installation](#installation)
-    - [Via pip](#pypi-via-pip)
-    - [Via Docker](#docker-via-docker)
-- [License](#license)
-- [How to cite](#how-to-cite)
-- [Repositories using refineGEMs](#repositories-using-refinegems)
+- [refineGEMs](#refinegems)
+    - [Overview](#overview)
+    - [Installation](#installation)
+        - [pypi Via pip](#pypi-via-pip)
+        - [docker Via Docker](#docker-via-docker)
+    - [License](#license)
+    - [How to cite](#how-to-cite)
+    - [Repositories using refineGEMs](#repositories-using-refinegems)
 
 <!-- /TOC -->
 

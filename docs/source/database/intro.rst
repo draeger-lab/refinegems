@@ -37,8 +37,6 @@ into an *in silico* medium. Our standardised aproach is described in :doc:`in_si
 
 You can find a detailed explanation of the database architecture under :doc:`db_architecture`.
 
-Additionally, the last point refers to more information about accessing the database. ``TODO`` Worauf bezieht sich das hier genau?
-
 .. toctree::
 
     in_silico_media_generation
