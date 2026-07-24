@@ -4,11 +4,8 @@ From laboratory to *in silico* medium
 The ``refineGEMs`` toolbox allows users to add their own media definition to the workflows
 or to their models. Personal media definitions can be converted into a Medium object by calling 
 the function :py:func:`~refinegems.classes.medium.load_external_medium`
-or added to the pipelines by using the ``external_base`` / ``add_external`` options in the media config.
+or added to the media config by using the ``external_base`` / ``add_external`` options.
 The input for both is a path to a tab-separated (TSV) file containing the medium information.
-
-.. 
-   @ASK How to reformulate pipelines here? That is not really fitting as refineGEMs does not contain pipelines.
 
 The format of the input TSV file and the conversion of a medium definition to an *in silico* medium
 will be discussed in the following sections.

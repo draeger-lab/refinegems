@@ -40,9 +40,6 @@ How to get the table from BioCyc
     iv. [Optional] If you want the specified order you can click on the 'Reaction-Direction' column, then select `Move` and then `Move Column Full Right`.
     v. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `frame IDs`.
 
-    .. 
-        @TODO Recheck last step as downloads failed all the time.
-
 The resulting table should look like this (start of the downloaded file):
 
 .. code-block:: text

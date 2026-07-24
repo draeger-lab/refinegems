@@ -12,8 +12,7 @@ The latest version is tested with Python 3.10, 3.11 and 3.12.
 
 :icon:`fa-brands fa-python` Via pip
 -----------------------------------
-..
-   @TODO: PyPI and here have the same underlying link to the refineGEMs PyPI page!
+
 .. warning::
 
    | With the release of version 2.0.0, ``refineGEMs`` will only work with Python 3.10+.
@@ -25,8 +24,6 @@ To install ``refineGEMs`` as Python package from `PyPI <https://pypi.org/project
    :class: copyable
 
    pip install refinegems
-
-The corresponding project site can be found `here <https://pypi.org/project/refineGEMs/>`__.
 
 Some ``refineGEMs`` features require optional dependencies that are not needed
 for the base installation:

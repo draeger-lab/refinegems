@@ -6,7 +6,7 @@ This section describes the architecture of the database, as well as information 
 Entity-Relationship-Diagram
 ---------------------------
 
-.. image:: ../images/er_diagram.*
+.. image:: ../images/ER_tables.*
   :align: center
   :width: 700
   :alt: Entity-Relationship-diagram for the database with exemplary tables.
@@ -76,16 +76,11 @@ Substances are added using the following naming conventions:
     previous table as they were - meaning that they do not necessarily follow the rules defined above. 
     These names might be subject to future change. 
     Any newly added substance should follow the naming scheme described above.
-    For more information about the conversion, see the jupyter notebook **Remapping_substance_table.ipynb**
-
-..
-    @ASK Where is this file?
 
 .. hint::
     Before adding a new substance to the table, please check carefully that the substance does not already have an entry. 
     In case your substance already exists, please use the existing entry. 
     For help mapping identifiers and formulas, see functions such as :py:func:`~refinegems.utility.entities.match_id_to_namespace` and :py:func:`~refinegems.utility.db_access.add_info_from_ChEBI_BiGG`.
-
 
 Substance2db
 ------------
