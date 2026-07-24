@@ -146,7 +146,7 @@ where the Blood medium composition from :numref:`blood_comp` was already used.
   * - 9-cis-Retinol
     - 0.0024199295081967
     - Vitamin A
-  * - ADP
+  * - ADP [Adenosine diphosphate]
     - 0.16
     - ADP
   * - ATP [Adenosine triphosphate]
@@ -209,7 +209,7 @@ where the Blood medium composition from :numref:`blood_comp` was already used.
   * - CAMP [Cyclic AMP]
     - 8.5e-06
     - Cyclic AMP
-  * - CDP
+  * - CDP [Cytidine diphosphate]
     - 36.0
     - CDP
   * - Calcidiol [25-Hydroxyvitamin D3]
@@ -344,10 +344,10 @@ where the Blood medium composition from :numref:`blood_comp` was already used.
   * - Ethanol
     - 0.0183333333333333
     - Ethanol
-  * - FMN [Flavin Mononucleotide]
+  * - FMN [oxidized Flavin mononucleotide]
     - 7.95e-06
     - Flavin Mononucleotide
-  * - Flavin adenine dinucleotide oxidized [FAD]
+  * - FAD [oxidized Flavin adenine dinucleotide]
     - 6.8e-05
     - FAD
   * - Formaldehyde
@@ -572,10 +572,10 @@ where the Blood medium composition from :numref:`blood_comp` was already used.
   * - Niacinamide
     - 0.000235
     - Niacinamide
-  * - Nicotinamide adenine dinucleotide [NAD]
+  * - NAD [oxidized Nicotinamide adenine dinucleotide]
     - 0.0243
     - NAD
-  * - Nicotinamide adenine dinucleotide phosphate [NADP]
+  * - NADP [oxidized Nicotinamide adenine dinucleotide phosphate]
     - 0.0196
     - NADP
   * - Nitrite
@@ -734,7 +734,7 @@ where the Blood medium composition from :numref:`blood_comp` was already used.
   * - Thymidine
     - 0.0001366666666666
     - Thymidine
-  * - UDP [Uridine 5-diphosphate]
+  * - UDP [Uridine diphosphate]
     - 41.0
     - Uridine 5-diphosphate
   * - UDPglucose [Uridine diphosphate glucose]

@@ -3,8 +3,8 @@ How to adjust the media config file
 
 The media configuration file is divided into two main parts:
 
-- params: sets the defaults for all non-set parameters in the media definitions
-- media: actual part where the media are listed
+- params: Sets the defaults for all non-set parameters in the media definitions
+- media: Actual part where the media are listed
 
 Media config: params block
 --------------------------
@@ -25,8 +25,8 @@ Options:
 
 - ``aerobic`` boolean
 
-    Sets the media to aerobic, if True (adds O2 when neccessary).
-    Default does not change media definitions.
+    Sets the media to aerobic, if True (adds O2 when necessary).
+    Default sets the media to anaerobic.
 
 - ``supplement`` None, std or min
 
@@ -35,11 +35,11 @@ Options:
 
 - ``default_flux`` float
 
-    Default glux to set if not flux value is given for a substance. Defaults to 10.0
+    Default flux to set if no flux value is given for a substance. Defaults to 10.0.
 
 - ``o2_percent`` float
 
-    Percentage of fluy to use for oxygen. Defaults to 1.0, which is 100%, meaning the normal (default) flux. 
+    Percentage of flux to use for oxygen. Defaults to 1.0, which is 100%, meaning the normal (default) flux.
 
 
 
@@ -60,16 +60,18 @@ Its structure is as follows:
         name 2:
         ...
 
-The block begins with the keyword ``media``. This block can contain an arbitrary number of
-subdictionary. Each starts with a name. The placeholder ``name`` can be substituted with a name for a medium or a name of a medium in 
-the media database. The following options can be used to further modify each medium (but no modification (empty dict) is
-neccessary):
+The block begins with the keyword ``media``. This block can contain an arbitrary number of subdictionaries. Each starts 
+with a name. The placeholder ``name`` can be substituted with a name for a medium or a name of a medium in the media 
+database. If the ``name`` of the medium is not a valid name for the media database, either base or external_base is 
+required to set the base medium for the medium ``name``. The following options can be used to further modify each medium:
+
+.. note::
+
+    To specify the medium ``name`` without modification, simply set the name and leave the dictionary empty.
 
 - ``base`` None or str
 
-    If the name of the medium is not a valid name for the media database, either base or externel_base
-    is required to set the base medium for this medium. The value for base has to a valid name/abbreviation 
-    of the media database.
+     The value for base has to be a valid name/abbreviation of the media database.
 
 - ``external_base`` None or str(path)
 
@@ -80,24 +82,30 @@ neccessary):
     Add subsets of the media database to the medium. Requires the abbreviation of the 
     subset and a percentage of how much in relation to the base should be added.
 
-- ``add_medium`` List of medium name: percentage (float, e.g. 0.5)
+- ``add_medium`` List of medium name: mode of combination
 
-    Similar to add_subset but add aanother medium instead of a subset.
+    Similar to add_subset but adds another medium instead of a subset. The mode of
+    combination can be:
 
-- ``add_external`` List of path: percentage (float, e.g. 0.5)
+    - a single float, e.g. ``0.1``; 
+    - a tuple of two floats, e.g. ``(0.1, 0.2)``; 
+    - ``"+"`` to simply add the media together; 
+    - or ``NULL`` to set the fluxes to ``None``.
 
-    Similar to add_subset, but add a medium loaded from an external path and
-    add it to the medium.
+- ``add_external`` List of paths: percentage (float, e.g. 0.5)
+
+    Similar to add_subset, but adds a medium loaded from an external path and
+    adds it to the medium.
 
 - ``add_substance`` Name:  Null|float|str in format 'X.X%' with X being [0-9]*
 
     Add more substances from the database to the medium or change the flux values of 
-    already existing ones. This has the hightes priority, overwriting all other flux values.
+    already existing ones. This has the highest priority, overwriting all other flux values.
     When a percentage is given uses the most specific set default (medium > params) as the reference point.
 
 .. hint::
 
-    In addition to these options, all options under params can be set here separatly 
+    In addition to these options, all options under params can be set here separately
     for each medium as well, overwriting the default only for that specific medium.
 
 Example for aerobic LB with lower fluxes, but double oxygen and added glycerol:

@@ -10,8 +10,10 @@ To maintain or extend the toolbox ``refineGEMs`` please install the package via 
 
    For help and information about known bugs, refer to :ref:`Help and FAQ`.
 
-Installation for developers
----------------------------
+.. _Installation for developers:
+
+:icon:`fa-solid fa-circle-arrow-down` Installation for developers
+-----------------------------------------------------------------
 
 Some optional workflow steps use the tools `MCC <https://github.com/Biomathsys/MassChargeCuration>`__ and
 `BOFdat <https://github.com/draeger-lab/BOFdat>`__, which cannot directly be installed via
@@ -92,8 +94,8 @@ if you are a Windows user).
    code, it is recommended to change the :code:`pip install` line from the code blocks to 
    :code:`pip install -e . --config-settings editable_mode=strict`.
 
-Additional packages required for development
---------------------------------------------
+:icon:`fa-solid fa-box-open` Additional packages required for development
+-------------------------------------------------------------------------
 
 .. attention::
     The following packages need to be installed to be able to add content to the refineGEMs documentation.
@@ -106,6 +108,7 @@ Additional packages required for development
     * `sphinx_copybutton`
     * `sphinx_rtd_theme`
     * `sphinxcontrib-bibtex`
+    * `sphinx-icon`
     
 
     In addition, `pip-compile` should be installed to update the `requirements.txt` for the next release.
@@ -117,7 +120,7 @@ You can install the packages via pip to your local environment:
 .. code:: console
     :class: copyable
 
-    pip install accessible-pygments sphinx nbsphinx sphinx_rtd_theme pandoc ipython sphinxcontrib-bibtex sphinx_copybutton
+    pip install accessible-pygments ipython nbsphinx pandoc sphinx sphinx_copybutton sphinx_rtd_theme sphinxcontrib-bibtex sphinx-icon
 
 .. code:: console
     :class: copyable
@@ -129,10 +132,12 @@ Alternatively, install the tool with the extra `docs`, e.g.
 .. code:: console
     :class: copyable
 
-     pip install -e ".[docs]" --config-settings editable_mode=strict  
+     pip install -e ".[docs]" --config-settings editable_mode=strict
 
-Updating the `requirements.txt`
--------------------------------
+For `pandoc` please also take a look at :ref:`help-pandoc`.
+
+:icon:`fa-solid fa-file-lines` Updating the `requirements.txt`
+--------------------------------------------------------------
 | To create the `requirements.txt` adjust the `requirements.in` file as needed in the folder docs.
 | Then navigate to the folder docs in the command line:
 
@@ -156,8 +161,8 @@ To bump to the newest versions possible, use the following command in the `docs`
     pip-compile --upgrade
 
 
-Todo Tree extension
--------------------
+:icon:`fa-solid fa-tree` Todo Tree extension
+--------------------------------------------
 
 If you are working with VS Code or similar, you can install the ``Todo Tree`` extension and copy the 
 content of the ``TodoTree_params.txt`` file in the ``dev`` folder into the corresponding place in your setting 
@@ -199,8 +204,8 @@ issues and ideas much easier. The following label are currently suppored:
 
     For the label to be recognised correctly, the following format is required: ``# @KEYWORD``.
 
-Debugging switches
-------------------
+:icon:`fa-solid fa-bug` Debugging switches
+------------------------------------------
 
 - You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
 - If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
@@ -215,8 +220,8 @@ Debugging switches
     # some code
     # ......................
 
-Guidelines for code documentation
----------------------------------
+:icon:`fa-solid fa-file-code` Guidelines for code documentation
+---------------------------------------------------------------
 
 We use the autoDocstring extension (njpwerner.autodocstring) for VSCode with the google format to generate function docstrings. 
 To ensure a nice looking sphinx documentation, we add ``-`` to all variables that are passed as Args. And tuple returns are written as follows:
@@ -272,8 +277,8 @@ We are also trying to make input and return types explicit by declaring those in
 More details for certain specifics can also be found `here <https://github.com/draeger-lab/refinegems/issues/74>`__.
 
 
-Information about working on the media database
------------------------------------------------
+:icon:`fa-solid fa-database` Information about working on the media database
+----------------------------------------------------------------------------
 
 Add of update information in the database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,7 +1,7 @@
 Roswell Park Memorial Institute 1640 Medium (RPMI)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-RPMI is a medium used in cell culture and was developed in 1966 at the Roswell Park Memorial Institute by Moore *et al.*
-, its exact formulation is known and available\ :footcite:p:`11875RPMI1640`.
+RPMI is a medium used in cell culture and was developed in 1966 at the Roswell Park Memorial Institute by Moore *et al.*:footcite:p:`Moore1967`. 
+Its exact formulation is known and available via `ThermoFisher Scientific <https://www.thermofisher.com/de/de/home/technical-resources/media-formulation.114.html>`__\ :footcite:p:`11875RPMI1640`.
 
 .. list-table:: RPMI composition
   :name: rpmi_comp

@@ -475,7 +475,7 @@ class Medium:
 
         Args:
             - subset_name (str):
-                The type of subset to be added. Name should be in database-substset-id.
+                The type of subset to be added. Name should be in database-subset-id.
             - default_flux (float, optional):
                 Default flux value to calculate fluxes from based  on the percentages saved in the database.
                 Defaults to 10.0.
@@ -538,7 +538,7 @@ class Medium:
 
     # functions for export table
     # --------------------------
-    
+    @staticmethod # This is neccessary to work with produce_medium_docs and generate_docs_for_subset
     def _produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
             """Helper function for producing reStructured text for medium definitions, 
             e.g. in with :py:func:`produce_medium_docs_table`.
@@ -557,12 +557,12 @@ class Medium:
                 file.write(f"    - {l}\n")
                 
 
-    def produce_medium_docs_table(self, folder: str = "./", max_width: int = 80) -> str:
+    def produce_medium_docs_table(self, folder: Union[str, Path] = "./", max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
         Args:
-            - folder (str, optional):
-                Path to folder/directory to save the rst-file to. Defaults to './'.
+            - folder (Union[str, Path], optional):
+                Path to folder/directory to save the rst file to. Defaults to './'.
             - max_width (int, optional):
                 Maximal table width of the rst-table. Defaults to 80.
         """
@@ -592,11 +592,7 @@ class Medium:
                 partition = (max_width - flux_width) // 2
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
 
-        # make sure given directory path ends with '/'
-        if not folder.endswith("/"):
-            folder = folder + "/"
-
-        with open(folder + f"{self.name}.rst", "w") as f:
+        with open(Path(folder, f"{self.name}.rst"), "w") as f:
 
             # slim table to columns of interest for documentation
             m_subs = self.substance_table[["name", "flux", "source"]]
@@ -910,7 +906,7 @@ def export_media_from_db_to_file(
             media_names_or_config = available_media # Set all available media names if 'all' is specified
         case str():
             # Check if string is a path to a YAML file
-            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix in yml_suffixes):
+            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix.split('.')[1] in yml_suffixes):
                 # Load media from YAML file
                 media, _ = load_media(media_names_or_config)
                 
@@ -957,30 +953,35 @@ def export_media_from_db_to_file(
             m.export_to_file(type, flavour, no_flux, dir, max_widths)
 
 
-def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: int = 80):
+def generate_docs_for_subset(subset_name: str, folder: Union[str, Path] = "./", max_width: int = 80):
     """Generate documentation for a subset.
 
     Args:
         - subset_name (str):
-            Name of the subset.
-        - folder (str, optional):
+            Name of the subset to be exported for the documentation. 
+            Name should be in database-subset-id.
+        - folder (Union[str, Path], optional):
             Folder to save the output to. Defaults to './'.
         - max_width (int, optional):
             Maximal table width for the documentation page. Defaults to 80.
     """
+    # Set-up path
+    if folder:
+        if isinstance(folder, str):
+            folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
 
     name, description, subs = load_subset_from_db(subset_name)
 
     with open(Path(folder, f"{name}.rst"), "w") as f:
 
         partition = max_width // 3
-        width = f"{str(max_width-partition)} {partition}"
         header = subs.columns
+        width = f"{str(max_width-partition)} {partition}"
+        title = f"{description} ({name})"
 
         # Produce header/title of HTML page
-        f.write(f"{name}\n" f"{'^' * len(name)}\n")
-
-        f.write(description + "\n\n")
+        f.write(f"{title}\n" f"{'^' * len(title)}\n\n")
 
         # produce descriptor
         f.write(
