@@ -133,13 +133,13 @@ pyyaml==6.0.2
     #   sphinx-icon
 pyzmq==27.0.2
     # via
-    #   -r requirements.in
+    #   -r docs/requirements.in
     #   jupyter-client
 referencing==0.35.1
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.34.2
     # via sphinx
 rpds-py==0.21.0
     # via
