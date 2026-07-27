@@ -70,7 +70,7 @@ jupyterlab-pygments==0.3.0
     # via nbconvert
 latexcodec==3.0.0
     # via pybtex
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   jinja2
     #   nbconvert
@@ -133,7 +133,7 @@ pyyaml==6.0.2
     #   sphinx-icon
 pyzmq==27.0.2
     # via
-    #   -r requirements.in
+    #   -r docs/requirements.in
     #   jupyter-client
 referencing==0.35.1
     # via
