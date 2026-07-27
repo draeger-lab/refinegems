@@ -82,7 +82,21 @@ missing dependency and skips the affected optional step where possible.
 :icon:`fa-brands fa-docker` Via Docker
 --------------------------------------
 
-``refineGEMs`` can also be used via Docker. To build the Docker image, firstly clone the repository:
+``refineGEMs`` can also be used via Docker. 
+You can pull the latest image from (a) Docker Hub or (b) build it locally.
+
+(a) Image from Docker Hub
+^^^^^^^^^^^^^^^^^^^^^^^^^
+To pull the image from Docker Hub, simply use:
+
+.. code:: console
+   :class: copyable
+
+   docker pull biodatalab/refinegems:<tag>
+
+(b) Local build
+^^^^^^^^^^^^^^^
+To build the Docker image locally, firstly clone the repository:
 
 .. code:: console
    :class: copyable
@@ -118,6 +132,9 @@ The full default can also be made explicit:
    docker build \
       --build-arg INSTALL_EXTERNAL_TOOLS=true \
       -t refinegems:full .
+
+How to use
+^^^^^^^^^^
 
 .. note::
 
