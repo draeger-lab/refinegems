@@ -127,13 +127,13 @@ pygments==2.20.0
     #   sphinx
 python-dateutil==2.9.0.post0
     # via jupyter-client
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   pybtex
     #   sphinx-icon
 pyzmq==27.0.2
     # via
-    #   -r requirements.in
+    #   -r docs/requirements.in
     #   jupyter-client
 referencing==0.35.1
     # via
