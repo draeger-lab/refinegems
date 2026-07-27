@@ -4,6 +4,7 @@ The refineGEMs logo files in this directory are licensed separately from the
 refineGEMs source code:
 
 - Covered assets: `refineGEMs_full_*.png`, `refineGEMs_icon_*.png`,
+  `refineGEMs_icon_badge.png`,
   `refineGEMs_text_*.png`, and the compatibility copy
   `../refineGEMs_logo.png`
 - Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
