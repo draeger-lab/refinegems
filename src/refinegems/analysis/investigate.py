@@ -12,7 +12,6 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 
 import cobra
 
-from bioregistry import is_valid_curie
 from cobra import Model as cobraModel
 from libsbml import Model as libModel
 
@@ -21,6 +20,7 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
+from ..developement.optional import require_bioregistry
 from ..utility.util import test_biomass_presence
 
 ################################################################################
@@ -236,6 +236,7 @@ def get_reactions_per_sbo(model: libModel) -> dict:
         dict:
             SBO Term as keys and number of reactions as values
     """
+    is_valid_curie = require_bioregistry("validate SBO CURIEs").is_valid_curie
     sbos_dict = {}
     for react in model.getListOfReactions():
         sbo = react.getSBOTerm()
