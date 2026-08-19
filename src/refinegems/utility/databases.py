@@ -26,6 +26,7 @@ import requests
 import logging
 import pandas as pd
 
+from collections.abc import Iterable
 from enum import Enum
 from sqlite3 import Error
 from tqdm import tqdm
@@ -80,9 +81,75 @@ mnx_db_namespace = {
     ),
 }
 
+DATABASE_NAMESPACES = (
+    "BiGG",
+    "ChEBI",
+    "KEGG",
+    "MetaCyc",
+    "MetaNetX",
+    "SEED",
+    "VMH",
+)  #: :meta:
+
+_NAMESPACE_ALIASES = {
+    "bigg": "BiGG",
+    "chebi": "ChEBI",
+    "kegg": "KEGG",
+    "metacyc": "MetaCyc",
+    "metanetx": "MetaNetX",
+    "seed": "SEED",
+    "vmh": "VMH",
+} #: :meta:
+
 ################################################################################
 # functions
 ################################################################################
+
+
+def canonicalize_namespace(value: object) -> str:
+    """Return a validated canonical database namespace.
+
+    Whitespace and accidentally repeated lines are normalized. Legacy combined
+    values must be handled with :func:`expand_namespace_memberships`.
+    """
+    parts = {part.strip() for part in str(value or "").splitlines() if part.strip()}
+    if len(parts) != 1:
+        raise ValueError(f"Expected one database namespace, received {value!r}")
+    raw = next(iter(parts))
+    if "+" in raw:
+        raise ValueError(f"Combined database namespace is not canonical: {raw!r}")
+    try:
+        return _NAMESPACE_ALIASES[raw.casefold()]
+    except KeyError as error:
+        raise ValueError(f"Unknown database namespace: {raw!r}") from error
+
+
+def expand_namespace_memberships(value: object) -> tuple[str, ...]:
+    """Expand legacy combined or repeated input into canonical memberships."""
+    raw_parts = []
+    for line in str(value or "").splitlines():
+        raw_parts.extend(part for part in line.split("+") if part.strip())
+    memberships = {canonicalize_namespace(part) for part in raw_parts}
+    if not memberships:
+        raise ValueError("Database namespace cannot be empty")
+    return tuple(name for name in DATABASE_NAMESPACES if name in memberships)
+
+
+def namespace_matches(value: object, namespace: str) -> bool:
+    """Check exact membership while accepting legacy combined input."""
+    canonical = canonicalize_namespace(namespace)
+    return canonical in expand_namespace_memberships(value)
+
+
+def expand_namespace_columns(columns: Iterable[object]) -> tuple[str, ...]:
+    """Return canonical database columns from an arbitrary column iterable."""
+    found = set()
+    for column in columns:
+        try:
+            found.update(expand_namespace_memberships(column))
+        except ValueError:
+            continue
+    return tuple(name for name in DATABASE_NAMESPACES if name in found)
 
 
 class ValidationCodes(Enum):

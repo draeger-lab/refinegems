@@ -34,8 +34,19 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Literal, Union, Any
 
-from ..utility.databases import PATH_TO_DB
-from ..utility.io import load_substance_table_from_db, load_subset_from_db, load_a_table_from_database
+from ..utility.databases import (
+    PATH_TO_DB,
+    DATABASE_NAMESPACES,
+    canonicalize_namespace,
+    expand_namespace_memberships,
+    namespace_matches,
+)
+from ..utility.io import (
+    load_substance_table_from_db,
+    load_subset_from_db,
+    load_a_table_from_database,
+    write_media_database_schema,
+)
 
 ################################################################################
 # setup logging
@@ -47,7 +58,7 @@ logger = logging.getLogger(__name__)
 # variables
 ############################################################################
 
-ALLOWED_DATABASE_LINKS = ["BiGG", "MetaNetX", "SEED", "VMH", "ChEBI", "KEGG"]  #: :meta:
+ALLOWED_DATABASE_LINKS = list(DATABASE_NAMESPACES)  #: :meta:
 REQUIRED_SUBSTANCE_ATTRIBUTES = ["name", "formula", "flux", "source"]  #: :meta:
 INTEGER_REGEX = re.compile(r"^[-+]?([1-9]\d*|0)$")  #: :meta:
 FLOAT_REGEX = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")  #: :meta:
@@ -659,7 +670,11 @@ class Medium:
         """
 
         # Keep all columns with BiGG IDs
-        carveme_mimic = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')]
+        carveme_mimic = self.substance_table[
+            self.substance_table["db_type"].map(
+                lambda value: namespace_matches(value, "BiGG")
+            )
+        ]
 
         # Remove unnecessary columns
         if no_flux:
@@ -779,7 +794,9 @@ class Medium:
             case "BiGG":
 
                 biggs = self.substance_table[
-                    self.substance_table["db_type"].str.contains("BiGG")
+                    self.substance_table["db_type"].map(
+                        lambda value: namespace_matches(value, "BiGG")
+                    )
                 ][["name", "db_id", "flux"]]
                 biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
                 cobra_medium = pd.Series(
@@ -789,7 +806,9 @@ class Medium:
             case "SEED":
                 
                 seeds = self.substance_table[   
-                    self.substance_table["db_type"].str.contains("SEED")
+                    self.substance_table["db_type"].map(
+                        lambda value: namespace_matches(value, "SEED")
+                    )
                 ][["name", "db_id", "flux"]]
                 seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
                 cobra_medium = pd.Series(
@@ -1187,6 +1206,24 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 
     # read in the table
     substance_table = pd.read_csv(path, sep="\t", comment="#")
+
+    # Normalize database columns and expand legacy combined columns.  A file
+    # containing ``BiGG+VMH`` remains readable, but the in-memory table uses
+    # one column per canonical namespace.
+    for column in list(substance_table.columns):
+        try:
+            memberships = expand_namespace_memberships(column)
+        except ValueError:
+            continue
+        for namespace in memberships:
+            if namespace in substance_table.columns:
+                substance_table[namespace] = substance_table[namespace].combine_first(
+                    substance_table[column]
+                )
+            else:
+                substance_table[namespace] = substance_table[column]
+        if column not in memberships:
+            substance_table.drop(columns=column, inplace=True)
 
     # validate the table
     substance_cols = substance_table.columns
@@ -1604,12 +1641,15 @@ def enter_s2db_row(
 
     # only need to enter if ID exists
     if row[db_type]:
+        canonical_db_type = canonicalize_namespace(db_type)
         # check if mapping already exists
         entry_check_res = cursor.execute(
-            "SELECT 1 FROM substance2db WHERE substance2db.substance_id = ? AND db_id = ?",
+            """SELECT 1 FROM substance2db
+               WHERE substance_id = ? AND db_id = ? AND db_type = ?""",
             (
                 row["substance_id"],
                 row[db_type],
+                canonical_db_type,
             ),
         )
         entry_check = entry_check_res.fetchone()
@@ -1619,7 +1659,7 @@ def enter_s2db_row(
                 (
                     row["substance_id"],
                     row[db_type],
-                    db_type,
+                    canonical_db_type,
                 ),
             )
             connection.commit()
@@ -2035,32 +2075,20 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
                     f"{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated."
                 )
             if "substance" in conditions_dict.keys():
-                res = cursor.execute(
-                    f"""SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'"""
-                )
-                substance_id = res.fetchone()[0]
-                ins = (
-                    cursor.execute(
-                        f"""SELECT * FROM substance2db WHERE substance2db.substance_id = {substance_id} AND substance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\'"""
+                new_values = [
+                    value.strip() for value in str(row["new_value"]).split(",")
+                ]
+                if len(new_values) != 2:
+                    raise ValueError(
+                        "substance2db inserts require 'db_id, db_type'"
                     )
-                    .fetchone()[2]
-                    .split("+")
-                )
-                if len(ins) > 0:
-                    cur = row["new_value"].split(",")[1].strip().split("+")
-                    missing = [_ for _ in ins if _ not in cur]
-                    if len(missing) > 0:
-                        update_value = "+".join(sorted(cur + missing))
-                        insert_query = f"""UPDATE substance2db SET db_type = \'{update_value}\' WHERE substance2db.substance_id = {substance_id} AND szbbstance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\'"""
-                    else:
-                        return None
-                # insert can be done without any problems
-                else:
-                    insert_query += f"""(\
-                        (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
-                        {value_str}\
-                        )\
-                    """
+                db_id, db_type = new_values
+                canonical_db_type = canonicalize_namespace(db_type)
+                insert_query = f"""INSERT OR IGNORE INTO substance2db
+                    (substance_id, db_id, db_type) VALUES (
+                    (SELECT substance.id FROM substance
+                     WHERE substance.name = \'{conditions_dict.get("substance")}\'),
+                    \'{db_id}\', \'{canonical_db_type}\')"""
 
             else:
                 raise ValueError(
@@ -2147,37 +2175,11 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
             If True, uses the default sql-file name, otherwise extends it with the prefix ``updated``.
     """
 
-    # Not needed to be included in Schema
-    NOT_TO_SCHEMA = [
-        "BEGIN TRANSACTION;",
-        "COMMIT;",
-        "bigg_to_sbo",
-        "ec_to_sbo",
-        "bigg_metabolites",
-        "bigg_reactions",
-        "modelseed_compounds",
-        "mnx_chem_prop",
-        "mnx_chem_xref",
-        "mnx_reac_prop",
-        "mnx_reac_xref"
-    ]
-    counter = 0  # To count rows in newly generated file
-
     if inplace:
         filename = "media_db.sql"
     else:
         filename = "updated_media_db.sql"
-
-    conn = sqlite3.connect(PATH_TO_DB)
-    with open(Path(directory, filename), "w") as file:
-        for line in conn.iterdump():
-            if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
-                if "CREATE TABLE" in line and counter != 0:
-                    file.write(f"\n\n{line}\n")
-                else:
-                    file.write(f"{line}\n")
-                counter += 1
-    conn.close()
+    write_media_database_schema(Path(PATH_TO_DB), Path(directory, filename))
 
 
 ############################################################################
@@ -2235,6 +2237,3 @@ def medium_to_model(
         return
     else:
         return exported_medium
-
-
-

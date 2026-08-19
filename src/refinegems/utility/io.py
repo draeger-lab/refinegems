@@ -21,6 +21,7 @@ import pandas as pd
 import re
 import sqlalchemy
 import sqlite3
+import textwrap
 import warnings
 
 from Bio import SeqIO
@@ -42,6 +43,19 @@ logger = logging.getLogger(__name__)
 ################################################################################
 # variables
 ################################################################################
+
+MEDIA_TABLES = {
+    "medium",
+    "medium2substance",
+    "subset",
+    "subset2substance",
+    "substance",
+    "substance2db",
+}  #: :meta:
+
+_DUMP_TABLE = re.compile(
+    r'^(?:CREATE TABLE|INSERT INTO)\s+"?([^"\s(]+)"?', re.IGNORECASE
+)
 
 ################################################################################
 # functions
@@ -456,6 +470,52 @@ def load_a_table_from_database(
 
     open_con.close()
     return db_table
+
+
+def write_media_database_schema(
+    database: Union[Path, str], output: Union[Path, str]
+) -> None:
+    """Atomically write the six media tables from a SQLite database to SQL.
+
+    Args:
+        - database (Path | str):
+            SQLite database containing the refineGEMs media tables.
+        - output (Path | str):
+            SQL file to create or replace.
+    """
+    database = Path(database)
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_suffix(output.suffix + ".tmp")
+
+    connection = sqlite3.connect(database)
+    try:
+        lines = []
+        for line in connection.iterdump():
+            match = _DUMP_TABLE.match(line)
+            if not match or match.group(1) not in MEDIA_TABLES:
+                continue
+            if line.upper().startswith("CREATE TABLE "):
+                first_line, *remaining_lines = line.splitlines()
+                if remaining_lines:
+                    line = first_line + "\n" + textwrap.dedent(
+                        "\n".join(remaining_lines)
+                    )
+                line = re.sub(
+                    r"^CREATE TABLE\s+",
+                    "CREATE TABLE IF NOT EXISTS ",
+                    line,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+                if lines:
+                    lines.extend(["", ""])
+            lines.append(line)
+    finally:
+        connection.close()
+
+    temporary.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    temporary.replace(output)
 
 
 def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
