@@ -47,6 +47,11 @@ from ..utility.io import (
     load_a_table_from_database,
     write_media_database_schema,
 )
+from ..utility.entities import (
+    get_model_exchange_reactions,
+    model_metabolite_matches_identifier,
+    resolve_external_compartment,
+)
 
 ################################################################################
 # setup logging
@@ -752,16 +757,20 @@ class Medium:
     # ------------------------
     def export_to_cobra(
         self,
-        namespace: Literal["Name", "BiGG", "SEED"] = "BiGG",
+        namespace: Literal[
+            "Name", "BiGG", "ChEBI", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+        ] = "BiGG",
         default_flux: float = 10.0,
         replace: bool = False,
         double_o2: bool = True,
         ext_compartment: str = "e",
-    ) -> dict[str, float]:
+        model: cobra.Model = None,
+        return_missing: bool = False,
+    ) -> Union[dict[str, float], tuple[dict[str, float], list[str]]]:
         """Export a medium to the COBRApy format for a medium.
 
         Args:
-            - namespace (Literal['Name', 'BiGG'], optional):
+            - namespace (Literal['Name', 'BiGG', 'ChEBI', 'KEGG', 'MetaCyc', 'MetaNetX', 'SEED', 'VMH'], optional):
                 Namespace to use. Defaults to 'BiGG'.
             - default_flux (float, optional):
                 Default flux to substitute missing values. Defaults to 10.0.
@@ -771,53 +780,140 @@ class Medium:
                 Double the flux of oxygen. Defaults to True.
             - ext_compartment (str, optional):
                 The compartment suffix for external compounds 
-                Mainly used fir the SEED namespace. 
+                Mainly used for the SEED namespace.
                 Defaults to 'e'.
+            - model (cobra.Model, optional):
+                Model whose actual exchange reactions should be used. This is
+                required for namespaces without a fixed COBRA exchange-ID
+                convention. Defaults to None.
+            - return_missing (bool, optional):
+                Return a second value containing identifiers for medium entries
+                that could not be matched to model exchanges. Requires
+                ``model``. Defaults to False.
 
         Raises:
             - ValueError: Unknown namespace.
 
         Returns:
-            dict[str,float]:
-                The exported medium.
+            dict[str,float] | tuple[dict[str,float], list[str]]:
+                The exported medium, optionally together with unmatched IDs.
         """
 
+        if return_missing and model is None:
+            raise ValueError("return_missing=True requires a model.")
+
         self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
+        missing_exchanges = []
 
         match namespace:
             case "Name":
 
-                names = self.substance_table[["name", "flux"]]
-                names["EX"] = biggs["db_id"] + " exchange"
-                cobra_medium = pd.Series(names.flux.values, index=names.EX).to_dict()
+                names = self.substance_table[["name", "db_id", "flux"]].copy()
+                if model is None:
+                    # Preserve the historical Name convention for callers that
+                    # only want a COBRA medium dictionary and provide no model.
+                    names["EX"] = names["db_id"] + " exchange"
+                    cobra_medium = pd.Series(
+                        names.flux.values, index=names.EX
+                    ).to_dict()
+                else:
+                    cobra_medium = {}
+                    for name, model_id, flux in names.itertuples(
+                        index=False, name=None
+                    ):
+                        if pd.isna(model_id):
+                            continue
+                        model_id = str(model_id)
+                        matched_exchange = None
+                        for exchange in get_model_exchange_reactions(model):
+                            # Prefer the model's real reaction ID. A Name entry
+                            # may denote that reaction directly, its historical
+                            # '<id> exchange' form, or the exchanged metabolite.
+                            if exchange.id in {
+                                model_id,
+                                f"{model_id} exchange",
+                            } or any(
+                                metabolite.id == model_id
+                                or metabolite.name == name
+                                or model_metabolite_matches_identifier(
+                                    metabolite, model_id
+                                )
+                                for metabolite in exchange.metabolites
+                            ):
+                                matched_exchange = exchange
+                                break
+                        if matched_exchange is None:
+                            missing_exchanges.append(f"{model_id} exchange")
+                        else:
+                            cobra_medium[matched_exchange.id] = flux
 
-            case "BiGG":
+            case _ if namespace in DATABASE_NAMESPACES:
 
-                biggs = self.substance_table[
-                    self.substance_table["db_type"].map(
-                        lambda value: namespace_matches(value, "BiGG")
+                # @TODO Validate all namespace-specific model conventions with
+                # representative real models. Constructed tests cover the
+                # generic matcher, but database coverage alone does not prove
+                # that every namespace is encoded as expected in practice.
+                # Select only rows belonging to the requested canonical
+                # namespace; the three-column schema stores each separately.
+                namespace_mask = self.substance_table["db_type"].map(
+                    lambda value: namespace_matches(value, namespace)
+                ).astype(bool)
+                database_ids = self.substance_table.loc[
+                    namespace_mask, ["name", "db_id", "flux"]
+                ].copy()
+
+                if model is not None:
+                    cobra_medium = {}
+                    for db_id, flux in database_ids[
+                        ["db_id", "flux"]
+                    ].itertuples(index=False, name=None):
+                        if pd.isna(db_id):
+                            continue
+                        db_id = str(db_id)
+                        matched_exchange = None
+                        for exchange in get_model_exchange_reactions(model):
+                            # Match via the exchange metabolite and retain the
+                            # reaction ID already used by the model. This avoids
+                            # guessing conventions such as '_e' versus '[e]'.
+                            if any(
+                                model_metabolite_matches_identifier(
+                                    metabolite, db_id
+                                )
+                                for metabolite in exchange.metabolites
+                            ):
+                                matched_exchange = exchange
+                                break
+                        if matched_exchange is None:
+                            # Retain the historical exchange-ID representation
+                            # where one exists. Other namespaces have no single
+                            # reliable reaction naming convention, so report
+                            # their database identifier instead.
+                            if namespace in ("BiGG", "SEED"):
+                                missing_exchanges.append(
+                                    f"EX_{db_id}_{ext_compartment}"
+                                )
+                            else:
+                                missing_exchanges.append(db_id)
+                        else:
+                            cobra_medium[matched_exchange.id] = flux
+                elif namespace in ("BiGG", "SEED"):
+                    database_ids["db_id_EX"] = (
+                        "EX_" + database_ids["db_id"] + "_" + ext_compartment
                     )
-                ][["name", "db_id", "flux"]]
-                biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
-                cobra_medium = pd.Series(
-                    biggs.flux.values, index=biggs.db_id_EX
-                ).to_dict()
-                
-            case "SEED":
-                
-                seeds = self.substance_table[   
-                    self.substance_table["db_type"].map(
-                        lambda value: namespace_matches(value, "SEED")
+                    cobra_medium = pd.Series(
+                        database_ids.flux.values, index=database_ids.db_id_EX
+                    ).to_dict()
+                else:
+                    raise ValueError(
+                        f"Exporting namespace {namespace!r} requires a model "
+                        "to resolve its exchange-reaction IDs."
                     )
-                ][["name", "db_id", "flux"]]
-                seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
-                cobra_medium = pd.Series(
-                    seeds.flux.values, index=seeds.db_id_EX
-                ).to_dict()
 
             case _:
                 raise ValueError(f"Unknown namespace: {namespace}")
 
+        if return_missing:
+            return cobra_medium, missing_exchanges
         return cobra_medium
 
 
@@ -2186,6 +2282,44 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
 # working with models
 ############################################################################
 
+
+def set_model_medium(
+    model: cobra.Model, medium: dict[str, float]
+) -> None:
+    """Apply a COBRA medium with a detector-independent fallback."""
+    try:
+        model.medium = medium
+        return
+    except (RuntimeError, ValueError, TypeError, KeyError, IndexError):
+        exchanges = get_model_exchange_reactions(model)
+
+    selected = set()
+    for reaction_id, bound in medium.items():
+        if reaction_id not in model.reactions:
+            continue
+        reaction = model.reactions.get_by_id(reaction_id)
+        selected.add(reaction)
+        if reaction.reactants:
+            reaction.lower_bound = -bound
+        elif reaction.products:
+            reaction.upper_bound = bound
+
+    # Reproduce COBRApy's behaviour by disabling uptake through exchanges that
+    # are not part of the requested medium while retaining possible secretion.
+    for reaction in exchanges:
+        if reaction in selected:
+            continue
+        is_export = reaction.reactants and not reaction.products
+        inactive_bound = min(
+            0.0,
+            -reaction.lower_bound if is_export else reaction.upper_bound,
+        )
+        if reaction.reactants:
+            reaction.lower_bound = -inactive_bound
+        elif reaction.products:
+            reaction.upper_bound = inactive_bound
+
+
 def medium_to_model(
     model: cobra.Model,
     medium: Medium,
@@ -2218,22 +2352,24 @@ def medium_to_model(
             Either none or the exported medium.
     """
 
-    # export medium to cobra
+    # Keep all namespace-to-exchange conversion in Medium.export_to_cobra so
+    # direct exports and model application cannot drift apart.
     exported_medium = medium.export_to_cobra(
         namespace=namespace,
         default_flux=default_flux,
         replace=replace,
         double_o2=double_o2,
-        ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)
+        ext_compartment=resolve_external_compartment(model),
+        model=model,
     )
 
-    # remove exchanges that do not exist in model
-    model_exchanges = [_.id for _ in model.exchanges]
+    # Defensive filtering for the legacy no-model naming conventions.
+    model_exchanges = [_.id for _ in get_model_exchange_reactions(model)]
     exported_medium = {k: v for k, v in exported_medium.items() if k in model_exchanges}
 
     if add:
         # add to model
-        model.medium = exported_medium
+        set_model_medium(model, exported_medium)
         return
     else:
         return exported_medium

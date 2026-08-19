@@ -16,6 +16,11 @@ import warnings
 
 from cobra import Model as cobraModel
 from ..developement.decorators import suppress_log_message, suppress_warning
+from ..utility.entities import (
+    get_model_exchange_reactions,
+    model_metabolite_matches_identifier,
+    resolve_external_compartment,
+)
 from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import (
@@ -30,6 +35,7 @@ from ..classes.medium import (
     read_from_cobra_model,
     load_medium_from_db,
     load_media,
+    set_model_medium,
 )
 from typing import Literal, Union
 
@@ -38,6 +44,19 @@ from typing import Literal, Union
 ################################################################################
 
 logger = logging.getLogger(__name__)
+
+############################################################################
+# variables
+############################################################################
+
+AUXOTROPHY_DATABASE_NAMESPACES = (
+    "BiGG",
+    "KEGG",
+    "MetaCyc",
+    "MetaNetX",
+    "SEED",
+    "VMH",
+)  #: :meta:
 
 ############################################################################
 # functions
@@ -342,7 +361,9 @@ def growth_sim_single(
     model: cobraModel,
     m: Medium,
     model_name: str=None,
-    namespace: Literal["BiGG", "Name", "SEED"] = "BiGG",
+    namespace: Literal[
+        "Name", "BiGG", "ChEBI", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+    ] = "BiGG",
     supplement: Literal[None, "std", "min"] = None,
 ) -> SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
@@ -355,9 +376,8 @@ def growth_sim_single(
         - model_name (str, optional):
             The name of the model, which will be used in the report. 
             Defaults to the model ID.
-        - namespace (Literal['BiGG','Name','SEED'], optional):
+        - namespace (Literal['Name','BiGG','ChEBI','KEGG','MetaCyc','MetaNetX','SEED','VMH'], optional):
             The namespace of the model that needs to be used for the medium.
-            Currently supports one of ['BiGG','Name','SEED']. 
             Defaults to 'BiGG'.
         - supplement (Literal[None,'std','min'], optional):
             Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
@@ -398,13 +418,13 @@ def growth_sim_single(
 
         # add medium to model
         try:
-            model.medium = new_m
+            set_model_medium(model, new_m)
         except ValueError:
             logger.info(
                 "Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable."
             )
             set_bounds_to_default(model)
-            model.medium = new_m
+            set_model_medium(model, new_m)
 
         # simulate growth
         report = SingleGrowthSimulationReport(
@@ -417,11 +437,16 @@ def growth_sim_single(
             (np.log(2) / report.growth_value) * 60 if report.growth_value != 0 else 0
         )
         report.additives = [_ for _ in new_m if _ not in exported_m]
-        report.no_exchange = [
-            _
-            for _ in m.export_to_cobra(namespace=namespace, ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)).keys()
-            if _ not in exported_m
-        ]
+        # Reuse the model-aware exporter for reporting too. Namespaces such as
+        # KEGG cannot construct exchange reaction IDs without inspecting the
+        # model, and the exporter also retains the unmatched entries for the
+        # report rather than silently dropping them.
+        _, report.no_exchange = m.export_to_cobra(
+            namespace=namespace,
+            ext_compartment=resolve_external_compartment(model),
+            model=model,
+            return_missing=True,
+        )
 
     return report
 
@@ -430,7 +455,12 @@ def growth_sim_multi(
     models: Union[cobraModel, list[cobraModel]],
     media: Union[Medium, list[Medium]],
     model_names: Union[None, list[str]] = None,
-    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
+    namespace: Union[
+        list,
+        Literal[
+            "Name", "BiGG", "ChEBI", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+        ],
+    ] = "BiGG",
     supplement_modes: Union[
         list[Literal["None", "min", "std"]], None, Literal["None", "min", "std"]
     ] = None,
@@ -445,10 +475,9 @@ def growth_sim_multi(
         - model_names (None | list[str], optional): 
             The names of the models, which will be used in the report. 
             Defaults to the model IDs.
-        - namespace (list | Literal['BiGG','Name','SEED'], optional):
+        - namespace (list | Literal['Name','BiGG','ChEBI','KEGG','MetaCyc','MetaNetX','SEED','VMH'], optional):
             Namespace(s) of the model(s).
             Can be a single string to set the same namespace for all models or a list with one entry for each model.
-            Further options include 'BiGG', 'Name' and 'SEED'.
             Defaults to 'BiGG'.
         - supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional):
             Option to supplement the media to enable growth.
@@ -496,7 +525,12 @@ def growth_analysis(
     models: Union[cobra.Model, str, list[str], list[cobra.Model]],
     media: Union[Medium, list[Medium], str],
     model_names: Union[None, list[str]] = None,
-    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
+    namespace: Union[
+        list,
+        Literal[
+            "Name", "BiGG", "ChEBI", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+        ],
+    ] = "BiGG",
     supplements: Union[
         None, list[Literal[None, "std", "min"]], Literal[None, "std", "min"]
     ] = None,
@@ -514,7 +548,7 @@ def growth_analysis(
         - model_names (None | list[str], optional): 
             The names of the models, which will be used in the report. 
             Defaults to the model IDs.
-        - namespace (Literal['BiGG'], optional):
+        - namespace (list | Literal['Name','BiGG','ChEBI','KEGG','MetaCyc','MetaNetX','SEED','VMH'], optional):
             Namespace of the model(s).
             Can be a list or a string, which sets the same namespace for all models.
             Defaults to 'BiGG'.
@@ -714,7 +748,9 @@ def test_auxotrophies(
     model: cobraModel,
     media_list: list[Medium],
     supplement_list: list[Literal[None, "min", "std"]],
-    namespace: Literal["BiGG", "Name"] = "BiGG",
+    namespace: Literal[
+        "Name", "BiGG", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+    ] = "BiGG",
 ) -> AuxotrophySimulationReport:
     """Test for amino acid auxothrophies for a model and a list of media.
 
@@ -729,9 +765,10 @@ def test_auxotrophies(
             List of media to be tested.
         - supplement_list (list[Literal[None,'min','std']]):
             List of supplement modes for the media.
-        - namespace (Literal['BiGG','Name'], optional):
+        - namespace (Literal['Name', 'BiGG', 'KEGG', 'MetaCyc', 'MetaNetX', 'SEED', 'VMH'], optional):
             String for the namespace to be used for the model.
-            Current options include 'BiGG', 'Name'.
+            ``Name`` uses model metabolite names directly. All other options
+            use the corresponding identifiers in ``substance2db``.
             Defaults to 'BiGG'.
 
     Raises:
@@ -741,6 +778,69 @@ def test_auxotrophies(
         AuxotrophySimulationReport:
             The report for the test containing a table of the amino acids and the media names containing the simualted flux values.
     """
+
+    allowed_namespaces = ("Name", *AUXOTROPHY_DATABASE_NAMESPACES)
+    if namespace not in allowed_namespaces:
+        raise ValueError(
+            f"Unknown namespace {namespace!r}. Expected one of {allowed_namespaces}."
+        )
+
+    def find_cytosolic_metabolite(
+        current_model: cobraModel,
+        substance_name: str,
+        identifiers: list[str],
+    ) -> Union[cobra.Metabolite, None]:
+        """Find the cytosolic model metabolite for one database/name entry."""
+        cytosolic = [
+            metabolite
+            for metabolite in current_model.metabolites
+            # This includes common identifiers such as 'c' and ModelSEED's
+            # numbered cytosolic compartments (for example, 'c0').
+            if metabolite.compartment.casefold().startswith("c")
+        ]
+        if namespace == "Name":
+            # Name is a model convention, not a substance2db namespace.
+            return next(
+                (
+                    metabolite
+                    for metabolite in cytosolic
+                    if metabolite.id == substance_name
+                    or metabolite.name == substance_name
+                ),
+                None,
+            )
+        return next(
+            (
+                metabolite
+                for identifier in identifiers
+                for metabolite in cytosolic
+                if model_metabolite_matches_identifier(metabolite, identifier)
+            ),
+            None,
+        )
+
+    def find_exchange_reaction(
+        current_model: cobraModel,
+        substance_name: str,
+        identifiers: list[str],
+    ) -> Union[cobra.Reaction, None]:
+        """Find the exchange reaction for a substance in the chosen namespace."""
+        # Resolve through the exchanged metabolite instead of constructing a
+        # reaction ID; VMH and other sources format those IDs differently.
+        for reaction in get_model_exchange_reactions(current_model):
+            for metabolite in reaction.metabolites:
+                if namespace == "Name":
+                    if (
+                        metabolite.id == substance_name
+                        or metabolite.name == substance_name
+                    ):
+                        return reaction
+                elif any(
+                    model_metabolite_matches_identifier(metabolite, identifier)
+                    for identifier in identifiers
+                ):
+                    return reaction
+        return None
 
     results = {}
 
@@ -753,11 +853,18 @@ def test_auxotrophies(
         auxotrophies = {}
         # then iterate over all amino acids
         for a in aa_list:
-            entry = amino_acids.substance_table.loc[
-                (amino_acids.substance_table["name"] == a)
-                & (amino_acids.substance_table["db_type"].str.contains(namespace))
-            ]
+            if namespace == "Name":
+                # Do not query substance2db for Name-based models.
+                identifiers = [a]
+            else:
+                entry = amino_acids.substance_table.loc[
+                    (amino_acids.substance_table["name"] == a)
+                    & (amino_acids.substance_table["db_type"] == namespace)
+                ]
+                identifiers = entry["db_id"].dropna().astype(str).tolist()
 
+            # COBRApy's model context rolls back the temporary sink, objective
+            # and exchange bounds before testing the next amino acid.
             with model as m:
 
                 # export the medium
@@ -785,10 +892,10 @@ def test_auxotrophies(
                     case _:
                         new_m = exported_m
                 # add medium to model
-                m.medium = new_m
+                set_model_medium(m, new_m)
 
                 # check namespace availability
-                if len(entry) == 0:
+                if len(identifiers) == 0:
                     warn_str = f"Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one."
                     warnings.warn(warn_str)
                     growth_res = m.optimize()
@@ -799,37 +906,24 @@ def test_auxotrophies(
                     )
                 else:
 
-                    # create and check IDs for the chosen namespace
-                    internal_meta = ""
-                    match namespace:
-                        case "BiGG":
-                            for np_id in entry["db_id"]:
-                                if np_id + "_c" in [_.id for _ in m.metabolites]:
-                                    internal_meta = np_id + "_c"
-                                    break
-
-                            exchange_reac = "EX_" + internal_meta
-                            sink_reac = f"sink_{internal_meta}_tmp"
-                        case _:
-                            raise ValueError(
-                                "Unknown namespace: {namespace}. Cannot create IDs."
-                            )
+                    internal_meta = find_cytosolic_metabolite(m, a, identifiers)
 
                     # create a pseudo reaction -> a sink reaction for the amino acid
                     # to use as the new objective
-                    if internal_meta == "":
+                    if internal_meta is None:
                         warnings.warn(f"No identifier matched in cytosol for {a}.")
                     else:
-                        m.add_boundary(
-                            m.metabolites.get_by_id(internal_meta),
+                        sink_reac = m.add_boundary(
+                            internal_meta,
                             type="sink",
-                            reaction_id=sink_reac,
+                            reaction_id=f"sink_{internal_meta.id}_tmp",
                         )
                         m.objective = sink_reac
                         # if existent, close the exchange reaction
-                        if exchange_reac in [_.id for _ in m.exchanges]:
-                            m.reactions.get_by_id(exchange_reac).lower_bound = 0.0
-                            m.reactions.get_by_id(exchange_reac).upper_bound = 0.0
+                        exchange_reac = find_exchange_reaction(m, a, identifiers)
+                        if exchange_reac is not None:
+                            exchange_reac.lower_bound = 0.0
+                            exchange_reac.upper_bound = 0.0
                     # and calculate the new objective
                     growth_res = m.optimize()
                     auxotrophies[a] = (
