@@ -804,6 +804,10 @@ class Medium:
 
         self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
         missing_exchanges = []
+        model_exchanges = (
+            get_model_exchange_reactions(model) if model is not None else []
+        )
+        exchanges_by_id = {exchange.id: exchange for exchange in model_exchanges}
 
         match namespace:
             case "Name":
@@ -825,7 +829,7 @@ class Medium:
                             continue
                         model_id = str(model_id)
                         matched_exchange = None
-                        for exchange in get_model_exchange_reactions(model):
+                        for exchange in model_exchanges:
                             # Prefer the model's real reaction ID. A Name entry
                             # may denote that reaction directly, its historical
                             # '<id> exchange' form, or the exchanged metabolite.
@@ -863,6 +867,23 @@ class Medium:
                 ].copy()
 
                 if model is not None:
+                    exchange_compartment = ext_compartment
+                    if namespace in ("BiGG", "SEED") and "_" in ext_compartment:
+                        short_compartment = ext_compartment.rsplit("_", 1)[-1]
+                        identifiers = set(
+                            database_ids["db_id"].dropna().astype(str)
+                        )
+                        full_matches = sum(
+                            f"EX_{db_id}_{ext_compartment}" in exchanges_by_id
+                            for db_id in identifiers
+                        )
+                        short_matches = sum(
+                            f"EX_{db_id}_{short_compartment}" in exchanges_by_id
+                            for db_id in identifiers
+                        )
+                        if short_matches > full_matches:
+                            exchange_compartment = short_compartment
+
                     cobra_medium = {}
                     for db_id, flux in database_ids[
                         ["db_id", "flux"]
@@ -870,19 +891,21 @@ class Medium:
                         if pd.isna(db_id):
                             continue
                         db_id = str(db_id)
-                        matched_exchange = None
-                        for exchange in get_model_exchange_reactions(model):
-                            # Match via the exchange metabolite and retain the
-                            # reaction ID already used by the model. This avoids
-                            # guessing conventions such as '_e' versus '[e]'.
-                            if any(
-                                model_metabolite_matches_identifier(
-                                    metabolite, db_id
-                                )
-                                for metabolite in exchange.metabolites
-                            ):
-                                matched_exchange = exchange
-                                break
+                        matched_exchange = exchanges_by_id.get(
+                            f"EX_{db_id}_{exchange_compartment}"
+                        )
+                        if matched_exchange is None:
+                            for exchange in model_exchanges:
+                                # Match via the exchange metabolite and retain
+                                # the reaction ID already used by the model.
+                                if any(
+                                    model_metabolite_matches_identifier(
+                                        metabolite, db_id
+                                    )
+                                    for metabolite in exchange.metabolites
+                                ):
+                                    matched_exchange = exchange
+                                    break
                         if matched_exchange is None:
                             # Retain the historical exchange-ID representation
                             # where one exists. Other namespaces have no single
@@ -890,7 +913,7 @@ class Medium:
                             # their database identifier instead.
                             if namespace in ("BiGG", "SEED"):
                                 missing_exchanges.append(
-                                    f"EX_{db_id}_{ext_compartment}"
+                                    f"EX_{db_id}_{exchange_compartment}"
                                 )
                             else:
                                 missing_exchanges.append(db_id)
@@ -2362,10 +2385,6 @@ def medium_to_model(
         ext_compartment=resolve_external_compartment(model),
         model=model,
     )
-
-    # Defensive filtering for the legacy no-model naming conventions.
-    model_exchanges = [_.id for _ in get_model_exchange_reactions(model)]
-    exported_medium = {k: v for k, v in exported_medium.items() if k in model_exchanges}
 
     if add:
         # add to model
