@@ -46,7 +46,7 @@ idna==3.15
 imagesize==1.4.1
     # via sphinx
 ipython==8.39.0
-    # via -r docs/requirements.in
+    # via -r requirements.in
 jedi==0.19.2
     # via ipython
 jinja2==3.1.6
