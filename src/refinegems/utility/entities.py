@@ -2142,16 +2142,12 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         # Query NCBI based on RefSeq Protein ID
         logger.info('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("refseq",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "refseq", email)
 
         # Query NCBI based on NCBI Protein ID
         logger.info('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "ncbiprotein", email)
 
     # Clean-up dataframe for output
     def _merge_name_cols(row: pd.Series) -> pd.Series:
