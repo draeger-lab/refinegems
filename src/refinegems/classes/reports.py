@@ -29,6 +29,9 @@ from itertools import chain
 from libsbml import Model as libModel
 from pathlib import Path
 from typing import Literal, Union
+from datetime import datetime
+from importlib.resources import files
+from itertools import chain, cycle, islice
 
 from ..analysis.investigate import (
     get_mass_charge_unbalanced,
@@ -88,6 +91,7 @@ class Report(ABC):
         """
         # Optionally, store a name or identifier for the report
         self.name = None
+        self.created_on = datetime.now()
 
     # abstract methods
     # ----------------
@@ -957,7 +961,7 @@ class AuxotrophySimulationReport(Report):
     """
 
     def __init__(self, results) -> None:
-        # super().__init__()
+        super().__init__()
         self.simulation_results = results.sort_index()
 
     # auxotrophy sim visualisation
@@ -1397,6 +1401,7 @@ class ModelInfoReport(Report):
     """
 
     def __init__(self, model: cobra.Model) -> None:
+        super().__init__()
 
         super().__init__()
         # cobra version
@@ -1420,7 +1425,7 @@ class ModelInfoReport(Report):
             _ for _ in mass_charge[1] if not _ in self.mass_charge_unbalanced
         ]
         # gpr
-        self.pseudo = [_.id for _ in model.boundary] + test_biomass_presence(model)
+        self.pseudo = [_.id for _ in model.boundary] + (test_biomass_presence(model) or [])
         with_gpr = get_reac_with_gpr(model)
         self.normal_with_gpr = with_gpr[0]
         self.pseudo_with_gpr = with_gpr[1]
@@ -2075,7 +2080,7 @@ class MultiSBOTermReport(Report):
 
     def visualise(
         self,
-        rename: Union[None, dict] = None,
+        rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         show_invalid: bool=False,
         show_overall_counts: bool=False,
@@ -2122,14 +2127,17 @@ class MultiSBOTermReport(Report):
                 except ValueError:
                     logger.warning('Unknown color palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
+                
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
-                    cmap = cmap.colors[0 : len(self.model_reports)]
+                    # FIX: Safely cycle through colors if there are more models than available colors
+                    cmap = list(islice(cycle(cmap.colors), len(self.model_reports)))
                 else:
                     cmap = cmap(np.linspace(0, 1, len(self.model_reports)))
             case list():
-                cmap = color_palette
+                # FIX: Safely cycle through the provided custom color list
+                cmap = list(islice(cycle(color_palette), len(self.model_reports)))
             case _:
-                mes = "Unkown type for color_palette"
+                mes = "Unknown type for color_palette"
                 raise TypeError(mes)
 
         # prepare the data
@@ -2166,7 +2174,7 @@ class MultiSBOTermReport(Report):
     def save(
         self,
         dir: Union[str, Path],
-        rename: dict = Union[None, dict],
+        rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         figsize: tuple = (10, 10),
     ):
