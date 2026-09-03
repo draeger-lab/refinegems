@@ -2,17 +2,18 @@
 Usage
 =====
 
-This page shows how to quickly access the ``refinegems`` toolbox. For more detailed examples see :ref:`About different applications`.
+This page shows how to quickly access functionalities from the ``refineGEMs`` toolbox. 
+For more detailed examples see :ref:`About different applications`.
 
 ----
 
 Access points
 -------------
 
-via command line/terminal
-^^^^^^^^^^^^^^^^^^^^^^^^^
+:icon:`fa-solid fa-terminal` via command line/terminal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main functionalities of refineGEMs can be accessed directly from the command line after a successfull installation.
+The main functionalities of ``refineGEMs`` can be accessed directly from the command line after a successful installation.
 
 For more information, call the following in your command line or terminal:
 
@@ -22,10 +23,10 @@ For more information, call the following in your command line or terminal:
 
 or refer to the following section: :ref:`Command line access points`.
 
-access from inside Python
-^^^^^^^^^^^^^^^^^^^^^^^^^
+:icon:`fa-solid fa-code` from inside Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Alternatively, refineGEMs can be directly imported into Python or a python script for full access of all modules, classes and more.
+Alternatively, ``refineGEMs`` can be directly imported into Python or a python script for full access of all modules, classes and more.
 
 .. code-block:: python 
 
@@ -42,23 +43,23 @@ Or, e.g.:
 The media database  
 ------------------
 
-The media database can be accessed via a mutitude of different routes.
+The media database can be accessed via a multitude of different routes.
 
 .. hint::
 
   For more information about the database and its contents, refer to :ref:`Media & Subsets`.
 
-Direct access via SQL
-^^^^^^^^^^^^^^^^^^^^^
+:icon:`fa-solid fa-database` Direct access via SQL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One way to inspect the database is to download it from the `GitHub page <https://github.com/draeger-lab/refinegems>`__
 and open it with an IDE with an SQL-extension (e.g. VSCode) or with a graphical SQL interface like SQLite.
 
-Access via the command line
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:icon:`fa-solid fa-terminal` Access via the command line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``refineGEMs`` command line tool provides limited access to some of the basic functionalities concering
-the media database, including downloading a config file and retrieving a list of all available media:
+The ``refineGEMs`` command line tool provides limited access to some of the basic functionalities concerning
+the media database, including downloading a configuration (config) file and retrieving a list of all available media:
 
 .. code-block:: bash
 
@@ -66,32 +67,30 @@ the media database, including downloading a config file and retrieving a list of
 
 For more information, see section :ref:`refinegems media`.
 
-Access via Python
-^^^^^^^^^^^^^^^^^
+:icon:`fa-solid fa-code` Access via Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To access the media from inside a Python script, the :py:mod:`~refinegems.classes.medium`
+To access the media from inside a Python script, the module :py:mod:`~refinegems.classes.medium`
 provides classes and functions.
 
 For example, to extract the medium `LB` run:
 
 .. code-block:: python
 
-  from refinegems.classes import Medium
+  from refinegems.classes.medium import load_medium_from_db
 
-  lb = medium.load_medium_from_db('LB')
+  lb = load_medium_from_db('LB')
 
 
-Access the database via a config.yaml
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the idea is to load a list of media - from the database or externel, with or without modifications -
+:icon:`fa-regular fa-file-lines` Access the database via a config.yaml
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the idea is to load a list of media - from the database or external, with or without modifications -
 it might be useful to use the media configuration file. There, different media names with options for 
-modifications can be listed and subsequently loaded using :py:class:`~refinegems.classes.medium` or used as input for other 
-entry points that requires a list of media or the config itself. 
+modifications can be listed and subsequently loaded using :py:func:`~refinegems.classes.medium.load_media` or used as 
+input for other entry points that require a list of media or the config itself. 
 
 .. toctree::
 
   The configuration file <config-desc/media-yaml>
   How to adjust the config <config-desc/media-yaml-howto>
-
-
 

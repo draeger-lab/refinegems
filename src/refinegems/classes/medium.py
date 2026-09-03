@@ -30,8 +30,8 @@ import yaml
 
 from colorama import init as colorama_init
 from colorama import Fore
+from importlib.resources import files
 from pathlib import Path
-from sqlite_dump import iterdump
 from typing import Literal, Union, Any
 
 from ..utility.databases import PATH_TO_DB
@@ -475,7 +475,7 @@ class Medium:
 
         Args:
             - subset_name (str):
-                The type of subset to be added. Name should be in database-substset-id.
+                The type of subset to be added. Name should be in database-subset-id.
             - default_flux (float, optional):
                 Default flux value to calculate fluxes from based  on the percentages saved in the database.
                 Defaults to 10.0.
@@ -538,7 +538,7 @@ class Medium:
 
     # functions for export table
     # --------------------------
-    
+    @staticmethod # This is neccessary to work with produce_medium_docs and generate_docs_for_subset
     def _produce_medium_docs_table_row(row: pd.Series, file: io.TextIOWrapper):
             """Helper function for producing reStructured text for medium definitions, 
             e.g. in with :py:func:`produce_medium_docs_table`.
@@ -557,12 +557,12 @@ class Medium:
                 file.write(f"    - {l}\n")
                 
 
-    def produce_medium_docs_table(self, folder: str = "./", max_width: int = 80) -> str:
+    def produce_medium_docs_table(self, folder: Union[str, Path] = "./", max_width: int = 80) -> str:
         """Produces a rst-file containing reStructuredText for the substance table for documentation.
 
         Args:
-            - folder (str, optional):
-                Path to folder/directory to save the rst-file to. Defaults to './'.
+            - folder (Union[str, Path], optional):
+                Path to folder/directory to save the rst file to. Defaults to './'.
             - max_width (int, optional):
                 Maximal table width of the rst-table. Defaults to 80.
         """
@@ -592,11 +592,7 @@ class Medium:
                 partition = (max_width - flux_width) // 2
                 return f"{str(max_width-flux_width-partition)} {flux_width} {partition}"
 
-        # make sure given directory path ends with '/'
-        if not folder.endswith("/"):
-            folder = folder + "/"
-
-        with open(folder + f"{self.name}.rst", "w") as f:
+        with open(Path(folder, f"{self.name}.rst"), "w") as f:
 
             # slim table to columns of interest for documentation
             m_subs = self.substance_table[["name", "flux", "source"]]
@@ -741,10 +737,11 @@ class Medium:
     # ------------------------
     def export_to_cobra(
         self,
-        namespace: Literal["Name", "BiGG"] = "BiGG",
+        namespace: Literal["Name", "BiGG", "SEED"] = "BiGG",
         default_flux: float = 10.0,
         replace: bool = False,
         double_o2: bool = True,
+        ext_compartment: str = "e",
     ) -> dict[str, float]:
         """Export a medium to the COBRApy format for a medium.
 
@@ -757,6 +754,10 @@ class Medium:
                 Replace all values with the default flux. Defaults to False.
             - double_o2 (bool, optional):
                 Double the flux of oxygen. Defaults to True.
+            - ext_compartment (str, optional):
+                The compartment suffix for external compounds 
+                Mainly used fir the SEED namespace. 
+                Defaults to 'e'.
 
         Raises:
             - ValueError: Unknown namespace.
@@ -783,6 +784,16 @@ class Medium:
                 biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
                 cobra_medium = pd.Series(
                     biggs.flux.values, index=biggs.db_id_EX
+                ).to_dict()
+                
+            case "SEED":
+                
+                seeds = self.substance_table[   
+                    self.substance_table["db_type"].str.contains("SEED")
+                ][["name", "db_id", "flux"]]
+                seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
+                cobra_medium = pd.Series(
+                    seeds.flux.values, index=seeds.db_id_EX
                 ).to_dict()
 
             case _:
@@ -895,7 +906,7 @@ def export_media_from_db_to_file(
             media_names_or_config = available_media # Set all available media names if 'all' is specified
         case str():
             # Check if string is a path to a YAML file
-            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix in yml_suffixes):
+            if Path(media_names_or_config).is_file() and (Path(media_names_or_config).suffix.split('.')[1] in yml_suffixes):
                 # Load media from YAML file
                 media, _ = load_media(media_names_or_config)
                 
@@ -942,30 +953,35 @@ def export_media_from_db_to_file(
             m.export_to_file(type, flavour, no_flux, dir, max_widths)
 
 
-def generate_docs_for_subset(subset_name: str, folder: str = "./", max_width: int = 80):
+def generate_docs_for_subset(subset_name: str, folder: Union[str, Path] = "./", max_width: int = 80):
     """Generate documentation for a subset.
 
     Args:
         - subset_name (str):
-            Name of the subset.
-        - folder (str, optional):
+            Name of the subset to be exported for the documentation. 
+            Name should be in database-subset-id.
+        - folder (Union[str, Path], optional):
             Folder to save the output to. Defaults to './'.
         - max_width (int, optional):
             Maximal table width for the documentation page. Defaults to 80.
     """
+    # Set-up path
+    if folder:
+        if isinstance(folder, str):
+            folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
 
     name, description, subs = load_subset_from_db(subset_name)
 
     with open(Path(folder, f"{name}.rst"), "w") as f:
 
         partition = max_width // 3
-        width = f"{str(max_width-partition)} {partition}"
         header = subs.columns
+        width = f"{str(max_width-partition)} {partition}"
+        title = f"{description} ({name})"
 
         # Produce header/title of HTML page
-        f.write(f"{name}\n" f"{'^' * len(name)}\n")
-
-        f.write(description + "\n\n")
+        f.write(f"{title}\n" f"{'^' * len(title)}\n\n")
 
         # produce descriptor
         f.write(
@@ -1255,7 +1271,7 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
                 for line in f:
                     # parse the comment lines from the file
                     if line.startswith("#"):
-                        l = line.split(":")
+                        l = line.split(":", maxsplit=1)
                         k = l[0]
                         k = k[1:].strip()
                         v = "".join(l[1:])
@@ -1300,6 +1316,24 @@ def load_external_medium(how: Literal["file", "console"], **kwargs) -> Medium:
         # unknown case, raise error
         case _:
             raise ValueError(f"Unknown input for parameter how: {how}")
+
+
+def download_example_medium(filename: str = "custom_medium_substance_table.tsv"):
+    """Load the example external medium file from the package and save a copy for the user to edit.
+
+    Args:
+        - filename (str, optional):
+            Filename to write the example medium to/save it under as.
+            Defaults to 'custom_medium_substance_table.tsv'.
+    """
+
+    example_medium = files("refinegems.example.example_inputs").joinpath(
+        "custom_medium_substance_table.tsv"
+    )
+
+    with example_medium.open("r") as infile, open(filename, "w") as outfile:
+        for line in infile:
+            outfile.write(line)
 
 
 def extract_medium_info_from_model_bigg(row, model: cobra.Model) -> pd.Series:
@@ -2136,7 +2170,7 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
 
     conn = sqlite3.connect(PATH_TO_DB)
     with open(Path(directory, filename), "w") as file:
-        for line in iterdump(conn):
+        for line in conn.iterdump():
             if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
                 if "CREATE TABLE" in line and counter != 0:
                     file.write(f"\n\n{line}\n")
@@ -2188,6 +2222,7 @@ def medium_to_model(
         default_flux=default_flux,
         replace=replace,
         double_o2=double_o2,
+        ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)
     )
 
     # remove exchanges that do not exist in model
@@ -2200,7 +2235,6 @@ def medium_to_model(
         return
     else:
         return exported_medium
-
 
 
 

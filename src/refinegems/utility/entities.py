@@ -15,8 +15,12 @@ import logging
 import pandas as pd
 import re
 import requests
+import subprocess
+import tempfile
 import urllib
 import warnings
+
+from .io import load_model, write_model_to_file
 
 from Bio import Entrez
 from Bio.KEGG import REST, Compound
@@ -90,57 +94,108 @@ logger = logging.getLogger(__name__)
 # handling compartments
 # ---------------------
 
+def get_compartment_ids(model: Union[cobra.Model, libModel]) -> list[str]:
+    """Get compartment IDs based on model type
 
-def are_compartment_names_valid(model: cobra.Model) -> bool:
+    Args:
+        - model (Union[cobra.Model, libModel]): 
+            The model loaded with COBRApy or libSBML.
+
+    Returns:
+        list[str]: 
+            List of compartment IDs
+    Raises:
+        - TypeError: Unknown model object type
+    """
+    match model:
+        case cobra.Model():
+            return model.compartments.keys()
+        case libModel():
+            return [c.getId() for c in model.getListOfCompartments()]
+        case _:
+            raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+# Adjusted with Copilot suggestions for refinement and libSBML support
+def are_compartment_names_valid(model: Union[cobra.Model, libModel]) -> bool:
     """Check if compartment names of model are considered valid based on
     :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`.
 
     Args:
-        - model (cobra.Model):
-            The model, loaded with COBRApy.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Returns:
         bool:
             True, if valid, else false.
+
     """
+    compartment_ids = get_compartment_ids(model)
+    return all(c in VALID_COMPARTMENTS for c in compartment_ids)
 
-    for c in model.compartments.keys():
-        if c not in VALID_COMPARTMENTS.keys():
-            return False
-
-    return True
-
-
-def resolve_compartment_names(model: cobra.Model):
+def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
     """Resolves compartment naming problems.
 
     Args:
-        - model (cobra.Model):
-            A COBRApy model object.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Raises:
         - KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
     """
 
-    # check if compartment names are valid
+    initial_compartment_ids = get_compartment_ids(model)
+
+    # Check if compartment names are valid
     if not are_compartment_names_valid(model):
-
         # check if mapping is possible
-        if set(model.compartments.keys()).issubset(set(COMP_MAPPING.keys())):
-            # for each metabolite rename the compartment
-            for metabolite in model.metabolites:
-                metabolite.compartment = COMP_MAPPING[metabolite.compartment]
-            # add whole descriptions of the compartments to the model
-            # note:
-            #    only compartments IN the model will be added
-            model.compartments = VALID_COMPARTMENTS
-            if "uc" in model.compartments.keys():
-                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
+        if set(initial_compartment_ids).issubset(set(COMP_MAPPING.keys())):
+            match model:
+                case cobra.Model():
+                    # for each metabolite rename the compartment
+                    for metabolite in model.metabolites:
+                        metabolite.compartment = COMP_MAPPING[metabolite.compartment]
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        model.compartments = VALID_COMPARTMENTS
 
+                # @TEST: Needs further testing
+                case libModel():
+                    # for each metabolite rename the compartment
+                    for metabolite in model.getListOfSpecies():
+                        metabolite.setCompartment(COMP_MAPPING[metabolite.getCompartment()])
+
+                    comp_map = {}
+                    # for each compartment rename the compartment ID
+                    for comp in model.getListOfCompartments():
+                        current_id = comp.getId()
+                        new_id = COMP_MAPPING[current_id]
+                        comp.setId(new_id)
+                        # comp_map[current_id] = new_id
+                        
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        if comp.getId() in VALID_COMPARTMENTS:
+                            comp.setName(VALID_COMPARTMENTS[comp.getId()])
+
+                    # # fix ID references in the whole file 
+                    # with tempfile.NamedTemporaryFile(suffix=".xml") as tmp:
+                    #     write_model_to_file(model, tmp.name)
+                    #     for current_id, new_id in tqdm(comp_map.items()):
+                    #         subprocess.run(['sed', '-i', "''",f's/{current_id}/{new_id}/g', tmp.name])
+                    #     model = load_model(tmp.name, "libsbml")
+
+                case _:
+                    raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+            updated_compartment_ids = get_compartment_ids(model)
+            if "uc" in updated_compartment_ids:
+                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
         else:
             raise KeyError(
                 f"Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Please contact developers or change compartment names manually."
-            )
+                )
 
 
 # handling cobra entities (features)
@@ -1838,19 +1893,15 @@ def get_gpid_mapping(
             Model loaded with libSBML
         - gff_paths (str|list[str]):
             Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - email (str):
             E-mail for NCBI queries.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - contains_locus_tags (bool, optional):
             Specifies if provided model has locus tags within the label tag if set to True.
-            This is only used when mapping_tbl_file == None.
             Defaults to False.
         - outpath (str|Path, optional):
             Output path for location where the generated mapping table should be written to.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
 
     Returns:
@@ -1909,12 +1960,14 @@ def get_gpid_mapping(
     logger.info("Extracting model IDs and potential valid database IDs from model...")
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
     modelid2potentialid = {"model_id": [], "database_id": []}
+    if contains_locus_tags:
+        modelid2potentialid["locus_tag"] = []
 
     for gene in tqdm(gene_list):
 
         # Get locus_tag if available
         if contains_locus_tags:
-            modelid2potentialid["locus_tag"] = (
+            modelid2potentialid["locus_tag"].append(
                 gene.getLabel() if gene.isSetLabel() else None
             )
 
@@ -2427,51 +2480,60 @@ def create_gpr(reaction: Reaction, gene: Union[str, list[str]]) -> None:
             Either a gene ID or a list of gene IDs, that will be added to the GPR
             (OR causality).
     """
+    
+    # Step 0: Pre-processing
+    # ----------------------
+    
+    if isinstance(gene, str):
+        gene_list = [gene]
+    else:
+        gene_list = gene
 
     # Step 1: test, if there is already a gpr
     # ---------------------------------------
-    old_association_str = None
-    old_association_fbc = None
+    
+    # case 1: reaction already has a gpr
     if reaction.getPlugin(0).getGeneProductAssociation():
-        old_association = (
-            reaction.getPlugin(0).getGeneProductAssociation().getListOfAllElements()
-        )
-        # case 1: only a single association
-        if len(old_association) == 1 and isinstance(old_association[0], GeneProductRef):
-            old_association_str = old_association[0].getGeneProduct()
-        # case 2: nested structure of asociations
-        elif isinstance(old_association[0], FbcOr) or isinstance(
-            old_association[0], FbcAnd
-        ):
-            old_association_fbc = old_association[0].clone()
-            # this should get the highest level association (that includes all others)
-
-    # Step 2: create new gene product association
-    # -------------------------------------------
-    if old_association_str and isinstance(gene, str):
-        gene = [old_association_str, gene]
-    elif old_association_str and isinstance(gene, list):
-        gene.append(old_association_str)
-
-    # add the old association rule as an 'OR' (if needed)
-    if not old_association_fbc:
-        new_association = reaction.getPlugin(0).createGeneProductAssociation()
+        match reaction.getPlugin(0).getGeneProductAssociation().getAssociation():
+            # case 1.1: single association
+            case GeneProductRef():
+                # save the existing gene product
+                gene_list.append(reaction.getPlugin(0).getGeneProductAssociation().getAssociation().getGeneProduct())
+                # remove old association 
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                # create new 'OR' association
+                reaction.getPlugin(0).createGeneProductAssociation().createOr()
+            # case 1.2: highest level fbc:or
+            case FbcOr():
+                # nothing to do here
+                pass
+            # case 1.3: highest level fbc:and
+            case FbcAnd():
+                # copy old association
+                old_association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation().clone()
+                # build new 'OR' association
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                newOR = reaction.getPlugin(0).createGeneProductAssociation().createOr()
+                # add old association as sub-association
+                newOR.addAssociation(old_association)
+            # case not defined
+            case _:
+                raise TypeError(f"Unknown GPR association type {type(reaction.getPlugin(0).getGeneProductAssociation().getAssociation())}. Check your model for errors or contact developers, if a association type is not implemented.")
+            
+    # case 2: reaction has no gpr yet
     else:
-        new_association = (
-            reaction.getPlugin(0).createGeneProductAssociation().createOr()
-        )
-        new_association.addAssociation(old_association_fbc)
-
-    # add the remaining genes
-    if isinstance(gene, str):
-        new_association.createGeneProductRef().setGeneProduct(gene)
-    elif isinstance(gene, list) and len(gene) == 1:
-        new_association.createGeneProductRef().setGeneProduct(gene[0])
-    elif isinstance(gene, list) and len(gene) > 1:
-        gpa_or = new_association.createOr()
-        for i in gene:
-            gpa_or.createGeneProductRef().setGeneProduct(i)
-
+        # create a new gpr with an 'OR' association
+        reaction.getPlugin(0).createGeneProductAssociation().createOr()
+    
+    # Step 2: add new gprs 
+    # --------------------
+    
+    # get highest level association (should now be FBCor)
+    association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation()
+    # add genes from the list
+    for g in gene_list:
+        association.createGeneProductRef().setGeneProduct(g)
+    
 
 def create_unit(
     model_specs: tuple[int],

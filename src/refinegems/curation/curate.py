@@ -42,7 +42,7 @@ import re
 import requests
 
 from bioservices.kegg import KEGG
-from cobra.io.sbml import _f_specie, _f_reaction, _sbml_to_model
+from cobra.io.sbml import _f_specie, _f_reaction
 from libsbml import Model as libModel
 from libsbml import GeneProduct, Species, ListOfSpecies, ListOfReactions, UnitDefinition, GeneProductRef, FbcAnd, FbcOr
 from pathlib import Path
@@ -60,8 +60,8 @@ from ..utility.cvterms import (
     get_id_from_cv_term,
     remove_cv_terms,
 )
-from ..utility.entities import get_gpid_mapping, create_fba_units, MIN_GROWTH_THRESHOLD
-from ..utility.io import load_a_table_from_database, convert_cobra_to_libsbml
+from ..utility.entities import get_gpid_mapping, create_fba_units, resolve_compartment_names, MIN_GROWTH_THRESHOLD
+from ..utility.io import load_a_table_from_database
 from ..utility.util import DB2REGEX, VALID_COMPARTMENTS, test_biomass_presence
 
 from ..classes.egcs import EGCSolver
@@ -278,7 +278,7 @@ def extend_gp_annots_via_KEGG(
 
         return no_valid_kegg_id
 
-    logging.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
+    logger.info('Trying to add KEGG Gene IDs and UniProt IDs to GeneProducts...')
     for gp in tqdm(gene_list): 
         if gp.getId() != "G_spontaneous": 
             locus_tag = gp.getLabel()
@@ -610,6 +610,16 @@ def add_compartment_structure_specs(model: libModel) -> None:
     """
     for compartment in model.getListOfCompartments():
 
+        if not compartment.isSetMetaId():
+            compartment.setMetaId(f"meta_{compartment.getId()}")
+
+        # Physical compartment is most likely case
+        if not compartment.isSetSBOTerm():
+            if (compartment.getId() == 'uc') or 'unknown' in compartment.getName().lower():
+                compartment.setSBOTerm("SBO:0000410")  # implicit compartment
+            else:
+                compartment.setSBOTerm('SBO:0000290')  # physical compartment
+
         if not compartment.isSetSize():
             compartment.setSize(float("NaN"))
 
@@ -625,14 +635,19 @@ def add_compartment_structure_specs(model: libModel) -> None:
             ):
                 compartment.setUnits(unit_id.group(0))
 
-def fix_compartments(model: libModel) -> None:
+def fix_compartments(model: libModel) -> libModel:
     """Fixes compartments in a model
-       - By adding missing compartments based on metabolite IDs if not set
-       - Setting the size and spatial dimension if not set
+        - By adding missing compartments based on metabolite IDs if not set
+        - By checking for valid compartment IDs & adjusting them if necessary
+        - By setting the size and spatial dimension if not set
 
     Args:
-        - metab_list (ListOfSpecies):
-            libSBML ListOfSpecies
+        - model (libModel):
+            Model loaded with libSBML
+
+    Returns:
+        libModel: 
+            Model as libSBML model with adjusted compartments
     """
     # Check if any metabolites without compartment exist
     comps_missing = not all([m.isSetCompartment() for m in model.getListOfSpecies()])
@@ -640,19 +655,44 @@ def fix_compartments(model: libModel) -> None:
     # If any metabolite has no compartment
     if comps_missing:
         # Get compartment list (for consistency)
-        comps_in_model = model.getListOfCompartments()
+        comps_in_model = set([c.getId() for c in model.getListOfCompartments()])
+        metab_comps = set()
         for m in model.getListOfSpecies():
-            comp_from_id = m.getId().split('_')[-1]
-            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS):
-                m.setCompartment(comp_from_id)
+            comp_from_id = m.getId().split('_')[-1].strip() # In case of whitespace
+            if (comp_from_id in comps_in_model) or (comp_from_id in VALID_COMPARTMENTS.keys()):
+                m.setCompartment(comp_from_id) # Set compartment from id
+                metab_comps.add(comp_from_id)
+
             else:
                 # No compartment in id found, using unknown
                 default_comp = 'uc'
-                logging.WARNING(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
+                logger.warning(f'Compartment for metabolite {m.getId()} not found, setting to {default_comp}:{VALID_COMPARTMENTS["uc"]}')
                 m.setCompartment(default_comp)
+                metab_comps.add(default_comp)
+
+        # Check if any compartment assigned to a metabolite is missing in the compartment list
+        missing_comps = metab_comps - comps_in_model # Comps missing in model
+        if missing_comps: # If any comps missing add to model
+            for c in missing_comps:
+                # Create new compartment based on the id found in the metabolite id
+                new_comp = model.createCompartment()
+                new_comp.setId(c)
+                new_comp.setName(VALID_COMPARTMENTS[c])
+                new_comp.setMetaId(f'meta_{c}')
+
+        comps_to_remove = comps_in_model - metab_comps # Comps in model that are not used by any metabolite
+        if comps_to_remove: # If any comps to remove
+            for c in comps_to_remove:
+                logger.warning(f'Removing compartment {c} as no metabolite is assigned to it.')
+                model.removeCompartment(c)
+
+    # Check validity of compartment IDs & adjust if necessary
+    resolve_compartment_names(model)
 
     # Add specifications for compartment structure
     add_compartment_structure_specs(model)
+
+    return model
 
 def fix_reac_bounds(model: cobra.Model) -> None:
     """Check the model`s reaction bounds and adjust values, if 
@@ -1433,7 +1473,7 @@ def check_direction(model: cobra.Model, data: Union[pd.DataFrame, str], exclude:
                     isinstance(r.annotation["metacyc.reaction"], list)
                     and len(data[data["Reaction"].isin(r.annotation["metacyc.reaction"])]) != 0
                 ):
-                    # @ASK make this more suffisticated?
+                    # @ASK make this more sophisticated?
                     direction = data[data["Reaction"].isin(r.annotation["metacyc.reaction"])][
                         "Reaction-Direction"
                     ].iloc[0]
@@ -1535,7 +1575,6 @@ def polish_model(
     lab_strain: bool = False,
     kegg_organism_id: str = None,
     prefixes2remove_kegg: Union[list[str], str] = '',
-    reaction_direction: str = None,
     outpath: str = None,
 ) -> libModel:
     """Completes all steps to polish a model
@@ -1543,10 +1582,6 @@ def polish_model(
     .. note::
 
         So far only tested for models having either BiGG or VMH identifiers.
-
-    .. hint::
-
-        Reaction direction check disabled for now as function generalises bad.
 
     Args:
         - model (libModel):
@@ -1580,16 +1615,6 @@ def polish_model(
         - prefixes2remove_kegg (Union[str,list[str]], optional):
             Prefix(es) to remove from the locus tag to get a valid KEGG Gene ID.
             Defaults to empty string ('').
-        - reaction_direction (str, optional):
-            Path to a CSV file containing the BioCyc smart table with the columns
-            ``Reactions (MetaCyc ID) | EC-Number | KEGG reaction | METANETX | Reaction-Direction``.
-            For more details see :py:func:`~refinegems.curation.curate.check_direction`
-            Defaults to None.
-
-            .. hint::
-
-                Currently disabled as function generalises bad.
-
         - outpath (str, optional):
             Output path for mapping table from model ID to valid database IDs (if mapping_tbl_file == None)
             & incorrect annotations file(s).
@@ -1599,12 +1624,6 @@ def polish_model(
         libModel:
             Polished libSBML model
     """
-    ### Set-up
-    # Get ListOf objects
-    metab_list = model.getListOfSpecies()
-    reac_list = model.getListOfReactions()
-    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
-
     ### Clean model metadata
     #polish_model_metadata(model)
 
@@ -1614,15 +1633,21 @@ def polish_model(
     set_units_of_parameters(model)
     set_initial_amount_metabs(model)
 
+    ### Fix/clean-up compartments -> requires unit in model
+    model = fix_compartments(model)
+
+    ### Set-up for later functions
+    # Get ListOf objects
+    metab_list = model.getListOfSpecies()
+    reac_list = model.getListOfReactions()
+    gene_list = model.getPlugin("fbc").getListOfGeneProducts()
+
     ### improve metabolite, reaction and gene annotations ###
     extend_metab_reac_annots_via_id(metab_list, id_db)
     extend_metab_reac_annots_via_id(reac_list, id_db)
     extend_metab_reac_annots_via_notes(metab_list)
     extend_metab_reac_annots_via_notes(reac_list)
     update_annotations_from_others(model)
-
-    ### Add compartments based on id
-    fix_compartments(model)
 
     ### Extend annotations for GeneProducts ###
     extend_gp_annots_via_mapping_table(
@@ -1636,13 +1661,7 @@ def polish_model(
     )
     if kegg_organism_id:
         extend_gp_annots_via_KEGG(gene_list, kegg_organism_id, prefixes2remove_kegg)
-
-    ### Check reaction direction ###
-    if reaction_direction:
-        model = _sbml_to_model(model)
-        model = check_direction(model, reaction_direction)
-        model = convert_cobra_to_libsbml(model, add_label_locus='notes')
-
+        
     ### set boundaries and constants ###
     polish_entity_conditions(metab_list)
     polish_entity_conditions(reac_list)
