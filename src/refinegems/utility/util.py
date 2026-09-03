@@ -1,5 +1,11 @@
 """Collection of utility functions."""
 
+__author__ = "Gwendolyn O. Döbel and Carolin Brune"
+
+################################################################################
+# requirements
+################################################################################
+
 import cobra
 import logging
 
@@ -8,9 +14,15 @@ from memote.utils import truncate
 
 from libsbml import Reaction
 from six import iteritems
-from typing import Union
+from typing import Union, Literal, Tuple
 
-__author__ = "Gwendolyn O. Döbel and Carolin Brune"
+from ..developement.optional import require_bioregistry
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -18,59 +30,158 @@ __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 
 # SBO terms
 # ---------
-SBO_BIOCHEM_TERMS = ["SBO:0000377", "SBO:0000399", "SBO:0000402", "SBO:0000403",
-                   "SBO:0000660", "SBO:0000178", "SBO:0000200", "SBO:0000214",
-                   "SBO:0000215", "SBO:0000217", "SBO:0000218", "SBO:0000219",
-                   "SBO:0000220", "SBO:0000222", "SBO:0000223", "SBO:0000233",
-                   "SBO:0000376", "SBO:0000401"] #: :meta: 
+SBO_BIOCHEM_TERMS = [
+    "SBO:0000377",
+    "SBO:0000399",
+    "SBO:0000402",
+    "SBO:0000403",
+    "SBO:0000660",
+    "SBO:0000178",
+    "SBO:0000200",
+    "SBO:0000214",
+    "SBO:0000215",
+    "SBO:0000217",
+    "SBO:0000218",
+    "SBO:0000219",
+    "SBO:0000220",
+    "SBO:0000222",
+    "SBO:0000223",
+    "SBO:0000233",
+    "SBO:0000376",
+    "SBO:0000401",
+]  #: :meta:
+
+SBO_TRANSPORT_TERMS = [
+    "SBO:0000658",
+    "SBO:0000657",
+    "SBO:0000654",
+    "SBO:0000659",
+    "SBO:0000660",
+]  #: :meta:
+
+class _BioregistryPatternMap:
+    """Lazy bioregistry pattern map for optional annotation features."""
+
+    def __getitem__(self, key: str) -> str:
+        return require_bioregistry("validate database identifiers").get_pattern_map()[key]
+
+    def get(self, key: str, default=None):
+        return require_bioregistry("validate database identifiers").get_pattern_map().get(key, default)
+
+
+# Database local identifier regex patterns
+# ----------------------------------------
+DB2REGEX = _BioregistryPatternMap()  #: :meta hide-value:
 
 # compartments
 # ------------
-VALID_COMPARTMENTS = {'c': 'cytosol', 'e': 'extracellular space', 'p':'periplasm','y':'unknown compartment'} #: :meta: 
-COMP_MAPPING = {'c': 'c', 'e': 'e', 'p': 'p',
-                'C_c': 'c', 'C_e': 'e', 'C_p': 'p',
-                '':'y'} #: :meta:
+VALID_COMPARTMENTS = {
+    "c": "cytosol",
+    "e": "extracellular space",
+    "p": "periplasm",
+    "uc": "unknown compartment",
+}  #: :meta:
+COMP_MAPPING = {
+    # standard names
+    "c": "c",
+    "e": "e",
+    "p": "p",
+    # C_ naming
+    "C_c": "c",
+    "C_e": "e",
+    "C_p": "p",
+    # Common names
+    "cytosol": "c",
+    "extracellular": "e",
+    # unknown compartments
+    "": "uc", 
+    "w": "uc",
+}  #: :meta:
 
+# useful defaults
+# ---------------
+MIN_GROWTH_THRESHOLD = 1.0e-5  #: :meta:
 
 ################################################################################
 # functions
 ################################################################################
 
-# @DISCUSSION: Might be useful for logging?
-##### Coloured text:
-# from colorama import init as colorama_init
-# from colorama import Fore
-# 
-# def coloured_example_text():
-#     colorama_init(autoreset=True)
-#     print(f'{Fore.RED}To use the KEGG comparison the specification of the organismid (KEGG organism code) is obligatory.\n' +
-#       'If there is no organism code available for your organism in KEGG but an entry for your organism exists in BioCyc, use the option \'BioCyc\'.\n' +
-#       'If no entry for your organism exists in KEGG and/or BioCyc, the gap analysis cannot be done.')
+
+# Helper function to insert into dictionary
+def insert_into_dict(
+    dictionary: dict, 
+    new_key_vals: Tuple[str, int],
+    target_key: str,
+    mode: Literal['before', 'after']='before'
+    ) -> dict:
+
+    # Dictionary to list
+    itms = list(dictionary.items())
+
+    # Determine index of the target key
+    target_idx  = [i for i, (key, _) in enumerate(itms) if key == target_key][0]
+    
+    # Determine mode
+    match mode:
+        case 'before':
+            if target_idx > 0:
+                itms.insert(target_idx - 1, new_key_vals)
+            else:
+                itms.insert(target_idx, new_key_vals)
+        case 'after':
+            itms.insert(target_idx + 1, new_key_vals)
+        case _:
+            raise KeyError('Invalid key for mode provided. Should be one of ["after", "before]. ')
+
+    return dict(itms)
 
 # SBO
 # ---
 
-# @TODO extend to cover more reactions
-def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
-   """Reannotate the SBO annotations (e.g. from SBOannotator) of a model 
-   into the SBO scheme accessible by memote.
 
-   Args:
-      - model (cobra.Model): 
-         The cobra Model to be reannotated.
+def reannotate_sbo_memote(model: cobra.Model):
+    """Reannotate the SBO annotations (e.g. from SBOannotator) of a model
+    into the SBO scheme accessible by memote.
 
-   Returns:
-       cobra.Model: 
-         The reannotated model 
-   """
+    Args:
+       - model (cobra.Model):
+          The cobra Model to be reannotated.
+    """
 
-   # biochem reactions
-   for r in model.reactions:
-      if 'sbo' in r.annotation:
-         if r.annotation['sbo'] in SBO_BIOCHEM_TERMS:
-            r.annotation['sbo'] = "SBO:0000176"
+    # reactions
+    for r in model.reactions:
+        if "sbo" in r.annotation:
+            # biochemical
+            if r.annotation["sbo"] in SBO_BIOCHEM_TERMS:
+                r.annotation["sbo"] = "SBO:0000176"
+            # transport
+            elif r.annotation["sbo"] in SBO_TRANSPORT_TERMS:
+                r.annotation["sbo"] = "SBO:0000185"
+    # no change needed, as as of now, only one term exists
+    # exchange
+    # memote: SBO:0000627 / same for SBOannotator
 
-    # @TODO: add transport reactions?
+    # demand
+    # memote: SBO:0000628 / same for SBOannotator
+
+    # sink
+    # memote: SBO:0000632 / same for SBOannotator
+
+
+# handling stoichiometric factors
+# -------------------------------
+def is_stoichiometric_factor(s: str) -> bool:
+    """ "Check if a string could be used as a stoichiometric factor.
+
+    Args:
+        - s (str):
+            The string to check.
+    """
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 # handling biomass reaction
@@ -78,7 +189,7 @@ def reannotate_sbo_memote(model:cobra.Model) -> cobra.Model:
 def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
     """
     Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#LL42C3-L42C3
-    
+
     Expect the model to contain at least one biomass reaction.
 
     The biomass composition aka biomass formulation aka biomass reaction
@@ -90,64 +201,69 @@ def test_biomass_presence(model: cobra.Model) -> Union[list[str], None]:
 
     Implementation:
     Identifies possible biomass reactions using two principal steps:
-    
+
         1. Return reactions that include the SBO annotation "SBO:0000629" for
         biomass.
-        
+
         2. If no reactions can be identified this way:
-        
+
             1. Look for the ``buzzwords`` "biomass", "growth" and "bof" in reaction IDs.
             2. Look for metabolite IDs or names that contain the ``buzzword`` "biomass" and obtain the set of reactions they are involved in.
             3. Remove boundary reactions from this set.
             4. Return the union of reactions that match the buzzwords and of the reactions that metabolites are involved in that match the buzzword.
-        
+
     This test checks if at least one biomass reaction is present.
-    
+
     If no reaction can be identified return None.
 
     """
     biomass_rxn = [rxn.id for rxn in helpers.find_biomass_reaction(model)]
     outcome = len(biomass_rxn) > 0
-    logging.info(
+    logger.info(
         """In this model the following {} biomass reaction(s) were
         identified: {}""".format(
             len(biomass_rxn), truncate(biomass_rxn)
         )
     )
-    if outcome: return biomass_rxn
-    else: return None
+    if outcome:
+        return biomass_rxn
+    else:
+        return None
 
 
 def sum_biomass_weight(reaction: Reaction) -> float:
     """
     From MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/support/biomass.py#L95
-    
+
     Compute the sum of all reaction compounds.
 
     This function expects all metabolites of the biomass reaction to have
     formula information assigned.
+    
+    .. note::
+        If there is a rest symbolised by an "R", its weight will be considered 0.
 
     Args:
-        - reaction (Reaction): 
+        - reaction (Reaction):
             The biomass reaction of the model under investigation.
 
     Returns:
-        float: 
+        float:
             The molecular weight of the biomass reaction in units of g/mmol.
     """
-    return (
-        sum(
+    cobra.core.formula.elements_and_molecular_weights['R'] = 1.0
+    biomass_weight = sum(
             -coef * met.formula_weight
             for (met, coef) in iteritems(reaction.metabolites)
-        )
-        / 1000.0
-    )
-    
-    
+        )/ 1000.0
+    del cobra.core.formula.elements_and_molecular_weights['R']
+    return biomass_weight
+
+
 def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[float, str]:
     """
     Modified from MEMOTE: https://github.com/opencobra/memote/blob/81a55a163262a0e06bfcb036d98e8e551edc3873/src/memote/suite/tests/test_biomass.py#L89
-    
+
     Expect biomass components to sum up to 1 g[CDW].
 
     This test only yields sensible results if all biomass precursor
@@ -163,7 +279,7 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
     its molecular weight calculated from the formula, then divides the overall
     sum of all the products by 1000.
 
-    Args: 
+    Args:
         - model(cobraModel):
             The model loaded with COBRApy.
         - reaction_id(str):
@@ -171,11 +287,11 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
 
     Returns:
         (1) Case: problematic input
-                str: 
+                str:
                     an error message.
-        
+
         (2) Case: successful testing
-                float: 
+                float:
                     biomass weight
     """
     reaction = model.reactions.get_by_id(reaction_id)
@@ -188,23 +304,23 @@ def test_biomass_consistency(model: cobra.Model, reaction_id: str) -> Union[floa
         """
         return message
     else:
-        if ((1 - 1e-03) < biomass_weight < (1 + 1e-06)):
-            logging.info(            
+        if (1 - 1e-03) < biomass_weight < (1 + 1e-06):
+            logger.info(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is inside the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
                     reaction_id, biomass_weight
-                    )
                 )
+            )
         else:
-            logging.warning(
+            logger.warning(
                 """The component molar mass of the biomass reaction {} sums up to {}
                 which is outside of the 1e-03 margin from 1 mmol / g[CDW] / h.
                 """.format(
                     reaction_id, biomass_weight
                 )
             )
-    #outcome = (1 - 1e-03) < biomass_weight < (1 + 1e-06) -> Need to implement that for check
+    # outcome = (1 - 1e-03) < biomass_weight < (1 + 1e-06) -> Need to implement that for check
     # To account for numerical inaccuracies, a range from 1-1e0-3 to 1+1e-06
     # is implemented in the assertion check
     return biomass_weight
