@@ -1,7 +1,11 @@
 #!/usr/bin/env python
-"""Most functions within this module were copied from the MEMOTE GitHub page and modified by Gwendolyn O. Döbel.
+"""Biomass objective function helpers.
 
-This module provides functions to normalise the biomass objective function(s).
+Most functions within this module were adapted from MEMOTE and modified by
+Gwendolyn O. Döbel. MEMOTE is distributed under the Apache License 2.0:
+https://github.com/opencobra/memote/blob/develop/LICENSE
+
+This module provides functions to normalise the biomass objective functions.
 """
 
 __author__ = "MEMOTE and Gwendolyn O. Döbel"

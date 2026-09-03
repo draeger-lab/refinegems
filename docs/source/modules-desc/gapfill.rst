@@ -5,12 +5,12 @@ Finding and filling gaps in a genome-scale metabolic model is a frequently discu
 time-consuming part of the modelling process.
 
 The :py:mod:`~refinegems.classes.gapfill` module of ``refineGEMs`` provides different 
-flavors of :ref:`(Semi-)automated gap-filling algorithms`.
+flavours of :ref:`(Semi-)automated gap-filling algorithms`.
 
-.. warning:: 
+.. caution::
 
-    The gap-filling has undergone major restructuring. Gap-filling of version 
-    > *2.0.0* behaves fundamentally different than the implementations in older versions. 
+    The :py:mod:`~refinegems.classes.gapfill` module has undergone major restructuring. Gap-filling as of version 
+    *2.0.0* behaves fundamentally different than the implementations in older versions. 
 
 Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
 
@@ -20,8 +20,15 @@ Currently, ``refineGEMs`` includes three ways of (semi-)automated gap-filling:
 - | :ref:`Gap-filling with BioCyc`:
   | If the organism to be modelled has an *entry in BioCyc*, this information can be compared to the model to add missing genes, reactions and more.
 
-- | :ref:`Gap-filling with a GFF (and SwissProt)`:
+- | :ref:`Gap-filling with a GFF (and a DIAMOND database)`:
   | This algorithm takes the protein GFF file of the organism and blasts the missing genes (products) against the SwissProt/a user-defined database to find homologs, that can then be added to the model.
+
+.. hint::
+
+  The gap-filling algorithms for KEGG and BioCyc have alternative implementations for the case that only a close 
+  relative of the organism to be modelled has an entry in the respective database. This implementation is, currently, only 
+  available via the `dev_for_gapfill <https://github.com/draeger-lab/refinegems/tree/dev_for_gapfill>`_ branch and will 
+  be added in a later version.
 
 ----
 
@@ -43,7 +50,7 @@ The algorithms have the same basic architecture:
     b. Try to add reactions and metabolites to the model, if they can be successfully (completely) constructed in an automated manner.
     c. Add the genes and GPRs of the reactions added in the previous step.
 
-During the steps above, if the information content if insufficient or the constructions of a model entity fails, 
+During the steps above, if the information content is insufficient or the construction of a model entity fails, 
 the corresponding part is collected and saved for the user to enable faster manual curation afterwards (if desired).
 
 All algorithms have similar table outputs for the finding part, the filling part is therefore
@@ -56,7 +63,7 @@ which reactions and metabolites should be added to the model:
 
 - ``exclude_dna``: If set to True, reactions containing the keyword ``DNA`` in their name are not added.
 - ``exclude_rna``: If set to True, reactions containing the keyword ``RNA`` in their name are not added.
-- ``formula_check``: Allow only reactions, whoose metabolites' formulas are of a certain quality.
+- ``formula_check``: Allow only reactions, whose metabolites' formulas are of a certain quality.
     
     a. ``"none"``: No restriction
     b. ``"existence"``: Formula exists (exludes empty string and None/NaN values)
@@ -64,7 +71,7 @@ which reactions and metabolites should be added to the model:
     d. ``"strict"``: Extends the previous option to also exclude formulas with a rest, denoted as ``"R"``
 
 After the gap-filling is done, statistics and information about remaining missing genes and reactions can be saved in a :py:mod:`~refinegems.classes.reports.GapFillerReport`.
-Firstly, the quantities of added genes and reactions and of those which could not be added are saved in both a table and as a visualization.
+Firstly, the quantities of added genes and reactions and of those which could not be added are saved in both a table and as a visualisation.
 Secondly, the remaining missing genes and reactions are saved separately in tables named after the missing information due to which they could not be added.
 
 Gap-filling with KEGG
@@ -93,50 +100,99 @@ Gap-filling with BioCyc
 
 If an organism has an entry for its metabolism in BioCyc, one can download two smart tables 
 containing the available information about the genes (at least the columns ``Accession-2`` and 
-``Reactions of gene``) and the reactions (at least the columns ``Reaction | Object ID | EC-Number | Spontanous?``).
+``Reactions of gene``) and the reactions (at least the columns ``Reaction | Object ID | EC-Number | Spontaneous?``).
 
 These two tables, together with the GFF file are the required input for this gap-filling algorithm.
-The missing genes are identfied by comparing the gene table ``Accession-2`` column to the model.
+The missing genes are identified by comparing the gene table's ``Accession-2`` column to the genes in the model.
 Subsequently, the missing genes are mapped back to the reactions to identify missing reactions.
 The reactions are further mapped to MetaNetX and BiGG to obtain more reaction equations and 
 information, since especially the metabolites are easier to construct using the other databases.
 
-Data acquisition from BioCyc
-""""""""""""""""""""""""""""
+Required BioCyc input files
+"""""""""""""""""""""""""""
+
+The command-line interface expects the BioCyc input files under the following options:
+
+- ``--genetable`` / ``-gt``: BioCyc gene SmartTable exported as a spreadsheet file.
+  The parser requires the columns ``Accession-2`` and ``Reactions of gene``. The
+  ``Accession-2`` column must contain the same GenBank or RefSeq locus tags that are stored
+  as gene product labels in the model.
+- ``--reactable`` / ``-rt``: BioCyc reaction SmartTable exported as a spreadsheet
+  file. The parser requires the columns ``Reaction``, ``Object ID``, ``EC-Number``
+  and ``Spontaneous?``.
+- ``--gff-bc``: GFF3 annotation file for the same organism or strain. The file is
+  used to map missing locus tags to NCBI protein identifiers and names, so its CDS
+  entries should contain ``locus_tag``, ``protein_id`` and, if available, ``product``
+  attributes.
+
+.. important::
+  
+  If BioCyc stores the relevant locus tags in a different accession column for the 
+  organism, export that column and rename it to ``Accession-2`` before using the 
+  table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
+
+How to get the tables from BioCyc
+"""""""""""""""""""""""""""""""""
 
 1. If you have no BioCyc account you will need to create one. See `BioCyc Create Free Account <https://biocyc.org/new-account.shtml>`__ to create an account. 
-2. Then you need to search for the strain of your organism.
-3. Within the database of your organism you need to click on `Tools` in the menu bar and select `Special SmartTables` under `SmartTables`.
-   There you need to make an adjustable copy of each of the tables "All genes of <organism>" and "All reactions of <organism>".   
+2. Then you need to search for your specific organism, i.e. the exact strain, and change to the corresponding organism database.
+3. Within the chosen database you need to click on `Tools` in the menu bar and select `Special SmartTables` under `SmartTables`.
+   (There you need to make an adjustable copy of each of the tables "All genes of <organism>" and "All reactions of <organism>".)
 4. **For the gene to reaction mapping table:**
 
         i. Remove all columns except 'Gene Name' from the "All genes of <organism>" table,
-        ii. then click `choose a transform` and select 'Reactions of gene', 
-        iii. then add the `property` 'Accession-2'
+        ii. select the column 'Gene Name',
+        iii. then select
+        
+          a. 'Reactions of gene' 
+          b. and 'Accession-2'
+          
+          under `ADD COLUMN` and click `submit`.
 
-        .. note:: The column 'Accession-2' should contain the Genbank locus tags of your organism. If this information 
-            is not in this column, try the column 'Acccession-1'. If you used another column to obtain these locus tags, 
-            please, rename it to 'Accession-2' before using the table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
+        .. important::
 
-        iv. and delete the 'Gene Name' column.
+          The column 'Accession-2' should contain the Genbank or RefSeq locus tags of your organism. If this information 
+          is not in this column, try the column 'Accession-1'. If you used another column to obtain these locus tags, 
+          please, rename it to 'Accession-2' before using the table with :py:class:`~refinegems.classes.gapfill.BioCycGapFiller`.
+
+        iv. Delete the 'Gene Name' column.
         v. After that select the column containing the locus tags and use the filter function in the box on the right side of the page to delete all empty rows.
         vi. Finally, click `Export to Spreadsheet File` from the box on the right side and choose `frame IDs`.
-        
+
+The resulting table should look like this (start of the downloaded file):
+
+.. code-block:: text
+
+    Reactions of gene	Accession-2
+    	LOCUSTAG_1001
+    GLUTAMATESYN-RXN // GLUTAMIN-RXN // GLUTDEHYD-RXN	LOCUSTAG_1013
+
 5. **For the reactions table:** 
 
     i. Remove all columns except 'Reaction' from the "All reactions of <organism>" table,
-    ii. then choose the `property`: 
+    ii. select the column 'Reaction',
+    iii. then select
     
         a. 'Object ID',
-        b. then 'EC-Number',
-        c. and then 'Spontaneous?'.
+        b. 'EC-Number'
+        c. and 'Spontaneous?'
+
+        under `ADD COLUMN` and click `submit`.
         
-    iii. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `common names`.
+    iv. Finally, click `Export to Spreadsheet File` in the box on the right side and choose `common names`.
+
+The resulting table should look like this (start of the downloaded file):
+
+.. code-block:: text
+
+    Reaction	Object ID	EC-Number	Spontaneous?
+    orotidine 5'-phosphate + diphosphate  <-  5-phospho-alpha-D-ribose 1-diphosphate + orotate	OROPRIBTRANS-RXN	EC-2.4.2.10	
+    6-deoxy-6-sulfo-D-fructose 1-phosphate  ->  (2S)-3-sulfolactaldehyde + glycerone phosphate	RXN-15298	EC-4.1.2.57	
 
 Gap-filling with a GFF (and a DIAMOND database)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file)
+| **Requirement:** Protein GFF (RefSeq or GenBank format), DIAMOND database file (+ database mapping file for DIAMOND-based EC mapping)
 | **Class:** :py:class:`~refinegems.classes.gapfill.GeneGapFiller`
 | **Runtime estimation:** ~3min (1min (for finding all missing components without NCBI) + 2min (for filling); tested with *Klebsiella pneumoniae* HS11286 and *Staphylococcus haemolyticus* from a private collection)
 
@@ -156,14 +212,40 @@ reactions that should be added to the model. However, enabling the NCBI search w
 algorithm significantly, since the NCBI search is done via the Entrez API and therefore
 limited to a certain number of requests per second.
 
+Required GeneGapFiller input files
+""""""""""""""""""""""""""""""""""
+
+The command-line interface expects the organism annotation under ``--gff-g``. This
+GFF3 file should describe the same organism or strain as the model and should contain
+CDS entries with ``locus_tag`` attributes. The locus tags are compared to the gene
+product labels in the model. CDS entries may also contain ``protein_id`` and
+``eC_number`` attributes. Existing EC numbers are used directly; missing EC numbers
+can be inferred from homolog searches or, optionally, from NCBI.
+
+For DIAMOND-based mapping, the following files are required together:
+
+- ``--fasta``: Protein FASTA file for the same organism or model. The sequences are
+  used as DIAMOND query input for missing genes that still need EC information.
+- ``--dmnd-db``: DIAMOND database searched for homologs. For the default
+  ``--db-type swissprot`` workflow, this is the SwissProt DIAMOND database. The
+  required SwissProt files can be downloaded with ``refinegems setup data
+  SwissProt_gapfill``. For ``--db-type user``, provide a DIAMOND database built from
+  the user-defined reference proteins.
+- ``--db-mapping`` / ``-db-map``: Mapping file for the selected database. For
+  ``swissprot``, this maps SwissProt identifiers to EC and BRENDA information. For
+  ``user``, it must map the identifiers in the user-defined database to EC numbers.
+
+The NCBI lookup is optional. If ``--check-ncbi`` is set, ``--mail`` must also be
+provided so Entrez requests include a contact address.
+
 How to run a GapFiller
 ----------------------
 
 Due to the gap-filling algorithms having the same architecture, the function calls
 for running them are basically the same, save for some parameters (will be denoted as ``<params>`` 
-in the following code snippets.)
+in the following code snippets).
 
-.. note::
+.. important::
 
     Please keep in mind that using this module requires a model containing the Genbank locus tags as labels.
     If your model does not conform to this you can use one of the functions
@@ -212,7 +294,7 @@ To access information between steps or afterwards, the following attributes can 
     - :code:`gapfiller.missing_genes`: Table of currently missing and not further categorised genes.
     - :code:`gapfiller.missing_reactions`: Table of currently missing and not further categorised reactions.
     - :code:`gapfiller._statistics`: Dictionary of statistical values, e.g. number of added genes.
-    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information that cannot be added automatically due to different reasons. Reason is denoted in the key.
+    - :code:`gapfiller.manual_curation`: Dictionary of tables containing information that cannot be added automatically due to different reasons. The reason is denoted in the key.
 
     Some GapFillers also provide additional, for the corresponding algorithm specific, attributes.
 

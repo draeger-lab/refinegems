@@ -196,7 +196,7 @@ def find_kegg_pathways(
                             case _:
                                 logger.warning(f"Unexpected type for KEGG pathway ID: {str(kegg_reaction['db']['kegg.pathway'])} for {reac_id} on {kegg_id}")
                     else:
-                        logging.warning(f"There was an error while parsing KEGG ID {kegg_id} for {reac_id}.\nManual re-checking required.")
+                        logger.warning(f"There was an error while parsing KEGG ID {kegg_id} for {reac_id}.\nManual re-checking required.")
                 
                 # exception handling
                 except KeyError:

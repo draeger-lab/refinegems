@@ -50,7 +50,7 @@ def implement(func):
             "The current function is just a placeholder and will be implement in the fucture."
         )
 
-    doc_extension = """\n.. note:: \n\t*Will be coming in a future release.*"""
+    doc_extension = "\n\n.. note::\n\n   *Will be coming in a future release.*"
     if wrapper.__doc__:
         wrapper.__doc__ += doc_extension
     else:

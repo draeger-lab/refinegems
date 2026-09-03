@@ -12,14 +12,15 @@ __author__ = "Famke Baeuerle and Alina Renz and Carolin Brune"
 
 import cobra
 
-from libsbml import Model as libModel
 from cobra import Model as cobraModel
+from libsbml import Model as libModel
 
 from memote.support import consistency
 
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
+from ..developement.optional import require_bioregistry
 from ..utility.util import test_biomass_presence
 
 ################################################################################
@@ -138,23 +139,26 @@ def get_mass_charge_unbalanced(model: cobraModel) -> tuple[list[str], list[str]]
 
 
 def summarise_annotation_coverage(model:cobra.Model) -> tuple[dict, dict, dict]:
-    """Summarise the annotation coverage of model entities by collecting the types of annotations 
-    and their counts and percentages.
+    """Summarise the annotation coverage of model entities by collecting types of annotations and their counts and percentages.
 
     Args:
-        - model (cobra.Model): 
-            A model loaded with the COBRApy package.
+       -  model (cobra.Model): A model loaded with the COBRApy package.
 
     Returns:
         tuple[dict, dict, dict]: 
             Three dictionaries containing the annotation coverage for genes, reactions, and metabolites.
-            Each dictionary has the format:
-            {
-                'database_name': (count, percentage),
-                ...
-            }
-            where 'database_name' is the name of the annotation database, 'count' is the number of entities
-            annotated with that database, and 'percentage' is the percentage of entities annotated with that database.
+            Each dictionary maps a database name to a tuple (count, percentage), where:
+
+            - database_name (str): name of the annotation database
+            - count (int): number of entities annotated with that database
+            - percentage (float): percentage of entities annotated with that database
+
+    .. code-block::
+
+        {
+            'database_name': (count, percentage),
+            ...
+        }
     """
     
     # genes
@@ -232,11 +236,18 @@ def get_reactions_per_sbo(model: libModel) -> dict:
         dict:
             SBO Term as keys and number of reactions as values
     """
+    is_valid_curie = require_bioregistry("validate SBO CURIEs").is_valid_curie
     sbos_dict = {}
     for react in model.getListOfReactions():
         sbo = react.getSBOTerm()
+        
+        complete_sbo_term = f'sbo:0000{sbo}'
+        if not is_valid_curie(complete_sbo_term):
+            sbo = 'invalid'
+    
         if sbo in sbos_dict.keys():
             sbos_dict[sbo] += 1
         else:
             sbos_dict[sbo] = 1
+    
     return sbos_dict
