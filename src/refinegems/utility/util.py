@@ -6,7 +6,6 @@ __author__ = "Gwendolyn O. Döbel and Carolin Brune"
 # requirements
 ################################################################################
 
-import bioregistry
 import cobra
 import logging
 
@@ -16,6 +15,8 @@ from memote.utils import truncate
 from libsbml import Reaction
 from six import iteritems
 from typing import Union, Literal, Tuple
+
+from ..developement.optional import require_bioregistry
 
 ################################################################################
 # setup logging
@@ -58,9 +59,19 @@ SBO_TRANSPORT_TERMS = [
     "SBO:0000660",
 ]  #: :meta:
 
+class _BioregistryPatternMap:
+    """Lazy bioregistry pattern map for optional annotation features."""
+
+    def __getitem__(self, key: str) -> str:
+        return require_bioregistry("validate database identifiers").get_pattern_map()[key]
+
+    def get(self, key: str, default=None):
+        return require_bioregistry("validate database identifiers").get_pattern_map().get(key, default)
+
+
 # Database local identifier regex patterns
 # ----------------------------------------
-DB2REGEX = bioregistry.get_pattern_map()  #: :meta hide-value:
+DB2REGEX = _BioregistryPatternMap()  #: :meta hide-value:
 
 # compartments
 # ------------
