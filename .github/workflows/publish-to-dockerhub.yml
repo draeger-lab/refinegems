@@ -100,14 +100,10 @@ jobs:
           IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/refinegems
           PUBLISH_LATEST: ${{ needs.validate-and-test.outputs.publish_latest }}
           VERSION: ${{ needs.validate-and-test.outputs.version }}
-          VERSION_TAG: ${{ needs.validate-and-test.outputs.version_tag }}
         run: |
           {
             echo "tags<<EOF"
             echo "${IMAGE_NAME}:${VERSION}"
-            if [ "$VERSION" != "$VERSION_TAG" ]; then
-              echo "${IMAGE_NAME}:${VERSION_TAG}"
-            fi
             if [ "$PUBLISH_LATEST" = "true" ]; then
               echo "${IMAGE_NAME}:latest"
             fi
