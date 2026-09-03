@@ -15,8 +15,12 @@ import logging
 import pandas as pd
 import re
 import requests
+import subprocess
+import tempfile
 import urllib
 import warnings
+
+from .io import load_model, write_model_to_file
 
 from Bio import Entrez
 from Bio.KEGG import REST, Compound
@@ -32,7 +36,6 @@ from libsbml import (
     GeneProductRef,
     Unit,
     UnitDefinition,
-    ListOfUnitDefinitions,
 )
 from libsbml import UNIT_KIND_MOLE, UNIT_KIND_GRAM, UNIT_KIND_LITRE, UNIT_KIND_SECOND
 from libsbml import BQM_IS, BQM_IS_DERIVED_FROM, BQM_IS_DESCRIBED_BY
@@ -71,10 +74,14 @@ from .util import (
 from ..developement.decorators import *
 
 ################################################################################
-# variables
+# setup logging
 ################################################################################
 
-REF_COL_GF_GENE_MAP = {"UniProt": "UNIPROT", "GeneID": "NCBIGENE"}  #: :meta:
+logger = logging.getLogger(__name__)
+
+################################################################################
+# variables
+################################################################################
 
 ################################################################################
 # functions
@@ -87,57 +94,108 @@ REF_COL_GF_GENE_MAP = {"UniProt": "UNIPROT", "GeneID": "NCBIGENE"}  #: :meta:
 # handling compartments
 # ---------------------
 
+def get_compartment_ids(model: Union[cobra.Model, libModel]) -> list[str]:
+    """Get compartment IDs based on model type
 
-def are_compartment_names_valid(model: cobra.Model) -> bool:
+    Args:
+        - model (Union[cobra.Model, libModel]): 
+            The model loaded with COBRApy or libSBML.
+
+    Returns:
+        list[str]: 
+            List of compartment IDs
+    Raises:
+        - TypeError: Unknown model object type
+    """
+    match model:
+        case cobra.Model():
+            return model.compartments.keys()
+        case libModel():
+            return [c.getId() for c in model.getListOfCompartments()]
+        case _:
+            raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+# Adjusted with Copilot suggestions for refinement and libSBML support
+def are_compartment_names_valid(model: Union[cobra.Model, libModel]) -> bool:
     """Check if compartment names of model are considered valid based on
     :py:const:`~refinegems.utility.util.VALID_COMPARTMENTS`.
 
     Args:
-        - model (cobra.Model):
-            The model, loaded with COBRApy.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Returns:
         bool:
             True, if valid, else false.
+
     """
+    compartment_ids = get_compartment_ids(model)
+    return all(c in VALID_COMPARTMENTS for c in compartment_ids)
 
-    for c in model.compartments.keys():
-        if c not in VALID_COMPARTMENTS.keys():
-            return False
-
-    return True
-
-
-def resolve_compartment_names(model: cobra.Model):
+def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
     """Resolves compartment naming problems.
 
     Args:
-        - model (cobra.Model):
-            A COBRApy model object.
+        - model (Union[cobra.Model, libModel]):
+            The model loaded with COBRApy or libSBML.
 
     Raises:
         - KeyError: Unknown compartment raises an error to add it to the mapping. Important for developers.
     """
 
-    # check if compartment names are valid
+    initial_compartment_ids = get_compartment_ids(model)
+
+    # Check if compartment names are valid
     if not are_compartment_names_valid(model):
-
         # check if mapping is possible
-        if set(model.compartments.keys()).issubset(set(COMP_MAPPING.keys())):
-            # for each metabolite rename the compartment
-            for metabolite in model.metabolites:
-                metabolite.compartment = COMP_MAPPING[metabolite.compartment]
-            # add whole descriptions of the compartments to the model
-            # note:
-            #    only compartments IN the model will be added
-            model.compartments = VALID_COMPARTMENTS
-            if "uc" in model.compartments.keys():
-                logging.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
+        if set(initial_compartment_ids).issubset(set(COMP_MAPPING.keys())):
+            match model:
+                case cobra.Model():
+                    # for each metabolite rename the compartment
+                    for metabolite in model.metabolites:
+                        metabolite.compartment = COMP_MAPPING[metabolite.compartment]
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        model.compartments = VALID_COMPARTMENTS
 
+                # @TEST: Needs further testing
+                case libModel():
+                    # for each metabolite rename the compartment
+                    for metabolite in model.getListOfSpecies():
+                        metabolite.setCompartment(COMP_MAPPING[metabolite.getCompartment()])
+
+                    comp_map = {}
+                    # for each compartment rename the compartment ID
+                    for comp in model.getListOfCompartments():
+                        current_id = comp.getId()
+                        new_id = COMP_MAPPING[current_id]
+                        comp.setId(new_id)
+                        # comp_map[current_id] = new_id
+                        
+                        # add whole descriptions of the compartments to the model
+                        # note:
+                        #    only compartments IN the model will be added
+                        if comp.getId() in VALID_COMPARTMENTS:
+                            comp.setName(VALID_COMPARTMENTS[comp.getId()])
+
+                    # # fix ID references in the whole file 
+                    # with tempfile.NamedTemporaryFile(suffix=".xml") as tmp:
+                    #     write_model_to_file(model, tmp.name)
+                    #     for current_id, new_id in tqdm(comp_map.items()):
+                    #         subprocess.run(['sed', '-i', "''",f's/{current_id}/{new_id}/g', tmp.name])
+                    #     model = load_model(tmp.name, "libsbml")
+
+                case _:
+                    raise TypeError(f"Unknown model object type: {type(model)}. Must be one of (cobra.Model, libsbml.Model).")
+
+            updated_compartment_ids = get_compartment_ids(model)
+            if "uc" in updated_compartment_ids:
+                logger.warning("Unknown compartment(s) detected and (re)named 'uc'. Simulation results might be affected.")
         else:
             raise KeyError(
                 f"Unknown compartment {[_ for _ in model.compartments if _ not in COMP_MAPPING.keys()]} detected. Please contact developers or change compartment names manually."
-            )
+                )
 
 
 # handling cobra entities (features)
@@ -322,6 +380,7 @@ def match_id_to_namespace(
             match namespace:
 
                 case "BiGG":
+                    # if a BiGG idea is annotated
                     if "bigg.metabolite" in model_entity.annotation.keys():
                         # currently takes first entry if annotation is list
                         model_entity.id = (
@@ -331,8 +390,15 @@ def match_id_to_namespace(
                             if isinstance(
                                 model_entity.annotation["bigg.metabolite"], str
                             )
-                            else model_entity.annotation["bigg.metabolite"][0]
+                            else model_entity.annotation["bigg.metabolite"][0] + "_" + model_entity.compartment
                         )
+                    # otherwise, transfer current ID into "BiGG" format
+                    # @DISCUSSION is there a better way to do this?
+                    else: 
+                        if model_entity.id.endswith(f"_{model_entity.compartment}"):
+                            pass
+                        else:
+                            model_entity.id = model_entity.id + f"_{model_entity.compartment}"
 
                 case _:
                     mes = f"Unknown input for namespace: {namespace}"
@@ -427,6 +493,42 @@ def isreaction_complete(
             case _:
                 mes = f"Unknown options for formula_check: {formula_check}\nChecking the metabolite formula will be skipped."
                 warnings.warn(mes, UserWarning)
+                
+    # check chemical plausability 
+    # ---------------------------
+    
+    # check mass balance 
+    elements_products = dict()
+    elements_reactants = dict()
+    factors = reac.metabolites
+    # get elements products
+    for met in reac.products:
+        for k,v in met.elements.items():
+            if k in elements_products.keys():
+                elements_products[k] += v*factors[met]
+            else:
+                elements_products[k] = v*factors[met]
+    # get elements of reactants
+    for met in reac.reactants:
+        for k,v in met.elements.items():
+            if k in elements_reactants.keys():
+                elements_reactants[k] += v*abs(factors[met])
+            else:
+                elements_reactants[k] = v*abs(factors[met])
+    # check difference
+    if elements_products == elements_reactants:
+        # mass conservation 
+        pass
+    elif len(set(elements_products.keys()).union(set(elements_reactants.keys()))) != len(elements_reactants):
+        # elements do not match
+        return False
+    else: 
+        # elements counts to not match
+        # @ASK better idea, so see, if this might be fixable?  
+        factors = reac.metabolites
+        for k in elements_products.keys():
+            if elements_reactants[k] != elements_products[k]:
+                return False
 
     return True
 
@@ -566,7 +668,8 @@ def build_metabolite_mnx(
         new_metabolite.annotation["metanetx.chemical"] = [metabolite_prop["id"].iloc[0]]
         if not pd.isnull(metabolite_prop["InChIKey"].iloc[0]):
             new_metabolite.annotation["inchikey"] = (
-                metabolite_prop["InChIKey"].iloc[0].split("=")[1]
+                # MNX version < 4.5: inchikey=... ; version >= 4.5 just the key, no "="
+                metabolite_prop["InChIKey"].iloc[0].split("=")[1] if "=" in metabolite_prop["InChIKey"].iloc[0] else metabolite_prop["InChIKey"].iloc[0]
             )
 
         # get more annotation from the mnx_chem_xref table
@@ -729,7 +832,7 @@ def build_metabolite_kegg(
         
         # in case of an ambiguous mapping, take first match
         if len(mnx_ids) > 1:
-            logging.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
+            logger.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
             mnx_ids = [mnx_ids[0]]
         
         # mapping is unambiguously (or made that way)
@@ -1228,6 +1331,8 @@ def build_reaction_mnx(
     # get annotations
     # ---------------
     new_reac.annotation["sbo"] = "SBO:0000167"
+    # get annotation for id
+    new_reac.annotation["metanetx.reaction"] = [id]
     # get more annotation from the mnx_reac_xref table
     for db in [
         "bigg.reaction",
@@ -1254,10 +1359,6 @@ def build_reaction_mnx(
 
     # add additional references from the parameter
     _add_annotations_from_dict_cobra(references, new_reac)
-
-    # get annotations
-    # ---------------
-    new_reac.annotation["sbo"] = "SBO:0000167"
 
     # add notes
     # ---------
@@ -1397,6 +1498,8 @@ def build_reaction_kegg(
     # add more information
     # --------------------
     new_reac.annotation["sbo"] = "SBO:0000167"
+     # get annotation for id
+    new_reac.annotation["kegg.reaction"] = [id]
     # get more information from searching the KEGG ID in BiGG
     bigg_res = load_a_table_from_database(
         f"SELECT * FROM bigg_reactions WHERE \"KEGG Reaction\" = '{id}'", query=True
@@ -1589,9 +1692,10 @@ def build_reaction():
 def remove_non_essential_genes(
     model: cobra.Model,
     genes_to_check: Union[list[cobra.Gene], None] = None,
+    keep_in_complex: bool=True,
     remove_reactions: bool = True,
     min_growth_threshold: float = MIN_GROWTH_THRESHOLD,
-) -> tuple[int, int]:
+) -> tuple[int, int, int]:
     """Remove non-essential genes based on gene knock-out.
 
     Args:
@@ -1600,6 +1704,9 @@ def remove_non_essential_genes(
         - genes_to_check (Union[list[cobra.Gene],None], optional):
             List of genes to check. If None, all genes of the model are checked.
             Defaults to None.
+        - keep_in_complex (bool, optional):
+            Check, if a gene if part of a complex (GPR connection with AND).
+            If True, keep genes, even if they are non-essential.
         - remove_reactions (bool, optional):
             If set to True, also remove corresponding reactions.
             Defaults to True.
@@ -1612,11 +1719,13 @@ def remove_non_essential_genes(
             Tuple of (1) int, (2) int:
                 (1) Number of deleted genes.
                 (2) Number of essential genes.
+                (3) Number of nonessential genes in a complex 
     """
 
     # initialise values
     to_delete = 0
     essential_counter = 0
+    incomplex = 0 
     remove = False
 
     # if no list of genes is given, take all genes of model
@@ -1632,9 +1741,21 @@ def remove_non_essential_genes(
             res = model.optimize()
             # make sure, model still reaches minimal growth
             if res.objective_value > min_growth_threshold:
+                # check, if gene is part of a complex
+                complexctr = False
+                if keep_in_complex:  # kepp genes in complex (AND connection)
+                    for r in m.reactions:
+                        reac_genes = [_.id for _ in list(r.genes)]
+                        if reac_genes != 0 and ('and '+g.id in r.gene_reaction_rule or g.id+' and' in r.gene_reaction_rule):
+                            logger.info(f'Keeping gene {g.id}, as it is part of a complex. Check during manual curation.')
+                            complexctr = True 
+                            break
+                if complexctr:
+                    incomplex += 1
                 # set for deletion
-                remove = True
-                to_delete += 1
+                else:
+                    remove = True
+                    to_delete += 1
             else:
                 # keep
                 essential_counter += 1
@@ -1646,7 +1767,7 @@ def remove_non_essential_genes(
             )
             remove = False
 
-    return (to_delete, essential_counter)
+    return (to_delete, essential_counter, incomplex)
 
 
 # ++++++++++++++++++++++++++++++++++++++++
@@ -1754,33 +1875,33 @@ def get_gpid_mapping(
     """Generate a mapping from model IDs to valid database IDs via model content, GFF files (optional)
     and NCBI requests (optional).
 
-    .. hint:
+    .. warning::
 
         Mappings may be incomplete and require manual adjustment.
+        
+        If locus tags from Genbank or RefSeq are present within the GeneProduct 
+        identifier and no GFF is provided, these will be added incorrectly to 
+        the annotations as NCBI Protein or RefSeq URIs.
 
-    .. note:
+    .. note::
 
         Mapping currently is only implemented for NCBI Protein and RefSeq IDs.
-        Other databases may be added in the future.
+        Other databases may be added in the future. 
 
     Args:
         - model (libModel):
             Model loaded with libSBML
         - gff_paths (str|list[str]):
             Path(s) to GFF file(s). Allowed GFF formats are: RefSeq, NCBI and Prokka.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - email (str):
             E-mail for NCBI queries.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
         - contains_locus_tags (bool, optional):
             Specifies if provided model has locus tags within the label tag if set to True.
-            This is only used when mapping_tbl_file == None.
             Defaults to False.
         - outpath (str|Path, optional):
             Output path for location where the generated mapping table should be written to.
-            This is only used when mapping_tbl_file == None.
             Defaults to None.
 
     Returns:
@@ -1807,6 +1928,9 @@ def get_gpid_mapping(
         """
         # Get NCBI ID
         ncbi_id = row["database_id"] if not pd.isnull(row["database_id"]) else ''
+        ncbi_id_alt = None # search for alternative pattern with '_' instead of '.'
+        if ncbi_id.count('_') == 2:
+            ncbi_id_alt = '.'.join(ncbi_id.rsplit("_",1))
 
         # Get locus_tag
         locus_tag = row.get("locus_tag", '') if not pd.isnull(row.get("locus_tag")) else ''
@@ -1817,10 +1941,14 @@ def get_gpid_mapping(
             # If identifier matches RefSeq ID pattern
             if re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id, re.IGNORECASE):
                 row["REFSEQ"] = row["database_id"]
+            elif ncbi_id_alt and re.fullmatch(rf'{DB2REGEX["refseq"]}', ncbi_id_alt, re.IGNORECASE):
+                row["REFSEQ"] = ncbi_id_alt
 
             # If identifier matches ncbiprotein ID pattern
             elif re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id, re.IGNORECASE):
                 row["NCBI"] = row["database_id"]
+            elif ncbi_id_alt and re.fullmatch(rf'{DB2REGEX["ncbiprotein"]}$', ncbi_id_alt, re.IGNORECASE):
+                row["NCBI"] = ncbi_id_alt
 
             # No pattern match & no locus_tag match
             else:
@@ -1829,15 +1957,17 @@ def get_gpid_mapping(
         return row
 
     # 1. Get model IDs & potential contained IDs
-    print("Extracting model IDs and potential valid database IDs from model...")
+    logger.info("Extracting model IDs and potential valid database IDs from model...")
     gene_list = model.getPlugin("fbc").getListOfGeneProducts()
     modelid2potentialid = {"model_id": [], "database_id": []}
+    if contains_locus_tags:
+        modelid2potentialid["locus_tag"] = []
 
     for gene in tqdm(gene_list):
 
         # Get locus_tag if available
         if contains_locus_tags:
-            modelid2potentialid["locus_tag"] = (
+            modelid2potentialid["locus_tag"].append(
                 gene.getLabel() if gene.isSetLabel() else None
             )
 
@@ -1865,6 +1995,8 @@ def get_gpid_mapping(
             # Case 5: Model ID contains locus_tag, AB-1_S128_00983
             else:
                 ncbi_id = gene_id
+        else:
+            ncbi_id = None
 
         # Add potential database ID to dictionary
         modelid2potentialid["database_id"].append(ncbi_id)
@@ -1878,7 +2010,7 @@ def get_gpid_mapping(
     mapping_table["UNCLASSIFIED"] = None
 
     # Classify potential database IDs according to db specific regexes
-    print('Classifying potential database IDs according to db specific regexes...')
+    logger.info('Classifying potential database IDs according to db specific regexes...')
     mapping_table = mapping_table.progress_apply(_classify_potential_db_ids, axis=1)
     mapping_table.drop("database_id", axis=1, inplace=True)
 
@@ -1887,7 +2019,7 @@ def get_gpid_mapping(
 
     # 1.1 (Optional) Get information from GFF(s)
     if gff_paths:
-        print("Extracting (protein id,) locus tag and name from GFF(s)...")
+        logger.info("Extracting (protein id,) locus tag and name from GFF(s)...")
 
         # Identical attributes to keep per GFF
         to_keep = {"locus_tag": "locus_tag", "product": "name"}
@@ -1900,6 +2032,9 @@ def get_gpid_mapping(
 
             # Check if protein_id in columns
             if "protein_id" in current_gff.columns: to_keep.update({"protein_id": "database_id"})
+            # @TODO
+            # @IDEA 
+            # Also get refseq locus tag for filtering?
 
             # Subset dataframe to only keep relevant columns & rename them
             current_gff = current_gff[to_keep.keys()]
@@ -1919,7 +2054,7 @@ def get_gpid_mapping(
                 current_gff["UNCLASSIFIED"] = None
 
                 # Classify potential database IDs according to db specific regexes
-                print('Classifying potential database IDs according to db specific regexes...')
+                logger.info('Classifying potential database IDs according to db specific regexes...')
                 current_gff = current_gff.progress_apply(_classify_potential_db_ids, axis=1)
                 current_gff.drop("database_id", axis=1, inplace=True)
                 
@@ -1953,9 +2088,13 @@ def get_gpid_mapping(
         # Merge both dataframes
         # If merge on identical columns is possible
         if identical_columns:
+            # Filter mapping_table to only keep rows where at least one of the identical_columns is not NaN/None
+            filtered_mapping_table = mapping_table.dropna(subset=identical_columns, how="all")
+            nan_mapping_table = mapping_table[~mapping_table.index.isin(filtered_mapping_table.index)]
             mapping_table = pd.merge(
-                mapping_table, gff_mapping, how="outer", on=identical_columns
+                filtered_mapping_table, gff_mapping, how="outer", on=identical_columns
             )
+            mapping_table = pd.concat([mapping_table, nan_mapping_table], ignore_index=True)
         else:  
             # Try merge on locus_tag & UNCLASSIFIED as UNCLASSIFIED could contain locus tags
             try:
@@ -1974,7 +2113,7 @@ def get_gpid_mapping(
                     filename = Path(outpath, filename)
                 else:
                     filename = Path(filename)
-                print(f'''
+                logger.warning(f'''
 No common columns found between mapping table derived from model and mapping table derived from provided GFFs. Cannot merge.
 The resulting mapping tables will be returned separately. The table for the GFF mapping is written to {filename}.
                 ''')
@@ -1984,7 +2123,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
     contains_protein_ids = len({'NCBI', 'REFSEQ'}.intersection(set(mapping_table.columns))) > 0
     if email and contains_protein_ids:
         Entrez.email = email
-        print("Retrieve locus tag and name information from NCBI...")
+        logger.info("Retrieve locus tag and name information from NCBI...")
 
         # Add empty columns for names and locus tags if not already contained
         if not "locus_tag" in mapping_table.columns:
@@ -2001,18 +2140,14 @@ The resulting mapping tables will be returned separately. The table for the GFF 
                 mapping_table["name_refseq"] = None
 
         # Query NCBI based on RefSeq Protein ID
-        print('Querying NCBI based on RefSeq Protein IDs...')
+        logger.info('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("refseq",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "refseq", email)
 
         # Query NCBI based on NCBI Protein ID
-        print('Querying NCBI based on NCBI Protein IDs...')
+        logger.info('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "ncbiprotein", email)
 
     # Clean-up dataframe for output
     def _merge_name_cols(row: pd.Series) -> pd.Series:
@@ -2046,11 +2181,12 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         # Default name is whatever is stored in name column, if exists, or None
         return row
 
-    print('Cleaning up dataframe for output...')
+    logger.info('Cleaning up dataframe for output...')
     # Generate default column name to set content
     if not 'name' in mapping_table.columns:
         mapping_table["name"] = None
     mapping_table = mapping_table.progress_apply(_merge_name_cols, axis=1)
+
     # Remove unnecessary name columns, if they exist
     names_to_remove = [n_col for n_col in mapping_table.columns if n_col.startswith("name_")]
     if names_to_remove: mapping_table.drop(names_to_remove, axis=1, inplace=True)
@@ -2063,7 +2199,7 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         filename = Path(outpath, filename)
     else:
         filename = Path(filename)
-    logging.info(
+    logger.info(
         f"The mapping table mapping the geneProduct IDs of the provided model {model.getId()} to the names and locus "
         + f"tags is saved to {filename}"
     )
@@ -2077,20 +2213,21 @@ The resulting mapping tables will be returned separately. The table for the GFF 
 
 def create_gp(
     model: libModel,
-    protein_id: str,
+    protein_id: str = None,
     model_id: str = None,
     name: str = None,
     locus_tag: str = None,
     reference: dict[str : tuple[Union[list, str], bool]] = dict(),
-    sanity_check: bool = False
+    sanity_check: bool = True
 ) -> None:
     """Creates GeneProduct in the given libSBML model.
 
     Args:
         - model (libModel):
             The model object, loaded with libSBML.
-        - protein_id (str):
+        - protein_id (str, optional):
             (NCBI) Protein ID of the gene.
+            Defaults to None.
         - model_id (str, optional):
             If given, uses this string as the ID of the gene in the model.
             ID should be identical to ID that CarveMe adds from the NCBI FASTA input file.
@@ -2102,8 +2239,7 @@ def create_gp(
             Defaults to None.
         - reference (dict, optional):
             Dictionary containing references for the gene product.
-            The key is the database name, the value is a tuple with the first element being the ID(s)
-            and the second element being a boolean indicating if the strain is a lab strain or not.
+            The key is the database name, the value is either a set containing the ID(s) or a single ID string.
             Defaults to an empty dictionary.
         - sanity_check (bool, optional):
             Check, whether locus tag (label) or model ID (ID) already exist in model.
@@ -2133,12 +2269,12 @@ def create_gp(
         genes = model.getPlugin(0).getListOfGeneProducts()
         for g in genes:
             # for ID 
-            if g.isSetId() and g.getId == model_id:
-                logging.warning(f'Cannot add gene product, as ID {model_id} is alreaedy in the model.')
+            if g.isSetId() and g.getId() == model_id:
+                logger.warning(f'Cannot add gene product, as ID {model_id} is already in the model.')
                 return None
             # for locus tag as label
             if label and g.isSetLabel() and g.getLabel() == label:
-                logging.warning(f'Cannot add gene product, as label {label} is already in the model.')
+                logger.warning(f'Cannot add gene product, as label {label} is already in the model.')
                 return None
         
     # create gene product object
@@ -2147,39 +2283,46 @@ def create_gp(
     gp.setIdAttribute(model_id)
     if name:
         gp.setName(name)  # Name
-    if label:
+    if label: # If locus_tag exists write to label and notes
         gp.setLabel(label)  # Label
+        gp.unsetNotes()
+        note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+        <p>locus_tag: {label}</p>
+        </html>'''
+        gp.setNotes(note_string)
+        
     gp.setSBOTerm("SBO:0000243")  # SBOterm
-    gp.setMetaId(f"meta_{_f_gene_rev(protein_id)}")  # Meta ID
+    gp.setMetaId(f"meta_{model_id}")  # Meta ID
     # test for NCBI/RefSeq
     id_db = None
-    if re.fullmatch(
-        r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
-        protein_id,
-        re.IGNORECASE,
-    ):
-        id_db = "REFSEQ"
-    elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", protein_id, re.IGNORECASE):
-        id_db = "NCBI"
-    if id_db:
-        add_cv_term_genes(protein_id, id_db, gp)  # NCBI protein
+    if protein_id:
+        if re.fullmatch(
+            r"^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|WP|XM|XP|XR|YP|ZP)_\d+)|(NZ_[A-Z]{2,4}\d+))(\.\d+)?$",
+            protein_id,
+            re.IGNORECASE,
+        ):
+            id_db = "REFSEQ"
+        elif re.fullmatch(r"^(\w+\d+(\.\d+)?)|(NP_\d+)$", protein_id, re.IGNORECASE):
+            id_db = "NCBI"
+        if id_db:
+            add_cv_term_genes(protein_id, id_db, gp)  # NCBI protein
 
     # add further references
-    # references {'dbname':(list_or_str_of_id,lab_strain_bool)}
+    # references {'dbname': set_or_str_of_id}
     if reference and len(reference) > 0:
-        for dbname, specs in reference.items():
-            match specs[0]:
-                case list():
-                    for s in specs[0]:
-                        add_cv_term_genes(s, REF_COL_GF_GENE_MAP[dbname], gp, specs[1])
+        for dbname, ids in reference.items():
+            match ids:
+                case set():
+                    for s in ids:
+                        add_cv_term_genes(s, dbname, gp, True)
                 case str():
                     add_cv_term_genes(
-                        specs[0], REF_COL_GF_GENE_MAP[dbname], gp, specs[1]
+                        ids, dbname, gp, True
                     )
                 case None:
                     pass
                 case _:
-                    raise ValueError(f"Unexpected type for reference value: {specs[0]}")
+                    raise ValueError(f"Unexpected type for reference value: {ids}")
 
 
 def create_species(
@@ -2214,7 +2357,7 @@ def create_species(
             (2) libModel: Model containing the created metabolite
     """
     metabolite = model.createSpecies()
-    metabolite.setId(f"M_{metabolite_id}")
+    metabolite.setId(f"M_{metabolite_id}_{compartment_id}")
     if name:
         metabolite.setName(name)
     metabolite.setMetaId(f"meta_M_{metabolite_id}")
@@ -2225,6 +2368,7 @@ def create_species(
     metabolite.setConstant(False)
     metabolite.setCompartment(compartment_id)
     metabolite.getPlugin(0).setCharge(charge)
+    # @DISCUSSION Replace '*' with 'R' except if only '*' to ensure SBML conformity?
     metabolite.getPlugin(0).setChemicalFormula(chem_formula)
     add_cv_term_metabolites(metabolite_id[:-2], "BIGG", metabolite)
     return metabolite, model
@@ -2332,51 +2476,60 @@ def create_gpr(reaction: Reaction, gene: Union[str, list[str]]) -> None:
             Either a gene ID or a list of gene IDs, that will be added to the GPR
             (OR causality).
     """
+    
+    # Step 0: Pre-processing
+    # ----------------------
+    
+    if isinstance(gene, str):
+        gene_list = [gene]
+    else:
+        gene_list = gene
 
     # Step 1: test, if there is already a gpr
     # ---------------------------------------
-    old_association_str = None
-    old_association_fbc = None
+    
+    # case 1: reaction already has a gpr
     if reaction.getPlugin(0).getGeneProductAssociation():
-        old_association = (
-            reaction.getPlugin(0).getGeneProductAssociation().getListOfAllElements()
-        )
-        # case 1: only a single association
-        if len(old_association) == 1 and isinstance(old_association[0], GeneProductRef):
-            old_association_str = old_association[0].getGeneProduct()
-        # case 2: nested structure of asociations
-        elif isinstance(old_association[0], FbcOr) or isinstance(
-            old_association[0], FbcAnd
-        ):
-            old_association_fbc = old_association[0].clone()
-            # this should get the highest level association (that includes all others)
-
-    # Step 2: create new gene product association
-    # -------------------------------------------
-    if old_association_str and isinstance(gene, str):
-        gene = [old_association_str, gene]
-    elif old_association_str and isinstance(gene, list):
-        gene.append(old_association_str)
-
-    # add the old association rule as an 'OR' (if needed)
-    if not old_association_fbc:
-        new_association = reaction.getPlugin(0).createGeneProductAssociation()
+        match reaction.getPlugin(0).getGeneProductAssociation().getAssociation():
+            # case 1.1: single association
+            case GeneProductRef():
+                # save the existing gene product
+                gene_list.append(reaction.getPlugin(0).getGeneProductAssociation().getAssociation().getGeneProduct())
+                # remove old association 
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                # create new 'OR' association
+                reaction.getPlugin(0).createGeneProductAssociation().createOr()
+            # case 1.2: highest level fbc:or
+            case FbcOr():
+                # nothing to do here
+                pass
+            # case 1.3: highest level fbc:and
+            case FbcAnd():
+                # copy old association
+                old_association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation().clone()
+                # build new 'OR' association
+                reaction.getPlugin(0).getGeneProductAssociation().unsetAssociation()
+                newOR = reaction.getPlugin(0).createGeneProductAssociation().createOr()
+                # add old association as sub-association
+                newOR.addAssociation(old_association)
+            # case not defined
+            case _:
+                raise TypeError(f"Unknown GPR association type {type(reaction.getPlugin(0).getGeneProductAssociation().getAssociation())}. Check your model for errors or contact developers, if a association type is not implemented.")
+            
+    # case 2: reaction has no gpr yet
     else:
-        new_association = (
-            reaction.getPlugin(0).createGeneProductAssociation().createOr()
-        )
-        new_association.addAssociation(old_association_fbc)
-
-    # add the remaining genes
-    if isinstance(gene, str):
-        new_association.createGeneProductRef().setGeneProduct(gene)
-    elif isinstance(gene, list) and len(gene) == 1:
-        new_association.createGeneProductRef().setGeneProduct(gene[0])
-    elif isinstance(gene, list) and len(gene) > 1:
-        gpa_or = new_association.createOr()
-        for i in gene:
-            gpa_or.createGeneProductRef().setGeneProduct(i)
-
+        # create a new gpr with an 'OR' association
+        reaction.getPlugin(0).createGeneProductAssociation().createOr()
+    
+    # Step 2: add new gprs 
+    # --------------------
+    
+    # get highest level association (should now be FBCor)
+    association = reaction.getPlugin(0).getGeneProductAssociation().getAssociation()
+    # add genes from the list
+    for g in gene_list:
+        association.createGeneProductRef().setGeneProduct(g)
+    
 
 def create_unit(
     model_specs: tuple[int],
@@ -2560,18 +2713,3 @@ def create_fba_units(model: libModel) -> list[UnitDefinition]:
     add_cv_term_units("pubmed:7986045", mmgdwh, BQM_IS_DESCRIBED_BY)
 
     return [mmgdwh, mmgdw, hour, femto_litre]
-
-
-# print model entities using libsbml
-# ----------------------------------
-
-
-def print_UnitDefinitions(unit_defs: ListOfUnitDefinitions):
-    """Prints a list of libSBML UnitDefinitions as XMLNodes
-
-    Args:
-        - unit_defs (ListOfUnitDefinitions):
-            List of libSBML UnitDefinition objects
-    """
-    for unit_def in unit_defs:
-        logging.info(unit_def.toXMLNode())

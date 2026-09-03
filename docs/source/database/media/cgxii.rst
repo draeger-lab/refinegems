@@ -1,8 +1,9 @@
 Corynebacterium glutamicum optimized growth medium (CGXII)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 CGXII is a medium developed to optimize growth of *Corynebacterium glutamicum*. Since *C. glutamicum* is used widely in 
-biotechnology applications, it was of interest to optimize a medium just for this species\ 
-:footcite:p:`unthanGrowthRateWhat2014`.
+biotechnology applications, it was of interest to optimize a medium just for this species. The following *in silico* 
+definition contains all components as described in 'Beyond growth rate 0.6: What drives Corynebacterium glutamicum to higher growth rates in defined medium'\ 
+:footcite:p:`unthanGrowthRateWhat2014` (Materials and Methods, Medium Preparation).
 
 .. list-table:: CGXII composition
   :name: cgxii_comp

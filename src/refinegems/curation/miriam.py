@@ -15,19 +15,12 @@ import re
 import libsbml
 import logging
 
-from bioregistry import (
-    is_valid_curie,
-    is_valid_identifier,
-    manager,
-    normalize_parsed_curie,
-    get_identifiers_org_iri,
-)
 from colorama import Fore, Style
 from datetime import date
 from functools import reduce
 
 from libsbml import Model as libModel
-from libsbml import UnitDefinition, SBase
+from libsbml import SBMLDocument, UnitDefinition, SBase, ListOf
 from libsbml import (
     MODEL_QUALIFIER,
     BQM_IS,
@@ -46,14 +39,61 @@ from tqdm.auto import tqdm
 from ..utility.cvterms import generate_cvterm, MIRIAM, OLD_MIRIAM
 from ..utility.db_access import BIOCYC_TIER1_DATABASES_PREFIXES
 from ..utility.io import parse_dict_to_dataframe
+from ..developement.optional import require_bioregistry
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
+
+################################################################################
+# variables
+################################################################################
+
+non_alnum_pattern = re.compile(r'[\W_]+') # :meta: 
+DEPRECATED_PREFIXES = {
+    'ecogene',
+    'ncbigi' # Converted to accession version since 2016 according to NCBI
+} # :meta:
 
 ################################################################################
 # functions
 ################################################################################
 
 
+def _parse_bioregistry_uri(bioregistry, uri: str) -> tuple[str, str] | None:
+    """Parse a URI while tolerating incompatible bioregistry/curies releases."""
+    try:
+        parsed_uri = bioregistry.manager.parse_uri(uri)
+    except Exception:
+        try:
+            parsed_uri = bioregistry.manager.converter.parse_uri(uri)
+        except Exception:
+            return None
+
+    if not parsed_uri:
+        return None
+
+    prefix, identifier = parsed_uri
+    if prefix is None or identifier is None:
+        return None
+
+    return prefix, identifier
+
+
+def _is_valid_bioregistry_uri(bioregistry, uri: str) -> bool:
+    """Return whether a URI parses to a valid bioregistry identifier."""
+    parsed_uri = _parse_bioregistry_uri(bioregistry, uri)
+    try:
+        return bool(parsed_uri and bioregistry.is_valid_identifier(*parsed_uri))
+    except Exception:
+        return False
+
+
 # Change CURIE pattern/Correct CURIEs
 # ------------------------------------
+# @FIXME Check if compatibility with bioregistry versions starting from 0.12.19 is possible
 def get_set_of_curies(
     uri_list: list[str],
 ) -> tuple[SortedDict[str : SortedSet[str]], list[str]]:
@@ -73,6 +113,7 @@ def get_set_of_curies(
     curie_dict = SortedDict()
     prefix, identifier = None, None
     invalid_curies = []
+    bioregistry = require_bioregistry("polish and validate MIRIAM annotations")
 
     for uri in uri_list:
 
@@ -84,13 +125,24 @@ def get_set_of_curies(
         else:
             extracted_curie = uri
 
-        curie = manager.parse_curie(
+        curie = bioregistry.manager.parse_curie(
             extracted_curie
         )  # Contains valid db prefix to identifiers pairs
         curie = list(curie)  # Turn tuple into list to allow item assignment
 
+        # @DEBUG
+        #print(f'Prefix:CURIE at start of get_set_of_curies: {curie[0]}:{curie[1]}')
+
         # Prefix is valid but to have same result for same databases need to do a bit of own parsing
-        if curie[0]:  
+        if curie[0]:
+            
+            # Check for presence of '<' or '>' in the identifier part of the CURIE
+            # This is to avoid issues with HTML-like strings that might be present in the identifier
+            # as these are hard to fix as it is not clear what the correct identifier should be
+            if "<" in curie[1] or ">" in curie[1]:
+                invalid_curies.append(f"{curie[0]}:{curie[1]}")
+                continue
+            
             if re.fullmatch(
                 r"^biocyc$", curie[0], re.IGNORECASE
             ):  # Check for biocyc to also add metacyc if possible
@@ -102,10 +154,10 @@ def get_set_of_curies(
                 )
 
                 if "META" in curie[1]:
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid BioCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -117,15 +169,15 @@ def get_set_of_curies(
                     curie[1] = curie[1].split(r"META:")[
                         1
                     ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                    if re.search(r"^rxn-|-rxn$", curie[1], re.IGNORECASE):
+                    if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                         curie[0] = "metacyc.reaction"
-                    else:
+                    else: 
                         curie[0] = "metacyc.compound"
             elif "metacyc." in curie[0]:
-                if is_valid_identifier(
+                if bioregistry.is_valid_identifier(
                     *curie
                 ):  # Get the valid MetaCyc identifier & Add to dictionary
-                    prefix, identifier = normalize_parsed_curie(*curie)
+                    prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                     if not curie_dict or (prefix not in curie_dict):
                         curie_dict[prefix] = SortedSet()
@@ -171,6 +223,10 @@ def get_set_of_curies(
                         )
                     elif re.fullmatch(r"^inchikey$", extracted_curie[0], re.IGNORECASE):
                         curie = (extracted_curie[0].lower(), extracted_curie[1])
+                    
+                    # make sure no non-alphanumeric characters are in the InChIKey
+                    elif non_alnum_pattern.sub('', extracted_curie[0]) == 'inchikey':
+                        curie = ('inchikey', extracted_curie[1]) 
                     else:
                         wrong_prefix = extracted_curie[0].split(r":")
                         curie = (
@@ -194,10 +250,10 @@ def get_set_of_curies(
                     curie = ["biocyc", extracted_curie[1]]
 
                     if "META" in curie[1]:
-                        if is_valid_identifier(
+                        if bioregistry.is_valid_identifier(
                             *curie
                         ):  # Get the valid BioCyc identifier & Add to dictionary
-                            prefix, identifier = normalize_parsed_curie(*curie)
+                            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                             if not curie_dict or (prefix not in curie_dict):
                                 curie_dict[prefix] = SortedSet()
@@ -209,16 +265,16 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE):
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
                 elif "metacyc." in extracted_curie[0]:
                     curie = extracted_curie
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid MetaCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -281,10 +337,10 @@ def get_set_of_curies(
                     curie = ["biocyc", extracted_curie[1]]
 
                     if "META" in curie[1]:
-                        if is_valid_identifier(
+                        if bioregistry.is_valid_identifier(
                             *curie
                         ):  # Get the valid BioCyc identifier & Add to dictionary
-                            prefix, identifier = normalize_parsed_curie(*curie)
+                            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                             if not curie_dict or (prefix not in curie_dict):
                                 curie_dict[prefix] = SortedSet()
@@ -296,16 +352,16 @@ def get_set_of_curies(
                         curie[1] = curie[1].split(r"META:")[
                             1
                         ]  # Metacyc identifier comes after 'META:' in biocyc identifier
-                        if re.search(r"^rxn-|-rxn$", curie[1], re.IGNORECASE):
+                        if re.search(r"^(rxn|trans-rxn)[-]*|[-]*(rxn)$", curie[1], re.IGNORECASE): 
                             curie[0] = "metacyc.reaction"
                         else:
                             curie[0] = "metacyc.compound"
                 elif "metacyc." in extracted_curie[0]:
                     curie = extracted_curie
-                    if is_valid_identifier(
+                    if bioregistry.is_valid_identifier(
                         *curie
                     ):  # Get the valid MetaCyc identifier & Add to dictionary
-                        prefix, identifier = normalize_parsed_curie(*curie)
+                        prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
 
                         if not curie_dict or (prefix not in curie_dict):
                             curie_dict[prefix] = SortedSet()
@@ -333,8 +389,8 @@ def get_set_of_curies(
                     else:
                         curie[1] = extracted_curie[1]
 
-        if is_valid_identifier(*curie):  # Get all valid identifiers
-            prefix, identifier = normalize_parsed_curie(*curie)
+        if bioregistry.is_valid_identifier(*curie):  # Get all valid identifiers
+            prefix, identifier = bioregistry.normalize_parsed_curie(*curie)
         else:
 
             if curie[0] == "eccode":
@@ -343,7 +399,7 @@ def get_set_of_curies(
                 ]  # EC number needs to have 4 places if splitted at the dots
                 while len(correct_id.split(r".")) < 4:
                     correct_id = f"{correct_id}.-"
-                prefix, identifier = normalize_parsed_curie(curie[0], correct_id)
+                prefix, identifier = bioregistry.normalize_parsed_curie(curie[0], correct_id)
                 # Report too long EC codes as invalid CURIEs!
                 if len(correct_id.split(r".")) > 4:
                     invalid_curies.append(f"{prefix}:{identifier}")
@@ -422,11 +478,21 @@ def generate_miriam_compliant_uri_set(
             Sorted set containing complete URIs
     """
     uri_set = SortedSet()
+    bioregistry = require_bioregistry("generate MIRIAM-compliant annotation IRIs")
 
     for prefix in prefix2id:
         for identifier in prefix2id.get(prefix):
-            uri = get_identifiers_org_iri(prefix, identifier)
-            uri_set.add(uri)
+            # @DEBUG
+            #print(f'Prefix:CURIE before identifiers.org IRI is generated: {prefix}:{identifier}')
+            if not prefix in DEPRECATED_PREFIXES:
+                uri = bioregistry.get_identifiers_org_iri(prefix, identifier)
+                # @DEBUG
+                #print(f'Resulting IRI: {uri}')
+                uri_set.add(uri)
+            else:
+                logger.warning(
+                    f"The prefix '{prefix}' is deprecated. The corresponding CURIE '{prefix}:{identifier}' cannot be converted to a MIRIAM compliant URI."
+                )
 
     return uri_set
 
@@ -467,6 +533,7 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
     """
     collected_invalid_curies = []
     pattern = rf"{MIRIAM}|{OLD_MIRIAM}"
+    bioregistry = require_bioregistry("polish and validate MIRIAM annotations")
     cvterms = entity.getCVTerms()
     cvterms = [cvterm.clone() for cvterm in cvterms]
     entity.unsetCVTerms()
@@ -500,8 +567,8 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
             cvterm.removeResource(cu)
 
             if (
-                is_valid_identifier(*manager.parse_uri(current_uri))
-                or is_valid_curie(current_uri.lower())
+                _is_valid_bioregistry_uri(bioregistry, current_uri)
+                or bioregistry.is_valid_curie(current_uri.lower())
                 or re.match(pattern, current_uri, re.IGNORECASE)
             ):
                 # For Rhea entries if version is specified with '#' remove the version
@@ -518,8 +585,12 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
 
         prefix2id, invalid_curies = get_set_of_curies(tmp_list)
         collected_invalid_curies.extend(invalid_curies)
+        
+        # Add valid CURIEs with selected pattern & report if no valid CURIEs exist
         if prefix2id:
             if new_pattern:
+                # @DEBUG
+                #print(f'Prefix:CURIE dictionary before generate_miriam_compliant_uri_set: {prefix2id}')
                 uri_set = generate_miriam_compliant_uri_set(prefix2id)
             else:
                 uri_set = generate_uri_set_with_old_pattern(prefix2id)
@@ -527,8 +598,12 @@ def improve_uri_per_entity(entity: SBase, new_pattern: bool) -> list[str]:
         else:
             # Remove annotations if no valid URIs/CURIEs were found
             if cvterm.getNumResources() < 1:
-                logging.warning(
-                    f"No valid URIs/CURIEs found for {entity.getId()}. To resolve manually please inspect file containing invalid CURIEs."
+                entity_reference = entity.getId()
+                if type(entity) == SBMLDocument:
+                    entity.unsetMetaId() # Remove meta ID from SBMLDocument as not necessary
+                    entity_reference = entity.getElementName() # Get entity name as SBMLDocument has no ID
+                logger.warning(
+                    f"No valid URIs/CURIEs found for {entity_reference}. To resolve manually please inspect file containing invalid CURIEs."
                 )
 
     return collected_invalid_curies
@@ -551,10 +626,12 @@ def improve_uris(entities: SBase, new_pattern: bool) -> dict[str : list[str]]:
     """
     entity2invalid_curies = {}
 
-    if type(entities) == libModel:  # Model needs to be handled like entity!
+    if not isinstance(entities, ListOf):  # Model & SBMLDocument need to be handled like entity! 
+        # type(entities) == libModel or type(entities) == SBMLDocument
         invalid_curies = improve_uri_per_entity(entities, new_pattern)
         if invalid_curies:
-            entity2invalid_curies[entities.getId()] = invalid_curies
+            entity_reference = entities.getElementName() if type(entities) == SBMLDocument else entities.getId()
+            entity2invalid_curies[entity_reference] = invalid_curies
 
     else:
         for entity in tqdm(entities):
@@ -597,6 +674,7 @@ def polish_annotations(
     """
     list_of_entity2invalid_curies = []
     listOf_dict = {
+        "sbml": model.getSBMLDocument(),
         "model": model,
         "compartment": model.getListOfCompartments(),
         "metabolite": model.getListOfSpecies(),
@@ -612,25 +690,62 @@ def polish_annotations(
         listOf_dict["group"] = model.getPlugin("groups").getListOfGroups()
 
     # Adjust annotations in model
-    for listOf in listOf_dict:
-        print(f"Polish {listOf} annotations...")
-        entity2invalid_curies = improve_uris(listOf_dict[listOf], new_pattern)
+    for lof in listOf_dict:
+        logger.info(f"Polish {lof} annotations...")
+        entity2invalid_curies = improve_uris(listOf_dict[lof], new_pattern)
+        
         list_of_entity2invalid_curies.append(entity2invalid_curies)
 
     all_entity2invalid_curies = reduce(
         lambda d1, d2: {**d1, **d2}, list_of_entity2invalid_curies
     )
 
+    # Handle CarveMe details correctly (written with help of Copilot)
+    cm_details_locations = {
+        k: [i for i, x in enumerate(v) if re.search('CarveMe', x, re.IGNORECASE)] 
+        for k, v in all_entity2invalid_curies.items()
+        if any(re.search('CarveMe', x, re.IGNORECASE) for x in v)
+    } # Get keys and indeces in value list for all CarveMe hits
+    if cm_details_locations:
+        cm_details4notes = set()
+        # Remove all entries for CarveMe and generate set of entries for notes
+        for k in cm_details_locations.keys():
+            cm_entries_at_k = all_entity2invalid_curies[k]
+            for i in cm_details_locations[k]:
+                cm_details4notes.add(cm_entries_at_k.pop(i).replace(':', ': ')) # Add to set
+
+            logger.info(f'Moved all invalid CURIE(s) from the annotations of {k} containing details on CarveMe to notes of the model object.')
+
+            if not all_entity2invalid_curies[k]: 
+                del all_entity2invalid_curies[k]
+                logger.warning(f'List of invalid CURIEs for {k} now empty.')
+
+        # Generate notes string from set to model notes
+        model_metadata = '\n'.join([f'<p>{cm_details}</p>' for cm_details in cm_details4notes])
+        if model.isSetNotes():
+            for cm_details in cm_details4notes:
+                model.appendNotes(model_metadata)
+        else: 
+            model.unsetNotes()
+            note_string = f'''<html xmlns = "http://www.w3.org/1999/xhtml" >
+            {model_metadata}
+            </html>'''
+            model.setNotes(note_string)
+
     # Write invalid CURIEs to file if present
     if all_entity2invalid_curies:
         filename = (
             f'{model.getId()}_invalid_curies_{str(date.today().strftime("%Y%m%d"))}.csv'
         )
+        # Set-up path
         if outpath:
+            if isinstance(outpath, str):
+                outpath = Path(outpath)
+            outpath.mkdir(parents=True, exist_ok=True)
             filename = Path(outpath, filename)
         else:
             filename = Path(filename)
-        logging.warning(
+        logger.warning(
             f"In the provided model {model.getId()} for {len(all_entity2invalid_curies)} entities invalid CURIEs were detected. "
             + f"These invalid CURIEs are saved to {filename}"
         )
@@ -678,7 +793,7 @@ def change_qualifier_per_entity(
         if (
             cvterm.getBiologicalQualifierType() == 9
         ):  # 9 = BQB_OCCURS_IN (Reaction), Check for reactions with occursIn
-            logging.info(
+            logger.info(
                 f"CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}"
                 + f" is left as {Fore.LIGHTYELLOW_EX}{BiolQualifierType_toString(cvterm.getBiologicalQualifierType())}{Style.RESET_ALL}"
             )
@@ -686,7 +801,7 @@ def change_qualifier_per_entity(
         elif (
             cvterm.getModelQualifierType() == 1
         ):  # 1 = BQM_IS_DESCRIBED_BY (UnitDefinition), Check for UnitDefinitions with isDescribedBy
-            logging.info(
+            logger.info(
                 f"CVTerm for {Fore.LIGHTYELLOW_EX}{str(entity)}{Style.RESET_ALL}"
                 + f" is left as {Fore.LIGHTYELLOW_EX}{ModelQualifierType_toString(cvterm.getModelQualifierType())}{Style.RESET_ALL}"
             )
@@ -787,12 +902,12 @@ def change_qualifiers(
                     entity, new_qt, new_b_m_qt, specific_db_prefix
                 )
         except TypeError:
-            logging.info(
+            logger.info(
                 "The entity " + entity_type + " is not present in " + model.getId()
             )
 
     if not_miriam_compliant:
-        logging.warning(
+        logger.warning(
             f"The following {len(not_miriam_compliant)} entities are not MIRIAM compliant: {not_miriam_compliant}"
         )
 
@@ -815,7 +930,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
     # Change all model entities to have the correct model qualifier
     entity_list_mod = ["model", "unit definition", "unit"]
     for entity in entity_list_mod:
-        print(f"Change {str(entity)} qualifiers...")
+        logger.info(f"Change {str(entity)} qualifiers...")
         model = change_qualifiers(model, entity, MODEL_QUALIFIER, BQM_IS)
 
     # Change all remaining entities to have the correct biological qualifier
@@ -833,7 +948,7 @@ def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
         entity_list.append("group")
 
     for entity in entity_list:
-        print(f"Change {str(entity)} qualifiers...")
+        logger.info(f"Change {str(entity)} qualifiers...")
         if lab_strain and entity == "gene product":
             model = change_qualifiers(
                 model, "gene product", BIOLOGICAL_QUALIFIER, BQB_IS_HOMOLOG_TO

@@ -9,7 +9,9 @@ __author__ = "Famke Baeuerle und Carolin Brune"
 
 import cobra
 import json
+import logging
 import memote
+import os
 import pandas as pd
 import shutil
 import subprocess
@@ -17,17 +19,10 @@ import tempfile
 import time
 import warnings
 
-from BOFdat import step1
-from BOFdat import step2
-from BOFdat.util import update
-from BOFdat.util.update import determine_coefficients
-
 from importlib.resources import files
 from libsbml import Model as libModel
-from MCC import MassChargeCuration
 from pathlib import Path
 from libsbml import readSBML
-from sboannotator.SBOannotator import sbo_annotator
 from typing import Literal, Union
 
 from memote.support import consistency
@@ -35,13 +30,20 @@ from memote.support import consistency
 # needed by memote.support.consistency
 from memote.support import consistency_helpers as con_helpers
 
+from ..developement.optional import OptionalDependencyError, require_optional_dependency
 from .util import test_biomass_presence, is_stoichiometric_factor
 from .io import write_model_to_file
 
-# note:
+# @NOTE:
 #    for BOFdat to run correctly, one needs to change 'solution.f' to 'solution.objective_value'
 #    in the coenzymes_and_ions.py file of BOFdat
 #    -> see forked version of it in the Draeger-lab github
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -54,51 +56,83 @@ from .io import write_model_to_file
 # BOFdat
 # ------
 
-
 def adjust_BOF(
     genome: str,
-    model_file: str,
     model: cobra.Model,
     dna_weight_fraction: float,
     weight_frac: float,
-) -> str:
+) -> Union[str, None]:
     """Adjust the model's BOF using BOFdat. Currently implemented are step 1
     DNA coefficients and step 2.
+    
+    Connection to the BOFdat tool as described in:
+    BOFdat: Generating biomass objective functions for genome-scale metabolic models from experimental data
+    Lachance JC, Lloyd CJ, Monk JM, Yang L, Sastry AV, et al. (2019) BOFdat: Generating biomass objective 
+    functions for genome-scale metabolic models from experimental data. PLOS Computational Biology 
+    15(4): e1006971. https://doi.org/10.1371/journal.pcbi.1006971
 
     Args:
         - genome (str):
             Path to the genome (e.g. .fna) FASTA file.
-        - model_file (str):
-            Path to the sbml (.xml) file of the model.
         - model (cobra.Model):
             The genome-scale metabolic model (from the string above), loaded with COBRApy.
         - dna_weight_fraction (float):
             DNA weight fraction for BOF step 1.
         - weight_frac (float):
-            Weight fraction for the second step of BOFdat (enzymes and ions)
+            Weight fraction for the second step of BOFdat (coenzymes and ions)
 
     Returns:
-        str:
-            The updated BOF reaction as a reaction string.
+        str | None:
+            The updated BOF reaction as a reaction string. Returns None if
+            BOFdat is not installed.
     """
+    try:
+        step1 = require_optional_dependency(
+            "BOFdat.step1",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+        step2 = require_optional_dependency(
+            "BOFdat.step2",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+        update = require_optional_dependency(
+            "BOFdat.util.update",
+            package_name="BOFdat",
+            purpose="adjust the biomass objective function with BOFdat",
+        )
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping BOFdat adjustment.", e)
+        return None
 
-    # BOFdat step 1:
-    # --------------
-    # dna coefficients
-    dna_coefficients = step1.generate_dna_coefficients(
-        genome, model_file, DNA_WEIGHT_FRACTION=dna_weight_fraction
-    )
-    bd_step1 = {}
-    for m in dna_coefficients:
-        bd_step1[m.id] = dna_coefficients[m]
+    # Generate temporary file & use for BOFdat
+    # ----------------------------------------
+    with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as temp_model:
+        # generate an up-to-date model xml-file
+        cobra.io.write_sbml_model(model, temp_model.name)
 
-    # BOFdat step 2:
-    # --------------
-    # find inorganic ions
-    selected_metabolites = step2.find_coenzymes_and_ions(model_file)
-    # determine coefficients
-    bd_step2 = determine_coefficients(selected_metabolites, model, weight_frac)
-    bd_step2.update(bd_step1)
+        # BOFdat step 1:
+        # --------------
+        # dna coefficients
+        dna_coefficients = step1.generate_dna_coefficients(
+            genome, temp_model.name, DNA_WEIGHT_FRACTION=dna_weight_fraction
+        )
+        bd_step1 = {}
+        for m in dna_coefficients:
+            bd_step1[m.id] = dna_coefficients[m]
+
+        # BOFdat step 2:
+        # --------------
+        # find inorganic ions
+        selected_metabolites = step2.find_coenzymes_and_ions(temp_model.name)
+        # determine coefficients
+        bd_step2 = update.determine_coefficients(selected_metabolites, model, weight_frac)
+        bd_step2.update(bd_step1)
+
+    # Remove temp file
+    # ----------------
+    os.remove(temp_model.name)
 
     # update BOF
     # ----------
@@ -169,6 +203,11 @@ def run_DIAMOND_blastp(
     outname: str = "DIAMOND_blastp_res.tsv",
 ) -> str:
     """Run DIAMOND in BLASTp mode.
+    
+    Connection to the DIAMOND tool as described in:
+    Buchfink B, Reuter K, Drost HG, 
+    "Sensitive protein alignments at tree-of-life scale using DIAMOND", 
+    Nature Methods 18, 366-368 (2021). doi:10.1038/s41592-021-01101-x
 
     Args:
         - fasta (str):
@@ -241,7 +280,7 @@ def run_DIAMOND_blastp(
     )
     with open(logfile, "a") as f:
         f.write(completed_blast.stderr)
-
+        
     return outname
 
 
@@ -303,6 +342,11 @@ def filter_DIAMOND_blastp_results(
 def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model:
     """Run the MassChargeCuration toll on the model and optionally directly apply
     the solution.
+    
+    Connection to the MCC tool, preprint is available at:
+    MCC: Automated Mass and Charge Curation at Genome-Scale Applied to C. tuberculostearicum
+    Reihaneh Mostolizadeh, Finn Mier, Andreas Dräger
+    bioRxiv 2024.11.19.624331; doi: https://doi.org/10.1101/2024.11.19.624331
 
     Args:
         - model (cobra.Model):
@@ -317,23 +361,45 @@ def perform_mcc(model: cobra.Model, dir: str, apply: bool = True) -> cobra.Model
         cobra.Model:
             The model (updated or not)
     """
+    
+    for r in model.reactions:
+        for m,c in r.metabolites.items():
+            r.metabolites[m] = c * 1.0  # ensure that all stoichiometric coefficients are floats
+            
+    try:
+        mcc = require_optional_dependency(
+            "MCC",
+            package_name="MassChargeCuration",
+            purpose="run MassChargeCuration",
+        )
+        MassChargeCuration = mcc.MassChargeCuration
 
-    # make temporary directory to save files for MCC in
-    with tempfile.TemporaryDirectory() as temp:
+        # make temporary directory to save files for MCC in
+        with tempfile.TemporaryDirectory() as temp:
+            # @DISCUSSION for the sake of runtime, it would be good to save the data needed by MCC somewhere 
+            # e.g. step 1: check, if data is available 
+            #      step 2: if not, download data once 
+            # => question is, where to save it? Or do we need a parameter for that? (kinda do not want that ...)
+            # use MCC
+            if apply:
+                # update model
+                balancer = MassChargeCuration(model, update_ids=False, data_path=temp)
+            else:
+                # do not change original model
+                with model as model_copy:
+                    balancer = MassChargeCuration(model_copy, update_ids=False, data_path=temp)
 
-        # use MCC
-        if apply:
-            # update model
-            balancer = MassChargeCuration(model, update_ids=False, data_path=temp)
-        else:
-            # do not change original model
-            model_copy = model.copy()
-            balancer = MassChargeCuration(model_copy, update_ids=False, data_path=temp)
-
-    # save reports
-    balancer.generate_reaction_report(Path(dir, model.id + "_mcc_reactions"))
-    balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
-    balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
+        # save reports
+        balancer.generate_reaction_report(Path(dir, model.id + "_mcc_reactions"))
+        balancer.generate_metabolite_report(Path(dir, model.id + "_mcc_metabolites"))
+        balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping MCC.", e)
+    except Exception as e:
+        print(repr(e))
+        import traceback
+        traceback.print_exc()
+        logger.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
 
     return model
 
@@ -350,6 +416,10 @@ def run_memote(
     verbose: bool = False,
 ) -> Union[dict, str, None]:
     """Run the memote snapshot function on a given model loaded with COBRApy.
+    
+    Connection to the memote tool as described in:
+    Lieven, C., Beber, M. E., Olivier, B. G., Bergmann, F. T., Ataman, M., Babaei, P., ... & Zhang, C. 
+    (2020). MEMOTE for standardized genome-scale metabolic model testing. Nature biotechnology, 38(3), 272-276.
 
     Args:
         - model (cobra.Model):
@@ -443,12 +513,64 @@ def get_memote_score(memote_report: dict) -> float:
     return memote_report["score"]["total_score"]
 
 
+# run ModelPolisher
+# -----------------
+
+def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -> Union[dict, None]:
+    """Wrapper around ModelPolisher
+    
+    .. warning:: 
+        ModelPolisher is currently not maintained. Might not work as expected
+
+    Args:
+        - model (libModel): 
+            Model loaded with libSBML
+        - configuration (dict): 
+            Configuration file for ModelPolisher
+
+    Returns:
+        Union[dict, None]: 
+            Result from ModelPolisher
+    """
+    try:
+        mp = require_optional_dependency(
+            "model_polisher",
+            package_name="model-polisher",
+            purpose="run ModelPolisher",
+        )
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping ModelPolisher.", e)
+        return None
+
+    # use correct function for input model/path to model
+    match model_or_path:
+        case libModel():
+            model_or_path = model_or_path.getSBMLDocument()
+            mp_polish = mp.polish_model_document
+        case str():
+            mp_polish = mp.polish_model_file
+        case _:
+            raise TypeError(f'Invalid input type: {type(model_or_path)}. Should be one of libSBML model object or str.')
+    
+    result = None
+    try:
+        result = mp_polish(model_or_path, configuration)
+    except:
+        logger.error(f"Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
+        
+    return result
+
+
 # SBOannotator
 # ------------
 
 
 def run_SBOannotator(model: libModel) -> libModel:
     """Run SBOannotator on a model to annotate the SBO terms.
+
+    Connection to the SBOannotator tool as described in:
+    Leonidou, N., Fritze, E., Renz, A., & Dräger, A. (2023). SBOannotator: a Python tool for the automated 
+    assignment of systems biology ontology terms. Bioinformatics, 39(7), btad437.
 
     Args:
         - model (libModel):
@@ -458,6 +580,17 @@ def run_SBOannotator(model: libModel) -> libModel:
         libModel:
             The model with corrected / added SBO terms.
     """
+    try:
+        sboannotator = require_optional_dependency(
+            "sboannotator.SBOannotator",
+            package_name="sboannotator",
+            extra="sbo",
+            purpose="annotate SBO terms",
+        )
+        sbo_annotator = sboannotator.sbo_annotator
+    except OptionalDependencyError as e:
+        logger.warning("%s Skipping SBOannotator.", e)
+        return model
 
     dbs_scheme = files("sboannotator").joinpath("create_dbs.sql")
 
@@ -474,4 +607,5 @@ def run_SBOannotator(model: libModel) -> libModel:
             str(Path(tempdir, "dbs")),
             str(Path(tempdir, "dud.xml")),
         )
+        
     return model

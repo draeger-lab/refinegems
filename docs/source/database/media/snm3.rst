@@ -1,7 +1,7 @@
 Synthetic Nasal Medium Version 3 (SNM3)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Synthetic Nasal Medium x3 (SNM3) definition contains all components as described in 'Nutrient Limitation Governs 
-Staphylococcus aureus Metabolism and Niche Adaptation in the Human Nose'\ :footcite:p:`Krismer2014`.
+Staphylococcus aureus Metabolism and Niche Adaptation in the Human Nose'\ :footcite:p:`Krismer2014` (Table 1 & 2).
 
 .. list-table:: SNM3 composition
   :name: snm3_comp

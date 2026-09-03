@@ -1,7 +1,7 @@
 Lysogeny broth (LB)
 ^^^^^^^^^^^^^^^^^^^
 LB is a complex medium that was developed in 1951\ :footcite:p:`bertaniSTUDIESLYSOGENESIS1951`. The following *in 
-sillico* definition is derived from Oh *et al.*:footcite:p:`Oh2007` and the definition in CarveMe\ 
+silico* definition is derived from Oh *et al.*:footcite:p:`Oh2007` and the definition in CarveMe\ 
 :footcite:p:`machado2018fast`. As Selenium is a component of Oh *et al.*:footcite:p:`Oh2007`'s definition but not 
 soluable in water\ :footcite:p:`WHOSeinDrinkingWater2003` possible Selenium sources were determined and added to the 
 definition based on the paper 'The use of high-selenium yeast to raise selenium status: how does it measure up?'\ 

@@ -2,6 +2,8 @@
 
 __author__ = "Carolin Brune, Famke Baeuerle, Gwendolyn O. Döbel"
 
+# @ASK: re-check, if the figures (after returning/plotting) are closed properly to avoid memory leaks. If not, add plt.close() where necessary.
+
 ################################################################################
 # requirements
 ################################################################################
@@ -21,6 +23,7 @@ import re
 import seaborn as sns
 import warnings
 
+from abc import ABC, abstractmethod
 from importlib.resources import files
 from itertools import chain
 from libsbml import Model as libModel
@@ -36,9 +39,15 @@ from ..analysis.investigate import (
     get_reac_with_gpr,
     get_reactions_per_sbo,
 )
-from ..utility.util import test_biomass_presence
+from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
 from ..developement.decorators import *
 from ..utility.io import search_sbo_label
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -71,10 +80,63 @@ KEGG_METABOLISM_PATHWAY_DATE = "6. July 2023"  #: :meta:
 ################################################################################
 
 
-class Report:
-    """Base class for all reports."""
+class Report(ABC):
+    """Abstract base class for the reports.
+
+    Each subclass needs an implementation of `save`.
+    """
+
     def __init__(self):
+        """Initialise the report.
+        """
+        # Optionally, store a name or identifier for the report
+        self.name = None
         self.created_on = datetime.now()
+
+    # abstract methods
+    # ----------------
+    @abstractmethod
+    def save(self, dir: Union[str, Path], *args, **kwargs):
+        """Abstract method to save the report. 
+        Only implements a method to ensure a provided directory exists.
+
+        Args:
+            - dir (Union[str, Path]): 
+                Path to a directory to save the output to.
+        """
+        # Ensure the directory exists
+        if isinstance(dir, str):
+            dir = Path(dir)
+        
+        try:
+            Path(dir).mkdir(parents=True, exist_ok=False)
+            print(f'Creating new directory {str(Path(dir))}')
+        except FileExistsError:
+            print("Given directory already exists.")
+
+        # Rest needs to be fully implemented in subclasses
+
+    # methods to implement
+    # --------------------
+    @implement
+    def to_table(self) -> pd.DataFrame:
+        """Return the contents of the report as a pandas.DataFrame."""
+        pass
+    
+    @implement
+    def visualise(self, *args, **kwargs):
+        """Visualise the report contents. Should return a matplotlib.figure.Figure."""
+        pass
+    
+    @implement
+    def __str__(self):
+        """Return a string representation of the report."""
+        pass
+    
+    @implement
+    def to_dict(self) -> dict:
+        """Return the contents of the report as a dictionary."""
+        pass
 
 
 class SingleGrowthSimulationReport(Report):
@@ -85,6 +147,8 @@ class SingleGrowthSimulationReport(Report):
             Name of the model.
         - medium_name:
             Name of the medium.
+        - supplementation_variety
+            Variety of the supplementation. One of ['min', 'std', None].
         - growth_value:
             Simulated growth value.
         - doubling_time:
@@ -101,13 +165,16 @@ class SingleGrowthSimulationReport(Report):
         self,
         model_name=None,
         medium_name=None,
+        supplementation_variety=None,
         growth_value=None,
         doubling_time=None,
         additives=None,
         no_exchange=None,
     ):
+        super().__init__()
         self.model_name = model_name
         self.medium_name = medium_name
+        self.supplementation_variety = supplementation_variety
         self.growth_value = growth_value
         self.doubling_time = doubling_time
         self.additives = additives
@@ -117,6 +184,7 @@ class SingleGrowthSimulationReport(Report):
         return (
             f"model: {self.model_name}\n"
             f"medium: {self.medium_name}\n"
+            f"supplementation: {self.supplementation_variety}\n"
             f"growth: {self.growth_value}\n"
             f"doubling time: {self.doubling_time}\n"
             f"additives: {self.additives}\n"
@@ -134,11 +202,28 @@ class SingleGrowthSimulationReport(Report):
         return {
             "model_name": self.model_name,
             "medium_name": self.medium_name,
+            "supplementation_variety": self.supplementation_variety,
             "growth_value": self.growth_value,
             "doubling_time": self.doubling_time,
             "additives": self.additives if len(self.additives) > 0 else None,
             "no_exchange": self.no_exchange,
         }
+
+    def save(self, dir: Union[str, Path]):
+        """Save the report.
+
+        Args:
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
+            - check_overwrite (bool, optional):
+                Flag to choose to check for existing directory/files of same name
+                or just to overwrite them. Defaults to True.
+        """
+        super().save(dir)
+        
+        # save the report
+        with open(Path(dir, "report.txt"), "w") as f:
+            f.write(str(self))
 
 
 class GrowthSimulationReport(Report):
@@ -151,13 +236,17 @@ class GrowthSimulationReport(Report):
             List of the model names.
         - media:
             List of the media names.
+        - supplementation:
+            List of the supplementation varieties.
     """
 
     def __init__(self, reports: list[SingleGrowthSimulationReport] = None):
 
+        super().__init__()
         self.reports = reports if reports else []
         self.models = set([_.model_name for _ in reports]) if reports else set()
         self.media = set([_.medium_name for _ in reports]) if reports else set()
+        self.supplementation = set([_.supplementation_variety for _ in reports]) if reports else set()
 
     def __str__(self) -> str:
 
@@ -174,6 +263,7 @@ class GrowthSimulationReport(Report):
         self.reports.append(new_rep)
         self.models.add(new_rep.model_name)
         self.media.add(new_rep.medium_name)
+        self.supplementation.add(new_rep.supplementation_variety)
 
     def to_table(self) -> pd.DataFrame:
         """Return a table of the contents of the report.
@@ -190,12 +280,12 @@ class GrowthSimulationReport(Report):
 
     def plot_growth(
         self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
-    ) -> matplotlib.figure.Figure:
+    ) -> Union[matplotlib.figure.Figure,None]:
         """Visualise the contents of the report.
 
         .. note::
 
-            Please keep in mind that the figure does not show unrealistically high and minicules values to zero.
+            Please keep in mind that the figure does not show unrealistically high and miniscule values to zero.
             However, all values are contained within the table one can get via
             :py:func:`~refinegems.classes.reports.GrowthSimulationReport.to_table`.
 
@@ -208,10 +298,17 @@ class GrowthSimulationReport(Report):
                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
+            - ``**kwargs``:
+                Additional keyword arguments for the plotting functions. 
+                See the ax.bar and sns.heatmap documentation for possible arguments.
+
 
         Returns:
-            matplotlib.figure.Figure:
-                The plotted figure.
+            If plotting possible: matplotlib.figure.Figure:
+                    The plotted figure.
+                    
+            Else None
+            
         """
 
         def plot_growth_bar(
@@ -221,6 +318,7 @@ class GrowthSimulationReport(Report):
             ylab: str,
             title: str,
             color_palette: str = "YlGn",
+            **kwargs
         ) -> matplotlib.figure.Figure:
             """Helper function to plot the bar plot for the growth visualisation.
 
@@ -239,6 +337,9 @@ class GrowthSimulationReport(Report):
                     A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default.
                     Defaults to 'YlGn'.
+                - ``**kwargs``:
+                    Additional keyword arguments for the plt.figure() function. 
+                    See the plt.figure() documentation for possible arguments.
 
             Returns:
                 matplotlib.figure.Figure:
@@ -253,7 +354,7 @@ class GrowthSimulationReport(Report):
                 cmap = matplotlib.colormaps["YlGn"]
 
             # set up the figure
-            fig = plt.figure()
+            fig = plt.figure(**kwargs)
             ax = fig.add_axes([0, 0, 1, 1])
 
             # clean-up data
@@ -282,7 +383,7 @@ class GrowthSimulationReport(Report):
             return fig
 
         def plot_growth_heatmap(
-            data: pd.DataFrame, color_palette: str = "YlGn"
+            data: pd.DataFrame, color_palette: str = "YlGn", unit_text: str = "doubling time [min]", **kwargs
         ) -> matplotlib.figure.Figure:
             """Helper function to plot the heatmap for the growth visualisation.
 
@@ -294,6 +395,12 @@ class GrowthSimulationReport(Report):
                     A colour gradient from the matplotlib library.
                     If the name does not exist, uses the default.
                     Defaults to 'YlGn'.
+                - unit_text (str, optional):
+                    The text for the colorbar label.
+                    Defaults to "doubling time [min]".
+                - ``**kwargs``:
+                    Additional keyword arguments for the plt.subplots() function.
+                    See the plt.subplots() documentation for possible arguments.
 
             Returns:
                 matplotlib.figure.Figure:
@@ -301,18 +408,24 @@ class GrowthSimulationReport(Report):
             """
 
             # clean up + transform data
+            order = data.model.unique().tolist()
             growth = data.set_index(["medium", "model"]).sort_index().T.stack()
             growth.columns.name = None
             growth.index.names = (None, None)
             growth.index.name = None
             growth.index = growth.index.get_level_values(1)
+        
+            growth.index = pd.CategoricalIndex(growth.index, categories=order)
+            growth.sort_index(level=0, inplace=True)
 
             # over / under (meaningful) values
             growth[growth > 1000] = 0
             growth[growth < 0] = 0
             growth.replace([np.inf, -np.inf], 0, inplace=True)
+            
             over_growth = growth.max().max() + 6
             growth.replace(np.nan, over_growth, inplace=True)
+            
             under_growth = growth.min().min() - 5
             vmin = (
                 under_growth if under_growth > 1e-5 else 1e-5
@@ -335,7 +448,7 @@ class GrowthSimulationReport(Report):
             cmap.set_over("white")  # no data
 
             # plot the heatmap
-            fig, ax = plt.subplots(figsize=(10, 8))
+            fig, ax = plt.subplots(**kwargs)
 
             zm = np.ma.masked_where(growth.T != over_growth, growth.T)
             x = np.arange(len(growth.T.columns) + 1)
@@ -351,13 +464,17 @@ class GrowthSimulationReport(Report):
                 linewidth=0.5,
                 cbar_kws={
                     "orientation": "vertical",
-                    "label": "Doubling time [min]",
+                    "label": unit_text, 
                     "extend": "min",
                     "extendrect": True,
                 },
                 ax=ax,
                 fmt="",
             )
+
+            # Keep special-value legend coupled to the colorbar axis so it
+            # remains aligned under the color scale for any figure size.
+            cbar = res.collections[0].colorbar
 
             # labels
             rotation = 40 if len(growth.index) > 3 else 0
@@ -377,7 +494,7 @@ class GrowthSimulationReport(Report):
                 spine.set_linewidth(1)
                 spine.set_edgecolor("grey")
 
-            # extra legend
+            # extra legend for special values, aligned below the colorbar
             handles = []
             handles.append(
                 mpatches.Rectangle(
@@ -389,10 +506,22 @@ class GrowthSimulationReport(Report):
                     (0, 0), 0, 0, color="white", ec="grey", hatch="xxx", label="No data"
                 )
             )
-            fig.legend(handles=handles, loc="lower right", bbox_to_anchor=(0.9, 0.05))
+            cbar.ax.legend(
+                handles=handles,
+                loc="lower left",
+                bbox_to_anchor=(-0.3, -0.17),
+                bbox_transform=cbar.ax.transAxes,
+                frameon=False,
+                borderaxespad=0
+            )
 
             return fig
 
+        # sanity check to not produce empty graphs
+        if all(_.growth_value < MIN_GROWTH_THRESHOLD for _ in self.reports):
+            logger.info("No growth detected, nothing to plot.")
+            return None
+        
         # match the unit
         match unit:
             case "h":
@@ -417,7 +546,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # one model vs mutiple media
         elif len(self.models) == 1 and len(self.media) > 1:
@@ -434,7 +563,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # one medium, one model case - just to make it usable for all inputs
         elif len(self.models) == 1 and len(self.media) == 1:
@@ -451,7 +580,7 @@ class GrowthSimulationReport(Report):
             )
 
             # plot
-            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette)
+            return plot_growth_bar(xdata, xlab, ydata, ylab, title, color_palette, **kwargs)
 
         # multiple vs multiple
         elif len(self.models) > 1 and len(self.media) > 1:
@@ -467,7 +596,7 @@ class GrowthSimulationReport(Report):
                 }
             )
 
-            return plot_growth_heatmap(data, color_palette)
+            return plot_growth_heatmap(data, color_palette, unit_text, **kwargs)
 
         # problematic case
         else:
@@ -477,24 +606,15 @@ class GrowthSimulationReport(Report):
 
     def save(
         self,
-        to: str,
-        how: Literal["dir"] = "dir",
+        dir: Union[str, Path],
         check_overwrite: bool = True,
         color_palette: str = "YlGn",
     ):
         """Save the report.
 
-        Current options include:
-
-        - 'dir': save the report to a directory, including a txt and two graphics
-
         Args:
-            - to (str):
-                Path to a directory to save the report to.
-            - how (Literal['dir'], optional):
-                How to save the report.
-                For options see functions description.
-                Defaults to 'dir'.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - check_overwrite (bool, optional):
                 Flag to choose to check for existing directory/files of same name
                 or just to overwrite them. Defaults to True.
@@ -502,31 +622,23 @@ class GrowthSimulationReport(Report):
                 A colour gradient from the matplotlib library.
                 If the name does not exist, uses the default.
                 Defaults to 'YlGn'.
-
-        Raises:
-            - ValueError: If the parameter 'how' is given something unexpected.
         """
-
-        match how:
-            # save to a new directory
-            case "dir":
-                # create directory to save report to
-                dir_path = Path(to, "GrowthSimReport")
-                dir_path.mkdir(parents=True, exist_ok=check_overwrite)
-                # save the report
-                with open(Path(dir_path, "report.txt"), "w") as f:
-                    f.write(str(self))
-                # save visualisation for doubling time
-                fig_dt = self.plot_growth(color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
-                # save visualisation for growth rate
-                fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
-                fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
-
-            case _:
-                raise ValueError(
-                    f'Unknow input for parameter "how": {how}.\n Cannot save report. Abort.'
-                )
+        super().save(dir)
+        
+        # create directory to save report to
+        dir_path = Path(dir, "GrowthSimReport")
+        dir_path.mkdir(parents=True, exist_ok=check_overwrite)
+        # save the report
+        with open(Path(dir_path, "report.txt"), "w") as f:
+            f.write(str(self))
+        # save visualisation for doubling time
+        fig_dt = self.plot_growth(color_palette=color_palette)
+        if fig_dt:
+            fig_dt.savefig(Path(dir_path, "report_vis_dt.png"), bbox_inches="tight")
+        # save visualisation for growth rate
+        fig_dt = self.plot_growth(unit="h", color_palette=color_palette)
+        if fig_dt:
+            fig_dt.savefig(Path(dir_path, "report_vis_h.png"), bbox_inches="tight")
 
 
 class KEGGPathwayAnalysisReport(Report):
@@ -554,7 +666,7 @@ class KEGGPathwayAnalysisReport(Report):
         kegg_rest=None,
     ) -> None:
 
-        # super().__init__()
+        super().__init__()
         # general counts
         self.total_reac = total_reac
         self.kegg_count = kegg_count
@@ -748,17 +860,18 @@ class KEGGPathwayAnalysisReport(Report):
 
         return fig
 
-    def save(self, dir: str, colors: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], colors: str = "YlGn") -> None:
         """Save the content of the report as plots.
 
         Args:
-            - dir (str):
-                Path to a directory to save the output directory with all the plot in.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - colors(str,optional):
                 Colour palette for the plots.
                 Should be a valid name of a matplotlib sequential colour palette.
         """
-
+        super().save(dir)
+        
         # collect all produced file in one directory
         try:
             Path(dir, "pathway-analysis").mkdir(parents=True, exist_ok=False)
@@ -855,11 +968,9 @@ class AuxotrophySimulationReport(Report):
     def visualise_auxotrophies(
         self, color_palette: str = "YlGn", save: Union[None, str] = None
     ) -> Union[None, matplotlib.figure.Figure]:
-        """Visualise and/or save the results of the :py:func:`~refinegems.analysis.growth.test_auxotrophies` function.
+        """Visualise and/or save the content of the report.
 
         Args:
-            - res (pd.DataFrame):
-                The output of  :py:func:`~refinegems.analysis.growth.test_auxotrophies`.
             - color_palette (str, optional):
                 A name of a seaborn gradient color palette.
                 In case name is unknown, takes the default. Defaults to 'YlGn'.
@@ -909,16 +1020,17 @@ class AuxotrophySimulationReport(Report):
         else:
             return fig
 
-    def save(self, dir: str, color_palette: str = "YlGn"):
+    def save(self, dir: Union[str, Path], color_palette: str = "YlGn"):
         """Save the report to a given dictionary.
 
         Args:
-            - dir (str):
-                Path to a dictionary.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - color_palette (str, optional):
                 Name of a matplotlib colour palette. Defaults to 'YnGr'.
         """
-
+        super().save(dir)
+        
         # save the visualisation of the growth rates
         self.visualise_auxotrophies(color_palette, save=dir)
 
@@ -943,11 +1055,12 @@ class SourceTestReport(Report):
     def __init__(
         self, results: pd.DataFrame = None, element: str = None, model_name: str = None
     ):
-        # super().__init__()
+        super().__init__()
         self.results = results
         self.element = element
         self.model_name = model_name
 
+    @suppress_warning("The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.") # @NOTE: maybe remove in future update
     def visualise(
         self, width: int = 12, color_palette: str = "YlGn"
     ) -> tuple[matplotlib.figure.Figure, pd.DataFrame]:
@@ -995,12 +1108,12 @@ class SourceTestReport(Report):
         )
 
         # remove unplottable entries
-        data_to_plot["growth value"].replace([np.inf, -np.inf], 0, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace([np.inf, -np.inf], 0)
         over_growth = (
             data_to_plot["growth value"].max()
             + 0.1 * data_to_plot["growth value"].max()
         )
-        data_to_plot["growth value"].replace(np.nan, over_growth, inplace=True)
+        data_to_plot["growth value"] = data_to_plot["growth value"].replace(np.nan, over_growth)
         vmin = 1e-5  # Use same threshhold as in find_missing_essential in growth
         vmax = over_growth - 0.05 * data_to_plot["growth value"].max()
 
@@ -1019,6 +1132,7 @@ class SourceTestReport(Report):
         legend = data_to_plot.pivot(index="row", columns="column", values="substance")
 
         # plot
+        plt.figure()
         ax = sns.heatmap(
             data_to_plot.pivot(index="row", columns="column", values="growth value"),
             linewidth=0.5,
@@ -1038,12 +1152,12 @@ class SourceTestReport(Report):
 
         return (ax.get_figure(), legend)
 
-    def save(self, dir: str, width: int = 12, color_palette: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], width: int = 12, color_palette: str = "YlGn") -> None:
         """Save the results of the source test.
 
         Args:
-            - dir (str):
-                Path to a directory to save the results to.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - width (int, optional):
                 Number of columns for the heatmap.
                 Defaults to 12.
@@ -1051,6 +1165,7 @@ class SourceTestReport(Report):
                 Color palette (gradient) for the plot.
                 Defaults to 'YlGn'.
         """
+        super().save(dir)
 
         # save the list
         self.results.to_csv(
@@ -1090,7 +1205,7 @@ class CorePanAnalysisReport(Report):
         novel_reac: list[str] = None,
     ):
 
-        # super().__init__()
+        super().__init__()
         # general attributes
         self.model = model
         # reaction attributes
@@ -1207,7 +1322,7 @@ class CorePanAnalysisReport(Report):
 
         return fig
 
-    def save(self, dir: str):
+    def save(self, dir: Union[str, Path]):
         """Save the results inside a PanCoreAnalysisReport object.
 
         The function creates a new folder 'pan-core-analysis'
@@ -1217,9 +1332,10 @@ class CorePanAnalysisReport(Report):
         - visualise_reactions : donut chart of the values above
 
         Args:
-            - dir (str):
+            - dir (Union[str, Path]):
                 Path to a directory to save the output to.
         """
+        super().save(dir)
 
         # collect all produced file in one directory
         try:
@@ -1287,6 +1403,7 @@ class ModelInfoReport(Report):
     def __init__(self, model: cobra.Model) -> None:
         super().__init__()
 
+        super().__init__()
         # cobra version
         # basics
         self.name = model.id
@@ -1555,16 +1672,17 @@ class ModelInfoReport(Report):
 
         return fig
 
-    def save(self, dir: str, color_palette: str = "YlGn") -> None:
+    def save(self, dir: Union[str, Path], color_palette: str = "YlGn") -> None:
         """Save the report.
 
         Args:
-            - dir (str):
-                Directory to save the report to.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - color_palette (str, optional):
                 Colour palette of matplotlib to plot
                 figures in. Defaults to 'YlGn'.
         """
+        super().save(dir)
 
         # save the statistics report
         self.format_table().to_csv(Path(dir, f"{self.name}_report.csv"), sep=";")
@@ -1620,7 +1738,7 @@ class ModelInfoReport(Report):
 class MultiModelInfoReport(Report):
 
     def __init__(self) -> None:
-        # super().__init__()
+        super().__init__()
         self.table = pd.DataFrame(
             "model",
             "#reactions",
@@ -1646,11 +1764,17 @@ class MultiModelInfoReport(Report):
 
     @implement
     def save(self):
+        # super().save(dir)
         pass
 
 
 class GapFillerReport(Report):
     """Report for the gap-filling of the model.
+    
+    .. note:: 
+        In care cases, the statistics might not sum up perfectly, 
+        as they only count the main steps, appart from the total and total 
+        missing amounts.
 
     Attributes:
         - variety:
@@ -1661,6 +1785,7 @@ class GapFillerReport(Report):
             List of IDs for manual curation.
         - hide_zeros:
             Option to hide all zero values in the statistics. Defaults to False.
+            
     """
 
     def __init__(
@@ -1671,6 +1796,7 @@ class GapFillerReport(Report):
         hide_zeros: bool = False,
         no_title: bool = False,
     ) -> None:
+        super().__init__()
         self.variety = variety
         self.manual_curation = manual_curation
         self.hide_zeros = hide_zeros
@@ -1718,7 +1844,7 @@ class GapFillerReport(Report):
             warnings.warn('Unknown color palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
-        fig = plt.figure(tight_layout=True)
+        fig = plt.figure() # tight_layout=True
         if not self.no_title:
             fig.suptitle(f"Statistics for Gapfilling via {self.variety}", fontsize=16)
         grid = gspec.GridSpec(2, 1, hspace=0.6)
@@ -1736,7 +1862,7 @@ class GapFillerReport(Report):
         )
         ax2.bar_label(p, values)
         ax2.set_xlabel("count")
-        ax2.tick_params(axis="x", which="major", labelsize=7, labelrotation=90)
+        ax2.tick_params(axis="x", which="major", labelsize=7)
         ax2.set_title("A) Genes")
 
         # plot statistics about reactions
@@ -1754,7 +1880,7 @@ class GapFillerReport(Report):
         )
         ax1.bar_label(p, values)
         ax1.set_xlabel("count")
-        ax1.tick_params(axis="x", which="major", labelsize=7, labelrotation=90)
+        ax1.tick_params(axis="x", which="major", labelsize=7)
         ax1.set_title("B) Reactions")
 
         return fig
@@ -1768,6 +1894,8 @@ class GapFillerReport(Report):
             - color_palette (str, optional):
                 A colour gradient from the matplotlib library. If the name does not exist, uses the default. Defaults to `YlGn`.
         """
+        super().save(dir)
+        
         dir_path = Path(
             dir,
             "GapFillerReport",
@@ -1818,18 +1946,34 @@ class SBOTermReport(Report):
             the model.
     """
 
-    def __init__(self, model: libModel):
+    def __init__(self, model: libModel, name: Union[str, None] = None):
         """
         Args:
             - model (libModel):
                 A model loaded with libSBML.
+            - name (Union[str, None], optional):
+                An optional name for the model.
+                If not provided, the ID of the model is used.
+                Defaults to None.
         """
-        self.name = model.getId()
+        super().__init__()
+        self.name = name if name else model.getId()
         self.sbodata = get_reactions_per_sbo(model)
 
-    def visualise(self) -> matplotlib.figure.Figure:
+    def visualise(self, color_palette: str = "forestgreen", show_invalid: bool=False, show_overall_counts: bool=False) -> matplotlib.figure.Figure:
         """Visualise the amount of SBO terms found in the model
         the report was created with.
+
+        Args:
+            - color_palette (str, optional):
+                Name of a color.
+                Defaults to 'forestgreen'.
+            - show_invalid (bool, optional):
+                Whether to include invalid SBO terms in the visualisation.
+                Defaults to False.
+            - show_overall_counts (bool, optional):
+                Whether to show overall counts of SBO terms in the visualisation.
+                Defaults to False.
 
         Returns:
             matplotlib.figure.Figure:
@@ -1842,32 +1986,59 @@ class SBOTermReport(Report):
             .rename({0: self.name, "index": "SBO-Term"}, axis=1)
         )
         df["SBO-Name"] = df["SBO-Term"].apply(search_sbo_label)
-        ax = (
-            df.drop("SBO-Term", axis=1)
-            .sort_values(self.name)
-            .set_index("SBO-Name")
-            .plot.barh(width=0.8, figsize=(8, 10))
-        )
+
+        # Show number for invalid SBO terms, optionally
+        if not show_invalid:
+            df = df[df['SBO-Name'] != 'invalid']
+
+        # Generate sorted df for plotting
+        df_sorted = df[df['SBO-Name'] != 'invalid'].sort_values(self.name)
+        df_invalid = df[df['SBO-Name'] == 'invalid']
+        df = pd.concat([df_invalid, df_sorted], ignore_index=True)
+
+        # Generate the plot + colour
+        try:
+            ax = (
+                df.drop("SBO-Term", axis=1)
+                .set_index("SBO-Name")
+                .plot.barh(width=0.8, color=color_palette, figsize=(8, 10))
+                )
+        except ValueError:
+            logger.warning('Unknown color, setting it to "forestgreen"')
+            ax = (
+                df.drop("SBO-Term", axis=1)
+                .set_index("SBO-Name")
+                .plot.barh(width=0.8, color='forestgreen', figsize=(8, 10))
+                )
+
+        if show_overall_counts:
+            df_counts = df[self.name].astype(int)
+            for x, y in enumerate(df_counts):
+                ax.annotate(y, (y+(df_counts.max()*0.01), x), xycoords="data", va='center')
+            ax.set_xlim(0, df_counts.max()*1.08)
+        
         ax.set_ylabel("")
-        ax.set_xlabel("number of reactions", fontsize=16)
+        ax.set_xlabel("Number of reactions", fontsize=16)
         ax.legend(loc="lower right")
         fig = ax.get_figure()
         plt.tight_layout()
 
         return fig
 
-    def save(self, dir: str):
+    def save(self, dir: Union[str, Path]):
         """Save the information inside
 
         Args:
-            - dir (str):
-                String to the output directory.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
         """
+        super().save(dir)
+        
         fig = self.visualise()
-        fig.savefig(Path(dir, "sboterms.png"), dpi=400)
+        fig.savefig(Path(dir, "sboterms.png"), bbox_inches='tight', dpi=400)
 
 
-class MultiSBOTermReport:
+class MultiSBOTermReport(Report):
     """A collection of SBO term reports.
 
     Attributes:
@@ -1885,7 +2056,8 @@ class MultiSBOTermReport:
         Raises:
             - ValueError: Wrong input type
         """
-
+        super().__init__()
+        
         match reports:
             case list():
                 self.model_reports = reports
@@ -1910,21 +2082,29 @@ class MultiSBOTermReport:
         self,
         rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
-        figsize: tuple = (10, 10),
+        show_invalid: bool=False,
+        show_overall_counts: bool=False,
+        kwargs: dict={'figsize': (10, 10), 'legend_loc':'lower right'},
     ) -> matplotlib.figure.Figure:
         """Visualise the amount of SBO terms in the models.
 
         Args:
             - rename (Union[None,dict], optional):
-                Takes a dictioanry of model IDs and alternative names
+                Takes a dictionary of model IDs and alternative names
                 When set, uses the dictionary to rename the models.
                 Defaults to None.
             - color_palette (Union[str,list[str]], optional):
                 Color palette name or list of colours for the graphic.
                 Defaults to 'Paired'.
-            - figsize (tuple, optional):
-                Site of the figure. Requires a tuple of two integers.
-                Defaults to (10,10).
+            - show_invalid (bool, optional):
+                Whether to include invalid SBO terms in the visualisation.
+                Defaults to False.
+            - show_overall_counts (bool, optional):
+                Whether to show overall counts of SBO terms in the visualisation.
+                Defaults to False.
+            - kwargs (dict, optional):
+                Dictionary containing details for plotting the MultiSBOTermReport. 
+                Defaults to {'figsize': (10, 10), 'legend_loc':'lower right'}.
 
         Raises:
             - TypeError: Unkown type for color palette.
@@ -1945,7 +2125,7 @@ class MultiSBOTermReport:
                 try:
                     cmap = matplotlib.colormaps[color_palette]
                 except ValueError:
-                    logging.warning('Unknown color palette, setting it to "Paired"')
+                    logger.warning('Unknown color palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
                 
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
@@ -1962,30 +2142,38 @@ class MultiSBOTermReport:
 
         # prepare the data
         df.drop("SBO-Term", axis=1, inplace=True)
-        df = df.set_index("SBO-Name")
         # sort by total SBO term count
-        df["rowsum"] = df.sum(axis=1)
-        df = df.sort_values(by="rowsum", axis=0)
+        cols_to_sum = df.select_dtypes(include='number').columns
+        df["rowsum"] = df[cols_to_sum].sum(axis=1)
+        df_sorted = df[df["SBO-Name"] != 'invalid'].sort_values(by="rowsum", axis=0)
+        df_invalid = df[df["SBO-Name"] == 'invalid']
+        df = pd.concat([df_invalid, df_sorted], ignore_index=True) if show_invalid else df_sorted
+        df = df.set_index("SBO-Name")
+        df_rowsum = df["rowsum"].astype(int)
         df.drop("rowsum", axis=1, inplace=True)
 
         # rename to custom names
-        if rename is not None:
-            df = df.rename(rename, axis=1)
+        # if rename is not None:
+        #     df = df.rename(rename, axis=1)
 
         # make the figure
-        ax = df.plot.barh(stacked=True, width=0.8, figsize=figsize, color=cmap)
+        ax = df.plot.barh(stacked=True, width=0.8, color=cmap, figsize=kwargs.get('figsize', (10,10)))
+        if show_overall_counts:
+            for x, y in enumerate(df_rowsum):
+                ax.annotate(y, (y+(df_rowsum.max()*0.01), x), xycoords="data", va='center')
+            ax.set_xlim(0, df_rowsum.max()*1.08)
         for patch in ax.patches:
             colour = patch.get_facecolor()
             patch.set_edgecolor(colour)
         ax.set_ylabel("")
-        ax.set_xlabel("number of reactions", fontsize=16)
-        ax.legend(loc="lower right")
+        ax.set_xlabel("Number of reactions", fontsize=16)
+        ax.legend(loc=kwargs.get('legend_loc', 'lower right'))
 
         return ax.get_figure()
 
     def save(
         self,
-        dir: str,
+        dir: Union[str, Path],
         rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         figsize: tuple = (10, 10),
@@ -1993,8 +2181,8 @@ class MultiSBOTermReport:
         """Save the information of contained in the report.
 
         Args:
-            - dir (str):
-                String for the path of the outpt directory.
+            - dir (Union[str, Path]):
+                Path to a directory to save the output to.
             - rename (Union[None,dict], optional):
                 Takes a dictioanry of model IDs and alternative names
                 When set, uses the dictionary to rename the models.
@@ -2006,5 +2194,7 @@ class MultiSBOTermReport:
                 Site of the figure. Requires a tuple of two integers.
                 Defaults to (10,10).
         """
+        super().save(dir)
+        
         fig = self.visualise(rename, color_palette, figsize)
-        fig.save(Path(dir, "sboterms.png"), dpi=400)
+        fig.savefig(Path(dir, "sboterms.png"), bbox_inches='tight', dpi=400)

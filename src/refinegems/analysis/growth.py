@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Provides functions to simulate growth on any medium and other functionalities replated to growth."""
+"""Provides functions to simulate growth on any medium and other functionalities related to growth."""
 
 __author__ = "Famke Baeuerle and Carolin Brune"
 
@@ -15,6 +15,7 @@ import pandas as pd
 import warnings
 
 from cobra import Model as cobraModel
+from ..developement.decorators import suppress_log_message, suppress_warning
 from ..utility.util import test_biomass_presence
 from ..utility.io import load_model, load_a_table_from_database
 from ..classes.reports import (
@@ -31,6 +32,12 @@ from ..classes.medium import (
     load_media,
 )
 from typing import Literal, Union
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ############################################################################
 # functions
@@ -113,7 +120,12 @@ def get_uptake(model: cobraModel, type: str) -> list[str]:
             with model:
                 minimal = cobra.medium.minimal_medium(model)
                 # print(minimal)
+            if minimal is not None and not minimal.empty:
                 return list(minimal.index)
+            else:
+                logger.warning(f'No minimal medium for given model found. Using the default medium for supplementation.')
+                supp_with_std = get_uptake(model, 'standard')
+                return supp_with_std
         # return standart, non-zero flux compounds
         case "standard" | "std":
             with model:
@@ -202,21 +214,35 @@ def find_growth_essential_exchanges(
         try:
             model.medium = new_medium
         except ValueError:
-            logging.info(
+            logger.info(
                 "Change upper bounds to COBRApy defaults to make model simulatable."
             )
             set_bounds_to_default(model)
             model.medium = new_medium
         # find essentials
         essential = []
+        non_essential = []
         for metab in new_medium.keys():
             with model:
-                model.reactions.get_by_id(metab).lower_bound = 0
+                # disable uptake
+                try:
+                    model.reactions.get_by_id(metab).lower_bound = 0
+                except ValueError:
+                    model.reactions.get_by_id(metab).bounds = (0.0,0.0)
+                # ensure, cross-dependency is not an issue
+                for noness_metab in non_essential:
+                    try: 
+                        model.reactions.get_by_id(noness_metab).lower_bound = 0
+                    except ValueError:
+                        model.reactions.get_by_id(metab).bounds = (0.0,0.0)
+                # optimize BOF
                 sol = model.optimize()
                 if (
                     sol.objective_value < 1e-5
                 ):  # and sol.objective_value > -1e-9: # == 0 no negative growth!
                     essential.append(metab)
+                else:
+                    non_essential.append(metab)
 
     return essential
 
@@ -271,7 +297,7 @@ def find_additives_to_enable_growth(
         suppl_medium = {**growth_medium, **supplements}
         return suppl_medium
     else:
-        # ... the list of suplements
+        # ... the list of supplements
         return additives
 
 
@@ -315,7 +341,8 @@ def get_metabs_essential_for_growth_wrapper(
 def growth_sim_single(
     model: cobraModel,
     m: Medium,
-    namespace: Literal["BiGG", "Name"] = "BiGG",
+    model_name: str=None,
+    namespace: Literal["BiGG", "Name", "SEED"] = "BiGG",
     supplement: Literal[None, "std", "min"] = None,
 ) -> SingleGrowthSimulationReport:
     """Simulate the growth of a model on a given medium.
@@ -325,6 +352,13 @@ def growth_sim_single(
             The model.
         - m (Medium):
             The medium.
+        - model_name (str, optional):
+            The name of the model, which will be used in the report. 
+            Defaults to the model ID.
+        - namespace (Literal['BiGG','Name','SEED'], optional):
+            The namespace of the model that needs to be used for the medium.
+            Currently supports one of ['BiGG','Name','SEED']. 
+            Defaults to 'BiGG'.
         - supplement (Literal[None,'std','min'], optional):
             Flag to add additvites to the model to ensure growth. Defaults to None (no supplements).
             Further options include 'std' for standard uptake and 'min' for minimal uptake supplementation.
@@ -366,14 +400,18 @@ def growth_sim_single(
         try:
             model.medium = new_m
         except ValueError:
-            logging.info(
+            logger.info(
                 "Change upper bounds to 1000.0 and lower bounds to -1000.0 to make model simulatable."
             )
             set_bounds_to_default(model)
             model.medium = new_m
 
         # simulate growth
-        report = SingleGrowthSimulationReport(model_name=model.id, medium_name=m.name)
+        report = SingleGrowthSimulationReport(
+            model_name=model_name if model_name else model.id, 
+            medium_name=m.name, 
+            supplementation_variety=supplement
+            )
         report.growth_value = model.optimize().objective_value
         report.doubling_time = (
             (np.log(2) / report.growth_value) * 60 if report.growth_value != 0 else 0
@@ -381,7 +419,7 @@ def growth_sim_single(
         report.additives = [_ for _ in new_m if _ not in exported_m]
         report.no_exchange = [
             _
-            for _ in m.export_to_cobra(namespace=namespace).keys()
+            for _ in m.export_to_cobra(namespace=namespace, ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)).keys()
             if _ not in exported_m
         ]
 
@@ -391,7 +429,8 @@ def growth_sim_single(
 def growth_sim_multi(
     models: Union[cobraModel, list[cobraModel]],
     media: Union[Medium, list[Medium]],
-    namespace: Literal["BiGG", "Name"] = "BiGG",
+    model_names: Union[None, list[str]] = None,
+    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
     supplement_modes: Union[
         list[Literal["None", "min", "std"]], None, Literal["None", "min", "std"]
     ] = None,
@@ -403,10 +442,21 @@ def growth_sim_multi(
             A COBRApy model or a list of multiple.
         - media (Medium | list[Medium]):
             A refinegems Medium object or a list of multiple.
+        - model_names (None | list[str], optional): 
+            The names of the models, which will be used in the report. 
+            Defaults to the model IDs.
+        - namespace (list | Literal['BiGG','Name','SEED'], optional):
+            Namespace(s) of the model(s).
+            Can be a single string to set the same namespace for all models or a list with one entry for each model.
+            Further options include 'BiGG', 'Name' and 'SEED'.
+            Defaults to 'BiGG'.
         - supplement_modes (list[Literal[None,'min','std']] | None | Literal[None, 'min', 'std'], optional):
             Option to supplement the media to enable growth.
             Default to None. Further options include a list with one entry for each medium or a string to set the same default for all.
             The string can be 'min', 'std' or None.
+
+    Raises:
+        - ValueError: Length of model_names list should match the number of models, if model_names is provided.
 
     Returns:
         GrowthSimulationReport:
@@ -418,23 +468,35 @@ def growth_sim_multi(
         models = [models]
     if type(media) != list:
         media = [media]
+    if type(namespace) != list:
+        namespace = [namespace] * len(models)
     if type(supplement_modes) != list:
         supplement_modes = [supplement_modes] * len(media)
 
+    if model_names: # Check if model_names was provided
+        if type(model_names) != list: # Check if it is a list, if not, make it a list
+            model_names = [model_names]
+        if len(model_names) != len(models):
+            raise ValueError("Length of model_names list should match the number of models.")
+    else:
+        model_names = [None] * len(models) # If not provided, create a list of None with the same length as models
+
     # simulate the growth of the models on the different media
     report = GrowthSimulationReport()
-    for mod in models:
+    for mod, mn, nsp in zip(models, model_names, namespace):
         for med, supp in zip(media, supplement_modes):
-            r = growth_sim_single(mod, med, namespace=namespace, supplement=supp)
+            r = growth_sim_single(mod, med, mn, namespace=nsp, supplement=supp)
             report.add_sim_results(r)
 
     return report
 
 
+@suppress_log_message("cobra.medium.boundary_types", logging.INFO, "Compartment `e` sounds like an external compartment.")
 def growth_analysis(
     models: Union[cobra.Model, str, list[str], list[cobra.Model]],
     media: Union[Medium, list[Medium], str],
-    namespace: Literal["BiGG"] = "BiGG",
+    model_names: Union[None, list[str]] = None,
+    namespace: Union[list, Literal["BiGG", "Name","SEED"]] = "BiGG",
     supplements: Union[
         None, list[Literal[None, "std", "min"]], Literal[None, "std", "min"]
     ] = None,
@@ -449,8 +511,12 @@ def growth_analysis(
         - media (Medium | list[Medium] | str):
             Medium or media to be tested.
             Can be single or a list of medium objects or a path to a medium config file.
+        - model_names (None | list[str], optional): 
+            The names of the models, which will be used in the report. 
+            Defaults to the model IDs.
         - namespace (Literal['BiGG'], optional):
-            Namespace of the model.
+            Namespace of the model(s).
+            Can be a list or a string, which sets the same namespace for all models.
             Defaults to 'BiGG'.
         - supplements (None | list[Literal[None,'std','min']] | Literal[None,'std','min'], optional):
             Option to supplement media to enable growth. Can be None, std or min. If a single
@@ -466,7 +532,7 @@ def growth_analysis(
         - TypeError: Unknown or mixed types in model list.
         - KeyError: Empty list for models detected.
         - ValueError: Unknown input type for models.
-        - TypeError: Unknown type found in media, should be list fo Medium.
+        - TypeError: Unknown type found in media, should be list of Medium.
         - ValueError: Unknown input for media.
         - ValueError: Unknown input for retrieve
 
@@ -524,7 +590,7 @@ def growth_analysis(
                 pass
             else:
                 raise TypeError(
-                    "Unknown type found in media, should be list fo Medium."
+                    "Unknown type found in media, should be list of Medium."
                 )
         # string - connection to YAML config file
         case str():
@@ -535,7 +601,7 @@ def growth_analysis(
 
     # run simulation
     # --------------
-    report = growth_sim_multi(mod_list, media, namespace, supplements)
+    report = growth_sim_multi(mod_list, media, model_names, namespace, supplements)
 
     # save / visualise report
     # -----------------------
@@ -641,7 +707,9 @@ def find_growth_enhancing_exchanges(
 # auxotrophy simulation
 # ---------------------
 
-
+@suppress_log_message("cobra.medium.boundary_types",
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.")
 def test_auxotrophies(
     model: cobraModel,
     media_list: list[Medium],
@@ -781,7 +849,10 @@ def test_auxotrophies(
 # source test
 # -----------
 
-
+@suppress_warning("Solver status is 'infeasible'") # to be expected, as organism is likely to not grow on all media
+@suppress_log_message("cobra.medium.boundary_types", 
+                      logging.INFO, 
+                      "Compartment `e` sounds like an external compartment.") # e is the default external compartment for refineGEMs, no logging neccessary
 def test_growth_with_source(
     model: cobra.Model,
     element: str,
@@ -840,7 +911,7 @@ def test_growth_with_source(
         case str():
             current_medium = load_medium_from_db(medium)
         case Medium():
-            current_medium = medium
+            current_medium = medium.copy()
         case _:
             current_medium = read_from_cobra_model(model)
 
@@ -901,7 +972,9 @@ def test_growth_with_source(
 # minimal medium
 # --------------
 
-
+@suppress_log_message("cobra.medium.boundary_types",
+                      logging.INFO,
+                      "Compartment `e` sounds like an external compartment.")
 def model_minimal_medium(
     model: cobraModel,
     objective: Literal["flux", "medium", "exchanges"] = "flux",
@@ -931,9 +1004,9 @@ def model_minimal_medium(
             If set to True assigns large upper bound to all import reactions.
             Defaults to False.
 
-            .. warning::
+    .. warning::
 
-                Running `open_exchanges` on `True` can lead to infeasible runtimes.
+        Running `open_exchanges` on `True` can lead to infeasible runtimes.
 
     Raises:
         - ValueError: unknown objective.
@@ -943,52 +1016,56 @@ def model_minimal_medium(
             The medium that is a solution for the minimisation task.
     """
 
-    # minimise the fluxes of the current medium
-    if objective == "flux":
-        max_growth = model.slim_optimize()
-        min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
+    try:
+        # minimise the fluxes of the current medium
+        if objective == "flux":
+            max_growth = model.slim_optimize()
+            min_medium = dict(cobra.medium.minimal_medium(model, max_growth))
 
-    # minimise components of current medium
-    elif objective == "medium":
-        warnings.warn(
-            "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
-        )
-        min_medium = dict(
-            cobra.medium.minimal_medium(
-                model,
-                growth_rate,
-                minimize_components=True,
-                open_exchanges=open_exchanges,
+        # minimise components of current medium
+        elif objective == "medium":
+            warnings.warn(
+                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
             )
-        )
-
-    # get minimal number of medium components
-    # based on exchange reaction possible in the model
-    # note 1: can be time consuming
-    # note 2: can lead to different results if run only once each time
-    elif objective == "exchanges":
-        # create cobra medium from all available exchange reactions
-        ex_medium = {_.id: 1000.0 for _ in model.exchanges}
-        # perform minimisation
-        model.medium = ex_medium
-        warnings.warn(
-            "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
-        )
-        min_medium = dict(
-            cobra.medium.minimal_medium(
-                model,
-                growth_rate,
-                minimize_components=True,
-                open_exchanges=open_exchanges,
+            min_medium = dict(
+                cobra.medium.minimal_medium(
+                    model,
+                    growth_rate,
+                    minimize_components=True,
+                    open_exchanges=open_exchanges,
+                )
             )
-        )
 
-    else:
-        raise ValueError("Unknown objective for minimisation.")
+        # get minimal number of medium components
+        # based on exchange reaction possible in the model
+        # note 1: can be time consuming
+        # note 2: can lead to different results if run only once each time
+        elif objective == "exchanges":
+            # create cobra medium from all available exchange reactions
+            ex_medium = {_.id: 1000.0 for _ in model.exchanges}
+            # perform minimisation
+            model.medium = ex_medium
+            warnings.warn(
+                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
+            )
+            min_medium = dict(
+                cobra.medium.minimal_medium(
+                    model,
+                    growth_rate,
+                    minimize_components=True,
+                    open_exchanges=open_exchanges,
+                )
+            )
 
-    # create a Medium object from the minimal medium
-    with model as tmp_model:
-        tmp_model.medium = min_medium
-        medium = read_from_cobra_model(tmp_model)
+        else:
+            raise ValueError("Unknown objective for minimisation.")
 
-    return medium
+        # create a Medium object from the minimal medium
+        with model as tmp_model:
+            tmp_model.medium = min_medium
+            medium = read_from_cobra_model(tmp_model)
+
+        return medium
+    
+    except:
+        return Medium("Minimal medium")

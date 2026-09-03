@@ -22,11 +22,12 @@ __author__ = """Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune,
 
 import cobra
 import io
-import libchebipy
+import logging
 import numpy as np
 import pandas as pd
 import re
 import requests
+import time
 import warnings
 import xmltodict
 
@@ -36,12 +37,14 @@ from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
 from typing import Literal, Union
 from tqdm import tqdm
+from urllib.error import HTTPError
 
 tqdm.pandas()
 pd.options.mode.chained_assignment = None  # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
 
 from .connections import run_DIAMOND_blastp, filter_DIAMOND_blastp_results
 from .io import load_a_table_from_database, create_missing_genes_protein_fasta
+from ..developement.optional import OptionalDependencyError, require_optional_dependency
 
 ############################################################################
 # variables
@@ -49,6 +52,7 @@ from .io import load_a_table_from_database, create_missing_genes_protein_fasta
 
 # database urls
 # -------------
+logger = logging.getLogger(__name__)
 BIGG_METABOLITES_URL = "http://bigg.ucsd.edu/api/v2/universal/metabolites/"  #: :meta:
 
 # Compartments in BiGG namespace
@@ -219,6 +223,24 @@ def add_info_from_ChEBI_BiGG(
        pd.DataFrame:
           Input table extended with the charges & chemical formulas obtained from ChEBI/BiGG.
     """
+    libchebipy = None
+    needs_chebi = (
+        (charge or formula or iupac)
+        and "ChEBI" in missing_metabs.columns
+        and missing_metabs["ChEBI"].notna().any()
+    )
+    if needs_chebi:
+        try:
+            libchebipy = require_optional_dependency(
+                "libchebipy",
+                extra="chebi",
+                purpose="query ChEBI for metabolite information",
+            )
+        except OptionalDependencyError as e:
+            warnings.warn(
+                f"{e} ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
+                category=UserWarning,
+            )
 
     # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
     def get_chebi_id(row: pd.Series) -> str:
@@ -242,7 +264,7 @@ def add_info_from_ChEBI_BiGG(
         chebi_id = get_chebi_id(row)
         bigg_id = str(row.get("bigg_id"))
         charge = None
-        if chebi_id:  # Get charge from ChEBI (Returns always a charge)
+        if chebi_id and libchebipy:  # Get charge from ChEBI (Returns always a charge)
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             return chebi_entity.get_charge()
         elif bigg_id != "nan":  # Get charge from BiGG if no ChEBI ID available
@@ -262,7 +284,7 @@ def add_info_from_ChEBI_BiGG(
         chebi_id = get_chebi_id(row)
         bigg_id, chem_form = str(row.get("bigg_id")), str(row.get("Chemical Formula"))
         chem_formula = None
-        if chebi_id:  # Get formula from ChEBI
+        if chebi_id and libchebipy:  # Get formula from ChEBI
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             chem_formula = chebi_entity.get_formula()
         if not chem_formula:  # If no formula was found with ChEBI/No ChEBI ID available
@@ -284,7 +306,7 @@ def add_info_from_ChEBI_BiGG(
     def find_iupac(row: pd.Series) -> str:
 
         chebi_id = get_chebi_id(row)
-        if chebi_id:
+        if chebi_id and libchebipy:
             chebi_entity = libchebipy.ChebiEntity(chebi_id)
             # only take the IUPAC names
             iupac_names = []
@@ -358,7 +380,7 @@ def parse_KEGG_gene(locus_tag: str) -> dict:
     """
 
     gene_info = dict()
-    gene_info["orgid:locus"] = locus_tag
+    gene_info["kegg.genes"] = locus_tag
 
     # retireve KEGG gene entry
     try:
@@ -788,65 +810,122 @@ like EC number of an NBCI protein accession number or information about locus ta
 
 
 def _search_ncbi_for_gp(
-    row: pd.Series, id_type: Literal["refseq", "ncbiprotein"]
-) -> pd.Series:
-    """Fetches protein name and locus tag from NCBI
+    df: pd.DataFrame, id_type: Literal["refseq", "ncbiprotein"], email: str
+) -> pd.DataFrame:
+    """Fetches protein name and locus tag from NCBI in batches with exponential backoff.
 
     Args:
-        - row (pd.Series):
-            Row of a pandas DataFrame containing RefSeq/NCBI Protein IDs in columns
+        - df (pd.DataFrame):
+            Pandas DataFrame containing RefSeq/NCBI Protein IDs.
         - id_type (Literal['refseq', 'ncbiprotein']):
-            ID type of IDs in provided row.
+            ID type of IDs in provided DataFrame.
             Can be one of ['refseq', 'ncbiprotein'].
+        - email (str):
+            User's mail address for the NCBI Entrez tool.
 
     Returns:
-        pd.Series:
-            Modified input row
+        pd.DataFrame:
+            Modified input Dataframe with fetched data.
     """
-    match id_type:
-        case "refseq":
-            ncbi_id = row["REFSEQ"]
-        case "ncbiprotein":
-            ncbi_id = row["NCBI"]
-        case _:
-            raise TypeError(
-                f"Provided type for id_type {id_type} invalid. Please use one of ['refseq', 'ncbiprotein']."
-            )
-            return row
+    if email:
+        Entrez.email = email
+        
+    if id_type == "refseq":
+        id_col = "REFSEQ"
+    elif id_type == "ncbiprotein":
+        id_col = "NCBI"
+    else:
+        raise TypeError(f"Provided type for id_type '{id_type}' invalid. Please use one of ['refseq', 'ncbiprotein'].")
+        
+    if id_col not in df.columns:
+        return df
+        
+    # Filter non-null IDs
+    valid_ids = df[df[id_col].notnull()][id_col].unique().tolist()
+    if not valid_ids:
+        return df
+        
+    # Initialize target columns if they don't exist
+    if id_type == "refseq" and "name_refseq" not in df.columns:
+        df["name_refseq"] = None
+    elif id_type == "ncbiprotein":
+        if "name_ncbi" not in df.columns:
+            df["name_ncbi"] = None
+        if "locus_tag" not in df.columns:
+            df["locus_tag"] = None
 
-    if not pd.isnull(ncbi_id):
+    chunk_size = 150  # Process 150 IDs per single HTTP request
+    name_dict = {}
+    locus_dict = {}
+    
+    for i in tqdm(range(0, len(valid_ids), chunk_size), desc=f"Batch fetching {id_type} from NCBI"):
+        chunk = valid_ids[i:i+chunk_size]
+        id_string = ",".join(chunk)
+        
+        records = []
+        max_retries = 5
+        
+        # Exponential Backoff Loop
+        for attempt in range(max_retries):
+            try:
+                handle = Entrez.efetch(db="protein", id=id_string, rettype="gbwithparts", retmode="text")
+                try:
+                    records = list(SeqIO.parse(handle, "gb"))
+                finally:
+                    handle.close()
+                break
+            except HTTPError as e:
+                if e.code in [400, 429, 500, 502, 503, 504]:
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt) # Wait 1s, 2s, 4s, 8s...
+                    else:
+                        logger.error(f"Failed to fetch chunk {chunk} after {max_retries} attempts due to HTTP {e.code}")
+                else:
+                    logger.error(f"NCBI API Error: {e}")
+                    break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                else:
+                        logger.error(f"Failed to fetch chunk {chunk} after {max_retries} attempts: {e}")
 
-        try:
-            handle = Entrez.efetch(
-                db="protein", id=ncbi_id, rettype="gbwithparts", retmode="text"
-            )
-            records = SeqIO.parse(handle, "gb")
+        for record in records:
+            # Match the exact queried ID to the returned record
+            matched_id = None
+            record_id_base = record.id.split('.')[0]
+            for q_id in chunk:
+                q_id_base = q_id.split('.')[0]
+                if q_id == record.id or q_id_base == record_id_base:
+                    matched_id = q_id
+                    break
+            if not matched_id:
+                matched_id = record.id
 
-            for i, record in enumerate(records):
-                match id_type:
-                    case "refseq":
-                        row["name_refseq"] = record.description
-                    case "ncbiprotein":
-                        for feature in record.features:
-                            if feature.type == "CDS":
-                                row["name_ncbi"] = record.description
-                                row["locus_tag"] = feature.qualifiers["locus_tag"][0]
+            if id_type == "refseq":
+                name_dict[matched_id] = record.description
+            elif id_type == "ncbiprotein":
+                name_dict[matched_id] = record.description
+                for feature in record.features:
+                    if feature.type == "CDS" and "locus_tag" in feature.qualifiers:
+                        locus_dict[matched_id] = feature.qualifiers["locus_tag"][0]
+                        break
 
-        except Exception as e:
-            print(f"{e} with {id_type} ID {ncbi_id}")
+    # Safely map results back to dataframe without destroying existing entries
+    if id_type == "refseq":
+        df["name_refseq"] = df[id_col].map(name_dict).fillna(df["name_refseq"])
+    elif id_type == "ncbiprotein":
+        df["name_ncbi"] = df[id_col].map(name_dict).fillna(df["name_ncbi"])
+        df["locus_tag"] = df[id_col].map(locus_dict).fillna(df["locus_tag"])
+        
+    return df
 
-    return row
-
-
-# fetching the EC number (if possible) from NCBI
-# based on an NCBI protein ID (accession version number)
 def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
     """Based on a NCBI protein accession number, try and fetch the
-    EC number from NCBI.
+    EC number from NCBI with Exponential Backoff.
 
     Args:
         - mail (str):
-            User's mail address for the NCBI ENtrez tool.
+            User's mail address for the NCBI Entrez tool.
         - ncbiprot (str):
             The NCBI protein accession number.
 
@@ -859,18 +938,45 @@ def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
                 None:
                     Nothing to return
     """
-    try:
-        Entrez.email = mail
-        handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
-        for feature_dict in xmltodict.parse(handle)["INSDSet"]["INSDSeq"][
-            "INSDSeq_feature-table"
-        ]["INSDFeature"]:
-            if isinstance(feature_dict["INSDFeature_quals"]["INSDQualifier"], list):
-                for qual in feature_dict["INSDFeature_quals"]["INSDQualifier"]:
-                    if qual["INSDQualifier_name"] == "EC_number":
-                        return qual["INSDQualifier_value"]
-    except Exception as e:
-        return None
+    Entrez.email = mail
+    max_retries = 5
+    
+    for attempt in range(max_retries):
+        handle = None
+        try:
+            handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
+            parsed_xml = xmltodict.parse(handle.read())
+            
+            features = parsed_xml.get("INSDSet", {}).get("INSDSeq", {}).get("INSDSeq_feature-table", {}).get("INSDFeature", [])
+            
+            if isinstance(features, dict):
+                features = [features]
+                
+            for feature_dict in features:
+                qualifiers = feature_dict.get("INSDFeature_quals", {}).get("INSDQualifier", [])
+                
+                if isinstance(qualifiers, dict):
+                    qualifiers = [qualifiers]
+                    
+                if isinstance(qualifiers, list):
+                    for qual in qualifiers:
+                        if qual.get("INSDQualifier_name") == "EC_number":
+                            return qual.get("INSDQualifier_value")
+            return None
+        except HTTPError as e:
+            if e.code in [400, 429, 500, 502, 503, 504]:
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+            else:
+                break
+        except Exception:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+        finally:
+            if handle is not None:
+                handle.close()
+                
+    return None
 
 
 # Uniprot
@@ -935,12 +1041,12 @@ def map_dmnd_res_to_sp_ec_brenda(
     swissprot_mapping.dropna(subset=["BRENDA", "EC number"], how="all", inplace=True)
 
     # extract SwissProts IDs from subject_ID
-    dmnd_results.columns = ["locus_tag", "UniProt"]
-    dmnd_results["UniProt"] = dmnd_results["UniProt"].apply(lambda x: x.split("|")[1])
+    dmnd_results.columns = ["locus_tag", "uniprot"]
+    dmnd_results["uniprot"] = dmnd_results["uniprot"].apply(lambda x: x.split("|")[1])
 
     # match
     dmnd_results = dmnd_results.merge(
-        swissprot_mapping, left_on="UniProt", right_on="Entry", how="left"
+        swissprot_mapping, left_on="uniprot", right_on="Entry", how="left"
     )
     dmnd_results.drop("Entry", axis=1, inplace=True)
     dmnd_results["ec-code"] = dmnd_results.apply(
@@ -1000,6 +1106,7 @@ def get_ec_via_swissprot(
 
     # Step 1: Make a FASTA out of the missing genes
     miss_fasta = create_missing_genes_protein_fasta(fasta, missing_genes, outdir)
+    
     # Step 2: Run DIAMOND
     #         blastp mode against SwissProt DB
     blast_path = run_DIAMOND_blastp(
@@ -1013,7 +1120,7 @@ def get_ec_via_swissprot(
     #         EC numbers and locus tags
     mapped_res = (
         mapped_res.groupby(["locus_tag", "ec-code"])
-        .agg({"UniProt": lambda x: x.tolist()})
+        .agg({"uniprot": lambda x: x.tolist()})
         .reset_index()
     )
 
@@ -1029,7 +1136,7 @@ def map_to_homologs(
     fasta: str,
     db: str,
     missing_genes: pd.DataFrame,
-    mapping_file: str,
+    mapping_file: str = None,
     outdir: str = None,
     sens: Literal[
         "sensitive", "more-sensitive", "very-sensitive", "ultra-sensitive"
@@ -1037,8 +1144,47 @@ def map_to_homologs(
     cov: float = 95.0,
     t: int = 2,
     pid: float = 90.0,
-    email=None,
+    email:str = None,
 ) -> pd.DataFrame:
+    """Based on a protein FASTA and a missing genes tables, mapped them to EC numbers
+     of homologous genes based on a DIAMOND BLASTp run.
+
+    Args:
+        - fasta (str): 
+            The protein FASTA file of the organism the model was build on.
+            Defaults to None.
+        - db (str): 
+            Path to the DIAMOND database.
+            Defaults to None.
+        - missing_genes (pd.DataFrame): 
+            Table containing information about the missing genes.
+        - mapping_file (str, optional): 
+            Precomputed mapping file to map the DIAMOND results to NCBI.
+        - outdir (str, optional): 
+            Path to the output directory. 
+            Defaults to None.
+        - sens (Literal['sensitive', 'more-sensitive', 'very-sensitive', 'ultra-sensitive'], optional): 
+            Sensitivity mode for DIAMOND. Defaults to "more-sensitive".
+        - cov (float, optional): 
+            Threshold for the coverage (parameter for DIAMOND). 
+            Defaults to 95.0.
+        - t (int, optional): 
+            Number of threads to use (DIAMOND parameter). 
+            Defaults to 2.
+        - pid (float, optional): 
+            Percentage identity cutoff value (Mappings with lower values are not considered). 
+            Defaults to 90.0.
+        - email (str, optional): 
+            Email to use for the NCBI requests. 
+            If not given, skips the direct requests. 
+            Also skipped, it mapping_file is provided.
+            Defaults to None.
+
+    Returns:
+        pd.DataFrame: 
+            Output table containing the following information (columns contain None, if mapping unsuccessful):
+            "locus_tag", "ncbiprotein", "locus_tag_ref", "old_locus_tag", "GeneID", "ec-code"
+    """
 
     # Step 1: Make a FASTA out of the missing genes
     miss_fasta = create_missing_genes_protein_fasta(fasta, missing_genes, outdir)
@@ -1084,29 +1230,33 @@ def map_to_homologs(
             )
             .reset_index()
         )
-        # locus_tag ncbiprotein locus_tag_ref old_locus_tag GeneID EC number
 
     # no mapping file
+    elif email:
+        print(
+            "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
+        )
+        table = dmnd_res
+        table["locus_tag_ref"] = pd.Series(dtype="str")
+        table["old_locus_tag"] = pd.Series(dtype="str")
+        table["GeneID"] = pd.Series(dtype="str")
+        # .......................
+        # @DEBUG
+        # if len(table) > 10:
+        #     table = table.sample(10)
+        #     print('Running in debugging mode')
+        # .......................
+        table["ec-code"] = table["ncbiprotein"].progress_apply(
+            lambda x: get_ec_from_ncbi(email, x)
+        )
     else:
-        if email:
-            print(
-                "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
-            )
-            table["locus_tag_ref"] = pd.Series(dtype="str")
-            table["old_locus_tag"] = pd.Series(dtype="str")
-            table["GeneID"] = pd.Series(dtype="str")
-            # .......................
-            # @DEBUG
-            # if len(table) > 10:
-            #     table = table.sample(10)
-            #     print('Running in debugging mode')
-            # .......................
-            table["ec-code"] = table["ncbiprotein"].progress_apply(
-                lambda x: get_ec_from_ncbi(x, email), axis=1
-            )
-        else:
-            warnings.warn(
-                "No email provided for NCBI quieries. Skipping mapping to EC numbers."
-            )
-
+        warnings.warn(
+            "Neither email nor mapping provided for NCBI quieries. Skipping mapping to EC numbers."
+        )
+        table = dmnd_res
+        table["locus_tag_ref"] = pd.Series(dtype="str")
+        table["old_locus_tag"] = pd.Series(dtype="str")
+        table["GeneID"] = pd.Series(dtype="str")
+        table["ec-code"] = pd.Series(dtype="str")
+        
     return table
