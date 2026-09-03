@@ -29,3 +29,12 @@ def require_optional_dependency(
         if extra:
             message += f" Install refineGEMs with the '{extra}' extra."
         raise OptionalDependencyError(message) from exc
+
+
+def require_bioregistry(purpose: str | None = None) -> ModuleType:
+    """Import bioregistry for annotation-related features."""
+    return require_optional_dependency(
+        "bioregistry",
+        extra="bioregistry",
+        purpose=purpose or "use annotation registry features",
+    )
