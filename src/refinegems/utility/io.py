@@ -21,8 +21,8 @@ import pandas as pd
 import re
 import sqlalchemy
 import sqlite3
+import warnings
 
-from ols_client import EBIClient
 from Bio import SeqIO
 from cobra.io.sbml import F_REPLACE, _model_to_sbml, _f_gene
 from libsbml import Model as libModel
@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Literal, Union
 
 from .databases import PATH_TO_DB
+from ..developement.optional import OptionalDependencyError, require_optional_dependency
 
 ################################################################################
 # setup logging
@@ -415,6 +416,11 @@ def load_subset_from_db(subset_name: str) -> tuple[str, str, pd.DataFrame]:
             (subset_name,),
         )
         substance_table = pd.DataFrame(db_res.fetchall(), columns=["name", "percent"])
+    
+    else:
+        mes = f"Subset name {subset_name} not found in database."
+        connection.close()
+        raise ValueError(mes)
 
     return (name, description, substance_table)
 
@@ -843,7 +849,24 @@ def search_sbo_label(sbo_number: str) -> str:
         str:
             Denoted label for given SBO Term
     """
-    sbo_number = str(sbo_number)
-    client = EBIClient()
-    sbo = client.get_term("sbo", "http://biomodels.net/SBO/SBO_0000" + sbo_number)
-    return sbo["_embedded"]["terms"][0]["label"]
+    if sbo_number == 'invalid':
+        return sbo_number
+    else:
+        sbo_number = str(sbo_number)
+        try:
+            ols_client = require_optional_dependency(
+                "ols_client",
+                package_name="ols-client",
+                extra="ols",
+                purpose="look up SBO labels",
+            )
+        except OptionalDependencyError as e:
+            warnings.warn(
+                f"{e} Returning SBO term without label.",
+                category=UserWarning,
+            )
+            return f"SBO:0000{sbo_number}"
+        EBIClient = ols_client.EBIClient
+        client = EBIClient()
+        sbo = client.get_term("sbo", "http://biomodels.net/SBO/SBO_0000" + sbo_number)
+        return sbo["_embedded"]["terms"][0]["label"]

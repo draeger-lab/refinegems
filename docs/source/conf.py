@@ -24,11 +24,11 @@ if os.environ.get("READTHEDOCS", "") == "True":
 # -- Project information -----------------------------------------------------
 
 project = 'refineGEMs'
-project_copyright = '2024, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
+project_copyright = '2023-2026, Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 author = 'Famke Bäuerle, Gwendolyn O. Döbel and Carolin Brune'
 
 # The full version, including alpha/beta/rc tags
-release = '2.0.0-beta.1'
+release = '2.0.0-beta.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -45,7 +45,8 @@ extensions = [
     'sphinx_rtd_theme',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib.bibtex',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'sphinxcontrib.icon'
 ]
 
 # For copy buttons in code blocks
@@ -60,7 +61,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '**.ipynb_checkpoints', 'modules-desc/examples.ipynb']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -76,17 +77,20 @@ html_theme = 'sphinx_rtd_theme' #'alabaster'
 html_static_path = ['_static']
 
 # Change colours in theme for navigation
-html_css_files = ['custom_theme.css']
+html_css_files = [
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css',
+    'custom_theme.css',
+]
 
 # Adds logo to documentation page
-html_logo = str(Path('images','refineGEMs_logo.png'))
+html_logo = str(Path('images','logos','refineGEMs_full_nb.png'))
 html_theme_options = {
     'logo_only': True,
 	'flyout_display': 'attached'
 }
 
 #Adds logo as favicon to tab
-html_favicon = str(Path('images','refineGEMs_logo.png'))
+html_favicon = str(Path('images','logos','refineGEMs_icon_nb.png'))
 
 # Changes code highlighting
 pygments_style = 'blinds-light'
@@ -139,7 +143,6 @@ autodoc_mock_imports = ['Bio',
                         'seaborn',
                         'sortedcontainers',
                         'sqlalchemy',
-                        'sqlite_dump',
                         'tqdm',
                         'venn',
                         'xmltodict',

@@ -9,11 +9,16 @@ __all__ = [
     "util",
 ]
 
-from . import connections
-from . import cvterms
-from . import databases
-from . import db_access
-from . import entities
-from . import io
-from . import set_up
-from . import util
+from importlib import import_module
+
+
+def __getattr__(name):
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted([*globals(), *__all__])

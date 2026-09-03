@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.3"
 requires-python = ">=3.10, <3.13"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
@@ -13,7 +13,6 @@ authors = [
     {name = "Carolin Brune", email = "carolin.brune@informatik.uni-halle.de"}
 ]
 maintainers = [
-    {name = "Tobias Fehrenbach"},
     {name = "Nina Roßbach"},
 ]
 
@@ -37,36 +36,41 @@ classifiers = [
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
     "biopython>=1.79",
-    "bioregistry>=0.12.0",
     "bioservices>=1.11.2",
     "click>=8.1.3",
     "cloup>=3.0.5",
     "cobra>=0.28.0", 
     "depinfo>=1.7.0",
     "gffutils>=0.10.1",
-    "libchebipy>=1.0.10",
+    'ipywidgets', # needed to run tqdm normally without error
     "markupsafe>=2.0.1",
     'matplotlib >= 3.8.2',
     "memote>=0.17.0", 
     "multiprocess>=0.70.16",
     "numpy>=2.0.0",
-    "ols-client>=0.1.3",
     "pandas>=2.2.2",
     'pyyaml>=6.0.1',
     "ratelimit>=2.2.1",
     'requests>=2.32.4',
-    "sboannotator>=3.0.2",
     "seaborn>=0.12.2",
     "sortedcontainers>=2.4.0",
     "sqlalchemy>=2.0.0",
-    "sqlite_dump>=0.1.1",
     'tqdm>=4.66.1',
-    'ipywidgets', # needed to run tqdm normally without error
+    'upsetplot>=0.9.0',
     "venn>=0.1.3",
     "z3-solver>=4.13.0.0",
 ]
 
 [project.optional-dependencies]
+bioregistry = ["bioregistry>=0.12.0, <0.12.19"]
+chebi = ["libchebipy>=1.0.10"]
+ols = ["ols-client>=0.1.3"]
+sbo = ["sboannotator>=3.0.2"]
+optional = [
+       "bioregistry>=0.12.0, <0.12.19",
+       "libchebipy>=1.0.10",
+       "ols-client>=0.1.3",
+       "sboannotator>=3.0.2"]
 # developer/docs installation dependancies
 docs = ["accessible-pygments",
        "sphinx", 
@@ -90,11 +94,14 @@ refinegems = "refinegems.cmd_access:cli"
 # [tool.setuptools.dynamic]
 # version = {attr = "refinegems.VERSION"}
 
+[tool.setuptools]
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md", "docs/source/images/logos/LOGO_LICENSE.md", "docs/source/images/GRAPHICS_LICENSE.md"]
+
 [tool.setuptools.packages.find]
 where = ['src']
 
 [tool.setuptools.package-data]
-"refinegems.example.example_inputs" = ['*.xlsx','*.csv']
+"refinegems.example.example_inputs" = ['*.tsv']
 "refinegems.data.database" = ['*.txt', '*.sql', '*.db', '*.csv']
 "refinegems.data.config" = ['*.yaml','*.yml']
 "refinegems.data.pathway" = ['*.csv']

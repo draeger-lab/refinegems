@@ -3,7 +3,7 @@ Casamino Acids medium (CasA)
 Casamino acids are a mixture of amino acids that potentially enhance growth. The composition is known since 1971\ 
 :footcite:p:`nolanAminoAcidsGrowth1971`. The exact composition including the recommended supplementation as described in 
 'Amino Acids and Growth Factors in Vitamin-Free Casamino Acids'\ :footcite:p:`nolanAminoAcidsGrowth1971` was used for 
-the following *in sillico* definition.
+the following *in silico* definition.
 
 .. list-table:: CasA composition
   :name: casa_comp_med

@@ -123,7 +123,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     """Verifies if database has:
 
        - 2 tables with names 'bigg_metabolites' & 'bigg_reactions'
-       - 6 tables with names 'medium', 'substance', 'substance2db' & 'medium2substance', 'subset' & 'subset2substance'
+       - 6 tables with names 'medium', 'substance', 'substance2db', 'medium2substance', 'subset' & 'subset2substance'
        - 1 table with name 'modelseed_compounds'
 
     Args:
@@ -190,8 +190,8 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 
 def create_media_database(db_cursor: sqlite3.Cursor):
-    """Creates the media database with 4 tables 
-    ('medium', 'substance', 'substance2db', 'medium2substance') 
+    """Creates the media database with 6 tables 
+    ('medium', 'substance', 'substance2db', 'medium2substance', 'subset' & 'subset2substance') 
     from file './data/database/media_db.sql'
 
     Args:
@@ -204,6 +204,8 @@ def create_media_database(db_cursor: sqlite3.Cursor):
                            DROP TABLE IF EXISTS substance2db;
                            DROP TABLE IF EXISTS medium;
                            DROP TABLE IF EXISTS medium2substance;
+                           DROP TABLE IF EXISTS subset;
+                           DROP TABLE IF EXISTS subset2substance;
                            """
     )
 
@@ -241,7 +243,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
                 key, value = link.split(":", 1)
                 key = key.strip()
                 value = value.rsplit("/", 1)[1].strip()
-                value = re.sub(r"^(?i)meta:", "", value)
+                value = re.sub(r"^meta:", "", value, re.IGNORECASE)
                 if key in database_ids.keys():
                     database_ids[key].append(value)
                 else:

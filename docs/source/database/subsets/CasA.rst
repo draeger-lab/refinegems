@@ -1,7 +1,7 @@
 Casamino acids (CasA)
 ^^^^^^^^^^^^^^^^^^^^^
-The definition of the Casamino acids (CasA) subset is based on the percentages and composition provided by USBiological 
-life Sciences\ :footcite:p:`USBiologicalCasA`.
+The definition of the Casamino acids (CasA) subset is based on the percentages and composition provided by 
+`USBiological life Sciences <https://www.usbio.net/media/C2080/casamino-acids#:~:text=Casamino%2520Acids%2520is%2520a%2520hydrochloric,destroyed%2520by%2520the%2520acid%2520treatment>`__\ :footcite:p:`USBiologicalCasA`.
 
 .. list-table:: CasA composition
   :name: casa_comp_sub
