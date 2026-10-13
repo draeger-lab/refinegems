@@ -8,7 +8,11 @@ __author__ = "Carolin Brune and Tobias Fehrenbach"
 
 from ..analysis.growth import set_bounds_to_default
 from .medium import Medium
-from ..utility.util import test_biomass_presence, MIN_GROWTH_THRESHOLD
+from ..utility.entities import resolve_external_compartment
+from ..utility.util import (
+    test_biomass_presence,
+    MIN_GROWTH_THRESHOLD,
+)
 from ..developement.decorators import suppress_log_message
 
 import cobra
@@ -288,7 +292,7 @@ class EGCSolver:
             - model (cobra.Model):
                 COBRApy model
         """
-        external_comp = cobra.medium.find_external_compartment(model)
+        external_comp = resolve_external_compartment(model)
         # set fluxes for each reaction within model
         for rea in model.reactions:
             # except dissipation reactions

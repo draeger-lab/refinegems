@@ -21,6 +21,7 @@ import pandas as pd
 import re
 import sqlalchemy
 import sqlite3
+import textwrap
 import warnings
 
 from Bio import SeqIO
@@ -42,6 +43,19 @@ logger = logging.getLogger(__name__)
 ################################################################################
 # variables
 ################################################################################
+
+MEDIA_TABLES = {
+    "medium",
+    "medium2substance",
+    "subset",
+    "subset2substance",
+    "substance",
+    "substance2db",
+}  #: :meta:
+
+_DUMP_TABLE = re.compile(
+    r'^(?:CREATE TABLE|INSERT INTO)\s+"?([^"\s(]+)"?', re.IGNORECASE
+)
 
 ################################################################################
 # functions
@@ -458,6 +472,52 @@ def load_a_table_from_database(
     return db_table
 
 
+def write_media_database_schema(
+    database: Union[Path, str], output: Union[Path, str]
+) -> None:
+    """Atomically write the six media tables from a SQLite database to SQL.
+
+    Args:
+        - database (Path | str):
+            SQLite database containing the refineGEMs media tables.
+        - output (Path | str):
+            SQL file to create or replace.
+    """
+    database = Path(database)
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_suffix(output.suffix + ".tmp")
+
+    connection = sqlite3.connect(database)
+    try:
+        lines = []
+        for line in connection.iterdump():
+            match = _DUMP_TABLE.match(line)
+            if not match or match.group(1) not in MEDIA_TABLES:
+                continue
+            if line.upper().startswith("CREATE TABLE "):
+                first_line, *remaining_lines = line.splitlines()
+                if remaining_lines:
+                    line = first_line + "\n" + textwrap.dedent(
+                        "\n".join(remaining_lines)
+                    )
+                line = re.sub(
+                    r"^CREATE TABLE\s+",
+                    "CREATE TABLE IF NOT EXISTS ",
+                    line,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+                if lines:
+                    lines.extend(["", ""])
+            lines.append(line)
+    finally:
+        connection.close()
+
+    temporary.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    temporary.replace(output)
+
+
 def parse_dict_to_dataframe(str2list: dict) -> pd.DataFrame:
     """| Parses dictionary of form {str: list} &
        | Transforms it into a table with a column containing the strings and a column containing the lists
@@ -576,8 +636,10 @@ def create_missing_genes_protein_fasta(
 # ---
 
 def parse_gff_for_cds(
-    gffpath: str, keep_attributes: dict[str:str] = None
-    ) -> Union[pd.DataFrame, tuple[pd.DataFrame, str]]:
+    gffpath: str,
+    keep_attributes: dict[str:str] = None,
+    use_old_locus_tag: bool = True,
+) -> Union[pd.DataFrame, tuple[pd.DataFrame, str]]:
     """Parses a GFF file to obtain a mapping for the corresponding attributes listed in keep_attributes
 
     Args:
@@ -586,6 +648,10 @@ def parse_gff_for_cds(
         - keep_attributes (dict, optional):
             Dictionary of attributes to be kept and the corresponding column for the table.
             Defaults to None.
+        - use_old_locus_tag (bool, optional):
+            Replace ``locus_tag`` with the corresponding ``old_locus_tag`` where
+            that gene-level mapping is available. If False, leave the CDS
+            attributes unchanged. Defaults to True for backwards compatibility.
 
     Returns:
         (1) Case: ``return_variety = False``
@@ -610,12 +676,21 @@ def parse_gff_for_cds(
     genes = pd.DataFrame.from_dict([_.attributes for _ in gff.features_of_type("gene")])
     if "locus_tag" in genes.columns:
         genes = genes.explode("locus_tag")
-    if "old_locus_tag" in genes.columns and "locus_tag" in genes.columns:
+        
+    # either retain old behaviour and map the old/new locus tags 
+    # or use the new behaviour aka keep the columns with "keep_attributes" only
+    print(genes.columns)
+    if (
+        "old_locus_tag" in genes.columns
+        and "locus_tag" in genes.columns
+    ):  
         cds = cds.merge(
-            genes[["locus_tag", "old_locus_tag"]], how="left", on="locus_tag"
-        )
-        cds.drop(columns=["locus_tag"], inplace=True)
-        cds.rename(columns={"old_locus_tag": "locus_tag"}, inplace=True)
+                    genes[["locus_tag", "old_locus_tag"]], how="left", on="locus_tag"
+                )
+        if use_old_locus_tag:
+            cds.drop(columns=["locus_tag"], inplace=True)
+            cds.rename(columns={"old_locus_tag": "locus_tag"}, inplace=True)
+
     # keep only certain columns
     if keep_attributes:
         cds = cds[[_ for _ in cds.columns if _ in list(keep_attributes.keys())]]

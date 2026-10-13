@@ -34,8 +34,24 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Literal, Union, Any
 
-from ..utility.databases import PATH_TO_DB
-from ..utility.io import load_substance_table_from_db, load_subset_from_db, load_a_table_from_database
+from ..utility.databases import (
+    PATH_TO_DB,
+    DATABASE_NAMESPACES,
+    canonicalize_namespace,
+    expand_namespace_memberships,
+    namespace_matches,
+)
+from ..utility.io import (
+    load_substance_table_from_db,
+    load_subset_from_db,
+    load_a_table_from_database,
+    write_media_database_schema,
+)
+from ..utility.entities import (
+    get_model_exchange_reactions,
+    model_metabolite_matches_identifier,
+    resolve_external_compartment,
+)
 
 ################################################################################
 # setup logging
@@ -47,7 +63,7 @@ logger = logging.getLogger(__name__)
 # variables
 ############################################################################
 
-ALLOWED_DATABASE_LINKS = ["BiGG", "MetaNetX", "SEED", "VMH", "ChEBI", "KEGG"]  #: :meta:
+ALLOWED_DATABASE_LINKS = list(DATABASE_NAMESPACES)  #: :meta:
 REQUIRED_SUBSTANCE_ATTRIBUTES = ["name", "formula", "flux", "source"]  #: :meta:
 INTEGER_REGEX = re.compile(r"^[-+]?([1-9]\d*|0)$")  #: :meta:
 FLOAT_REGEX = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")  #: :meta:
@@ -659,7 +675,11 @@ class Medium:
         """
 
         # Keep all columns with BiGG IDs
-        carveme_mimic = self.substance_table[self.substance_table['db_type'].str.contains('BiGG')]
+        carveme_mimic = self.substance_table[
+            self.substance_table["db_type"].map(
+                lambda value: namespace_matches(value, "BiGG")
+            )
+        ]
 
         # Remove unnecessary columns
         if no_flux:
@@ -737,16 +757,20 @@ class Medium:
     # ------------------------
     def export_to_cobra(
         self,
-        namespace: Literal["Name", "BiGG", "SEED"] = "BiGG",
+        namespace: Literal[
+            "Name", "BiGG", "ChEBI", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"
+        ] = "BiGG",
         default_flux: float = 10.0,
         replace: bool = False,
         double_o2: bool = True,
         ext_compartment: str = "e",
-    ) -> dict[str, float]:
+        model: cobra.Model = None,
+        return_missing: bool = False,
+    ) -> Union[dict[str, float], tuple[dict[str, float], list[str]]]:
         """Export a medium to the COBRApy format for a medium.
 
         Args:
-            - namespace (Literal['Name', 'BiGG'], optional):
+            - namespace (Literal['Name', 'BiGG', 'ChEBI', 'KEGG', 'MetaCyc', 'MetaNetX', 'SEED', 'VMH'], optional):
                 Namespace to use. Defaults to 'BiGG'.
             - default_flux (float, optional):
                 Default flux to substitute missing values. Defaults to 10.0.
@@ -756,49 +780,163 @@ class Medium:
                 Double the flux of oxygen. Defaults to True.
             - ext_compartment (str, optional):
                 The compartment suffix for external compounds 
-                Mainly used fir the SEED namespace. 
+                Mainly used for the SEED namespace.
                 Defaults to 'e'.
+            - model (cobra.Model, optional):
+                Model whose actual exchange reactions should be used. This is
+                required for namespaces without a fixed COBRA exchange-ID
+                convention. Defaults to None.
+            - return_missing (bool, optional):
+                Return a second value containing identifiers for medium entries
+                that could not be matched to model exchanges. Requires
+                ``model``. Defaults to False.
 
         Raises:
             - ValueError: Unknown namespace.
 
         Returns:
-            dict[str,float]:
-                The exported medium.
+            dict[str,float] | tuple[dict[str,float], list[str]]:
+                The exported medium, optionally together with unmatched IDs.
         """
 
+        if return_missing and model is None:
+            raise ValueError("return_missing=True requires a model.")
+
         self.set_default_flux(default_flux, replace=replace, double_o2=double_o2)
+        missing_exchanges = []
+        model_exchanges = (
+            get_model_exchange_reactions(model) if model is not None else []
+        )
+        exchanges_by_id = {exchange.id: exchange for exchange in model_exchanges}
 
         match namespace:
             case "Name":
 
-                names = self.substance_table[["name", "flux"]]
-                names["EX"] = biggs["db_id"] + " exchange"
-                cobra_medium = pd.Series(names.flux.values, index=names.EX).to_dict()
+                names = self.substance_table[["name", "db_id", "flux"]].copy()
+                if model is None:
+                    # Preserve the historical Name convention for callers that
+                    # only want a COBRA medium dictionary and provide no model.
+                    names["EX"] = names["db_id"] + " exchange"
+                    cobra_medium = pd.Series(
+                        names.flux.values, index=names.EX
+                    ).to_dict()
+                else:
+                    cobra_medium = {}
+                    for name, model_id, flux in names.itertuples(
+                        index=False, name=None
+                    ):
+                        if pd.isna(model_id):
+                            continue
+                        model_id = str(model_id)
+                        matched_exchange = None
+                        for exchange in model_exchanges:
+                            # Prefer the model's real reaction ID. A Name entry
+                            # may denote that reaction directly, its historical
+                            # '<id> exchange' form, or the exchanged metabolite.
+                            if exchange.id in {
+                                model_id,
+                                f"{model_id} exchange",
+                            } or any(
+                                metabolite.id == model_id
+                                or metabolite.name == name
+                                or model_metabolite_matches_identifier(
+                                    metabolite, model_id
+                                )
+                                for metabolite in exchange.metabolites
+                            ):
+                                matched_exchange = exchange
+                                break
+                        if matched_exchange is None:
+                            missing_exchanges.append(f"{model_id} exchange")
+                        else:
+                            cobra_medium[matched_exchange.id] = flux
 
-            case "BiGG":
+            case _ if namespace in DATABASE_NAMESPACES:
 
-                biggs = self.substance_table[
-                    self.substance_table["db_type"].str.contains("BiGG")
-                ][["name", "db_id", "flux"]]
-                biggs["db_id_EX"] = "EX_" + biggs["db_id"] + "_e"
-                cobra_medium = pd.Series(
-                    biggs.flux.values, index=biggs.db_id_EX
-                ).to_dict()
-                
-            case "SEED":
-                
-                seeds = self.substance_table[   
-                    self.substance_table["db_type"].str.contains("SEED")
-                ][["name", "db_id", "flux"]]
-                seeds["db_id_EX"] = "EX_" + seeds["db_id"] + "_" + ext_compartment
-                cobra_medium = pd.Series(
-                    seeds.flux.values, index=seeds.db_id_EX
-                ).to_dict()
+                # @TODO Validate all namespace-specific model conventions with
+                # representative real models. Constructed tests cover the
+                # generic matcher, but database coverage alone does not prove
+                # that every namespace is encoded as expected in practice.
+                # Select only rows belonging to the requested canonical
+                # namespace; the three-column schema stores each separately.
+                namespace_mask = self.substance_table["db_type"].map(
+                    lambda value: namespace_matches(value, namespace)
+                ).astype(bool)
+                database_ids = self.substance_table.loc[
+                    namespace_mask, ["name", "db_id", "flux"]
+                ].copy()
+
+                if model is not None:
+                    exchange_compartment = ext_compartment
+                    if namespace in ("BiGG", "SEED") and "_" in ext_compartment:
+                        short_compartment = ext_compartment.rsplit("_", 1)[-1]
+                        identifiers = set(
+                            database_ids["db_id"].dropna().astype(str)
+                        )
+                        full_matches = sum(
+                            f"EX_{db_id}_{ext_compartment}" in exchanges_by_id
+                            for db_id in identifiers
+                        )
+                        short_matches = sum(
+                            f"EX_{db_id}_{short_compartment}" in exchanges_by_id
+                            for db_id in identifiers
+                        )
+                        if short_matches > full_matches:
+                            exchange_compartment = short_compartment
+
+                    cobra_medium = {}
+                    for db_id, flux in database_ids[
+                        ["db_id", "flux"]
+                    ].itertuples(index=False, name=None):
+                        if pd.isna(db_id):
+                            continue
+                        db_id = str(db_id)
+                        matched_exchange = exchanges_by_id.get(
+                            f"EX_{db_id}_{exchange_compartment}"
+                        )
+                        if matched_exchange is None:
+                            for exchange in model_exchanges:
+                                # Match via the exchange metabolite and retain
+                                # the reaction ID already used by the model.
+                                if any(
+                                    model_metabolite_matches_identifier(
+                                        metabolite, db_id
+                                    )
+                                    for metabolite in exchange.metabolites
+                                ):
+                                    matched_exchange = exchange
+                                    break
+                        if matched_exchange is None:
+                            # Retain the historical exchange-ID representation
+                            # where one exists. Other namespaces have no single
+                            # reliable reaction naming convention, so report
+                            # their database identifier instead.
+                            if namespace in ("BiGG", "SEED"):
+                                missing_exchanges.append(
+                                    f"EX_{db_id}_{exchange_compartment}"
+                                )
+                            else:
+                                missing_exchanges.append(db_id)
+                        else:
+                            cobra_medium[matched_exchange.id] = flux
+                elif namespace in ("BiGG", "SEED"):
+                    database_ids["db_id_EX"] = (
+                        "EX_" + database_ids["db_id"] + "_" + ext_compartment
+                    )
+                    cobra_medium = pd.Series(
+                        database_ids.flux.values, index=database_ids.db_id_EX
+                    ).to_dict()
+                else:
+                    raise ValueError(
+                        f"Exporting namespace {namespace!r} requires a model "
+                        "to resolve its exchange-reaction IDs."
+                    )
 
             case _:
                 raise ValueError(f"Unknown namespace: {namespace}")
 
+        if return_missing:
+            return cobra_medium, missing_exchanges
         return cobra_medium
 
 
@@ -1187,6 +1325,24 @@ def read_substances_from_file(path: str) -> pd.DataFrame:
 
     # read in the table
     substance_table = pd.read_csv(path, sep="\t", comment="#")
+
+    # Normalize database columns and expand legacy combined columns.  A file
+    # containing ``BiGG+VMH`` remains readable, but the in-memory table uses
+    # one column per canonical namespace.
+    for column in list(substance_table.columns):
+        try:
+            memberships = expand_namespace_memberships(column)
+        except ValueError:
+            continue
+        for namespace in memberships:
+            if namespace in substance_table.columns:
+                substance_table[namespace] = substance_table[namespace].combine_first(
+                    substance_table[column]
+                )
+            else:
+                substance_table[namespace] = substance_table[column]
+        if column not in memberships:
+            substance_table.drop(columns=column, inplace=True)
 
     # validate the table
     substance_cols = substance_table.columns
@@ -1604,12 +1760,15 @@ def enter_s2db_row(
 
     # only need to enter if ID exists
     if row[db_type]:
+        canonical_db_type = canonicalize_namespace(db_type)
         # check if mapping already exists
         entry_check_res = cursor.execute(
-            "SELECT 1 FROM substance2db WHERE substance2db.substance_id = ? AND db_id = ?",
+            """SELECT 1 FROM substance2db
+               WHERE substance_id = ? AND db_id = ? AND db_type = ?""",
             (
                 row["substance_id"],
                 row[db_type],
+                canonical_db_type,
             ),
         )
         entry_check = entry_check_res.fetchone()
@@ -1619,7 +1778,7 @@ def enter_s2db_row(
                 (
                     row["substance_id"],
                     row[db_type],
-                    db_type,
+                    canonical_db_type,
                 ),
             )
             connection.commit()
@@ -2035,32 +2194,20 @@ def generate_insert_query(row: pd.Series, cursor) -> str:
                     f"{Fore.MAGENTA}No conditions column was found in the provided DataFrame. Chosen table {table} cannot be updated."
                 )
             if "substance" in conditions_dict.keys():
-                res = cursor.execute(
-                    f"""SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'"""
-                )
-                substance_id = res.fetchone()[0]
-                ins = (
-                    cursor.execute(
-                        f"""SELECT * FROM substance2db WHERE substance2db.substance_id = {substance_id} AND substance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\'"""
+                new_values = [
+                    value.strip() for value in str(row["new_value"]).split(",")
+                ]
+                if len(new_values) != 2:
+                    raise ValueError(
+                        "substance2db inserts require 'db_id, db_type'"
                     )
-                    .fetchone()[2]
-                    .split("+")
-                )
-                if len(ins) > 0:
-                    cur = row["new_value"].split(",")[1].strip().split("+")
-                    missing = [_ for _ in ins if _ not in cur]
-                    if len(missing) > 0:
-                        update_value = "+".join(sorted(cur + missing))
-                        insert_query = f"""UPDATE substance2db SET db_type = \'{update_value}\' WHERE substance2db.substance_id = {substance_id} AND szbbstance2db.db_id = \'{row["new_value"].split(",")[0].strip()}\'"""
-                    else:
-                        return None
-                # insert can be done without any problems
-                else:
-                    insert_query += f"""(\
-                        (SELECT substance.id FROM substance WHERE substance.name = \'{conditions_dict.get("substance")}\'), \
-                        {value_str}\
-                        )\
-                    """
+                db_id, db_type = new_values
+                canonical_db_type = canonicalize_namespace(db_type)
+                insert_query = f"""INSERT OR IGNORE INTO substance2db
+                    (substance_id, db_id, db_type) VALUES (
+                    (SELECT substance.id FROM substance
+                     WHERE substance.name = \'{conditions_dict.get("substance")}\'),
+                    \'{db_id}\', \'{canonical_db_type}\')"""
 
             else:
                 raise ValueError(
@@ -2147,42 +2294,54 @@ def updated_db_to_schema(directory: str = "../data/database", inplace: bool = Fa
             If True, uses the default sql-file name, otherwise extends it with the prefix ``updated``.
     """
 
-    # Not needed to be included in Schema
-    NOT_TO_SCHEMA = [
-        "BEGIN TRANSACTION;",
-        "COMMIT;",
-        "bigg_to_sbo",
-        "ec_to_sbo",
-        "bigg_metabolites",
-        "bigg_reactions",
-        "modelseed_compounds",
-        "mnx_chem_prop",
-        "mnx_chem_xref",
-        "mnx_reac_prop",
-        "mnx_reac_xref"
-    ]
-    counter = 0  # To count rows in newly generated file
-
     if inplace:
         filename = "media_db.sql"
     else:
         filename = "updated_media_db.sql"
-
-    conn = sqlite3.connect(PATH_TO_DB)
-    with open(Path(directory, filename), "w") as file:
-        for line in conn.iterdump():
-            if not (any(map(lambda x: x in line, NOT_TO_SCHEMA))):
-                if "CREATE TABLE" in line and counter != 0:
-                    file.write(f"\n\n{line}\n")
-                else:
-                    file.write(f"{line}\n")
-                counter += 1
-    conn.close()
+    write_media_database_schema(Path(PATH_TO_DB), Path(directory, filename))
 
 
 ############################################################################
 # working with models
 ############################################################################
+
+
+def set_model_medium(
+    model: cobra.Model, medium: dict[str, float]
+) -> None:
+    """Apply a COBRA medium with a detector-independent fallback."""
+    try:
+        model.medium = medium
+        return
+    except (RuntimeError, ValueError, TypeError, KeyError, IndexError):
+        exchanges = get_model_exchange_reactions(model)
+
+    selected = set()
+    for reaction_id, bound in medium.items():
+        if reaction_id not in model.reactions:
+            continue
+        reaction = model.reactions.get_by_id(reaction_id)
+        selected.add(reaction)
+        if reaction.reactants:
+            reaction.lower_bound = -bound
+        elif reaction.products:
+            reaction.upper_bound = bound
+
+    # Reproduce COBRApy's behaviour by disabling uptake through exchanges that
+    # are not part of the requested medium while retaining possible secretion.
+    for reaction in exchanges:
+        if reaction in selected:
+            continue
+        is_export = reaction.reactants and not reaction.products
+        inactive_bound = min(
+            0.0,
+            -reaction.lower_bound if is_export else reaction.upper_bound,
+        )
+        if reaction.reactants:
+            reaction.lower_bound = -inactive_bound
+        elif reaction.products:
+            reaction.upper_bound = inactive_bound
+
 
 def medium_to_model(
     model: cobra.Model,
@@ -2216,25 +2375,20 @@ def medium_to_model(
             Either none or the exported medium.
     """
 
-    # export medium to cobra
+    # Keep all namespace-to-exchange conversion in Medium.export_to_cobra so
+    # direct exports and model application cannot drift apart.
     exported_medium = medium.export_to_cobra(
         namespace=namespace,
         default_flux=default_flux,
         replace=replace,
         double_o2=double_o2,
-        ext_compartment=cobra.medium.boundary_types.find_external_compartment(model)
+        ext_compartment=resolve_external_compartment(model),
+        model=model,
     )
-
-    # remove exchanges that do not exist in model
-    model_exchanges = [_.id for _ in model.exchanges]
-    exported_medium = {k: v for k, v in exported_medium.items() if k in model_exchanges}
 
     if add:
         # add to model
-        model.medium = exported_medium
+        set_model_medium(model, exported_medium)
         return
     else:
         return exported_medium
-
-
-

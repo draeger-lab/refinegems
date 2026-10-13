@@ -1301,7 +1301,9 @@ def simulate(modelpaths, media, namespace, dir, colors):
     "-n",
     "--namespace",
     required=False,
-    type=click.Choice(["BiGG"]),
+    type=click.Choice(
+        ["Name", "BiGG", "KEGG", "MetaCyc", "MetaNetX", "SEED", "VMH"]
+    ),
     show_default=True,
     default="BiGG",
     help="Namespace to use for the model.",
@@ -1328,7 +1330,9 @@ def auxotrophies(modelpath, media, namespace, dir, colors):
     """Test for auxotrophies for the 20 proteinogenic amino acids."""
     medialist, supps = rg.classes.medium.load_media(media)
     model = rg.utility.io.load_model(modelpath, "cobra")
-    report = rg.analysis.growth.test_auxotrophies(model, medialist, namespace)
+    report = rg.analysis.growth.test_auxotrophies(
+        model, medialist, supps, namespace=namespace
+    )
     # @TODO
     report.save(dir, colors)
 

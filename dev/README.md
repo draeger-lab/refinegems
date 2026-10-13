@@ -2,7 +2,7 @@
 
 This is a directory containing information, notebooks with open work and testing examples and much more for the developers of the `refineGEMs` package. It also serves as an additional hub, where developers can share and discuss their code.
 
-Additionally, some helpful code for making developement easier and standardised 
+Additionally, some helpful code for making development easier and standardised
 between developers has been added here as well.
 
 More information about the different files collected here can be found below.
@@ -33,9 +33,10 @@ More information about the different files collected here can be found below.
   Small notebook with short block for learning how to work with this toolbox. <br>
   Status: Not fully finished but a good starting point
 
-## Ideas
+## Archive
 
-
+Completed or paused development experiments are stored in `archive/`. See its
+README for an inventory and the location of the corresponding production data.
 
 ## Removed from Package
 

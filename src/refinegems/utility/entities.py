@@ -198,8 +198,130 @@ def resolve_compartment_names(model: Union[cobra.Model, libModel]) -> None:
                 )
 
 
+def get_model_exchange_reactions(model: cobra.Model) -> list[cobra.Reaction]:
+    """Return exchange reactions even when COBRApy cannot infer compartments."""
+    try:
+        return list(model.exchanges)
+    except (RuntimeError, ValueError, TypeError, KeyError, IndexError):
+        pass
+
+    # Prefer explicit exchange markers. They avoid confusing sinks and demands
+    # with exchanges when several kinds of one-metabolite boundaries exist.
+    explicit = [
+        reaction
+        for reaction in model.reactions
+        if len(reaction.metabolites) == 1
+        and (
+            reaction.id.startswith("EX_")
+            or "exchange" in reaction.name.casefold()
+            or "SBO:0000627" in str(reaction.annotation.get("sbo", ""))
+        )
+    ]
+    if explicit:
+        return explicit
+
+    # Last resort for models without conventional exchange annotations/IDs.
+    return [reaction for reaction in model.reactions if len(reaction.metabolites) == 1]
+
+
+def resolve_external_compartment(
+    model: cobra.Model, default: str = "e"
+) -> str:
+    """Return an external compartment without failing on ambiguous models.
+
+    COBRApy's detector is tried first. If it cannot decide, the function uses
+    exchange reactions from the current model medium, then all exchanges, and
+    finally a conventional external compartment already declared by the model.
+    ``default`` is returned when none of these sources is informative.
+    """
+
+    def compartment_from_exchanges(exchanges) -> Union[str, None]:
+        counts = {}
+        for exchange in exchanges:
+            for metabolite in exchange.metabolites:
+                compartment = str(metabolite.compartment)
+                counts[compartment] = counts.get(compartment, 0) + 1
+        return max(counts, key=counts.get) if counts else None
+
+    try:
+        detected = cobra.medium.boundary_types.find_external_compartment(model)
+        if detected:
+            return detected
+    except (RuntimeError, ValueError, TypeError, KeyError, IndexError):
+        # Ambiguous or incomplete compartment metadata is handled below.
+        pass
+
+    # An already active model medium is the strongest fallback evidence because
+    # its reactions have explicitly been used as exchanges by the caller/model.
+    try:
+        active_exchanges = [
+            model.reactions.get_by_id(reaction_id)
+            for reaction_id in model.medium
+            if reaction_id in model.reactions
+        ]
+    except (RuntimeError, ValueError, TypeError, KeyError):
+        active_exchanges = []
+    inferred = compartment_from_exchanges(active_exchanges)
+    if inferred:
+        return inferred
+
+    # A model may have defined exchanges without having an active medium yet.
+    inferred = compartment_from_exchanges(get_model_exchange_reactions(model))
+    if inferred:
+        return inferred
+
+    # Prefer a declared external-looking compartment before using the generic
+    # fallback. This covers models with compartments but no exchange reactions.
+    compartments = [str(compartment) for compartment in model.compartments]
+    if default in compartments:
+        return default
+    external_like = next(
+        (
+            compartment
+            for compartment in compartments
+            if compartment.casefold().startswith(("e", "extra"))
+        ),
+        None,
+    )
+    if external_like:
+        return external_like
+
+    logger.warning(
+        "Unable to determine an external compartment for model %s; using %r. "
+        "Model-aware medium export will return an empty mapping when no "
+        "exchange metabolites can be matched.",
+        model.id,
+        default,
+    )
+    return default
+
+
 # handling cobra entities (features)
 # ----------------------------------
+
+
+def model_metabolite_matches_identifier(
+    metabolite: cobra.Metabolite, identifier: str
+) -> bool:
+    """Match a database ID to common model metabolite ID conventions."""
+    identifier = str(identifier)
+    compartment = str(metabolite.compartment)
+    # Build the known representations from the metabolite's own compartment;
+    # no assumption about cytosolic/external compartment names is needed here.
+    candidates = {
+        identifier,
+        f"{identifier}_{compartment}",
+        f"{identifier}[{compartment}]",
+        f"{identifier}({compartment})",
+        f"{identifier}__91__{compartment}__93__",
+        f"{identifier}__40__{compartment}__41__",
+    }
+    model_ids = {metabolite.id}
+    # Raw SBML species IDs may keep the conventional species prefix, whereas
+    # COBRApy commonly removes it while importing the model.
+    if metabolite.id.startswith("M_"):
+        model_ids.add(metabolite.id.removeprefix("M_"))
+    return not model_ids.isdisjoint(candidates)
 
 
 def reaction_equation_to_dict(eq: str, model: cobra.Model) -> dict:
