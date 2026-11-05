@@ -1612,7 +1612,7 @@ def build_reaction_kegg(
 
     # set reversibility
     if rev:
-        new_reac.bounds = (1000.0, 1000.0)
+        new_reac.bounds = (-1000.0, 1000.0)
     else:
         new_reac.bounds = (0.0, 1000.0)
 
@@ -1765,7 +1765,7 @@ def build_reaction_bigg(
 
     # set reversibility
     if rev:
-        new_reac.bounds = (1000.0, 1000.0)
+        new_reac.bounds = (-1000.0, 1000.0)
     else:
         new_reac.bounds = (0.0, 1000.0)
 
@@ -2107,9 +2107,12 @@ def get_gpid_mapping(
             # Case 1: CarveMe version; Contains NCBI Protein ID, lcl_CP035291_1_prot_QCY37541_1_361
             if "prot_" in gene_id:
                  # All NCBI CDS protein FASTA files have the NCBI protein identifier + Version after 'prot_' in the FASTA identifier
-                id_string = gene_id.split(r"prot_")[1].split(r"_")
-                # If identifier contains no '_', this is full identifier + add version number
-                ncbi_id = '.'.join(id_string[0:2])
+                # CarveMe replaces punctuation in the FASTA ID with underscores.
+                # Remove only the final CDS index, retaining RefSeq's prefix underscore.
+                ncbi_id = gene_id.split("prot_", 1)[1].rsplit("_", 1)[0]
+                accession = re.fullmatch(r"([A-Za-z]+_?\d+)[_.](\d+)", ncbi_id)
+                if accession:
+                    ncbi_id = f"{accession[1]}.{accession[2]}"
 
             # Case 2: RAST contained without any surrounding stuff, 1134914.3.1020_56.peg
             # Case 3: RefSeq contained without any surrounding stuff, WP_011275285.1, From CarveMe: YP_005228568_1

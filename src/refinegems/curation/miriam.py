@@ -128,7 +128,8 @@ def get_set_of_curies(
         curie = bioregistry.manager.parse_curie(
             extracted_curie
         )  # Contains valid db prefix to identifiers pairs
-        curie = list(curie)  # Turn tuple into list to allow item assignment
+        # A failed Bioregistry parse must reach the legacy-format fallback below.
+        curie = list(curie) if curie is not None else [None, None]  # Turn tuple into list to allow item assignment
 
         # @DEBUG
         #print(f'Prefix:CURIE at start of get_set_of_curies: {curie[0]}:{curie[1]}')

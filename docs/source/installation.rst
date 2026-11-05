@@ -73,6 +73,13 @@ missing dependency and skips the affected optional step where possible.
 
    pip install "masschargecuration@git+https://github.com/draeger-lab/MassChargeCuration"
 
+Use MCC 1.0.2 or newer to benefit from its persistent default database cache.
+Calls from ``refineGEMs`` reuse this cache automatically, without additional
+parameters. MCC stores it in ``$XDG_CACHE_HOME/MassChargeCuration`` when
+``XDG_CACHE_HOME`` is set, otherwise in ``~/.cache/MassChargeCuration``.
+Missing database artifacts are downloaded on first use. Cached artifacts avoid
+repeated downloads, but MCC can still make online requests for missing entries.
+
 .. code:: console
    :class: copyable
 

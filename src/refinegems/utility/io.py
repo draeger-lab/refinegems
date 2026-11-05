@@ -66,12 +66,12 @@ _DUMP_TABLE = re.compile(
 
 
 def load_model(
-    modelpath: Union[str, list[str]], package: Literal["cobra", "libsbml"]
+    modelpath: Union[str, Path, list[Union[str, Path]]], package: Literal["cobra", "libsbml"]
 ) -> Union[cobra.Model, list[cobra.Model], libModel, list[libModel]]:
     """Load a model.
 
     Args:
-        - modelpath (str | list[str]):
+        - modelpath (str | Path | list[str | Path]):
             Path to the model or list of paths to models (string format).
         - package (Literal['cobra','libsbml']):
             Package to use to load the model.
@@ -99,7 +99,7 @@ def load_model(
 
         match extension:
             case "xml" | "sbml":
-                data = cobra.io.read_sbml_model(modelpath)
+                data = cobra.io.read_sbml_model(Path(modelpath))
             case "json":
                 data = cobra.io.load_json_model(modelpath)
             case "yml" | "yaml":
@@ -127,7 +127,7 @@ def load_model(
         match extension:
             case "xml" | "sbml":
                 reader = SBMLReader()
-                read = reader.readSBMLFromFile(modelpath)  # read from file
+                read = reader.readSBMLFromFile(str(modelpath))  # read from file
                 mod = read.getModel()
             case "json" | "yml" | "mat":
                 data = load_cobra_model(modelpath)
@@ -153,7 +153,7 @@ def load_model(
             return loaded_models
 
         # read in a single model
-        case str():
+        case str() | Path():
 
             if package == "cobra":
                 return load_cobra_model(modelpath)
@@ -688,8 +688,11 @@ def parse_gff_for_cds(
                     genes[["locus_tag", "old_locus_tag"]], how="left", on="locus_tag"
                 )
         if use_old_locus_tag:
-            cds.drop(columns=["locus_tag"], inplace=True)
-            cds.rename(columns={"old_locus_tag": "locus_tag"}, inplace=True)
+            # Some newly annotated CDS have no old tag; retain their current tag.
+            cds["locus_tag"] = cds["old_locus_tag"].where(
+                cds["old_locus_tag"].notna(), cds["locus_tag"]
+            )
+            cds.drop(columns=["old_locus_tag"], inplace=True)
 
     # keep only certain columns
     if keep_attributes:

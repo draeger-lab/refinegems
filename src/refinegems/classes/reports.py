@@ -275,7 +275,7 @@ class GrowthSimulationReport(Report):
         return pd.DataFrame(l)
 
     def plot_growth(
-        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
+        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn", **kwargs
     ) -> Union[matplotlib.figure.Figure,None]:
         """Visualise the contents of the report.
 

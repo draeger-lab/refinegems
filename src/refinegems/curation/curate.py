@@ -185,6 +185,16 @@ def extend_gp_annots_via_mapping_table(
     for gene in tqdm(gene_list):
         # Get row of mapping table for current model_id
         gp_infos = mapping_table.loc[gene.getId(), :]
+        if isinstance(gp_infos, pd.DataFrame):
+            # A shared protein accession can map to multiple genomic loci.
+            # Preserve consistent annotations without choosing an arbitrary locus.
+            logger.warning(
+                "Multiple mapping rows for gene %s; ambiguous fields are left unchanged.",
+                gene.getId(),
+            )
+            gp_infos = gp_infos.apply(
+                lambda column: column.iloc[0] if column.nunique() == 1 else ""
+            )
 
         # Add infos to current GeneProduct if available
         if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
@@ -1168,7 +1178,13 @@ def resolve_duplicates(
 def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
     """Prune mass unbalanced reactions from a model. 
     Reactions that are part of the biomass function or boundary reactions
-    are not pruned, even if they are mass unbalanced.
+    are not pruned, even if they are mass unbalanced. Candidates are tested
+    sequentially against the first detected biomass reaction. Reactions whose
+    removal prevents growth are retained and reported for manual curation.
+    Checks use the current medium, or temporarily open existing exchanges if
+    the current medium does not support growth. If neither supports growth,
+    pruning is skipped because essentiality cannot be established. The original
+    medium and objective are preserved.
     Metabolites and genes that become orphaned due to the pruning are also removed.
 
     Args:
@@ -1188,13 +1204,80 @@ def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
     
     # get reactions, that are at the boundary or biomass 
     # => these are allowed to be - somewhat - unbalanced
-    ub_allowed_ids = set(test_biomass_presence(model)).union([_.id for _ in model.boundary])
+    biomass_ids = test_biomass_presence(model) or []
+    ub_allowed_ids = set(biomass_ids).union([_.id for _ in model.boundary])
     
     # identify, which reactions should be pruned
-    to_prune = [_ for _ in ubmass if _ not in ub_allowed_ids]
+    # Ignore floating-point residuals in elemental balance. Charge imbalance
+    # is handled separately and does not make a reaction mass unbalanced.
+    to_prune = [
+        rid for rid in ubmass
+        if rid not in ub_allowed_ids
+        and any(
+            abs(value) > model.tolerance
+            for element, value in model.reactions.get_by_id(rid).check_mass_balance().items()
+            if element != "charge"
+        )
+    ]
     
-    # prune the model
-    model.remove_reactions(to_prune, remove_orphans=True)
+    # Establish a growing reference before testing sequential deletions.
+    safe_to_prune = []
+    retained = []
+    growth_threshold = max(model.tolerance, 1e-6)
+
+    def supports_growth(solution):
+        return (
+            solution.status == "optimal"
+            and solution.objective_value is not None
+            and solution.objective_value > growth_threshold
+        )
+
+    if to_prune and not biomass_ids:
+        logger.warning(
+            "No biomass reaction detected; reporting mass-unbalanced reactions "
+            "without pruning because growth essentiality cannot be checked: %s",
+            to_prune,
+        )
+    elif to_prune:
+        with model:
+            model.objective = biomass_ids[0]
+            reference = model.optimize()
+            if not supports_growth(reference):
+                model.medium = {reaction.id: 1000.0 for reaction in model.exchanges}
+                reference = model.optimize()
+                logger.info(
+                    "Current medium does not support growth; testing pruning "
+                    "with existing exchanges temporarily open."
+                )
+            if not supports_growth(reference):
+                logger.warning(
+                    "No growing reference could be established; reporting "
+                    "mass-unbalanced reactions without pruning: %s", to_prune
+                )
+            else:
+                for rid in to_prune:
+                    reaction = model.reactions.get_by_id(rid)
+                    with model:
+                        reaction.knock_out()
+                        solution = model.optimize()
+                    if supports_growth(solution):
+                        # Retain accepted knockouts during subsequent checks to
+                        # protect alternative routes from combined deletion.
+                        reaction.knock_out()
+                        safe_to_prune.append(rid)
+                    else:
+                        retained.append(rid)
+                        logger.warning(
+                            "Retained mass-unbalanced reaction %s: knockout "
+                            "prevents growth or could not be verified "
+                            "(status=%s, growth=%s). Manual curation required.",
+                            rid, solution.status, solution.objective_value,
+                        )
+
+    # The context restores medium, objective and trial bounds before removal.
+    if safe_to_prune:
+        model.remove_reactions(safe_to_prune, remove_orphans=True)
+    logger.info("Retained %s growth-protected reactions: %s", len(retained), retained)
     
     # report pruned entities
     pruned_reacs = [rid for rid in og_reacs if rid not in {_.id for _ in model.reactions}]
