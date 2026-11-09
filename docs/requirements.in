@@ -7,4 +7,4 @@ sphinx_copybutton
 sphinx-icon
 accessible-pygments
 pandoc
-pyzmq>=27.2.0
+pyzmq>=27.3.0
