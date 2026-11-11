@@ -325,9 +325,17 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
     for i in tqdm(range(len(pathway_groups))):
         kegg_pathway = k.get(keys[i])
         dbentry = k.parse(kegg_pathway)
+        names = dbentry.get("NAME")
+        pathway_name = names[0] if isinstance(names, list) and names else names
+        if not isinstance(pathway_name, str) or not pathway_name.strip():
+            pathway_name = keys[i]
+            logger.warning(
+                "KEGG pathway %s has no NAME; using its ID as the group name.",
+                keys[i],
+            )
         if groups.getGroup("G_" + keys[i]) is not None:
             group = groups.getGroup("G_" + keys[i])
-            group.setName(dbentry["NAME"][0])
+            group.setName(pathway_name)
             group.setMetaId("meta_" + "G_" + keys[i])
             group.setKind("partonomy")
             group.setSBOTerm("SBO:0000633")  # NAME
@@ -338,7 +346,7 @@ def create_pathway_groups(model: libModel, pathway_groups) -> libModel:
                     member.setIdRef(reac)
         else:
             group = group_list.createGroup()
-            group.setName(dbentry["NAME"][0])
+            group.setName(pathway_name)
             group.setId("G_" + keys[i])  # important for validity (memote/cobra)
             group.setMetaId("meta_" + "G_" + keys[i])
             group.setKind("partonomy")

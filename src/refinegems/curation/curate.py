@@ -932,7 +932,7 @@ def resolve_duplicate_metabolites(
                     # resolve annotations
                     for key, value in annotations.items():
                         if len(value) > 0 and not key in keep_meta.annotation:
-                            keep_meta.annotations[key] = value
+                            keep_meta.annotation[key] = value
                     # note: charge and formula should be in valid range and be corrected by MCC (if needed)
 
                     # replace duplicates with the metabolite to be kept
