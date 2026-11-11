@@ -914,6 +914,10 @@ def change_qualifiers(
     return model
 
 
+# @BUG/@WARNING: 
+# The correct annotation for pathways gets sorted into the wrong group
+# KEGGPathwayGroups
+# -----------------
 def change_all_qualifiers(model: libModel, lab_strain: bool) -> libModel:
     """Wrapper function to change qualifiers of all entities at once
 
