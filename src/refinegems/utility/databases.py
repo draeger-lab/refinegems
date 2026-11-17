@@ -34,6 +34,8 @@ from pathlib import Path
 from importlib.resources import files
 from typing import Union
 
+from ..warnings import BIGG_TABLES, MEDIA_TABLES, MODELSEED_REQUIRED_COLUMNS, database_table_problems
+
 ################################################################################
 # setup logging
 ################################################################################
@@ -53,9 +55,7 @@ VERSION_URL = "http://bigg.ucsd.edu/api/v2/database_version"  #: :meta:
 MODELSEED_COMPOUNDS_CONTENTS_URL = (
     "https://api.github.com/repos/ModelSEED/ModelSEEDDatabase/contents/Biochemistry?ref=master"
 )
-MODELSEED_REQUIRED_COLUMNS = {
-    "id", "name", "formula", "charge", "mass", "linked_compound", "aliases"
-}
+
 
 MNX_FTP_BASE_PATH = "https://www.metanetx.org/ftp/latest/"
 mnx_db_namespace = {
@@ -209,38 +209,10 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     """
     print("Verifying database...")
 
-    # Fetches the table names as string tuples from the connected database
-    db_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = [string[0] for string in db_cursor.fetchall()]
-
-    bigg_tables_contained = (
-        len([s for s in tables if re.match(r"^bigg_(?!to)(.*?)", s, re.IGNORECASE)])
-        == 2
-    )
-    media_tables_contained = (
-        len(
-            [
-                s
-                for s in tables
-                if re.match(
-                    r"^medium(.*?)|^substance(.*?)|^subset(.*?)", s, re.IGNORECASE
-                )
-            ]
-        )
-        == 6
-    )
-    modelseed_cmpd_tbl_contained = (
-        len([s for s in tables if s == "modelseed_compounds"]) == 1
-    )
-    if modelseed_cmpd_tbl_contained:
-        columns = {
-            row[1] for row in db_cursor.execute("PRAGMA table_info(modelseed_compounds)")
-        }
-        modelseed_cmpd_tbl_contained = MODELSEED_REQUIRED_COLUMNS.issubset(columns)
-        if modelseed_cmpd_tbl_contained:
-            modelseed_cmpd_tbl_contained = db_cursor.execute(
-                "SELECT 1 FROM modelseed_compounds LIMIT 1"
-            ).fetchone() is not None
+    problems = database_table_problems(db_cursor.connection)
+    bigg_tables_contained = not any(name in problems for name in BIGG_TABLES)
+    media_tables_contained = not any(name in problems for name in MEDIA_TABLES)
+    modelseed_cmpd_tbl_contained = "modelseed_compounds" not in problems
 
     bigg_media_tbls_contained = bigg_tables_contained and media_tables_contained 
     bigg_modelseed_cmpd_tbls_contained = (
@@ -272,9 +244,9 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
 
 
 def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
-    """Create missing media and subset tables from the bundled media_db.sql.
+    """Create missing or empty media and subset tables from the bundled media_db.sql.
 
-    Existing tables and their contents are preserved unless ``reload=True``.
+    Existing non-empty tables and their contents are preserved unless ``reload=True``.
     Reloading replaces all six tables and discards local changes. Changes are
     rolled back if loading fails.
 
@@ -284,16 +256,9 @@ def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
        - reload (bool, optional):
           Replace all media and subset tables. Defaults to False.
     """
-    tables = (
-        "medium", "substance", "subset", "medium2substance",
-        "substance2db", "subset2substance",
-    )
-    existing = {
-        row[0] for row in db_cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )
-    }
-    selected = tables if reload else tuple(name for name in tables if name not in existing)
+    tables = MEDIA_TABLES
+    problems = database_table_problems(db_cursor.connection)
+    selected = tables if reload else tuple(name for name in tables if name in problems)
     if not selected:
         return
 
@@ -310,6 +275,8 @@ def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
                 for name in reversed(tables):
                     db_cursor.execute(f'DROP TABLE IF EXISTS "{name}"')
             for name in selected:
+                if not reload and problems[name] == "empty":
+                    continue
                 schema_sql = source.execute(
                     "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (name,)
                 ).fetchone()[0]
@@ -530,7 +497,7 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
 def initialise_database(reload_media: bool = False):
     """Initialises/updates the database (data.db)
 
-    Only missing media and subset tables are created by default. Set
+    Missing or empty media and subset tables are populated by default. Set
     ``reload_media=True`` to replace all six tables with the bundled SQL
     contents, discarding local changes.
 
@@ -540,67 +507,24 @@ def initialise_database(reload_media: bool = False):
     - 6 tables with names 'medium', 'substance', 'medium2substance', 'substance2db', 'subset' & 'subset2substance'
     - 1 table with name 'modelseed_compounds'
     """
-    # Initialise empty connection
-    con = None
-
     print("Initialising database...")
-
-    # Try to open connection & get cursor
+    con = sqlite3.connect(PATH_TO_DB)
     try:
-        con = sqlite3.connect(PATH_TO_DB)
-        cursor = con.cursor()
-
-        validity_code = is_valid_database(cursor)
-        create_media_database(cursor, reload=reload_media)
-
-        if validity_code == ValidationCodes.BIGG:
-            print("Only BiGG tables contained in database.")
+        create_media_database(con.cursor(), reload=reload_media)
+        problems = database_table_problems(con)
+        get_latest_bigg_databases(
+            con, is_missing=any(name in problems for name in BIGG_TABLES)
+        )
+        if "modelseed_compounds" in problems:
             get_modelseed_compounds_database(con)
-
-        elif validity_code == ValidationCodes.MEDIA: 
-            print("Only media tables contained in database.")
-            get_latest_bigg_databases(con)
-            get_modelseed_compounds_database(con)
-
-        elif validity_code == ValidationCodes.MODELSEED_COMPOUNDS:
-            print("Only ModelSEED compounds table contained in database.")
-            get_latest_bigg_databases(con)
-
-        elif validity_code == ValidationCodes.BIGG_MEDIA: 
-            print("Only BiGG and media tables contained in database.")
-            get_modelseed_compounds_database(con)
-
-        elif validity_code == ValidationCodes.BIGG_MSEED_COMPOUNDS:
-            print("Only BiGG and ModelSEED compounds tables contained in database.")
-
-        elif validity_code == ValidationCodes.MEDIA_MSEED_COMPOUNDS: 
-            print(
-                "Only media and ModelSEED compounds tables contained in database."
+        remaining = database_table_problems(con)
+        if remaining:
+            raise RuntimeError(
+                "Database initialisation incomplete: "
+                + ", ".join(f"{reason} {name}" for name, reason in remaining.items())
             )
-            get_latest_bigg_databases(con)
-
-        elif validity_code == ValidationCodes.EMPTY:
-            print(
-                "Incorrect or empty database. Initialise database with required tables..."
-            )
-            get_latest_bigg_databases(con)
-            get_modelseed_compounds_database(con)
-
-        elif validity_code == ValidationCodes.COMPLETE:
-            print("Verifying if BiGG tables are up-to-date...")
-            get_latest_bigg_databases(con, False)
-
-    except Error as e:
-        print(e)
+        print(validation_messages[ValidationCodes.COMPLETE])
     finally:
-        if con:
-            con.close()
-
-        # Validate initialised database
-        con = sqlite3.connect(PATH_TO_DB)
-        cursor = con.cursor()
-        validity_code = is_valid_database(cursor)
-        print(validation_messages.get(validity_code))
         con.close()
 
 

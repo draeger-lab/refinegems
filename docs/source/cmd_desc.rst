@@ -197,7 +197,8 @@ Access and curate the internal database.
   refinegems database initialise
 
 Initialise or update the internal database.
-Existing media and subset tables are preserved; only missing tables are created.
+Existing non-empty media and subset tables are preserved. Missing tables are
+created, and empty tables are populated from the bundled SQL contents.
 Use ``--reload-media`` to replace all six media and subset tables with the bundled
 SQL contents. This discards local changes in those tables.
 

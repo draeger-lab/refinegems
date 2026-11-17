@@ -38,7 +38,8 @@ To install ``refineGEMs`` as Python package from `PyPI <https://pypi.org/project
 
    The bundled database contains the media and subset tables. BiGG and ModelSEED
    data are downloaded during initialisation rather than included in the package.
-   Existing media and subset tables are preserved by default.
+   Existing non-empty media and subset tables are preserved by default; missing
+   or empty tables are populated from the bundled SQL contents.
 
    Importing ``refinegems`` issues a warning if the database is missing, unreadable,
    or required tables are missing or empty. The warning also detects an invalid
@@ -111,6 +112,9 @@ repeated downloads, but MCC can still make online requests for missing entries.
 
 ``refineGEMs`` can also be used via Docker. 
 You can pull the latest image from (a) Docker Hub or (b) build it locally.
+The Dockerfile runs ``refinegems database initialise`` during the build, so new
+images include the downloaded BiGG and ModelSEED tables. Building requires an
+internet connection and fails if database initialisation cannot complete.
 
 (a) Image from Docker Hub
 ^^^^^^^^^^^^^^^^^^^^^^^^^
