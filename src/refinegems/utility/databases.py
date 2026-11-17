@@ -294,12 +294,12 @@ def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
         source.close()
 
 
-def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> dict:
+def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
     """Updates the BiGG tables 'bigg_metabolites' & 'bigg_reactions' within a database (data.db)
 
     Args:
       - latest_version (str):
-         String containing the Path to a file with the latest version of the BiGG database
+         Latest BiGG database version string
       - db_connection (sqlite3.Connection):
          Open connection to the database (data.db)
     """
@@ -356,63 +356,61 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> di
 
         return data
 
+    def download_table(url: str) -> pd.DataFrame:
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        data = pd.read_csv(io.StringIO(response.text), dtype=str, sep="\t")
+        if data.empty or not {"bigg_id", "database_links", "model_list"}.issubset(data.columns):
+            raise ValueError(f"Invalid or empty BiGG table from {url}.")
+        if data["bigg_id"].isna().any() or data["bigg_id"].str.strip().eq("").any():
+            raise ValueError(f"Missing BiGG IDs in {url}.")
+        return get_database_links(data.rename(columns={"bigg_id": "id"}))
+
     print("Adding BiGG tables...")
-
-    # Store currently used version
-    with open(VERSION_FILE, "w") as file:
-        file.write(latest_version)
-
-    # Create BiGG metabolites table
-    BIGG_MODELS_METABS_URL = (
+    metabolites = download_table(
         "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
     )
-    bigg_models_metabs = requests.get(BIGG_MODELS_METABS_URL).text
-    bigg_models_metabs_df = pd.read_csv(
-        io.StringIO(bigg_models_metabs), dtype=str, sep="\t"
-    )
-    bigg_models_metabs_df.rename(columns={"bigg_id": "id"}, inplace=True)
-
-    bigg_models_metabs_df = get_database_links(bigg_models_metabs_df)
-
-    bigg_id_duplicates = bigg_models_metabs_df.duplicated(subset=["id"], keep=False)
-    bigg_id_duplicates_df = bigg_models_metabs_df[bigg_id_duplicates]
-    bigg_id_duplicates_set = set(bigg_id_duplicates_df["id"].tolist())
-
-    bigg_models_metabs_df[~bigg_id_duplicates].to_sql(
-        "bigg_metabolites",
-        db_connection,
-        if_exists="replace",
-        index=False,
-        dtype={"id": "TEXT PRIMARY KEY"},
-    )
-
-    if bigg_id_duplicates_set:
-        logger.warning(
-            "The BiGG metabolite table contains the following "
-            f"{len(bigg_id_duplicates_set)} duplicate(s):\n"
-            f"{bigg_id_duplicates_set}\n"
-            "Duplicate(s) are completely removed from the table."
-        )
-
-    # Create BiGG reactions table
-    BIGG_MODELS_REACS_URL = (
+    reactions = download_table(
         "http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt"
     )
-    bigg_models_reacs = requests.get(BIGG_MODELS_REACS_URL).text
-    bigg_models_reacs_df = pd.read_csv(
-        io.StringIO(bigg_models_reacs), dtype=str, sep="\t"
-    )
-    bigg_models_reacs_df.rename(columns={"bigg_id": "id"}, inplace=True)
 
-    bigg_models_reacs_df = get_database_links(bigg_models_reacs_df)
+    # Preserve the existing policy of removing all duplicate metabolite IDs.
+    duplicates = metabolites.duplicated(subset=["id"], keep=False)
+    duplicate_ids = set(metabolites.loc[duplicates, "id"])
+    metabolites = metabolites.loc[~duplicates]
+    if duplicate_ids:
+        logger.warning(
+            "The BiGG metabolite table contains the following "
+            f"{len(duplicate_ids)} duplicate(s):\n{duplicate_ids}\n"
+            "Duplicate(s) are completely removed from the table."
+        )
+    if metabolites.empty or reactions["id"].duplicated().any():
+        raise ValueError("BiGG tables must contain metabolites and unique reaction IDs.")
 
-    bigg_models_reacs_df.to_sql(
-        "bigg_reactions",
-        db_connection,
-        if_exists="replace",
-        index=False,
-        dtype={"id": "TEXT PRIMARY KEY"},
-    )
+    # pandas.to_sql commits SQLite writes, so prepare both tables in a separate
+    # database before copying them into the destination in one transaction.
+    staged = sqlite3.connect(":memory:")
+    try:
+        for name, data in (("bigg_metabolites", metabolites), ("bigg_reactions", reactions)):
+            data.to_sql(name, staged, index=False, dtype={"id": "TEXT PRIMARY KEY"})
+        with db_connection:
+            if not db_connection.in_transaction:
+                db_connection.execute("BEGIN")
+            for name in BIGG_TABLES:
+                schema = staged.execute(
+                    "SELECT sql FROM sqlite_master WHERE name=?", (name,)
+                ).fetchone()[0]
+                db_connection.execute(f'DROP TABLE IF EXISTS "{name}"')
+                db_connection.execute(schema)
+                rows = staged.execute(f'SELECT * FROM "{name}"')
+                placeholders = ", ".join("?" for _ in rows.description)
+                db_connection.executemany(f'INSERT INTO "{name}" VALUES ({placeholders})', rows)
+    finally:
+        staged.close()
+
+    # Record the version only after both table replacements have committed.
+    with open(VERSION_FILE, "w") as file:
+        file.write(latest_version)
 
 
 def get_latest_bigg_databases(
@@ -431,7 +429,9 @@ def get_latest_bigg_databases(
           True if no BiGG tables are in the database. Defaults to True.
     """
     # Check if BiGG database had an update
-    LATEST_VERSION = requests.get(VERSION_URL).json()["bigg_models_version"]
+    response = requests.get(VERSION_URL, timeout=60)
+    response.raise_for_status()
+    LATEST_VERSION = response.json()["bigg_models_version"]
 
     if not Path.exists(VERSION_FILE) or is_missing:
         update_bigg_db(LATEST_VERSION, db_connection)
