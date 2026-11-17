@@ -20,7 +20,7 @@ beautifulsoup4==4.12.3
     # via nbconvert
 bleach==6.4.0
     # via nbconvert
-certifi==2024.8.30
+certifi==2026.10.18
     # via requests
 charset-normalizer==3.4.0
     # via requests
@@ -80,7 +80,7 @@ mistune==3.3.3
     # via nbconvert
 nbclient==0.10.0
     # via nbconvert
-nbconvert==7.17.1
+nbconvert==7.17.2
     # via nbsphinx
 nbformat==5.10.4
     # via
@@ -190,7 +190,7 @@ tinycss2==1.4.0
     # via bleach
 tomli==2.0.2
     # via sphinx
-tornado==6.5.8
+tornado==6.6.1
     # via jupyter-client
 traitlets==5.14.3
     # via
@@ -207,7 +207,7 @@ typing-extensions==4.16.0
     #   exceptiongroup
     #   ipython
     #   mistune
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit
