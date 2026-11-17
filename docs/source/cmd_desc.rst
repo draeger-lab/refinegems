@@ -197,6 +197,9 @@ Access and curate the internal database.
   refinegems database initialise
 
 Initialise or update the internal database.
+Existing media and subset tables are preserved; only missing tables are created.
+Use ``--reload-media`` to replace all six media and subset tables with the bundled
+SQL contents. This discards local changes in those tables.
 
 .. code:: bash
 
@@ -213,6 +216,15 @@ Options:
   refinegems database reset
 
 Reset the database by removing additionally downloaded tables.
+By default, only MetaNetX tables are removed. Developers can use
+``refinegems database reset --for-release`` to reload media/subset tables from
+SQL (discarding local changes), remove BiGG, ModelSEED and MetaNetX tables,
+and compact the database for distribution. No downloads are performed.
+
+After installing refineGEMs, run ``refinegems database initialise`` to download
+the required namespaces. Importing refineGEMs warns if required tables are
+missing, empty, or the database cannot be read; this check does not modify the
+database or access the network.
 
 refinegems media
 ----------------

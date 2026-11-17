@@ -221,9 +221,14 @@ def database():
 
 
 @database.command()
-def initialise():
+@click.option(
+    "--reload-media",
+    is_flag=True,
+    help="Replace all media and subset tables with the bundled SQL contents, discarding local changes.",
+)
+def initialise(reload_media: bool = False):
     """Initialise or update the database."""
-    rg.utility.databases.initialise_database()
+    rg.utility.databases.initialise_database(reload_media=reload_media)
 
 
 @database.command()
@@ -246,9 +251,14 @@ def add_namespace(databasename, chunksize):
 
 
 @database.command()
-def reset():
+@click.option(
+    "--for-release",
+    is_flag=True,
+    help="Replace media/subset tables from SQL (discarding local changes), remove BiGG, ModelSEED and MetaNetX tables, and compact the database.",
+)
+def reset(for_release: bool = False):
     """Reset the database by removing additionally downloaded tables."""
-    rg.utility.databases.reset_database()
+    rg.utility.databases.reset_database(for_release=for_release)
 
 
 # -------------------

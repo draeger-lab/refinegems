@@ -50,6 +50,12 @@ VERSION_FILE = PATH_TO_DB_FOLDER.joinpath(
     "current_bigg_db_version.txt"
 )  #: :meta hide-value:
 VERSION_URL = "http://bigg.ucsd.edu/api/v2/database_version"  #: :meta:
+MODELSEED_COMPOUNDS_CONTENTS_URL = (
+    "https://api.github.com/repos/ModelSEED/ModelSEEDDatabase/contents/Biochemistry?ref=master"
+)
+MODELSEED_REQUIRED_COLUMNS = {
+    "id", "name", "formula", "charge", "mass", "linked_compound", "aliases"
+}
 
 MNX_FTP_BASE_PATH = "https://www.metanetx.org/ftp/latest/"
 mnx_db_namespace = {
@@ -226,6 +232,15 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
     modelseed_cmpd_tbl_contained = (
         len([s for s in tables if s == "modelseed_compounds"]) == 1
     )
+    if modelseed_cmpd_tbl_contained:
+        columns = {
+            row[1] for row in db_cursor.execute("PRAGMA table_info(modelseed_compounds)")
+        }
+        modelseed_cmpd_tbl_contained = MODELSEED_REQUIRED_COLUMNS.issubset(columns)
+        if modelseed_cmpd_tbl_contained:
+            modelseed_cmpd_tbl_contained = db_cursor.execute(
+                "SELECT 1 FROM modelseed_compounds LIMIT 1"
+            ).fetchone() is not None
 
     bigg_media_tbls_contained = bigg_tables_contained and media_tables_contained 
     bigg_modelseed_cmpd_tbls_contained = (
@@ -256,29 +271,60 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
         return ValidationCodes.EMPTY
 
 
-def create_media_database(db_cursor: sqlite3.Cursor):
-    """Creates the media database with 6 tables 
-    ('medium', 'substance', 'substance2db', 'medium2substance', 'subset' & 'subset2substance') 
-    from file './data/database/media_db.sql'
+def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
+    """Create missing media and subset tables from the bundled media_db.sql.
+
+    Existing tables and their contents are preserved unless ``reload=True``.
+    Reloading replaces all six tables and discards local changes. Changes are
+    rolled back if loading fails.
 
     Args:
        - db_cursor (sqlite3.Cursor):
-          Cursor from open connection to the database (data.db)
+          Cursor from an open connection to the database (data.db).
+       - reload (bool, optional):
+          Replace all media and subset tables. Defaults to False.
     """
-    db_cursor.executescript(
-        """
-                           DROP TABLE IF EXISTS susbtance;
-                           DROP TABLE IF EXISTS substance2db;
-                           DROP TABLE IF EXISTS medium;
-                           DROP TABLE IF EXISTS medium2substance;
-                           DROP TABLE IF EXISTS subset;
-                           DROP TABLE IF EXISTS subset2substance;
-                           """
+    tables = (
+        "medium", "substance", "subset", "medium2substance",
+        "substance2db", "subset2substance",
     )
+    existing = {
+        row[0] for row in db_cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )
+    }
+    selected = tables if reload else tuple(name for name in tables if name not in existing)
+    if not selected:
+        return
 
-    print("Adding media tables...")
-    with open(files("refinegems.data.database").joinpath("media_db.sql")) as schema:
-        db_cursor.executescript(schema.read())
+    # Load the SQL separately so inserts for existing tables are never replayed.
+    # Create all missing schemas before copying rows to satisfy foreign keys.
+    source = sqlite3.connect(":memory:")
+    try:
+        with open(files("refinegems.data.database").joinpath("media_db.sql")) as schema:
+            source.executescript(schema.read())
+        print("Reloading media tables..." if reload else "Adding missing media tables...")
+        db_cursor.execute("SAVEPOINT media_tables")
+        try:
+            if reload:
+                for name in reversed(tables):
+                    db_cursor.execute(f'DROP TABLE IF EXISTS "{name}"')
+            for name in selected:
+                schema_sql = source.execute(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (name,)
+                ).fetchone()[0]
+                db_cursor.execute(schema_sql)
+            for name in selected:
+                rows = source.execute(f'SELECT * FROM "{name}"')
+                placeholders = ", ".join("?" for _ in rows.description)
+                db_cursor.executemany(f'INSERT INTO "{name}" VALUES ({placeholders})', rows)
+            db_cursor.execute("RELEASE SAVEPOINT media_tables")
+        except Error:
+            db_cursor.execute("ROLLBACK TO SAVEPOINT media_tables")
+            db_cursor.execute("RELEASE SAVEPOINT media_tables")
+            raise
+    finally:
+        source.close()
 
 
 def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection) -> dict:
@@ -432,18 +478,46 @@ def get_latest_bigg_databases(
 
 
 def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
-    """Retrieves the compounds table from ModelSEED from the respective GitHub repository
+    """Combines ModelSEED's compound TSV partitions into the compounds table.
+
+    All downloads and their required columns are checked before replacing the
+    existing table. HTTP failures and invalid compound data raise an exception.
 
     Args:
        - db_connection (sqlite3.Connection):
           Open connection to the database (data.db)
     """
     print("Adding the ModelSEED compounds table...")
-    MODELSEED_COMPOUNDS_URL = "https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv"
-    modelseed_compounds = requests.get(MODELSEED_COMPOUNDS_URL).text
-    modelseed_df = pd.read_csv(
-        io.StringIO(modelseed_compounds), sep="\t", dtype={"linked_compound": str}
-    )  #'mass': float,
+    # ModelSEED now distributes compounds in numbered TSV partitions. Discover
+    # them rather than assuming a fixed number, excluding provenance TSVs.
+    response = requests.get(MODELSEED_COMPOUNDS_CONTENTS_URL, timeout=60)
+    response.raise_for_status()
+    compound_files = sorted(
+        (
+            entry for entry in response.json()
+            if entry["type"] == "file"
+            and re.fullmatch(r"compound_\d+\.tsv", entry["name"])
+        ),
+        key=lambda entry: entry["name"],
+    )
+    if not compound_files:
+        raise ValueError("No ModelSEED compound TSV partitions found.")
+
+    frames = []
+    for entry in compound_files:
+        response = requests.get(entry["download_url"], timeout=60)
+        response.raise_for_status()
+        frame = pd.read_csv(
+            io.StringIO(response.text), sep="\t", dtype={"linked_compound": str}
+        )
+        if frame.empty or not MODELSEED_REQUIRED_COLUMNS.issubset(frame.columns):
+            raise ValueError(f"Invalid ModelSEED compounds data in {entry['name']}.")
+        frames.append(frame)
+
+    modelseed_df = pd.concat(frames, ignore_index=True)
+    if modelseed_df["id"].isna().any() or modelseed_df["id"].duplicated().any():
+        raise ValueError("ModelSEED compound IDs must be non-null and unique.")
+    # Leave the existing table untouched if any download or validation fails.
     modelseed_df.to_sql(
         "modelseed_compounds",
         db_connection,
@@ -453,8 +527,12 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
     )
 
 
-def initialise_database():
+def initialise_database(reload_media: bool = False):
     """Initialises/updates the database (data.db)
+
+    Only missing media and subset tables are created by default. Set
+    ``reload_media=True`` to replace all six tables with the bundled SQL
+    contents, discarding local changes.
 
     After initialisation the database contains:
 
@@ -473,10 +551,10 @@ def initialise_database():
         cursor = con.cursor()
 
         validity_code = is_valid_database(cursor)
+        create_media_database(cursor, reload=reload_media)
 
         if validity_code == ValidationCodes.BIGG:
             print("Only BiGG tables contained in database.")
-            create_media_database(cursor)
             get_modelseed_compounds_database(con)
 
         elif validity_code == ValidationCodes.MEDIA: 
@@ -486,7 +564,6 @@ def initialise_database():
 
         elif validity_code == ValidationCodes.MODELSEED_COMPOUNDS:
             print("Only ModelSEED compounds table contained in database.")
-            create_media_database(cursor)
             get_latest_bigg_databases(con)
 
         elif validity_code == ValidationCodes.BIGG_MEDIA: 
@@ -495,7 +572,6 @@ def initialise_database():
 
         elif validity_code == ValidationCodes.BIGG_MSEED_COMPOUNDS:
             print("Only BiGG and ModelSEED compounds tables contained in database.")
-            create_media_database(cursor)
 
         elif validity_code == ValidationCodes.MEDIA_MSEED_COMPOUNDS: 
             print(
@@ -507,7 +583,6 @@ def initialise_database():
             print(
                 "Incorrect or empty database. Initialise database with required tables..."
             )
-            create_media_database(cursor)
             get_latest_bigg_databases(con)
             get_modelseed_compounds_database(con)
 
@@ -643,21 +718,35 @@ def update_mnx_namespaces(db: Union[Path, str] = PATH_TO_DB, chunksize: int = 1)
     con.close()
 
 
-def reset_database(database: Union[Path, str] = PATH_TO_DB):
+def reset_database(database: Union[Path, str] = PATH_TO_DB, for_release: bool = False):
     """Remove tables for certain databases to allow pushing of the database
     to GitHub (reduce size).
 
     Args:
         - database (Path | str, optional):
             Path to the database. Defaults to PATH_TO_DB, the in-build database.
+        - for_release (bool, optional):
+            Reload media/subset tables from SQL, remove all downloadable
+            namespaces and compact the file. Discards local media changes.
+            Defaults to False (remove only MetaNetX tables).
     """
-    # establish connection
+    database = Path(database)
     con = sqlite3.connect(database)
-    cursor = con.cursor()
-    # remove MetaNetX tables
-    cursor.execute("DROP TABLE IF EXISTS mnx_chem_xref")
-    cursor.execute("DROP TABLE IF EXISTS mnx_reac_xref")
-    cursor.execute("DROP TABLE IF EXISTS mnx_chem_prop")
-    cursor.execute("DROP TABLE IF EXISTS mnx_reac_prop")
-    # close connection
-    con.close()
+    try:
+        with con:
+            cursor = con.cursor()
+            # Keep the SQL refresh and table removal in the same transaction.
+            cursor.execute("BEGIN")
+            if for_release:
+                create_media_database(cursor, reload=True)
+            tables = [
+                "mnx_chem_xref", "mnx_reac_xref", "mnx_chem_prop", "mnx_reac_prop"
+            ]
+            if for_release:
+                tables.extend(["bigg_metabolites", "bigg_reactions", "modelseed_compounds"])
+            for name in tables:
+                cursor.execute(f'DROP TABLE IF EXISTS "{name}"')
+        if for_release:
+            con.execute("VACUUM")
+    finally:
+        con.close()

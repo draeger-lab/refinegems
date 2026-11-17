@@ -144,3 +144,6 @@ simulate_all**.xlsx
 
 # conda stuff
 .rg/
+
+# tests (until we actually add a full set)
+**/tests/**
