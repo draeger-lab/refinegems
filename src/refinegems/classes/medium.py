@@ -1881,7 +1881,8 @@ def enter_medium_into_db(medium: Medium, database: str = PATH_TO_DB):
     # in case of problems, interupt and revert changes
     except:
 
-        logger.info(f"During execution, the following error occured: \n{sys.exc_info()}")
+        # Preserve the original failure and traceback before reverting changes.
+        logger.exception("An error occurred while adding the medium to the database.")
         logger.info("Reverting changes to database...")
 
         cursor.execute("DELETE FROM medium WHERE rowid > ?", (sid_medium,))

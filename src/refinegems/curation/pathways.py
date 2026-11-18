@@ -13,7 +13,6 @@ import cobra
 import logging
 import re
 import urllib
-import warnings
 
 from bioservices import KEGG
 from Bio.KEGG import REST, Enzyme
@@ -202,8 +201,9 @@ def find_kegg_pathways(
                 except KeyError:
                     # no pathway found
                     pass
-                except Exception as e:
-                    warnings.warn(F'Something unexpected happened: {reac_id} on {kegg_id}\n{repr(e)}', UserWarning)
+                except Exception:
+                    # Include the original error and traceback for failed lookups.
+                    logger.exception("Something unexpected happened: %s on %s", reac_id, kegg_id)
 
         # via RC
         # via reaction class

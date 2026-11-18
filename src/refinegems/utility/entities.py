@@ -18,7 +18,6 @@ import requests
 import subprocess
 import tempfile
 import urllib
-import warnings
 
 from .io import load_model, write_model_to_file
 
@@ -614,7 +613,7 @@ def isreaction_complete(
             # default case: Warning + no formula check
             case _:
                 mes = f"Unknown options for formula_check: {formula_check}\nChecking the metabolite formula will be skipped."
-                warnings.warn(mes, UserWarning)
+                logger.warning(mes)
                 
     # check chemical plausability 
     # ---------------------------
@@ -900,13 +899,13 @@ def build_metabolite_kegg(
         kegg_handle = REST.kegg_get(kegg_id)
         kegg_record = [r for r in Compound.parse(kegg_handle)][0]
     except urllib.error.HTTPError:
-        warnings.warn(f"HTTPError: {kegg_id}")
+        logger.warning("HTTPError: %s", kegg_id, exc_info=True)
         return None
     except ConnectionResetError:
-        warnings.warn(f"ConnectionResetError: {kegg_id}")
+        logger.warning("ConnectionResetError: %s", kegg_id, exc_info=True)
         return None
     except urllib.error.URLError:
-        warnings.warn(f"URLError: {kegg_id}")
+        logger.warning("URLError: %s", kegg_id, exc_info=True)
         return None
 
     # step 2: create a random metabolite ID
@@ -954,7 +953,11 @@ def build_metabolite_kegg(
         
         # in case of an ambiguous mapping, take first match
         if len(mnx_ids) > 1:
-            logger.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
+            logger.warning(
+                "MNX mapping is ambiguous due to multiple matches: %s\n"
+                "-> Using first entry for building metabolite.",
+                mnx_ids,
+            )
             mnx_ids = [mnx_ids[0]]
         
         # mapping is unambiguously (or made that way)

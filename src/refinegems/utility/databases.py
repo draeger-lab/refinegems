@@ -207,7 +207,7 @@ def is_valid_database(db_cursor: sqlite3.Cursor) -> int:
        int:
           Corresponding to one of the ValidationCodes
     """
-    print("Verifying database...")
+    logger.info("Verifying database...")
 
     problems = database_table_problems(db_cursor.connection)
     bigg_tables_contained = not any(name in problems for name in BIGG_TABLES)
@@ -268,7 +268,7 @@ def create_media_database(db_cursor: sqlite3.Cursor, reload: bool = False):
     try:
         with open(files("refinegems.data.database").joinpath("media_db.sql")) as schema:
             source.executescript(schema.read())
-        print("Reloading media tables..." if reload else "Adding missing media tables...")
+        logger.info("Reloading media tables..." if reload else "Adding missing media tables...")
         db_cursor.execute("SAVEPOINT media_tables")
         try:
             if reload:
@@ -366,7 +366,7 @@ def update_bigg_db(latest_version: str, db_connection: sqlite3.Connection):
             raise ValueError(f"Missing BiGG IDs in {url}.")
         return get_database_links(data.rename(columns={"bigg_id": "id"}))
 
-    print("Adding BiGG tables...")
+    logger.info("Adding BiGG tables...")
     metabolites = download_table(
         "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
     )
@@ -454,7 +454,7 @@ def get_modelseed_compounds_database(db_connection: sqlite3.Connection):
        - db_connection (sqlite3.Connection):
           Open connection to the database (data.db)
     """
-    print("Adding the ModelSEED compounds table...")
+    logger.info("Adding the ModelSEED compounds table...")
     # ModelSEED now distributes compounds in numbered TSV partitions. Discover
     # them rather than assuming a fixed number, excluding provenance TSVs.
     response = requests.get(MODELSEED_COMPOUNDS_CONTENTS_URL, timeout=60)
@@ -507,7 +507,7 @@ def initialise_database(reload_media: bool = False):
     - 6 tables with names 'medium', 'substance', 'medium2substance', 'substance2db', 'subset' & 'subset2substance'
     - 1 table with name 'modelseed_compounds'
     """
-    print("Initialising database...")
+    logger.info("Initialising database...")
     con = sqlite3.connect(PATH_TO_DB)
     try:
         create_media_database(con.cursor(), reload=reload_media)
@@ -523,7 +523,7 @@ def initialise_database(reload_media: bool = False):
                 "Database initialisation incomplete: "
                 + ", ".join(f"{reason} {name}" for name, reason in remaining.items())
             )
-        print(validation_messages[ValidationCodes.COMPLETE])
+        logger.info(validation_messages[ValidationCodes.COMPLETE])
     finally:
         con.close()
 

@@ -28,7 +28,6 @@ import pandas as pd
 import re
 import requests
 import time
-import warnings
 import xmltodict
 
 from Bio import Entrez, SeqIO
@@ -237,9 +236,9 @@ def add_info_from_ChEBI_BiGG(
                 purpose="query ChEBI for metabolite information",
             )
         except OptionalDependencyError as e:
-            warnings.warn(
-                f"{e} ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
-                category=UserWarning,
+            logger.warning(
+                "%s ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
+                e,
             )
 
     # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
@@ -311,7 +310,7 @@ def add_info_from_ChEBI_BiGG(
             # only take the IUPAC names
             iupac_names = []
             for name in chebi_entity.get_names():
-                print(name)
+                logger.debug("ChEBI name candidate: %s", name)
                 if name.get_source() == "IUPAC":
                     iupac_names.append(name.get_name())
                     break
@@ -879,15 +878,16 @@ def _search_ncbi_for_gp(
                     if attempt < max_retries - 1:
                         time.sleep(2 ** attempt) # Wait 1s, 2s, 4s, 8s...
                     else:
-                        logger.error(f"Failed to fetch chunk {chunk} after {max_retries} attempts due to HTTP {e.code}")
+                        # Retain the final failure's traceback after retries are exhausted.
+                        logger.exception("Failed to fetch chunk %s after %s attempts due to HTTP %s", chunk, max_retries, e.code)
                 else:
-                    logger.error(f"NCBI API Error: {e}")
+                    logger.exception("NCBI API Error: %s", e)
                     break
             except Exception as e:
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)
                 else:
-                        logger.error(f"Failed to fetch chunk {chunk} after {max_retries} attempts: {e}")
+                    logger.exception("Failed to fetch chunk %s after %s attempts: %s", chunk, max_retries, e)
 
         for record in records:
             # Match the exact queried ID to the returned record
@@ -1233,7 +1233,7 @@ def map_to_homologs(
 
     # no mapping file
     elif email:
-        print(
+        logger.info(
             "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
         )
         table = dmnd_res
@@ -1250,7 +1250,7 @@ def map_to_homologs(
             lambda x: get_ec_from_ncbi(email, x)
         )
     else:
-        warnings.warn(
+        logger.warning(
             "Neither email nor mapping provided for NCBI quieries. Skipping mapping to EC numbers."
         )
         table = dmnd_res

@@ -23,6 +23,12 @@ General Options
 
 - ``--help``/``-h``: Call the help page of the command.
 - ``--version``: Show the version and exit.
+- ``--log-level``: Minimum diagnostic level: ``DEBUG``, ``INFO`` (default),
+  ``WARNING``, ``ERROR`` or ``CRITICAL``. Diagnostics are written to stderr;
+  command results are written to stdout. Place this option before the command,
+  for example ``refinegems --log-level DEBUG database initialise``.
+- ``--colour``/``--no-colour``: Enable/disable coloured level keywords.
+  By default, colour is enabled only for terminal output.
 
 ----
 

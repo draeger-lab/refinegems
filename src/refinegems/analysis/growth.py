@@ -12,7 +12,6 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import warnings
 
 from cobra import Model as cobraModel
 from ..developement.decorators import suppress_log_message, suppress_warning
@@ -667,9 +666,11 @@ def get_essential_reactions_via_single_knockout(model: cobraModel) -> list[str]:
             reaction.knock_out()
             sol = model.optimize().objective_value
             if sol <= 11:
-                print(
-                    "%s blocked (bounds: %s), new growth rate %f $"
-                    % (reaction.id, str(reaction.bounds), sol)
+                logger.info(
+                    "%s blocked (bounds: %s), new growth rate %f $",
+                    reaction.id,
+                    reaction.bounds,
+                    sol,
                 )
                 ess.append(reaction.id)
 
@@ -719,7 +720,7 @@ def find_growth_enhancing_exchanges(
         model.medium = base_medium
         sol = model.optimize()
     base_growth = sol.objective_value
-    print(base_growth)
+    logger.info("Baseline growth rate: %s", base_growth)
 
     enhancement = {}
     for ex in list(model.exchanges):
@@ -897,7 +898,7 @@ def test_auxotrophies(
                 # check namespace availability
                 if len(identifiers) == 0:
                     warn_str = f"Amino acid {a} has no identifier for your chosen namespace {namespace}. Please contact support if you want to add one."
-                    warnings.warn(warn_str)
+                    logger.warning(warn_str)
                     growth_res = m.optimize()
                     auxotrophies[a] = (
                         growth_res.objective_value
@@ -911,7 +912,7 @@ def test_auxotrophies(
                     # create a pseudo reaction -> a sink reaction for the amino acid
                     # to use as the new objective
                     if internal_meta is None:
-                        warnings.warn(f"No identifier matched in cytosol for {a}.")
+                        logger.warning(f"No identifier matched in cytosol for {a}.")
                     else:
                         sink_reac = m.add_boundary(
                             internal_meta,
@@ -993,7 +994,7 @@ def test_growth_with_source(
         if any(_ in str(model.objective.expression) for _ in growth_funcs):
             pass
         else:
-            warnings.warn(
+            logger.warning(
                 f"No growth functions set as objective, but growth function(s) detected. Setting objective to {growth_funcs[0]}"
             )
             model.objective = growth_funcs[0]
@@ -1118,8 +1119,8 @@ def model_minimal_medium(
 
         # minimise components of current medium
         elif objective == "medium":
-            warnings.warn(
-                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
+            logger.info(
+                "cobrapy.minimal_medium uses MIP formulation. This may take some time."
             )
             min_medium = dict(
                 cobra.medium.minimal_medium(
@@ -1139,8 +1140,8 @@ def model_minimal_medium(
             ex_medium = {_.id: 1000.0 for _ in model.exchanges}
             # perform minimisation
             model.medium = ex_medium
-            warnings.warn(
-                "Warning: cobrapy.minimal_medium uses MIP formulation. This may take some time."
+            logger.info(
+                "cobrapy.minimal_medium uses MIP formulation. This may take some time."
             )
             min_medium = dict(
                 cobra.medium.minimal_medium(

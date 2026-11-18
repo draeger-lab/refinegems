@@ -17,7 +17,6 @@ import shutil
 import subprocess
 import tempfile
 import time
-import warnings
 
 from importlib.resources import files
 from libsbml import Model as libModel
@@ -144,7 +143,7 @@ def adjust_BOF(
         )
     elif len(growth_func_list) > 1:
         mes = f"Multiple BOFs found. Using {growth_func_list[0]} for BOF adjustment."
-        warnings.warn(mes, category=UserWarning)
+        logger.warning(mes)
         objective_list = model.reactions.get_by_id(growth_func_list[0]).reaction.split(
             " "
         )
@@ -407,11 +406,9 @@ def perform_mcc(
         balancer.generate_visual_report(Path(dir, model.id + "_mcc_visual"))
     except OptionalDependencyError as e:
         logger.warning("%s Skipping MCC.", e)
-    except Exception as e:
-        print(repr(e))
-        import traceback
-        traceback.print_exc()
-        logger.error("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
+    except Exception:
+        # Include the traceback in the log while allowing the workflow to continue.
+        logger.exception("Something went wrong while running MCC. MCC will be skipped. Try running MCC outside the workflow to determine the cause.")
 
     return model
 
@@ -447,7 +444,8 @@ def run_memote(
             If given a path string, saves the report
             under the given path. Defaults to None.
         - verbose (bool, optional):
-            Produce a more verbose ouput.
+            Log progress and execution time at INFO level.
+            Requires INFO logging to be enabled.
             Defaults to False.
 
     Raises:
@@ -469,7 +467,7 @@ def run_memote(
 
     # verbose output I
     if verbose:
-        print("\n# -------------------\n# Analyse with MEMOTE\n# -------------------")
+        logger.info("Analyse with MEMOTE")
         start = time.time()
 
     # run memote
@@ -504,7 +502,7 @@ def run_memote(
     # verbose output II
     if verbose:
         end = time.time()
-        print(f"\ttotal time: {end - start}s")
+        logger.info("Memote total time: %ss", end - start)
 
     # option to return report
     if return_res:
@@ -567,8 +565,9 @@ def run_ModelPolisher(model_or_path: Union[libModel, str], configuration:dict) -
     result = None
     try:
         result = mp_polish(model_or_path, configuration)
-    except:
-        logger.error(f"Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
+    except Exception:
+        # Preserve the original traceback while allowing the workflow to continue.
+        logger.exception("Something unexpected happened while running ModelPolisher. Skipping ModelPolisher.")
         
     return result
 

@@ -22,7 +22,6 @@ import re
 import sqlalchemy
 import sqlite3
 import textwrap
-import warnings
 
 from Bio import SeqIO
 from cobra.io.sbml import F_REPLACE, _model_to_sbml, _f_gene
@@ -247,66 +246,68 @@ def write_model_to_file(
     Raises:
         - ValueError: Unknown file extension for model
         - TypeError: Unknown model type
+        - OSError: Model could not be saved to the destination
     """
 
     def _write_cobra_model_to_file(model: cobra.Model, filepath: Path):
-        """Helper function of :py:func:`~refingems.utility.io.write_model_to_file`.
+        """Helper function of :py:func:`~refinegems.utility.io.write_model_to_file`.
         Write a model loaded with COBRApy to a file.
 
         Args:
             - model (cobra.Model):
                 The COBRApy model.
             - filepath (Path):
-                The file path to save the model to. Extensions sets the file format.
+                The file path to save the model to. Extension sets the file format.
 
         Raises:
             - ValueError: Unknown file extension for model
+            - OSError: Model could not be saved to the destination
         """
-        try:
-            extension = filepath.suffix.replace(".", "")
-            match extension:
-                case "xml":
-                    cobra.io.write_sbml_model(model, filepath)
-                case "json":
-                    cobra.io.save_json_model(model, filepath)
-                case "yml":
-                    cobra.io.save_yaml_model(model, str(filepath))
-                case "mat":
-                    cobra.io.save_matlab_model(model, filepath)
-                case _:
-                    raise ValueError("Unknown file extension for model: ", extension)
-            logger.info("Modified model written to " + str(filepath))
-        except OSError as e:
-            logger.error("Could not write to file. Wrong path?")
+        extension = filepath.suffix.replace(".", "")
+        match extension:
+            case "xml":
+                # Serialise before opening the destination, as COBRApy does.
+                document = _model_to_sbml(model, F_REPLACE)
+                # libSBML returns a failure status instead of raising an OSError.
+                if not writeSBMLToFile(document, str(filepath)):
+                    raise OSError("libSBML reported that the model could not be written")
+            case "json":
+                cobra.io.save_json_model(model, filepath)
+            case "yml":
+                cobra.io.save_yaml_model(model, str(filepath))
+            case "mat":
+                cobra.io.save_matlab_model(model, filepath)
+            case _:
+                raise ValueError("Unknown file extension for model: ", extension)
 
-    # Cast filename to Path object if string is provided
-    if isinstance(filename, str):
-        filename = Path(filename)
-
-    # save cobra model
-    if isinstance(model, cobra.core.model.Model):
-        _write_cobra_model_to_file(model, filename)
-
-    # save libsbml model
-    elif isinstance(model, libModel):
-        try:
+    # Normalise the destination to a Path object.
+    filename = Path(filename)
+    try:
+        # Save a COBRApy model.
+        if isinstance(model, cobra.core.model.Model):
+            _write_cobra_model_to_file(model, filename)
+        # Save a libSBML model, converting to COBRApy for non-SBML formats.
+        elif isinstance(model, libModel):
             extension = filename.suffix.replace(".", "")
             match extension:
                 case "xml":
                     new_document = model.getSBMLDocument()
-                    writeSBMLToFile(new_document, str(filename))
+                    # libSBML reports write failures via its return value.
+                    if not writeSBMLToFile(new_document, str(filename)):
+                        raise OSError("libSBML reported that the model could not be written")
                 case "json" | "yml" | "mat":
                     data = cobra.io.sbml._sbml_to_model(model)
                     _write_cobra_model_to_file(data, filename)
                 case _:
                     raise ValueError("Unknown file extension for model: ", extension)
-            logger.info("Modified model written to " + str(filename))
-        except OSError as e:
-            logger.error("Could not write to file. Wrong path?")
-    # unknown model type or no model
-    else:
-        message = f"Unknown model type {type(model)}. Cannot save."
-        raise TypeError(message)
+        # Reject an unknown model type or a missing model.
+        else:
+            raise TypeError(f"Unknown model type {type(model)}. Cannot save.")
+    except OSError as e:
+        # Abort on save failure, retaining the original cause for callers.
+        raise OSError(f"Could not save model to '{filename}': {e}") from e
+
+    logger.info("Modified model written to %s", filename)
 
 
 # media
@@ -672,7 +673,7 @@ def parse_gff_for_cds(
         
     # either retain old behaviour and map the old/new locus tags 
     # or use the new behaviour aka keep the columns with "keep_attributes" only
-    print(genes.columns)
+    logger.debug("Gene feature columns: %s", genes.columns)
     if (
         "old_locus_tag" in genes.columns
         and "locus_tag" in genes.columns
@@ -927,9 +928,9 @@ def search_sbo_label(sbo_number: str) -> str:
                 purpose="look up SBO labels",
             )
         except OptionalDependencyError as e:
-            warnings.warn(
-                f"{e} Returning SBO term without label.",
-                category=UserWarning,
+            logger.warning(
+                "%s Returning SBO term without label.",
+                e,
             )
             return f"SBO:0000{sbo_number}"
         EBIClient = ols_client.EBIClient
