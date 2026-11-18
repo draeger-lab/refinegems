@@ -693,6 +693,7 @@ def parse_gff_for_cds(
                 cds["old_locus_tag"].notna(), cds["locus_tag"]
             )
             cds.drop(columns=["old_locus_tag"], inplace=True)
+            logger.info(f"No old locus tag found. Using current locus tag instead for: {str(cds['locus_tag'])}")
 
     # keep only certain columns
     if keep_attributes:
