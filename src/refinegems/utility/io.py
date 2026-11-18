@@ -68,7 +68,7 @@ _DUMP_TABLE = re.compile(
 def load_model(
     modelpath: Union[str, Path, list[Union[str, Path]]], package: Literal["cobra", "libsbml"]
 ) -> Union[cobra.Model, list[cobra.Model], libModel, list[libModel]]:
-    """Load a model.
+    """Load a model, including gzip-compressed SBML (.xml.gz or .sbml.gz).
 
     Args:
         - modelpath (str | Path | list[str | Path]):
@@ -81,7 +81,7 @@ def load_model(
             The loaded model(s).
     """
 
-    def load_cobra_model(modelpath: str) -> cobra.Model:
+    def load_cobra_model(modelpath: Union[str, Path]) -> cobra.Model:
         """Load a model using COBRApy.
 
         Args:
@@ -95,11 +95,13 @@ def load_model(
             cobra.Model:
                 The loaded model object.
         """
-        extension = os.path.splitext(modelpath)[1].replace(".", "")
+        modelpath = Path(modelpath)
+        suffixes = modelpath.suffixes
+        extension = "".join(suffixes[-2:] if modelpath.suffix == ".gz" else suffixes[-1:]).lstrip(".")
 
         match extension:
-            case "xml" | "sbml":
-                data = cobra.io.read_sbml_model(Path(modelpath))
+            case "xml" | "sbml" | "xml.gz" | "sbml.gz":
+                data = cobra.io.read_sbml_model(modelpath)
             case "json":
                 data = cobra.io.load_json_model(modelpath)
             case "yml" | "yaml":
@@ -111,7 +113,7 @@ def load_model(
 
         return data
 
-    def load_libsbml_model(modelpath: str) -> libModel:
+    def load_libsbml_model(modelpath: Union[str, Path]) -> libModel:
         """Load a model with libsbml.
 
         Args:
@@ -122,14 +124,16 @@ def load_model(
                 The loaded model object
         """
 
-        extension = os.path.splitext(modelpath)[1].replace(".", "")
+        modelpath = Path(modelpath)
+        suffixes = modelpath.suffixes
+        extension = "".join(suffixes[-2:] if modelpath.suffix == ".gz" else suffixes[-1:]).lstrip(".")
 
         match extension:
-            case "xml" | "sbml":
+            case "xml" | "sbml" | "xml.gz" | "sbml.gz":
                 reader = SBMLReader()
                 read = reader.readSBMLFromFile(str(modelpath))  # read from file
                 mod = read.getModel()
-            case "json" | "yml" | "mat":
+            case "json" | "yml" | "yaml" | "mat":
                 data = load_cobra_model(modelpath)
                 mod = cobra.io.sbml._model_to_sbml(data, F_REPLACE).getModel()
             case _:
@@ -155,17 +159,6 @@ def load_model(
         # read in a single model
         case str() | Path():
 
-            if package == "cobra":
-                return load_cobra_model(modelpath)
-            elif package == "libsbml":
-                return load_libsbml_model(modelpath)
-            else:
-                mes = f"Unknown type for package. Unable to load model."
-                raise ValueError(mes)
-
-        case Path():
-
-            modelpath = str(modelpath)
             if package == "cobra":
                 return load_cobra_model(modelpath)
             elif package == "libsbml":
