@@ -38,7 +38,6 @@ import numpy as np
 import os
 import pandas as pd
 import re
-import warnings
 
 from bioservices.kegg import KEGG
 from itertools import chain
@@ -725,7 +724,7 @@ class GapFiller(ABC):
             q = f"SELECT name FROM sqlite_master WHERE type='table' AND name='mnx_{t}'"
             if load_a_table_from_database(q, True).empty:
                 mes = f"MetaNetX table mnx_{t} not found in database. Filling part will most likely fail."
-                warnings.warn(mes, UserWarning)
+                logger.warning(mes)
         # @IDEA maybe directly install the missing stuff?
 
     # abstract methods
@@ -987,9 +986,8 @@ class GapFiller(ABC):
                         refs["ec-code"].append(row["ec-code"])
                         refs["ec-code"] = list(set(refs["ec-code"]))
                     else:
-                        warnings.warn(
+                        logger.warning(
                             f'Unknown type for ec-code: {type(row["ec-code"])}',
-                            UserWarning,
                         )
                 else:
                     refs["ec-code"] = (
@@ -1035,7 +1033,7 @@ class GapFiller(ABC):
                 case _:
                     mes = f"""Unknown database name for reaction reconstruction: {row["via"]}\n
                     Reaction will not be reconstructed."""
-                    warnings.warn(mes, UserWarning)
+                    logger.warning(mes)
 
             # check output of reconstruction
             # ------------------------------
@@ -1282,7 +1280,8 @@ class GapFiller(ABC):
                         )
                     ]
         except NameError:
-            warnings.warn("Something went wrong. Contact the developers (gapfillmodel)")
+            # Retain the traceback for diagnosis while preserving recovery behaviour.
+            logger.exception("Something went wrong. Contact the developers (gapfillmodel)")
 
         # collect stats and stuff for manual curation
         self.manual_curation["genes"]["building failed"] = self.missing_genes
@@ -2456,7 +2455,7 @@ def single_cobra_gapfill(
                     demand_reactions=False,
                 )
             except cobra.exceptions.Infeasible:
-                warnings.warn(
+                logger.warning(
                     f"Gapfilling for medium {medium.name} failed. Manual curation required."
                 )
         else:

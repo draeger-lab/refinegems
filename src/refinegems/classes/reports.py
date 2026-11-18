@@ -21,14 +21,14 @@ import numpy as np
 import pandas as pd
 import re
 import seaborn as sns
-import warnings
 
 from abc import ABC, abstractmethod
 from importlib.resources import files
-from itertools import chain
+from itertools import chain, cycle, islice
 from libsbml import Model as libModel
 from pathlib import Path
 from typing import Literal, Union
+from datetime import datetime
 
 from ..analysis.investigate import (
     get_mass_charge_unbalanced,
@@ -88,6 +88,7 @@ class Report(ABC):
         """
         # Optionally, store a name or identifier for the report
         self.name = None
+        self.created_on = datetime.now()
 
     # abstract methods
     # ----------------
@@ -106,9 +107,9 @@ class Report(ABC):
         
         try:
             Path(dir).mkdir(parents=True, exist_ok=False)
-            print(f'Creating new directory {str(Path(dir))}')
+            logger.info("Creating new directory %s", Path(dir))
         except FileExistsError:
-            print("Given directory already exists.")
+            logger.info("Given directory already exists.")
 
         # Rest needs to be fully implemented in subclasses
 
@@ -275,7 +276,7 @@ class GrowthSimulationReport(Report):
         return pd.DataFrame(l)
 
     def plot_growth(
-        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn"
+        self, unit: Literal["h", "dt"] = "dt", color_palette: str = "YlGn", **kwargs
     ) -> Union[matplotlib.figure.Figure,None]:
         """Visualise the contents of the report.
 
@@ -346,7 +347,7 @@ class GrowthSimulationReport(Report):
             try:
                 cmap = matplotlib.colormaps[color_palette]
             except ValueError:
-                warnings.warn('Unknown color palette, setting it to "YlGn"')
+                logger.warning('Unknown colour palette, setting it to "YlGn"')
                 cmap = matplotlib.colormaps["YlGn"]
 
             # set up the figure
@@ -360,7 +361,7 @@ class GrowthSimulationReport(Report):
             # construct the plot
             max_ydata = max(ydata)
             if max_ydata <= 0:
-                warnings.warn(
+                logger.warning(
                     "Model is not able to grow sensible on any medium. Returning empty figure."
                 )
                 return fig
@@ -438,7 +439,7 @@ class GrowthSimulationReport(Report):
             try:
                 cmap = matplotlib.colormaps[color_palette]
             except ValueError:
-                warnings.warn('Unknown color palette, setting it to "YlGn"')
+                logger.warning('Unknown colour palette, setting it to "YlGn"')
                 cmap = matplotlib.colormaps["YlGn"]
             cmap.set_under("white")  # too low / no growth
             cmap.set_over("white")  # no data
@@ -695,8 +696,8 @@ class KEGGPathwayAnalysisReport(Report):
             or not matplotlib.colors.is_color_like(colors[0])
             or not matplotlib.colors.is_color_like(colors[1])
         ):
-            warnings.warn(
-                "Unknown colors or false amount of colors for pie chart. Resume using default values."
+            logger.warning(
+                "Unknown colours or incorrect number of colours for pie chart. Resume using default values."
             )
             colors = ["lightgreen", "lightskyblue"]
 
@@ -780,7 +781,7 @@ class KEGGPathwayAnalysisReport(Report):
                 )
                 title_type = "identifiers in model"
             case _:
-                warnings.warn(
+                logger.warning(
                     f'Unknown option for plot_type, choosing "global" istead: {plot_type}'
                 )
                 data = self.kegg_global
@@ -807,7 +808,7 @@ class KEGGPathwayAnalysisReport(Report):
                             data[label_map[k]] += old_data[k]
 
             case _:
-                warnings.warn(f'Unknown input for label: {label}. Using "id" instead.')
+                logger.warning(f'Unknown input for label: {label}. Using "id" instead.')
                 for k in label_map:
                     if k not in data:
                         data[k] = 0
@@ -824,7 +825,7 @@ class KEGGPathwayAnalysisReport(Report):
         try:
             cmap = matplotlib.colormaps[color_palette]
         except ValueError:
-            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            logger.warning('Unknown colour palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
         # set up the figure
         fig = plt.figure()
@@ -871,9 +872,9 @@ class KEGGPathwayAnalysisReport(Report):
         # collect all produced file in one directory
         try:
             Path(dir, "pathway-analysis").mkdir(parents=True, exist_ok=False)
-            print(f'Creating new directory {str(Path(dir,"pathway-analysis"))}')
+            logger.info("Creating new directory %s", Path(dir, "pathway-analysis"))
         except FileExistsError:
-            print("Given directory already has required structure.")
+            logger.info("Given directory already has required structure.")
 
         # create and save plots
         # a) for the counts
@@ -957,7 +958,7 @@ class AuxotrophySimulationReport(Report):
     """
 
     def __init__(self, results) -> None:
-        # super().__init__()
+        super().__init__()
         self.simulation_results = results.sort_index()
 
     # auxotrophy sim visualisation
@@ -987,7 +988,7 @@ class AuxotrophySimulationReport(Report):
         try:
             cmap = matplotlib.colormaps[color_palette]
         except ValueError:
-            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            logger.warning('Unknown colour palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
         # set up the figure
@@ -1080,7 +1081,7 @@ class SourceTestReport(Report):
         try:
             cmap = matplotlib.colormaps[color_palette]
         except ValueError:
-            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            logger.warning('Unknown colour palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
         cmap.set_under("black")  # too low / no growth
@@ -1280,7 +1281,7 @@ class CorePanAnalysisReport(Report):
             vis_color = ["lightgreen", "lightskyblue", "lightcoral"]
 
         else:
-            warnings.warn(
+            logger.warning(
                 "Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected."
             )
             vis_data = list(counts.values()).append(
@@ -1336,9 +1337,9 @@ class CorePanAnalysisReport(Report):
         # collect all produced file in one directory
         try:
             Path(dir, "pan-core-analysis/").mkdir(parents=True, exist_ok=False)
-            print(f'Creating new directory {str(Path(dir,"pan-core-analysis/"))}')
+            logger.info("Creating new directory %s", Path(dir, "pan-core-analysis"))
         except FileExistsError:
-            print("Given directory already has required structure.")
+            logger.info("Given directory already has required structure.")
 
         # save the reactions visualisation
         reac_vis = self.visualise_reactions()
@@ -1348,7 +1349,7 @@ class CorePanAnalysisReport(Report):
 
         # save table of reactions mapped to characterisation
         if not self.isValid(check="reaction-count"):
-            warnings.warn(
+            logger.warning(
                 "Discrepancies between number of reactions in model and sum of novel, pan and core reactions detected. Only labbeld reactions will be written to table."
             )
         reac_tab = pd.DataFrame(
@@ -1397,7 +1398,6 @@ class ModelInfoReport(Report):
     """
 
     def __init__(self, model: cobra.Model) -> None:
-
         super().__init__()
         # cobra version
         # basics
@@ -1420,7 +1420,7 @@ class ModelInfoReport(Report):
             _ for _ in mass_charge[1] if not _ in self.mass_charge_unbalanced
         ]
         # gpr
-        self.pseudo = [_.id for _ in model.boundary] + test_biomass_presence(model)
+        self.pseudo = [_.id for _ in model.boundary] + (test_biomass_presence(model) or [])
         with_gpr = get_reac_with_gpr(model)
         self.normal_with_gpr = with_gpr[0]
         self.pseudo_with_gpr = with_gpr[1]
@@ -1507,7 +1507,7 @@ class ModelInfoReport(Report):
         try:
             cmap = matplotlib.colormaps[color_palette]
         except ValueError:
-            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            logger.warning('Unknown colour palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
         # function to adjust position of labels
@@ -1836,7 +1836,7 @@ class GapFillerReport(Report):
         try:
             cmap = matplotlib.colormaps[color_palette]
         except ValueError:
-            warnings.warn('Unknown color palette, setting it to "YlGn"')
+            logger.warning('Unknown colour palette, setting it to "YlGn"')
             cmap = matplotlib.colormaps["YlGn"]
 
         fig = plt.figure() # tight_layout=True
@@ -1999,7 +1999,7 @@ class SBOTermReport(Report):
                 .plot.barh(width=0.8, color=color_palette, figsize=(8, 10))
                 )
         except ValueError:
-            logger.warning('Unknown color, setting it to "forestgreen"')
+            logger.warning('Unknown colour, setting it to "forestgreen"')
             ax = (
                 df.drop("SBO-Term", axis=1)
                 .set_index("SBO-Name")
@@ -2075,7 +2075,7 @@ class MultiSBOTermReport(Report):
 
     def visualise(
         self,
-        rename: Union[None, dict] = None,
+        rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         show_invalid: bool=False,
         show_overall_counts: bool=False,
@@ -2120,16 +2120,19 @@ class MultiSBOTermReport(Report):
                 try:
                     cmap = matplotlib.colormaps[color_palette]
                 except ValueError:
-                    logger.warning('Unknown color palette, setting it to "Paired"')
+                    logger.warning('Unknown colour palette, setting it to "Paired"')
                     cmap = matplotlib.colormaps["Paired"]
+
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
-                    cmap = cmap.colors[0 : len(self.model_reports)]
+                    # FIX: Safely cycle through colors if there are more models than available colors
+                    cmap = list(islice(cycle(cmap.colors), len(self.model_reports)))
                 else:
                     cmap = cmap(np.linspace(0, 1, len(self.model_reports)))
             case list():
-                cmap = color_palette
+                # FIX: Safely cycle through the provided custom color list
+                cmap = list(islice(cycle(color_palette), len(self.model_reports)))
             case _:
-                mes = "Unkown type for color_palette"
+                mes = "Unknown type for color_palette"
                 raise TypeError(mes)
 
         # prepare the data
@@ -2166,7 +2169,7 @@ class MultiSBOTermReport(Report):
     def save(
         self,
         dir: Union[str, Path],
-        rename: dict = Union[None, dict],
+        rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         figsize: tuple = (10, 10),
     ):

@@ -1,6 +1,10 @@
 __all__ = ["analysis", "classes", "curation", "developement", "utility", "cmd_access"]
 
 from importlib import import_module
+from .warnings import warn_if_database_uninitialised as _warn_database
+
+_warn_database()
+del _warn_database
 
 
 def __getattr__(name):

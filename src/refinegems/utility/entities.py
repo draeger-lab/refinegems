@@ -18,7 +18,6 @@ import requests
 import subprocess
 import tempfile
 import urllib
-import warnings
 
 from .io import load_model, write_model_to_file
 
@@ -614,7 +613,7 @@ def isreaction_complete(
             # default case: Warning + no formula check
             case _:
                 mes = f"Unknown options for formula_check: {formula_check}\nChecking the metabolite formula will be skipped."
-                warnings.warn(mes, UserWarning)
+                logger.warning(mes)
                 
     # check chemical plausability 
     # ---------------------------
@@ -900,13 +899,13 @@ def build_metabolite_kegg(
         kegg_handle = REST.kegg_get(kegg_id)
         kegg_record = [r for r in Compound.parse(kegg_handle)][0]
     except urllib.error.HTTPError:
-        warnings.warn(f"HTTPError: {kegg_id}")
+        logger.warning("HTTPError: %s", kegg_id, exc_info=True)
         return None
     except ConnectionResetError:
-        warnings.warn(f"ConnectionResetError: {kegg_id}")
+        logger.warning("ConnectionResetError: %s", kegg_id, exc_info=True)
         return None
     except urllib.error.URLError:
-        warnings.warn(f"URLError: {kegg_id}")
+        logger.warning("URLError: %s", kegg_id, exc_info=True)
         return None
 
     # step 2: create a random metabolite ID
@@ -954,7 +953,11 @@ def build_metabolite_kegg(
         
         # in case of an ambiguous mapping, take first match
         if len(mnx_ids) > 1:
-            logger.warning('MNX mapping ambiguously due to multiple matches: {mnx_ids}\n-> Using first entry for building metabolite.')
+            logger.warning(
+                "MNX mapping is ambiguous due to multiple matches: %s\n"
+                "-> Using first entry for building metabolite.",
+                mnx_ids,
+            )
             mnx_ids = [mnx_ids[0]]
         
         # mapping is unambiguously (or made that way)
@@ -1612,7 +1615,7 @@ def build_reaction_kegg(
 
     # set reversibility
     if rev:
-        new_reac.bounds = (1000.0, 1000.0)
+        new_reac.bounds = (-1000.0, 1000.0)
     else:
         new_reac.bounds = (0.0, 1000.0)
 
@@ -1765,7 +1768,7 @@ def build_reaction_bigg(
 
     # set reversibility
     if rev:
-        new_reac.bounds = (1000.0, 1000.0)
+        new_reac.bounds = (-1000.0, 1000.0)
     else:
         new_reac.bounds = (0.0, 1000.0)
 
@@ -2107,9 +2110,12 @@ def get_gpid_mapping(
             # Case 1: CarveMe version; Contains NCBI Protein ID, lcl_CP035291_1_prot_QCY37541_1_361
             if "prot_" in gene_id:
                  # All NCBI CDS protein FASTA files have the NCBI protein identifier + Version after 'prot_' in the FASTA identifier
-                id_string = gene_id.split(r"prot_")[1].split(r"_")
-                # If identifier contains no '_', this is full identifier + add version number
-                ncbi_id = '.'.join(id_string[0:2])
+                # CarveMe replaces punctuation in the FASTA ID with underscores.
+                # Remove only the final CDS index, retaining RefSeq's prefix underscore.
+                ncbi_id = gene_id.split("prot_", 1)[1].rsplit("_", 1)[0]
+                accession = re.fullmatch(r"([A-Za-z]+_?\d+)[_.](\d+)", ncbi_id)
+                if accession:
+                    ncbi_id = f"{accession[1]}.{accession[2]}"
 
             # Case 2: RAST contained without any surrounding stuff, 1134914.3.1020_56.peg
             # Case 3: RefSeq contained without any surrounding stuff, WP_011275285.1, From CarveMe: YP_005228568_1
@@ -2264,16 +2270,12 @@ The resulting mapping tables will be returned separately. The table for the GFF 
         # Query NCBI based on RefSeq Protein ID
         logger.info('Querying NCBI based on RefSeq Protein IDs...')
         if "REFSEQ" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("refseq",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "refseq", email)
 
         # Query NCBI based on NCBI Protein ID
         logger.info('Querying NCBI based on NCBI Protein IDs...')
         if "NCBI" in mapping_table.columns:
-            mapping_table = mapping_table.progress_apply(
-                _search_ncbi_for_gp, axis=1, args=("ncbiprotein",)
-            )
+            mapping_table = _search_ncbi_for_gp(mapping_table, "ncbiprotein", email)
 
     # Clean-up dataframe for output
     def _merge_name_cols(row: pd.Series) -> pd.Series:

@@ -7,12 +7,15 @@ __author__ = "Carolin Brune, Gwendolyn O. Döbel"
 ################################################################################
 
 from pathlib import Path
+from contextlib import ExitStack
 
+import logging
 import click
 import cloup
 import pandas as pd
 
 import refinegems as rg
+from refinegems.utility.log import LevelFormatter
 
 ################################################################################
 # Entry points
@@ -22,13 +25,43 @@ import refinegems as rg
 @cloup.group()
 @cloup.help_option("--help", "-h")
 @cloup.version_option()
-def cli():
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False),
+    default="INFO",
+    show_default=True,
+    help="Minimum level of refineGEMs diagnostics written to stderr.",
+)
+@click.option(
+    "--colour/--no-colour",
+    default=None,
+    help="Colour level keywords; automatically enabled for terminal output.",
+)
+def cli(log_level, colour):
     """refineGEMs - A toolbox for fast curation and analysis of constraint-based metabolic models
 
     This tool provides scripts and functions to curate and analyse a strain-specific GEM with information from multiple
     databases. In addition, it offers functions for analysis of multiple GEMs at the same time as well as comparison
     reports.
     """
+    logger = logging.getLogger("refinegems")
+    handler = logging.StreamHandler()
+    handler.setLevel(log_level.upper())
+    # Redirected output stays plain unless colour is explicitly requested.
+    use_colour = handler.stream.isatty() if colour is None else colour
+    handler.setFormatter(LevelFormatter(colour=use_colour))
+
+    # Limit configuration to this CLI invocation and preserve embedding applications.
+    cleanup = click.get_current_context().with_resource(ExitStack())
+    cleanup.callback(handler.close)
+    cleanup.callback(logger.setLevel, logger.level)
+    cleanup.callback(setattr, logger, "propagate", logger.propagate)
+    cleanup.callback(setattr, logger, "handlers", logger.handlers)
+
+    # Use one stderr handler and avoid duplicate output through the root logger.
+    logger.handlers = [handler]
+    logger.setLevel(log_level.upper())
+    logger.propagate = False
 
 
 # ------
@@ -221,9 +254,14 @@ def database():
 
 
 @database.command()
-def initialise():
+@click.option(
+    "--reload-media",
+    is_flag=True,
+    help="Replace all media and subset tables with the bundled SQL contents, discarding local changes.",
+)
+def initialise(reload_media: bool = False):
     """Initialise or update the database."""
-    rg.utility.databases.initialise_database()
+    rg.utility.databases.initialise_database(reload_media=reload_media)
 
 
 @database.command()
@@ -246,9 +284,14 @@ def add_namespace(databasename, chunksize):
 
 
 @database.command()
-def reset():
+@click.option(
+    "--for-release",
+    is_flag=True,
+    help="Replace media/subset tables from SQL (discarding local changes), remove BiGG, ModelSEED and MetaNetX tables, and compact the database.",
+)
+def reset(for_release: bool = False):
     """Reset the database by removing additionally downloaded tables."""
-    rg.utility.databases.reset_database()
+    rg.utility.databases.reset_database(for_release=for_release)
 
 
 # -------------------

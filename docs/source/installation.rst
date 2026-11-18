@@ -25,6 +25,27 @@ To install ``refineGEMs`` as Python package from `PyPI <https://pypi.org/project
 
    pip install refinegems
 
+.. important::
+
+   After installation, initialise the database before using database-dependent
+   features. Run the following command in the environment where you installed
+   ``refineGEMs`` (an internet connection is required):
+
+   .. code:: console
+      :class: copyable
+
+      refinegems database initialise
+
+   The bundled database contains the media and subset tables. BiGG and ModelSEED
+   data are downloaded during initialisation rather than included in the package.
+   Existing non-empty media and subset tables are preserved by default; missing
+   or empty tables are populated from the bundled SQL contents.
+
+   Importing ``refinegems`` issues a warning if the database is missing, unreadable,
+   or required tables are missing or empty. The warning also detects an invalid
+   ModelSEED table schema. This check does not download data or modify the database;
+   run the command above to initialise it.
+
 Some ``refineGEMs`` features require optional dependencies that are not needed
 for the base installation:
 
@@ -73,6 +94,13 @@ missing dependency and skips the affected optional step where possible.
 
    pip install "masschargecuration@git+https://github.com/draeger-lab/MassChargeCuration"
 
+Use MCC 1.0.2 or newer to benefit from its persistent default database cache.
+Calls from ``refineGEMs`` reuse this cache automatically, without additional
+parameters. MCC stores it in ``$XDG_CACHE_HOME/MassChargeCuration`` when
+``XDG_CACHE_HOME`` is set, otherwise in ``~/.cache/MassChargeCuration``.
+Missing database artifacts are downloaded on first use. Cached artifacts avoid
+repeated downloads, but MCC can still make online requests for missing entries.
+
 .. code:: console
    :class: copyable
 
@@ -84,6 +112,9 @@ missing dependency and skips the affected optional step where possible.
 
 ``refineGEMs`` can also be used via Docker. 
 You can pull the latest image from (a) Docker Hub or (b) build it locally.
+The Dockerfile runs ``refinegems database initialise`` during the build, so new
+images include the downloaded BiGG and ModelSEED tables. Building requires an
+internet connection and fails if database initialisation cannot complete.
 
 (a) Image from Docker Hub
 ^^^^^^^^^^^^^^^^^^^^^^^^^

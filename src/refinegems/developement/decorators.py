@@ -13,6 +13,13 @@ import warnings
 from functools import wraps, partial
 
 ################################################################################
+# setup logging
+################################################################################
+
+# Route decorator diagnostics through the refinegems logger hierarchy.
+logger = logging.getLogger(__name__)
+
+################################################################################
 # variables
 ################################################################################
 
@@ -86,7 +93,7 @@ def deprecate(func=None, note: str = None):
         mes = f"This function will be deprecated in the next major update: {func.__name__}"
         if note:
             mes = mes + "\n" + f"Additional notes: {note}"
-        logging.warning(mes)
+        logger.warning(mes)
         return func(*args, **kwargs)
 
     return wrapper

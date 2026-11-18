@@ -185,6 +185,16 @@ def extend_gp_annots_via_mapping_table(
     for gene in tqdm(gene_list):
         # Get row of mapping table for current model_id
         gp_infos = mapping_table.loc[gene.getId(), :]
+        if isinstance(gp_infos, pd.DataFrame):
+            # A shared protein accession can map to multiple genomic loci.
+            # Preserve consistent annotations without choosing an arbitrary locus.
+            logger.warning(
+                "Multiple mapping rows for gene %s; ambiguous fields are left unchanged.",
+                gene.getId(),
+            )
+            gp_infos = gp_infos.apply(
+                lambda column: column.iloc[0] if column.nunique() == 1 else ""
+            )
 
         # Add infos to current GeneProduct if available
         if ('name' in gp_infos.index.to_list()) and gp_infos["name"]:
@@ -884,15 +894,19 @@ def resolve_duplicate_metabolites(
     now = egcsolver.find_egcs(model, with_reacs=False)
     # get objective function
     bof_list = test_biomass_presence(model)
-    if len(bof_list) == 1:
+
+    # FIX: Safely check if bof_list is not None before checking its length
+    if bof_list and len(bof_list) == 1:
         objective_function = bof_list[0]
-    elif len(bof_list) > 1:
+    elif bof_list and len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
         logger.warning(mes)
         objective_function = bof_list[0]
     else:
         mes = "No BOF detected. Might lead to problems during duplicate removal."
         logger.warning(mes)
+        # FIX: Initialize the variable to None to prevent UnboundLocalError later
+        objective_function = None
 
     for c in df_meta.groupby("compartment"):
         # note: using groupby drops nans
@@ -977,7 +991,7 @@ def resolve_duplicate_metabolites(
                                     for del_reac_id in reac_intersec:
                                         # if objective_function is part of the set
                                         # automated deletion is (currently) not possible
-                                        if del_reac_id == objective_function:
+                                        if objective_function is not None and del_reac_id == objective_function:
                                             perform_deletion = False
                                             break
                                         model_del.reactions.get_by_id(
@@ -985,7 +999,7 @@ def resolve_duplicate_metabolites(
                                         ).remove_from_model()
                                     # set the metabolites to be deleted to be the one NOT in the objective functions
                                     # to avoid inconsistencies
-                                    if del_meta_id in [
+                                    if objective_function is not None and del_meta_id in [
                                         _.id
                                         for _ in model_del.reactions.get_by_id(
                                             objective_function
@@ -1007,50 +1021,48 @@ def resolve_duplicate_metabolites(
                                     )
 
                                     # skip if objective function is found
-                                    if reac.id == objective_function:
+                                    if objective_function is not None and reac.id == objective_function:
                                         continue
 
                                     # check if consistency is still intact
                                     balance_test = reac.check_mass_balance()
                                     if not reac.boundary and len(balance_test) > 0:
-                                        # try fixing H-balance
+
+                                        comp = keep_meta.compartment
+                                        comp_suffix = comp.split('_')[-1].strip() if '_' in comp else comp.strip()
+
+                                        # Dynamically resolve full names to short IDs using the global VALID_COMPARTMENTS mapping
+                                        if comp_suffix not in VALID_COMPARTMENTS:
+                                            for short_id, full_name in VALID_COMPARTMENTS.items():
+                                                if re.search(rf'(_{short_id}$|^{short_id}$|{full_name})', comp, re.IGNORECASE):
+                                                    comp_suffix = short_id
+                                                    break
+
+                                        if "O" in balance_test.keys():
+                                            h2o_metab_id = f"h2o_{comp_suffix}"
+                                            if h2o_metab_id in model_del.metabolites:
+                                                reac.subtract_metabolites(
+                                                    {model_del.metabolites.get_by_id(h2o_metab_id): balance_test["O"]}
+                                                )
+                                                balance_test = reac.check_mass_balance()
+
                                         if "H" in balance_test.keys():
-                                            # ..............................
-                                            # TODO:
-                                            #    get H according to compartment
-                                            #    current implementation relies heavily
-                                            #    on 'correct' use input: compartment should have format: c (p, e, etc.)
-                                            # ..............................
-                                            reac_comp = reac.compartments.pop()[-1]
-                                            if reac_comp == "c":
+                                            h_metab_id = f"h_{comp_suffix}"
+                                            if h_metab_id in model_del.metabolites:
                                                 reac.subtract_metabolites(
-                                                    {"h_c": balance_test["H"]}
+                                                    {model_del.metabolites.get_by_id(h_metab_id): balance_test["H"]}
                                                 )
-                                            elif reac_comp == "p":
-                                                reac.subtract_metabolites(
-                                                    {"h_p": balance_test["H"]}
-                                                )
-                                            elif reac_comp == "e":
-                                                reac.subtract_metabolites(
-                                                    {"h_e": balance_test["H"]}
-                                                )
-                                            else:
-                                                perform_deletion = False
-                                                break
-                                        # ..............................
-                                        # @ASK more cases needed here?
-                                        # ..............................
 
                                         # check balance again (continue only if fixed, else break)
                                         if len(reac.check_mass_balance()) > 0:
                                             perform_deletion = False
                                             break
+
                                         # check for the generation of EGCs
                                         prev = egcsolver.find_egcs(model_del, with_reacs=False)
                                         if len(now) > len(prev) or not set(now).issubset(set(prev)):
                                             perform_deletion = False
                                             break
-                                        
 
                                     else:
                                         continue
@@ -1168,7 +1180,13 @@ def resolve_duplicates(
 def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
     """Prune mass unbalanced reactions from a model. 
     Reactions that are part of the biomass function or boundary reactions
-    are not pruned, even if they are mass unbalanced.
+    are not pruned, even if they are mass unbalanced. Candidates are tested
+    sequentially against the first detected biomass reaction. Reactions whose
+    removal prevents growth are retained and reported for manual curation.
+    Checks use the current medium, or temporarily open existing exchanges if
+    the current medium does not support growth. If neither supports growth,
+    pruning is skipped because essentiality cannot be established. The original
+    medium and objective are preserved.
     Metabolites and genes that become orphaned due to the pruning are also removed.
 
     Args:
@@ -1188,13 +1206,80 @@ def prune_mass_unbalanced_reacs(model:cobra.Model) -> None:
     
     # get reactions, that are at the boundary or biomass 
     # => these are allowed to be - somewhat - unbalanced
-    ub_allowed_ids = set(test_biomass_presence(model)).union([_.id for _ in model.boundary])
+    biomass_ids = test_biomass_presence(model) or []
+    ub_allowed_ids = set(biomass_ids).union([_.id for _ in model.boundary])
     
     # identify, which reactions should be pruned
-    to_prune = [_ for _ in ubmass if _ not in ub_allowed_ids]
+    # Ignore floating-point residuals in elemental balance. Charge imbalance
+    # is handled separately and does not make a reaction mass unbalanced.
+    to_prune = [
+        rid for rid in ubmass
+        if rid not in ub_allowed_ids
+        and any(
+            abs(value) > model.tolerance
+            for element, value in model.reactions.get_by_id(rid).check_mass_balance().items()
+            if element != "charge"
+        )
+    ]
     
-    # prune the model
-    model.remove_reactions(to_prune, remove_orphans=True)
+    # Establish a growing reference before testing sequential deletions.
+    safe_to_prune = []
+    retained = []
+    growth_threshold = max(model.tolerance, 1e-6)
+
+    def supports_growth(solution):
+        return (
+            solution.status == "optimal"
+            and solution.objective_value is not None
+            and solution.objective_value > growth_threshold
+        )
+
+    if to_prune and not biomass_ids:
+        logger.warning(
+            "No biomass reaction detected; reporting mass-unbalanced reactions "
+            "without pruning because growth essentiality cannot be checked: %s",
+            to_prune,
+        )
+    elif to_prune:
+        with model:
+            model.objective = biomass_ids[0]
+            reference = model.optimize()
+            if not supports_growth(reference):
+                model.medium = {reaction.id: 1000.0 for reaction in model.exchanges}
+                reference = model.optimize()
+                logger.info(
+                    "Current medium does not support growth; testing pruning "
+                    "with existing exchanges temporarily open."
+                )
+            if not supports_growth(reference):
+                logger.warning(
+                    "No growing reference could be established; reporting "
+                    "mass-unbalanced reactions without pruning: %s", to_prune
+                )
+            else:
+                for rid in to_prune:
+                    reaction = model.reactions.get_by_id(rid)
+                    with model:
+                        reaction.knock_out()
+                        solution = model.optimize()
+                    if supports_growth(solution):
+                        # Retain accepted knockouts during subsequent checks to
+                        # protect alternative routes from combined deletion.
+                        reaction.knock_out()
+                        safe_to_prune.append(rid)
+                    else:
+                        retained.append(rid)
+                        logger.warning(
+                            "Retained mass-unbalanced reaction %s: knockout "
+                            "prevents growth or could not be verified "
+                            "(status=%s, growth=%s). Manual curation required.",
+                            rid, solution.status, solution.objective_value,
+                        )
+
+    # The context restores medium, objective and trial bounds before removal.
+    if safe_to_prune:
+        model.remove_reactions(safe_to_prune, remove_orphans=True)
+    logger.info("Retained %s growth-protected reactions: %s", len(retained), retained)
     
     # report pruned entities
     pruned_reacs = [rid for rid in og_reacs if rid not in {_.id for _ in model.reactions}]

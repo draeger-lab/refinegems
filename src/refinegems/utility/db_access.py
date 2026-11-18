@@ -22,11 +22,12 @@ __author__ = """Famke Baeuerle, Gwendolyn O. Döbel, Carolin Brune,
 
 import cobra
 import io
+import logging
 import numpy as np
 import pandas as pd
 import re
 import requests
-import warnings
+import time
 import xmltodict
 
 from Bio import Entrez, SeqIO
@@ -35,6 +36,7 @@ from bioservices.kegg import KEGG
 from cobra import Model as cobraModel
 from typing import Literal, Union
 from tqdm import tqdm
+from urllib.error import HTTPError
 
 tqdm.pandas()
 pd.options.mode.chained_assignment = None  # suppresses the pandas SettingWithCopyWarning; comment out before developing!!
@@ -49,6 +51,7 @@ from ..developement.optional import OptionalDependencyError, require_optional_de
 
 # database urls
 # -------------
+logger = logging.getLogger(__name__)
 BIGG_METABOLITES_URL = "http://bigg.ucsd.edu/api/v2/universal/metabolites/"  #: :meta:
 
 # Compartments in BiGG namespace
@@ -233,9 +236,9 @@ def add_info_from_ChEBI_BiGG(
                 purpose="query ChEBI for metabolite information",
             )
         except OptionalDependencyError as e:
-            warnings.warn(
-                f"{e} ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
-                category=UserWarning,
+            logger.warning(
+                "%s ChEBI lookups will be skipped and available BiGG or existing table values will be used.",
+                e,
             )
 
     # check if a row contains a ChEBI ID, take the first and make sure its in the format: CHEBI:234567
@@ -307,7 +310,7 @@ def add_info_from_ChEBI_BiGG(
             # only take the IUPAC names
             iupac_names = []
             for name in chebi_entity.get_names():
-                print(name)
+                logger.debug("ChEBI name candidate: %s", name)
                 if name.get_source() == "IUPAC":
                     iupac_names.append(name.get_name())
                     break
@@ -806,65 +809,123 @@ like EC number of an NBCI protein accession number or information about locus ta
 
 
 def _search_ncbi_for_gp(
-    row: pd.Series, id_type: Literal["refseq", "ncbiprotein"]
-) -> pd.Series:
-    """Fetches protein name and locus tag from NCBI
+    df: pd.DataFrame, id_type: Literal["refseq", "ncbiprotein"], email: str
+) -> pd.DataFrame:
+    """Fetches protein name and locus tag from NCBI in batches with exponential backoff.
 
     Args:
-        - row (pd.Series):
-            Row of a pandas DataFrame containing RefSeq/NCBI Protein IDs in columns
+        - df (pd.DataFrame):
+            Pandas DataFrame containing RefSeq/NCBI Protein IDs.
         - id_type (Literal['refseq', 'ncbiprotein']):
-            ID type of IDs in provided row.
+            ID type of IDs in provided DataFrame.
             Can be one of ['refseq', 'ncbiprotein'].
+        - email (str):
+            User's mail address for the NCBI Entrez tool.
 
     Returns:
-        pd.Series:
-            Modified input row
+        pd.DataFrame:
+            Modified input Dataframe with fetched data.
     """
-    match id_type:
-        case "refseq":
-            ncbi_id = row["REFSEQ"]
-        case "ncbiprotein":
-            ncbi_id = row["NCBI"]
-        case _:
-            raise TypeError(
-                f"Provided type for id_type {id_type} invalid. Please use one of ['refseq', 'ncbiprotein']."
-            )
-            return row
+    if email:
+        Entrez.email = email
 
-    if not pd.isnull(ncbi_id):
+    if id_type == "refseq":
+        id_col = "REFSEQ"
+    elif id_type == "ncbiprotein":
+        id_col = "NCBI"
+    else:
+        raise TypeError(f"Provided type for id_type '{id_type}' invalid. Please use one of ['refseq', 'ncbiprotein'].")
 
-        try:
-            handle = Entrez.efetch(
-                db="protein", id=ncbi_id, rettype="gbwithparts", retmode="text"
-            )
-            records = SeqIO.parse(handle, "gb")
+    if id_col not in df.columns:
+        return df
 
-            for i, record in enumerate(records):
-                match id_type:
-                    case "refseq":
-                        row["name_refseq"] = record.description
-                    case "ncbiprotein":
-                        for feature in record.features:
-                            if feature.type == "CDS":
-                                row["name_ncbi"] = record.description
-                                row["locus_tag"] = feature.qualifiers["locus_tag"][0]
+    # Filter non-null IDs
+    valid_ids = df[df[id_col].notnull()][id_col].unique().tolist()
+    if not valid_ids:
+        return df
 
-        except Exception as e:
-            print(f"{e} with {id_type} ID {ncbi_id}")
+    # Initialize target columns if they don't exist
+    if id_type == "refseq" and "name_refseq" not in df.columns:
+        df["name_refseq"] = None
+    elif id_type == "ncbiprotein":
+        if "name_ncbi" not in df.columns:
+            df["name_ncbi"] = None
+        if "locus_tag" not in df.columns:
+            df["locus_tag"] = None
 
-    return row
+    chunk_size = 150  # Process 150 IDs per single HTTP request
+    name_dict = {}
+    locus_dict = {}
 
+    for i in tqdm(range(0, len(valid_ids), chunk_size), desc=f"Batch fetching {id_type} from NCBI"):
+        chunk = valid_ids[i:i+chunk_size]
+        id_string = ",".join(chunk)
 
-# fetching the EC number (if possible) from NCBI
-# based on an NCBI protein ID (accession version number)
+        records = []
+        max_retries = 5
+
+        # Exponential Backoff Loop
+        for attempt in range(max_retries):
+            try:
+                handle = Entrez.efetch(db="protein", id=id_string, rettype="gbwithparts", retmode="text")
+                try:
+                    records = list(SeqIO.parse(handle, "gb"))
+                finally:
+                    handle.close()
+                break
+            except HTTPError as e:
+                if e.code in [400, 429, 500, 502, 503, 504]:
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt) # Wait 1s, 2s, 4s, 8s...
+                    else:
+                        # Retain the final failure's traceback after retries are exhausted.
+                        logger.exception("Failed to fetch chunk %s after %s attempts due to HTTP %s", chunk, max_retries, e.code)
+                else:
+                    logger.exception("NCBI API Error: %s", e)
+                    break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                else:
+                    logger.exception("Failed to fetch chunk %s after %s attempts: %s", chunk, max_retries, e)
+
+        for record in records:
+            # Match the exact queried ID to the returned record
+            matched_id = None
+            record_id_base = record.id.split('.')[0]
+            for q_id in chunk:
+                q_id_base = q_id.split('.')[0]
+                if q_id == record.id or q_id_base == record_id_base:
+                    matched_id = q_id
+                    break
+            if not matched_id:
+                matched_id = record.id
+
+            if id_type == "refseq":
+                name_dict[matched_id] = record.description
+            elif id_type == "ncbiprotein":
+                name_dict[matched_id] = record.description
+                for feature in record.features:
+                    if feature.type == "CDS" and "locus_tag" in feature.qualifiers:
+                        locus_dict[matched_id] = feature.qualifiers["locus_tag"][0]
+                        break
+
+    # Safely map results back to dataframe without destroying existing entries
+    if id_type == "refseq":
+        df["name_refseq"] = df[id_col].map(name_dict).fillna(df["name_refseq"])
+    elif id_type == "ncbiprotein":
+        df["name_ncbi"] = df[id_col].map(name_dict).fillna(df["name_ncbi"])
+        df["locus_tag"] = df[id_col].map(locus_dict).fillna(df["locus_tag"])
+
+    return df
+
 def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
     """Based on a NCBI protein accession number, try and fetch the
-    EC number from NCBI.
+    EC number from NCBI with Exponential Backoff.
 
     Args:
         - mail (str):
-            User's mail address for the NCBI ENtrez tool.
+            User's mail address for the NCBI Entrez tool.
         - ncbiprot (str):
             The NCBI protein accession number.
 
@@ -877,18 +938,45 @@ def get_ec_from_ncbi(mail: str, ncbiprot: str) -> Union[str, None]:
                 None:
                     Nothing to return
     """
-    try:
-        Entrez.email = mail
-        handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
-        for feature_dict in xmltodict.parse(handle)["INSDSet"]["INSDSeq"][
-            "INSDSeq_feature-table"
-        ]["INSDFeature"]:
-            if isinstance(feature_dict["INSDFeature_quals"]["INSDQualifier"], list):
-                for qual in feature_dict["INSDFeature_quals"]["INSDQualifier"]:
-                    if qual["INSDQualifier_name"] == "EC_number":
-                        return qual["INSDQualifier_value"]
-    except Exception as e:
-        return None
+    Entrez.email = mail
+    max_retries = 5
+
+    for attempt in range(max_retries):
+        handle = None
+        try:
+            handle = Entrez.efetch(db="protein", id=ncbiprot, rettype="gpc", retmode="xml")
+            parsed_xml = xmltodict.parse(handle.read())
+
+            features = parsed_xml.get("INSDSet", {}).get("INSDSeq", {}).get("INSDSeq_feature-table", {}).get("INSDFeature", [])
+
+            if isinstance(features, dict):
+                features = [features]
+
+            for feature_dict in features:
+                qualifiers = feature_dict.get("INSDFeature_quals", {}).get("INSDQualifier", [])
+
+                if isinstance(qualifiers, dict):
+                    qualifiers = [qualifiers]
+
+                if isinstance(qualifiers, list):
+                    for qual in qualifiers:
+                        if qual.get("INSDQualifier_name") == "EC_number":
+                            return qual.get("INSDQualifier_value")
+            return None
+        except HTTPError as e:
+            if e.code in [400, 429, 500, 502, 503, 504]:
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+            else:
+                break
+        except Exception:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+        finally:
+            if handle is not None:
+                handle.close()
+
+    return None
 
 
 # Uniprot
@@ -1145,7 +1233,7 @@ def map_to_homologs(
 
     # no mapping file
     elif email:
-        print(
+        logger.info(
             "\t\tNo precomputed mapping. Retrieving information directly from NCBI.\n\t\tThis may take a while."
         )
         table = dmnd_res
@@ -1159,10 +1247,10 @@ def map_to_homologs(
         #     print('Running in debugging mode')
         # .......................
         table["ec-code"] = table["ncbiprotein"].progress_apply(
-            lambda x: get_ec_from_ncbi(x, email), axis=1
+            lambda x: get_ec_from_ncbi(email, x)
         )
     else:
-        warnings.warn(
+        logger.warning(
             "Neither email nor mapping provided for NCBI quieries. Skipping mapping to EC numbers."
         )
         table = dmnd_res

@@ -6,14 +6,20 @@ __author__ = "Carolin Brune"
 # requirements
 ################################################################################
 
+import logging
 import requests
 import subprocess
-import warnings
 
 from importlib.resources import files
 from pathlib import Path
 from tqdm import tqdm
 from typing import Literal
+
+################################################################################
+# setup logging
+################################################################################
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # variables
@@ -124,16 +130,20 @@ def download_url(
             # Create db folder for DIAMONd if non-existent
             try:
                 Path(directory, "db").mkdir(parents=True, exist_ok=False)
-                print("Creating new directory " + str(Path(directory, "db")))
+                logger.info("Creating new directory %s", Path(directory, "db"))
             except FileExistsError:
-                warnings.warn(
+                logger.warning(
                     "Given directory already exists. High possibility of files being overwritten."
                 )
             Path(directory, "db").mkdir(parents=True, exist_ok=True)
             # create DIAMOND database
-            print(f"create DIAMOND database for {download_type} using:")
-            print(
-                f'diamond makedb --in {Path(directory, "SwissProt.fasta")} --db {str(Path(directory,"db","SwissProt.dmnd"))} --threads {int(t)}'
+            # Keep setup diagnostics available to applications using refinegems.
+            logger.info("create DIAMOND database for %s using:", download_type)
+            logger.info(
+                "diamond makedb --in %s --db %s --threads %s",
+                Path(directory, "SwissProt.fasta"),
+                Path(directory, "db", "SwissProt.dmnd"),
+                int(t),
             )
             subprocess.run(
                 [

@@ -62,6 +62,12 @@ io module
    :private-members: 
    :special-members:
 
+log module
+----------
+
+.. automodule:: refinegems.utility.log
+   :members:
+
 set_up module
 -------------
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "refineGEMs"
-version = "2.0.0"
+version = "2.1.0"
 requires-python = ">=3.10, <3.13"
 authors = [
     {name = "Famke Baeuerle", email = "famke.baeuerle@gmail.com"},
@@ -36,7 +36,8 @@ classifiers = [
 dependencies = [
     # cobra changed model.add_reaction to model.add_reactions -> important in investigate.py
     "biopython>=1.79",
-    "bioservices>=1.11.2",
+    # BioServices 1.16.0 requires easydev>=0.13.3; both avoid pkg_resources.
+    "bioservices>=1.16.0",
     "click>=8.1.3",
     "cloup>=3.0.5",
     "cobra>=0.28.0", 

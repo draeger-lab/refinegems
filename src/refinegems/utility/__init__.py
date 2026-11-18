@@ -5,6 +5,7 @@ __all__ = [
     "db_access",
     "entities",
     "io",
+    "log",
     "set_up",
     "util",
 ]

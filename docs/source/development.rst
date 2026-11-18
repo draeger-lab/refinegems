@@ -238,8 +238,19 @@ issues and ideas much easier. The following label are currently suppored:
 :icon:`fa-solid fa-bug` Debugging switches
 ------------------------------------------
 
-- You can enable debug logging by replacing ``level=logging.INFO``  with ``level=logging.DEBUG``.
-- If you want your print message to show in the log file, replace the ```print()`` statement by ``logging.info()``.
+- Define ``logger = logging.getLogger(__name__)`` in each module. Use DEBUG for
+  debugging details, INFO for progress, WARNING for recoverable problems, and
+  ERROR for failures. In an exception handler, ``logger.exception(...)`` includes
+  the original exception and traceback. Fatal failures must raise an exception.
+- The CLI logs to stderr at INFO by default; use ``refinegems --log-level DEBUG``
+  before the command for debugging. Command results remain on stdout.
+- Library callers configure logging themselves. Module loggers propagate through
+  ``logging.getLogger("refinegems")``. For a standalone script, configure
+  ``logging.basicConfig(level=logging.INFO)`` once in the application.
+- Keep the import-time database readiness check as a ``RuntimeWarning``.
+- In notebooks, call ``from refinegems.utility.log import configure_logging``
+  and ``configure_logging()`` for INFO output with coloured level keywords.
+  Use ``colour=False`` to disable colour or ``level="DEBUG"`` for more detail.
 - For debugging of pandas warnings or issues ``pd.options.mode.chained_assignment = None`` needs to be commented out.
 - | Additionally, some modules contain comment blocks inf the format shown below.
   | By enabling the code lines between the dotted lines, a debugging-mode is run, which e.g. subsets the data to shorten the runtime to make debugging faster.

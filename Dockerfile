@@ -25,6 +25,10 @@ RUN if [ "$INSTALL_EXTERNAL_TOOLS" = "true" ]; then \
         && python -m pip install --no-cache-dir "bofdat@git+https://github.com/draeger-lab/BOFdat"; \
     fi
 
+# Download BiGG and ModelSEED into the installed database in the image.
+# Fail the build if initialization cannot complete.
+RUN refinegems database initialise
+
 # Entrypoint for the container -> If set all CLI commands can be directly used
 ENTRYPOINT ["refinegems"]
 CMD ["-h"]
