@@ -894,9 +894,11 @@ def resolve_duplicate_metabolites(
     now = egcsolver.find_egcs(model, with_reacs=False)
     # get objective function
     bof_list = test_biomass_presence(model)
+    
+    # FIX: Safely check if bof_list is not None before checking its length
 
     # FIX: Safely check if bof_list is not None before checking its length
-    if bof_list and len(bof_list) == 1:
+    if bof_list and bof_list and len(bof_list) == 1:
         objective_function = bof_list[0]
     elif bof_list and len(bof_list) > 1:
         mes = f"Multiple BOFs detected. Will be using {bof_list[0]}"
@@ -1021,12 +1023,26 @@ def resolve_duplicate_metabolites(
                                     )
 
                                     # skip if objective function is found
-                                    if objective_function is not None and reac.id == objective_function:
+                                    if objective_function is not None and objective_function is not None and reac.id == objective_function:
                                         continue
 
                                     # check if consistency is still intact
                                     balance_test = reac.check_mass_balance()
                                     if not reac.boundary and len(balance_test) > 0:
+                                        
+                                        comp = keep_meta.compartment
+                                        comp_suffix = comp.split('_')[-1].strip() if '_' in comp else comp.strip()
+                                        
+                                        # Dynamically resolve full names to short IDs using the global VALID_COMPARTMENTS mapping
+                                        if comp_suffix not in VALID_COMPARTMENTS:
+                                            for short_id, full_name in VALID_COMPARTMENTS.items():
+                                                if re.search(rf'(_{short_id}$|^{short_id}$|{full_name})', comp, re.IGNORECASE):
+                                                    comp_suffix = short_id
+                                                    break
+                                            
+                                        if "O" in balance_test.keys():
+                                            h2o_metab_id = f"h2o_{comp_suffix}"
+                                            if h2o_metab_id in model_del.metabolites:
 
                                         comp = keep_meta.compartment
                                         comp_suffix = comp.split('_')[-1].strip() if '_' in comp else comp.strip()
@@ -1043,13 +1059,20 @@ def resolve_duplicate_metabolites(
                                             if h2o_metab_id in model_del.metabolites:
                                                 reac.subtract_metabolites(
                                                     {model_del.metabolites.get_by_id(h2o_metab_id): balance_test["O"]}
+                                                    {model_del.metabolites.get_by_id(h2o_metab_id): balance_test["O"]}
                                                 )
                                                 balance_test = reac.check_mass_balance()
 
                                         if "H" in balance_test.keys():
                                             h_metab_id = f"h_{comp_suffix}"
                                             if h_metab_id in model_del.metabolites:
+                                                balance_test = reac.check_mass_balance()
+
+                                        if "H" in balance_test.keys():
+                                            h_metab_id = f"h_{comp_suffix}"
+                                            if h_metab_id in model_del.metabolites:
                                                 reac.subtract_metabolites(
+                                                    {model_del.metabolites.get_by_id(h_metab_id): balance_test["H"]}
                                                     {model_del.metabolites.get_by_id(h_metab_id): balance_test["H"]}
                                                 )
 

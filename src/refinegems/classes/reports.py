@@ -89,6 +89,7 @@ class Report(ABC):
         # Optionally, store a name or identifier for the report
         self.name = None
         self.created_on = datetime.now()
+        self.created_on = datetime.now()
 
     # abstract methods
     # ----------------
@@ -959,6 +960,7 @@ class AuxotrophySimulationReport(Report):
 
     def __init__(self, results) -> None:
         super().__init__()
+        super().__init__()
         self.simulation_results = results.sort_index()
 
     # auxotrophy sim visualisation
@@ -1399,6 +1401,7 @@ class ModelInfoReport(Report):
 
     def __init__(self, model: cobra.Model) -> None:
         super().__init__()
+        super().__init__()
 
         super().__init__()
         # cobra version
@@ -1422,6 +1425,7 @@ class ModelInfoReport(Report):
             _ for _ in mass_charge[1] if not _ in self.mass_charge_unbalanced
         ]
         # gpr
+        self.pseudo = [_.id for _ in model.boundary] + (test_biomass_presence(model) or [])
         self.pseudo = [_.id for _ in model.boundary] + (test_biomass_presence(model) or [])
         with_gpr = get_reac_with_gpr(model)
         self.normal_with_gpr = with_gpr[0]
@@ -2078,6 +2082,7 @@ class MultiSBOTermReport(Report):
     def visualise(
         self,
         rename: Union[dict, None] = None,
+        rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         show_invalid: bool=False,
         show_overall_counts: bool=False,
@@ -2128,12 +2133,17 @@ class MultiSBOTermReport(Report):
                 if isinstance(cmap, matplotlib.colors.ListedColormap):
                     # FIX: Safely cycle through colors if there are more models than available colors
                     cmap = list(islice(cycle(cmap.colors), len(self.model_reports)))
+                    # FIX: Safely cycle through colors if there are more models than available colors
+                    cmap = list(islice(cycle(cmap.colors), len(self.model_reports)))
                 else:
                     cmap = cmap(np.linspace(0, 1, len(self.model_reports)))
             case list():
                 # FIX: Safely cycle through the provided custom color list
                 cmap = list(islice(cycle(color_palette), len(self.model_reports)))
+                # FIX: Safely cycle through the provided custom color list
+                cmap = list(islice(cycle(color_palette), len(self.model_reports)))
             case _:
+                mes = "Unknown type for color_palette"
                 mes = "Unknown type for color_palette"
                 raise TypeError(mes)
 
@@ -2171,6 +2181,7 @@ class MultiSBOTermReport(Report):
     def save(
         self,
         dir: Union[str, Path],
+        rename: Union[dict, None] = None,
         rename: Union[dict, None] = None,
         color_palette: Union[str, list[str]] = "Paired",
         figsize: tuple = (10, 10),
